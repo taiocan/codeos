@@ -1,0 +1,312 @@
+# Intent
+
+## Core philosophy
+
+Runtime-observed, constraint-verified behavior is the only source of truth.  
+Design intent is provisional; execution under constraints is authoritative.
+
+Truth = behavior that passes tests, satisfies invariants, and is confirmed through runtime observation.
+
+---
+
+## System process
+
+Intent  
+→ Capabilities (high-level outcomes)  
+→ Observable Features (state transitions with explicit contracts)  
+→ Behavioral Specification (tests + invariants as truth anchors)  
+→ Atomic Implementation (minimal code to satisfy tests)  
+→ Verification Gate (tests + invariants + architecture constraints)  
+→ Runtime Observability (logs, metrics, events)  
+→ Targeted Refinement (fix only observed failures or ambiguity)  
+→ repeat under bounded execution
+
+---
+
+## System invariants
+
+- All changes are atomic (commit or rollback, no partial state)
+- All implementations must pass behavioral tests and invariants before becoming valid
+- Architecture and dependency constraints are enforced before execution
+- Execution is bounded (finite retries, finite resource usage)
+- Every execution step is observable and causally traceable
+
+---
+
+## Operational principle
+
+The system prioritizes:
+
+- executable truth over specification completeness  
+- observable behavior over theoretical design  
+- constrained execution over open-ended generation  
+- localized refinement over global redesign  
+- incremental validation over upfront architecture  
+
+---
+
+## Definition of correctness
+
+Correctness is not assumed from design.
+
+Correctness = passing behavioral tests + satisfying invariants + verified runtime behavior under constraints.
+
+
+
+
+## Why the system exists
+
+Transform human-defined intent into validated, observable software through constrained, test-first execution.
+
+The system exists to ensure that software is defined by executable, verifiable behavior rather than unexecuted design.
+
+The system:
+- derives structured capabilities from intent as intermediate executable outcomes,
+- decomposes capabilities into observable features defined by explicit state transitions and behavioral contracts,
+- generates behavioral specifications (failing tests + invariants) before any implementation,
+- produces minimal implementations that satisfy these specifications,
+- applies atomic code changes with full rollback on failure,
+- enforces invariants, architectural rules, and dependency constraints before execution,
+- validates all changes through a verification gate (tests + invariants + structural constraints),
+- exposes execution through runtime observability (logs, metrics, events, traces),
+- and iterates through bounded refinement loops, focusing only on observed failures or ambiguity.
+
+Execution continues until:
+- all behavioral specifications are satisfied, or
+- bounded execution limits are reached, resulting in controlled termination and escalation.
+
+Correctness is defined exclusively as:
+behavior that satisfies executable tests, enforced invariants, and validated runtime execution under system constraints.
+
+
+Transform human-defined intent into executable and observable software through incremental, test-first refinement.
+
+The system:
+- derives executable behavior from intent,
+- generates failing behavioral tests before implementation,
+- applies atomic code changes,
+- enforces invariants and architecture constraints,
+- and iterates within bounded execution limits until behavioral tests pass or execution terminates.
+
+## What stable behavior it provides
+
+- Given human input, the system derives structured intent.
+- Given intent, the system derives capabilities.
+- Given capabilities, the system derives observable features defined by explicit state transitions and observable contracts.
+
+- For each feature, the system:
+  - defines executable behavioral specifications,
+  - emits logs, metrics, and events,
+  - decomposes work into atomic Change Units (CUs),
+  - and generates failing behavioral tests before implementation.
+
+- Behavioral tests define externally observable semantics independent of implementation details.
+
+- Given failing tests, the system generates the minimal implementation required to satisfy them.
+
+- All generated changes are validated against:
+  - architectural and dependency constraints,
+  - invariants,
+  - and repository validation rules before touching disk.
+
+- Invalid changes are rejected immediately.
+
+- Repository updates are atomic:
+  - either all files apply successfully,
+  - or the entire changeset is discarded.
+
+- The repository transitions only between fully validated states.
+
+- The system executes through bounded test-first refinement loops:
+  - generate tests,
+  - generate implementation,
+  - execute validation,
+  - collect runtime feedback,
+  - refine only where failures or ambiguity emerge.
+
+- Retries are bounded, normalized failures are deduplicated, and unresolved execution terminates cleanly for human escalation.
+
+- Every execution step is causally traceable through structured event logs and correlation IDs.
+
+- The system guarantees:
+  1. Behavioral predictability
+  2. Architectural stability
+  3. Execution safety
+  4. Bounded execution
+
+## System invariants
+
+- Repository updates are atomic.
+- Architectural constraints are enforced before changes apply.
+- Invariants are validated continuously.
+- Execution retries and resource usage are bounded.
+- All execution steps are observable and traceable.
+
+## Operational goals
+
+- Minimize time to executable feedback.
+- Minimize implementation scope per change.
+- Refine only failing or ambiguous regions.
+- Preserve behavioral consistency across implementations.
+
+## Expected emergent properties
+
+- Predictable system behavior
+- Stable architectural structure
+- Reduced repository corruption risk
+- Observable execution flow
+- Incremental system evolution
+
+
+---
+
+## What high-level operational qualities matter
+!!!
+- **Behavioral determinism** — externally observable behavior remains stable independent of implementation details.
+
+- **Behavioral correctness** — generated implementations must satisfy executable behavioral tests and enforced invariants.
+
+- **Invariant enforcement** — domain rules are enforced as executable constraints.
+
+- **Architectural enforcement** — dependency and layer constraints are validated before changes apply.
+
+- **Atomic state transitions** — repository updates apply completely or not at all.
+
+- **Bounded execution** — retries, execution depth, and resource usage are explicitly limited.
+
+- **State-directed execution** — validation and retry mechanisms constrain execution toward invariant-satisfying states.
+
+- **Observability** — every feature emits verifiable logs, metrics, and events by default.
+
+- **Causal traceability** — execution decisions, failures, and generated changes are observable through structured event traces.
+
+- **Localized refinement** — validation and corrective refinement are scoped to failing or ambiguous regions.
+
+- **Incremental evolution** — system structure is refined through iterative execution and validation rather than exhaustive upfront decomposition.
+
+- **Rapid feedback** — the system prioritizes fast generation of executable and observable behavior.
+
+
+---
+# intent1.md
+
+## Why the system exists
+
+Turn human‑described intent into observable and easy-to-maintain, iteratable, working software as quickly as possible—without heavy upfront design.
+Turn human‑described behavior into working code without probabilistic drift, architectural decay, or broken intermediate states.  
+Codeos exists to replace open‑ended AI autonomy with bounded, test‑first, invariant‑enforced engineering.
+
+## What stable behavior it provides
+
+* Given human input, the system derives structured intent.
+
+* Given intent, the system derives capabilities (high-level user-visible outcomes).
+
+* Given capabilities, the system derives observable features defined by explicit state transitions and observable contracts.
+
+* For each feature, the system:
+
+  * defines executable behavioral specifications and observable contracts,
+  * defines observable behavior through logs, metrics, and events,
+  * decomposes the feature into atomic Change Units (CUs),
+  * and generates failing behavioral tests before implementation begins.
+
+* Behavioral tests define externally observable semantics independent of implementation details: implementation may vary syntactically, but externally observable behavior must remain consistent.
+
+* Given failing tests, the system generates the minimal code required to make them pass.
+
+* Every generated change is validated against hard constraints before touching disk:
+
+  * invariant enforcement,
+  * architectural and dependency constraints,
+  * and repository validation rules.
+
+* Any change that violates architecture constraints or invariants is rejected immediately.
+
+* All repository updates are atomic:
+
+  * either every file in a changeset applies successfully,
+  * or the entire changeset is discarded.
+  * The repository never enters a partially modified state.
+
+* The system executes through bounded test-first refinement loops:
+
+  * generate failing tests,
+  * generate minimal implementation,
+  * execute validation and runtime checks,
+  * collect runtime feedback,
+  * refine only where failures or ambiguity emerge.
+
+* Execution is constrained toward valid states through bounded retries and validation rules:
+
+  * retries are bounded,
+  * normalized failures are deduplicated,
+  * unbounded retry loops are prevented,
+  * and unresolved execution terminates cleanly for human escalation.
+
+* The repository transitions only between fully validated states.
+
+* Every execution step is causally traceable:
+
+  * decisions,
+  * generated changes,
+  * failures,
+  * retries,
+  * and fixes
+    are recorded through structured event logs and correlation IDs.
+
+* The system guarantees:
+
+  1. **Behavioral predictability** — behavior remains aligned with executable specifications and enforced invariants.
+  2. **Architectural stability** — structural constraints are continuously enforced.
+  3. **Execution safety** — repository state transitions remain atomic and fully validated.
+  4. **Bounded execution** — retries, costs, and execution paths remain finite and predictable.
+
+
+
+## What high‑level operational qualities matter
+
+- semantic determinism (stable behavior, flexible syntax)
+- state convergence (always moves toward intended invariant‑satisfying state)
+- causal traceability (every AI decision is observable and debuggable)
+- invariant enforcement (business rules as hard boundaries)
+- bounded execution (fixed retries, no infinite loops)
+- **Evolvability** – Features and architecture emerge from runtime interaction patterns, not upfront decomposition.  
+- **Observability** – Every feature produces verifiable events, metrics, and logs by default.
+- **Speed to observable reality** – From idea to running, measurable behavior in the shortest possible time.  
+- **Evolvability** – Features and architecture emerge from runtime interaction patterns, not upfront decomposition.  
+- **Localized rigor** – Formal constraints and refinement apply only to areas where failures actually occur.  
+- **Observability** – Every feature produces verifiable events, metrics, and logs by default.
+- **Correctness** – The generated code must pass its own tests.  
+- **Boundness** – Each attempt has a fixed limit of tries, files, and retries.  
+- **Compliance** – Architecture rules are enforced as hard constraints.  
+- **Determinism** – Given the same input and rules, the outcome is consistent.
+- **Intent‑driven stability** – Behavior matches specification, even when code syntax varies.
+- **Architectural compliance** – Layer rules are hard constraints, not suggestions.
+- **Atomic consistency** – No partial or broken states ever persist.
+- **Bounded execution** – Fixed retries and failure detection guarantee predictable resource use.
+
+
+# Intent4
+
+## Why the system exists
+
+
+## What stable behavior it provides
+
+- Given an intent (why the system exists), the system produces capabilities (high‑level user‑visible outcomes) and observable features (small state transformations).  
+- For each feature, the system writes a failing behavioral test **before any code** – this test locks the intended semantics.  
+- The AI then writes code to pass the test. The code may be syntactically different each run, but the external behavior remains identical.  
+- The system enforces hard **invariants** (e.g., no negative balance, unique project names) as runtime or static checks. Any AI attempt that violates an invariant is rejected immediately.  
+- Execution always **converges** toward the desired stable state: if a change unit fails, the system retries within a bounded budget, but it never diverges or gets stuck.  
+- Every AI decision (why it chose a file, why a test failed, how it fixed it) is captured with causal traceability – a complete event log with correlation IDs.  
+- All changes are atomic: either every file in a patch applies successfully, or none do.
+
+## What high‑level operational qualities matter
+
+- **Semantic determinism** – Behavior is reproducible and verifiable, even when code syntax varies.  
+- **State convergence** – The system always moves toward the intended stable state, never away from it.  
+- **Invariant enforcement** – Critical business rules are hard boundaries; the AI cannot break them.  
+- **Causal traceability** – Every generative step is observable and debuggable (events, correlation IDs, decision logs).  
+- **Bounded execution** – Fixed retry limits prevent infinite AI spins.  
+- **Localized rigor** – Formal constraints apply only where failures or ambiguity emerge; the rest remains lightweight.
