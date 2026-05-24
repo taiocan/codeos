@@ -21,7 +21,10 @@ Every step requires explicit human approval before Claude advances.
 
 ```bash
 # In a new project directory:
-bash /home/arc/projects/claude/Codeos/scripts/dba-init.sh
+bash /home/arc/projects/claude/Codeos/scripts/dba-init.sh [project-name] [remote-url]
+
+# Example:
+bash /home/arc/projects/claude/Codeos/scripts/dba-init.sh my-project https://github.com/user/my-project.git
 
 # Then in Claude Code:
 # Paste the contents of .codeos/prompts/00-session-start.md
@@ -55,7 +58,7 @@ Codeos/
 │   └── project-CLAUDE.md
 │
 ├── scripts/
-│   └── dba-init.sh    — Scaffolds a new project
+│   └── dba-init.sh    — Scaffolds a new project (args: [project-name] [remote-url])
 │
 └── Archive/           — Prior design artifacts and reference material
 ```
@@ -86,7 +89,7 @@ Paste `prompts/00-session-start.md` to orient Claude.
 
 ### Starting a New Project for the First Time
 
-After running `dba-init.sh`, follow these steps before opening Claude:
+After running `dba-init.sh` (with an optional project name and remote URL), follow these steps before opening Claude:
 
 **Step 1 — Fill in the project `CLAUDE.md` that the script generated.**
 Open it and complete:
