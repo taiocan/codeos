@@ -2,13 +2,15 @@
 # dba-init.sh — Initialize a new DBA/IDS project
 #
 # Usage (from new project root):
-#   bash /home/arc/projects/claude/Codeos/scripts/dba-init.sh [project-name]
+#   bash /home/arc/projects/claude/Codeos/scripts/dba-init.sh [project-name] [remote-url]
 #
 # What it does:
 #   1. Creates .codeos symlink → Codeos toolkit
 #   2. Creates project directory structure
 #   3. Generates CLAUDE.md from template
 #   4. Generates docs/conventions.md
+#   5. Initializes git repo (if not already one)
+#   6. Adds git remote (if remote URL provided)
 
 set -euo pipefail
 
@@ -17,6 +19,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CODEOS_PATH="$(cd "$SCRIPT_DIR/.." && pwd)"
 PROJECT_DIR="$PWD"
 PROJECT_NAME="${1:-$(basename "$PROJECT_DIR")}"
+REMOTE_URL="${2:-}"
 
 echo ""
 echo "DBA Project Init"
@@ -24,6 +27,9 @@ echo "================"
 echo "Project name : $PROJECT_NAME"
 echo "Project dir  : $PROJECT_DIR"
 echo "Toolkit path : $CODEOS_PATH"
+if [ -n "$REMOTE_URL" ]; then
+echo "Remote URL   : $REMOTE_URL"
+fi
 echo ""
 
 # ── 1. Symlink ─────────────────────────────────────────────────────────────
@@ -88,6 +94,26 @@ if [ -f "$CONVENTIONS" ]; then
 else
     cp "$CODEOS_PATH/templates/conventions.md" "$CONVENTIONS"
     echo "[ok]   docs/conventions.md (from template)"
+fi
+
+# ── 6. Git init ─────────────────────────────────────────────────────────────
+
+if [ -d "$PROJECT_DIR/.git" ]; then
+    echo "[skip] git repo already exists"
+else
+    git -C "$PROJECT_DIR" init -b main
+    echo "[ok]   git init (branch: main)"
+fi
+
+# ── 7. Git remote ────────────────────────────────────────────────────────────
+
+if [ -n "$REMOTE_URL" ]; then
+    if git -C "$PROJECT_DIR" remote get-url origin &>/dev/null; then
+        echo "[skip] git remote 'origin' already set"
+    else
+        git -C "$PROJECT_DIR" remote add origin "$REMOTE_URL"
+        echo "[ok]   git remote origin → $REMOTE_URL"
+    fi
 fi
 
 # ── Done ────────────────────────────────────────────────────────────────────
