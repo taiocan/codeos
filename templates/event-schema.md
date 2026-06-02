@@ -37,6 +37,15 @@ Every event must include these fields:
 
 `correlation_id` is mandatory and must propagate through the entire execution chain.
 
+## Design Notes
+
+<!--
+Record implementation context, timing, and rationale here.
+This section is for implementers — it is NOT part of the observable event contract.
+Put here: processing loops, ordering assumptions, cross-module timing, architectural decisions.
+Do NOT put these in Event Definitions or the Event Flow diagram.
+-->
+
 ## Event Definitions
 
 <!--
@@ -87,16 +96,36 @@ Show branching for failure paths.
 [FailureEventD]
 ```
 
+## Cross-module events relied upon
+
+<!--
+Events emitted by OTHER modules that this feature depends on for its observable behavior.
+These are NOT emitted by this module. List them here to make the dependency explicit.
+If none, state "none".
+-->
+
+| Event | Source module | Contract clause |
+|---|---|---|
+| (none) | — | — |
+
 ## Coverage Check
 
 <!--
 Every failure in contracts/[feature_id]_contract.md must appear here as a FAILURE event.
+Every new payload field or event must trace to an approved contract clause.
 Fill this table before submitting for approval.
 -->
 
 | Contract Failure | Event Here | Status |
 |---|---|---|
 | [failure_name from contract] | [FailureEventName] | COVERED / MISSING |
+
+<!--
+Also verify before submitting:
+- [ ] No new observable (payload field, event, ordering guarantee) introduced beyond the contract
+- [ ] Validation ordering not prescribed unless the contract explicitly requires it
+- [ ] Event flow diagram contains events only — no processing steps
+-->
 
 ---
 

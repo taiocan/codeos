@@ -10,6 +10,9 @@ Once the event schema is approved:
 - Hidden behavior is structurally impossible
 - Any behavior change requires updating the schema first, then re-approval
 
+**The schema must not be stronger than the contract.**
+Every new observable the schema introduces — a new payload field, a new event, an ordering guarantee — must trace to an approved contract clause. If it cannot, either amend the contract first (and get it approved) or remove it from the schema. An event schema that invents observables breaks the contract → schema → implementation derivation chain.
+
 ## Preconditions
 
 You MUST have ALL of these approved before starting:
@@ -38,6 +41,10 @@ A completed `events/[feature_id]_schema.md` file, filled from `.codeos/templates
 - Each failure path → one FAILURE event per named failure
 - State transitions → OBSERVATIONAL events at key boundaries
 - External side effects → EXTERNAL events
+
+### What to avoid
+- **Validation ordering** — do not specify which failure fires when multiple invalid inputs are present simultaneously unless the contract explicitly requires a precedence rule. Prescribing uncontracted ordering creates hidden behavioral requirements that drift from the contract.
+- **Design notes in event definitions** — implementation mechanics (processing loops, timing details, architectural rationale) belong in a dedicated Design Notes section, not in event definitions or the event flow diagram. The flow diagram should show events only, not processing steps.
 
 ## Event Categories (use all that apply)
 
@@ -81,9 +88,12 @@ Every event must include:
 Before presenting the schema, verify:
 - [ ] Every contract scenario has at least one corresponding event
 - [ ] Every named failure in the contract has exactly one FAILURE event
-- [ ] The event flow diagram shows happy path + all failure branches
+- [ ] The event flow diagram shows happy path + all failure branches (events only — no processing steps)
 - [ ] The Coverage Check table is complete with no MISSING items
 - [ ] `correlation_id` is in the required base fields
+- [ ] No new observable (payload field, event, ordering guarantee) introduced that is not traceable to an approved contract clause
+- [ ] Validation ordering is not prescribed unless the contract explicitly requires it
+- [ ] Cross-module events relied upon are listed separately from events emitted by this module
 
 ## Output Format
 

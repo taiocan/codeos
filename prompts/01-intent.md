@@ -36,6 +36,11 @@ Apply these without exception:
 - File formats, protocols
 - Infrastructure
 
+Watch for these subtle implementation leaks that are easy to miss:
+- **Timing language** — "at command startup", "before X is called" → replace with "a resource must be available before execution proceeds"
+- **Mechanism language** — "no hardcoded list is consulted", "validated against a table" → replace with observable form: "the value is accepted if and only if it is recognized"
+- **Implementation-bound compatibility** — "preserves the existing five entity types" → replace with behavioral form: "behavior is unchanged when no project vocabulary is supplied"
+
 **No observability mechanics.** Intent does not mention events, logs, metrics, dashboards.
 - Good: `Changes apply atomically`
 - Bad: `System emits AtomicChangeCompleted event`
@@ -59,6 +64,8 @@ Before presenting the intent, verify:
 - [ ] All guarantees are enforceable/testable
 - [ ] Fits on one screen
 - [ ] Scope boundary explicitly states what is excluded
+- [ ] No timing language, mechanism language, or implementation-bound counts/lists in guarantees
+- [ ] All anchor terms used in multiple guarantees are formally defined
 
 ## Ambiguity Detection
 
@@ -67,6 +74,7 @@ Call out explicitly:
 - Vague outcome language ("manage", "handle", "process" — these hide intent)
 - Implicit constraints that need to become explicit guarantees
 - Scope that seems too large for one feature intent (should be split)
+- **Undefined anchor terms** — if a term appears in multiple guarantees as an anchor (e.g., "recognized type", "active vocabulary"), flag it for formal definition. Undefined anchor terms force contract authors to infer semantics, which produces divergent implementations.
 
 ## Output Format
 

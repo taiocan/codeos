@@ -84,6 +84,18 @@ implementation are a DBA violation.
 |---|---|---|
 | (none beyond events/runtime_events.jsonl) | — | — |
 
+### Cross-module signals relied upon
+
+<!--
+If this feature's observable behavior depends on events emitted by another module
+(e.g., a shared schema-validation module emitting SchemaTypeUnknown), list them here.
+Silence implies no cross-module dependency.
+-->
+
+| Event | Source module | When relied upon |
+|---|---|---|
+| (none) | — | — |
+
 ## Failure Classifications
 
 <!--
