@@ -40,6 +40,10 @@ Watch for these subtle implementation leaks that are easy to miss:
 - **Timing language** — "at command startup", "before X is called" → replace with "a resource must be available before execution proceeds"
 - **Mechanism language** — "no hardcoded list is consulted", "validated against a table" → replace with observable form: "the value is accepted if and only if it is recognized"
 - **Implementation-bound compatibility** — "preserves the existing five entity types" → replace with behavioral form: "behavior is unchanged when no project vocabulary is supplied"
+- **Overly broad backward-compatibility** — "behavior is unchanged from the previous implementation" silently creates obligations around ordering, formatting, timestamps, sorting, and anything else that was previously true. Name only what the feature is responsible for not breaking:
+  - Wrong: "When no project schema is supplied, behavior is unchanged."
+  - Right: "The absence of a project schema does not cause additional exclusions — items visible before this feature remain visible."
+  The first form creates an obligation to preserve all previous behavior indefinitely. The second names only the specific invariant this feature is responsible for.
 
 **No observability mechanics.** Intent does not mention events, logs, metrics, dashboards.
 - Good: `Changes apply atomically`

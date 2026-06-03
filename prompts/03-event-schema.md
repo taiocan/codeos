@@ -46,6 +46,52 @@ A completed `events/[feature_id]_schema.md` file, filled from `.codeos/templates
 - **Validation ordering** — do not specify which failure fires when multiple invalid inputs are present simultaneously unless the contract explicitly requires a precedence rule. Prescribing uncontracted ordering creates hidden behavioral requirements that drift from the contract.
 - **Design notes in event definitions** — implementation mechanics (processing loops, timing details, architectural rationale) belong in a dedicated Design Notes section, not in event definitions or the event flow diagram. The flow diagram should show events only, not processing steps.
 
+## Pitfalls to Avoid
+
+### 1. Flow diagram ordering implication
+Sequential branch layout implies execution ordering even when a note says "not
+prescribed." Use contract failure names as branch labels, not condition descriptions:
+
+```
+WRONG:                            RIGHT:
+  ├─ (schema load fails)            ├─ (SchemaLoadFailed)
+  │    ...                          │    ...
+  ├─ (graph not accessible)         ├─ (GraphNotAccessible)
+```
+
+With contract failure names as labels, no ordering note is needed. If you must use
+condition descriptions, add explicitly: "These branches are mutually exclusive failure
+conditions; no evaluation order is prescribed."
+
+### 2. Lifecycle language in definitions
+Definitions must describe observable concepts, not implementation lifecycle mechanics.
+
+```
+WRONG: "Active vocabulary — the set of status values, loaded from the project
+        schema at command startup."
+RIGHT: "Active vocabulary — the vocabulary used by this command to determine
+        valid values for entity type concepts."
+```
+
+Remove: "at startup", "before X is called", "during initialization." These describe
+when something happens, not what it is.
+
+### 3. Semantic amendments to existing payload fields require explicit justification
+When a refinement changes the *meaning* (not just the structure) of an existing
+payload field, add a decision note:
+
+```
+[field] semantic change: [old meaning] → [new meaning].
+Justification: [contract clause that requires this change].
+Alternative considered: [what was preserved and why].
+```
+
+If the intent does not require the semantic change, do not make it. Quietly
+redefining existing observables breaks consumers who depend on the previous semantics.
+If the intent requires that certain items be absent from output, that is satisfied by
+excluding them from the items array — it does not require changing a count field that
+consumers use to understand record size.
+
 ## Event Categories (use all that apply)
 
 | Category | When to use |

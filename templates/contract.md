@@ -60,16 +60,17 @@ Complete only if this feature owns or consumes vocabulary-defined concepts
 (types, statuses, or domain concepts defined by a configurable schema).
 Delete this section entirely if not applicable.
 Reference: .codeos/patterns/vocabulary-architecture.md
+DO NOT state a resolution strategy here — that is a Stage 4 implementation choice.
 -->
 
 **Vocabulary owner:** [module name, or "this feature"]
 **Concepts operated on:** [list the named concepts this feature reasons about]
-**Resolution strategy:** [normalize-on-write | normalize-on-read | concept identifiers]
-**Representation Ban invariant:** All [feature name] domain logic operates on
-vocabulary-resolved concept identity. No comparison, branch, or match against
-vocabulary representations (alias or canonical string) is permitted in domain layers.
-**Uniformity invariant:** Exactly one resolution strategy is applied uniformly
-across all comparison sites in this feature.
+**Concept Dependency Invariant (governing):** Decision outcomes are invariant under
+substitution of equivalent vocabulary representations. Operations receiving "risk" and
+"Risk" (equivalent concepts) must produce identical outcomes.
+**Representation Ban invariant (derived):** Vocabulary representations must not appear
+as inputs to domain decision logic. [If display applies: "Display uses the canonical
+representation associated with the resolved concept."]
 
 ## Invariant Falsification Scenarios
 

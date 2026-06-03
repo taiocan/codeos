@@ -32,6 +32,14 @@ If you cannot write a test that passes/fails against this clause, the clause is 
 **Contracts may NOT reference implementation.**
 No mention of: classes, functions, databases, APIs, frameworks, file systems.
 
+**Behavioral Contract Rule — what contracts may and may not specify:**
+Contracts may specify: observable outputs, observable failures, observable signals,
+and invariants visible to a user or a test.
+Contracts must NOT specify: storage strategy, normalization strategy, evaluation order,
+module ownership boundaries, or internal architecture — unless the architecture itself
+is the business requirement (e.g., "changes must be atomic" is observable; "use
+normalize-on-read" is not).
+
 **All actors in scenarios must match actors from the intent.**
 Do not introduce new actors that weren't in the approved intent.
 
@@ -49,7 +57,29 @@ Behavioral language belongs in Given/When/Then. Event names, module names, and c
 Produce at minimum:
 1. One happy path: Given/When/Then/And covering successful execution
 2. Two or more failure paths: one scenario per failure mode
-3. At least one **boundary scenario** — a case that many readers will assume should fail but should not (or vice versa). Examples: "filter value valid globally but inapplicable to current selection → accepted, empty result, no failure"; "update with identical value to current state → succeeds, no error". Without an explicit boundary scenario, future maintainers will "fix" correct behavior.
+3. At least one **boundary scenario** — a case at the edge of what the contract covers:
+   empty sets, all-excluded results, absent schema, maximum/minimum values, or a case
+   many readers will assume should fail but should not (or vice versa). Without an
+   explicit boundary scenario, future maintainers will "fix" correct edge-case behavior.
+4. At least one **falsification scenario** — a Given/When/Then that directly exercises
+   a specific plausible wrong implementation assumption. Include a `Falsifies:` annotation
+   naming the incorrect implementation it would catch.
+
+   Example falsification scenario:
+   ```gherkin
+   Given vocabulary canonical "Risk", alias "risk"; item stored as "risk"
+   When PM requests the view
+   Then item is included
+   Falsifies: resolution logic only traverses alias tables; direct canonical
+              match not handled → item stored as "Risk" would be excluded
+   ```
+
+   Falsification scenarios complement the Invariant Falsification table by providing
+   the full behavioral scenario form for the most critical invariants.
+
+   Note: boundary and falsification scenarios are distinct purposes. A boundary
+   scenario tests that correct behavior holds at limits; a falsification scenario
+   targets a specific wrong implementation assumption. Both are required.
 
 Every failure path must be named (these names become failure event names in Stage 3).
 
@@ -109,17 +139,28 @@ If the feature identified a vocabulary dependency in Stage 1:
 
 - Name the vocabulary-owning module
 - List the concepts this feature reasons about
-- State the **Representation Ban invariant**:
-  > All [feature] domain logic operates on vocabulary-resolved concept identity.
-  > No comparison, branch, or match against vocabulary representations (alias or
-  > canonical string) is permitted in domain layers.
-- State the **uniformity invariant**:
-  > This feature applies exactly one resolution strategy uniformly across all
-  > comparison sites: [normalize-on-write | normalize-on-read | concept identifiers].
-- Add at least one Invariant Falsification row targeting the Representation Ban.
-  The canonical-casing fixture is the standard falsifier for this class: define a
-  concept with a capitalized canonical (`Risk`) and lowercase alias (`risk`); the
-  feature must include items regardless of stored representation.
+- State the **Concept Dependency Invariant (governing)**:
+  > Decision outcomes are invariant under substitution of equivalent vocabulary
+  > representations. An operation receiving "risk" and one receiving "Risk" —
+  > where both resolve to the same concept — must produce identical outcomes.
+- State the **Representation Ban invariant (derived)**:
+  > Because outcomes depend only on concept identity, vocabulary representations
+  > must not appear as inputs to domain decision logic.
+  > Note: this does NOT apply to display — display uses the canonical representation
+  > associated with the resolved concept, which is prescribed, not banned.
+- If the feature displays type names, state the **Display invariant**:
+  > The displayed type is the canonical representation associated with the
+  > vocabulary concept, regardless of stored representation.
+- Add at least one Invariant Falsification row targeting the Concept Dependency
+  Invariant. The canonical-casing fixture is the standard falsifier: define a concept
+  with a capitalized canonical (`Risk`) and lowercase alias (`risk`); the feature must
+  produce identical outcomes for items stored with either representation.
+- Do NOT state a resolution strategy (normalize-on-read, normalize-on-write, concept
+  identifiers) — that is an implementation choice belonging to Stage 4.
+
+Definitions involving recognition must use concept-resolution language, not string-matching:
+- Wrong: "a type string that matches a canonical type name or alias"
+- Right: "a stored type representation that resolves to a concept in the vocabulary"
 
 See: `.codeos/patterns/vocabulary-architecture.md`
 
@@ -142,15 +183,18 @@ Before presenting the contract, verify:
 - [ ] Every Then clause is observable (verifiable without reading code)
 - [ ] No Then clause asserts internal mechanism ("no hardcoded X consulted")
 - [ ] No layer mixing — event names and module names are in Notes, not scenarios
-- [ ] At least one boundary scenario present
+- [ ] At least one boundary scenario present (edge condition, not just typical case)
+- [ ] At least one falsification scenario present (wrong implementation assumption + `Falsifies:` annotation)
 - [ ] Every named failure has a row in Failure Classifications
 - [ ] Cross-module signal dependencies are acknowledged if present
 - [ ] Any bidirectional resolution definitions (e.g., alias matching) are verified to cover both directions
 - [ ] If vocabulary dependency exists: Vocabulary Dependency section present with
-      concepts listed, Representation Ban invariant stated, resolution strategy
-      declared, and at least one falsification row targeting the invariant
-- [ ] Each invariant has one or more rows in the Invariant Falsification Scenarios table,
-      sufficient to cover the plausible wrong assumptions identified during contract review
+      concepts listed, Concept Dependency Invariant stated, Representation Ban invariant
+      stated (derived), Display invariant stated if applicable; NO resolution strategy;
+      at least one falsification row targeting the Concept Dependency invariant
+- [ ] Definitions involving recognition use concept-resolution language, not string-matching
+- [ ] Each invariant has at least one row in the Invariant Falsification Scenarios table
+      covering a specific plausible wrong implementation assumption
 - [ ] Each row names a specific wrong implementation assumption (not a generic edge case)
 - [ ] Each fixture is a genuine falsifier: a correct implementation passes it, but an
       implementation violating the named assumption fails it
