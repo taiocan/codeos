@@ -56,6 +56,38 @@ Every failure path must be named (these names become failure event names in Stag
 ### Invariants
 Derive from the intent's "Stable Guarantees" — what is ALWAYS true.
 
+### Invariant Falsification Scenarios
+
+For each invariant, identify one or more plausible wrong implementation assumptions
+and provide the minimal fixture that falsifies each one.
+
+The question to ask is:
+
+> "What concrete mistakes could a developer make when implementing this invariant,
+>  and what is the simplest fixture that exposes each mistake?"
+
+A complex invariant may have several distinct wrong assumptions, each requiring its
+own row. The goal is to cover the plausible failure modes, not to enumerate all
+conceivable cases.
+
+Common wrong-assumption patterns to check:
+
+- **Vocabulary-driven matching**: hardcoded strings instead of schema resolution →
+  fixture: vocabulary where canonical name casing differs from the hardcoded string
+  (e.g., canonical `Risk` with alias `risk` exposes any hardcoded `"risk"` comparison)
+- **Directionality**: alias resolution assumed to work only one direction →
+  fixtures: one item stored as alias + filter by canonical; one item stored as
+  canonical + filter by alias
+- **Cardinality**: event emitted once assumed, but condition fires N times →
+  fixture: N items triggering the condition, assert exactly N events
+- **Content isolation**: transformation assumed to rewrite item content →
+  fixture: check original stored values are unchanged in output
+
+Add each falsifying fixture as a row in the Invariant Falsification Scenarios
+table, with the specific wrong assumption named explicitly.
+
+Leave the Test ID column blank — Stage 5 fills it in.
+
 ### Preconditions
 What must be true BEFORE this feature can execute.
 (System state, actor state, prior events that must have occurred.)
@@ -70,6 +102,26 @@ Every failure here must eventually become a FAILURE event in Stage 3.
 
 ### Cross-module signals
 If the contract's postconditions or invariants depend on observational signals emitted by another module (e.g., a shared schema-validation module), acknowledge them explicitly — either in Runtime Artifacts or in a Note. Silence implies no cross-module dependency. If a resolution concept is directional (e.g., alias resolution), check explicitly that the definition covers all required directions.
+
+### Vocabulary Dependency (if applicable)
+
+If the feature identified a vocabulary dependency in Stage 1:
+
+- Name the vocabulary-owning module
+- List the concepts this feature reasons about
+- State the **Representation Ban invariant**:
+  > All [feature] domain logic operates on vocabulary-resolved concept identity.
+  > No comparison, branch, or match against vocabulary representations (alias or
+  > canonical string) is permitted in domain layers.
+- State the **uniformity invariant**:
+  > This feature applies exactly one resolution strategy uniformly across all
+  > comparison sites: [normalize-on-write | normalize-on-read | concept identifiers].
+- Add at least one Invariant Falsification row targeting the Representation Ban.
+  The canonical-casing fixture is the standard falsifier for this class: define a
+  concept with a capitalized canonical (`Risk`) and lowercase alias (`risk`); the
+  feature must include items regardless of stored representation.
+
+See: `.codeos/patterns/vocabulary-architecture.md`
 
 ## Ambiguity Detection
 
@@ -94,6 +146,15 @@ Before presenting the contract, verify:
 - [ ] Every named failure has a row in Failure Classifications
 - [ ] Cross-module signal dependencies are acknowledged if present
 - [ ] Any bidirectional resolution definitions (e.g., alias matching) are verified to cover both directions
+- [ ] If vocabulary dependency exists: Vocabulary Dependency section present with
+      concepts listed, Representation Ban invariant stated, resolution strategy
+      declared, and at least one falsification row targeting the invariant
+- [ ] Each invariant has one or more rows in the Invariant Falsification Scenarios table,
+      sufficient to cover the plausible wrong assumptions identified during contract review
+- [ ] Each row names a specific wrong implementation assumption (not a generic edge case)
+- [ ] Each fixture is a genuine falsifier: a correct implementation passes it, but an
+      implementation violating the named assumption fails it
+- [ ] Test ID column is left blank (filled in at Stage 5)
 
 ## Output Format
 

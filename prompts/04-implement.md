@@ -52,6 +52,25 @@ No hidden randomness, no time-based branching not reflected in contracts.
 **Correlation IDs propagate through all operations.**
 This is the first thing you wire up. Every log line, every emitted event, carries the correlation ID from the feature invocation.
 
+**If this feature consumes vocabulary: apply the Representation Ban.**
+
+Domain logic in this feature must not store, compare, branch on, or pattern-match
+vocabulary representations (aliases or canonical strings). Only concept identity —
+resolved by the vocabulary module's API — is valid.
+
+Before implementation begins:
+1. Identify every site in domain logic that will operate on vocabulary-defined concepts
+2. Choose one resolution strategy (normalize-on-write, normalize-on-read, or concept
+   identifiers) and apply it uniformly — mixing strategies within one feature is a violation
+3. If you find a string literal representing a vocabulary concept in domain logic,
+   replace it with a vocabulary-resolved equivalent before proceeding
+
+The wrong pattern in any strategy: comparing a type or concept against a hardcoded
+string literal (`== "risk"`, `== Some("risk")`). The correct pattern: concept equality
+via the vocabulary's resolution API applied uniformly on both sides of every comparison.
+
+See: `.codeos/patterns/vocabulary-architecture.md`
+
 ## Structure
 
 Place implementation in `modules/[feature_id]/` or follow the existing project module layout.

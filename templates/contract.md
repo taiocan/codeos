@@ -53,6 +53,44 @@ What must ALWAYS be true, regardless of inputs or execution path.
 - [invariant — always true]
 - [invariant — always true]
 
+## Vocabulary Dependency
+
+<!--
+Complete only if this feature owns or consumes vocabulary-defined concepts
+(types, statuses, or domain concepts defined by a configurable schema).
+Delete this section entirely if not applicable.
+Reference: .codeos/patterns/vocabulary-architecture.md
+-->
+
+**Vocabulary owner:** [module name, or "this feature"]
+**Concepts operated on:** [list the named concepts this feature reasons about]
+**Resolution strategy:** [normalize-on-write | normalize-on-read | concept identifiers]
+**Representation Ban invariant:** All [feature name] domain logic operates on
+vocabulary-resolved concept identity. No comparison, branch, or match against
+vocabulary representations (alias or canonical string) is permitted in domain layers.
+**Uniformity invariant:** Exactly one resolution strategy is applied uniformly
+across all comparison sites in this feature.
+
+## Invariant Falsification Scenarios
+
+<!--
+For each invariant above, list one or more falsifying fixtures — one per distinct
+wrong implementation assumption that could plausibly cause a regression.
+
+Each row answers: "What is the simplest setup where a specific wrong assumption
+causes an observable test failure?"
+
+Complex invariants may have several distinct wrong assumptions and therefore
+several rows. The goal is to cover the plausible failure modes identified
+during contract review, not to enumerate all conceivable cases.
+
+Test ID is filled in at Stage 5 and used for traceability in Stages 7 and 8.
+-->
+
+| Invariant | Falsifying fixture | Observable when correct | Wrong implementation assumption | Test ID |
+|---|---|---|---|---|
+| [invariant text] | [minimal setup] | [expected outcome] | [specific wrong assumption] | (Stage 5) |
+
 ## Preconditions
 
 <!--

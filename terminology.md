@@ -531,3 +531,26 @@ runtime-truth-centered
 ```
 
 That is the defining characteristic of your philosophy.
+
+---
+
+## Vocabulary-Centric Architecture
+
+Terms for systems where types, statuses, or domain concepts are defined by a
+configurable vocabulary and consumed across multiple modules.
+
+See: `.codeos/patterns/vocabulary-architecture.md` for the full pattern reference.
+
+| Term | Definition |
+|---|---|
+| **Concept** | The semantic identity the system reasons about, independent of any string representation. The unit of domain logic. |
+| **Canonical** | The single stable runtime identifier chosen by the vocabulary to name a concept. Unique and authoritative — not merely "another representation." There is exactly one canonical per concept. |
+| **Alias** | An alternative input form accepted for compatibility, migration, or user preference. Resolved to a concept before domain logic runs; never appears in business logic. |
+| **Resolution** | Mapping any input form (alias or canonical string) to its concept via the vocabulary module's API. |
+| **Vocabulary owner** | The module that defines concepts, accepts aliases, and exposes the resolution API. Exactly one owner per vocabulary. |
+| **Vocabulary consumer** | Any module that operates on vocabulary-defined concepts by calling the resolution API. Consumers never inspect aliases or hardcode canonical strings. |
+| **Concept Dependency Rule** | Business logic depends on vocabulary-defined concepts. Vocabulary resolution maps all representations to concepts before any domain comparison. Comparisons occur on resolved concept identity, not representations. |
+| **Representation Ban Rule** | Domain layers must not store, compare, branch on, or pattern-match vocabulary representations (canonical strings or aliases). Only concept identity is valid in domain logic. |
+| **Concept leak** | A bug where a vocabulary representation (alias string or assumed canonical form) escapes the resolution boundary and appears in domain logic, bypassing the vocabulary module. The R8 report_export bug is a concept leak. |
+| **Normalize-on-write** | Resolution strategy: resolve aliases at ingestion; store concept identity. Simpler domain logic; vocabulary migrations require data backfill. |
+| **Normalize-on-read** | Resolution strategy: store original representation; resolve at every comparison site. Flexible vocabulary evolution; each comparison site is a potential concept leak if resolution is accidentally skipped. |

@@ -53,6 +53,22 @@ Watch for these subtle implementation leaks that are easy to miss:
 
 **Keep it compact.** A valid intent has: one purpose statement, a few actor-outcome statements, a few stable guarantees. If it fills more than one screen, it is probably too broad.
 
+## Vocabulary Role (if applicable)
+
+If this feature involves types, statuses, relationships, or domain concepts defined
+by a configurable schema or vocabulary, identify:
+
+- **Vocabulary owner**: which module defines and owns the concept vocabulary?
+- **Vocabulary consumer**: does this feature consume concepts defined by another module?
+- **Concepts relied upon**: which named concepts does this feature reason about?
+
+If neither owner nor consumer — state "no vocabulary dependency" and skip.
+
+A vocabulary dependency is a signal to add a Vocabulary Dependency section in
+Stage 2 and a Representation Ban check in Stage 4.
+
+See: `.codeos/patterns/vocabulary-architecture.md`
+
 ## Verification Checklist
 
 Before presenting the intent, verify:
