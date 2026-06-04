@@ -133,6 +133,8 @@ Every failure here must eventually become a FAILURE event in Stage 3.
 ### Cross-module signals
 If the contract's postconditions or invariants depend on observational signals emitted by another module (e.g., a shared schema-validation module), acknowledge them explicitly — either in Runtime Artifacts or in a Note. Silence implies no cross-module dependency. If a resolution concept is directional (e.g., alias resolution), check explicitly that the definition covers all required directions.
 
+**Naming rule:** Event names in the cross-module signals table must be exact strings as defined in the source module's approved event schema — not generic labels, concept groupings, or human-readable summaries. If a source module emits multiple event types for a single logical condition (e.g., `SchemaParseError`, `SchemaValidationFailed`, `SchemaAliasCollisionDetected` all represent "schema load failure"), list each event type in a separate row or note "includes: [EventTypeA, EventTypeB, ...]" in the Event column. Vague labels that do not match any real event type are not valid entries.
+
 ### Vocabulary Dependency (if applicable)
 
 If the feature identified a vocabulary dependency in Stage 1:

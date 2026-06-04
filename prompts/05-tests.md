@@ -102,6 +102,17 @@ fn setup_temp_dir() -> TempDir {
 `DEFAULT_SCHEMA` serves double duty: test isolation AND backward-compat regression
 baseline. Its status sets must exactly match what the previous hardcoded table provided.
 
+**Environment isolation:** When the binary under test resolves a global configuration root
+at runtime (e.g., `HOME`, `XDG_CONFIG_HOME`, `APPDATA`), the test runner must override
+that variable to point to the temp directory, preventing any globally-installed schema from
+merging with the test schema. Without this, a system-installed vocabulary may introduce alias
+collisions or unexpected types that silently break test assertions.
+
+Name this runner variant clearly (e.g., `run_binary_schema_isolated`). Apply it to all tests
+that write a `project-schema.yaml`. Tests that deliberately exercise the *no-schema* path
+must **not** use the isolated variant — they should let the global configuration resolve
+normally, which exercises backward-compatibility with the system vocabulary.
+
 ### 8. Backward-Compatibility Regression Test (vocabulary refinements)
 When a refinement replaces hardcoded vocabulary behavior with schema-driven behavior,
 one test must prove the default schema produces outcomes identical to the old hardcoded

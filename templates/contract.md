@@ -129,6 +129,11 @@ implementation are a DBA violation.
 If this feature's observable behavior depends on events emitted by another module
 (e.g., a shared schema-validation module emitting SchemaTypeUnknown), list them here.
 Silence implies no cross-module dependency.
+
+NAMING RULE: Event names must be exact strings from the source module's approved event
+schema — not generic labels. List each real event type separately if the source emits
+multiple types for the same condition (e.g., list SchemaParseError, SchemaValidationFailed,
+and SchemaAliasCollisionDetected as separate rows rather than a generic "SchemaInvalid").
 -->
 
 | Event | Source module | When relied upon |

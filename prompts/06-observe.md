@@ -40,6 +40,27 @@ After running the system, check:
 - Are correlation chains intact (same `correlation_id` across a feature execution)?
 - Are there any unexpected events (not in the schema)?
 
+## Failure Path Coverage
+
+Attempt runtime observation of each named failure in the contract's Failure Classifications
+table. For each path not yet observed, create a *runtime fixture* — the minimal setup that
+reproducibly triggers that path.
+
+Common fixture strategies:
+
+| Failure condition | Fixture strategy |
+|---|---|
+| Schema absent or invalid | Write broken/missing schema to project dir before running |
+| Empty record | Run against a fresh project dir with no incorporated items |
+| No recognized types | Write a schema defining only a type no existing item uses; isolate runtime from global schema (e.g., `HOME=<temp>`) |
+| External service unavailable | Remove API key or point to unreachable endpoint |
+| Resource not found | Supply a non-existent ID in the command arguments |
+
+Where direct runtime observation is impractical or environmentally constrained (cloud
+outages, third-party failures, race conditions, production-only infrastructure), document
+the reason and classify the row in Stage 7 as **GAP (runtime evidence)**. The goal is
+*observe or explicitly justify why not* — not a mandatory pass/fail gate on every path.
+
 ## Handoff to Stage 7
 
 Once the system has been run and `events/runtime_events.jsonl` contains data, Stage 7 (Reconciliation Review) can begin.
