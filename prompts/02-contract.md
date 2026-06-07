@@ -179,7 +179,18 @@ This is a legitimate reason to return to Stage 1.
 
 ## Completeness Check
 
-Before presenting the contract, verify:
+This checklist is Step 2 of the Output Sequence. Run it against your draft before outputting the contract. Output the results (✓ / ✗) as part of your response.
+
+## Output Sequence
+
+Follow this sequence exactly. Do not combine steps.
+
+**Step 1 — Generate complete draft**
+Produce the full `contracts/[feature_id]_contract.md` content from `.codeos/templates/contract.md`.
+Fill every section. Do not leave placeholders. Do not output yet.
+
+**Step 2 — Run the completeness checklist against your draft**
+Check each item. Mark each ✓ (passes) or ✗ (fails — state why).
 
 - [ ] Every intent outcome has at least one scenario
 - [ ] Every Then clause is observable (verifiable without reading code)
@@ -189,24 +200,20 @@ Before presenting the contract, verify:
 - [ ] At least one falsification scenario present (wrong implementation assumption + `Falsifies:` annotation)
 - [ ] Every named failure has a row in Failure Classifications
 - [ ] Cross-module signal dependencies are acknowledged if present
-- [ ] Any bidirectional resolution definitions (e.g., alias matching) are verified to cover both directions
-- [ ] If vocabulary dependency exists: Vocabulary Dependency section present with
-      concepts listed, Concept Dependency Invariant stated, Representation Ban invariant
-      stated (derived), Display invariant stated if applicable; NO resolution strategy;
-      at least one falsification row targeting the Concept Dependency invariant
+- [ ] Any bidirectional resolution definitions verified to cover both directions
+- [ ] If vocabulary dependency exists: Vocabulary Dependency section present with Concept Dependency Invariant, Representation Ban invariant (derived), Display invariant if applicable; NO resolution strategy; at least one falsification row
 - [ ] Definitions involving recognition use concept-resolution language, not string-matching
-- [ ] Each invariant has at least one row in the Invariant Falsification Scenarios table
-      covering a specific plausible wrong implementation assumption
+- [ ] Each invariant has at least one row in the Invariant Falsification Scenarios table covering a specific plausible wrong implementation assumption
 - [ ] Each row names a specific wrong implementation assumption (not a generic edge case)
-- [ ] Each fixture is a genuine falsifier: a correct implementation passes it, but an
-      implementation violating the named assumption fails it
+- [ ] Each fixture is a genuine falsifier: a correct implementation passes it, but an implementation violating the named assumption fails it
 - [ ] Test ID column is left blank (filled in at Stage 5)
 
-## Output Format
+If any item is ✗: revise the draft before proceeding to Step 3.
 
-1. Present the completed `contracts/[feature_id]_contract.md` content
-2. List any intent ambiguities discovered (if any)
-3. Confirm that every scenario has a corresponding row in the Failure Classifications table
+**Step 3 — Output**
+1. Present the verified `contracts/[feature_id]_contract.md` content
+2. Present the completed checklist (with ✓ / ✗ marks)
+3. List any intent ambiguities discovered (if any)
 4. State: **`AWAITING HUMAN APPROVAL TO PROCEED TO STAGE 3`**
 
 **STOP.** Do not proceed to Stage 3 until the human explicitly approves.

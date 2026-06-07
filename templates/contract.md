@@ -85,6 +85,13 @@ Complex invariants may have several distinct wrong assumptions and therefore
 several rows. The goal is to cover the plausible failure modes identified
 during contract review, not to enumerate all conceivable cases.
 
+COVERAGE INVARIANTS: If this feature enforces a coverage relationship (e.g., set A
+must be a subset of set B, or every item in list X must appear in table Y), that
+relationship must appear here as a falsifying fixture — not as a YAML schema or a
+separate artifact type. The falsifying fixture is: define set A with an element absent
+from set B and assert the observable failure signal. This keeps coverage enforcement
+derived from the contract, not invented ad hoc.
+
 Test ID is filled in at Stage 5 and used for traceability in Stages 7 and 8.
 -->
 

@@ -127,19 +127,55 @@ guarantee.
 
 ## Replay Test (required)
 
-The replay test must:
-1. Capture the event stream from running a behavioral test
-2. Store it as a JSONL fixture
-3. Replay the event stream
-4. Confirm identical state transitions result
+The replay test verifies that the system is deterministically replayable: given the same
+inputs, the same events are emitted in the same order.
 
-This ensures the system is deterministically replayable.
+### Required interface
 
-## Output Format
+The replay test file (`tests/replay/[feature_id]_replay.test.[ext]`) must:
 
-1. Present `tests/behavioral/[feature_id]_behavior.test.[ext]`
-2. Present `tests/replay/[feature_id]_replay.test.[ext]`
-3. Present a **Contract Coverage Table**:
+1. **Invoke the real feature** (not a mock) with a known input that exercises the happy path
+2. **Capture the event stream** from `events/runtime_events.jsonl` (or a temp copy) after execution
+3. **Assert schema conformance** for every event:
+   - All six base fields present and non-null (`event_id`, `event_type`, `timestamp`, `correlation_id`, `source_module`, `payload`)
+   - `event_type` is one of the types listed in `events/[feature_id]_schema.md`
+4. **Assert correlation chain integrity**:
+   - All events from one invocation share a single `correlation_id`
+   - The chain starts with the feature's trigger event and ends with a BEHAVIORAL or FAILURE event
+   - No orphaned events (events with a `correlation_id` not matching any chain start)
+5. **Assert event sequence**:
+   - The ordered list of `event_type` values matches the expected happy path sequence from the event flow diagram
+   - The sequence is deterministic: running the feature twice with the same input produces the same sequence
+
+### What replay tests do NOT do
+
+- Replay tests do not re-inject the JSONL file into the system and re-run it (that would require
+  a replay engine outside the current scope)
+- Replay tests do not mock internal components — they invoke the real binary/function
+- Replay tests do not assert payload content beyond field presence (payload assertions belong
+  in the behavioral tests)
+
+### File format
+
+The event log is JSONL: one complete JSON object per line, no trailing comma, UTF-8.
+Each line must be independently parseable. An empty file or a file with only partial lines
+is a test failure.
+
+### Determinism verification
+
+Name the primary replay assertion `test_[feature_id]_event_sequence_is_deterministic`.
+Run the feature twice in sequence within the same test. Assert that both runs produce
+the same `event_type` sequence. Differences indicate hidden non-determinism
+(randomness, timestamp-based branching, external state dependency) that must be fixed.
+
+## Output Sequence
+
+**Step 1 — Write both test files**
+Write `tests/behavioral/[feature_id]_behavior.test.[ext]` and
+`tests/replay/[feature_id]_replay.test.[ext]`. Apply all rules above.
+
+**Step 2 — Fill in the Contract Coverage Table**
+Every contract scenario and every invariant falsification row must have exactly one test:
 
 | Contract Scenario | Test Name | Assertions |
 |---|---|---|
@@ -147,6 +183,23 @@ This ensures the system is deterministically replayable.
 | Failure: [name] | `test_[failure_name]_emits_failure_event` | [what is asserted] |
 | Invariant falsification: [wrong assumption] | `test_[invariant]_falsifies_[assumption]` | [what fails under the wrong assumption] |
 
+After completing this table, fill in the Test ID column in the contract's Invariant
+Falsification Scenarios table. This is required for Stage 7 and Stage 8 traceability.
+
+**Step 3 — Self-check**
+Verify before outputting:
+- [ ] One behavioral test per contract happy path scenario
+- [ ] One behavioral test per named failure in Failure Classifications
+- [ ] One invariant falsification test per row in the contract's Invariant Falsification Scenarios table
+- [ ] Telemetry test asserts `correlation_id` and all six base fields on every event
+- [ ] Replay test asserts: base fields, schema event types, correlation chain integrity, deterministic sequence
+- [ ] Contract Coverage Table has no empty rows
+- [ ] Test IDs filled in the contract's Invariant Falsification Scenarios table
+
+**Step 4 — Output**
+1. Present `tests/behavioral/[feature_id]_behavior.test.[ext]`
+2. Present `tests/replay/[feature_id]_replay.test.[ext]`
+3. Present the Contract Coverage Table (from Step 2) with ✓ / ✗ marks from Step 3
 4. State: **`AWAITING HUMAN APPROVAL TO PROCEED TO STAGE 6`**
 
 **STOP.** The human must approve tests and run them before Stage 6.

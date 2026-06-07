@@ -129,9 +129,17 @@ Every event must include:
 
 `correlation_id` is mandatory on every event without exception.
 
-## Completeness Check
+## Output Sequence
 
-Before presenting the schema, verify:
+Follow this sequence exactly. Do not combine steps.
+
+**Step 1 — Generate complete draft**
+Produce the full `events/[feature_id]_schema.md` content from `.codeos/templates/event-schema.md`.
+Fill every section including the Coverage Check table and event flow diagram. Do not output yet.
+
+**Step 2 — Run the completeness checklist against your draft**
+Check each item. Mark each ✓ (passes) or ✗ (fails — state why).
+
 - [ ] Every contract scenario has at least one corresponding event
 - [ ] Every named failure in the contract has exactly one FAILURE event
 - [ ] The event flow diagram shows happy path + all failure branches (events only — no processing steps)
@@ -141,12 +149,14 @@ Before presenting the schema, verify:
 - [ ] Validation ordering is not prescribed unless the contract explicitly requires it
 - [ ] Cross-module events relied upon are listed separately from events emitted by this module
 
-## Output Format
+If any item is ✗: revise the draft before proceeding to Step 3.
 
-1. Present the completed `events/[feature_id]_schema.md` content
-2. Present the completed Coverage Check table
-3. Explicitly confirm: every contract failure is covered by a FAILURE event
-4. State: **`AWAITING HUMAN APPROVAL TO PROCEED TO STAGE 4`**
+**Step 3 — Output**
+1. Present the verified `events/[feature_id]_schema.md` content
+2. Present the completed checklist (with ✓ / ✗ marks)
+3. Present the Coverage Check table
+4. Explicitly confirm: every contract failure is covered by a FAILURE event
+5. State: **`AWAITING HUMAN APPROVAL TO PROCEED TO STAGE 4`**
 
 **STOP.** Do not write any implementation until the human explicitly approves the schema.
 This is the gate that constrains everything that follows.
