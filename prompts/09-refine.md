@@ -39,6 +39,18 @@ For each identified problem:
 ### 1. Diagnose
 State the trigger type and the specific observed evidence.
 
+**Structural risk check:** Identify what behavior changes, what contract changes,
+and what structural blast radius exists for this fix. If `docs/codebase-digest.md`
+exists, check whether the affected code is a listed Critical Hub or God Function.
+If not, derive manually from the module structure. State the structural risk level:
+- **LOW** — behavior visible outside the module is unchanged
+- **MEDIUM** — external behavior likely unchanged but must be verified
+- **HIGH** — behavior visible outside the module may change
+
+If the fix requires touching a Critical Hub or God Function with HIGH structural
+risk, evaluate whether a Stage 10 Architectural Refinement is more appropriate
+than a targeted Stage 9 fix.
+
 ### 2. Root Cause
 Identify the specific behavioral mechanism that caused the problem.
 Not a guess — trace it from evidence in the event log or reconciliation table.

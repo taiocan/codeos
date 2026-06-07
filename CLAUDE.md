@@ -10,6 +10,19 @@ Read this file fully at the start of every session before doing anything else.
 
 ---
 
+## Truth Authority and Conflict Resolution
+
+When intent, runtime evidence, and structural analysis disagree, resolve as follows:
+
+1. **Explicit human correction** (at any stage gate) overrides all other sources.
+2. **Runtime behavior** (observed events) overrides intent text when behavior is more specific. Example: schema declares `"string"`, runtime consistently emits integer — this is empirical evidence of intent-text drift, not a runtime error.
+3. **Safety, authorization, and invariant-enforcement logic** always preserves intent primacy regardless of runtime behavior. Example: runtime shows no authorization check was invoked — this is a contract violation, not an authorization redesign.
+4. **Structural digest observations** (fan-in, god functions, known risk zones) do not override behavioral findings. They inform blast-radius estimates and remediation sequencing only.
+
+When a conflict cannot be resolved by these rules: surface it clearly to the human rather than silently resolving it.
+
+---
+
 ## The Non-Negotiable Rules
 
 1. **Every stage transition requires explicit human approval.** You NEVER advance to the next stage without a human "APPROVED", "approved", "yes proceed", or equivalent.
@@ -81,6 +94,8 @@ Use the corresponding prompt file from `.codeos/prompts/` for detailed instructi
 | Stage | File |
 |---|---|
 | Session start | `.codeos/prompts/00-session-start.md` |
+| Feature Brief (pre-Stage 1) | `.codeos/prompts/00b-feature-brief.md` |
+| Existing Codebase Onboarding (Session Type D) | `.codeos/prompts/00c-onboarding.md` |
 | Stage 1: Intent | `.codeos/prompts/01-intent.md` |
 | Stage 2: Contracts | `.codeos/prompts/02-contract.md` |
 | Stage 3: Event Schema | `.codeos/prompts/03-event-schema.md` |
@@ -90,16 +105,22 @@ Use the corresponding prompt file from `.codeos/prompts/` for detailed instructi
 | Stage 7: Reconcile | `.codeos/prompts/07-reconcile.md` |
 | Stage 8: Replay | `.codeos/prompts/08-replay.md` |
 | Stage 9: Refine | `.codeos/prompts/09-refine.md` |
+| **Architectural Refinement** (alternate loop) | `.codeos/prompts/10-arch-refine.md` |
+
+The Architectural Refinement workflow is a 5-step alternative loop (Scope → Impact → Implement → Verify → Reconcile) for structural changes that have no behavioral contract or event schema. Use it for workspace restructuring, shared library extraction, dependency consolidation, test infrastructure, and naming normalization. Use the 9-step loop for any change that would alter a contract or schema.
 
 Use the corresponding template from `.codeos/templates/` when producing artifacts:
 
 | Artifact | Template |
 |---|---|
+| Feature brief | `.codeos/templates/feature-brief.md` |
 | Feature intent | `.codeos/templates/intent.md` |
 | Behavioral contract | `.codeos/templates/contract.md` |
 | Event schema | `.codeos/templates/event-schema.md` |
 | Feature specification | `.codeos/templates/feature-spec.md` |
 | Refinement log | `.codeos/templates/refinement.md` |
+| Architectural refinement | `.codeos/templates/arch-refinement.md` |
+| Codebase digest | `.codeos/templates/codebase-digest.md` |
 
 ---
 
@@ -122,12 +143,36 @@ See `.codeos/templates/conventions.md` for the authoritative naming convention r
 
 ---
 
+## Artifact Classification
+
+Not all artifacts are required. This table tells you which artifacts block stage
+advancement and which improve decision quality without being prerequisites.
+
+**Required artifacts block stage advancement. Optional and recommended artifacts
+improve decision quality but are never prerequisites for stage transitions.**
+
+| Artifact | Classification | When it exists |
+|---|---|---|
+| Feature Brief (`backlog/[id].md`) | Optional | Pre-Stage-1 discovery; not required to start Stage 1 |
+| Intent (`intents/[id].md`) | **Required** | Any behavioral work — must be APPROVED before Stage 2 |
+| Contract (`contracts/[id]_contract.md`) | **Required** | Any behavioral work — must be APPROVED before Stage 3 |
+| Event Schema (`events/[id]_schema.md`) | **Required** | Any behavioral work — must be APPROVED before Stage 4 |
+| Feature Registry (`features/registry.yaml`) | Recommended | Multi-feature projects; not required for single-feature work |
+| Codebase Digest (`docs/codebase-digest.md`) | Optional | Existing codebases and mature projects; absent digest is never a blocker |
+| Structural Alignment (Stage 7 output section) | Optional output | Produced at Stage 7 only when architectural observations exist |
+| Architectural Refinement (`refinements/arch/[id].md`) | Optional | Non-behavioral structural changes; uses the Stage 10 workflow |
+| Onboarding artifacts (`HYPOTHESIZED_INTENT`) | Onboarding only | Produced by Session Type D; must pass Stage 1 review before advancing |
+
+---
+
 ## File Layout
 
 ```
 project/
 ├── .codeos/                      ← this toolkit (symlink)
 ├── CLAUDE.md                     ← project-level instructions (references this file)
+├── features/
+│   └── registry.yaml             ← authoritative feature status index (human-maintained)
 ├── intents/
 │   └── [feature_id].md           ← one per feature
 ├── contracts/
@@ -135,6 +180,11 @@ project/
 ├── events/
 │   ├── [feature_id]_schema.md    ← event schema per feature (or shared event_schema.md)
 │   └── runtime_events.jsonl      ← append-only runtime log
+├── backlog/
+│   └── [feature_id].md           ← feature briefs (pre-Stage-1 discovery)
+├── refinements/
+│   └── arch/
+│       └── [refine_id].md        ← architectural refinement records
 ├── modules/                      ← actual implementation code
 └── tests/
     ├── behavioral/               ← behavioral outcome tests

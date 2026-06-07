@@ -1,0 +1,62 @@
+# Feature Registry
+#
+# Single source of truth for feature status in this project.
+# Human-maintained — update whenever a feature advances a stage or changes status.
+#
+# Status values:
+#   stage0-hypothesized — ONBOARDING DRAFT: artifacts produced by Session Type D;
+#                         Stage 1 review required before this can advance.
+#                         Intent status is HYPOTHESIZED_INTENT, not APPROVED.
+#   stage0    — Feature Brief in progress (backlog/[feature_id].md)
+#   stage1    — Intent being written or awaiting approval
+#   stage2    — Contract being written or awaiting approval
+#   stage3    — Event schema being written or awaiting approval
+#   stage4    — Implementation in progress or awaiting approval
+#   stage5    — Tests being written or awaiting approval
+#   stage6    — Runtime execution (human-driven)
+#   stage7    — Reconciliation review in progress or awaiting approval
+#   stage8    — Replay verification in progress or awaiting approval
+#   stage9    — Targeted refinement in progress
+#   complete  — All stages approved, no open refinements
+#
+# Type values: F (feature) | R (refinement of an existing feature)
+#
+# Notes: free-form text for blockers, context, or next action
+
+features:
+  - feature_id: example_feature
+    description: "Brief description of what this feature does"
+    type: F
+    status: stage1
+    artifacts:
+      intent: intents/example_feature.md
+      contract: contracts/example_feature_contract.md
+      schema: events/example_feature_schema.md
+    tests:
+      behavioral:
+        - tests/behavioral/example_feature_behavior.test.ext
+      replay:
+        - tests/replay/example_feature_replay.test.ext
+    notes: ""
+
+  # Onboarding example (Session Type D output — status: stage0-hypothesized)
+  # - feature_id: example_existing_module
+  #   description: "Existing module being brought under DBA governance"
+  #   type: F
+  #   status: stage0-hypothesized
+  #   artifacts:
+  #     intent: intents/example_existing_module.md   # HYPOTHESIZED_INTENT — not APPROVED
+  #     contract: ""
+  #     schema: ""
+  #   tests:
+  #     behavioral:
+  #       - tests/behavioral/example_existing_module_behavior.rs
+  #     replay: []
+  #   notes: "ONBOARDING: draft intent from code analysis — Stage 1 review required before advancing"
+
+architectural_refinements:
+  - refine_id: example_refine
+    description: "Brief description of the structural change"
+    status: step2  # step1 | step2 | step3 | step4 | step5 | complete
+    artifact: refinements/arch/example_refine.md
+    notes: ""

@@ -11,7 +11,11 @@ None — this is the first stage. No prior artifacts required.
 
 ## What You Receive
 
-The human's raw description of what they want a feature to do.
+The human's description of what they want a feature to do. Preferred form: a completed
+Feature Brief (`.codeos/templates/feature-brief.md`). A completed brief reduces
+clarification round-trips — Stage 1 can proceed directly to DBA formalization.
+If no brief is present, proceed with what is provided and use the Ambiguity Detection
+section to surface gaps.
 
 ## What You Produce
 
@@ -75,7 +79,25 @@ See: `.codeos/patterns/vocabulary-architecture.md`
 
 ## Verification Checklist
 
-Before presenting the intent, verify:
+This checklist is Step 2 of the Output Sequence. Run it against your draft before outputting the intent. Output the results (✓ / ✗) as part of your response.
+
+## Ambiguity Detection
+
+Call out explicitly:
+- Unclear actors (who is the actor?)
+- Vague outcome language ("manage", "handle", "process" — these hide intent)
+- Implicit constraints that need to become explicit guarantees
+- Scope that seems too large for one feature intent (should be split)
+- **Undefined anchor terms** — if a term appears in multiple guarantees as an anchor (e.g., "recognized type", "active vocabulary"), flag it for formal definition. Undefined anchor terms force contract authors to infer semantics, which produces divergent implementations.
+
+## Output Sequence
+
+**Step 1 — Generate complete draft**
+Produce the full `intents/[feature_id].md` content from `.codeos/templates/intent.md`.
+Apply every Intent Rule without exception. Do not output yet.
+
+**Step 2 — Run the verification checklist against your draft**
+Check each item. Mark each ✓ (passes) or ✗ (fails — state why).
 
 - [ ] Every statement uses actor + outcome form
 - [ ] No implementation details present
@@ -87,20 +109,30 @@ Before presenting the intent, verify:
 - [ ] No timing language, mechanism language, or implementation-bound counts/lists in guarantees
 - [ ] All anchor terms used in multiple guarantees are formally defined
 
-## Ambiguity Detection
+If any item is ✗: revise the draft before proceeding to Step 3.
 
-Call out explicitly:
-- Unclear actors (who is the actor?)
-- Vague outcome language ("manage", "handle", "process" — these hide intent)
-- Implicit constraints that need to become explicit guarantees
-- Scope that seems too large for one feature intent (should be split)
-- **Undefined anchor terms** — if a term appears in multiple guarantees as an anchor (e.g., "recognized type", "active vocabulary"), flag it for formal definition. Undefined anchor terms force contract authors to infer semantics, which produces divergent implementations.
+**Step 3 — Cross-examination**
 
-## Output Format
+After the draft passes the verification checklist, apply this conversational
+validation. These four questions attack a different failure mode than the checklist:
+the checklist verifies that required *sections* exist; cross-examination verifies
+that the author actually understands the intent.
 
-1. Present the completed `intents/[feature_id].md` content
-2. List any ambiguities you detected and questions for the human
-3. Confirm the checklist is passing
-4. State: **`AWAITING HUMAN APPROVAL TO PROCEED TO STAGE 2`**
+Ask yourself (do not ask the human — answer from the draft):
+
+1. **Who benefits?** — "Who is the human role that benefits from this feature — not the system, but the person?" If the answer is "the system" or a module name, the actor definition is wrong.
+2. **What do they gain?** — "After this feature exists, what can that person do or know that they could not before?" If the answer requires naming a function or data structure, the outcome is implementation-bound.
+3. **What must never fail?** — "What is the single thing this feature must never fail to do, even if everything else is degraded?" If the answer is not clearly stated as a Stable Guarantee, add it.
+4. **What is excluded?** — "What would seem related but this feature intentionally does not handle?" If the Scope Boundary does not answer this, it is incomplete.
+
+If the draft answers all four clearly: it is stronger — proceed to Step 4.
+If any answer is "unclear from the draft": mark it as an open question in Step 4.
+
+**Step 4 — Output**
+1. Present the verified `intents/[feature_id].md` content
+2. Present the completed checklist (with ✓ / ✗ marks)
+3. Present the cross-examination results: one line per question (answered / open)
+4. List any ambiguities you detected and questions for the human
+5. State: **`AWAITING HUMAN APPROVAL TO PROCEED TO STAGE 2`**
 
 **STOP.** Do not proceed to Stage 2 until the human explicitly approves.

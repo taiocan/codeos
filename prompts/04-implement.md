@@ -26,6 +26,19 @@ Implementation without all three is a DBA violation.
 
 Implementation code in `modules/`, satisfying all contract clauses and emitting all required events.
 
+## Structural Orientation (before writing any code)
+
+Identify any critical hubs, high-risk modules, or dependency chokepoints affected
+by this change:
+
+- If `docs/codebase-digest.md` exists: read it now and note which listed functions
+  this implementation will touch.
+- If no digest exists: derive manually — scan `modules/` and identify any function
+  that appears to coordinate multiple downstream calls or is called from many sites.
+
+This is a *thinking step*, not an artifact requirement. The goal is to know where
+blast radius is concentrated before the first line of code is written.
+
 ## Implementation Constraints (non-negotiable)
 
 **Every contract clause must be satisfied.**
@@ -82,9 +95,15 @@ Emit events to `events/runtime_events.jsonl` as append-only JSONL. Each line is 
 1. Present the implementation
 2. Present a **Contract Satisfaction Table**:
 
-| Contract Clause | Satisfied By | Line/Function |
-|---|---|---|
-| [clause from contract] | [code location] | [file:line] |
+| Contract Clause | Satisfied By | Line/Function | Structural Risk |
+|---|---|---|---|
+| [clause from contract] | [code location] | [file:line] | [LOW / MEDIUM / HIGH / —] |
+
+Structural Risk levels (only populate when a Critical Hub or God Function is touched):
+- **LOW** — renaming, extracting helpers, testability changes; behavior visible outside the module is unchanged
+- **MEDIUM** — modifying internal logic; external behavior likely unchanged but must be verified
+- **HIGH** — behavior visible outside the module may change (callers, emitted events, return values, error modes)
+- **—** — no Critical Hub or God Function touched by this clause
 
 3. Present an **Event Emission Table**:
 

@@ -53,6 +53,9 @@ DIRS=(
     "tests/behavioral"
     "tests/replay"
     "docs"
+    "features"
+    "backlog"
+    "refinements/arch"
 )
 
 for dir in "${DIRS[@]}"; do
@@ -64,7 +67,19 @@ for dir in "${DIRS[@]}"; do
     fi
 done
 
-# ── 3. Runtime event log ────────────────────────────────────────────────────
+# ── 3. Feature registry ────────────────────────────────────────────────────
+
+REGISTRY="$PROJECT_DIR/features/registry.yaml"
+REGISTRY_TEMPLATE="$CODEOS_PATH/templates/feature-registry.yaml"
+
+if [ -f "$REGISTRY" ]; then
+    echo "[skip] features/registry.yaml already exists"
+else
+    cp "$REGISTRY_TEMPLATE" "$REGISTRY"
+    echo "[ok]   features/registry.yaml (from template — edit to replace example entries)"
+fi
+
+# ── 4. Runtime event log ────────────────────────────────────────────────────
 
 EVENTS_LOG="$PROJECT_DIR/events/runtime_events.jsonl"
 if [ -f "$EVENTS_LOG" ]; then
@@ -74,7 +89,7 @@ else
     echo "[ok]   events/runtime_events.jsonl"
 fi
 
-# ── 4. Project CLAUDE.md ────────────────────────────────────────────────────
+# ── 5. Project CLAUDE.md ────────────────────────────────────────────────────
 
 PROJECT_CLAUDE="$PROJECT_DIR/CLAUDE.md"
 TEMPLATE="$CODEOS_PATH/templates/project-CLAUDE.md"
@@ -86,7 +101,7 @@ else
     echo "[ok]   CLAUDE.md (from template)"
 fi
 
-# ── 5. Naming conventions ───────────────────────────────────────────────────
+# ── 6. Naming conventions ───────────────────────────────────────────────────
 
 CONVENTIONS="$PROJECT_DIR/docs/conventions.md"
 if [ -f "$CONVENTIONS" ]; then
@@ -96,7 +111,18 @@ else
     echo "[ok]   docs/conventions.md (from template)"
 fi
 
-# ── 6. Git init ─────────────────────────────────────────────────────────────
+# ── 7. Codebase digest placeholder ─────────────────────────────────────────
+
+DIGEST="$PROJECT_DIR/docs/codebase-digest.md"
+if [ -f "$DIGEST" ]; then
+    echo "[skip] docs/codebase-digest.md already exists"
+else
+    cp "$CODEOS_PATH/templates/codebase-digest.md" "$DIGEST"
+    sed -i "s/\[PROJECT_NAME\]/$PROJECT_NAME/g" "$DIGEST"
+    echo "[ok]   docs/codebase-digest.md (template — complete after first implementation)"
+fi
+
+# ── 8. Git init ─────────────────────────────────────────────────────────────
 
 if [ -d "$PROJECT_DIR/.git" ]; then
     echo "[skip] git repo already exists"
@@ -105,7 +131,7 @@ else
     echo "[ok]   git init (branch: main)"
 fi
 
-# ── 7. Git remote ────────────────────────────────────────────────────────────
+# ── 9. Git remote ────────────────────────────────────────────────────────────
 
 if [ -n "$REMOTE_URL" ]; then
     if git -C "$PROJECT_DIR" remote get-url origin &>/dev/null; then
@@ -116,19 +142,30 @@ if [ -n "$REMOTE_URL" ]; then
     fi
 fi
 
-# ── Done ────────────────────────────────────────────────────────────────────
+# ── 10. Done ────────────────────────────────────────────────────────────────
 
 echo ""
 echo "Done. Project initialized."
 echo ""
 echo "Next steps:"
 echo "  1. Open CLAUDE.md and fill in the project intent"
-echo "  2. Update the Active Features table as you create features"
+echo "  2. Edit features/registry.yaml — replace the example entry with real features"
 echo "  3. Start Claude Code: claude"
 echo "  4. Tell Claude: 'Read .codeos/CLAUDE.md'"
 echo "  5. Paste .codeos/prompts/00-session-start.md to begin"
 echo ""
-echo "To create your first feature intent:"
-echo "  cp .codeos/templates/intent.md intents/[feature_id].md"
-echo "  # Edit the file, then tell Claude: 'Stage 1 for [feature_id]'"
+echo "Session type choices (from 00-session-start.md):"
+echo "  A — Feature Brief (new feature discovery)"
+echo "  B — Feature Stage Work (Stages 1–9)"
+echo "  C — Architectural Refinement (structural changes)"
+echo "  D — Existing Codebase Onboarding (working code, no DBA artifacts)"
+echo ""
+echo "To create your first feature brief:"
+echo "  cp .codeos/templates/feature-brief.md backlog/[feature_id].md"
+echo "  # Complete the brief, then use it as Stage 1 input"
+echo ""
+echo "Optional — Codebase Digest (structural orientation for Claude):"
+echo "  Complete docs/codebase-digest.md after your first implementation is in place."
+echo "  Claude will read it at session start (Step 2b). Generate from openlore,"
+echo "  static analysis, or manual inspection. See templates/codebase-digest.md."
 echo ""

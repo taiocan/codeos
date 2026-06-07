@@ -15,18 +15,52 @@ You are operating in **Declarative Behavioral Architecture (DBA)** mode for this
 
 **Step 2:** Read the project `CLAUDE.md` (in the project root). Note the Active Features table.
 
-**Step 3:** Use the following session context:
+**Step 2b:** If `docs/codebase-digest.md` exists in the project root, read it now. Confirm you have read it by stating: "Structural digest read — [N] critical hubs, [N] god functions noted." If it does not exist, state: "No structural digest found — proceeding without structural orientation."
+
+**Step 3:** Determine the session type from the options below and confirm it:
+
+---
+
+### Session Type
+
+**A — Feature Brief (new feature discovery)**
+Use when: starting a new feature, uncertain about scope, or the feature has not been written as a DBA intent yet.
+Prompt to load: `.codeos/prompts/00b-feature-brief.md`
+Output: a completed Feature Brief in `backlog/[feature_id].md`, ready to become Stage 1 input.
+
+**B — Feature Stage Work (continuing or starting a feature in the DBA loop)**
+Use when: a feature has an approved intent (or brief) and you are advancing through Stages 1–9.
+Prompt to load: the appropriate stage prompt for the feature's current stage.
+
+**C — Architectural Refinement**
+Use when: the change is structural, not behavioral — workspace restructuring, shared library extraction, dependency consolidation, test infrastructure, naming normalization.
+No behavioral contract or event schema is required.
+Prompt to load: `.codeos/prompts/10-arch-refine.md`
+
+**D — Existing Codebase Onboarding**
+Use when: working code exists in `modules/` but has no approved DBA artifacts.
+Goal: produce draft Feature Briefs and Intents for existing modules so they can enter the Stage 1 review queue.
+Prompt to load: `.codeos/prompts/00c-onboarding.md`
+Output: `HYPOTHESIZED_INTENT` draft briefs in `backlog/` and draft intents in `intents/` + registry entries. None are APPROVED — all require Stage 1 review before advancing.
+
+---
+
+**Step 4:** Check the feature registry. If `features/registry.yaml` exists, read it and report the current status of all features. State any features that are blocked on approval.
+
+**Step 5:** Use the following session context:
 
 ## Session Context
 
 **Today's goal:**
 [Human fills in: e.g., "Complete Stage 2 contract for user_login feature"]
 
-**Current feature states:**
+**Session type:** [A / B / C — from Step 3]
 
-| Feature ID | Current Stage | Status |
-|---|---|---|
-| [feature_id] | [Stage N] | [DRAFT/APPROVED/IN_PROGRESS] |
+**Current feature or refinement:**
+
+| ID | Type | Current Stage | Status |
+|---|---|---|---|
+| [feature_id] | [Feature / Arch Refinement] | [Stage N or step name] | [DRAFT/APPROVED/IN_PROGRESS] |
 
 **This session's scope:**
 [Human fills in: e.g., "Only work on user_login. Do not touch payment features."]
@@ -34,12 +68,22 @@ You are operating in **Declarative Behavioral Architecture (DBA)** mode for this
 **Any session-specific forbidden actions:**
 [Human fills in, or "none"]
 
+**Structural context** (if `docs/codebase-digest.md` exists):
+[Human fills in, or "see codebase-digest.md" — e.g., "We will be modifying cmd_export (god function, 30 fan-out). Contract clause required before touching it."]
+
 ---
 
-**Step 4:** After reading and confirming, state:
+**Library documentation:** When working on implementation stages (4, 5) or architectural refinements that involve external libraries, use the **Context7 MCP tool** to fetch current library documentation rather than relying on training data. This applies especially to Rust crates (Tokio, Serde, Reqwest, Clap) and any dependency where API surface or version compatibility matters. Invoke with the library name — Context7 returns current, version-accurate docs.
+
+---
+
+**Forbidden action (structural):** Behavioral modification of a function listed in `docs/codebase-digest.md` as a Critical Hub or God Function requires explicit contract coverage for that change. Non-behavioral modifications (performance, extraction of helpers, testability work) that do not change observable outputs are exempt.
+
+**Step 6:** After reading and confirming, state:
 - You are in DBA mode
-- Which feature(s) you'll work on
-- Which stage you are currently at for that feature
+- The session type (A, B, C, or D)
+- Which feature(s) or refinement you'll work on
+- Which stage or step you are currently at
 - What you will produce this session
 
 Then **STOP** and wait for the human to begin.
