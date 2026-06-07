@@ -210,6 +210,36 @@ project/
 
 ---
 
+## Human Navigation
+
+Intent files are precision artifacts optimized for contract derivation, not for fast reading.
+When you need a quick plain-language explanation of what a feature does:
+
+**Ask Claude directly:**
+> "Explain [feature_id] in plain English."
+
+Claude will read `intents/[feature_id].md` and produce a jargon-free explanation on demand.
+No file is saved. No approval gate. No DBA lifecycle.
+
+This is the preferred pattern. It solves the readability gap without creating a second
+intent surface or introducing drift between stored summaries and authoritative intents.
+
+**If a stored summary is needed** (e.g., for onboarding documentation or a project README):
+Generate it on request, include provenance metadata (see below), and treat it as
+generated output — never manually edit, regenerate from intent when the intent changes.
+
+Provenance metadata for any stored generated summary:
+```yaml
+generated_from_intent: intents/[feature_id].md
+generated_at: [ISO date]
+generated_by: [Claude session / human]
+```
+
+Stored generated summaries are not DBA artifacts. They do not feed into any stage.
+They do not carry `status`, `approved_by`, or `derived_contracts` fields.
+
+---
+
 ## How to Use the Toolkit in a New Project
 
 1. Run from the new project root: `bash /home/arc/projects/claude/Codeos/scripts/dba-init.sh`
