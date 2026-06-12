@@ -93,6 +93,33 @@ Record findings in this table:
 - EXTRA fields → always GAP (documentation) — undeclared payload evolution
 - No observed instances for an event type → Evidence Level 5 (None) in Step 3
 
+## Evidence Quality Scale
+
+Separate from the Runtime evidence codes below, this scale measures environment fidelity —
+how trustworthy the evidence is in terms of where it was collected.
+
+| Level | Label | Meaning |
+|---|---|---|
+| 1 | Specification | Contract or intent text only; no execution |
+| 2 | Static | Code review, type checking, linting |
+| 3 | Simulated | Automated tests in mock/simulated environment |
+| 4 | Real boundary | Executed in the actual runtime environment (Electron, Docker, real binary) |
+| 5 | Production | Observed under real load in production |
+
+**Key principle:** Alignment and evidence quality are independent axes. A test can pass
+(ALIGNED) but still be Evidence Quality 3 when the contract requires level 4.
+
+When the feature's contract declares `Minimum runtime evidence:` in its Runtime Context
+section, also record the Evidence Quality level (EQ) in the reconciliation table. A row
+where EQ < the contract minimum is classified as `GAP (evidence quality)` regardless of
+test pass/fail.
+
+Example reconciliation row for a feature requiring EQ ≥ 4:
+```
+| HP6 settings persist | ✓ | ✓ | ✓ | ✓ | ✓ | 3 (EQ 3) | GAP (evidence quality — simulated, requires real boundary) |
+| FP2 LucidNotAvailable | ✓ | ✓ | ✓ | ✓ | — | 5 (EQ 1) | MANUAL-PENDING |
+```
+
 **Step 3 — Build the reconciliation table**
 
 Use EXACTLY this column structure. Do not omit or rename columns.
@@ -116,6 +143,7 @@ Use EXACTLY this column structure. Do not omit or rename columns.
 - **GAP (runtime evidence)** — implemented and tested, but path never observed at runtime
 - **GAP (observability)** — behavior may be occurring but cannot be proven from events alone
 - **GAP (documentation)** — artifact text does not match implemented reality; no code change needed
+- **GAP (evidence quality)** — test passes but evidence level is below the contract's `Minimum runtime evidence`; real-boundary or production observation still required
 - **MISMATCH** — two layers disagree (contract says X, runtime shows Y)
 - **MISSING** — required artifact or event is absent
 

@@ -44,6 +44,29 @@ Add additional failure paths to exhaustively cover failure_classifications below
 Every failure in the table must have a scenario.
 -->
 
+## Runtime Context
+
+<!--
+Complete only if this feature executes inside a specific environment or crosses
+a process/OS/network/sandbox boundary. Delete section entirely if not applicable
+(standard Rust CLI running in user's shell).
+-->
+
+**Execution environment:** [e.g. Electron renderer sandbox, Docker container, browser]
+**External boundaries:** [e.g. child_process.exec, Logseq settings API, HTTP companion server]
+**Environment assumptions:** [e.g. lucid available on PATH, project path accessible by OS]
+**Environment-sensitive behavior:** [e.g. path resolution, settings persistence, command registration]
+**Observation mode:** `events` | `external-observation`
+  - `events` — domain events emitted to runtime_events.jsonl; proceed to Stage 3 normally
+  - `external-observation` — feature emits no domain events; evidence comes from test layers,
+    acceptance checklist, or logs; declare the observation artifact below; skip Stage 3 event schema
+  - Observation artifacts are exceptional. Use runtime_events.jsonl whenever events exist.
+    Do not invent per-feature observation documents for event-emitting features.
+**Observation artifact:** [if external-observation only: e.g. plugin/ACCEPTANCE.md, verification ladder output]
+**Minimum runtime evidence:** [lowest evidence level acceptable for declaring the feature VERIFIED;
+  e.g. "3 — mock tests sufficient" or "4 — must execute in real Logseq Desktop";
+  individual Stage 7 rows may require higher levels than this floor]
+
 ## Invariants
 
 <!--

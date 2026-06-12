@@ -1,5 +1,9 @@
 # Stage 3: Event Schema Definition
 
+> **Observation mode check:** If the contract's Runtime Context section declares
+> `observation_mode: external-observation`, skip this stage and proceed to Stage 4.
+> The observation artifact is declared in the contract.
+
 ## Your Role
 
 You define the event spine that constrains all future implementation.

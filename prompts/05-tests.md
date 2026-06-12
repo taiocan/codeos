@@ -195,6 +195,13 @@ Verify before outputting:
 - [ ] Replay test asserts: base fields, schema event types, correlation chain integrity, deterministic sequence
 - [ ] Contract Coverage Table has no empty rows
 - [ ] Test IDs filled in the contract's Invariant Falsification Scenarios table
+- [ ] **If the contract has a Runtime Context section:** check whether any test executes
+  across the real boundary (Electron harness, Docker container, real binary execution —
+  not only mocks). If no real-boundary test exists:
+  - Document why (infeasible, deferred, etc.)
+  - Classify the uncovered contract clauses as MANUAL-PENDING
+  - Carry those forward into Stage 6 reconciliation as evidence gaps
+  This is not a hard blocker — the goal is to surface gaps, not prohibit progress.
 
 **Step 4 — Output**
 1. Present `tests/behavioral/[feature_id]_behavior.test.[ext]`
