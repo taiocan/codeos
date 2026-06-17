@@ -67,6 +67,25 @@ After each round, briefly synthesize what you've heard and confirm before contin
 
 ---
 
+## Scope Frame (All Modes — Always Run)
+
+Before any rounds, establish the scope in one batched message. These questions apply
+whether in fast-track or full interview mode. If the human's input already answers
+them, confirm and move on — do not re-ask answered questions.
+
+Ask:
+1. Is this an entirely new capability, or does it extend or constrain an existing feature?
+2. Which existing modules or commands does this most directly touch?
+3. What is explicitly NOT this feature — what adjacent thing should it NOT become?
+4. Is there a simpler path that doesn't require new DBA artifacts (e.g., a schema
+   refinement, a configuration change, a documentation fix)?
+
+Record answers as the opening "Scope Frame" section of the feature brief.
+If the human cannot name a NOT-scope boundary (question 3), probe once:
+"What would this feature accidentally become if Stage 1 wrote the intent too broadly?"
+
+---
+
 ## Full Interview — Round 0: Type Identification
 
 Always run this first, even in full interview mode.

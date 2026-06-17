@@ -94,6 +94,7 @@ Use the corresponding prompt file from `.codeos/prompts/` for detailed instructi
 | Stage | File |
 |---|---|
 | Session start | `.codeos/prompts/00-session-start.md` |
+| Session end (handoff) | `.codeos/prompts/00-session-end.md` |
 | Feature Brief (pre-Stage 1) | `.codeos/prompts/00b-feature-brief.md` |
 | Existing Codebase Onboarding (Session Type D) | `.codeos/prompts/00c-onboarding.md` |
 | Stage 1: Intent | `.codeos/prompts/01-intent.md` |
@@ -121,6 +122,7 @@ Use the corresponding template from `.codeos/templates/` when producing artifact
 | Refinement log | `.codeos/templates/refinement.md` |
 | Architectural refinement | `.codeos/templates/arch-refinement.md` |
 | Codebase digest | `.codeos/templates/codebase-digest.md` |
+| Session handoff | `.codeos/templates/handoff.md` |
 
 ---
 
@@ -182,6 +184,8 @@ project/
 │   └── runtime_events.jsonl      ← append-only runtime log
 ├── backlog/
 │   └── [feature_id].md           ← feature briefs (pre-Stage-1 discovery)
+├── handoffs/
+│   └── [YYYY-MM-DD]-[desc].md    ← session handoffs (optional, not DBA artifacts)
 ├── refinements/
 │   └── arch/
 │       └── [refine_id].md        ← architectural refinement records

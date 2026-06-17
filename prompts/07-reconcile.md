@@ -93,6 +93,26 @@ Record findings in this table:
 - EXTRA fields → always GAP (documentation) — undeclared payload evolution
 - No observed instances for an event type → Evidence Level 5 (None) in Step 3
 
+**Step 2c — Documentation Honesty Check**
+
+Identify user-facing documentation for this feature: README sections, WALKTHROUGH files,
+CLI `--help` output strings, report templates, or exported pages that describe this
+feature's behavior to users.
+
+For each document found, check:
+- [ ] No capability is claimed that has no corresponding contract clause
+- [ ] No reliability or completeness language ("always", "guaranteed", "fully supported")
+  is used without contract backing
+- [ ] Documented failure behavior matches the contract's Failure Classifications —
+  no failure path is silently omitted
+
+If no user-facing documentation references this feature, state:
+"No user-facing documentation found — Step 2c skipped."
+
+Findings from this step enter the reconciliation table (Step 3) as rows with Status
+`GAP (documentation)` if a claim is unsupported, or `ALIGNED` if every claim maps to
+a contract clause.
+
 ## Evidence Quality Scale
 
 Separate from the Runtime evidence codes below, this scale measures environment fidelity —
