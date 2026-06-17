@@ -207,6 +207,8 @@ project/
 | **Replay Verification** | Confirming runtime event log conforms to schema and contract sequence. |
 | **Targeted Refinement** | Smallest effective change for a specific observed problem. Not a rewrite. |
 | **Correlation ID** | UUID that links all events from a single feature execution chain. |
+| **Shared Infrastructure Module** | A module depended on by ≥2 feature modules that provides only mechanical infrastructure (event emission, DTOs, constants, re-exports). Never contains domain logic. See `patterns/shared-infrastructure-boundary.md`. |
+| **Vertical Drift** | Accumulation of domain logic in a shared infrastructure module. Bypasses lateral isolation guarantees even when feature→feature imports are blocked by workspace topology. |
 
 ---
 

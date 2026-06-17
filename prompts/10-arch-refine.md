@@ -78,11 +78,20 @@ Analysis section of `refinements/arch/[refine_id].md`.
   that will change; these tests need updates as part of Step 3
 - If the impact is larger than expected from Step 1, return to Step 1 and narrow scope
 
+**6. Shared infrastructure gate:** If the change adds to or modifies a shared
+infrastructure module (one depended on by ≥2 feature modules), classify each addition
+using the Diagnostic Test from `patterns/shared-infrastructure-boundary.md`:
+"Would a pure infrastructure module — one with zero knowledge of the domain vocabulary
+— need this?" Any addition that does not pass this test requires a written justification
+sentence in the refinement record before proceeding to Step 3.
+
 **Impact Analysis is complete when:**
 - [ ] Every affected module and feature is listed with a risk level
 - [ ] Every artifact whose path changes is listed
 - [ ] Regression risks are named, not dismissed
 - [ ] Cross-feature blast radius assessed: features sharing affected hubs are named
+- [ ] Shared infrastructure gate cleared (or written justification recorded for any
+  domain-logic additions to shared modules)
 
 Output: Impact Analysis section + **`AWAITING HUMAN APPROVAL TO PROCEED TO STEP 3`**
 
