@@ -111,6 +111,14 @@ Structural Risk levels (only populate when a Critical Hub or God Function is tou
 |---|---|---|
 | [EventName] | [file:line] | [when] |
 
-4. State: **`AWAITING HUMAN APPROVAL TO PROCEED TO STAGE 5`**
+4. Present the Review Package using `.codeos/templates/review-package.md` (Stage 4–5 format, inline only):
+   - Artifact: `modules/[feature_id]/`
+   - Stage purpose: Implement only what the three approved artifacts specify.
+   - Files changed: [list all files created or modified]
+   - Key architectural decisions: [choices not fully determined by the approved artifacts — e.g., internal data structure, error propagation strategy]
+   - What is not covered yet: [explicit list of what stages 5–9 still need to verify]
+   - Suggested areas: (1) Are there contract clauses technically satisfied but implemented in a surprising or fragile way? (2) Does the implementation introduce any behavior not traceable to the approved intent, contract, or schema? (3) What is the most likely Stage 7 gap or mismatch, given what was implemented?
+   - Known tensions: from schema design decisions or contract boundary cases, or "none"
+5. State: **`AWAITING HUMAN APPROVAL TO PROCEED TO STAGE 5`**
 
 **STOP.** Do not write tests until the human explicitly approves the implementation.

@@ -82,4 +82,11 @@ Either:
 - "Log conforms to schema and contracts — ready for Stage 9 (if refinements needed) or COMPLETE"
 - "N conformance issues found — return to Stage [X]"
 
+Present the Review Package using `.codeos/templates/review-package.md` (Stage 8–9 format, inline only):
+- Stage purpose: Verify deterministic, schema-conforming, correlation-intact event replay.
+- What was verified: [N events inspected for schema conformance, N correlation chains verified, replay test results]
+- Verdict: PASS / FAIL ([N] issues found)
+- What would make this stage stronger: [e.g., "Observe failure path X at real boundary — currently EQ 3", or "none — evidence is sufficient"]
+- Suggested areas: (1) Are schema conformance issues indicating implementation drift rather than test gaps? (2) Do broken correlation chains point to a specific event category or module? (3) Would real-boundary observation of any failure path change the verdict?
+
 State: **`AWAITING HUMAN APPROVAL TO PROCEED TO STAGE 9 OR MARK COMPLETE`**

@@ -208,4 +208,9 @@ Present as a brief unnumbered list. Each entry: what was observed, where, and wh
 4. Present the Findings Summary (Step 4)
 5. Present Structural Alignment observations, if any (Step 5)
 6. State recommendation: "All items ALIGNED — ready for Stage 8" or "N gaps/mismatches found — return to Stage [X]"
-7. State: **`AWAITING HUMAN APPROVAL TO PROCEED TO STAGE 8 OR RETURN TO EARLIER STAGE`**
+7. Present the Review Package using `.codeos/templates/review-package.md` (Stage 7 format, inline only):
+   - Verdict: N ALIGNED / N GAP / N MISMATCH / N MISSING
+   - Non-ALIGNED items: one line per item, or "none"
+   - Not measured: performance/benchmarks, security audit, and any other explicitly out-of-scope dimension
+   - Suggested areas: (1) Do any ALIGNED findings have low evidence quality (EQ 3 or below) that may mask real gaps? (2) Are the GAP sub-types correctly classified — could any MISMATCH be misread as a documentation gap? (3) Are non-ALIGNED items in a priority order that helps the human decide what to address first?
+8. State: **`AWAITING HUMAN APPROVAL TO PROCEED TO STAGE 8 OR RETURN TO EARLIER STAGE`**

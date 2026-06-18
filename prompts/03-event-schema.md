@@ -160,7 +160,12 @@ If any item is ✗: revise the draft before proceeding to Step 3.
 2. Present the completed checklist (with ✓ / ✗ marks)
 3. Present the Coverage Check table
 4. Explicitly confirm: every contract failure is covered by a FAILURE event
-5. State: **`AWAITING HUMAN APPROVAL TO PROCEED TO STAGE 4`**
+5. Present the Review Package using `.codeos/templates/review-package.md` (Stage 1–3 format, inline only):
+   - Artifact: `events/[feature_id]_schema.md`
+   - Stage purpose: Define the complete event spine that will constrain all implementation.
+   - Suggested areas: (1) Does every event in the schema trace to an approved contract clause — or did any get added beyond what the contract requires? (2) Are failure events specific enough to support root-cause analysis, or do multiple distinct failure modes collapse into one? (3) Does the event flow diagram accurately represent what Stage 4 will be constrained to implement?
+   - Known tensions: from contract ambiguities or coverage gaps, or "none"
+6. State: **`AWAITING HUMAN APPROVAL TO PROCEED TO STAGE 4`**
 
 **STOP.** Do not write any implementation until the human explicitly approves the schema.
 This is the gate that constrains everything that follows.

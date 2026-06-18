@@ -207,6 +207,14 @@ Verify before outputting:
 1. Present `tests/behavioral/[feature_id]_behavior.test.[ext]`
 2. Present `tests/replay/[feature_id]_replay.test.[ext]`
 3. Present the Contract Coverage Table (from Step 2) with ✓ / ✗ marks from Step 3
-4. State: **`AWAITING HUMAN APPROVAL TO PROCEED TO STAGE 6`**
+4. Present the Review Package using `.codeos/templates/review-package.md` (Stage 4–5 format, inline only):
+   - Artifacts: `tests/behavioral/[feature_id]_behavior.test.[ext]`, `tests/replay/[feature_id]_replay.test.[ext]`
+   - Stage purpose: Write behavioral tests that would fail if observable behavior deviates from contracts.
+   - Files changed: [list test files created or modified]
+   - Key decisions: [test design choices — isolation strategy, mock vs real boundary, what was classified MANUAL-PENDING]
+   - What is not covered: [contract clauses classified MANUAL-PENDING or deferred to Stage 6 real-boundary observation]
+   - Suggested areas: (1) Do the tests verify observable behavior, or do they inadvertently test internal implementation details? (2) Are the invariant falsification tests set up so they would fail if the named wrong assumption were present? (3) Is there any contract clause technically covered but not actually verifying the right outcome?
+   - Known tensions: from implementation decisions or contract boundary cases, or "none"
+5. State: **`AWAITING HUMAN APPROVAL TO PROCEED TO STAGE 6`**
 
 **STOP.** The human must approve tests and run them before Stage 6.

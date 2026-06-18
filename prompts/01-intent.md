@@ -133,6 +133,11 @@ If any answer is "unclear from the draft": mark it as an open question in Step 4
 2. Present the completed checklist (with ✓ / ✗ marks)
 3. Present the cross-examination results: one line per question (answered / open)
 4. List any ambiguities you detected and questions for the human
-5. State: **`AWAITING HUMAN APPROVAL TO PROCEED TO STAGE 2`**
+5. Present the Review Package using `.codeos/templates/review-package.md` (Stage 1–3 format, inline only):
+   - Artifact: `intents/[feature_id].md`
+   - Stage purpose: Establish implementation-independent actor-outcome intent.
+   - Suggested areas: (1) Is the primary actor a specific human role, or has the feature been misattributed to a system? (2) Do the stable guarantees name the one thing this feature must never fail to do? (3) Is the scope boundary explicit enough that a future stage cannot silently expand it?
+   - Known tensions: from feature brief open questions, or "none"
+6. State: **`AWAITING HUMAN APPROVAL TO PROCEED TO STAGE 2`**
 
 **STOP.** Do not proceed to Stage 2 until the human explicitly approves.

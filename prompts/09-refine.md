@@ -88,6 +88,13 @@ For each refinement:
 
 Present all proposed refinements, then:
 
+Present the Review Package using `.codeos/templates/review-package.md` (Stage 8–9 format, inline only):
+- Stage purpose: Apply the smallest effective changes for observed problems only.
+- What was changed: [N refinements proposed — list each with trigger type and one-line description]
+- Verdict: [N problems addressed / N deferred with reason]
+- What would make this stage stronger: [or "none — all observed problems addressed"]
+- Suggested areas: (1) Is each proposed change the smallest effective fix, or could it be narrowed further? (2) Should any proposed change be moved to Stage 10 (Architectural Refinement) instead? (3) Are there observed problems not listed that should be addressed?
+
 State: **`AWAITING HUMAN APPROVAL FOR EACH REFINEMENT`**
 
 Human approves each refinement individually before you apply any of them.

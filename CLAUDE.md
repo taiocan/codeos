@@ -107,6 +107,7 @@ Use the corresponding prompt file from `.codeos/prompts/` for detailed instructi
 | Stage 8: Replay | `.codeos/prompts/08-replay.md` |
 | Stage 9: Refine | `.codeos/prompts/09-refine.md` |
 | **Architectural Refinement** (alternate loop) | `.codeos/prompts/10-arch-refine.md` |
+| Reviewer Activation Package | `.codeos/prompts/pipeline-reviewer.md` |
 
 The Architectural Refinement workflow is a 5-step alternative loop (Scope → Impact → Implement → Verify → Reconcile) for structural changes that have no behavioral contract or event schema. Use it for workspace restructuring, shared library extraction, dependency consolidation, test infrastructure, and naming normalization. Use the 9-step loop for any change that would alter a contract or schema.
 
@@ -123,6 +124,8 @@ Use the corresponding template from `.codeos/templates/` when producing artifact
 | Architectural refinement | `.codeos/templates/arch-refinement.md` |
 | Codebase digest | `.codeos/templates/codebase-digest.md` |
 | Session handoff | `.codeos/templates/handoff.md` |
+| Review Package | `.codeos/templates/review-package.md` |
+| Per-feature review file | `.codeos/templates/review-file.md` |
 
 ---
 
@@ -186,6 +189,9 @@ project/
 │   └── [feature_id].md           ← feature briefs (pre-Stage-1 discovery)
 ├── handoffs/
 │   └── [YYYY-MM-DD]-[desc].md    ← session handoffs (optional, not DBA artifacts)
+├── reviews/
+│   ├── [feature_id].md           ← per-feature: Decision Log + Decision Rationale (traceability)
+│   └── architecture-journal.md   ← cross-feature institutional memory (AJ-NNN entries)
 ├── refinements/
 │   └── arch/
 │       └── [refine_id].md        ← architectural refinement records
@@ -243,6 +249,61 @@ generated_by: [Claude session / human]
 
 Stored generated summaries are not DBA artifacts. They do not feed into any stage.
 They do not carry `status`, `approved_by`, or `derived_contracts` fields.
+
+---
+
+## Review Logging
+
+When the human provides a reviewer's assessment and their decision on it, before writing
+any review artifacts, Claude shows a brief preview of what it will write (5 lines inline).
+Then Claude writes — **do this before proceeding to any other work:**
+
+1. **One row** to `reviews/[feature_id].md` Decision Log.
+2. **A Decision Rationale section** to `reviews/[feature_id].md` — only when the decision
+   would be difficult to reconstruct from artifact history alone: a reframing, an
+   architectural pivot, a rejected direction. Not for wording revisions, contract
+   clarifications, or any change the diff already explains. Most stages do not get a section.
+3. **One entry** to `reviews/architecture-journal.md` — only if the insight is likely to
+   remain useful six months from now to a reader who has forgotten this feature entirely.
+   When uncertain, journal only if future usefulness is clear. Missing an important finding
+   is more expensive than adding a few extra entries.
+
+**Human overrides (override automatic classification):**
+- "do not log this review" — suppress all review artifacts for this cycle
+- "journal this" — force a journal entry regardless of criteria
+- "do not journal this" — suppress only the journal entry
+
+**Log fidelity:** Preserve the reviewer's core insight as close to verbatim as the format
+allows. Compress explanation and context — never compress the insight itself.
+
+**Log quality:** Record conclusions and rationale, not conversation history. Capture what
+was learned, not what happened. Review artifacts must never become meeting minutes.
+
+**Architecture Journal:** The journal is the long-term institutional knowledge artifact;
+per-feature review files are primarily traceability artifacts. When an architectural
+finding belongs equally in both, put it in the journal and keep the feature file entry
+brief with a reference (e.g., `See AJ-014`). Journal entries must remain useful to a
+future reader who has forgotten the feature entirely — if understanding requires feature
+context, the entry belongs in `reviews/[feature_id].md` instead.
+
+**Decision Log rows are append-only.** Original findings and decisions are never
+rewritten. Superseded decisions are addressed by adding a new row. Decision Rationale
+sections may gain cross-references, supersession references, or clarification notes —
+but never rewrites of original findings or decisions.
+
+Architecture Journal entry format (see `templates/review-file.md` for per-feature format):
+```
+## AJ-NNN — [topic]
+Date: YYYY-MM-DD
+Status: Active | Superseded | Rejected
+
+Context: [what triggered this — feature, stage, or discussion]
+Finding: [the key insight or reframing]
+Decision: [accepted / rejected / deferred and why]
+Action: [what changed — pattern created, architecture revised, etc.]
+Supersedes: [AJ-NNN or "none"]
+Related: [AJ-NNN, AJ-NNN or "none"]
+```
 
 ---
 

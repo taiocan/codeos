@@ -214,6 +214,11 @@ If any item is ✗: revise the draft before proceeding to Step 3.
 1. Present the verified `contracts/[feature_id]_contract.md` content
 2. Present the completed checklist (with ✓ / ✗ marks)
 3. List any intent ambiguities discovered (if any)
-4. State: **`AWAITING HUMAN APPROVAL TO PROCEED TO STAGE 3`**
+4. Present the Review Package using `.codeos/templates/review-package.md` (Stage 1–3 format, inline only):
+   - Artifact: `contracts/[feature_id]_contract.md`
+   - Stage purpose: Derive all observable behavioral truths from the approved intent.
+   - Suggested areas: (1) Does the contract cover failure modes that will matter under real operational conditions, not just the happy path? (2) Are the Then clauses verifiable without reading code — could a test assert them from output alone? (3) Is there a boundary or falsification scenario that would catch the most plausible wrong implementation?
+   - Known tensions: from Stage 1 ambiguities or cross-examination open questions, or "none"
+5. State: **`AWAITING HUMAN APPROVAL TO PROCEED TO STAGE 3`**
 
 **STOP.** Do not proceed to Stage 3 until the human explicitly approves.
