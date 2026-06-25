@@ -1,0 +1,104 @@
+# Upgrade: solution-discovery-00b — Expanded 00b Solution Discovery / Feature Topology Stage
+
+**Priority**: P0
+**Status**: BACKLOG
+**Type**: toolkit-upgrade
+**Related**: config-discovery, 00b-adr-generator
+
+## Problem
+
+Codeos is strong once a feature enters Stage 1. But before Stage 1, there is a need to
+brainstorm possible features, common vocabulary, event families, configuration needs,
+architecture pressure, and shared concepts without prematurely approving architecture or
+feature lists.
+
+## Upgrade
+
+Expand Stage 00b into a non-authoritative solution discovery stage.
+
+## Scope
+
+Pre-Stage-1 discovery.
+
+## Proposed artifact(s)
+
+`prompts/00b-solution-discovery.md`
+
+Optional output: `docs/solution-discovery.md`
+
+Core principle: 00b output is not approved DBA truth. It is planning hypothesis only. Only
+Stage 1 intent, Stage 2 contract, and Stage 3 event schema become approved behavioral truth.
+
+## Design notes
+
+00b output structure:
+
+```markdown
+# Solution Discovery / Feature Topology
+
+Product/domain problem:
+User/workflow context:
+Candidate actors:
+Candidate feature list:
+Candidate outcomes:
+Shared vocabulary/concepts:
+Possible event families:
+Potential event spine pressure:
+Potential shared infrastructure:
+Potential configuration requirements:
+Potential configuration schema:
+External integrations:
+Data persistence needs:
+Operational constraints:
+Security/privacy concerns:
+Likely failure modes:
+Potential Stage 10 / ADR needs:
+Architecture risks:
+Vertical drift risks:
+Recommended first feature:
+Features to defer:
+Explicit non-decisions:
+What must NOT be treated as approved:
+```
+
+Configuration discovery — 00b should identify configuration needs early:
+
+```markdown
+# Configuration Hypotheses
+
+Config item:
+Purpose:
+Feature(s) likely affected:
+Default:
+Required/optional:
+Secret/non-secret:
+Environment-specific:
+Runtime-changeable:
+Needs schema validation:
+Potential event impact:
+```
+
+## Value
+
+Very high. This helps identify common denominators across multiple future features without
+losing DBA advantages.
+
+## Risk
+
+The model may treat 00b hypotheses as approved architecture.
+
+## Guardrail
+
+Every 00b artifact must contain:
+
+```text
+This document is non-authoritative planning material.
+It does not approve features, architecture, contracts, schemas, events, or implementation.
+If this document conflicts with later approved DBA artifacts, the approved DBA artifacts win.
+```
+
+## DBA-philosophy note
+
+Touches **artifact authority**: 00b output must never be treated as approved DBA truth. Only
+Stages 1–3 produce approved behavioral truth. The non-authoritative banner is the guardrail
+that keeps this from eroding intent primacy.
