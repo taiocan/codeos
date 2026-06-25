@@ -1,0 +1,2 @@
+# Full Codex review assessments are written here (one file per stage review), each opening
+# with a self-contained YAML metadata header. Pilot/test runs go under _scratch/ (gitignored).
