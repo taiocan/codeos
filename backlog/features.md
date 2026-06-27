@@ -45,7 +45,8 @@ The goal is to speed up Codeos development without weakening DBA advantages.
 | 7 | [verify-only-mode](verify-only-mode.md) | Strict read-only verification so checks never silently edit the evidence. |
 | 8 | [readiness-checklist](readiness-checklist.md) | Lightweight operational merge/release gate distinct from Stage 7. |
 | 9 | [repair-before-next-feature](repair-before-next-feature.md) | Unresolved work blocks new behavioral features (human override allowed). |
-| 9a | [reviewer-decision-integrity](reviewer-decision-integrity.md) | Bind stage approval to the full reviewed provenance (commit + diff_hash + workspace state), not just named-artifact hashes. |
+| 9a | [reviewer-decision-integrity](reviewer-decision-integrity.md) | Bind stage approval to the full reviewed provenance (commit + diff_hash + workspace state); deferred from the v0 advisory pilot. |
+| 9b | [reviewer-engine-v1](reviewer-engine-v1.md) | Typed (Rust/Python) reviewer engine to replace the Bash pilot wrapper; future direction, not the v0 MVP. |
 
 ### P2 — Support and maintenance upgrades
 

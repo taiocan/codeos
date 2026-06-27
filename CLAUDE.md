@@ -107,8 +107,7 @@ Use the corresponding prompt file from `.codeos/prompts/` for detailed instructi
 | Stage 8: Replay | `.codeos/prompts/08-replay.md` |
 | Stage 9: Refine | `.codeos/prompts/09-refine.md` |
 | **Architectural Refinement** (alternate loop) | `.codeos/prompts/10-arch-refine.md` |
-| Reviewer Activation Package (interactive, paste-in) | `.codeos/prompts/pipeline-reviewer.md` |
-| Automated Reviewer (packet spec for the script) | `.codeos/prompts/reviewer-automated.md` |
+| Reviewer Activation Package | `.codeos/prompts/pipeline-reviewer.md` |
 
 The Architectural Refinement workflow is a 5-step alternative loop (Scope → Impact → Implement → Verify → Reconcile) for structural changes that have no behavioral contract or event schema. Use it for workspace restructuring, shared library extraction, dependency consolidation, test infrastructure, and naming normalization. Use the 9-step loop for any change that would alter a contract or schema.
 
@@ -127,41 +126,6 @@ Use the corresponding template from `.codeos/templates/` when producing artifact
 | Session handoff | `.codeos/templates/handoff.md` |
 | Review Package | `.codeos/templates/review-package.md` |
 | Per-feature review file | `.codeos/templates/review-file.md` |
-
----
-
-## Automated Reviewer (on request)
-
-An optional **advisory, read-only, cross-model reviewer** is available at
-`.codeos/scripts/codeos-review.sh`. It calls Codex (a different model family) to critically
-assess a stage artifact and appends the result to an append-only review log. It is **not
-automatic** — no hooks are wired — and it makes a real Codex call, so you run it **only when
-the human asks** (e.g. "have the reviewer look at this", "get a second opinion on the
-contract", "call the reviewer on Stage N"). Requires the `codex` CLI installed and
-authenticated.
-
-When the human requests a review, run from the project root:
-
-```
-.codeos/scripts/codeos-review.sh review <feature_id> <stage> <artifact-path> [more-paths...]
-```
-
-Optionally precede it with `... stage-start <feature_id> <stage>` to pin the base commit, or
-add `--print-packet` for a no-cost dry run of exactly what would be sent. Then surface, from
-`reviews/review-log.md`: the **Concern** level (`NO OBJECTION` / `CHANGES ADVISED` / `DO NOT
-ADVANCE` / `UNCLASSIFIED`), the **Evidence** grade (A–E), the one-line summary, and the link
-to the full assessment under `reviews/codex/`.
-
-**This does not change the Non-Negotiable Rules.** The reviewer never approves a stage —
-`APPROVE` is the human's word. The human still gives explicit approval at every gate (Rule 1).
-After the human decides, record it with:
-
-```
-.codeos/scripts/codeos-review.sh decision <feature_id> <stage> <APPROVE_STAGE|REQUEST_CHANGES|STOP> "<reason>"
-```
-
-The reviewer reduces the human's reading load, not their responsibility. Full design,
-feasibility, and the (inert) hook option: `.codeos/docs/reviewer-pipeline.md`.
 
 ---
 

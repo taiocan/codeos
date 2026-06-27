@@ -4,10 +4,21 @@
 stage artifact into a critical assessment and an append-only log entry so the human decides
 faster — without ever becoming a gate.*
 
+> **v0 is a manual advisory review logging pilot.** It records review evidence and human
+> decisions, but it does **not** enforce complete approval-integrity or rollback correctness.
+> The persisted hashes, packet copy, and `workspace_dirty` flag are **audit aids**, not a formal
+> guarantee that a human approval is bound to an unchanged repository state. The deeper binding
+> model (approval bound to a reproducible reviewed state, decision-time reverification, rollback
+> semantics) is **deferred** — see `backlog/reviewer-decision-integrity.md`.
+
+> **The Bash implementation is a manual pilot wrapper.** It validates the workflow but is not the
+> intended long-term review engine; the future typed engine is `backlog/reviewer-engine-v1.md`.
+
 ```yaml
 status: PILOT — manual operation; no Claude Code hooks wired
 scope: implements backlog/reviewer-decision-brief.md (#1), pulls in #13 (evidence grade)
 binding: changes no Codeos non-negotiable rule; CLAUDE.md and the stage prompts untouched
+guarantees: advisory logging only — NOT approval-integrity or rollback (deferred to backlog)
 ```
 
 ---
@@ -31,8 +42,11 @@ documents the prompt/packet convention.
 
 The visible instruction is just `Critically assess:` — Codex's default-model critical
 assessment is the best feedback, so it is not role-primed. What makes the review
-*DBA-specific* rather than generic is the **evidence packet** beneath that line: review
-context (feature/stage/branch/base+review SHA), the DBA rules relevant to the stage, the
+*DBA-specific* rather than generic is the **evidence packet** beneath that line: the **Scope
+Contract + Triage Rule** (so the reviewer classifies each finding as IN-SCOPE BLOCKER /
+IN-SCOPE NON-BLOCKER / OUT-OF-SCOPE BACKLOG / REJECTED and bases its PR decision only on
+in-scope blockers — this is the scope-drift brake), review context
+(feature/stage/branch/base+review SHA), the DBA rules relevant to the stage, the
 stage-specific checklist (sourced from `backlog/reviewer-decision-brief.md`), the expected
 stage output, the artifact contents with hashes, and the secret-filtered diff. See
 `prompts/reviewer-automated.md` for the exact shape.
@@ -94,37 +108,30 @@ JSON Schema validation is deferred until pilot use shows it is needed.
   Real stage reviews are committed with the feature branch; pilot/test runs use
   `reviews/codex/_scratch/` (gitignored).
 - `reviews/review-log.md` is **append-only**. The REVIEW entry records **both** the raw
-  `Codex concern` and the `Effective concern` (after coverage adjustment), the coverage state,
+  `Codex concern` and the `Effective concern` (after the coverage floor), the coverage state,
   redaction count, hashes, and links. The human decision is a **separately appended** entry
-  via `codeos-review.sh decision …` — prior entries are never edited. That command also
-  **re-verifies the reviewed state at decision time** and records MATCH / CHANGED per artifact.
-  **`APPROVE_STAGE` eligibility is governed entirely by the authoritative matrix in
-  [`reviewer-artifact-schemas.md`](reviewer-artifact-schemas.md)** (its *Approval eligibility*
-  rule): a `COMMIT_BOUND` review is eligible when HEAD still equals `review_commit`, the tree is
-  clean, and artifacts hash-match; a `WORKSPACE_BOUND` review is eligible only when the decision
-  re-verifies artifact SHA + diff hash + packet SHA + `workspace_dirty`. **`UNBOUND` /
-  `CRITICAL_OMISSION` / `EMPTY_PACKET` are hard stops that `--force` cannot override** — approval
-  must trace to evidence the reviewer actually saw. `SECRET_REDACTION` and `PARTIAL_COVERAGE` are
-  *not* hard stops but require an explicit `--force` waiver (`[SECURITY WAIVER]` /
-  `[COVERAGE WAIVER]`); a provenance mismatch requires a `[STALE OVERRIDE]` / `[WORKSPACE
-  OVERRIDE]`. `REQUEST_CHANGES` / `STOP` always record. The REVIEW entry's SHAs + the appended HUMAN DECISION entry (with its
-  `Rollback:` line) are what let a human later identify the last sound "OK point" to return to.
-  Deeper provenance binding (durable workspace snapshots, structured decision ledgers) is
-  tracked in `backlog/reviewer-decision-integrity.md`.
+  via `codeos-review.sh decision …` — prior entries are never edited. As a **best-effort audit
+  aid**, that command re-hashes the named reviewed artifacts and records MATCH / CHANGED per
+  artifact; a `CHANGED` line is flagged (and a warning printed) but **never blocks** the
+  decision. **The decision command records the human's choice; it does not enforce approval
+  eligibility, refuse approvals, or bind approval to a reproducible reviewed state.** `APPROVE`
+  is the human's word (Non-Negotiable Rule 1). Stronger guarantees — binding approval to a
+  durable reviewed state (commit + diff hash + workspace snapshot), decision-time reverification,
+  hard stops, and rollback semantics — are **deferred** and tracked in
+  `backlog/reviewer-decision-integrity.md`.
 
-## 5. Coverage, provenance, and effective concern
+## 5. Coverage and effective concern
 
-These are **not** restated here — they are defined once, normatively, in the
-[authoritative matrix](reviewer-artifact-schemas.md#the-authoritative-matrix). In summary: two
-filtering layers run before anything reaches Codex — **path exclusion** (`.env*`, `*.pem`,
-`secrets/*`, size limit, …) applies to the **diff and incidental files only**, and **content
-redaction** blanks secret-like values in place in both the diff and requested artifacts. A
-requested artifact is therefore never silently dropped — it is `shown`, `shown_redacted`,
-`oversize_omitted`, or `missing`. The resulting `coverage_state` and `provenance_integrity`
-select the matrix row, which fixes the **minimum effective concern** (a coverage gap is a
-verdict floor, not a footnote) and the **approval eligibility** and **rollback meaning**. When
-anything is excluded/redacted, or on a critical/empty/unbound row, the log flags
-**MANUAL SECURITY REVIEW REQUIRED**.
+Defined normatively in [`reviewer-artifact-schemas.md`](reviewer-artifact-schemas.md) (coverage
+rules). In summary: two filtering layers run before anything reaches Codex — **path exclusion**
+(`.env*`, `*.pem`, `secrets/*`, size limit, …) applies to the **diff and incidental files only**,
+and **content redaction** blanks secret-like values in place in both the diff and requested
+artifacts. A requested artifact is therefore never silently dropped — it is `shown`,
+`shown_redacted`, `oversize_omitted`, or `missing`. The resulting `coverage_state` fixes the
+**minimum effective concern** (an evidence-coverage gap is a verdict floor, not a footnote). This
+is about *how complete the evidence was*, not approval eligibility. When anything is
+excluded/redacted, or on a critical/empty state, the log flags **MANUAL SECURITY REVIEW
+REQUIRED**. `workspace_dirty` is recorded as descriptive audit context only.
 
 ## 6. Concern-level semantics + human responsibility
 

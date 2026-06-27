@@ -222,25 +222,14 @@ build_packet() {
     state="FULL_COVERAGE"; coverage="full"
   fi
 
-  # --- provenance_integrity per the authoritative matrix (docs/reviewer-artifact-schemas.md):
-  #   FULL+clean=COMMIT_BOUND, FULL+dirty=WORKSPACE_BOUND, SECRET_REDACTION=REDACTED_BOUND,
-  #   PARTIAL_COVERAGE=PARTIAL_BOUND, CRITICAL_OMISSION/EMPTY_PACKET=UNBOUND. A self-contradictory
-  #   state (base==review SHA, non-empty diff, clean tree) is UNBOUND (unverifiable).
+  # --- workspace_dirty: DESCRIPTIVE audit context only ---
+  # v0 is a manual advisory logging pilot. We record whether the tree had uncommitted changes at
+  # review time so the saved evidence is self-describing. This is NOT an enforcement/binding mode:
+  # there is no provenance-integrity matrix and no approval gating. The deeper binding model
+  # (COMMIT_BOUND/WORKSPACE_BOUND reverification, rollback) is deferred — see
+  # backlog/reviewer-decision-integrity.md.
   local workspace_dirty=0
   git diff --quiet HEAD -- . ':(exclude)reviews' ':(exclude).codeos-state' 2>/dev/null || workspace_dirty=1
-  local nonempty_diff=0; [[ -n "${redacted_diff//[$' \t\n']/}" ]] && nonempty_diff=1
-  local contradiction=0
-  [[ -n "${base_sha}" && "${base_sha}" == "${review_sha}" && ${nonempty_diff} -eq 1 && ${workspace_dirty} -eq 0 ]] && contradiction=1
-
-  # provenance_integrity is the BINDING MODE only (orthogonal to coverage):
-  #   COMMIT_BOUND | WORKSPACE_BOUND | UNBOUND. Coverage degradation (redaction/partial) stays
-  #   in coverage_state and drives a decision-time WAIVER, not the provenance value.
-  local provenance
-  case "${state}" in
-    EMPTY_PACKET|CRITICAL_OMISSION) provenance="UNBOUND" ;;   # reviewer did not see required evidence
-    *)                              provenance=$([[ ${workspace_dirty} -eq 1 ]] && echo "WORKSPACE_BOUND" || echo "COMMIT_BOUND") ;;
-  esac
-  [[ ${contradiction} -eq 1 ]] && provenance="UNBOUND"
 
   PACKET_EXCLUDED="${excluded}"
   PACKET_COVERAGE="${coverage}"
@@ -248,8 +237,6 @@ build_packet() {
   PACKET_REDACTION_COUNT="${redaction_count}"
   PACKET_SECRET_FLAG="${secret_flag}"
   PACKET_WORKSPACE_DIRTY="${workspace_dirty}"
-  PACKET_CONTRADICTION="${contradiction}"
-  PACKET_PROVENANCE="${provenance}"
   PACKET_DIFF_HASH="$(sha256_str "${redacted_diff}")"
   PACKET_BASE_SHA="${base_sha:-(no base pin)}"   # no stage-start recorded; review pins to review_commit
   PACKET_REVIEW_SHA="${review_sha}"   # machine-pure SHA; the dirty bit lives in workspace_dirty
@@ -263,6 +250,25 @@ build_packet() {
   {
     echo "Critically assess:"
     echo
+    echo "SCOPE CONTRACT"
+    echo "  Assess this artifact against the STATED SCOPE of this stage/PR — the Expected Stage"
+    echo "  Output below and what the artifacts actually claim — NOT against an ideal final system."
+    echo "  A capability the artifacts do not claim to provide is OUT-OF-SCOPE, not a defect."
+    echo "  The following are OUT-OF-SCOPE BACKLOG unless THIS artifact explicitly claims to provide"
+    echo "  them: formal approval-binding enforcement; rollback correctness; COMMIT_BOUND/"
+    echo "  WORKSPACE_BOUND enforcement; JSON Schema validation; CI validation; exact"
+    echo "  decision-integrity; per-feature decision ledgers; autonomous approval; enabled hooks."
+    echo
+    echo "TRIAGE RULE — classify EVERY finding as exactly one of:"
+    echo "  IN-SCOPE BLOCKER     breaks the stated goal; creates a FALSE CLAIM in this artifact;"
+    echo "                       weakens the advisory/read-only/human-gated guarantees; prevents"
+    echo "                       the work from running; or violates an explicit safety constraint."
+    echo "  IN-SCOPE NON-BLOCKER improves it but is not required for this PR."
+    echo "  OUT-OF-SCOPE BACKLOG valid, but belongs to a future feature / stronger guarantee."
+    echo "  REJECTED             conflicts with the stated scope or Codeos philosophy."
+    echo "  Base the PR decision ONLY on IN-SCOPE BLOCKER findings. An OUT-OF-SCOPE BACKLOG finding"
+    echo "  must NOT cause DO NOT ADVANCE unless this artifact FALSELY CLAIMS to solve it."
+    echo
     echo "REVIEW CONTEXT"
     echo "  Feature:                ${feature}"
     echo "  Stage:                  ${stage}"
@@ -271,11 +277,7 @@ build_packet() {
     echo "  Review commit:          ${review_sha}$([[ ${workspace_dirty} -eq 1 ]] && echo ' (+ uncommitted workspace changes)')"
     echo "  Current approved stage: ${approved_stage}"
     echo "  Evidence coverage:      ${state}"
-    echo "  Provenance integrity:   ${provenance}"
-    if [[ ${contradiction} -eq 1 ]]; then
-      echo "  - PROVENANCE CONTRADICTION: base and review SHA are identical yet the diff is"
-      echo "    non-empty and the tree is clean — the reviewed state is not verifiable (UNBOUND)."
-    fi
+    echo "  Workspace dirty:        $([[ ${workspace_dirty} -eq 1 ]] && echo 'yes (uncommitted changes at review time)' || echo 'no')"
     echo
     echo "DBA RULES RELEVANT TO THIS STAGE"
     echo "  - Human approval is required for every stage transition; you are advisory only."
@@ -302,9 +304,16 @@ build_packet() {
     echo "INSTRUCTIONS"
     echo "  If this is a resumed session, ignore any earlier-session conclusions unless they are"
     echo "  re-established by THIS packet; assess only the evidence above, pinned to this commit."
-    echo "  Give your full critical assessment first (operational, ranked by severity, with"
-    echo "  concrete better-designs; separate required fixes from optional ones; end with a"
-    echo "  clear judgement). Then on the LAST two lines emit exactly:"
+    echo "  Give your full critical assessment (operational, ranked by severity, with concrete"
+    echo "  better-designs). For EACH finding emit:"
+    echo "    Finding: / Severity: High|Medium|Low / Classification: <one of the TRIAGE RULE labels>"
+    echo "    Evidence: <file/line> / Why: <short> / Required action: fix now|optional fix|backlog|reject"
+    echo "    Scope reason: <why it does/does not belong to this PR's scope>"
+    echo "  Then emit:"
+    echo "    PR decision: ADVANCE | REQUEST CHANGES | DO NOT ADVANCE   (based ONLY on in-scope blockers)"
+    echo "    Scope drift warning: yes|no — <is anything pulling this PR beyond its stated scope?>"
+    echo "  Then on the LAST two lines emit exactly (map ADVANCE->NO OBJECTION,"
+    echo "  REQUEST CHANGES->CHANGES ADVISED, DO NOT ADVANCE->DO NOT ADVANCE):"
     echo "    LOG SUMMARY: <NO OBJECTION | CHANGES ADVISED | DO NOT ADVANCE | UNCLASSIFIED> — <single most important point>"
     echo "      (use UNCLASSIFIED if you genuinely cannot classify the artifact safely)"
     echo "    EVIDENCE: <A|B|C|D|E>   (optional)"
@@ -435,8 +444,9 @@ cmd_review() {
     *) evidence="not reported" ;;
   esac
 
-  # Effective concern = max severity of (Codex concern, the matrix MINIMUM for the coverage
-  # state). We keep and log BOTH so a coverage gap never silently passes as the verdict.
+  # Effective concern = max severity of (Codex concern, the coverage-state MINIMUM floor). We keep
+  # and log BOTH so an evidence-coverage gap never silently passes as the verdict. This is the only
+  # adjustment the pilot makes — it is about how complete the evidence was, NOT an approval guarantee.
   # Severity rank: NO OBJECTION < CHANGES ADVISED < UNCLASSIFIED < DO NOT ADVANCE.
   local codex_concern="${concern}" effective_concern coverage_note=""
   local floor=0
@@ -446,15 +456,13 @@ cmd_review() {
     EMPTY_PACKET)                    floor=2 ;;      # min UNCLASSIFIED
     CRITICAL_OMISSION)               floor=3 ;;      # min DO NOT ADVANCE
   esac
-  [[ "${PACKET_CONTRADICTION}" -eq 1 ]] && floor=3   # unverifiable state -> DO NOT ADVANCE
   local cr; case "${codex_concern}" in
     "NO OBJECTION") cr=0 ;; "CHANGES ADVISED") cr=1 ;; "UNCLASSIFIED") cr=2 ;; "DO NOT ADVANCE") cr=3 ;; *) cr=2 ;;
   esac
   local eff=${cr}; [[ ${floor} -gt ${eff} ]] && eff=${floor}
   case ${eff} in 0) effective_concern="NO OBJECTION" ;; 1) effective_concern="CHANGES ADVISED" ;; 2) effective_concern="UNCLASSIFIED" ;; 3) effective_concern="DO NOT ADVANCE" ;; esac
   if [[ ${eff} -gt ${cr} ]]; then
-    coverage_note="raised from '${codex_concern}' to matrix minimum for ${PACKET_COVERAGE_STATE}/${PACKET_PROVENANCE}"
-    [[ "${PACKET_CONTRADICTION}" -eq 1 ]] && coverage_note="PROVENANCE CONTRADICTION — reviewed state unverifiable; forced DO NOT ADVANCE"
+    coverage_note="raised from '${codex_concern}' to the coverage floor for ${PACKET_COVERAGE_STATE}"
   fi
   concern="${effective_concern}"
 
@@ -474,12 +482,11 @@ cmd_review() {
   local pair _v_err=""
   for pair in "feature=${feature}" "stage=${stage}" "base_commit=${PACKET_BASE_SHA}" \
               "review_commit=${PACKET_REVIEW_SHA}" "diff_hash=${PACKET_DIFF_HASH}" \
-              "coverage_state=${PACKET_COVERAGE_STATE}" "provenance_integrity=${PACKET_PROVENANCE}" \
+              "coverage_state=${PACKET_COVERAGE_STATE}" \
               "reviewed_packet_sha256=${packet_hash}"; do
     [[ -n "${pair#*=}" ]] || _v_err+=" missing:${pair%%=*}"
   done
   in_list "${PACKET_COVERAGE_STATE}" "FULL_COVERAGE|PARTIAL_COVERAGE|SECRET_REDACTION|CRITICAL_OMISSION|EMPTY_PACKET" || _v_err+=" enum:coverage_state"
-  in_list "${PACKET_PROVENANCE}" "COMMIT_BOUND|WORKSPACE_BOUND|UNBOUND" || _v_err+=" enum:provenance_integrity"
   in_list "${codex_concern}"     "NO OBJECTION|CHANGES ADVISED|DO NOT ADVANCE|UNCLASSIFIED" || _v_err+=" enum:codex_concern"
   in_list "${effective_concern}" "NO OBJECTION|CHANGES ADVISED|DO NOT ADVANCE|UNCLASSIFIED" || _v_err+=" enum:effective_concern"
   in_list "${evidence}" "A|B|C|D|E|not reported" || _v_err+=" enum:evidence"
@@ -503,7 +510,6 @@ cmd_review() {
     if [[ -n "${PACKET_ARTIFACTS_YAML}" ]]; then echo "  artifacts:"; printf '%s' "${PACKET_ARTIFACTS_YAML}"; else echo "  artifacts: []"; fi
     echo "  diff_hash: ${PACKET_DIFF_HASH}"
     echo "  coverage_state: ${PACKET_COVERAGE_STATE}"
-    echo "  provenance_integrity: ${PACKET_PROVENANCE}"
     echo "  workspace_dirty: $([[ ${PACKET_WORKSPACE_DIRTY} -eq 1 ]] && echo true || echo false)"
     echo "  redaction_count: ${PACKET_REDACTION_COUNT}"
     echo "  secret_redaction: $([[ ${PACKET_SECRET_FLAG} -eq 1 ]] && echo true || echo false)"
@@ -543,8 +549,7 @@ cmd_review() {
     echo "Codex concern: ${codex_concern}"
     echo "Effective concern: ${effective_concern}"
     echo "Evidence: ${evidence}"
-    echo "Coverage: ${PACKET_COVERAGE_STATE}; provenance: ${PACKET_PROVENANCE}; redactions: ${PACKET_REDACTION_COUNT}; workspace_dirty: $([[ ${PACKET_WORKSPACE_DIRTY} -eq 1 ]] && echo true || echo false)${coverage_note:+; note: ${coverage_note}}"
-    [[ "${PACKET_PROVENANCE}" == "WORKSPACE_BOUND" ]] && echo "Rollback: NOT exact until a stage commit is made (workspace-bound review)"
+    echo "Coverage: ${PACKET_COVERAGE_STATE}; redactions: ${PACKET_REDACTION_COUNT}; workspace_dirty: $([[ ${PACKET_WORKSPACE_DIRTY} -eq 1 ]] && echo true || echo false)${coverage_note:+; note: ${coverage_note}}"
     echo "Log summary: ${summary_line#LOG SUMMARY: }"
     echo "Full assessment: ${assessment_file} (sha256:${assessment_hash})"
     echo "Reviewed packet: ${packet_saved} (sha256:${packet_hash})"
@@ -567,33 +572,23 @@ cmd_review() {
   echo "  packet: ${packet_saved}"
 }
 
-# reverify_packet <feature> <stage> <artifacts...> : rebuild the packet for a WORKSPACE_BOUND
-# review and recompute its hashes, so a decision can prove the workspace still matches.
-# Sets RV_DIFF_HASH / RV_PACKET_SHA / RV_WORKSPACE_DIRTY.
-reverify_packet() {
-  local f="$1" s="$2"; shift 2
-  PACKET_FILE="$(mktemp)"
-  build_packet "${f}" "${s}" "$@"      # deterministic given tree + HEAD + artifacts
-  RV_DIFF_HASH="${PACKET_DIFF_HASH}"
-  RV_PACKET_SHA="$(sha256_of "${PACKET_FILE}")"
-  RV_WORKSPACE_DIRTY="${PACKET_WORKSPACE_DIRTY}"
-  rm -f "${PACKET_FILE}"
-}
-
 # --- decision (append-only human entry) -------------------------------------
+# v0 is an ADVISORY logging pilot. This APPENDS the human's decision and, as a best-effort AUDIT
+# AID, notes whether the reviewed artifacts still hash-match what the reviewer saw. It does NOT
+# enforce approval eligibility, bind approval to a reviewed state, or guarantee rollback — a
+# mismatch is flagged, never blocks. Stronger reviewed-state binding / rollback is deferred:
+# see backlog/reviewer-decision-integrity.md. APPROVE is the human's word (Rule 1).
 cmd_decision() {
   local feature="$1" stage="$2" decision="$3"; shift 3
-  local reason="" force=0
-  while [[ $# -gt 0 ]]; do
-    case "$1" in --force) force=1; shift ;; *) reason="$1"; shift ;; esac
-  done
+  local reason=""
+  while [[ $# -gt 0 ]]; do reason="$1"; shift; done
   case "${decision}" in APPROVE_STAGE|REQUEST_CHANGES|STOP) ;; *)
     echo "decision must be APPROVE_STAGE | REQUEST_CHANGES | STOP" >&2; exit 2 ;; esac
   [[ -f "${REVIEW_LOG}" ]] || init_log
   local sha; sha="$(git rev-parse HEAD)"
 
-  # Re-verify the reviewed artifacts still match what was reviewed, so an approval cannot
-  # silently apply to a since-edited artifact (the reviewer's "prove what was reviewed" point).
+  # Best-effort audit: do the reviewed artifacts still match what the reviewer saw?
+  # Informational only — a mismatch is flagged in the log + a warning, never blocks the decision.
   local latest verify_lines="" changed=0
   latest="$(ls -1t "${CODEX_DIR}"/*-"${feature}"-stage-"${stage}"-*.md 2>/dev/null | head -1 || true)"
   if [[ -n "${latest}" ]]; then
@@ -613,87 +608,23 @@ cmd_decision() {
     done < <(sed -n '/^  artifacts:/,/^  diff_hash:/p' "${latest}")
   fi
 
-  # Decision-integrity guard, per the authoritative matrix (docs/reviewer-artifact-schemas.md).
-  # Provenance (binding mode) and coverage (degradation) are ORTHOGONAL:
-  #   - UNBOUND / CRITICAL_OMISSION / EMPTY_PACKET  -> HARD STOP, not --force'able (reviewer
-  #     never saw the required evidence; approval would not trace to reviewed artifacts).
-  #   - COMMIT_BOUND / WORKSPACE_BOUND              -> reverify the binding; then any coverage
-  #     degradation (SECRET_REDACTION / PARTIAL_COVERAGE) requires an explicit waiver via --force.
-  local override_note="" rollback_note=""
-  if [[ "${decision}" == "APPROVE_STAGE" ]]; then
-    local reasons=() label="OVERRIDE"
-    if [[ -z "${latest}" ]]; then
-      [[ ${force} -eq 1 ]] || { echo "refused: APPROVE_STAGE — no review on record for ${feature} stage ${stage}; run 'review' first." >&2; exit 4; }
-      override_note=" [UNREVIEWED OVERRIDE]"
-    else
-      local prov cov rev_recorded dirty_recorded head_now tree_dirty_now=0
-      prov="$(grep -E '^  provenance_integrity:' "${latest}" | head -1 | awk '{print $2}' || true)"
-      cov="$(grep -E '^  coverage_state:' "${latest}" | head -1 | awk '{print $2}' || true)"
-      rev_recorded="$(grep -E '^  review_commit:' "${latest}" | head -1 | sed -E 's/.*:[[:space:]]*([0-9a-fA-F]+).*/\1/' || true)"
-      dirty_recorded="$(grep -E '^  workspace_dirty:' "${latest}" | head -1 | awk '{print $2}' || true)"
-      head_now="$(git rev-parse HEAD)"
-      git diff --quiet HEAD -- . ':(exclude)reviews' ':(exclude).codeos-state' 2>/dev/null || tree_dirty_now=1
-
-      # HARD STOP — not overridable. The reviewer did not see the required evidence.
-      if [[ "${prov}" == "UNBOUND" ]] || in_list "${cov}" "CRITICAL_OMISSION|EMPTY_PACKET"; then
-        echo "refused: APPROVE_STAGE is NOT permitted — the reviewer did not see the required evidence (${cov} / ${prov})." >&2
-        echo "  This is a hard stop and cannot be --force'd. Resolve the omission and re-run 'review'." >&2
-        exit 4
-      fi
-
-      # provenance binding reverification
-      case "${prov}" in
-        COMMIT_BOUND)
-          [[ "${rev_recorded}" == "${head_now}" ]] || reasons+=("HEAD ${head_now:0:12} != reviewed commit ${rev_recorded:0:12}")
-          [[ ${tree_dirty_now} -eq 0 ]]            || reasons+=("working tree is dirty now (review was COMMIT_BOUND/clean)")
-          [[ ${changed} -eq 0 ]]                   || reasons+=("a reviewed artifact changed since the review")
-          [[ ${#reasons[@]} -eq 0 ]] && rollback_note="Rollback: exact git commit ${rev_recorded}"
-          label="STALE OVERRIDE" ;;
-        WORKSPACE_BOUND)
-          local rec_diff rec_pkt rec_arts=()
-          rec_diff="$(grep -E '^  diff_hash:' "${latest}" | head -1 | awk '{print $2}' || true)"
-          rec_pkt="$(grep -E '^  reviewed_packet_sha256:' "${latest}" | head -1 | awk '{print $2}' || true)"
-          mapfile -t rec_arts < <(sed -n '/^  artifacts:/,/^  diff_hash:/p' "${latest}" | sed -n 's/^    - path: //p')
-          reverify_packet "${feature}" "${stage}" "${rec_arts[@]}"
-          [[ ${changed} -eq 0 ]]                 || reasons+=("a reviewed artifact changed since the review")
-          [[ "${RV_DIFF_HASH}" == "${rec_diff}" ]] || reasons+=("diff hash changed since review (workspace moved)")
-          [[ "${RV_PACKET_SHA}" == "${rec_pkt}" ]] || reasons+=("packet hash changed since review (reviewed bytes differ)")
-          { [[ ${RV_WORKSPACE_DIRTY} -eq 1 && "${dirty_recorded}" == "true" ]] || [[ ${RV_WORKSPACE_DIRTY} -eq 0 && "${dirty_recorded}" == "false" ]]; } || reasons+=("workspace_dirty state changed since review")
-          [[ ${#reasons[@]} -eq 0 ]] && rollback_note="Rollback: NOT exact until a stage commit is made (workspace-bound review)"
-          label="WORKSPACE OVERRIDE" ;;
-      esac
-
-      # coverage waiver (orthogonal) — the reviewer DID see the content but it was degraded.
-      [[ "${cov}" == "SECRET_REDACTION" ]] && { reasons+=("SECRET_REDACTION — requires an explicit human security waiver"); label="SECURITY WAIVER"; }
-      [[ "${cov}" == "PARTIAL_COVERAGE" ]] && { reasons+=("PARTIAL_COVERAGE — a supplemental diff path was excluded; requires a coverage waiver"); label="COVERAGE WAIVER"; }
-
-      if [[ ${#reasons[@]} -gt 0 ]]; then
-        if [[ ${force} -eq 0 ]]; then
-          echo "refused: APPROVE_STAGE not eligible:" >&2
-          printf '  - %s\n' "${reasons[@]}" >&2
-          echo "  re-run 'review' on the current state, or pass --force \"<reason>\" to record a ${label}." >&2
-          [[ -n "${verify_lines}" ]] && printf '%s' "${verify_lines}" >&2
-          exit 4
-        fi
-        local joined; joined="$(printf '%s; ' "${reasons[@]}")"
-        override_note=" [${label} — ${joined%; }]"
-      fi
-    fi
+  if [[ "${decision}" == "APPROVE_STAGE" && -z "${latest}" ]]; then
+    echo "note: no review is on record for ${feature} stage ${stage}. The reviewer is advisory;" >&2
+    echo "      consider running 'review' first. Recording the human decision anyway." >&2
   fi
 
   {
     echo
     echo "## $(now_iso) HUMAN DECISION — ${feature} — Stage ${stage}"
-    echo "Commit reviewed: ${sha}"
-    echo "Decision: ${decision}${override_note}"
+    echo "Commit at decision: ${sha}"
+    echo "Decision: ${decision}"
     echo "Reason/next: ${reason}"
     [[ -n "${latest}" ]] && echo "Verified against: ${latest}"
-    [[ -n "${rollback_note}" ]] && echo "${rollback_note}"
-    [[ -n "${verify_lines}" ]] && { echo "Artifact integrity:"; printf '%s' "${verify_lines}"; }
+    [[ -n "${verify_lines}" ]] && { echo "Artifact integrity (informational audit, not a gate):"; printf '%s' "${verify_lines}"; }
   } >> "${REVIEW_LOG}"
   echo "decision appended to ${REVIEW_LOG}"
   if [[ ${changed} -eq 1 ]]; then
-    echo "WARNING: some reviewed artifacts changed since the review — decision recorded with that flagged." >&2
+    echo "WARNING: some reviewed artifacts changed since the review — recorded with that flagged (advisory only)." >&2
   fi
 }
 
