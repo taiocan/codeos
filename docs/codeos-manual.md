@@ -332,7 +332,7 @@ Stage 0 is not part of the feature lifecycle; it is the operating preflight that
 Claude into DBA mode, scopes the session, names forbidden actions, and prevents accidental
 autonomous work. The session-start prompt (`prompts/00-session-start.md`) directs Claude to:
 
-- read `.codeos/CLAUDE.md` and confirm it by stating the non-negotiable rules;
+- read `.codeos/dba-system.md` and confirm it by stating the non-negotiable rules;
 - read the project `CLAUDE.md` and note the Active Features table;
 - read `docs/codebase-digest.md` if it exists (structural orientation), or state that none
   was found;

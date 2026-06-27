@@ -1,316 +1,176 @@
-# Codeos DBA Toolkit — Master System Instructions
+# Codeos Self-Development — Toolkit Operating Guide
+
+> **What this file is.** This file governs development of the **Codeos toolkit repository
+> itself** — its prompts, templates, docs, patterns, and scripts. It does **not** replace
+> the downstream DBA doctrine in [`dba-system.md`](dba-system.md), which is what
+> *downstream projects* load via `.codeos/dba-system.md`. Do not run the full 9-stage DBA
+> loop on the toolkit; use the lean self-development loop below.
+
+This is a **stable rulebook**. It contains no live workflow state. Current status lives in
+[`status/self-development.md`](status/self-development.md); per-change detail lives in
+`changes/[change_id].md`.
+
+All paths in this file are **repo-relative** (`prompts/`, `templates/`, `scripts/`, …).
+There is no `.codeos/` symlink inside this repo — that prefix is only for downstream projects.
+
+---
 
 ## Mode Declaration
 
-You are operating in **Declarative Behavioral Architecture (DBA)** mode, also called **Intent-Driven System (IDS)** mode.
-
-This toolkit is located at `.codeos/` (symlinked from `/home/arc/projects/claude/Codeos`).
-
-Read this file fully at the start of every session before doing anything else.
-
----
-
-## Truth Authority and Conflict Resolution
-
-When intent, runtime evidence, and structural analysis disagree, resolve as follows:
-
-1. **Explicit human correction** (at any stage gate) overrides all other sources.
-2. **Runtime behavior** (observed events) overrides intent text when behavior is more specific. Example: schema declares `"string"`, runtime consistently emits integer — this is empirical evidence of intent-text drift, not a runtime error.
-3. **Safety, authorization, and invariant-enforcement logic** always preserves intent primacy regardless of runtime behavior. Example: runtime shows no authorization check was invoked — this is a contract violation, not an authorization redesign.
-4. **Structural digest observations** (fan-in, god functions, known risk zones) do not override behavioral findings. They inform blast-radius estimates and remediation sequencing only.
-
-When a conflict cannot be resolved by these rules: surface it clearly to the human rather than silently resolving it.
+You are developing the Codeos toolkit. Codeos *defines* Declarative Behavioral Architecture
+(DBA); it does not need to prove DBA to itself. Toolkit changes are prose (prompts,
+templates, docs, patterns) and bash tooling (the reviewer pipeline, `dba-init.sh`). There
+are no runtime events, no event schema, and no replay here — so the 9-stage loop does not
+apply. Self-development keeps DBA's **philosophy** — intent primacy, approve-the-WHAT-before-
+the-HOW, human-approved gates, advisory (never gatekeeping) review — in a leaner shape.
 
 ---
 
-## The Non-Negotiable Rules
+## At Session Start
 
-1. **Every stage transition requires explicit human approval.** You NEVER advance to the next stage without a human "APPROVED", "approved", "yes proceed", or equivalent.
-2. **You NEVER implement before intent + contract + event schema are all approved.**
-3. **You NEVER add abstractions, patterns, or behaviors beyond what the current intent + contract + event schema specifies.**
-4. **You NEVER emit events not listed in the approved event schema.**
-5. **You NEVER invent hidden behavior** — all behavior must be traceable to an approved artifact.
-6. **After producing any stage output, you STOP and state: `AWAITING HUMAN APPROVAL`.**
-
----
-
-## The 9-Step DBA Development Loop
-
-Every feature follows this exact sequence. No skipping.
-
-```
-STEP 1 — Intent
-  Human writes raw feature description.
-  AI verifies, corrects format, flags missing information.
-  Output: intents/[feature_id].md
-  Gate: human approves intent before step 2.
-
-STEP 2 — Behavioral Contracts
-  AI derives BDD-style contracts from approved intent.
-  Output: contracts/[feature_id]_contract.md
-  Gate: human approves contracts before step 3.
-
-STEP 3 — Event Schema
-  AI defines the complete event spine from approved intent + contracts.
-  This is the most constraining artifact — implementation is locked to it.
-  Output: events/[feature_id]_schema.md (or events/event_schema.md)
-  Gate: human approves schema before step 4.
-
-STEP 4 — AI Implementation
-  AI implements ONLY what is specified by the three approved artifacts.
-  Output: code in modules/
-  Gate: human approves implementation before step 5.
-
-STEP 5 — Tests
-  AI writes behavioral tests and replay tests.
-  Output: tests/behavioral/ and tests/replay/
-  Gate: human approves tests before step 6.
-
-STEP 6 — Runtime Execution
-  Human runs the implementation.
-  System emits events to events/runtime_events.jsonl (append-only).
-
-STEP 7 — AI Reconciliation Review
-  AI compares intent / contracts / event schema / implementation / tests / runtime events.
-  Produces reconciliation table with ALIGNED / GAP / MISMATCH / MISSING status.
-  Gate: human approves before step 8 or directs return to earlier step.
-
-STEP 8 — Replay Verification
-  AI verifies runtime_events.jsonl conforms to schema and contract sequence.
-  Gate: human approves before step 9 or directs return.
-
-STEP 9 — Targeted Refinement
-  AI proposes the smallest effective change for each observed problem.
-  Affected stages are re-run. No full rewrites.
-  Gate: human approves each refinement individually.
-```
+1. Read this file.
+2. Read [`status/self-development.md`](status/self-development.md) — the live Self-Development
+   Status dashboard (what is in flight and at which step).
+3. Inspect the active `changes/[change_id].md` for any IN_PROGRESS row.
+4. Confirm the current state with the human, then **STOP** and ask what to work on.
 
 ---
 
-## What You Do at Each Stage
+## Truth Authority (inherited)
 
-Use the corresponding prompt file from `.codeos/prompts/` for detailed instructions:
+1. **Explicit human correction** at any gate overrides everything else.
+2. **The artifacts on disk are authoritative** — never memory of them. Re-read before acting.
+3. Surface unresolved conflicts to the human rather than silently resolving them.
 
-| Stage | File |
+The downstream doctrine in `dba-system.md` is the authority on DBA *substance*. When a
+self-development change touches it, see the `downstream-doctrine` rules below.
+
+---
+
+## Triage Front-Door
+
+Classify every change before doing anything. Class determines rigor.
+
+| Class | Path |
 |---|---|
-| Session start | `.codeos/prompts/00-session-start.md` |
-| Session end (handoff) | `.codeos/prompts/00-session-end.md` |
-| Feature Brief (pre-Stage 1) | `.codeos/prompts/00b-feature-brief.md` |
-| Existing Codebase Onboarding (Session Type D) | `.codeos/prompts/00c-onboarding.md` |
-| Stage 1: Intent | `.codeos/prompts/01-intent.md` |
-| Stage 2: Contracts | `.codeos/prompts/02-contract.md` |
-| Stage 3: Event Schema | `.codeos/prompts/03-event-schema.md` |
-| Stage 4: Implementation | `.codeos/prompts/04-implement.md` |
-| Stage 5: Tests | `.codeos/prompts/05-tests.md` |
-| Stage 6: Observation | `.codeos/prompts/06-observe.md` |
-| Stage 7: Reconcile | `.codeos/prompts/07-reconcile.md` |
-| Stage 8: Replay | `.codeos/prompts/08-replay.md` |
-| Stage 9: Refine | `.codeos/prompts/09-refine.md` |
-| **Architectural Refinement** (alternate loop) | `.codeos/prompts/10-arch-refine.md` |
-| Reviewer Activation Package | `.codeos/prompts/pipeline-reviewer.md` |
+| `trivial` | Direct edit. No loop, no review, no change record. |
+| `backlog-only` | Direct edit, unless it changes accepted scope (then 4-step loop). |
+| `documentation` (normative) | 4-step loop. |
+| `template` / `prompt` / `script-tooling` | 4-step loop. |
+| `downstream-doctrine` | 4-step loop **+ downstream-compatibility acceptance criteria + grep cross-reference verification + reviewer scope-triage**. |
+| `self-dev-governance` | 4-step loop **+ scope-drift review** (changes to this file or the self-dev loop itself). |
 
-The Architectural Refinement workflow is a 5-step alternative loop (Scope → Impact → Implement → Verify → Reconcile) for structural changes that have no behavioral contract or event schema. Use it for workspace restructuring, shared library extraction, dependency consolidation, test infrastructure, and naming normalization. Use the 9-step loop for any change that would alter a contract or schema.
+**`trivial` means non-semantic only:** typo, broken link, formatting, a wording
+clarification that does not change meaning, or a backlog note with no implementation.
+**Anything** that touches process, policy, behavior, script behavior, template meaning,
+prompt semantics, doctrine, stage names, approval rules, file layout, or generated-project
+layout is **non-trivial** and uses the 4-step loop. When unsure, treat it as non-trivial.
 
-Use the corresponding template from `.codeos/templates/` when producing artifacts:
-
-| Artifact | Template |
-|---|---|
-| Feature brief | `.codeos/templates/feature-brief.md` |
-| Feature intent | `.codeos/templates/intent.md` |
-| Behavioral contract | `.codeos/templates/contract.md` |
-| Event schema | `.codeos/templates/event-schema.md` |
-| Feature specification | `.codeos/templates/feature-spec.md` |
-| Refinement log | `.codeos/templates/refinement.md` |
-| Architectural refinement | `.codeos/templates/arch-refinement.md` |
-| Codebase digest | `.codeos/templates/codebase-digest.md` |
-| Session handoff | `.codeos/templates/handoff.md` |
-| Review Package | `.codeos/templates/review-package.md` |
-| Per-feature review file | `.codeos/templates/review-file.md` |
+**Scope axis** — every non-trivial change must declare its scope in Step 1:
+`self-dev only` | `downstream doctrine only` | `both`. This prevents accidental drift into
+the downstream master doctrine.
 
 ---
 
-## What You NEVER Do
+## The 4-Step Self-Development Loop
 
-- Implement before intent + contract + event schema are all APPROVED
-- Add abstractions not demanded by the contracts
-- Add "just in case" error handling not listed in the contract's failure modes
-- Emit events not in the approved event schema
-- Move to the next stage without explicit human approval
-- Suggest full rewrites — only targeted, localized changes
-- Add autonomous planning, self-direction, or multi-step autonomous execution
-- Modify `events/runtime_events.jsonl` — it is append-only
+Anchor each non-trivial change to a `backlog/` item (create one if none exists). Use
+[`prompts/codeos-self-dev.md`](prompts/codeos-self-dev.md) for the detailed step prompt and
+[`templates/codeos-change.md`](templates/codeos-change.md) for the change record. One change
+record per non-trivial change: `changes/[change_id].md`.
 
----
+Each step: **produce output → run the compulsory Codex review → STOP at the gate → human
+approves → next step.**
 
-## Naming Conventions
+1. **Change Intent** — Why (problem in the toolkit), what changes (named files), what stays
+   the same (scope boundary), triage class, scope axis, originating backlog id. Start the
+   change record; activate the row in `status/self-development.md`.
+2. **Acceptance Criteria** — The consistency contracts the change must hold.
+   *Doctrine/downstream:* cross-reference integrity, downstream-compatibility (the generated
+   project still loads `.codeos/dba-system.md`; stage tables, prompt filenames, and
+   references move together), no internal contradiction. *Tooling:* I/O behavior, exit-code /
+   fail-closed cases, idempotency.
+3. **Implement** — Edits constrained to the approved scope. Update **all** cross-references
+   in the same change. No scope creep. If a change you discover is out of scope, stop and
+   re-triage it as its own change.
+4. **Reconcile** — Verify each acceptance criterion. Sweep the toolkit for stale references,
+   orphaned links, and stage-table↔prompt-file drift (grep). For tooling, do a smoke run.
+   Apply reviewer **scope triage** (IN-SCOPE BLOCKER / IN-SCOPE NON-BLOCKER /
+   OUT-OF-SCOPE BACKLOG / REJECTED). Mark the row COMPLETE in `status/self-development.md`;
+   log the decision (see Review Logging).
 
-See `.codeos/templates/conventions.md` for the authoritative naming convention reference.
+### Compulsory review, advisory verdict
 
----
-
-## Artifact Classification
-
-Not all artifacts are required. This table tells you which artifacts block stage
-advancement and which improve decision quality without being prerequisites.
-
-**Required artifacts block stage advancement. Optional and recommended artifacts
-improve decision quality but are never prerequisites for stage transitions.**
-
-| Artifact | Classification | When it exists |
-|---|---|---|
-| Feature Brief (`backlog/[id].md`) | Optional | Pre-Stage-1 discovery; not required to start Stage 1 |
-| Intent (`intents/[id].md`) | **Required** | Any behavioral work — must be APPROVED before Stage 2 |
-| Contract (`contracts/[id]_contract.md`) | **Required** | Any behavioral work — must be APPROVED before Stage 3 |
-| Event Schema (`events/[id]_schema.md`) | **Required** | Any behavioral work — must be APPROVED before Stage 4 |
-| Feature Registry (`features/registry.yaml`) | Recommended | Multi-feature projects; not required for single-feature work |
-| Codebase Digest (`docs/codebase-digest.md`) | Optional | Existing codebases and mature projects; absent digest is never a blocker |
-| Structural Alignment (Stage 7 output section) | Optional output | Produced at Stage 7 only when architectural observations exist |
-| Architectural Refinement (`refinements/arch/[id].md`) | Optional | Non-behavioral structural changes; uses the Stage 10 workflow |
-| Onboarding artifacts (`HYPOTHESIZED_INTENT`) | Onboarding only | Produced by Session Type D; must pass Stage 1 review before advancing |
-
----
-
-## File Layout
+Run the Codex reviewer at every non-trivial step, before its gate:
 
 ```
-project/
-├── .codeos/                      ← this toolkit (symlink)
-├── CLAUDE.md                     ← project-level instructions (references this file)
-├── features/
-│   └── registry.yaml             ← authoritative feature status index (human-maintained)
-├── intents/
-│   └── [feature_id].md           ← one per feature
-├── contracts/
-│   └── [feature_id]_contract.md  ← one per feature
-├── events/
-│   ├── [feature_id]_schema.md    ← event schema per feature (or shared event_schema.md)
-│   └── runtime_events.jsonl      ← append-only runtime log
+bash scripts/codeos-review.sh review <change_id> selfdev-step-<N> changes/<change_id>.md <touched-files>
+```
+
+Running the review is **mandatory**. The verdict is **advisory** — NO OBJECTION /
+CHANGES ADVISED / DO NOT ADVANCE inform the human's decision but never auto-block. The
+reviewer is independent, read-only, and non-gatekeeping; the human decides at the gate.
+
+### Gate discipline
+
+After each step output (and its review), STOP and state:
+`AWAITING HUMAN APPROVAL TO PROCEED TO STEP [N+1]`. Advance only on an explicit
+"APPROVED" / "approved" / "yes proceed" / equivalent. Anything else is a revision request.
+
+---
+
+## What You NEVER Do (self-development)
+
+- Treat a non-trivial change as trivial to skip the loop.
+- Advance a step without running the compulsory review and getting explicit approval.
+- Change the downstream doctrine (`dba-system.md`) as a side effect — that requires an
+  explicit `downstream-doctrine` (or `both`) scope declaration in Step 1.
+- Rewrite downstream 9-stage substance when only a path/location change is intended.
+- Put live status into this file — it belongs in `status/self-development.md`.
+- Turn `prompts/codeos-self-dev.md` into a second doctrine; keep it a practical step prompt.
+- Let the reviewer become an enforcement engine — its verdict is advisory, scope-triaged.
+
+---
+
+## Self-Development File Layout
+
+```
+Codeos/                          ← toolkit repo (this repo)
+├── CLAUDE.md                    ← THIS FILE — stable self-development operating guide
+├── dba-system.md                ← downstream DBA doctrine (loaded by downstream projects)
+├── status/
+│   └── self-development.md       ← live Self-Development Status dashboard (mutable)
+├── changes/
+│   └── [change_id].md            ← per-change source of truth (one per non-trivial change)
 ├── backlog/
-│   └── [feature_id].md           ← feature briefs (pre-Stage-1 discovery)
-├── handoffs/
-│   └── [YYYY-MM-DD]-[desc].md    ← session handoffs (optional, not DBA artifacts)
-├── reviews/
-│   ├── [feature_id].md           ← per-feature: Decision Log + Decision Rationale (traceability)
-│   └── architecture-journal.md   ← cross-feature institutional memory (AJ-NNN entries)
-├── refinements/
-│   └── arch/
-│       └── [refine_id].md        ← architectural refinement records
-├── modules/                      ← actual implementation code
-└── tests/
-    ├── behavioral/               ← behavioral outcome tests
-    └── replay/                   ← replay verification tests
+│   ├── features.md               ← backlog roadmap / index
+│   └── [feature_id].md           ← feature briefs (discovery; feed Step 1)
+├── prompts/                     ← stage + self-dev step prompts
+├── templates/                   ← artifact templates
+├── patterns/                    ← structural patterns
+├── docs/                        ← toolkit documentation
+├── scripts/                     ← dba-init.sh, codeos-review.sh
+└── reviews/
+    ├── review-log.md             ← append-only review + decision log
+    ├── architecture-journal.md   ← cross-cutting institutional memory (AJ-NNN)
+    └── codex/                     ← reviewer assessments + packets
 ```
-
----
-
-## DBA Vocabulary
-
-| Term | Definition |
-|---|---|
-| **Intent** | Why a feature exists. Actor + outcome form. No implementation details. |
-| **Behavioral Contract** | Observable truths derived from intent. BDD Given/When/Then. |
-| **Event Spine** | The complete ordered set of events a feature is permitted to emit. |
-| **Observational Event** | Raw runtime fact (e.g., `RequestReceived`). |
-| **Behavioral Event** | Verified outcome (e.g., `CartItemAdded`). |
-| **Failure Event** | Classified error condition (e.g., `CartItemAddFailed`). |
-| **Reconciliation Review** | Structural comparison of all artifacts against each other for gaps/mismatches. |
-| **Replay Verification** | Confirming runtime event log conforms to schema and contract sequence. |
-| **Targeted Refinement** | Smallest effective change for a specific observed problem. Not a rewrite. |
-| **Correlation ID** | UUID that links all events from a single feature execution chain. |
-| **Shared Infrastructure Module** | A module depended on by ≥2 feature modules that provides only mechanical infrastructure (event emission, DTOs, constants, re-exports). Never contains domain logic. See `patterns/shared-infrastructure-boundary.md`. |
-| **Vertical Drift** | Accumulation of domain logic in a shared infrastructure module. Bypasses lateral isolation guarantees even when feature→feature imports are blocked by workspace topology. |
-
----
-
-## Human Navigation
-
-Intent files are precision artifacts optimized for contract derivation, not for fast reading.
-When you need a quick plain-language explanation of what a feature does:
-
-**Ask Claude directly:**
-> "Explain [feature_id] in plain English."
-
-Claude will read `intents/[feature_id].md` and produce a jargon-free explanation on demand.
-No file is saved. No approval gate. No DBA lifecycle.
-
-This is the preferred pattern. It solves the readability gap without creating a second
-intent surface or introducing drift between stored summaries and authoritative intents.
-
-**If a stored summary is needed** (e.g., for onboarding documentation or a project README):
-Generate it on request, include provenance metadata (see below), and treat it as
-generated output — never manually edit, regenerate from intent when the intent changes.
-
-Provenance metadata for any stored generated summary:
-```yaml
-generated_from_intent: intents/[feature_id].md
-generated_at: [ISO date]
-generated_by: [Claude session / human]
-```
-
-Stored generated summaries are not DBA artifacts. They do not feed into any stage.
-They do not carry `status`, `approved_by`, or `derived_contracts` fields.
 
 ---
 
 ## Review Logging
 
-When the human provides a reviewer's assessment and their decision on it, before writing
-any review artifacts, Claude shows a brief preview of what it will write (5 lines inline).
-Then Claude writes — **do this before proceeding to any other work:**
+When the human gives a reviewer's assessment and their decision, before any other work:
+show a brief (≈5-line) preview of what you will write, then write it.
 
-1. **One row** to `reviews/[feature_id].md` Decision Log.
-2. **A Decision Rationale section** to `reviews/[feature_id].md` — only when the decision
-   would be difficult to reconstruct from artifact history alone: a reframing, an
-   architectural pivot, a rejected direction. Not for wording revisions, contract
-   clarifications, or any change the diff already explains. Most stages do not get a section.
-3. **One entry** to `reviews/architecture-journal.md` — only if the insight is likely to
-   remain useful six months from now to a reader who has forgotten this feature entirely.
-   When uncertain, journal only if future usefulness is clear. Missing an important finding
-   is more expensive than adding a few extra entries.
+1. **One entry** to `reviews/review-log.md` (append-only) capturing the reviewer's core
+   insight (close to verbatim) and the human decision separately.
+2. **One entry** to `reviews/architecture-journal.md` (`AJ-NNN`) only if the insight will
+   still matter six months from now to someone who has forgotten this change. When unsure,
+   journal only if future usefulness is clear.
 
-**Human overrides (override automatic classification):**
-- "do not log this review" — suppress all review artifacts for this cycle
-- "journal this" — force a journal entry regardless of criteria
-- "do not journal this" — suppress only the journal entry
+**Human overrides:** "do not log this review" / "journal this" / "do not journal this".
 
-**Log fidelity:** Preserve the reviewer's core insight as close to verbatim as the format
-allows. Compress explanation and context — never compress the insight itself.
-
-**Log quality:** Record conclusions and rationale, not conversation history. Capture what
-was learned, not what happened. Review artifacts must never become meeting minutes.
-
-**Architecture Journal:** The journal is the long-term institutional knowledge artifact;
-per-feature review files are primarily traceability artifacts. When an architectural
-finding belongs equally in both, put it in the journal and keep the feature file entry
-brief with a reference (e.g., `See AJ-014`). Journal entries must remain useful to a
-future reader who has forgotten the feature entirely — if understanding requires feature
-context, the entry belongs in `reviews/[feature_id].md` instead.
-
-**Decision Log rows are append-only.** Original findings and decisions are never
-rewritten. Superseded decisions are addressed by adding a new row. Decision Rationale
-sections may gain cross-references, supersession references, or clarification notes —
-but never rewrites of original findings or decisions.
-
-Architecture Journal entry format (see `templates/review-file.md` for per-feature format):
-```
-## AJ-NNN — [topic]
-Date: YYYY-MM-DD
-Status: Active | Superseded | Rejected
-
-Context: [what triggered this — feature, stage, or discussion]
-Finding: [the key insight or reframing]
-Decision: [accepted / rejected / deferred and why]
-Action: [what changed — pattern created, architecture revised, etc.]
-Supersedes: [AJ-NNN or "none"]
-Related: [AJ-NNN, AJ-NNN or "none"]
-```
-
----
-
-## How to Use the Toolkit in a New Project
-
-1. Run from the new project root: `bash /home/arc/projects/claude/Codeos/scripts/dba-init.sh`
-2. This creates `.codeos` symlink, all required directories, and a project `CLAUDE.md`
-3. Start Claude Code in the project directory
-4. Claude reads the project `CLAUDE.md` which directs it to read this file
-5. Human pastes `.codeos/prompts/00-session-start.md` to begin a session
+**Fidelity:** preserve the insight verbatim; compress only context. Record conclusions and
+rationale, not conversation history. Log entries are append-only — supersede with a new
+entry, never rewrite.

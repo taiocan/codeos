@@ -112,7 +112,13 @@ build_packet() {
   local branch review_sha base_sha approved_stage
   branch="$(git rev-parse --abbrev-ref HEAD)"
   review_sha="$(git rev-parse HEAD)"
-  approved_stage="$((stage - 1))"
+  # stage is a free token (numeric DBA stages, or labels like selfdev-step-2). Only compute
+  # a predecessor for numeric stages; non-numeric stages have no "approved stage N-1".
+  if [[ "${stage}" =~ ^[0-9]+$ ]]; then
+    approved_stage="$((stage - 1))"
+  else
+    approved_stage="n/a (non-numeric stage)"
+  fi
 
   local ss="${STAGE_START_DIR}/${feature}/stage-${stage}.json"
   if [[ -f "${ss}" ]]; then

@@ -32,9 +32,18 @@ bash /home/arc/projects/claude/Codeos/scripts/dba-init.sh my-project https://git
 
 ## Directory Structure
 
+**Two CLAUDE.md surfaces.** The toolkit repo and the projects that use it operate in
+different modes, so the doctrine and the toolkit's own operating guide are separate files:
+- `dba-system.md` — the downstream **DBA doctrine** (the full 9-stage loop). Downstream
+  projects load it via `.codeos/dba-system.md`.
+- `CLAUDE.md` (toolkit repo root) — the **Codeos Self-Development** guide: a leaner,
+  intent-driven loop for changing the toolkit itself (prompts, templates, docs, scripts).
+  Claude auto-reads it when working in this repo.
+
 ```
 Codeos/
-├── CLAUDE.md          — Master DBA system instructions (Claude reads this)
+├── CLAUDE.md          — Codeos Self-Development guide (governs toolkit changes)
+├── dba-system.md      — Downstream DBA doctrine (loaded by projects via .codeos/dba-system.md)
 ├── README.md          — This file
 │
 ├── prompts/           — Stage-gated prompts (paste to Claude at each stage)
@@ -68,7 +77,7 @@ Codeos/
 ```
 myproject/
 ├── .codeos -> /home/arc/projects/claude/Codeos   (symlink)
-├── CLAUDE.md          — Project-level instructions; references .codeos/CLAUDE.md
+├── CLAUDE.md          — Project-level instructions; references .codeos/dba-system.md
 ├── intents/           — Feature intents (one .md per feature)
 ├── contracts/         — Behavioral contracts (one .md per feature)
 ├── events/
@@ -103,14 +112,14 @@ Fill in the [BRACKETS] before pasting:
 - "Current feature states" — write "No features started yet" or leave the table blank
 - "This session's scope" — name the first feature; tell Claude not to start any others
 
-**Step 3 — Claude reads both CLAUDE.md files and confirms — verify it names both.**
-1. `.codeos/CLAUDE.md` — master DBA rules and the 9-step loop (Claude reads this; you do not edit it)
+**Step 3 — Claude reads the doctrine and the project `CLAUDE.md` and confirms — verify it names both.**
+1. `.codeos/dba-system.md` — master DBA rules and the 9-step loop (Claude reads this; you do not edit it)
 2. Project `CLAUDE.md` — the file you just filled in; Claude reads the project intent and conventions
 
 **Step 4 — Paste `prompts/01-intent.md` and describe the first feature.**
 Claude produces `intents/[feature_id].md`. After you approve it, add a row to the Active Features table in project `CLAUDE.md` (Stage 1, status APPROVED) before telling Claude to proceed to Stage 2.
 
-There are no existing artifacts to read at this point — Claude starts from scratch using only the two CLAUDE.md files as context. Do not paste a resumption prompt; go straight to the stage prompt.
+There are no existing artifacts to read at this point — Claude starts from scratch using only `.codeos/dba-system.md` and the project `CLAUDE.md` as context. Do not paste a resumption prompt; go straight to the stage prompt.
 
 ### Resuming After a Crash or Session Break
 
@@ -131,7 +140,7 @@ Fill in the [BRACKETS] before pasting:
 - "This session's scope" — be explicit about which features are in scope
 
 **Step 3 — Claude reads these two files automatically (verify it confirms both):**
-1. `.codeos/CLAUDE.md` — master DBA rules, the 9-step loop, and non-negotiable constraints
+1. `.codeos/dba-system.md` — master DBA rules, the 9-step loop, and non-negotiable constraints
 2. Project `CLAUDE.md` — your Active Features table and project-specific conventions
 
 **Step 4 — For each in-progress feature, direct Claude to read the existing approved artifacts.**
@@ -165,7 +174,7 @@ Work through stages in order, pausing for human approval at each gate:
 ## Stage Purposes
 
 ### Stage 0 — Session Start
-**Purpose:** Orient Claude to DBA mode before any work begins. The human fills in today's goal, the current stage and status of every active feature, and any session-specific forbidden actions. Claude reads both `.codeos/CLAUDE.md` and the project `CLAUDE.md`, then stops and waits for the human to begin.
+**Purpose:** Orient Claude to DBA mode before any work begins. The human fills in today's goal, the current stage and status of every active feature, and any session-specific forbidden actions. Claude reads both `.codeos/dba-system.md` and the project `CLAUDE.md`, then stops and waits for the human to begin.
 **Key constraint:** Claude does not produce artifacts, write code, or analyze anything until the human explicitly says to proceed.
 
 ### Stage 1 — Intent
