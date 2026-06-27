@@ -88,9 +88,13 @@ Loading-path refs clean. One documentation gap (descriptive doctrine attribution
 | Reviewer crashed on non-numeric stage | IN-SCOPE BLOCKER | fixed (guard in `build_packet`) |
 
 **Note on process:** This bootstrap change predates a runnable self-dev loop, so the
-compulsory per-step Codex reviews were not executed; the change was instead gated through the
-plan-mode review cycle (multiple human-relayed reviewer passes + explicit approval). Future
-non-trivial changes follow the per-step compulsory-review discipline.
+compulsory per-step Codex reviews were not executed at the time; the change was instead gated
+through the plan-mode review cycle (multiple human-relayed reviewer passes + explicit
+approval). A retroactive doctrine-split **series** Codex review was subsequently run at HEAD
+2563e37 (verdict **CHANGES ADVISED**, evidence A; see `reviews/review-log.md`); it flagged
+that this record's status-dashboard header still named `backlog/features.md` as "the roadmap"
+— addressed by change `0004-review-fixes`. Future non-trivial changes follow the per-step
+compulsory-review discipline.
 
 ---
 

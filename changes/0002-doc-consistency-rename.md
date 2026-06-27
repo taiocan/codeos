@@ -69,9 +69,10 @@ naming-collision / governance references. Final scope is 25 edits across 2 files
 |---|---|---|
 | oap-codeos-integration.md / reviewer-pipeline.md CLAUDE.md refs | IN-SCOPE NON-BLOCKER → leave | Reverted; preserved as historical/governance refs ("rename only where it makes sense") |
 
-**Codex review:** not run — change executed under direct human supervision (human acting as
-in-session reviewer). `codex` CLI is available; automated review deferred by choice, not
-silently skipped. Run on request via `codeos-review.sh review 0002-doc-consistency-rename ...`.
+**Codex review:** covered by the retroactive doctrine-split series review (run at HEAD
+2563e37, verdict **CHANGES ADVISED**, evidence A; see `reviews/review-log.md`). The
+series-level findings (review-record compliance, status-dashboard roadmap pointer) are
+addressed by change `0004-review-fixes`; no finding was specific to this docs rename.
 
 ---
 

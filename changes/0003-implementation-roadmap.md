@@ -54,9 +54,12 @@ its status note in Current State explicitly points to Wave 1 rather than re-list
 | 3 | Deps shown, acyclic | PASS | dependency column per wave |
 | 4 | Honest current state | PASS | reviewer-quality-scale = partially piloted |
 
-**Codex review:** not run — change executed under direct human supervision (human acting as
-in-session reviewer). `codex` CLI available; automated review deferred by choice, not silently
-skipped.
+**Codex review:** RUN (retroactively, as the doctrine-split series review at HEAD 2563e37).
+Verdict **CHANGES ADVISED** (evidence A, full coverage) — see
+`reviews/codex/2026-06-27T163034Z-dsplit-0003-stage-selfdev-step-4-2563e37.md` and
+`reviews/review-log.md`. Two IN-SCOPE BLOCKERs + one NON-BLOCKER raised; all addressed by
+change `0004-review-fixes` (status-dashboard roadmap pointer, review-record compliance,
+roadmap wording).
 
 ---
 

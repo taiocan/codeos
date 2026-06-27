@@ -7,8 +7,10 @@
 > wave here is *not* authorization. Live per-change status lives in
 > `status/self-development.md`; per-change detail in `changes/[id].md`.
 
-Each backlog item is implemented as a self-dev change (`0004`, `0005`, …) through the 4-step
-loop in `prompts/codeos-self-dev.md`.
+From here on, each backlog item is taken as its own self-dev change (the next available
+change ID) through the 4-step loop in `prompts/codeos-self-dev.md`. (Some items already
+landed outside this sequence — e.g. `reviewer-decision-brief` was piloted earlier; see
+Current State. Concrete change IDs are tracked in `status/self-development.md`, not here.)
 
 ---
 
@@ -81,8 +83,8 @@ pilot-adjacent wins early.
 1. `stage-4-6-reports` (Wave 1, P0, no deps) — foundational for later generators/dashboards.
 2. `current-verified-state` (Wave 1, P0, no deps).
 
-Each is taken as its own self-dev change (`0004`, `0005`, …) via the 4-step loop, with human
-approval at every gate.
+Each is taken as its own self-dev change (the next available change ID) via the 4-step loop,
+with human approval at every gate.
 
 ---
 
