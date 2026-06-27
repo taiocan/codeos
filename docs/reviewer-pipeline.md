@@ -75,6 +75,12 @@ session instead of resuming under a different parser/behavior.
 
 ## 4. Evidence durability + append-only log
 
+The exact on-disk shapes of every persisted artifact below — packet, assessment header,
+session state, REVIEW entry, HUMAN DECISION entry — are specified as **v0 normative schemas**
+in [`reviewer-artifact-schemas.md`](reviewer-artifact-schemas.md), including required fields,
+allowed enum values, and the lightweight fail-closed validation the script applies. Full
+JSON Schema validation is deferred until pilot use shows it is needed.
+
 - The **full** Codex assessment is saved under `reviews/codex/<ts>-<feature>-stage-<N>-<sha>.md`,
   opening with a self-contained YAML metadata header (feature/stage/branch/base+review
   commit/artifacts+sha256/diff_hash/coverage_state/redaction_count/secret_redaction/

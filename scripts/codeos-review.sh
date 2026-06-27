@@ -61,6 +61,9 @@ redact_secrets() {
     -e 's/-----BEGIN [A-Z ]*PRIVATE KEY-----/[REDACTED PRIVATE KEY]/g'
 }
 
+# in_list <value> <pipe|separated|list>  -> 0 if value is exactly one of the list items
+in_list() { case "|$2|" in *"|$1|"*) return 0 ;; *) return 1 ;; esac; }
+
 now_iso() { date -u +%Y-%m-%dT%H:%M:%SZ; }
 sha256_of() { sha256sum "$1" | awk '{print $1}'; }
 sha256_str() { printf '%s' "$1" | sha256sum | awk '{print $1}'; }
@@ -401,6 +404,14 @@ cmd_review() {
   fi
   [[ -n "${evidence}" ]] || evidence="not reported"
 
+  # normalize to schema enums (the reviewer's free text can be loose)
+  in_list "${concern}" "NO OBJECTION|CHANGES ADVISED|DO NOT ADVANCE|UNCLASSIFIED" || concern="UNCLASSIFIED"
+  case "${evidence}" in
+    A*|B*|C*|D*|E*) evidence="${evidence:0:1}" ;;
+    "not reported") ;;
+    *) evidence="not reported" ;;
+  esac
+
   # Effective concern = Codex concern adjusted for evidence coverage. We keep and log BOTH,
   # so a coverage gap can never silently pass as the reviewer's verdict.
   local codex_concern="${concern}" effective_concern="${concern}" coverage_note=""
@@ -439,6 +450,27 @@ cmd_review() {
   for a in "${artifacts[@]}"; do
     [[ -f "${a}" ]] && artifact_shas+=$'\n'"    - path: ${a}"$'\n'"      sha256: $(sha256_of "${a}")"
   done
+
+  # --- v0 schema validation, fail-closed (see docs/reviewer-artifact-schemas.md) ---
+  local pair _v_err=""
+  for pair in "feature=${feature}" "stage=${stage}" "base_commit=${PACKET_BASE_SHA}" \
+              "review_commit=${PACKET_REVIEW_SHA}" "diff_hash=${PACKET_DIFF_HASH}" \
+              "coverage_state=${PACKET_COVERAGE_STATE}" "reviewed_packet_sha256=${packet_hash}"; do
+    [[ -n "${pair#*=}" ]] || _v_err+=" missing:${pair%%=*}"
+  done
+  in_list "${PACKET_COVERAGE_STATE}" "FULL_COVERAGE|PARTIAL_COVERAGE|SECRET_REDACTION|CRITICAL_OMISSION|EMPTY_PACKET" || _v_err+=" enum:coverage_state"
+  in_list "${codex_concern}"     "NO OBJECTION|CHANGES ADVISED|DO NOT ADVANCE|UNCLASSIFIED" || _v_err+=" enum:codex_concern"
+  in_list "${effective_concern}" "NO OBJECTION|CHANGES ADVISED|DO NOT ADVANCE|UNCLASSIFIED" || _v_err+=" enum:effective_concern"
+  in_list "${evidence}" "A|B|C|D|E|not reported" || _v_err+=" enum:evidence"
+  if [[ -z "${artifact_shas}" ]] && ! in_list "${PACKET_COVERAGE_STATE}" "CRITICAL_OMISSION|EMPTY_PACKET"; then
+    _v_err+=" missing:artifact_sha256"
+  fi
+  if [[ -n "${_v_err}" ]]; then
+    echo "error: v0 schema validation failed (fail-closed):${_v_err}" >&2
+    echo "       review NOT logged. See docs/reviewer-artifact-schemas.md" >&2
+    exit 4
+  fi
+
   {
     echo "---"
     echo "reviewed:"
