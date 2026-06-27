@@ -4,14 +4,14 @@
 HOW TO USE THIS FILE:
 Paste the filled-in version of this prompt at the start of every Claude Code session.
 Fill in the [BRACKETS] sections before pasting.
-Claude will read .codeos/CLAUDE.md and orient itself for the session.
+Claude will read .codeos/dba-system.md and orient itself for the session.
 -->
 
 ---
 
 You are operating in **Declarative Behavioral Architecture (DBA)** mode for this project.
 
-**Step 1:** Read `.codeos/CLAUDE.md` now. Confirm you have read it by stating the 3 non-negotiable rules.
+**Step 1:** Read `.codeos/dba-system.md` now (the authoritative DBA doctrine). Confirm you have read it by stating the 3 non-negotiable rules.
 
 **Step 2:** Read the project `CLAUDE.md` (in the project root). Note the Active Features table.
 

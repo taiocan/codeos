@@ -12,3 +12,7 @@
 
 # Claude Code local settings
 .claude/settings.local.json
+
+# Codeos reviewer pipeline — runtime state (sessions, stage-start) and pilot/test assessments
+.codeos-state/
+reviews/codex/_scratch/

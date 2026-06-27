@@ -1,0 +1,65 @@
+# Upgrade: repair-before-next-feature — Repair-Before-Next-Feature Workflow Gate
+
+**Priority**: P1
+**Status**: BACKLOG
+**Type**: toolkit-upgrade
+**Related**: current-verified-state, feature-registry, readiness-checklist
+
+## Problem
+
+It is easy to start a new feature while the current one has unresolved gaps, failed replay, CI
+failure, structural risk, or release blocker.
+
+## Upgrade
+
+Add a workflow rule: unresolved work blocks new behavioral features.
+
+## Scope
+
+Workflow rule at session start / before starting a new behavioral feature.
+
+## Proposed artifact(s)
+
+`CLAUDE.md` or `prompts/00-session-start.md`
+
+## Design notes
+
+Rule:
+
+```text
+Do not start a new behavioral feature while the current feature has unresolved:
+- Stage 7 GAP/MISMATCH/MISSING;
+- Stage 8 replay failure;
+- required Stage 9 refinement;
+- Stage 10 structural blocker;
+- failing CI;
+- unresolved reviewer BLOCK;
+- unresolved pre-release blocker.
+```
+
+Routing:
+- Behavioral issue → Stage 9 targeted refinement or rerun affected earlier stage.
+- Structural issue → Stage 10 architectural refinement.
+- Release/package issue → Readiness checklist / release blocker.
+
+## Value
+
+Medium-high. Protects quality and prevents unfinished evidence chains.
+
+## Risk
+
+Can block exploratory work.
+
+## Guardrail
+
+Allow explicit human override:
+
+```text
+Human may explicitly suspend a feature and start another, but the suspended feature must remain
+marked as blocked/incomplete.
+```
+
+## DBA-philosophy note
+
+Adds a **workflow gate**. Preserves human authority via the explicit override; the suspended
+feature must stay marked blocked so the evidence chain is never silently abandoned.
