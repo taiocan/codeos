@@ -1,6 +1,12 @@
 # Backlog: doc-consistency pass after CLAUDE.md → dba-system.md split
 
-**Status:** open (filed by change `0001-claude-split`, Reconcile step)
+**Status:** RESOLVED by change `0002-doc-consistency-rename` (2026-06-27). Renamed the 24
+doctrine-attribution refs in `docs/codeos-manual.md` and 1 in `docs/oap-adoption-candidates.md`
+to `dba-system.md`. The `oap-codeos-integration.md` and `reviewer-pipeline.md` references were
+intentionally left as historical naming-collision / governance refs ("rename only where it
+makes sense"). See `changes/0002-doc-consistency-rename.md`.
+
+**Original status:** open (filed by change `0001-claude-split`, Reconcile step)
 **Class (when worked):** documentation (normative) — 4-step self-dev loop
 **Scope axis:** downstream doctrine only
 
