@@ -51,8 +51,15 @@ CODEX_SCRATCH="reviews/codex/_scratch"
 SIZE_LIMIT_BYTES=$((256 * 1024))
 PATH_EXCLUDES=( '*.env' '.env*' '*.pem' '*.key' 'secrets/*' 'credentials/*'
                 '*runtime_events*.jsonl' '*.log' )
-# Content patterns whose VALUES get redacted before the diff is sent to Codex.
-SECRET_PATTERNS='OPENAI_API_KEY|ANTHROPIC_API_KEY|AWS_SECRET_ACCESS_KEY|BEGIN [A-Z ]*PRIVATE KEY|password[[:space:]]*=|token[[:space:]]*=|secret[[:space:]]*='
+# Secret-key names whose VALUES get redacted. Redaction requires an actual value (8+ chars)
+# after the separator, so prose that merely mentions a key name (e.g. docs, this script) is
+# left intact and not treated as a secret.
+SECRET_KV_KEYS='OPENAI_API_KEY|ANTHROPIC_API_KEY|AWS_SECRET_ACCESS_KEY|[Aa][Pp][Ii][_-]?[Kk][Ee][Yy]|[Pp]assword|[Tt]oken|[Ss]ecret'
+redact_secrets() {
+  sed -E \
+    -e "s/((${SECRET_KV_KEYS})[[:space:]]*[:=][[:space:]]*[\"']?)[A-Za-z0-9._/+-]{8,}/\1[REDACTED]/g" \
+    -e 's/-----BEGIN [A-Z ]*PRIVATE KEY-----/[REDACTED PRIVATE KEY]/g'
+}
 
 now_iso() { date -u +%Y-%m-%dT%H:%M:%SZ; }
 sha256_of() { sha256sum "$1" | awk '{print $1}'; }
@@ -148,13 +155,38 @@ build_packet() {
 
   # content redaction: blank the value after a secret-like key
   local redacted_diff
-  redacted_diff="$(printf '%s\n' "${filtered_diff}" \
-    | sed -E "s/(${SECRET_PATTERNS})([\"'[:space:]:=]*).*/\1\2[REDACTED]/I")"
+  redacted_diff="$(printf '%s\n' "${filtered_diff}" | redact_secrets)"
   if [[ "${redacted_diff}" != "${filtered_diff}" ]]; then
-    excluded+="(secret-like content redacted) "
+    excluded+="(secret-like diff content redacted) "
   fi
 
+  # --- requested artifacts: secret-redact + size-guard; a requested artifact that cannot
+  #     be fully shown is a HARD coverage failure (we were asked to review it). ---
+  local artifacts_block="" a raw redacted shown_count=0
+  PACKET_ARTIFACT_EXCLUDED=0
+  for a in "${artifacts[@]}"; do
+    if [[ ! -f "${a}" ]]; then
+      artifacts_block+="  --- ${a} (MISSING — not shown) ---"$'\n\n'
+      PACKET_ARTIFACT_EXCLUDED=1; excluded+="${a}(missing) "; continue
+    fi
+    if [[ "$(wc -c < "${a}")" -gt ${SIZE_LIMIT_BYTES} ]]; then
+      artifacts_block+="  --- ${a} (EXCLUDED: over size limit — not shown) ---"$'\n\n'
+      PACKET_ARTIFACT_EXCLUDED=1; excluded+="${a}(oversize) "; continue
+    fi
+    raw="$(cat "${a}")"
+    redacted="$(printf '%s\n' "${raw}" | redact_secrets)"
+    [[ "${redacted}" != "${raw}" ]] && excluded+="${a}(secret redacted) "
+    artifacts_block+="  --- ${a} (sha256: $(sha256_of "${a}")) ---"$'\n'
+    artifacts_block+="$(printf '%s\n' "${redacted}" | sed 's/^/    /')"$'\n\n'
+    shown_count=$((shown_count + 1))
+  done
+
+  # coverage: "full" only when nothing was excluded or redacted anywhere
+  local coverage="full"
+  [[ -n "${excluded}" ]] && coverage="partial"
+
   PACKET_EXCLUDED="${excluded}"
+  PACKET_COVERAGE="${coverage}"
   PACKET_DIFF_HASH="$(sha256_str "${redacted_diff}")"
   PACKET_BASE_SHA="${base_sha:-(uncommitted artifact)}"
   PACKET_REVIEW_SHA="${review_sha}"
@@ -175,12 +207,17 @@ build_packet() {
     echo "  Base commit:            ${PACKET_BASE_SHA}"
     echo "  Review commit:          ${review_sha}"
     echo "  Current approved stage: ${approved_stage}"
+    echo "  Evidence coverage:      ${coverage}"
     echo
     echo "DBA RULES RELEVANT TO THIS STAGE"
     echo "  - Human approval is required for every stage transition; you are advisory only."
     echo "  - Memory is not truth — assess only what is provided, pinned to the review commit."
     echo "  - Implementation must trace to approved artifacts; no behavior beyond intent+contract+schema."
     echo "  - No events outside the approved event schema; no hidden behavior."
+    if [[ "${coverage}" != "full" ]]; then
+      echo "  - COVERAGE IS PARTIAL: some content was excluded/redacted (see below). You are"
+      echo "    seeing an incomplete evidence set — do not issue NO OBJECTION on this basis."
+    fi
     echo
     echo "STAGE-SPECIFIC CHECKS"
     echo "${checks}"
@@ -189,16 +226,7 @@ build_packet() {
     echo "  ${expected}"
     echo
     echo "ARTIFACTS TO REVIEW"
-    local a
-    for a in "${artifacts[@]}"; do
-      if [[ -f "${a}" ]]; then
-        echo "  --- ${a} (sha256: $(sha256_of "${a}")) ---"
-        sed 's/^/    /' "${a}"
-      else
-        echo "  --- ${a} (MISSING) ---"
-      fi
-      echo
-    done
+    printf '%s' "${artifacts_block}"
     echo "DIFF TO REVIEW (base->review, secret/size filtered)"
     [[ -n "${excluded}" ]] && echo "  [excluded/redacted: ${excluded}] manual security review required"
     printf '%s\n' "${redacted_diff}"
@@ -250,9 +278,18 @@ run_codex() {
   local feature="$1" fresh="$2" packet_file="$3"
   mkdir -p "${SESSIONS_DIR}"
   local sess_file="${SESSIONS_DIR}/${feature}.json"
+  local codex_ver; codex_ver="$(codex --version 2>/dev/null | head -1)"
   local session_id=""
-  [[ "${fresh}" == "0" && -f "${sess_file}" ]] && \
+  if [[ "${fresh}" == "0" && -f "${sess_file}" ]]; then
     session_id="$(grep -oE '"session_id" *: *"[^"]*"' "${sess_file}" | sed -E 's/.*"([^"]*)"$/\1/')"
+    # version drift: a session created under a different codex build may parse/behave
+    # differently — force a fresh session rather than resuming across versions.
+    local stored_ver; stored_ver="$(grep -oE '"codex_version" *: *"[^"]*"' "${sess_file}" | sed -E 's/.*"([^"]*)"$/\1/')"
+    if [[ -n "${stored_ver}" && "${stored_ver}" != "${codex_ver}" ]]; then
+      echo "note: codex version changed (${stored_ver} -> ${codex_ver}); starting a fresh session." >&2
+      session_id=""
+    fi
+  fi
 
   local out
   if [[ -n "${session_id}" ]]; then
@@ -266,8 +303,8 @@ run_codex() {
       echo "       review NOT logged. Inspect the codex output and rerun." >&2
       exit 3
     fi
-    printf '{ "feature": "%s", "session_id": "%s", "created_at": "%s" }\n' \
-      "${feature}" "${session_id}" "$(now_iso)" > "${sess_file}"
+    printf '{ "feature": "%s", "session_id": "%s", "codex_version": "%s", "created_at": "%s" }\n' \
+      "${feature}" "${session_id}" "${codex_ver}" "$(now_iso)" > "${sess_file}"
   fi
   REVIEW_SESSION="${session_id}"
   REVIEW_OUTPUT="${out}"
@@ -317,13 +354,28 @@ cmd_review() {
   fi
   [[ -n "${evidence}" ]] || evidence="not reported"
 
-  # save full assessment (with metadata header)
-  local ts outdir assessment_file artifact_shas=""
+  # Promote missing/partial coverage into the decision (a coverage gap must not pass silently):
+  #  - a requested artifact we could not show at all  -> force DO NOT ADVANCE
+  #  - any other partial coverage with NO OBJECTION    -> downgrade to CHANGES ADVISED
+  local coverage_note=""
+  if [[ "${PACKET_ARTIFACT_EXCLUDED:-0}" -eq 1 ]]; then
+    coverage_note="a requested artifact could not be shown (missing/oversize) — forced DO NOT ADVANCE"
+    concern="DO NOT ADVANCE"
+  elif [[ "${PACKET_COVERAGE:-full}" == "partial" && "${concern}" == "NO OBJECTION" ]]; then
+    coverage_note="evidence coverage partial (content excluded/redacted) — NO OBJECTION downgraded to CHANGES ADVISED"
+    concern="CHANGES ADVISED"
+  fi
+
+  # save full assessment (with metadata header) + the EXACT packet that was reviewed
+  local ts outdir assessment_file packet_saved artifact_shas=""
   ts="$(now_iso)"
   if [[ ${scratch} -eq 1 ]]; then outdir="${CODEX_SCRATCH}"; else outdir="${CODEX_DIR}"; fi
   mkdir -p "${outdir}"
   local short_sha; short_sha="$(git rev-parse --short HEAD)"
   assessment_file="${outdir}/${ts//:/}-${feature}-stage-${stage}-${short_sha}.md"
+  packet_saved="${assessment_file%.md}.packet.txt"
+  cp "${PACKET_FILE}" "${packet_saved}"          # exact reviewed bytes — durable, verifiable
+  local packet_hash; packet_hash="$(sha256_of "${packet_saved}")"
   local a
   for a in "${artifacts[@]}"; do
     [[ -f "${a}" ]] && artifact_shas+=$'\n'"    - path: ${a}"$'\n'"      sha256: $(sha256_of "${a}")"
@@ -338,7 +390,10 @@ cmd_review() {
     echo "  review_commit: ${PACKET_REVIEW_SHA}"
     echo "  artifacts:${artifact_shas}"
     echo "  diff_hash: ${PACKET_DIFF_HASH}"
+    echo "  coverage: ${PACKET_COVERAGE}${coverage_note:+ (${coverage_note})}"
     echo "  excluded_paths: \"${PACKET_EXCLUDED}\""
+    echo "  reviewed_packet: $(basename "${packet_saved}")"
+    echo "  reviewed_packet_sha256: ${packet_hash}"
     echo "  reviewer: \"codex (session ${REVIEW_SESSION})\""
     echo "  concern: ${concern}"
     echo "  evidence: ${evidence}"
@@ -359,8 +414,10 @@ cmd_review() {
     echo "Reviewer: codex default-model (session ${REVIEW_SESSION})"
     echo "Concern: ${concern}"
     echo "Evidence: ${evidence}"
+    echo "Coverage: ${PACKET_COVERAGE}${coverage_note:+ — ${coverage_note}}"
     echo "Log summary: ${summary_line#LOG SUMMARY: }"
     echo "Full assessment: ${assessment_file} (sha256:${assessment_hash})"
+    echo "Reviewed packet: ${packet_saved} (sha256:${packet_hash})"
     [[ -n "${PACKET_EXCLUDED}" ]] && echo "Coverage gap: excluded/redacted [${PACKET_EXCLUDED}] — manual security review required"
     echo "Human decision: (append with: codeos-review.sh decision ${feature} ${stage} <DECISION> \"<reason>\")"
   } >> "${REVIEW_LOG}"
@@ -383,14 +440,41 @@ cmd_decision() {
     echo "decision must be APPROVE_STAGE | REQUEST_CHANGES | STOP" >&2; exit 2 ;; esac
   [[ -f "${REVIEW_LOG}" ]] || init_log
   local sha; sha="$(git rev-parse HEAD)"
+
+  # Re-verify the reviewed artifacts still match what was reviewed, so an approval cannot
+  # silently apply to a since-edited artifact (the reviewer's "prove what was reviewed" point).
+  local latest verify_lines="" changed=0
+  latest="$(ls -1t "${CODEX_DIR}"/*-"${feature}"-stage-"${stage}"-*.md 2>/dev/null | head -1 || true)"
+  if [[ -n "${latest}" ]]; then
+    local p="" h now
+    while IFS= read -r line; do
+      case "${line}" in
+        *"- path: "*) p="${line#*- path: }" ;;
+        *"sha256: "*)
+          h="${line#*sha256: }"
+          if [[ -n "${p}" ]]; then
+            now="(missing)"; [[ -f "${p}" ]] && now="$(sha256_of "${p}")"
+            if [[ "${now}" == "${h}" ]]; then verify_lines+="  MATCH   ${p}"$'\n'
+            else verify_lines+="  CHANGED ${p} (reviewed ${h:0:12} / now ${now:0:12})"$'\n'; changed=1; fi
+            p=""
+          fi ;;
+      esac
+    done < <(sed -n '/^  artifacts:/,/^  diff_hash:/p' "${latest}")
+  fi
+
   {
     echo
     echo "## $(now_iso) HUMAN DECISION — ${feature} — Stage ${stage}"
     echo "Commit reviewed: ${sha}"
     echo "Decision: ${decision}"
     echo "Reason/next: ${reason}"
+    [[ -n "${latest}" ]] && echo "Verified against: ${latest}"
+    [[ -n "${verify_lines}" ]] && { echo "Artifact integrity:"; printf '%s' "${verify_lines}"; }
   } >> "${REVIEW_LOG}"
   echo "decision appended to ${REVIEW_LOG}"
+  if [[ ${changed} -eq 1 ]]; then
+    echo "WARNING: some reviewed artifacts changed since the review — decision recorded with that flagged." >&2
+  fi
 }
 
 init_log() {

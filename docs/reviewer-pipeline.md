@@ -69,30 +69,50 @@ Session-id capture is **deterministic / fail-closed**: the id is parsed from the
 call's own banner output, so it is exactly the session just created. If no id can be parsed,
 the script aborts and logs nothing.
 
+Sessions are also **version-pinned**: the session record stores the `codex --version` that
+created it, and a resume across a changed Codex build is refused — the script starts a fresh
+session instead of resuming under a different parser/behavior.
+
 ## 4. Evidence durability + append-only log
 
 - The **full** Codex assessment is saved under `reviews/codex/<ts>-<feature>-stage-<N>-<sha>.md`,
   opening with a self-contained YAML metadata header (feature/stage/branch/base+review
-  commit/artifacts+sha256/diff_hash/excluded_paths/concern/evidence) so the file is auditable
-  on its own. Real stage reviews are committed with the feature branch; pilot/test runs use
-  `reviews/codex/_scratch/` (gitignored).
+  commit/artifacts+sha256/diff_hash/coverage/excluded_paths/reviewed_packet+sha256/
+  concern/evidence) so the file is auditable on its own.
+- The **exact bytes that were reviewed** are persisted alongside it as
+  `…-stage-<N>-<sha>.packet.txt`, with its own SHA256 recorded. This is what makes
+  auditability real for uncommitted artifacts, since-edited files, and filtered diffs — you
+  can prove precisely what Codex saw, not merely a hash of it. Real stage reviews are
+  committed with the feature branch; pilot/test runs use `reviews/codex/_scratch/`
+  (gitignored).
 - `reviews/review-log.md` is **append-only**. The script appends a short REVIEW entry
-  (summary + concern + hashes + link). The human decision is a **separately appended** entry
-  via `codeos-review.sh decision …` — prior entries are never edited. The REVIEW entry's
-  base/review SHA + the appended HUMAN DECISION entry are what let a human later identify the
-  last sound "OK point" (commit/branch) to return to.
+  (summary + concern + coverage + hashes + links). The human decision is a **separately
+  appended** entry via `codeos-review.sh decision …` — prior entries are never edited. That
+  command also **re-hashes the reviewed artifacts at decision time** and records MATCH /
+  CHANGED per artifact, so an approval can never silently apply to an artifact that moved
+  since the review. The REVIEW entry's base/review SHA + the appended HUMAN DECISION entry
+  are what let a human later identify the last sound "OK point" (commit/branch) to return to.
 
 ## 5. Safety — secret + oversized-diff filtering
 
-Two layers before anything reaches Codex:
+Two layers before anything reaches Codex, applied to **both the diff and the requested
+artifact contents**:
 1. **Path exclusion** — `.env*`, `*.pem`, `*.key`, `secrets/*`, `credentials/*`, raw runtime
    logs, files over a size threshold.
 2. **Content redaction** — secret-like values (`OPENAI_API_KEY=`, `ANTHROPIC_API_KEY=`,
    `AWS_SECRET_ACCESS_KEY`, `BEGIN … PRIVATE KEY`, `password=`/`token=`/`secret=`) are
-   redacted from the diff.
+   redacted.
 
-When anything is excluded or redacted, the packet and the log entry flag **"manual security
-review required"**, so the reviewer's coverage gap is explicit.
+**A coverage gap is a decision downgrade, not a footnote.** Filtering protects secrets but
+shrinks what the reviewer saw, so missing coverage is promoted into the verdict rather than
+left as a side note:
+- if a **requested artifact** cannot be shown at all (missing or over the size limit), the
+  concern is forced to **DO NOT ADVANCE** — the reviewer never saw the thing under review;
+- otherwise, any exclusion/redaction marks coverage **partial**, the packet tells Codex it is
+  seeing an incomplete set, and a returned `NO OBJECTION` is **downgraded to CHANGES ADVISED**.
+
+The excluded/redacted paths and the resulting coverage are recorded in both the saved
+assessment and the log, so the gap is explicit *and* consequential.
 
 ## 6. Concern-level semantics + human responsibility
 
@@ -167,18 +187,33 @@ These are provided for a *future* phase only. **Do not add them to `.claude/sett
 yet** — the pilot runs the script manually until the advisory reviewer has a proven track
 record. A guarded `Stop` hook keyed on a sentinel avoids reviewing every stop.
 
+The hook delegates to a small wrapper rather than an inline one-liner, because the cleanup
+must be **success-gated** (do not consume the request if the review failed) and the artifact
+paths must be **quoted/arrayed** (never word-split a `jq` expansion):
+
 ```jsonc
 // .claude/settings.json — illustrative ONLY, not enabled
 {
   "hooks": {
     "Stop": [
-      {
-        // only fires when Claude wrote .codeos-state/review-request.json at a stage gate
-        "command": "test -f .codeos-state/review-request.json && scripts/codeos-review.sh review \"$(jq -r .feature .codeos-state/review-request.json)\" \"$(jq -r .stage .codeos-state/review-request.json)\" $(jq -r '.artifacts[]' .codeos-state/review-request.json) ; rm -f .codeos-state/review-request.json"
-      }
+      { "command": "scripts/codeos-review-hook.sh" }   // no-op unless the sentinel exists
     ]
   }
 }
+```
+
+```bash
+# scripts/codeos-review-hook.sh — illustrative ONLY
+#!/usr/bin/env bash
+set -euo pipefail
+req=".codeos-state/review-request.json"
+[[ -f "${req}" ]] || exit 0                       # nothing requested → no-op
+feature="$(jq -r '.feature' "${req}")"
+stage="$(jq -r '.stage' "${req}")"
+mapfile -t paths < <(jq -r '.artifacts[]' "${req}")   # array-safe, no word-splitting
+if scripts/codeos-review.sh review "${feature}" "${stage}" "${paths[@]}"; then
+  rm -f "${req}"                                  # consume the sentinel ONLY on success
+fi
 ```
 
 ## Appendix B — Rejected / Deferred — Not Approved for Implementation
