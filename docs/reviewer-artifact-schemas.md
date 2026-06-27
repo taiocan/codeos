@@ -24,6 +24,14 @@ Normative v0 shapes for the on-disk artifacts produced by `scripts/codeos-review
 | `provenance_integrity` | `OK` \| `CONTRADICTION` |
 | booleans | `true` \| `false` |
 
+**Coverage-state precedence (single value, most severe wins).** A review may have several
+degradations at once; exactly one `coverage_state` is recorded, chosen in this order:
+`EMPTY_PACKET` > `CRITICAL_OMISSION` > `SECRET_REDACTION` > `PARTIAL_COVERAGE` >
+`FULL_COVERAGE`. `effective_concern` is then derived from `codex_concern`:
+`EMPTY_PACKET`/`CRITICAL_OMISSION` force `DO NOT ADVANCE`; `SECRET_REDACTION`/`PARTIAL_COVERAGE`
+downgrade only `NO OBJECTION` → `CHANGES ADVISED`; a `CONTRADICTION` provenance integrity
+overrides all of these to `DO NOT ADVANCE`.
+
 ## 1. Review packet (text sent to Codex; canonical copy under `reviews/codex/packets/`)
 
 Required structure — a `Critically assess:` line, then:
