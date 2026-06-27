@@ -226,9 +226,10 @@ build_packet() {
   PACKET_SECRET_FLAG="${secret_flag}"
   PACKET_WORKSPACE_DIRTY="${workspace_dirty}"
   PACKET_INTEGRITY="${integrity}"
+  local dirty_suffix=""; [[ ${workspace_dirty} -eq 1 ]] && dirty_suffix=" +workspace"
   PACKET_DIFF_HASH="$(sha256_str "${redacted_diff}")"
   PACKET_BASE_SHA="${base_sha:-(uncommitted artifact)}"
-  PACKET_REVIEW_SHA="${review_sha}$([[ ${workspace_dirty} -eq 1 ]] && echo ' +workspace')"
+  PACKET_REVIEW_SHA="${review_sha}${dirty_suffix}"
   PACKET_BRANCH="${branch}"
 
   # --- stage-specific checks + expected output (lightweight, inline) ---
