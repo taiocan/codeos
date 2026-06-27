@@ -12,6 +12,7 @@
 |---|---|---|---|---|---|
 | — | 0001-claude-split | self-dev-governance + downstream-doctrine | 4-Reconcile | — | COMPLETE |
 | backlog/doc-consistency-doctrine-rename | 0002-doc-consistency-rename | documentation | 4-Reconcile | — | COMPLETE |
+| — (whole-backlog planning) | 0003-implementation-roadmap | backlog-only / self-dev planning | 4-Reconcile | — | COMPLETE |
 
 <!--
 Loop step : 1-Intent / 2-Acceptance / 3-Implement / 4-Reconcile / —
