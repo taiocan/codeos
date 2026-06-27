@@ -68,7 +68,7 @@ File: `reviews/codex/<ts>-<feature>-stage-<N>-<sha>.md`. Opens with a `---` YAML
 | `feature` | string | |
 | `stage` | integer | |
 | `branch` | string | |
-| `base_commit` | string | git SHA, or `(uncommitted artifact)` |
+| `base_commit` | string | git SHA, or `(no base pin)` when no stage-start was recorded (review pins to `review_commit`; approvable only under the standard guard) |
 | `review_commit` | string | git SHA — **machine-pure** (no suffix); the dirty bit is `workspace_dirty` |
 | `artifacts` | list of `{path, sha256}` | one entry per **shown** artifact; may be empty only for `CRITICAL_OMISSION`/`EMPTY_PACKET` |
 | `diff_hash` | string (sha256) | |
@@ -77,7 +77,7 @@ File: `reviews/codex/<ts>-<feature>-stage-<N>-<sha>.md`. Opens with a `---` YAML
 | `workspace_dirty` | bool | |
 | `redaction_count` | integer | |
 | `secret_redaction` | bool | |
-| `excluded_paths` | string | space-separated; may be `""` |
+| `excluded_paths` | list of strings | YAML list (`[]` when none); each entry names a withheld/redacted item, e.g. `diff:<path> (path/size excluded)`, `artifact:<path> (MISSING\|EXCLUDED_SIZE\|SHOWN_REDACTED)` |
 | `reviewed_packet` | string | `packets/<file>.packet.txt` |
 | `reviewed_packet_sha256` | string (sha256) | |
 | `reviewer` | string | e.g. `codex (session <uuid>)` |
@@ -107,7 +107,7 @@ Required lines:
 
 ```
 ## <ISO ts> REVIEW — <feature> — Stage <N>
-Base: <sha|(uncommitted artifact)>  Review: <sha>  Branch: <branch>
+Base: <sha|(no base pin)>  Review: <sha>  Branch: <branch>
 Diff-hash: <sha256>
 Reviewer: codex <model> (session <uuid>)
 Codex concern: <enum>

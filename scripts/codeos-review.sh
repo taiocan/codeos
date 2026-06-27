@@ -124,6 +124,7 @@ build_packet() {
 
   # --- diff, path-excluded then content-redacted ---
   local raw_diff excluded="" filtered_diff=""
+  PACKET_EXCLUDED_ITEMS=()   # structured, lossless list of what was withheld/redacted
   if [[ -n "${base_sha}" ]]; then
     raw_diff="$(git diff "${base_sha}" -- . 2>/dev/null || true)"
   else
@@ -149,7 +150,7 @@ build_packet() {
         drop=1
       fi
     fi
-    if [[ ${drop} -eq 1 ]]; then excluded+="${f} "; else keep_pathspec+=( "${f}" ); fi
+    if [[ ${drop} -eq 1 ]]; then excluded+="${f} "; PACKET_EXCLUDED_ITEMS+=("diff:${f} (path/size excluded)"); else keep_pathspec+=( "${f}" ); fi
   done
 
   if [[ ${#keep_pathspec[@]} -gt 0 ]]; then
@@ -169,6 +170,7 @@ build_packet() {
     secret_flag=1
     redaction_count=$(( redaction_count + $(grep -c "\[REDACTED" <<<"${redacted_diff}" || true) ))
     excluded+="(secret-like diff content redacted) "
+    PACKET_EXCLUDED_ITEMS+=("diff: secret-like content redacted")
   fi
   [[ -n "${excluded}" ]] && path_excluded=1   # path/size diff exclusions recorded above
 
@@ -179,11 +181,11 @@ build_packet() {
   for a in "${artifacts[@]}"; do
     if [[ ! -f "${a}" ]]; then
       artifacts_block+="  --- ${a} (MISSING — not shown) ---"$'\n\n'
-      PACKET_ARTIFACT_EXCLUDED=1; excluded+="${a}(missing) "; continue
+      PACKET_ARTIFACT_EXCLUDED=1; excluded+="${a}(missing) "; PACKET_EXCLUDED_ITEMS+=("artifact:${a} (MISSING)"); continue
     fi
     if [[ "$(wc -c < "${a}")" -gt ${SIZE_LIMIT_BYTES} ]]; then
       artifacts_block+="  --- ${a} (EXCLUDED: over size limit — not shown) ---"$'\n\n'
-      PACKET_ARTIFACT_EXCLUDED=1; excluded+="${a}(oversize) "; continue
+      PACKET_ARTIFACT_EXCLUDED=1; excluded+="${a}(oversize) "; PACKET_EXCLUDED_ITEMS+=("artifact:${a} (EXCLUDED_SIZE)"); continue
     fi
     raw="$(cat "${a}")"
     redacted="$(printf '%s\n' "${raw}" | redact_secrets)"
@@ -191,6 +193,7 @@ build_packet() {
       secret_flag=1
       redaction_count=$(( redaction_count + $(grep -c "\[REDACTED" <<<"${redacted}" || true) ))
       excluded+="${a}(secret redacted) "
+      PACKET_EXCLUDED_ITEMS+=("artifact:${a} (SHOWN_REDACTED)")
     fi
     artifacts_block+="  --- ${a} (sha256: $(sha256_of "${a}")) ---"$'\n'
     artifacts_block+="$(printf '%s\n' "${redacted}" | sed 's/^/    /')"$'\n\n'
@@ -230,7 +233,7 @@ build_packet() {
   PACKET_WORKSPACE_DIRTY="${workspace_dirty}"
   PACKET_INTEGRITY="${integrity}"
   PACKET_DIFF_HASH="$(sha256_str "${redacted_diff}")"
-  PACKET_BASE_SHA="${base_sha:-(uncommitted artifact)}"
+  PACKET_BASE_SHA="${base_sha:-(no base pin)}"   # no stage-start recorded; review pins to review_commit
   PACKET_REVIEW_SHA="${review_sha}"   # machine-pure SHA; the dirty bit lives in workspace_dirty
   PACKET_BRANCH="${branch}"
 
@@ -487,7 +490,11 @@ cmd_review() {
     echo "  workspace_dirty: $([[ ${PACKET_WORKSPACE_DIRTY} -eq 1 ]] && echo true || echo false)"
     echo "  redaction_count: ${PACKET_REDACTION_COUNT}"
     echo "  secret_redaction: $([[ ${PACKET_SECRET_FLAG} -eq 1 ]] && echo true || echo false)"
-    echo "  excluded_paths: \"${PACKET_EXCLUDED}\""
+    if [[ ${#PACKET_EXCLUDED_ITEMS[@]} -eq 0 ]]; then
+      echo "  excluded_paths: []"
+    else
+      echo "  excluded_paths:"; printf '    - "%s"\n' "${PACKET_EXCLUDED_ITEMS[@]}"
+    fi
     echo "  reviewed_packet: packets/$(basename "${packet_saved}")"
     echo "  reviewed_packet_sha256: ${packet_hash}"
     echo "  reviewer: \"codex (session ${REVIEW_SESSION})\""

@@ -119,18 +119,24 @@ recorded as `workspace_dirty: true`. If the base and review SHA are identical ye
 *and the tree is clean* — a self-contradiction that means the reviewed state cannot be trusted
 — the integrity state is `CONTRADICTION` and the effective concern is forced to
 **DO NOT ADVANCE**, ahead of any coverage- or Codex-based verdict. Malformed provenance state
-(a stage-start file with no valid base commit, or a session file with no session id) is
-**fail-closed**: the script aborts rather than silently continuing with an empty value.
+(a stage-start file that *exists* but has no valid base commit, or a session file with no
+session id) is **fail-closed**: the script aborts rather than silently continuing with an empty
+value. When **no** stage-start file exists, that is a distinct valid mode: `base_commit` is
+recorded as `(no base pin)` and the review pins to `review_commit` (HEAD). Approval in this
+mode still requires the standard guard (HEAD matches, tree clean, not workspace-dirty), so a
+no-base-pin review is approvable only when it corresponds to a clean committed state.
 
 ## 5. Safety — secret + oversized-diff filtering
 
-Two layers before anything reaches Codex, applied to **both the diff and the requested
-artifact contents**:
+Two layers before anything reaches Codex, but they apply differently to the diff and to
+requested artifacts (see the per-artifact visibility model in `reviewer-artifact-schemas.md`):
 1. **Path exclusion** — `.env*`, `*.pem`, `*.key`, `secrets/*`, `credentials/*`, raw runtime
-   logs, files over a size threshold.
+   logs, files over a size threshold. **This applies to the diff only.** A *requested* artifact
+   is never dropped by a secret path rule — it is `SHOWN`, `SHOWN_REDACTED`, or (only when
+   missing/oversize) `MISSING` / `EXCLUDED_SIZE`.
 2. **Content redaction** — secret-like values (`OPENAI_API_KEY=`, `ANTHROPIC_API_KEY=`,
-   `AWS_SECRET_ACCESS_KEY`, `BEGIN … PRIVATE KEY`, `password=`/`token=`/`secret=`) are
-   redacted.
+   `AWS_SECRET_ACCESS_KEY`, `BEGIN … PRIVATE KEY`, `password=`/`token=`/`secret=`) are redacted
+   in place, in both the diff and requested artifacts.
 
 **A coverage gap is a decision downgrade, not a footnote.** Filtering protects secrets but
 shrinks what the reviewer saw, so each review is classified into an explicit **coverage
