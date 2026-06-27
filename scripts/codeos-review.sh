@@ -232,12 +232,13 @@ build_packet() {
   local contradiction=0
   [[ -n "${base_sha}" && "${base_sha}" == "${review_sha}" && ${nonempty_diff} -eq 1 && ${workspace_dirty} -eq 0 ]] && contradiction=1
 
+  # provenance_integrity is the BINDING MODE only (orthogonal to coverage):
+  #   COMMIT_BOUND | WORKSPACE_BOUND | UNBOUND. Coverage degradation (redaction/partial) stays
+  #   in coverage_state and drives a decision-time WAIVER, not the provenance value.
   local provenance
   case "${state}" in
-    EMPTY_PACKET|CRITICAL_OMISSION) provenance="UNBOUND" ;;
-    SECRET_REDACTION)               provenance="REDACTED_BOUND" ;;
-    PARTIAL_COVERAGE)               provenance="PARTIAL_BOUND" ;;
-    FULL_COVERAGE)                  provenance=$([[ ${workspace_dirty} -eq 1 ]] && echo "WORKSPACE_BOUND" || echo "COMMIT_BOUND") ;;
+    EMPTY_PACKET|CRITICAL_OMISSION) provenance="UNBOUND" ;;   # reviewer did not see required evidence
+    *)                              provenance=$([[ ${workspace_dirty} -eq 1 ]] && echo "WORKSPACE_BOUND" || echo "COMMIT_BOUND") ;;
   esac
   [[ ${contradiction} -eq 1 ]] && provenance="UNBOUND"
 
@@ -304,7 +305,8 @@ build_packet() {
     echo "  Give your full critical assessment first (operational, ranked by severity, with"
     echo "  concrete better-designs; separate required fixes from optional ones; end with a"
     echo "  clear judgement). Then on the LAST two lines emit exactly:"
-    echo "    LOG SUMMARY: <NO OBJECTION | CHANGES ADVISED | DO NOT ADVANCE> — <single most important point>"
+    echo "    LOG SUMMARY: <NO OBJECTION | CHANGES ADVISED | DO NOT ADVANCE | UNCLASSIFIED> — <single most important point>"
+    echo "      (use UNCLASSIFIED if you genuinely cannot classify the artifact safely)"
     echo "    EVIDENCE: <A|B|C|D|E>   (optional)"
   } > "${PACKET_FILE}"
 }
@@ -477,7 +479,7 @@ cmd_review() {
     [[ -n "${pair#*=}" ]] || _v_err+=" missing:${pair%%=*}"
   done
   in_list "${PACKET_COVERAGE_STATE}" "FULL_COVERAGE|PARTIAL_COVERAGE|SECRET_REDACTION|CRITICAL_OMISSION|EMPTY_PACKET" || _v_err+=" enum:coverage_state"
-  in_list "${PACKET_PROVENANCE}" "COMMIT_BOUND|WORKSPACE_BOUND|REDACTED_BOUND|PARTIAL_BOUND|UNBOUND" || _v_err+=" enum:provenance_integrity"
+  in_list "${PACKET_PROVENANCE}" "COMMIT_BOUND|WORKSPACE_BOUND|UNBOUND" || _v_err+=" enum:provenance_integrity"
   in_list "${codex_concern}"     "NO OBJECTION|CHANGES ADVISED|DO NOT ADVANCE|UNCLASSIFIED" || _v_err+=" enum:codex_concern"
   in_list "${effective_concern}" "NO OBJECTION|CHANGES ADVISED|DO NOT ADVANCE|UNCLASSIFIED" || _v_err+=" enum:effective_concern"
   in_list "${evidence}" "A|B|C|D|E|not reported" || _v_err+=" enum:evidence"
@@ -612,27 +614,42 @@ cmd_decision() {
   fi
 
   # Decision-integrity guard, per the authoritative matrix (docs/reviewer-artifact-schemas.md).
-  # APPROVE_STAGE eligibility depends on the recorded provenance_integrity mode.
+  # Provenance (binding mode) and coverage (degradation) are ORTHOGONAL:
+  #   - UNBOUND / CRITICAL_OMISSION / EMPTY_PACKET  -> HARD STOP, not --force'able (reviewer
+  #     never saw the required evidence; approval would not trace to reviewed artifacts).
+  #   - COMMIT_BOUND / WORKSPACE_BOUND              -> reverify the binding; then any coverage
+  #     degradation (SECRET_REDACTION / PARTIAL_COVERAGE) requires an explicit waiver via --force.
   local override_note="" rollback_note=""
   if [[ "${decision}" == "APPROVE_STAGE" ]]; then
     local reasons=() label="OVERRIDE"
     if [[ -z "${latest}" ]]; then
-      reasons+=("no review on record for ${feature} stage ${stage}"); label="UNBOUND OVERRIDE"
+      [[ ${force} -eq 1 ]] || { echo "refused: APPROVE_STAGE — no review on record for ${feature} stage ${stage}; run 'review' first." >&2; exit 4; }
+      override_note=" [UNREVIEWED OVERRIDE]"
     else
-      local prov rev_recorded dirty_recorded head_now tree_dirty_now=0
+      local prov cov rev_recorded dirty_recorded head_now tree_dirty_now=0
       prov="$(grep -E '^  provenance_integrity:' "${latest}" | head -1 | awk '{print $2}' || true)"
+      cov="$(grep -E '^  coverage_state:' "${latest}" | head -1 | awk '{print $2}' || true)"
       rev_recorded="$(grep -E '^  review_commit:' "${latest}" | head -1 | sed -E 's/.*:[[:space:]]*([0-9a-fA-F]+).*/\1/' || true)"
       dirty_recorded="$(grep -E '^  workspace_dirty:' "${latest}" | head -1 | awk '{print $2}' || true)"
       head_now="$(git rev-parse HEAD)"
       git diff --quiet HEAD -- . ':(exclude)reviews' ':(exclude).codeos-state' 2>/dev/null || tree_dirty_now=1
+
+      # HARD STOP — not overridable. The reviewer did not see the required evidence.
+      if [[ "${prov}" == "UNBOUND" ]] || in_list "${cov}" "CRITICAL_OMISSION|EMPTY_PACKET"; then
+        echo "refused: APPROVE_STAGE is NOT permitted — the reviewer did not see the required evidence (${cov} / ${prov})." >&2
+        echo "  This is a hard stop and cannot be --force'd. Resolve the omission and re-run 'review'." >&2
+        exit 4
+      fi
+
+      # provenance binding reverification
       case "${prov}" in
         COMMIT_BOUND)
           [[ "${rev_recorded}" == "${head_now}" ]] || reasons+=("HEAD ${head_now:0:12} != reviewed commit ${rev_recorded:0:12}")
           [[ ${tree_dirty_now} -eq 0 ]]            || reasons+=("working tree is dirty now (review was COMMIT_BOUND/clean)")
           [[ ${changed} -eq 0 ]]                   || reasons+=("a reviewed artifact changed since the review")
-          label="STALE OVERRIDE"; rollback_note="Rollback: exact git commit ${rev_recorded}" ;;
+          [[ ${#reasons[@]} -eq 0 ]] && rollback_note="Rollback: exact git commit ${rev_recorded}"
+          label="STALE OVERRIDE" ;;
         WORKSPACE_BOUND)
-          # reverify the EXACT reviewed workspace: artifact SHA + diff hash + packet SHA + dirty state
           local rec_diff rec_pkt rec_arts=()
           rec_diff="$(grep -E '^  diff_hash:' "${latest}" | head -1 | awk '{print $2}' || true)"
           rec_pkt="$(grep -E '^  reviewed_packet_sha256:' "${latest}" | head -1 | awk '{print $2}' || true)"
@@ -642,25 +659,25 @@ cmd_decision() {
           [[ "${RV_DIFF_HASH}" == "${rec_diff}" ]] || reasons+=("diff hash changed since review (workspace moved)")
           [[ "${RV_PACKET_SHA}" == "${rec_pkt}" ]] || reasons+=("packet hash changed since review (reviewed bytes differ)")
           { [[ ${RV_WORKSPACE_DIRTY} -eq 1 && "${dirty_recorded}" == "true" ]] || [[ ${RV_WORKSPACE_DIRTY} -eq 0 && "${dirty_recorded}" == "false" ]]; } || reasons+=("workspace_dirty state changed since review")
-          label="WORKSPACE OVERRIDE"; rollback_note="Rollback: NOT exact until a stage commit is made (workspace-bound review)" ;;
-        REDACTED_BOUND)
-          reasons+=("REDACTED_BOUND — requires an explicit human security waiver"); label="SECURITY WAIVER" ;;
-        PARTIAL_BOUND)
-          reasons+=("PARTIAL_BOUND — a supplemental path was excluded; requires a conscious coverage waiver"); label="COVERAGE WAIVER" ;;
-        *)
-          reasons+=("${prov:-UNBOUND} — critical omission / empty / unverifiable review is not eligible"); label="UNBOUND OVERRIDE" ;;
+          [[ ${#reasons[@]} -eq 0 ]] && rollback_note="Rollback: NOT exact until a stage commit is made (workspace-bound review)"
+          label="WORKSPACE OVERRIDE" ;;
       esac
-    fi
-    if [[ ${#reasons[@]} -gt 0 ]]; then
-      if [[ ${force} -eq 0 ]]; then
-        echo "refused: APPROVE_STAGE not eligible under the provenance matrix:" >&2
-        printf '  - %s\n' "${reasons[@]}" >&2
-        echo "  re-run 'review' on the current state, or pass --force \"<reason>\" to record a ${label}." >&2
-        [[ -n "${verify_lines}" ]] && printf '%s' "${verify_lines}" >&2
-        exit 4
+
+      # coverage waiver (orthogonal) — the reviewer DID see the content but it was degraded.
+      [[ "${cov}" == "SECRET_REDACTION" ]] && { reasons+=("SECRET_REDACTION — requires an explicit human security waiver"); label="SECURITY WAIVER"; }
+      [[ "${cov}" == "PARTIAL_COVERAGE" ]] && { reasons+=("PARTIAL_COVERAGE — a supplemental diff path was excluded; requires a coverage waiver"); label="COVERAGE WAIVER"; }
+
+      if [[ ${#reasons[@]} -gt 0 ]]; then
+        if [[ ${force} -eq 0 ]]; then
+          echo "refused: APPROVE_STAGE not eligible:" >&2
+          printf '  - %s\n' "${reasons[@]}" >&2
+          echo "  re-run 'review' on the current state, or pass --force \"<reason>\" to record a ${label}." >&2
+          [[ -n "${verify_lines}" ]] && printf '%s' "${verify_lines}" >&2
+          exit 4
+        fi
+        local joined; joined="$(printf '%s; ' "${reasons[@]}")"
+        override_note=" [${label} — ${joined%; }]"
       fi
-      local joined; joined="$(printf '%s; ' "${reasons[@]}")"
-      override_note=" [${label} — ${joined%; }]"
     fi
   fi
 

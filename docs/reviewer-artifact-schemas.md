@@ -23,42 +23,61 @@ disagree, **this document wins**.
 | `evidence` | `A` \| `B` \| `C` \| `D` \| `E` \| `not reported` |
 | `human decision` | `APPROVE STAGE` \| `REQUEST CHANGES` \| `STOP` (CLI tokens: `APPROVE_STAGE` \| `REQUEST_CHANGES` \| `STOP`) |
 | `coverage_state` | `FULL_COVERAGE` \| `PARTIAL_COVERAGE` \| `SECRET_REDACTION` \| `CRITICAL_OMISSION` \| `EMPTY_PACKET` |
-| `provenance_integrity` | `COMMIT_BOUND` \| `WORKSPACE_BOUND` \| `REDACTED_BOUND` \| `PARTIAL_BOUND` \| `UNBOUND` |
+| `provenance_integrity` | `COMMIT_BOUND` \| `WORKSPACE_BOUND` \| `UNBOUND` |
 | artifact `visibility` | `shown` \| `shown_redacted` \| `oversize_omitted` \| `missing` |
 | booleans | `true` \| `false` |
 
-Concern severity order (used to compute the effective concern floor):
+Concern severity order (used for the effective-concern floor):
 `NO OBJECTION` < `CHANGES ADVISED` < `UNCLASSIFIED` < `DO NOT ADVANCE`.
 
-`coverage_state` is a single value — most severe wins, in the order
-`EMPTY_PACKET` > `CRITICAL_OMISSION` > `SECRET_REDACTION` > `PARTIAL_COVERAGE` > `FULL_COVERAGE`.
+`UNCLASSIFIED` is a **first-class** verdict: the reviewer may emit it in `LOG SUMMARY` to mean
+"I cannot classify this safely", and the pipeline also assigns it to malformed/unparseable
+output.
 
 ## THE AUTHORITATIVE MATRIX
 
-Every review resolves to exactly one row. `effective_concern` = the more severe of the Codex
-concern and the row's **minimum**. A self-contradictory state (base == review SHA, non-empty
-diff, clean tree) is treated as `UNBOUND` (row 7 semantics).
+**Two orthogonal axes.** `provenance_integrity` is the *binding mode* (is the reviewed state a
+durable, re-verifiable thing?). `coverage_state` is *how complete the evidence was*. They are
+recorded independently and combine to decide approval eligibility.
 
-| # | Input condition | Packet rendering | `coverage_state` | `provenance_integrity` | Min `effective_concern` | Approval eligibility | Rollback meaning |
-|---|---|---|---|---|---|---|---|
-| 1 | All requested artifacts shown fully; no redaction; clean workspace; `review_commit` contains the reviewed content | every artifact `shown`; full diff | `FULL_COVERAGE` | `COMMIT_BOUND` | Codex concern as emitted | **Eligible** | exact git commit (`review_commit`) |
-| 2 | Same as 1 but the reviewed artifact/workspace is **uncommitted**; exact artifact text, artifact SHA, diff hash, packet SHA, `workspace_dirty` all saved | every artifact `shown`; full diff | `FULL_COVERAGE` | `WORKSPACE_BOUND` | Codex concern as emitted | **Eligible** *iff* the decision command re-verifies artifact SHA + diff hash + packet SHA + `workspace_dirty` still match | NOT exact until a stage commit is made; the log must say *workspace-bound* |
-| 3 | A requested artifact exists; a secret-like value is redacted in place; artifact record preserved | artifact `shown_redacted` | `SECRET_REDACTION` | `REDACTED_BOUND` | `CHANGES ADVISED` | Requires an explicit human **security waiver** (`--force "<reason>"`) | depends on commit/workspace mode |
-| 4 | A requested artifact path does not exist or cannot be read | artifact `missing` (no contents) | `CRITICAL_OMISSION` | `UNBOUND` | `DO NOT ADVANCE` | **Not eligible** | none (reviewer never saw it) |
-| 5 | A requested artifact exceeds the packet size threshold | artifact `oversize_omitted` (no contents) | `CRITICAL_OMISSION` | `UNBOUND` (unless separately hashed and manually reviewed) | `DO NOT ADVANCE` | **Not eligible** without `--force` + reason | none until separately captured |
-| 6 | All requested artifacts shown, but some **non-requested / supplemental** diff path was excluded | artifacts shown; diff partial | `PARTIAL_COVERAGE` | `PARTIAL_BOUND` | `CHANGES ADVISED` | Eligible only with a conscious **coverage waiver** (`--force`) if the excluded path is relevant | per commit/workspace mode |
-| 7 | No requested artifact content shown and no useful diff | empty | `EMPTY_PACKET` | `UNBOUND` | `UNCLASSIFIED` | **Not eligible** | none |
+### Axis A — `coverage_state` → packet rendering, effective-concern floor, waiver
 
-**Path exclusion vs requested artifacts.** Secret *path* rules (`.env*`, `*.pem`, `secrets/*`,
-size limit, …) apply to **non-requested diff paths and incidental files** only. A *requested*
-artifact is always represented in the artifact section — `shown`, `shown_redacted`,
-`oversize_omitted`, or `missing` — never silently dropped.
+`coverage_state` is a single value (most severe wins):
+`EMPTY_PACKET` > `CRITICAL_OMISSION` > `SECRET_REDACTION` > `PARTIAL_COVERAGE` > `FULL_COVERAGE`.
+`effective_concern` = the more severe of the Codex concern and the **floor** below.
 
-**Two provenance modes for approval.** `COMMIT_BOUND` means the reviewed state is a clean Git
-commit (rollback is exact). `WORKSPACE_BOUND` means the reviewed artifact/workspace was
-uncommitted; it is approvable, but only if the decision command re-verifies the saved artifact
-SHA, diff hash, packet SHA, and `workspace_dirty` state still match — and the decision log must
-state that rollback is **not exact until a stage commit is made**.
+| `coverage_state` | Condition / packet rendering | Min `effective_concern` (floor) | Eligibility effect |
+|---|---|---|---|
+| `FULL_COVERAGE` | every requested artifact `shown`; nothing redacted/excluded | none (Codex concern as emitted) | none |
+| `SECRET_REDACTION` | a requested artifact `shown_redacted` (secret value blanked in place) | `CHANGES ADVISED` | requires a **security waiver** (`--force`) |
+| `PARTIAL_COVERAGE` | a non-requested/supplemental diff path was path/size-excluded | `CHANGES ADVISED` | requires a **coverage waiver** (`--force`) |
+| `CRITICAL_OMISSION` | a requested artifact is `missing` or `oversize_omitted` (not shown) | `DO NOT ADVANCE` | **HARD STOP** (see Axis B) |
+| `EMPTY_PACKET` | no requested artifact content and no useful diff | `UNCLASSIFIED` | **HARD STOP** |
+
+Secret *path* rules (`.env*`, `*.pem`, `secrets/*`, size limit, …) apply to **non-requested
+diff paths and incidental files only**. A *requested* artifact is never silently dropped — it is
+`shown`, `shown_redacted`, `oversize_omitted`, or `missing`.
+
+### Axis B — `provenance_integrity` → reverification, rollback, eligibility
+
+| `provenance_integrity` | When | Decision-time reverification | Rollback meaning | Approvable? |
+|---|---|---|---|---|
+| `COMMIT_BOUND` | coverage not critical/empty; clean workspace; `review_commit` holds the reviewed content | `HEAD == review_commit`, tree clean, artifacts hash-match | exact git commit (`review_commit`) | yes (subject to Axis-A waiver) |
+| `WORKSPACE_BOUND` | coverage not critical/empty; reviewed content uncommitted; artifact text + SHA + diff hash + packet SHA + `workspace_dirty` saved | re-verify artifact SHA **and** diff hash **and** packet SHA **and** `workspace_dirty` still match | NOT exact until a stage commit is made (logged as workspace-bound) | yes (subject to Axis-A waiver) |
+| `UNBOUND` | `CRITICAL_OMISSION` / `EMPTY_PACKET`, or a self-contradictory state (base == review SHA, non-empty diff, clean tree) | n/a | none | **no — HARD STOP, not `--force`'able** |
+
+### Approval-eligibility rule (single source of truth)
+
+`APPROVE_STAGE` is appended **iff**:
+1. `provenance_integrity != UNBOUND` and `coverage_state ∉ {CRITICAL_OMISSION, EMPTY_PACKET}` —
+   otherwise it is a **hard stop** that **`--force` cannot override** (approval must trace to
+   evidence the reviewer actually saw); **and**
+2. the Axis-B reverification for the binding mode passes (or `--force` records a
+   `[STALE OVERRIDE]` / `[WORKSPACE OVERRIDE]`); **and**
+3. any Axis-A waiver is supplied — `SECRET_REDACTION` needs `--force` (`[SECURITY WAIVER]`),
+   `PARTIAL_COVERAGE` needs `--force` (`[COVERAGE WAIVER]`).
+
+`REQUEST_CHANGES` / `STOP` are always recorded.
 
 ---
 
@@ -132,7 +151,7 @@ Human decision: (append with: codeos-review.sh decision ...)
 ```
 ## <ISO ts> HUMAN DECISION — <feature> — Stage <N>
 Commit reviewed: <sha>
-Decision: <APPROVE_STAGE|REQUEST_CHANGES|STOP>[ [<STALE|WORKSPACE|SECURITY WAIVER|COVERAGE WAIVER|UNBOUND> OVERRIDE — ...]]
+Decision: <APPROVE_STAGE|REQUEST_CHANGES|STOP>[ [<STALE OVERRIDE|WORKSPACE OVERRIDE|SECURITY WAIVER|COVERAGE WAIVER|UNREVIEWED OVERRIDE> — ...]]
 Reason/next: <text>
 [Verified against: <assessment path>]
 [Rollback: exact git commit <sha> | NOT exact until a stage commit is made (workspace-bound review)]

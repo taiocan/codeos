@@ -100,12 +100,14 @@ JSON Schema validation is deferred until pilot use shows it is needed.
   **re-verifies the reviewed state at decision time** and records MATCH / CHANGED per artifact.
   **`APPROVE_STAGE` eligibility is governed entirely by the authoritative matrix in
   [`reviewer-artifact-schemas.md`](reviewer-artifact-schemas.md)** (its *Approval eligibility*
-  column): a `COMMIT_BOUND` review is eligible when HEAD still equals `review_commit`, the tree
-  is clean, and artifacts hash-match; a `WORKSPACE_BOUND` review is eligible only when the
-  decision re-verifies artifact SHA + diff hash + packet SHA + `workspace_dirty`; redacted /
-  partial / unbound modes need an explicit waiver. An ineligible mode is **refused** (nothing
-  logged) unless `--force "<reason>"` records the named override/waiver; `REQUEST_CHANGES` /
-  `STOP` always record. The REVIEW entry's SHAs + the appended HUMAN DECISION entry (with its
+  rule): a `COMMIT_BOUND` review is eligible when HEAD still equals `review_commit`, the tree is
+  clean, and artifacts hash-match; a `WORKSPACE_BOUND` review is eligible only when the decision
+  re-verifies artifact SHA + diff hash + packet SHA + `workspace_dirty`. **`UNBOUND` /
+  `CRITICAL_OMISSION` / `EMPTY_PACKET` are hard stops that `--force` cannot override** — approval
+  must trace to evidence the reviewer actually saw. `SECRET_REDACTION` and `PARTIAL_COVERAGE` are
+  *not* hard stops but require an explicit `--force` waiver (`[SECURITY WAIVER]` /
+  `[COVERAGE WAIVER]`); a provenance mismatch requires a `[STALE OVERRIDE]` / `[WORKSPACE
+  OVERRIDE]`. `REQUEST_CHANGES` / `STOP` always record. The REVIEW entry's SHAs + the appended HUMAN DECISION entry (with its
   `Rollback:` line) are what let a human later identify the last sound "OK point" to return to.
   Deeper provenance binding (durable workspace snapshots, structured decision ledgers) is
   tracked in `backlog/reviewer-decision-integrity.md`.
