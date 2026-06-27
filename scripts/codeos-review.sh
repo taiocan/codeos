@@ -228,8 +228,10 @@ build_packet() {
   # there is no provenance-integrity matrix and no approval gating. The deeper binding model
   # (COMMIT_BOUND/WORKSPACE_BOUND reverification, rollback) is deferred — see
   # backlog/reviewer-decision-integrity.md.
+  # use status --porcelain (not diff --quiet) so untracked files also count as dirty — untracked
+  # artifacts are a normal review case in this pilot, so missing them would log false-clean context.
   local workspace_dirty=0
-  git diff --quiet HEAD -- . ':(exclude)reviews' ':(exclude).codeos-state' 2>/dev/null || workspace_dirty=1
+  [[ -n "$(git status --porcelain=v1 --untracked-files=all -- . ':(exclude)reviews' ':(exclude).codeos-state' 2>/dev/null)" ]] && workspace_dirty=1
 
   PACKET_EXCLUDED="${excluded}"
   PACKET_COVERAGE="${coverage}"
