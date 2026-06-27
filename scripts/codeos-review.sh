@@ -504,7 +504,11 @@ cmd_review() {
 
 # --- decision (append-only human entry) -------------------------------------
 cmd_decision() {
-  local feature="$1" stage="$2" decision="$3" reason="${4:-}"
+  local feature="$1" stage="$2" decision="$3"; shift 3
+  local reason="" force=0
+  while [[ $# -gt 0 ]]; do
+    case "$1" in --force) force=1; shift ;; *) reason="$1"; shift ;; esac
+  done
   case "${decision}" in APPROVE_STAGE|REQUEST_CHANGES|STOP) ;; *)
     echo "decision must be APPROVE_STAGE | REQUEST_CHANGES | STOP" >&2; exit 2 ;; esac
   [[ -f "${REVIEW_LOG}" ]] || init_log
@@ -531,11 +535,23 @@ cmd_decision() {
     done < <(sed -n '/^  artifacts:/,/^  diff_hash:/p' "${latest}")
   fi
 
+  # Stale-approval invariant: a CHANGED artifact means the latest review no longer describes
+  # the tree. APPROVE_STAGE is refused (nothing logged) unless --force records a stale override.
+  if [[ "${decision}" == "APPROVE_STAGE" && ${changed} -eq 1 && ${force} -eq 0 ]]; then
+    echo "refused: APPROVE_STAGE against a CHANGED reviewed artifact — run 'review' again first," >&2
+    echo "         or pass --force \"<reason>\" to record a stale-override approval." >&2
+    printf '%s' "${verify_lines}" >&2
+    exit 4
+  fi
+  local stale_note=""
+  [[ "${decision}" == "APPROVE_STAGE" && ${changed} -eq 1 && ${force} -eq 1 ]] && \
+    stale_note=" [STALE OVERRIDE — approved against a CHANGED artifact]"
+
   {
     echo
     echo "## $(now_iso) HUMAN DECISION — ${feature} — Stage ${stage}"
     echo "Commit reviewed: ${sha}"
-    echo "Decision: ${decision}"
+    echo "Decision: ${decision}${stale_note}"
     echo "Reason/next: ${reason}"
     [[ -n "${latest}" ]] && echo "Verified against: ${latest}"
     [[ -n "${verify_lines}" ]] && { echo "Artifact integrity:"; printf '%s' "${verify_lines}"; }

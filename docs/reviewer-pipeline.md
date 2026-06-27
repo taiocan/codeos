@@ -93,9 +93,10 @@ session instead of resuming under a different parser/behavior.
   via `codeos-review.sh decision …` — prior entries are never edited. That command also
   **re-hashes the reviewed artifacts at decision time** and records MATCH / CHANGED per
   artifact. A **CHANGED** artifact means the review no longer describes the file in the tree:
-  the decision is still recorded (append-only) but flagged, and the rule is that a CHANGED
-  artifact requires a **fresh review before approval** — an approval must not rest on a stale
-  assessment. The REVIEW entry's base/review SHA + the appended HUMAN DECISION entry are what
+  a CHANGED artifact requires a **fresh review before approval**. This is *enforced*, not just
+  advised: `decision APPROVE_STAGE` is **refused** (nothing logged) when a reviewed artifact is
+  CHANGED — you must re-run `review`, or pass `--force "<reason>"` to record an explicit
+  `[STALE OVERRIDE]` approval. `REQUEST_CHANGES` / `STOP` are always recorded. The REVIEW entry's base/review SHA + the appended HUMAN DECISION entry are what
   let a human later identify the last sound "OK point" (commit/branch) to return to.
 
 **Provenance integrity.** The packet labels its reviewed "second state" honestly: a tree with
@@ -175,7 +176,7 @@ exactly this shape.
 | Feature-scoped session via `exec resume` | **Neutral** | Re-reads artifacts + SHA-pins every review; `--fresh` escape hatch; no cross-feature bleed |
 | Durable assessments + append-only log (no mutable fields) | **Aligned** | Mirrors `runtime_events.jsonl` + existing append-only Decision Log |
 | Advisory concern field (non-gatekeeping words) | **Neutral** | `APPROVE` reserved for the human |
-| Secret/diff filtering | **Positive** | Prevents credential leakage into the review packet |
+| Secret/diff filtering | **Positive** | Reduces common credential-leakage risk in the review packet (heuristic, not a guarantee) |
 | Automated hooks | **Risky → kept inert** | Documented (Appendix), not wired |
 | Autonomous stage approval | **Negative — violates rule #1** | Rejected/deferred (Appendix) |
 
