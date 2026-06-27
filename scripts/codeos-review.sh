@@ -229,10 +229,9 @@ build_packet() {
   PACKET_SECRET_FLAG="${secret_flag}"
   PACKET_WORKSPACE_DIRTY="${workspace_dirty}"
   PACKET_INTEGRITY="${integrity}"
-  local dirty_suffix=""; [[ ${workspace_dirty} -eq 1 ]] && dirty_suffix=" +workspace"
   PACKET_DIFF_HASH="$(sha256_str "${redacted_diff}")"
   PACKET_BASE_SHA="${base_sha:-(uncommitted artifact)}"
-  PACKET_REVIEW_SHA="${review_sha}${dirty_suffix}"
+  PACKET_REVIEW_SHA="${review_sha}"   # machine-pure SHA; the dirty bit lives in workspace_dirty
   PACKET_BRANCH="${branch}"
 
   # --- stage-specific checks + expected output (lightweight, inline) ---
@@ -280,6 +279,8 @@ build_packet() {
     printf '%s\n' "${redacted_diff}"
     echo
     echo "INSTRUCTIONS"
+    echo "  If this is a resumed session, ignore any earlier-session conclusions unless they are"
+    echo "  re-established by THIS packet; assess only the evidence above, pinned to this commit."
     echo "  Give your full critical assessment first (operational, ranked by severity, with"
     echo "  concrete better-designs; separate required fixes from optional ones; end with a"
     echo "  clear judgement). Then on the LAST two lines emit exactly:"
@@ -491,7 +492,8 @@ cmd_review() {
     echo "  reviewed_packet_sha256: ${packet_hash}"
     echo "  reviewer: \"codex (session ${REVIEW_SESSION})\""
     echo "  codex_concern: ${codex_concern}"
-    echo "  effective_concern: ${effective_concern}${coverage_note:+ (${coverage_note})}"
+    echo "  effective_concern: ${effective_concern}"
+    [[ -n "${coverage_note}" ]] && echo "  effective_concern_note: ${coverage_note}"
     echo "  evidence: ${evidence}"
     echo "---"
     echo
@@ -509,9 +511,9 @@ cmd_review() {
     echo "Diff-hash: ${PACKET_DIFF_HASH}"
     echo "Reviewer: codex default-model (session ${REVIEW_SESSION})"
     echo "Codex concern: ${codex_concern}"
-    echo "Effective concern: ${effective_concern}${coverage_note:+ — ${coverage_note}}"
+    echo "Effective concern: ${effective_concern}"
     echo "Evidence: ${evidence}"
-    echo "Coverage: ${PACKET_COVERAGE_STATE} (redactions: ${PACKET_REDACTION_COUNT}); integrity: ${PACKET_INTEGRITY}; workspace_dirty: $([[ ${PACKET_WORKSPACE_DIRTY} -eq 1 ]] && echo true || echo false)"
+    echo "Coverage: ${PACKET_COVERAGE_STATE} (redactions: ${PACKET_REDACTION_COUNT}); integrity: ${PACKET_INTEGRITY}; workspace_dirty: $([[ ${PACKET_WORKSPACE_DIRTY} -eq 1 ]] && echo true || echo false)${coverage_note:+; note: ${coverage_note}}"
     echo "Log summary: ${summary_line#LOG SUMMARY: }"
     echo "Full assessment: ${assessment_file} (sha256:${assessment_hash})"
     echo "Reviewed packet: ${packet_saved} (sha256:${packet_hash})"

@@ -37,13 +37,20 @@ overrides all of these to `DO NOT ADVANCE`.
 Required structure — a `Critically assess:` line, then:
 
 - **REVIEW CONTEXT** — required fields: `Feature`, `Stage`, `Branch`, `Base commit`,
-  `Review commit` (may carry a ` (+ uncommitted workspace changes)` suffix),
+  `Review commit` (the packet text may append a human-readable `(+ uncommitted workspace
+  changes)` marker for the reviewer; the persisted `review_commit` field is the pure SHA),
   `Current approved stage`, `Evidence coverage` (= `coverage_state`), `Provenance integrity`.
 - **DBA RULES RELEVANT TO THIS STAGE** — present.
 - **STAGE-SPECIFIC CHECKS** — present (may be the generic line for non-1–9 stages).
 - **EXPECTED STAGE OUTPUT** — present.
-- **ARTIFACTS TO REVIEW** — each artifact is either `--- <path> (sha256: <hex>) ---` + indented
-  (redacted) contents, or an exclusion marker (`MISSING`/`EXCLUDED: over size limit`).
+- **ARTIFACTS TO REVIEW** — each requested artifact has exactly one **visibility**:
+  `SHOWN` (full contents) or `SHOWN_REDACTED` (contents with secret values redacted in place) —
+  both render as `--- <path> (sha256: <hex>) ---` + indented contents; or `MISSING`; or
+  `EXCLUDED_SIZE` (over the size limit) — both render as an exclusion marker with no contents.
+  Requested artifacts are **never** dropped by the secret *path* rules (those apply to the diff
+  only); a secret inside a requested artifact yields `SHOWN_REDACTED`, not exclusion. Only
+  `MISSING` / `EXCLUDED_SIZE` force `CRITICAL_OMISSION`; `SHOWN_REDACTED` contributes to
+  `SECRET_REDACTION`.
 - **DIFF TO REVIEW** — the secret/size-filtered diff (may be empty); an exclusion/redaction
   note when any path/hunk was withheld.
 - **INSTRUCTIONS** — requests the `LOG SUMMARY:` and optional `EVIDENCE:` trailing lines.
@@ -62,7 +69,7 @@ File: `reviews/codex/<ts>-<feature>-stage-<N>-<sha>.md`. Opens with a `---` YAML
 | `stage` | integer | |
 | `branch` | string | |
 | `base_commit` | string | git SHA, or `(uncommitted artifact)` |
-| `review_commit` | string | git SHA, optional ` +workspace` suffix |
+| `review_commit` | string | git SHA — **machine-pure** (no suffix); the dirty bit is `workspace_dirty` |
 | `artifacts` | list of `{path, sha256}` | one entry per **shown** artifact; may be empty only for `CRITICAL_OMISSION`/`EMPTY_PACKET` |
 | `diff_hash` | string (sha256) | |
 | `coverage_state` | enum | |
@@ -74,8 +81,9 @@ File: `reviews/codex/<ts>-<feature>-stage-<N>-<sha>.md`. Opens with a `---` YAML
 | `reviewed_packet` | string | `packets/<file>.packet.txt` |
 | `reviewed_packet_sha256` | string (sha256) | |
 | `reviewer` | string | e.g. `codex (session <uuid>)` |
-| `codex_concern` | enum | |
-| `effective_concern` | enum | may carry a `( … )` coverage/integrity note |
+| `codex_concern` | enum | pure enum value |
+| `effective_concern` | enum | pure enum value (validated against the enum) |
+| `effective_concern_note` | string | optional; present only when a downgrade/override applied — the coverage/integrity explanation. Never part of `effective_concern` itself |
 | `evidence` | enum | |
 
 Body (after the closing `---`): the full Codex assessment text, verbatim.
@@ -99,13 +107,13 @@ Required lines:
 
 ```
 ## <ISO ts> REVIEW — <feature> — Stage <N>
-Base: <sha|(uncommitted artifact)>  Review: <sha[ +workspace]>  Branch: <branch>
+Base: <sha|(uncommitted artifact)>  Review: <sha>  Branch: <branch>
 Diff-hash: <sha256>
 Reviewer: codex <model> (session <uuid>)
 Codex concern: <enum>
-Effective concern: <enum>[ — <note>]
+Effective concern: <enum>
 Evidence: <enum>
-Coverage: <coverage_state> (redactions: <int>); integrity: <enum>; workspace_dirty: <bool>
+Coverage: <coverage_state> (redactions: <int>); integrity: <enum>; workspace_dirty: <bool>[; note: <text>]
 Log summary: <text>
 Full assessment: <path> (sha256:<hex>)
 Reviewed packet: <path> (sha256:<hex>)

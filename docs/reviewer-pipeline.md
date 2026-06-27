@@ -113,8 +113,9 @@ JSON Schema validation is deferred until pilot use shows it is needed.
   let a human later identify the last sound "OK point" (commit/branch) to return to.
 
 **Provenance integrity.** The packet labels its reviewed "second state" honestly: a tree with
-uncommitted changes is shown as `<review_sha> (+ uncommitted workspace changes)` and recorded
-as `workspace_dirty: true`. If the base and review SHA are identical yet the diff is non-empty
+uncommitted changes shows a human-readable `(+ uncommitted workspace changes)` marker in the
+packet text, while the persisted `review_commit` field stays a pure SHA and the dirty bit is
+recorded as `workspace_dirty: true`. If the base and review SHA are identical yet the diff is non-empty
 *and the tree is clean* — a self-contradiction that means the reviewed state cannot be trusted
 — the integrity state is `CONTRADICTION` and the effective concern is forced to
 **DO NOT ADVANCE**, ahead of any coverage- or Codex-based verdict. Malformed provenance state
