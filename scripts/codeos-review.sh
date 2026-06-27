@@ -137,9 +137,9 @@ build_packet() {
   # path exclusion: drop hunks for excluded files (computed from changed-file list)
   local changed_files f keep_pathspec=()
   if [[ -n "${base_sha}" ]]; then
-    mapfile -t changed_files < <(git diff --name-only "${base_sha}" -- . 2>/dev/null || true)
+    mapfile -t changed_files < <(git diff --name-only "${base_sha}" -- . ':(exclude)reviews' ':(exclude).codeos-state' 2>/dev/null || true)
   else
-    mapfile -t changed_files < <(git diff --name-only HEAD -- . 2>/dev/null || true)
+    mapfile -t changed_files < <(git diff --name-only HEAD -- . ':(exclude)reviews' ':(exclude).codeos-state' 2>/dev/null || true)
   fi
   for f in "${changed_files[@]}"; do
     local drop=0 pat
@@ -227,7 +227,7 @@ build_packet() {
   #   PARTIAL_COVERAGE=PARTIAL_BOUND, CRITICAL_OMISSION/EMPTY_PACKET=UNBOUND. A self-contradictory
   #   state (base==review SHA, non-empty diff, clean tree) is UNBOUND (unverifiable).
   local workspace_dirty=0
-  git diff --quiet HEAD -- . 2>/dev/null || workspace_dirty=1
+  git diff --quiet HEAD -- . ':(exclude)reviews' ':(exclude).codeos-state' 2>/dev/null || workspace_dirty=1
   local nonempty_diff=0; [[ -n "${redacted_diff//[$' \t\n']/}" ]] && nonempty_diff=1
   local contradiction=0
   [[ -n "${base_sha}" && "${base_sha}" == "${review_sha}" && ${nonempty_diff} -eq 1 && ${workspace_dirty} -eq 0 ]] && contradiction=1
@@ -624,7 +624,7 @@ cmd_decision() {
       rev_recorded="$(grep -E '^  review_commit:' "${latest}" | head -1 | sed -E 's/.*:[[:space:]]*([0-9a-fA-F]+).*/\1/' || true)"
       dirty_recorded="$(grep -E '^  workspace_dirty:' "${latest}" | head -1 | awk '{print $2}' || true)"
       head_now="$(git rev-parse HEAD)"
-      git diff --quiet HEAD -- . 2>/dev/null || tree_dirty_now=1
+      git diff --quiet HEAD -- . ':(exclude)reviews' ':(exclude).codeos-state' 2>/dev/null || tree_dirty_now=1
       case "${prov}" in
         COMMIT_BOUND)
           [[ "${rev_recorded}" == "${head_now}" ]] || reasons+=("HEAD ${head_now:0:12} != reviewed commit ${rev_recorded:0:12}")
