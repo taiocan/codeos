@@ -92,9 +92,20 @@ session instead of resuming under a different parser/behavior.
   redaction count, hashes, and links. The human decision is a **separately appended** entry
   via `codeos-review.sh decision …` — prior entries are never edited. That command also
   **re-hashes the reviewed artifacts at decision time** and records MATCH / CHANGED per
-  artifact, so an approval can never silently apply to an artifact that moved since the review.
-  The REVIEW entry's base/review SHA + the appended HUMAN DECISION entry are what let a human
-  later identify the last sound "OK point" (commit/branch) to return to.
+  artifact. A **CHANGED** artifact means the review no longer describes the file in the tree:
+  the decision is still recorded (append-only) but flagged, and the rule is that a CHANGED
+  artifact requires a **fresh review before approval** — an approval must not rest on a stale
+  assessment. The REVIEW entry's base/review SHA + the appended HUMAN DECISION entry are what
+  let a human later identify the last sound "OK point" (commit/branch) to return to.
+
+**Provenance integrity.** The packet labels its reviewed "second state" honestly: a tree with
+uncommitted changes is shown as `<review_sha> (+ uncommitted workspace changes)` and recorded
+as `workspace_dirty: true`. If the base and review SHA are identical yet the diff is non-empty
+*and the tree is clean* — a self-contradiction that means the reviewed state cannot be trusted
+— the integrity state is `CONTRADICTION` and the effective concern is forced to
+**DO NOT ADVANCE**, ahead of any coverage- or Codex-based verdict. Malformed provenance state
+(a stage-start file with no valid base commit, or a session file with no session id) is
+**fail-closed**: the script aborts rather than silently continuing with an empty value.
 
 ## 5. Safety — secret + oversized-diff filtering
 
@@ -220,6 +231,9 @@ req=".codeos-state/review-request.json"
 feature="$(jq -r '.feature' "${req}")"
 stage="$(jq -r '.stage' "${req}")"
 mapfile -t paths < <(jq -r '.artifacts[]' "${req}")   # array-safe, no word-splitting
+# abort WITHOUT deleting the sentinel if the request is unparseable or names no artifacts
+[[ -n "${feature}" && -n "${stage}" && ${#paths[@]} -gt 0 ]] || {
+  echo "review-hook: malformed/empty request; sentinel preserved" >&2; exit 1; }
 if scripts/codeos-review.sh review "${feature}" "${stage}" "${paths[@]}"; then
   rm -f "${req}"                                  # consume the sentinel ONLY on success
 fi

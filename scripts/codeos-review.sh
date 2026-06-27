@@ -110,7 +110,11 @@ build_packet() {
 
   local ss="${STAGE_START_DIR}/${feature}/stage-${stage}.json"
   if [[ -f "${ss}" ]]; then
-    base_sha="$(grep -oE '"base_commit"[^,]*' "${ss}" | sed -E 's/.*"base_commit": *"([^"]*)".*/\1/')"
+    base_sha="$(grep -oE '"base_commit"[^,]*' "${ss}" | sed -E 's/.*"base_commit": *"([^"]*)".*/\1/' || true)"
+    # provenance is fail-closed: a stage-start file that exists but has no valid base SHA
+    # is malformed state, not "absent" — refuse rather than silently downgrade to empty.
+    [[ "${base_sha}" =~ ^[0-9a-fA-F]{7,40}$ ]] || {
+      echo "error: ${ss} exists but has no valid base_commit (malformed provenance) — aborting." >&2; exit 4; }
   else
     base_sha=""
   fi
@@ -160,7 +164,7 @@ build_packet() {
   redacted_diff="$(printf '%s\n' "${filtered_diff}" | redact_secrets)"
   if [[ "${redacted_diff}" != "${filtered_diff}" ]]; then
     secret_flag=1
-    redaction_count=$(( redaction_count + $(grep -c '\[REDACTED' <<<"${redacted_diff}") ))
+    redaction_count=$(( redaction_count + $(grep -c "\[REDACTED" <<<"${redacted_diff}" || true) ))
     excluded+="(secret-like diff content redacted) "
   fi
   [[ -n "${excluded}" ]] && path_excluded=1   # path/size diff exclusions recorded above
@@ -182,7 +186,7 @@ build_packet() {
     redacted="$(printf '%s\n' "${raw}" | redact_secrets)"
     if [[ "${redacted}" != "${raw}" ]]; then
       secret_flag=1
-      redaction_count=$(( redaction_count + $(grep -c '\[REDACTED' <<<"${redacted}") ))
+      redaction_count=$(( redaction_count + $(grep -c "\[REDACTED" <<<"${redacted}" || true) ))
       excluded+="${a}(secret redacted) "
     fi
     artifacts_block+="  --- ${a} (sha256: $(sha256_of "${a}")) ---"$'\n'
@@ -205,14 +209,26 @@ build_packet() {
     state="FULL_COVERAGE"; coverage="full"
   fi
 
+  # --- provenance integrity: the reviewed "second state" must be labeled honestly ---
+  # A non-empty diff against an identical base/review SHA can only come from uncommitted
+  # workspace changes; if the tree is in fact clean, the provenance is self-contradictory.
+  local workspace_dirty=0 integrity="OK"
+  git diff --quiet HEAD -- . 2>/dev/null || workspace_dirty=1
+  local nonempty_diff=0; [[ -n "${redacted_diff//[$' \t\n']/}" ]] && nonempty_diff=1
+  if [[ -n "${base_sha}" && "${base_sha}" == "${review_sha}" && ${nonempty_diff} -eq 1 && ${workspace_dirty} -eq 0 ]]; then
+    integrity="CONTRADICTION"   # SHAs equal but a committed diff exists — unverifiable
+  fi
+
   PACKET_EXCLUDED="${excluded}"
   PACKET_COVERAGE="${coverage}"
   PACKET_COVERAGE_STATE="${state}"
   PACKET_REDACTION_COUNT="${redaction_count}"
   PACKET_SECRET_FLAG="${secret_flag}"
+  PACKET_WORKSPACE_DIRTY="${workspace_dirty}"
+  PACKET_INTEGRITY="${integrity}"
   PACKET_DIFF_HASH="$(sha256_str "${redacted_diff}")"
   PACKET_BASE_SHA="${base_sha:-(uncommitted artifact)}"
-  PACKET_REVIEW_SHA="${review_sha}"
+  PACKET_REVIEW_SHA="${review_sha}$([[ ${workspace_dirty} -eq 1 ]] && echo ' +workspace')"
   PACKET_BRANCH="${branch}"
 
   # --- stage-specific checks + expected output (lightweight, inline) ---
@@ -228,9 +244,14 @@ build_packet() {
     echo "  Stage:                  ${stage}"
     echo "  Branch:                 ${branch}"
     echo "  Base commit:            ${PACKET_BASE_SHA}"
-    echo "  Review commit:          ${review_sha}"
+    echo "  Review commit:          ${review_sha}$([[ ${workspace_dirty} -eq 1 ]] && echo ' (+ uncommitted workspace changes)')"
     echo "  Current approved stage: ${approved_stage}"
     echo "  Evidence coverage:      ${state}"
+    echo "  Provenance integrity:   ${integrity}"
+    if [[ "${integrity}" == "CONTRADICTION" ]]; then
+      echo "  - PROVENANCE CONTRADICTION: base and review SHA are identical yet the diff is"
+      echo "    non-empty and the tree is clean — the reviewed state is not verifiable."
+    fi
     echo
     echo "DBA RULES RELEVANT TO THIS STAGE"
     echo "  - Human approval is required for every stage transition; you are advisory only."
@@ -304,10 +325,12 @@ run_codex() {
   local codex_ver; codex_ver="$(codex --version 2>/dev/null | head -1)"
   local session_id=""
   if [[ "${fresh}" == "0" && -f "${sess_file}" ]]; then
-    session_id="$(grep -oE '"session_id" *: *"[^"]*"' "${sess_file}" | sed -E 's/.*"([^"]*)"$/\1/')"
+    session_id="$(grep -oE '"session_id" *: *"[^"]*"' "${sess_file}" | sed -E 's/.*"([^"]*)"$/\1/' || true)"
     # version drift: a session created under a different codex build may parse/behave
     # differently — force a fresh session rather than resuming across versions.
-    local stored_ver; stored_ver="$(grep -oE '"codex_version" *: *"[^"]*"' "${sess_file}" | sed -E 's/.*"([^"]*)"$/\1/')"
+    # session_id is provenance: present-but-unparseable session state is malformed -> fail closed.
+    [[ -n "${session_id}" ]] || { echo "error: ${sess_file} exists but has no session_id (malformed) — delete it or pass --fresh." >&2; exit 4; }
+    local stored_ver; stored_ver="$(grep -oE '"codex_version" *: *"[^"]*"' "${sess_file}" | sed -E 's/.*"([^"]*)"$/\1/' || true)"
     if [[ -n "${stored_ver}" && "${stored_ver}" != "${codex_ver}" ]]; then
       echo "note: codex version changed (${stored_ver} -> ${codex_ver}); starting a fresh session." >&2
       session_id=""
@@ -320,7 +343,7 @@ run_codex() {
     out="$(codex exec resume "${session_id}" -c sandbox_mode="read-only" - < "${packet_file}" 2>&1)" || true
   else
     out="$(codex exec -s read-only --cd "${REPO_ROOT}" - < "${packet_file}" 2>&1)" || true
-    session_id="$(printf '%s\n' "${out}" | grep -oE 'session id: [0-9a-fA-F-]+' | head -1 | awk '{print $3}')"
+    session_id="$(printf '%s\n' "${out}" | grep -oE 'session id: [0-9a-fA-F-]+' | head -1 | awk '{print $3}' || true)"
     if [[ -z "${session_id}" ]]; then
       echo "error: could not capture a Codex session id from output — aborting (fail-closed)." >&2
       echo "       review NOT logged. Inspect the codex output and rerun." >&2
@@ -393,6 +416,11 @@ cmd_review() {
         coverage_note="${PACKET_COVERAGE_STATE} — partial evidence; NO OBJECTION downgraded to CHANGES ADVISED"
       fi ;;
   esac
+  # Provenance integrity failure is fail-closed and wins over any coverage-based verdict.
+  if [[ "${PACKET_INTEGRITY:-OK}" == "CONTRADICTION" ]]; then
+    effective_concern="DO NOT ADVANCE"
+    coverage_note="PROVENANCE CONTRADICTION — base/review SHA identical but diff non-empty; reviewed state unverifiable"
+  fi
   concern="${effective_concern}"
 
   # save full assessment (with metadata header) + the EXACT packet that was reviewed
@@ -421,6 +449,8 @@ cmd_review() {
     echo "  artifacts:${artifact_shas}"
     echo "  diff_hash: ${PACKET_DIFF_HASH}"
     echo "  coverage_state: ${PACKET_COVERAGE_STATE}"
+    echo "  provenance_integrity: ${PACKET_INTEGRITY}"
+    echo "  workspace_dirty: $([[ ${PACKET_WORKSPACE_DIRTY} -eq 1 ]] && echo true || echo false)"
     echo "  redaction_count: ${PACKET_REDACTION_COUNT}"
     echo "  secret_redaction: $([[ ${PACKET_SECRET_FLAG} -eq 1 ]] && echo true || echo false)"
     echo "  excluded_paths: \"${PACKET_EXCLUDED}\""
@@ -448,7 +478,7 @@ cmd_review() {
     echo "Codex concern: ${codex_concern}"
     echo "Effective concern: ${effective_concern}${coverage_note:+ — ${coverage_note}}"
     echo "Evidence: ${evidence}"
-    echo "Coverage: ${PACKET_COVERAGE_STATE} (redactions: ${PACKET_REDACTION_COUNT})"
+    echo "Coverage: ${PACKET_COVERAGE_STATE} (redactions: ${PACKET_REDACTION_COUNT}); integrity: ${PACKET_INTEGRITY}; workspace_dirty: $([[ ${PACKET_WORKSPACE_DIRTY} -eq 1 ]] && echo true || echo false)"
     echo "Log summary: ${summary_line#LOG SUMMARY: }"
     echo "Full assessment: ${assessment_file} (sha256:${assessment_hash})"
     echo "Reviewed packet: ${packet_saved} (sha256:${packet_hash})"
