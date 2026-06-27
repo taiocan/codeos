@@ -99,10 +99,17 @@ JSON Schema validation is deferred until pilot use shows it is needed.
   via `codeos-review.sh decision …` — prior entries are never edited. That command also
   **re-hashes the reviewed artifacts at decision time** and records MATCH / CHANGED per
   artifact. A **CHANGED** artifact means the review no longer describes the file in the tree:
-  a CHANGED artifact requires a **fresh review before approval**. This is *enforced*, not just
-  advised: `decision APPROVE_STAGE` is **refused** (nothing logged) when a reviewed artifact is
-  CHANGED — you must re-run `review`, or pass `--force "<reason>"` to record an explicit
-  `[STALE OVERRIDE]` approval. `REQUEST_CHANGES` / `STOP` are always recorded. The REVIEW entry's base/review SHA + the appended HUMAN DECISION entry are what
+  approval must bind to the **exact reviewed state**. This is *enforced*: `decision APPROVE_STAGE`
+  is **refused** (nothing logged) unless the current state reproduces the review — `HEAD ==`
+  the recorded `review_commit`, the working tree is clean **now**, the review itself was **not**
+  against an uncommitted workspace (`workspace_dirty: false`), and every named artifact still
+  hash-matches. (For a clean committed review those conditions together guarantee the whole repo
+  state is byte-identical to what was reviewed, so `diff_hash` is reproduced transitively.)
+  A review with no record at all also refuses. You must re-run `review` on the current state, or
+  pass `--force "<reason>"` to record an explicit `[STALE OVERRIDE]` / `[DIRTY OVERRIDE]`
+  approval that names exactly which provenance field diverged. `REQUEST_CHANGES` / `STOP` are
+  always recorded. Deeper provenance binding (durable workspace snapshots, structured decision
+  ledgers) is tracked in `backlog/reviewer-decision-integrity.md`. The REVIEW entry's base/review SHA + the appended HUMAN DECISION entry are what
   let a human later identify the last sound "OK point" (commit/branch) to return to.
 
 **Provenance integrity.** The packet labels its reviewed "second state" honestly: a tree with

@@ -567,23 +567,44 @@ cmd_decision() {
     done < <(sed -n '/^  artifacts:/,/^  diff_hash:/p' "${latest}")
   fi
 
-  # Stale-approval invariant: a CHANGED artifact means the latest review no longer describes
-  # the tree. APPROVE_STAGE is refused (nothing logged) unless --force records a stale override.
-  if [[ "${decision}" == "APPROVE_STAGE" && ${changed} -eq 1 && ${force} -eq 0 ]]; then
-    echo "refused: APPROVE_STAGE against a CHANGED reviewed artifact — run 'review' again first," >&2
-    echo "         or pass --force \"<reason>\" to record a stale-override approval." >&2
-    printf '%s' "${verify_lines}" >&2
-    exit 4
+  # Decision-integrity guard: APPROVE_STAGE must bind to the EXACT reviewed state, not just
+  # matching named-artifact hashes. For a clean committed review, "HEAD == review_commit AND
+  # tree clean now" guarantees the whole repo state is byte-identical to what was reviewed
+  # (so diff_hash is reproduced transitively). Refuse otherwise; --force records an override.
+  local override_note=""
+  if [[ "${decision}" == "APPROVE_STAGE" ]]; then
+    local reasons=() label="STALE OVERRIDE"
+    if [[ -z "${latest}" ]]; then
+      reasons+=("no review on record for ${feature} stage ${stage}")
+    else
+      local rev_recorded dirty_recorded head_now tree_dirty_now=0
+      rev_recorded="$(grep -E '^  review_commit:' "${latest}" | head -1 | sed -E 's/^  review_commit:[[:space:]]*([0-9a-fA-F]+).*/\1/' || true)"
+      dirty_recorded="$(grep -E '^  workspace_dirty:' "${latest}" | head -1 | awk '{print $2}' || true)"
+      head_now="$(git rev-parse HEAD)"
+      git diff --quiet HEAD -- . 2>/dev/null || tree_dirty_now=1
+      [[ "${dirty_recorded}" == "true" ]] && { reasons+=("review was against uncommitted workspace changes (not a durable state)"); label="DIRTY OVERRIDE"; }
+      [[ ${tree_dirty_now} -eq 1 ]] && { reasons+=("working tree is dirty now (differs from a clean reviewed commit)"); label="DIRTY OVERRIDE"; }
+      [[ -n "${rev_recorded}" && "${rev_recorded}" != "${head_now}" ]] && reasons+=("HEAD ${head_now:0:12} != reviewed commit ${rev_recorded:0:12}")
+      [[ ${changed} -eq 1 ]] && reasons+=("a reviewed artifact changed since the review")
+    fi
+    if [[ ${#reasons[@]} -gt 0 ]]; then
+      if [[ ${force} -eq 0 ]]; then
+        echo "refused: APPROVE_STAGE — the reviewed state no longer matches the current state:" >&2
+        printf '  - %s\n' "${reasons[@]}" >&2
+        echo "  re-run 'review' on the current state, or pass --force \"<reason>\" to record a ${label}." >&2
+        [[ -n "${verify_lines}" ]] && printf '%s' "${verify_lines}" >&2
+        exit 4
+      fi
+      local joined; joined="$(printf '%s; ' "${reasons[@]}")"
+      override_note=" [${label} — ${joined%; }]"
+    fi
   fi
-  local stale_note=""
-  [[ "${decision}" == "APPROVE_STAGE" && ${changed} -eq 1 && ${force} -eq 1 ]] && \
-    stale_note=" [STALE OVERRIDE — approved against a CHANGED artifact]"
 
   {
     echo
     echo "## $(now_iso) HUMAN DECISION — ${feature} — Stage ${stage}"
     echo "Commit reviewed: ${sha}"
-    echo "Decision: ${decision}${stale_note}"
+    echo "Decision: ${decision}${override_note}"
     echo "Reason/next: ${reason}"
     [[ -n "${latest}" ]] && echo "Verified against: ${latest}"
     [[ -n "${verify_lines}" ]] && { echo "Artifact integrity:"; printf '%s' "${verify_lines}"; }

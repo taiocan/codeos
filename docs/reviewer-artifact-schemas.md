@@ -120,7 +120,7 @@ Required lines:
 ```
 ## <ISO ts> HUMAN DECISION — <feature> — Stage <N>
 Commit reviewed: <sha>
-Decision: <APPROVE_STAGE|REQUEST_CHANGES|STOP>[ [STALE OVERRIDE — ...]]
+Decision: <APPROVE_STAGE|REQUEST_CHANGES|STOP>[ [STALE OVERRIDE — ...] | [DIRTY OVERRIDE — ...]]
 Reason/next: <text>
 [Verified against: <assessment path>]            # when a prior assessment exists
 [Artifact integrity:                              # when verified

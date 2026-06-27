@@ -23,9 +23,16 @@ identified that this leaves approval able to apply to a stale or non-durable rev
    correspond to any durable git object, so the "last sound OK point" is not reproducible from
    git alone.
 
+> **Status note:** the *minimal* guard has shipped — `decision APPROVE_STAGE` now refuses
+> unless `HEAD == review_commit`, the tree is clean now, the review was not workspace-dirty,
+> and named artifacts still hash-match (else `--force` records a `[STALE/DIRTY OVERRIDE]`).
+> This backlog item now covers only the **deeper** provenance work below.
+
 ## Upgrade
 
-Bind `APPROVE_STAGE` to reproducing the **stored review provenance**, not just artifact hashes.
+Bind `APPROVE_STAGE` to reproducing the **stored review provenance** with durable guarantees
+beyond the shipped minimal guard (exact `diff_hash` recomputation independent of commit
+identity, durable workspace snapshots, structured decision ledgers).
 
 ## Scope
 
