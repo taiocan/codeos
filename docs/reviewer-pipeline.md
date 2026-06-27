@@ -97,63 +97,32 @@ JSON Schema validation is deferred until pilot use shows it is needed.
   `Codex concern` and the `Effective concern` (after coverage adjustment), the coverage state,
   redaction count, hashes, and links. The human decision is a **separately appended** entry
   via `codeos-review.sh decision …` — prior entries are never edited. That command also
-  **re-hashes the reviewed artifacts at decision time** and records MATCH / CHANGED per
-  artifact. A **CHANGED** artifact means the review no longer describes the file in the tree:
-  approval must bind to the **exact reviewed state**. This is *enforced*: `decision APPROVE_STAGE`
-  is **refused** (nothing logged) unless the current state reproduces the review — `HEAD ==`
-  the recorded `review_commit`, the working tree is clean **now**, the review itself was **not**
-  against an uncommitted workspace (`workspace_dirty: false`), and every named artifact still
-  hash-matches. (For a clean committed review those conditions together guarantee the whole repo
-  state is byte-identical to what was reviewed, so `diff_hash` is reproduced transitively.)
-  A review with no record at all also refuses. You must re-run `review` on the current state, or
-  pass `--force "<reason>"` to record an explicit `[STALE OVERRIDE]` / `[DIRTY OVERRIDE]`
-  approval that names exactly which provenance field diverged. `REQUEST_CHANGES` / `STOP` are
-  always recorded. Deeper provenance binding (durable workspace snapshots, structured decision
-  ledgers) is tracked in `backlog/reviewer-decision-integrity.md`. The REVIEW entry's base/review SHA + the appended HUMAN DECISION entry are what
-  let a human later identify the last sound "OK point" (commit/branch) to return to.
+  **re-verifies the reviewed state at decision time** and records MATCH / CHANGED per artifact.
+  **`APPROVE_STAGE` eligibility is governed entirely by the authoritative matrix in
+  [`reviewer-artifact-schemas.md`](reviewer-artifact-schemas.md)** (its *Approval eligibility*
+  column): a `COMMIT_BOUND` review is eligible when HEAD still equals `review_commit`, the tree
+  is clean, and artifacts hash-match; a `WORKSPACE_BOUND` review is eligible only when the
+  decision re-verifies artifact SHA + diff hash + packet SHA + `workspace_dirty`; redacted /
+  partial / unbound modes need an explicit waiver. An ineligible mode is **refused** (nothing
+  logged) unless `--force "<reason>"` records the named override/waiver; `REQUEST_CHANGES` /
+  `STOP` always record. The REVIEW entry's SHAs + the appended HUMAN DECISION entry (with its
+  `Rollback:` line) are what let a human later identify the last sound "OK point" to return to.
+  Deeper provenance binding (durable workspace snapshots, structured decision ledgers) is
+  tracked in `backlog/reviewer-decision-integrity.md`.
 
-**Provenance integrity.** The packet labels its reviewed "second state" honestly: a tree with
-uncommitted changes shows a human-readable `(+ uncommitted workspace changes)` marker in the
-packet text, while the persisted `review_commit` field stays a pure SHA and the dirty bit is
-recorded as `workspace_dirty: true`. If the base and review SHA are identical yet the diff is non-empty
-*and the tree is clean* — a self-contradiction that means the reviewed state cannot be trusted
-— the integrity state is `CONTRADICTION` and the effective concern is forced to
-**DO NOT ADVANCE**, ahead of any coverage- or Codex-based verdict. Malformed provenance state
-(a stage-start file that *exists* but has no valid base commit, or a session file with no
-session id) is **fail-closed**: the script aborts rather than silently continuing with an empty
-value. When **no** stage-start file exists, that is a distinct valid mode: `base_commit` is
-recorded as `(no base pin)` and the review pins to `review_commit` (HEAD). Approval in this
-mode still requires the standard guard (HEAD matches, tree clean, not workspace-dirty), so a
-no-base-pin review is approvable only when it corresponds to a clean committed state.
+## 5. Coverage, provenance, and effective concern
 
-## 5. Safety — secret + oversized-diff filtering
-
-Two layers before anything reaches Codex, but they apply differently to the diff and to
-requested artifacts (see the per-artifact visibility model in `reviewer-artifact-schemas.md`):
-1. **Path exclusion** — `.env*`, `*.pem`, `*.key`, `secrets/*`, `credentials/*`, raw runtime
-   logs, files over a size threshold. **This applies to the diff only.** A *requested* artifact
-   is never dropped by a secret path rule — it is `SHOWN`, `SHOWN_REDACTED`, or (only when
-   missing/oversize) `MISSING` / `EXCLUDED_SIZE`.
-2. **Content redaction** — secret-like values (`OPENAI_API_KEY=`, `ANTHROPIC_API_KEY=`,
-   `AWS_SECRET_ACCESS_KEY`, `BEGIN … PRIVATE KEY`, `password=`/`token=`/`secret=`) are redacted
-   in place, in both the diff and requested artifacts.
-
-**A coverage gap is a decision downgrade, not a footnote.** Filtering protects secrets but
-shrinks what the reviewer saw, so each review is classified into an explicit **coverage
-state**, and the state maps the raw Codex concern to an **effective concern**:
-
-| Coverage state | When | Effect on effective concern |
-|---|---|---|
-| `FULL_COVERAGE` | nothing excluded or redacted | Codex concern unchanged |
-| `PARTIAL_COVERAGE` | a diff file path/size-excluded | `NO OBJECTION` → `CHANGES ADVISED` |
-| `SECRET_REDACTION` | secret-like values redacted from diff or artifacts | `NO OBJECTION` → `CHANGES ADVISED` |
-| `CRITICAL_OMISSION` | a **requested artifact** could not be shown (missing/oversize) | forced `DO NOT ADVANCE` |
-| `EMPTY_PACKET` | no reviewable content reached Codex at all | forced `DO NOT ADVANCE` |
-
-The coverage state, redaction count, excluded/redacted paths, and **both** concerns are
-recorded in the assessment and the log. When any secret-like content is excluded/redacted (or
-on a critical/empty packet), the log flags **MANUAL SECURITY REVIEW REQUIRED**, so the gap is
-explicit *and* consequential.
+These are **not** restated here — they are defined once, normatively, in the
+[authoritative matrix](reviewer-artifact-schemas.md#the-authoritative-matrix). In summary: two
+filtering layers run before anything reaches Codex — **path exclusion** (`.env*`, `*.pem`,
+`secrets/*`, size limit, …) applies to the **diff and incidental files only**, and **content
+redaction** blanks secret-like values in place in both the diff and requested artifacts. A
+requested artifact is therefore never silently dropped — it is `shown`, `shown_redacted`,
+`oversize_omitted`, or `missing`. The resulting `coverage_state` and `provenance_integrity`
+select the matrix row, which fixes the **minimum effective concern** (a coverage gap is a
+verdict floor, not a footnote) and the **approval eligibility** and **rollback meaning**. When
+anything is excluded/redacted, or on a critical/empty/unbound row, the log flags
+**MANUAL SECURITY REVIEW REQUIRED**.
 
 ## 6. Concern-level semantics + human responsibility
 

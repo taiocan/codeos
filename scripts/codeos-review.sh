@@ -64,6 +64,9 @@ redact_secrets() {
 # in_list <value> <pipe|separated|list>  -> 0 if value is exactly one of the list items
 in_list() { case "|$2|" in *"|$1|"*) return 0 ;; *) return 1 ;; esac; }
 
+# exc_add <path> <reason> <affected_section>  -> structured excluded-item record
+exc_add() { PACKET_EXC_PATH+=("$1"); PACKET_EXC_REASON+=("$2"); PACKET_EXC_SECTION+=("$3"); }
+
 now_iso() { date -u +%Y-%m-%dT%H:%M:%SZ; }
 sha256_of() { sha256sum "$1" | awk '{print $1}'; }
 sha256_str() { printf '%s' "$1" | sha256sum | awk '{print $1}'; }
@@ -124,7 +127,7 @@ build_packet() {
 
   # --- diff, path-excluded then content-redacted ---
   local raw_diff excluded="" filtered_diff=""
-  PACKET_EXCLUDED_ITEMS=()   # structured, lossless list of what was withheld/redacted
+  PACKET_EXC_PATH=(); PACKET_EXC_REASON=(); PACKET_EXC_SECTION=()   # structured exclusion record
   if [[ -n "${base_sha}" ]]; then
     raw_diff="$(git diff "${base_sha}" -- . 2>/dev/null || true)"
   else
@@ -150,7 +153,7 @@ build_packet() {
         drop=1
       fi
     fi
-    if [[ ${drop} -eq 1 ]]; then excluded+="${f} "; PACKET_EXCLUDED_ITEMS+=("diff:${f} (path/size excluded)"); else keep_pathspec+=( "${f}" ); fi
+    if [[ ${drop} -eq 1 ]]; then excluded+="${f} "; exc_add "${f}" "path/size excluded" "diff"; else keep_pathspec+=( "${f}" ); fi
   done
 
   if [[ ${#keep_pathspec[@]} -gt 0 ]]; then
@@ -170,33 +173,37 @@ build_packet() {
     secret_flag=1
     redaction_count=$(( redaction_count + $(grep -c "\[REDACTED" <<<"${redacted_diff}" || true) ))
     excluded+="(secret-like diff content redacted) "
-    PACKET_EXCLUDED_ITEMS+=("diff: secret-like content redacted")
+    exc_add "(diff)" "secret-like content redacted" "diff"
   fi
   [[ -n "${excluded}" ]] && path_excluded=1   # path/size diff exclusions recorded above
 
-  # --- requested artifacts: secret-redact + size-guard; a requested artifact that cannot
-  #     be fully shown is a HARD coverage failure (we were asked to review it). ---
-  local artifacts_block="" a raw redacted shown_count=0
+  # --- requested artifacts: each is REPRESENTED, never silently dropped —
+  #     visibility is one of: shown | shown_redacted | oversize_omitted | missing. ---
+  local artifacts_block="" a raw redacted shown_count=0 vis sha
   PACKET_ARTIFACT_EXCLUDED=0
+  PACKET_ARTIFACTS_YAML=""
   for a in "${artifacts[@]}"; do
     if [[ ! -f "${a}" ]]; then
-      artifacts_block+="  --- ${a} (MISSING — not shown) ---"$'\n\n'
-      PACKET_ARTIFACT_EXCLUDED=1; excluded+="${a}(missing) "; PACKET_EXCLUDED_ITEMS+=("artifact:${a} (MISSING)"); continue
+      artifacts_block+="  --- ${a} (visibility: missing — not shown) ---"$'\n\n'
+      PACKET_ARTIFACT_EXCLUDED=1; excluded+="${a}(missing) "; exc_add "${a}" "requested artifact missing" "artifact"
+      PACKET_ARTIFACTS_YAML+="    - path: ${a}"$'\n'"      visibility: missing"$'\n'; continue
     fi
     if [[ "$(wc -c < "${a}")" -gt ${SIZE_LIMIT_BYTES} ]]; then
-      artifacts_block+="  --- ${a} (EXCLUDED: over size limit — not shown) ---"$'\n\n'
-      PACKET_ARTIFACT_EXCLUDED=1; excluded+="${a}(oversize) "; PACKET_EXCLUDED_ITEMS+=("artifact:${a} (EXCLUDED_SIZE)"); continue
+      artifacts_block+="  --- ${a} (visibility: oversize_omitted — over size limit, not shown) ---"$'\n\n'
+      PACKET_ARTIFACT_EXCLUDED=1; excluded+="${a}(oversize) "; exc_add "${a}" "requested artifact over size limit" "artifact"
+      PACKET_ARTIFACTS_YAML+="    - path: ${a}"$'\n'"      visibility: oversize_omitted"$'\n'; continue
     fi
-    raw="$(cat "${a}")"
-    redacted="$(printf '%s\n' "${raw}" | redact_secrets)"
+    raw="$(cat "${a}")"; redacted="$(printf '%s\n' "${raw}" | redact_secrets)"; sha="$(sha256_of "${a}")"
     if [[ "${redacted}" != "${raw}" ]]; then
-      secret_flag=1
+      vis="shown_redacted"; secret_flag=1
       redaction_count=$(( redaction_count + $(grep -c "\[REDACTED" <<<"${redacted}" || true) ))
-      excluded+="${a}(secret redacted) "
-      PACKET_EXCLUDED_ITEMS+=("artifact:${a} (SHOWN_REDACTED)")
+      excluded+="${a}(secret redacted) "; exc_add "${a}" "secret value redacted in place" "artifact"
+    else
+      vis="shown"
     fi
-    artifacts_block+="  --- ${a} (sha256: $(sha256_of "${a}")) ---"$'\n'
+    artifacts_block+="  --- ${a} (sha256: ${sha}, visibility: ${vis}) ---"$'\n'
     artifacts_block+="$(printf '%s\n' "${redacted}" | sed 's/^/    /')"$'\n\n'
+    PACKET_ARTIFACTS_YAML+="    - path: ${a}"$'\n'"      sha256: ${sha}"$'\n'"      visibility: ${vis}"$'\n'
     shown_count=$((shown_count + 1))
   done
 
@@ -215,15 +222,24 @@ build_packet() {
     state="FULL_COVERAGE"; coverage="full"
   fi
 
-  # --- provenance integrity: the reviewed "second state" must be labeled honestly ---
-  # A non-empty diff against an identical base/review SHA can only come from uncommitted
-  # workspace changes; if the tree is in fact clean, the provenance is self-contradictory.
-  local workspace_dirty=0 integrity="OK"
+  # --- provenance_integrity per the authoritative matrix (docs/reviewer-artifact-schemas.md):
+  #   FULL+clean=COMMIT_BOUND, FULL+dirty=WORKSPACE_BOUND, SECRET_REDACTION=REDACTED_BOUND,
+  #   PARTIAL_COVERAGE=PARTIAL_BOUND, CRITICAL_OMISSION/EMPTY_PACKET=UNBOUND. A self-contradictory
+  #   state (base==review SHA, non-empty diff, clean tree) is UNBOUND (unverifiable).
+  local workspace_dirty=0
   git diff --quiet HEAD -- . 2>/dev/null || workspace_dirty=1
   local nonempty_diff=0; [[ -n "${redacted_diff//[$' \t\n']/}" ]] && nonempty_diff=1
-  if [[ -n "${base_sha}" && "${base_sha}" == "${review_sha}" && ${nonempty_diff} -eq 1 && ${workspace_dirty} -eq 0 ]]; then
-    integrity="CONTRADICTION"   # SHAs equal but a committed diff exists — unverifiable
-  fi
+  local contradiction=0
+  [[ -n "${base_sha}" && "${base_sha}" == "${review_sha}" && ${nonempty_diff} -eq 1 && ${workspace_dirty} -eq 0 ]] && contradiction=1
+
+  local provenance
+  case "${state}" in
+    EMPTY_PACKET|CRITICAL_OMISSION) provenance="UNBOUND" ;;
+    SECRET_REDACTION)               provenance="REDACTED_BOUND" ;;
+    PARTIAL_COVERAGE)               provenance="PARTIAL_BOUND" ;;
+    FULL_COVERAGE)                  provenance=$([[ ${workspace_dirty} -eq 1 ]] && echo "WORKSPACE_BOUND" || echo "COMMIT_BOUND") ;;
+  esac
+  [[ ${contradiction} -eq 1 ]] && provenance="UNBOUND"
 
   PACKET_EXCLUDED="${excluded}"
   PACKET_COVERAGE="${coverage}"
@@ -231,7 +247,8 @@ build_packet() {
   PACKET_REDACTION_COUNT="${redaction_count}"
   PACKET_SECRET_FLAG="${secret_flag}"
   PACKET_WORKSPACE_DIRTY="${workspace_dirty}"
-  PACKET_INTEGRITY="${integrity}"
+  PACKET_CONTRADICTION="${contradiction}"
+  PACKET_PROVENANCE="${provenance}"
   PACKET_DIFF_HASH="$(sha256_str "${redacted_diff}")"
   PACKET_BASE_SHA="${base_sha:-(no base pin)}"   # no stage-start recorded; review pins to review_commit
   PACKET_REVIEW_SHA="${review_sha}"   # machine-pure SHA; the dirty bit lives in workspace_dirty
@@ -253,10 +270,10 @@ build_packet() {
     echo "  Review commit:          ${review_sha}$([[ ${workspace_dirty} -eq 1 ]] && echo ' (+ uncommitted workspace changes)')"
     echo "  Current approved stage: ${approved_stage}"
     echo "  Evidence coverage:      ${state}"
-    echo "  Provenance integrity:   ${integrity}"
-    if [[ "${integrity}" == "CONTRADICTION" ]]; then
+    echo "  Provenance integrity:   ${provenance}"
+    if [[ ${contradiction} -eq 1 ]]; then
       echo "  - PROVENANCE CONTRADICTION: base and review SHA are identical yet the diff is"
-      echo "    non-empty and the tree is clean — the reviewed state is not verifiable."
+      echo "    non-empty and the tree is clean — the reviewed state is not verifiable (UNBOUND)."
     fi
     echo
     echo "DBA RULES RELEVANT TO THIS STAGE"
@@ -416,26 +433,26 @@ cmd_review() {
     *) evidence="not reported" ;;
   esac
 
-  # Effective concern = Codex concern adjusted for evidence coverage. We keep and log BOTH,
-  # so a coverage gap can never silently pass as the reviewer's verdict.
-  local codex_concern="${concern}" effective_concern="${concern}" coverage_note=""
+  # Effective concern = max severity of (Codex concern, the matrix MINIMUM for the coverage
+  # state). We keep and log BOTH so a coverage gap never silently passes as the verdict.
+  # Severity rank: NO OBJECTION < CHANGES ADVISED < UNCLASSIFIED < DO NOT ADVANCE.
+  local codex_concern="${concern}" effective_concern coverage_note=""
+  local floor=0
   case "${PACKET_COVERAGE_STATE:-FULL_COVERAGE}" in
-    EMPTY_PACKET)
-      effective_concern="DO NOT ADVANCE"
-      coverage_note="EMPTY_PACKET — no reviewable content reached Codex" ;;
-    CRITICAL_OMISSION)
-      effective_concern="DO NOT ADVANCE"
-      coverage_note="CRITICAL_OMISSION — a requested artifact could not be shown (missing/oversize)" ;;
-    SECRET_REDACTION|PARTIAL_COVERAGE)
-      if [[ "${codex_concern}" == "NO OBJECTION" ]]; then
-        effective_concern="CHANGES ADVISED"
-        coverage_note="${PACKET_COVERAGE_STATE} — partial evidence; NO OBJECTION downgraded to CHANGES ADVISED"
-      fi ;;
+    FULL_COVERAGE)                   floor=0 ;;
+    SECRET_REDACTION|PARTIAL_COVERAGE) floor=1 ;;   # min CHANGES ADVISED
+    EMPTY_PACKET)                    floor=2 ;;      # min UNCLASSIFIED
+    CRITICAL_OMISSION)               floor=3 ;;      # min DO NOT ADVANCE
   esac
-  # Provenance integrity failure is fail-closed and wins over any coverage-based verdict.
-  if [[ "${PACKET_INTEGRITY:-OK}" == "CONTRADICTION" ]]; then
-    effective_concern="DO NOT ADVANCE"
-    coverage_note="PROVENANCE CONTRADICTION — base/review SHA identical but diff non-empty; reviewed state unverifiable"
+  [[ "${PACKET_CONTRADICTION}" -eq 1 ]] && floor=3   # unverifiable state -> DO NOT ADVANCE
+  local cr; case "${codex_concern}" in
+    "NO OBJECTION") cr=0 ;; "CHANGES ADVISED") cr=1 ;; "UNCLASSIFIED") cr=2 ;; "DO NOT ADVANCE") cr=3 ;; *) cr=2 ;;
+  esac
+  local eff=${cr}; [[ ${floor} -gt ${eff} ]] && eff=${floor}
+  case ${eff} in 0) effective_concern="NO OBJECTION" ;; 1) effective_concern="CHANGES ADVISED" ;; 2) effective_concern="UNCLASSIFIED" ;; 3) effective_concern="DO NOT ADVANCE" ;; esac
+  if [[ ${eff} -gt ${cr} ]]; then
+    coverage_note="raised from '${codex_concern}' to matrix minimum for ${PACKET_COVERAGE_STATE}/${PACKET_PROVENANCE}"
+    [[ "${PACKET_CONTRADICTION}" -eq 1 ]] && coverage_note="PROVENANCE CONTRADICTION — reviewed state unverifiable; forced DO NOT ADVANCE"
   fi
   concern="${effective_concern}"
 
@@ -450,24 +467,22 @@ cmd_review() {
   packet_saved="${packets_dir}/${ts//:/}-${feature}-stage-${stage}-${short_sha}.packet.txt"
   cp "${PACKET_FILE}" "${packet_saved}"          # exact reviewed bytes — durable, verifiable
   local packet_hash; packet_hash="$(sha256_of "${packet_saved}")"
-  local a
-  for a in "${artifacts[@]}"; do
-    [[ -f "${a}" ]] && artifact_shas+=$'\n'"    - path: ${a}"$'\n'"      sha256: $(sha256_of "${a}")"
-  done
 
   # --- v0 schema validation, fail-closed (see docs/reviewer-artifact-schemas.md) ---
   local pair _v_err=""
   for pair in "feature=${feature}" "stage=${stage}" "base_commit=${PACKET_BASE_SHA}" \
               "review_commit=${PACKET_REVIEW_SHA}" "diff_hash=${PACKET_DIFF_HASH}" \
-              "coverage_state=${PACKET_COVERAGE_STATE}" "reviewed_packet_sha256=${packet_hash}"; do
+              "coverage_state=${PACKET_COVERAGE_STATE}" "provenance_integrity=${PACKET_PROVENANCE}" \
+              "reviewed_packet_sha256=${packet_hash}"; do
     [[ -n "${pair#*=}" ]] || _v_err+=" missing:${pair%%=*}"
   done
   in_list "${PACKET_COVERAGE_STATE}" "FULL_COVERAGE|PARTIAL_COVERAGE|SECRET_REDACTION|CRITICAL_OMISSION|EMPTY_PACKET" || _v_err+=" enum:coverage_state"
+  in_list "${PACKET_PROVENANCE}" "COMMIT_BOUND|WORKSPACE_BOUND|REDACTED_BOUND|PARTIAL_BOUND|UNBOUND" || _v_err+=" enum:provenance_integrity"
   in_list "${codex_concern}"     "NO OBJECTION|CHANGES ADVISED|DO NOT ADVANCE|UNCLASSIFIED" || _v_err+=" enum:codex_concern"
   in_list "${effective_concern}" "NO OBJECTION|CHANGES ADVISED|DO NOT ADVANCE|UNCLASSIFIED" || _v_err+=" enum:effective_concern"
   in_list "${evidence}" "A|B|C|D|E|not reported" || _v_err+=" enum:evidence"
-  if [[ -z "${artifact_shas}" ]] && ! in_list "${PACKET_COVERAGE_STATE}" "CRITICAL_OMISSION|EMPTY_PACKET"; then
-    _v_err+=" missing:artifact_sha256"
+  if [[ -z "${PACKET_ARTIFACTS_YAML}" ]] && ! in_list "${PACKET_COVERAGE_STATE}" "CRITICAL_OMISSION|EMPTY_PACKET"; then
+    _v_err+=" missing:artifacts"
   fi
   if [[ -n "${_v_err}" ]]; then
     echo "error: v0 schema validation failed (fail-closed):${_v_err}" >&2
@@ -483,17 +498,23 @@ cmd_review() {
     echo "  branch: ${PACKET_BRANCH}"
     echo "  base_commit: ${PACKET_BASE_SHA}"
     echo "  review_commit: ${PACKET_REVIEW_SHA}"
-    echo "  artifacts:${artifact_shas}"
+    if [[ -n "${PACKET_ARTIFACTS_YAML}" ]]; then echo "  artifacts:"; printf '%s' "${PACKET_ARTIFACTS_YAML}"; else echo "  artifacts: []"; fi
     echo "  diff_hash: ${PACKET_DIFF_HASH}"
     echo "  coverage_state: ${PACKET_COVERAGE_STATE}"
-    echo "  provenance_integrity: ${PACKET_INTEGRITY}"
+    echo "  provenance_integrity: ${PACKET_PROVENANCE}"
     echo "  workspace_dirty: $([[ ${PACKET_WORKSPACE_DIRTY} -eq 1 ]] && echo true || echo false)"
     echo "  redaction_count: ${PACKET_REDACTION_COUNT}"
     echo "  secret_redaction: $([[ ${PACKET_SECRET_FLAG} -eq 1 ]] && echo true || echo false)"
-    if [[ ${#PACKET_EXCLUDED_ITEMS[@]} -eq 0 ]]; then
+    if [[ ${#PACKET_EXC_PATH[@]} -eq 0 ]]; then
       echo "  excluded_paths: []"
     else
-      echo "  excluded_paths:"; printf '    - "%s"\n' "${PACKET_EXCLUDED_ITEMS[@]}"
+      echo "  excluded_paths:"
+      local _i
+      for _i in "${!PACKET_EXC_PATH[@]}"; do
+        echo "    - path: \"${PACKET_EXC_PATH[$_i]}\""
+        echo "      reason: \"${PACKET_EXC_REASON[$_i]}\""
+        echo "      affected_section: ${PACKET_EXC_SECTION[$_i]}"
+      done
     fi
     echo "  reviewed_packet: packets/$(basename "${packet_saved}")"
     echo "  reviewed_packet_sha256: ${packet_hash}"
@@ -520,7 +541,8 @@ cmd_review() {
     echo "Codex concern: ${codex_concern}"
     echo "Effective concern: ${effective_concern}"
     echo "Evidence: ${evidence}"
-    echo "Coverage: ${PACKET_COVERAGE_STATE} (redactions: ${PACKET_REDACTION_COUNT}); integrity: ${PACKET_INTEGRITY}; workspace_dirty: $([[ ${PACKET_WORKSPACE_DIRTY} -eq 1 ]] && echo true || echo false)${coverage_note:+; note: ${coverage_note}}"
+    echo "Coverage: ${PACKET_COVERAGE_STATE}; provenance: ${PACKET_PROVENANCE}; redactions: ${PACKET_REDACTION_COUNT}; workspace_dirty: $([[ ${PACKET_WORKSPACE_DIRTY} -eq 1 ]] && echo true || echo false)${coverage_note:+; note: ${coverage_note}}"
+    [[ "${PACKET_PROVENANCE}" == "WORKSPACE_BOUND" ]] && echo "Rollback: NOT exact until a stage commit is made (workspace-bound review)"
     echo "Log summary: ${summary_line#LOG SUMMARY: }"
     echo "Full assessment: ${assessment_file} (sha256:${assessment_hash})"
     echo "Reviewed packet: ${packet_saved} (sha256:${packet_hash})"
@@ -541,6 +563,19 @@ cmd_review() {
   echo "  coverage: ${PACKET_COVERAGE_STATE} (redactions: ${PACKET_REDACTION_COUNT})"
   echo "  assessment: ${assessment_file}"
   echo "  packet: ${packet_saved}"
+}
+
+# reverify_packet <feature> <stage> <artifacts...> : rebuild the packet for a WORKSPACE_BOUND
+# review and recompute its hashes, so a decision can prove the workspace still matches.
+# Sets RV_DIFF_HASH / RV_PACKET_SHA / RV_WORKSPACE_DIRTY.
+reverify_packet() {
+  local f="$1" s="$2"; shift 2
+  PACKET_FILE="$(mktemp)"
+  build_packet "${f}" "${s}" "$@"      # deterministic given tree + HEAD + artifacts
+  RV_DIFF_HASH="${PACKET_DIFF_HASH}"
+  RV_PACKET_SHA="$(sha256_of "${PACKET_FILE}")"
+  RV_WORKSPACE_DIRTY="${PACKET_WORKSPACE_DIRTY}"
+  rm -f "${PACKET_FILE}"
 }
 
 # --- decision (append-only human entry) -------------------------------------
@@ -576,29 +611,49 @@ cmd_decision() {
     done < <(sed -n '/^  artifacts:/,/^  diff_hash:/p' "${latest}")
   fi
 
-  # Decision-integrity guard: APPROVE_STAGE must bind to the EXACT reviewed state, not just
-  # matching named-artifact hashes. For a clean committed review, "HEAD == review_commit AND
-  # tree clean now" guarantees the whole repo state is byte-identical to what was reviewed
-  # (so diff_hash is reproduced transitively). Refuse otherwise; --force records an override.
-  local override_note=""
+  # Decision-integrity guard, per the authoritative matrix (docs/reviewer-artifact-schemas.md).
+  # APPROVE_STAGE eligibility depends on the recorded provenance_integrity mode.
+  local override_note="" rollback_note=""
   if [[ "${decision}" == "APPROVE_STAGE" ]]; then
-    local reasons=() label="STALE OVERRIDE"
+    local reasons=() label="OVERRIDE"
     if [[ -z "${latest}" ]]; then
-      reasons+=("no review on record for ${feature} stage ${stage}")
+      reasons+=("no review on record for ${feature} stage ${stage}"); label="UNBOUND OVERRIDE"
     else
-      local rev_recorded dirty_recorded head_now tree_dirty_now=0
-      rev_recorded="$(grep -E '^  review_commit:' "${latest}" | head -1 | sed -E 's/^  review_commit:[[:space:]]*([0-9a-fA-F]+).*/\1/' || true)"
+      local prov rev_recorded dirty_recorded head_now tree_dirty_now=0
+      prov="$(grep -E '^  provenance_integrity:' "${latest}" | head -1 | awk '{print $2}' || true)"
+      rev_recorded="$(grep -E '^  review_commit:' "${latest}" | head -1 | sed -E 's/.*:[[:space:]]*([0-9a-fA-F]+).*/\1/' || true)"
       dirty_recorded="$(grep -E '^  workspace_dirty:' "${latest}" | head -1 | awk '{print $2}' || true)"
       head_now="$(git rev-parse HEAD)"
       git diff --quiet HEAD -- . 2>/dev/null || tree_dirty_now=1
-      [[ "${dirty_recorded}" == "true" ]] && { reasons+=("review was against uncommitted workspace changes (not a durable state)"); label="DIRTY OVERRIDE"; }
-      [[ ${tree_dirty_now} -eq 1 ]] && { reasons+=("working tree is dirty now (differs from a clean reviewed commit)"); label="DIRTY OVERRIDE"; }
-      [[ -n "${rev_recorded}" && "${rev_recorded}" != "${head_now}" ]] && reasons+=("HEAD ${head_now:0:12} != reviewed commit ${rev_recorded:0:12}")
-      [[ ${changed} -eq 1 ]] && reasons+=("a reviewed artifact changed since the review")
+      case "${prov}" in
+        COMMIT_BOUND)
+          [[ "${rev_recorded}" == "${head_now}" ]] || reasons+=("HEAD ${head_now:0:12} != reviewed commit ${rev_recorded:0:12}")
+          [[ ${tree_dirty_now} -eq 0 ]]            || reasons+=("working tree is dirty now (review was COMMIT_BOUND/clean)")
+          [[ ${changed} -eq 0 ]]                   || reasons+=("a reviewed artifact changed since the review")
+          label="STALE OVERRIDE"; rollback_note="Rollback: exact git commit ${rev_recorded}" ;;
+        WORKSPACE_BOUND)
+          # reverify the EXACT reviewed workspace: artifact SHA + diff hash + packet SHA + dirty state
+          local rec_diff rec_pkt rec_arts=()
+          rec_diff="$(grep -E '^  diff_hash:' "${latest}" | head -1 | awk '{print $2}' || true)"
+          rec_pkt="$(grep -E '^  reviewed_packet_sha256:' "${latest}" | head -1 | awk '{print $2}' || true)"
+          mapfile -t rec_arts < <(sed -n '/^  artifacts:/,/^  diff_hash:/p' "${latest}" | sed -n 's/^    - path: //p')
+          reverify_packet "${feature}" "${stage}" "${rec_arts[@]}"
+          [[ ${changed} -eq 0 ]]                 || reasons+=("a reviewed artifact changed since the review")
+          [[ "${RV_DIFF_HASH}" == "${rec_diff}" ]] || reasons+=("diff hash changed since review (workspace moved)")
+          [[ "${RV_PACKET_SHA}" == "${rec_pkt}" ]] || reasons+=("packet hash changed since review (reviewed bytes differ)")
+          { [[ ${RV_WORKSPACE_DIRTY} -eq 1 && "${dirty_recorded}" == "true" ]] || [[ ${RV_WORKSPACE_DIRTY} -eq 0 && "${dirty_recorded}" == "false" ]]; } || reasons+=("workspace_dirty state changed since review")
+          label="WORKSPACE OVERRIDE"; rollback_note="Rollback: NOT exact until a stage commit is made (workspace-bound review)" ;;
+        REDACTED_BOUND)
+          reasons+=("REDACTED_BOUND — requires an explicit human security waiver"); label="SECURITY WAIVER" ;;
+        PARTIAL_BOUND)
+          reasons+=("PARTIAL_BOUND — a supplemental path was excluded; requires a conscious coverage waiver"); label="COVERAGE WAIVER" ;;
+        *)
+          reasons+=("${prov:-UNBOUND} — critical omission / empty / unverifiable review is not eligible"); label="UNBOUND OVERRIDE" ;;
+      esac
     fi
     if [[ ${#reasons[@]} -gt 0 ]]; then
       if [[ ${force} -eq 0 ]]; then
-        echo "refused: APPROVE_STAGE — the reviewed state no longer matches the current state:" >&2
+        echo "refused: APPROVE_STAGE not eligible under the provenance matrix:" >&2
         printf '  - %s\n' "${reasons[@]}" >&2
         echo "  re-run 'review' on the current state, or pass --force \"<reason>\" to record a ${label}." >&2
         [[ -n "${verify_lines}" ]] && printf '%s' "${verify_lines}" >&2
@@ -616,6 +671,7 @@ cmd_decision() {
     echo "Decision: ${decision}${override_note}"
     echo "Reason/next: ${reason}"
     [[ -n "${latest}" ]] && echo "Verified against: ${latest}"
+    [[ -n "${rollback_note}" ]] && echo "${rollback_note}"
     [[ -n "${verify_lines}" ]] && { echo "Artifact integrity:"; printf '%s' "${verify_lines}"; }
   } >> "${REVIEW_LOG}"
   echo "decision appended to ${REVIEW_LOG}"

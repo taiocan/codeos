@@ -23,10 +23,14 @@ identified that this leaves approval able to apply to a stale or non-durable rev
    correspond to any durable git object, so the "last sound OK point" is not reproducible from
    git alone.
 
-> **Status note:** the *minimal* guard has shipped — `decision APPROVE_STAGE` now refuses
-> unless `HEAD == review_commit`, the tree is clean now, the review was not workspace-dirty,
-> and named artifacts still hash-match (else `--force` records a `[STALE/DIRTY OVERRIDE]`).
-> This backlog item now covers only the **deeper** provenance work below.
+> **Status note:** the provenance/coverage **matrix** has shipped (see
+> `docs/reviewer-artifact-schemas.md`): `APPROVE_STAGE` eligibility is governed by
+> `provenance_integrity` (COMMIT_BOUND / WORKSPACE_BOUND / REDACTED_BOUND / PARTIAL_BOUND /
+> UNBOUND), and WORKSPACE_BOUND approvals re-verify artifact SHA + diff hash + packet SHA +
+> workspace_dirty at decision time. This item now covers only the **deeper** work below:
+> durable workspace snapshots (so a workspace-bound approval is reproducible from an object,
+> not just re-hashing the live tree), structured per-feature decision ledgers, machine-readable
+> JSON Schema validation, parser hardening, and CI enforcement.
 
 ## Upgrade
 
