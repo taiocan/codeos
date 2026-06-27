@@ -77,21 +77,24 @@ session instead of resuming under a different parser/behavior.
 
 - The **full** Codex assessment is saved under `reviews/codex/<ts>-<feature>-stage-<N>-<sha>.md`,
   opening with a self-contained YAML metadata header (feature/stage/branch/base+review
-  commit/artifacts+sha256/diff_hash/coverage/excluded_paths/reviewed_packet+sha256/
-  concern/evidence) so the file is auditable on its own.
-- The **exact bytes that were reviewed** are persisted alongside it as
-  `…-stage-<N>-<sha>.packet.txt`, with its own SHA256 recorded. This is what makes
-  auditability real for uncommitted artifacts, since-edited files, and filtered diffs — you
-  can prove precisely what Codex saw, not merely a hash of it. Real stage reviews are
-  committed with the feature branch; pilot/test runs use `reviews/codex/_scratch/`
-  (gitignored).
-- `reviews/review-log.md` is **append-only**. The script appends a short REVIEW entry
-  (summary + concern + coverage + hashes + links). The human decision is a **separately
-  appended** entry via `codeos-review.sh decision …` — prior entries are never edited. That
-  command also **re-hashes the reviewed artifacts at decision time** and records MATCH /
-  CHANGED per artifact, so an approval can never silently apply to an artifact that moved
-  since the review. The REVIEW entry's base/review SHA + the appended HUMAN DECISION entry
-  are what let a human later identify the last sound "OK point" (commit/branch) to return to.
+  commit/artifacts+sha256/diff_hash/coverage_state/redaction_count/secret_redaction/
+  excluded_paths/reviewed_packet+sha256/codex_concern/effective_concern/evidence) so the file
+  is auditable on its own.
+- The **exact bytes that were reviewed** are persisted as the canonical packet under
+  `reviews/codex/packets/<ts>-<feature>-stage-<N>-<sha>.packet.txt`, with its own SHA256
+  recorded in the assessment and the log. It contains the full context, artifact contents,
+  filtered diff, and the exclusion/redaction list — so for uncommitted artifacts, since-edited
+  files, and filtered diffs you can prove precisely what Codex saw, not merely a hash of it.
+  Real stage reviews are committed with the feature branch; pilot/test runs use
+  `reviews/codex/_scratch/` (gitignored).
+- `reviews/review-log.md` is **append-only**. The REVIEW entry records **both** the raw
+  `Codex concern` and the `Effective concern` (after coverage adjustment), the coverage state,
+  redaction count, hashes, and links. The human decision is a **separately appended** entry
+  via `codeos-review.sh decision …` — prior entries are never edited. That command also
+  **re-hashes the reviewed artifacts at decision time** and records MATCH / CHANGED per
+  artifact, so an approval can never silently apply to an artifact that moved since the review.
+  The REVIEW entry's base/review SHA + the appended HUMAN DECISION entry are what let a human
+  later identify the last sound "OK point" (commit/branch) to return to.
 
 ## 5. Safety — secret + oversized-diff filtering
 
@@ -104,15 +107,21 @@ artifact contents**:
    redacted.
 
 **A coverage gap is a decision downgrade, not a footnote.** Filtering protects secrets but
-shrinks what the reviewer saw, so missing coverage is promoted into the verdict rather than
-left as a side note:
-- if a **requested artifact** cannot be shown at all (missing or over the size limit), the
-  concern is forced to **DO NOT ADVANCE** — the reviewer never saw the thing under review;
-- otherwise, any exclusion/redaction marks coverage **partial**, the packet tells Codex it is
-  seeing an incomplete set, and a returned `NO OBJECTION` is **downgraded to CHANGES ADVISED**.
+shrinks what the reviewer saw, so each review is classified into an explicit **coverage
+state**, and the state maps the raw Codex concern to an **effective concern**:
 
-The excluded/redacted paths and the resulting coverage are recorded in both the saved
-assessment and the log, so the gap is explicit *and* consequential.
+| Coverage state | When | Effect on effective concern |
+|---|---|---|
+| `FULL_COVERAGE` | nothing excluded or redacted | Codex concern unchanged |
+| `PARTIAL_COVERAGE` | a diff file path/size-excluded | `NO OBJECTION` → `CHANGES ADVISED` |
+| `SECRET_REDACTION` | secret-like values redacted from diff or artifacts | `NO OBJECTION` → `CHANGES ADVISED` |
+| `CRITICAL_OMISSION` | a **requested artifact** could not be shown (missing/oversize) | forced `DO NOT ADVANCE` |
+| `EMPTY_PACKET` | no reviewable content reached Codex at all | forced `DO NOT ADVANCE` |
+
+The coverage state, redaction count, excluded/redacted paths, and **both** concerns are
+recorded in the assessment and the log. When any secret-like content is excluded/redacted (or
+on a critical/empty packet), the log flags **MANUAL SECURITY REVIEW REQUIRED**, so the gap is
+explicit *and* consequential.
 
 ## 6. Concern-level semantics + human responsibility
 

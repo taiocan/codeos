@@ -70,6 +70,11 @@ INSTRUCTIONS
 - **UNCLASSIFIED** — set by the pipeline when no parseable `LOG SUMMARY` line is found;
   treated as **HIGH attention / manual review required**, never neutral.
 
+The reviewer emits one concern. The pipeline may then compute an **effective concern** that
+is at least as severe, when evidence coverage was partial or content was withheld (see the
+coverage-state table in `docs/reviewer-pipeline.md`). Both the raw Codex concern and the
+effective concern are logged; the human acts on the effective concern.
+
 ## Evidence grade (optional — backlog #13)
 
 - **A** — Direct evidence from artifact/diff/test/runtime log

@@ -153,12 +153,17 @@ build_packet() {
     fi
   fi
 
+  local redaction_count=0 secret_flag=0 path_excluded=0
+
   # content redaction: blank the value after a secret-like key
   local redacted_diff
   redacted_diff="$(printf '%s\n' "${filtered_diff}" | redact_secrets)"
   if [[ "${redacted_diff}" != "${filtered_diff}" ]]; then
+    secret_flag=1
+    redaction_count=$(( redaction_count + $(grep -c '\[REDACTED' <<<"${redacted_diff}") ))
     excluded+="(secret-like diff content redacted) "
   fi
+  [[ -n "${excluded}" ]] && path_excluded=1   # path/size diff exclusions recorded above
 
   # --- requested artifacts: secret-redact + size-guard; a requested artifact that cannot
   #     be fully shown is a HARD coverage failure (we were asked to review it). ---
@@ -175,18 +180,36 @@ build_packet() {
     fi
     raw="$(cat "${a}")"
     redacted="$(printf '%s\n' "${raw}" | redact_secrets)"
-    [[ "${redacted}" != "${raw}" ]] && excluded+="${a}(secret redacted) "
+    if [[ "${redacted}" != "${raw}" ]]; then
+      secret_flag=1
+      redaction_count=$(( redaction_count + $(grep -c '\[REDACTED' <<<"${redacted}") ))
+      excluded+="${a}(secret redacted) "
+    fi
     artifacts_block+="  --- ${a} (sha256: $(sha256_of "${a}")) ---"$'\n'
     artifacts_block+="$(printf '%s\n' "${redacted}" | sed 's/^/    /')"$'\n\n'
     shown_count=$((shown_count + 1))
   done
 
-  # coverage: "full" only when nothing was excluded or redacted anywhere
-  local coverage="full"
-  [[ -n "${excluded}" ]] && coverage="partial"
+  # --- explicit coverage state (most severe wins) ---
+  #   FULL_COVERAGE | PARTIAL_COVERAGE | SECRET_REDACTION | CRITICAL_OMISSION | EMPTY_PACKET
+  local state coverage
+  if [[ ${shown_count} -eq 0 && -z "${redacted_diff//[$' \t\n']/}" ]]; then
+    state="EMPTY_PACKET"; coverage="empty"
+  elif [[ "${PACKET_ARTIFACT_EXCLUDED}" -eq 1 ]]; then
+    state="CRITICAL_OMISSION"; coverage="critical"
+  elif [[ ${secret_flag} -eq 1 ]]; then
+    state="SECRET_REDACTION"; coverage="partial"
+  elif [[ ${path_excluded} -eq 1 ]]; then
+    state="PARTIAL_COVERAGE"; coverage="partial"
+  else
+    state="FULL_COVERAGE"; coverage="full"
+  fi
 
   PACKET_EXCLUDED="${excluded}"
   PACKET_COVERAGE="${coverage}"
+  PACKET_COVERAGE_STATE="${state}"
+  PACKET_REDACTION_COUNT="${redaction_count}"
+  PACKET_SECRET_FLAG="${secret_flag}"
   PACKET_DIFF_HASH="$(sha256_str "${redacted_diff}")"
   PACKET_BASE_SHA="${base_sha:-(uncommitted artifact)}"
   PACKET_REVIEW_SHA="${review_sha}"
@@ -207,7 +230,7 @@ build_packet() {
     echo "  Base commit:            ${PACKET_BASE_SHA}"
     echo "  Review commit:          ${review_sha}"
     echo "  Current approved stage: ${approved_stage}"
-    echo "  Evidence coverage:      ${coverage}"
+    echo "  Evidence coverage:      ${state}"
     echo
     echo "DBA RULES RELEVANT TO THIS STAGE"
     echo "  - Human approval is required for every stage transition; you are advisory only."
@@ -354,17 +377,23 @@ cmd_review() {
   fi
   [[ -n "${evidence}" ]] || evidence="not reported"
 
-  # Promote missing/partial coverage into the decision (a coverage gap must not pass silently):
-  #  - a requested artifact we could not show at all  -> force DO NOT ADVANCE
-  #  - any other partial coverage with NO OBJECTION    -> downgrade to CHANGES ADVISED
-  local coverage_note=""
-  if [[ "${PACKET_ARTIFACT_EXCLUDED:-0}" -eq 1 ]]; then
-    coverage_note="a requested artifact could not be shown (missing/oversize) — forced DO NOT ADVANCE"
-    concern="DO NOT ADVANCE"
-  elif [[ "${PACKET_COVERAGE:-full}" == "partial" && "${concern}" == "NO OBJECTION" ]]; then
-    coverage_note="evidence coverage partial (content excluded/redacted) — NO OBJECTION downgraded to CHANGES ADVISED"
-    concern="CHANGES ADVISED"
-  fi
+  # Effective concern = Codex concern adjusted for evidence coverage. We keep and log BOTH,
+  # so a coverage gap can never silently pass as the reviewer's verdict.
+  local codex_concern="${concern}" effective_concern="${concern}" coverage_note=""
+  case "${PACKET_COVERAGE_STATE:-FULL_COVERAGE}" in
+    EMPTY_PACKET)
+      effective_concern="DO NOT ADVANCE"
+      coverage_note="EMPTY_PACKET — no reviewable content reached Codex" ;;
+    CRITICAL_OMISSION)
+      effective_concern="DO NOT ADVANCE"
+      coverage_note="CRITICAL_OMISSION — a requested artifact could not be shown (missing/oversize)" ;;
+    SECRET_REDACTION|PARTIAL_COVERAGE)
+      if [[ "${codex_concern}" == "NO OBJECTION" ]]; then
+        effective_concern="CHANGES ADVISED"
+        coverage_note="${PACKET_COVERAGE_STATE} — partial evidence; NO OBJECTION downgraded to CHANGES ADVISED"
+      fi ;;
+  esac
+  concern="${effective_concern}"
 
   # save full assessment (with metadata header) + the EXACT packet that was reviewed
   local ts outdir assessment_file packet_saved artifact_shas=""
@@ -373,7 +402,8 @@ cmd_review() {
   mkdir -p "${outdir}"
   local short_sha; short_sha="$(git rev-parse --short HEAD)"
   assessment_file="${outdir}/${ts//:/}-${feature}-stage-${stage}-${short_sha}.md"
-  packet_saved="${assessment_file%.md}.packet.txt"
+  local packets_dir="${outdir}/packets"; mkdir -p "${packets_dir}"
+  packet_saved="${packets_dir}/${ts//:/}-${feature}-stage-${stage}-${short_sha}.packet.txt"
   cp "${PACKET_FILE}" "${packet_saved}"          # exact reviewed bytes — durable, verifiable
   local packet_hash; packet_hash="$(sha256_of "${packet_saved}")"
   local a
@@ -390,12 +420,15 @@ cmd_review() {
     echo "  review_commit: ${PACKET_REVIEW_SHA}"
     echo "  artifacts:${artifact_shas}"
     echo "  diff_hash: ${PACKET_DIFF_HASH}"
-    echo "  coverage: ${PACKET_COVERAGE}${coverage_note:+ (${coverage_note})}"
+    echo "  coverage_state: ${PACKET_COVERAGE_STATE}"
+    echo "  redaction_count: ${PACKET_REDACTION_COUNT}"
+    echo "  secret_redaction: $([[ ${PACKET_SECRET_FLAG} -eq 1 ]] && echo true || echo false)"
     echo "  excluded_paths: \"${PACKET_EXCLUDED}\""
-    echo "  reviewed_packet: $(basename "${packet_saved}")"
+    echo "  reviewed_packet: packets/$(basename "${packet_saved}")"
     echo "  reviewed_packet_sha256: ${packet_hash}"
     echo "  reviewer: \"codex (session ${REVIEW_SESSION})\""
-    echo "  concern: ${concern}"
+    echo "  codex_concern: ${codex_concern}"
+    echo "  effective_concern: ${effective_concern}${coverage_note:+ (${coverage_note})}"
     echo "  evidence: ${evidence}"
     echo "---"
     echo
@@ -412,13 +445,16 @@ cmd_review() {
     echo "Base: ${PACKET_BASE_SHA}  Review: ${PACKET_REVIEW_SHA}  Branch: ${PACKET_BRANCH}"
     echo "Diff-hash: ${PACKET_DIFF_HASH}"
     echo "Reviewer: codex default-model (session ${REVIEW_SESSION})"
-    echo "Concern: ${concern}"
+    echo "Codex concern: ${codex_concern}"
+    echo "Effective concern: ${effective_concern}${coverage_note:+ — ${coverage_note}}"
     echo "Evidence: ${evidence}"
-    echo "Coverage: ${PACKET_COVERAGE}${coverage_note:+ — ${coverage_note}}"
+    echo "Coverage: ${PACKET_COVERAGE_STATE} (redactions: ${PACKET_REDACTION_COUNT})"
     echo "Log summary: ${summary_line#LOG SUMMARY: }"
     echo "Full assessment: ${assessment_file} (sha256:${assessment_hash})"
     echo "Reviewed packet: ${packet_saved} (sha256:${packet_hash})"
-    [[ -n "${PACKET_EXCLUDED}" ]] && echo "Coverage gap: excluded/redacted [${PACKET_EXCLUDED}] — manual security review required"
+    if [[ ${PACKET_SECRET_FLAG} -eq 1 || "${PACKET_COVERAGE_STATE}" == CRITICAL_OMISSION || "${PACKET_COVERAGE_STATE}" == EMPTY_PACKET ]]; then
+      echo "Coverage gap: ${PACKET_COVERAGE_STATE} — excluded/redacted [${PACKET_EXCLUDED}] — MANUAL SECURITY REVIEW REQUIRED"
+    fi
     echo "Human decision: (append with: codeos-review.sh decision ${feature} ${stage} <DECISION> \"<reason>\")"
   } >> "${REVIEW_LOG}"
 
@@ -429,8 +465,10 @@ cmd_review() {
   fi
 
   echo "review logged: ${REVIEW_LOG}"
-  echo "  concern: ${concern}   evidence: ${evidence}"
+  echo "  codex concern: ${codex_concern}   effective concern: ${effective_concern}   evidence: ${evidence}"
+  echo "  coverage: ${PACKET_COVERAGE_STATE} (redactions: ${PACKET_REDACTION_COUNT})"
   echo "  assessment: ${assessment_file}"
+  echo "  packet: ${packet_saved}"
 }
 
 # --- decision (append-only human entry) -------------------------------------
