@@ -93,3 +93,114 @@ Artifact integrity (informational audit, not a gate):
   CHANGED changes/0004-review-fixes.md (reviewed 46d9864e9782 / now 99fe2d702a69)
   CHANGED status/self-development.md (reviewed 5afa58f49c78 / now 530399bf84ce)
   MATCH   status/roadmap.md
+
+## 2026-06-27T17:19:14Z REVIEW — UPG-0001__CHG-20260627-001 — Stage selfdev-step-1
+Base: (no base pin)  Review: 89269f1344d54d585d09fd881aa965b934bb30fc  Branch: feature/backlog-split-and-reviewer
+Diff-hash: 4591aa7e439d81be60094892c112530031014f90853b909e9a36a8bfbedc3af9
+Reviewer: codex default-model (session 019f0a15-774b-7b90-85fd-4bf9245db690)
+Codex concern: DO NOT ADVANCE
+Effective concern: DO NOT ADVANCE
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: DO NOT ADVANCE — Step 1 does not yet present a single consistent scope contract for review traceability and historical migration
+Full assessment: reviews/codex/2026-06-27T171914Z-UPG-0001__CHG-20260627-001-stage-selfdev-step-1-89269f1.md (sha256:7a35aad2c851b0d53da6020b318302ff084db7659bdefec927c84e6944d0d46e)
+Reviewed packet: reviews/codex/packets/2026-06-27T171914Z-UPG-0001__CHG-20260627-001-stage-selfdev-step-1-89269f1.packet.txt (sha256:7856065d162323f44316615979662429242522537c74d670080462a150ab364d)
+Human decision: (append with: codeos-review.sh decision UPG-0001__CHG-20260627-001 selfdev-step-1 <DECISION> "<reason>")
+
+## 2026-06-27T17:23:00Z REVIEW — UPG-0001__CHG-20260627-001 — Stage selfdev-step-1
+Base: (no base pin)  Review: 89269f1344d54d585d09fd881aa965b934bb30fc  Branch: feature/backlog-split-and-reviewer
+Diff-hash: 893e99daca557bb35262292a66d55c125309e3058e0de197fa07acba10bed04b
+Reviewer: codex default-model (session 019f0a15-774b-7b90-85fd-4bf9245db690)
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: CHANGES ADVISED — The Step 1 contract is mostly coherent now, but the brief still defines conflicting feature-state values
+Full assessment: reviews/codex/2026-06-27T172300Z-UPG-0001__CHG-20260627-001-stage-selfdev-step-1-89269f1.md (sha256:2198f48f8362638856be632d6d05016f5437a7a1739e1353a9a5ae360566d207)
+Reviewed packet: reviews/codex/packets/2026-06-27T172300Z-UPG-0001__CHG-20260627-001-stage-selfdev-step-1-89269f1.packet.txt (sha256:d781c9a227e791634ddaa8337857d482848bb8ac979af69f7a45a7777952c8fe)
+Human decision: (append with: codeos-review.sh decision UPG-0001__CHG-20260627-001 selfdev-step-1 <DECISION> "<reason>")
+
+## 2026-06-27T17:25:28Z REVIEW — UPG-0001__CHG-20260627-001 — Stage selfdev-step-1
+Base: (no base pin)  Review: 89269f1344d54d585d09fd881aa965b934bb30fc  Branch: feature/backlog-split-and-reviewer
+Diff-hash: 893e99daca557bb35262292a66d55c125309e3058e0de197fa07acba10bed04b
+Reviewer: codex default-model (session 019f0a15-774b-7b90-85fd-4bf9245db690)
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — The Step 1 scope contract is now coherent; only minor transitional documentation mismatches remain
+Full assessment: reviews/codex/2026-06-27T172528Z-UPG-0001__CHG-20260627-001-stage-selfdev-step-1-89269f1.md (sha256:83285daf44d28dc81ed09e2a60d0e53781ee72f7b3fe1924ab68bfc00eeab0ad)
+Reviewed packet: reviews/codex/packets/2026-06-27T172528Z-UPG-0001__CHG-20260627-001-stage-selfdev-step-1-89269f1.packet.txt (sha256:1ed4f7d4b20f88bbdb6eae357ca3599d23bf61967f4aadf198fe2d8559cca7f1)
+Human decision: (append with: codeos-review.sh decision UPG-0001__CHG-20260627-001 selfdev-step-1 <DECISION> "<reason>")
+
+## 2026-06-27T17:35:27Z HUMAN DECISION — UPG-0001__CHG-20260627-001 — Stage selfdev-step-1
+Commit at decision: 89269f1344d54d585d09fd881aa965b934bb30fc
+Decision: APPROVE_STAGE
+Reason/next: Step 1 Change Intent accepted. Advisory review converged R1 DO NOT ADVANCE -> R3 NO OBJECTION after reconciling the originating brief to the human-narrowed scope (review-traceability AC#9, historical-no-rename migration step 8, state-vocabulary enum). Proceed to Step 2.
+Verified against: reviews/codex/2026-06-27T172528Z-UPG-0001__CHG-20260627-001-stage-selfdev-step-1-89269f1.md
+Artifact integrity (informational audit, not a gate):
+  CHANGED changes/UPG-0001__CHG-20260627-001__feature-thread-traceability.md (reviewed ce8d8f9f431c / now 0e833afdfa09)
+  MATCH   backlog/UPG-0001-feature-thread-traceability.md
+  CHANGED status/self-development.md (reviewed 1aac172ddc72 / now 0b9003606a07)
+
+## 2026-06-27T17:39:19Z REVIEW — UPG-0001__CHG-20260627-001 — Stage selfdev-step-2
+Base: (no base pin)  Review: 89269f1344d54d585d09fd881aa965b934bb30fc  Branch: feature/backlog-split-and-reviewer
+Diff-hash: a32bcdc40324ca7c9e0541b28b516e30f8355092e7f28fdb2bb6fb2618f0c485
+Reviewer: codex default-model (session 019f0a15-774b-7b90-85fd-4bf9245db690)
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: CHANGES ADVISED — Several Step 2 acceptance checks are not reliably verifiable as written, and one of them narrows the Step 1 review-identification contract
+Full assessment: reviews/codex/2026-06-27T173919Z-UPG-0001__CHG-20260627-001-stage-selfdev-step-2-89269f1.md (sha256:5c1cf7b487c3fdf45d56e9a7367cc2e33a99e32ee39596a3ccba056edd7c28b5)
+Reviewed packet: reviews/codex/packets/2026-06-27T173919Z-UPG-0001__CHG-20260627-001-stage-selfdev-step-2-89269f1.packet.txt (sha256:4759920a267c21c4b73452b9114a35530f961779c4103c09e9a8241a32c07fda)
+Human decision: (append with: codeos-review.sh decision UPG-0001__CHG-20260627-001 selfdev-step-2 <DECISION> "<reason>")
+
+## 2026-06-27T17:42:30Z REVIEW — UPG-0001__CHG-20260627-001 — Stage selfdev-step-2
+Base: (no base pin)  Review: 89269f1344d54d585d09fd881aa965b934bb30fc  Branch: feature/backlog-split-and-reviewer
+Diff-hash: a32bcdc40324ca7c9e0541b28b516e30f8355092e7f28fdb2bb6fb2618f0c485
+Reviewer: codex default-model (session 019f0a15-774b-7b90-85fd-4bf9245db690)
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: CHANGES ADVISED — Two Step 2 checks still are not operationally verifiable as written
+Full assessment: reviews/codex/2026-06-27T174230Z-UPG-0001__CHG-20260627-001-stage-selfdev-step-2-89269f1.md (sha256:1f1e298273453e9f86495f5a655b7580ede125e66fe5d0cc8570600de0cf2ae7)
+Reviewed packet: reviews/codex/packets/2026-06-27T174230Z-UPG-0001__CHG-20260627-001-stage-selfdev-step-2-89269f1.packet.txt (sha256:8fcca27bce23b6526d0caecb00219f0fb5b3c5d44492353e8912a353dc6793ee)
+Human decision: (append with: codeos-review.sh decision UPG-0001__CHG-20260627-001 selfdev-step-2 <DECISION> "<reason>")
+
+## 2026-06-28T05:12:36Z REVIEW — UPG-0001__CHG-20260627-001 — Stage selfdev-step-2
+Base: (no base pin)  Review: 89269f1344d54d585d09fd881aa965b934bb30fc  Branch: feature/backlog-split-and-reviewer
+Diff-hash: a32bcdc40324ca7c9e0541b28b516e30f8355092e7f28fdb2bb6fb2618f0c485
+Reviewer: codex default-model (session 019f0a15-774b-7b90-85fd-4bf9245db690)
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: CHANGES ADVISED — `C2` still defines two different verification methods, so the Step 2 acceptance contract is not yet singular
+Full assessment: reviews/codex/2026-06-28T051236Z-UPG-0001__CHG-20260627-001-stage-selfdev-step-2-89269f1.md (sha256:a414b41e4906307d650858badd9fcf922fb4b1828729cfd886596904bab1df30)
+Reviewed packet: reviews/codex/packets/2026-06-28T051236Z-UPG-0001__CHG-20260627-001-stage-selfdev-step-2-89269f1.packet.txt (sha256:9f9315525b84881ed780be9f1ee1c62fc360e60fadd449bc443ee61aadc09e98)
+Human decision: (append with: codeos-review.sh decision UPG-0001__CHG-20260627-001 selfdev-step-2 <DECISION> "<reason>")
+
+## 2026-06-28T05:14:03Z REVIEW — UPG-0001__CHG-20260627-001 — Stage selfdev-step-2
+Base: (no base pin)  Review: 89269f1344d54d585d09fd881aa965b934bb30fc  Branch: feature/backlog-split-and-reviewer
+Diff-hash: a32bcdc40324ca7c9e0541b28b516e30f8355092e7f28fdb2bb6fb2618f0c485
+Reviewer: codex default-model (session 019f0a15-774b-7b90-85fd-4bf9245db690)
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — The Step 2 acceptance contract is now coherent and checkable; only minor transitional dashboard wording remains
+Full assessment: reviews/codex/2026-06-28T051403Z-UPG-0001__CHG-20260627-001-stage-selfdev-step-2-89269f1.md (sha256:4418fbb6280340f8a2f7d89c641510dc994f47e833e74947ffa3a0bb0837ab42)
+Reviewed packet: reviews/codex/packets/2026-06-28T051403Z-UPG-0001__CHG-20260627-001-stage-selfdev-step-2-89269f1.packet.txt (sha256:6fd1d3d48945e46596409a715f997499848860f91a4d928f0113ea3c95966679)
+Human decision: (append with: codeos-review.sh decision UPG-0001__CHG-20260627-001 selfdev-step-2 <DECISION> "<reason>")
+
+## 2026-06-28T05:19:43Z HUMAN DECISION — UPG-0001__CHG-20260627-001 — Stage selfdev-step-2
+Commit at decision: 89269f1344d54d585d09fd881aa965b934bb30fc
+Decision: APPROVE_STAGE
+Reason/next: Step 2 Acceptance Criteria accepted. Advisory review converged R1 CHANGES ADVISED -> R4 NO OBJECTION; all seven required contracts present (A2,C1,C2,B1,D2,E1,E2) with every git-based check pinned to base 89269f1 / a baseline commit. Human authorized the pre-migration baseline commit with constraints. Proceed to Step 3.
+Verified against: reviews/codex/2026-06-28T051403Z-UPG-0001__CHG-20260627-001-stage-selfdev-step-2-89269f1.md
+Artifact integrity (informational audit, not a gate):
+  CHANGED changes/UPG-0001__CHG-20260627-001__feature-thread-traceability.md (reviewed a92f7e30d3e3 / now 5486502b4644)
+  MATCH   backlog/UPG-0001-feature-thread-traceability.md
+  CHANGED status/self-development.md (reviewed ee2858a79712 / now c022486a436b)

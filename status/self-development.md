@@ -18,6 +18,7 @@
 | backlog/doc-consistency-doctrine-rename | 0002-doc-consistency-rename | documentation | 4-Reconcile | CHANGES ADV →0004 | COMPLETE |
 | — (whole-backlog planning) | 0003-implementation-roadmap | backlog-only / self-dev planning | 4-Reconcile | CHANGES ADV →0004 | COMPLETE |
 | — (reviewer findings) | 0004-review-fixes | documentation / self-dev-governance | 4-Reconcile | CHANGES ADV (accepted) | COMPLETE |
+| backlog/UPG-0001-feature-thread-traceability.md | CHG-20260627-001 | self-dev-governance | 2-Acceptance | NO OBJ (r4) | IN_PROGRESS |
 
 <!--
 Loop step : 1-Intent / 2-Acceptance / 3-Implement / 4-Reconcile / —
