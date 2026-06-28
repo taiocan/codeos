@@ -1,7 +1,19 @@
+---
+feature_id: UPG-0004
+slug: stage-4-6-reports
+title: Structured Stage 4–6 Reports
+status: PROPOSED
+priority: P0
+depends_on: []
+related_features: []
+supersedes: []
+superseded_by: []
+---
+
 # Upgrade: stage-4-6-reports — Structured Stage 4–6 Reports
 
 **Priority**: P0
-**Status**: BACKLOG
+**Status**: PROPOSED
 **Type**: toolkit-upgrade
 **Related**: stage-report-generator, current-verified-state
 
@@ -109,3 +121,28 @@ Each field must be concise. Empty sections must say `none`, `not run`, or `not a
 
 No non-negotiable rule touched. Pure transparency aid for Stages 4–6; strengthens the
 evidence chain that reconciliation (Stage 7) consumes.
+
+## Feature Thread
+
+> Canonical thread rollup for this feature. Compact links/IDs only; full detail lives in the
+> change records and review files. May be maintained manually.
+
+### Changes
+
+| Change ID | File | Purpose | State |
+|---|---|---|---|
+
+### Reviews
+
+| Review ID | Change ID | Step | Round | Verdict |
+|---|---|---|---|---|
+
+### Findings Tracked Inside This Feature
+
+| Finding ID | Review ID | Classification | Resolution |
+|---|---|---|---|
+
+### Follow-up Features
+
+| Feature ID | Reason | Source finding |
+|---|---|---|

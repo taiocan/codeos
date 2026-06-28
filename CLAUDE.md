@@ -8,7 +8,7 @@
 
 This is a **stable rulebook**. It contains no live workflow state. Current status lives in
 [`status/self-development.md`](status/self-development.md); per-change detail lives in
-`changes/[change_id].md`.
+`changes/UPG-####__CHG-YYYYMMDD-NNN__slug.md`.
 
 All paths in this file are **repo-relative** (`prompts/`, `templates/`, `scripts/`, …).
 There is no `.codeos/` symlink inside this repo — that prefix is only for downstream projects.
@@ -31,7 +31,7 @@ the-HOW, human-approved gates, advisory (never gatekeeping) review — in a lean
 1. Read this file.
 2. Read [`status/self-development.md`](status/self-development.md) — the live Self-Development
    Status dashboard (what is in flight and at which step).
-3. Inspect the active `changes/[change_id].md` for any IN_PROGRESS row.
+3. Inspect the active `changes/UPG-####__CHG-YYYYMMDD-NNN__slug.md` for any IN_PROGRESS row.
 4. Confirm the current state with the human, then **STOP** and ask what to work on.
 
 ---
@@ -77,7 +77,7 @@ the downstream master doctrine.
 Anchor each non-trivial change to a `backlog/` item (create one if none exists). Use
 [`prompts/codeos-self-dev.md`](prompts/codeos-self-dev.md) for the detailed step prompt and
 [`templates/codeos-change.md`](templates/codeos-change.md) for the change record. One change
-record per non-trivial change: `changes/[change_id].md`.
+record per non-trivial change: `changes/UPG-####__CHG-YYYYMMDD-NNN__slug.md`.
 
 Each step: **produce output → run the compulsory Codex review → STOP at the gate → human
 approves → next step.**
@@ -104,7 +104,7 @@ approves → next step.**
 Run the Codex reviewer at every non-trivial step, before its gate:
 
 ```
-bash scripts/codeos-review.sh review <change_id> selfdev-step-<N> changes/<change_id>.md <touched-files>
+bash scripts/codeos-review.sh review UPG-####__CHG-YYYYMMDD-NNN selfdev-step-<N> changes/UPG-####__CHG-YYYYMMDD-NNN__slug.md <touched-files>
 ```
 
 Running the review is **mandatory**. The verdict is **advisory** — NO OBJECTION /
@@ -139,12 +139,13 @@ Codeos/                          ← toolkit repo (this repo)
 ├── CLAUDE.md                    ← THIS FILE — stable self-development operating guide
 ├── dba-system.md                ← downstream DBA doctrine (loaded by downstream projects)
 ├── status/
-│   └── self-development.md       ← live Self-Development Status dashboard (mutable)
+│   ├── self-development.md       ← live Self-Development Status dashboard (mutable; Feature ID + Change ID)
+│   └── roadmap.md                ← dependency-aware wave plan, keyed by UPG-#### (mutable)
 ├── changes/
-│   └── [change_id].md            ← per-change source of truth (one per non-trivial change)
+│   └── UPG-####__CHG-YYYYMMDD-NNN__slug.md  ← per-change source of truth (one per non-trivial change)
 ├── backlog/
-│   ├── features.md               ← backlog roadmap / index
-│   └── [feature_id].md           ← feature briefs (discovery; feed Step 1)
+│   ├── features.md               ← authoritative UPG-#### → file map (identity)
+│   └── UPG-####-slug.md          ← feature briefs w/ trace header + Feature Thread (feed Step 1)
 ├── prompts/                     ← stage + self-dev step prompts
 ├── templates/                   ← artifact templates
 ├── patterns/                    ← structural patterns
@@ -155,6 +156,15 @@ Codeos/                          ← toolkit repo (this repo)
     ├── architecture-journal.md   ← cross-cutting institutional memory (AJ-NNN)
     └── codex/                     ← reviewer assessments + packets
 ```
+
+**Identity & IDs (Feature Thread model).** Work is traced by stable **`UPG-####`** feature ids,
+per-execution **`CHG-YYYYMMDD-NNN`** change ids, **`REV__…__S<N>__R<N>`** review-round ids, and the
+stable **`RVS__…__S<N>`** review-series id. **Self-Reference Boundary:** reviewed artifacts carry
+`review_series` + `review_state`, never a live round — exact rounds live only in `reviews/`. The
+dashboard separates Feature ID from Change ID, and every backlog brief carries a
+`## Feature Thread` rollup. The full model is `backlog/UPG-0001-feature-thread-traceability.md`.
+In-scope review fixes stay inside the same `CHG-*`; only OUT-OF-SCOPE BACKLOG findings spawn a new
+`UPG-####` (see the Review-Fix Rule in `prompts/codeos-self-dev.md`).
 
 ---
 

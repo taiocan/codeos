@@ -1,7 +1,19 @@
+---
+feature_id: UPG-0022
+slug: 00b-adr-generator
+title: 00b to ADR Candidate Generator
+status: PROPOSED
+priority: P3
+depends_on: []
+related_features: []
+supersedes: []
+superseded_by: []
+---
+
 # Upgrade: 00b-adr-generator — 00b to ADR Candidate Generator
 
 **Priority**: P3
-**Status**: BACKLOG
+**Status**: PROPOSED
 **Type**: toolkit-upgrade
 **Related**: solution-discovery-00b, config-discovery
 
@@ -57,3 +69,28 @@ Candidates only; non-authoritative until routed through Stage 1–3 or Stage 10.
 
 Touches **artifact authority**: ADR candidates are non-authoritative until routed through an
 approved stage. Keeps 00b discovery from silently becoming architecture.
+
+## Feature Thread
+
+> Canonical thread rollup for this feature. Compact links/IDs only; full detail lives in the
+> change records and review files. May be maintained manually.
+
+### Changes
+
+| Change ID | File | Purpose | State |
+|---|---|---|---|
+
+### Reviews
+
+| Review ID | Change ID | Step | Round | Verdict |
+|---|---|---|---|---|
+
+### Findings Tracked Inside This Feature
+
+| Finding ID | Review ID | Classification | Resolution |
+|---|---|---|---|
+
+### Follow-up Features
+
+| Feature ID | Reason | Source finding |
+|---|---|---|

@@ -47,3 +47,30 @@ base-pinning (`codeos-review.sh stage-start --base`). Also: a verification metho
 test its criterion — `ls <file>` proves existence, not identity/content/ownership; read the file
 and assert the specific properties. And state exactly **one** method per criterion. See
 [[AJ-001]] for the related rule that the step's contract must be internally singular.
+
+---
+
+## AJ-003 — Don't let an artifact record the review that is reviewing it (self-reference loop)
+
+*Origin: UPG-0001 / CHG-20260627-001 (feature-thread-traceability), Step 4 review rounds R1–R5.*
+
+When a compulsory advisory review assesses artifacts that **also contain the bookkeeping that
+tracks the review** (a change record's `latest_review`, the dashboard "latest review" cell, a
+Feature Thread review row), Step 4 enters an **infinite self-reference loop**: the artifact cannot
+name the review currently assessing it, so every round flags the field as stale, and fixing it
+just shifts the lag by one round. (Earlier seen, less acutely, in the `0001–0004` series — see
+`UPG-0028`.)
+
+**Fix — separate stable traceability from live review chronology:**
+- Reviewed artifacts carry a **stable review-series id** `RVS__UPG-####__CHG-…__S<N>` + a
+  `review_state` (DRAFT/IN_REVIEW/REVIEWED/ACCEPTED) — **never** an exact `REV__…__R<N>` round.
+- Exact rounds, verdicts, packet hashes, and the human decision live **only** in
+  `reviews/review-log.md` and `reviews/codex/*` (the "Surface ownership" rule).
+- **Stop rule:** if two consecutive rounds find only stale review-bookkeeping caused by the
+  previous round, stop editing the artifact and close by **human decision** — advisory, not
+  gatekeeping. Don't chase `NO OBJECTION` on a structurally unsatisfiable field.
+
+**How to apply:** never embed live review chronology in an artifact that is itself reviewed. The
+doctrine + artifact structure landed here (Self-Reference Boundary in `prompts/codeos-self-dev.md`);
+teaching the reviewer/packet to honor it is `UPG-0028`. Builds on [[AJ-001]] (singular contract)
+and [[AJ-002]] (reproducible-from-committed-artifacts).

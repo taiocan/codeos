@@ -1,7 +1,19 @@
+---
+feature_id: UPG-0009
+slug: feature-registry
+title: Feature Registry / Branch Binding
+status: PROPOSED
+priority: P2
+depends_on: []
+related_features: []
+supersedes: []
+superseded_by: []
+---
+
 # Upgrade: feature-registry — Feature Registry / Branch Binding
 
 **Priority**: P2
-**Status**: BACKLOG
+**Status**: PROPOSED
 **Type**: toolkit-upgrade
 **Related**: current-verified-state, workflow-profiles, branch-helper, approval-dashboard
 
@@ -59,3 +71,28 @@ Generate warnings if registry disagrees with filesystem/git state.
 
 Touches **artifact authority** boundary: the registry is an index, not truth. It must warn —
 and defer — on any disagreement with the filesystem/git/artifacts, never override them.
+
+## Feature Thread
+
+> Canonical thread rollup for this feature. Compact links/IDs only; full detail lives in the
+> change records and review files. May be maintained manually.
+
+### Changes
+
+| Change ID | File | Purpose | State |
+|---|---|---|---|
+
+### Reviews
+
+| Review ID | Change ID | Step | Round | Verdict |
+|---|---|---|---|---|
+
+### Findings Tracked Inside This Feature
+
+| Finding ID | Review ID | Classification | Resolution |
+|---|---|---|---|
+
+### Follow-up Features
+
+| Feature ID | Reason | Source finding |
+|---|---|---|

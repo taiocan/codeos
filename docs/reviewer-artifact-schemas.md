@@ -9,7 +9,7 @@ and refers here for exact shapes.
 > the hashes, packet copy, and `workspace_dirty` flag are **audit aids**, not a guarantee that a
 > human approval is bound to an unchanged repository state. Binding approval to a reproducible
 > reviewed state (commit + diff hash + workspace snapshot, decision-time reverification, rollback)
-> is **deferred** — see `backlog/reviewer-decision-integrity.md`.
+> is **deferred** — see `backlog/UPG-0015-reviewer-decision-integrity.md`.
 
 ## Schema authority
 

@@ -64,7 +64,7 @@ DBA RULES RELEVANT TO THIS STAGE
   - No events outside the approved event schema; no hidden behavior.
 
 STAGE-SPECIFIC CHECKS
-  <the Stage-N checklist from backlog/reviewer-decision-brief.md>
+  <the Stage-N checklist from backlog/UPG-0003-reviewer-decision-brief.md>
 
 EXPECTED STAGE OUTPUT
   <expected artifact type + stage exit condition for Stage N>
@@ -155,5 +155,5 @@ grading is only considered "implemented" once the reviewer actually emits it.
 ## Stage-specific checklists
 
 The pipeline injects the Stage-N checklist from
-[`backlog/reviewer-decision-brief.md`](../backlog/reviewer-decision-brief.md) (the single source
+[`backlog/UPG-0003-reviewer-decision-brief.md`](../backlog/UPG-0003-reviewer-decision-brief.md) (the single source
 of truth for per-stage checks) plus the expected-stage-output line for Stage N.

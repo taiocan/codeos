@@ -1,7 +1,19 @@
+---
+feature_id: UPG-0018
+slug: reviewer-engine-v1
+title: Typed reviewer engine to replace the Bash pilot
+status: PROPOSED
+priority: P2
+depends_on: []
+related_features: []
+supersedes: []
+superseded_by: []
+---
+
 # Upgrade: reviewer-engine-v1 — Typed reviewer engine to replace the Bash pilot
 
 **Priority**: P2
-**Status**: BACKLOG
+**Status**: PROPOSED
 **Type**: toolkit-upgrade
 **Related**: reviewer-decision-brief, reviewer-decision-integrity, reviewer-pipeline (docs/reviewer-pipeline.md)
 
@@ -75,3 +87,28 @@ v0 fix.
 
 Keeps the reviewer **advisory and testable**. Moving policy/provenance into typed, tested code
 strengthens evidence quality without moving the human gate or adding autonomy.
+
+## Feature Thread
+
+> Canonical thread rollup for this feature. Compact links/IDs only; full detail lives in the
+> change records and review files. May be maintained manually.
+
+### Changes
+
+| Change ID | File | Purpose | State |
+|---|---|---|---|
+
+### Reviews
+
+| Review ID | Change ID | Step | Round | Verdict |
+|---|---|---|---|---|
+
+### Findings Tracked Inside This Feature
+
+| Finding ID | Review ID | Classification | Resolution |
+|---|---|---|---|
+
+### Follow-up Features
+
+| Feature ID | Reason | Source finding |
+|---|---|---|

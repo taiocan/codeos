@@ -1,94 +1,107 @@
 # Codeos Implementation Roadmap
 
-> **This is mutable planning state, not Codeos doctrine.** `backlog/features.md` remains the
-> stable backlog catalog (the briefs and their P0–P3 priorities). This file sequences that
-> catalog into dependency-aware waves and tracks current reality. **Each item still requires
-> its own self-dev change and explicit human approval before implementation** — appearing in a
-> wave here is *not* authorization. Live per-change status lives in
-> `status/self-development.md`; per-change detail in `changes/[id].md`.
+> **This is mutable planning state, not Codeos doctrine.** [`../backlog/features.md`](../backlog/features.md)
+> is the authoritative `UPG-#### → file` map (identity); **this file is authoritative for
+> *order*** — it sequences that catalog into dependency-aware waves and tracks current reality.
+> **Each feature still requires its own self-dev change and explicit human approval before
+> implementation** — appearing in a wave here is *not* authorization. Live per-change status lives
+> in [`self-development.md`](self-development.md); per-change detail in
+> `../changes/UPG-####__CHG-YYYYMMDD-NNN__slug.md`.
 
-From here on, each backlog item is taken as its own self-dev change (the next available
-change ID) through the 4-step loop in `prompts/codeos-self-dev.md`. (Some items already
-landed outside this sequence — e.g. `reviewer-decision-brief` was piloted earlier; see
-Current State. Concrete change IDs are tracked in `status/self-development.md`, not here.)
+Roadmap rows are keyed by **`UPG-####`** (the stable feature id). `Planned/active change` names the
+`CHG-*` once one exists; change ids are execution detail, not feature identity. Some work landed
+outside this sequence (see Current State) and is recorded truthfully without false retroactive
+sequencing.
 
 ---
 
-## Current State (completed / piloted — not in a wave)
+## Current State (completed / piloted / in flight — not in a wave)
 
-| Item | State | Notes |
-|---|---|---|
-| `0001-claude-split` | DONE | Split downstream doctrine (`dba-system.md`) from the self-dev guide (`CLAUDE.md`). |
-| `0002-doc-consistency-rename` | DONE | Renamed doctrine-attribution refs in docs after the split. |
-| `reviewer-decision-brief` (#1) | PILOTED | Advisory Bash reviewer: `scripts/codeos-review.sh` + `docs/reviewer-pipeline.md` + `docs/reviewer-artifact-schemas.md`. Manual, read-only, non-gatekeeping; no Claude Code hooks wired. |
+Entries under **Change ID** are self-development *change* records (execution), not feature ids.
 
-(`reviewer-quality-scale` is **partially piloted** — the reviewer emits an evidence grade but
-the full scale is not realized; the remaining work is scheduled once in Wave 1, not here.)
+| Change ID | Feature ID | State | Notes |
+|---|---|---|---|
+| `0001-claude-split` | — (no backlog feature) | DONE | Split downstream doctrine (`dba-system.md`) from the self-dev guide (`CLAUDE.md`). |
+| `0002-doc-consistency-rename` | UPG-0002 | DONE | Renamed doctrine-attribution refs in docs after the split. |
+| `0003-implementation-roadmap` | — (planning) | DONE | Created this roadmap. |
+| `0004-review-fixes` | — (reviewer findings) | DONE | Advisory-review follow-up fixes. |
+| — | UPG-0003 | PILOTED | `reviewer-decision-brief`: advisory Bash reviewer (`scripts/codeos-review.sh` + `docs/reviewer-pipeline.md`). Manual, read-only, non-gatekeeping. |
+| `CHG-20260627-001` | UPG-0001 | COMPLETE | Feature Thread traceability + stable IDs (review-series self-reference boundary; accepted by decision 2026-06-28). |
+
+(`UPG-0006` reviewer-quality-scale is **partially piloted** — the reviewer already emits an
+evidence grade; the full scale is scheduled in Wave 1.)
 
 ---
 
 ## Waves (dependency-aware)
 
 Sequencing principles: value first (P0 → P3); respect hard dependencies; build on the existing
-reviewer pilot; preserve "advisory-not-autonomous" and "evidence-integrity"; take cheap
-pilot-adjacent wins early.
+reviewer pilot (UPG-0003); preserve "advisory-not-autonomous" and "evidence-integrity"; take
+cheap pilot-adjacent wins early.
 
 ### Wave 1 — Transparency & state  *(P0, no deps, highest value / lowest risk)*
-| Item | Pri | Depends on | Notes |
-|---|---|---|---|
-| `stage-4-6-reports` | P0 | — | Structured Implementation/Test/Runtime reports. **Next pickup.** |
-| `current-verified-state` | P0 | — | Auto-generated session-start state snapshot. |
-| `reviewer-quality-scale` | P2 | reviewer pilot ✓ | **Partially piloted** — formalize the A–E evidence scale + reviewer consistency (pilot already emits a grade). |
+| Wave | Feature ID | Title | Priority | Depends on | Planned/active change | State |
+|---|---|---|---|---|---|---|
+| 1 | UPG-0004 | Structured Stage 4–6 Reports | P0 | — | — | PROPOSED |
+| 1 | UPG-0005 | Current Verified State Block | P0 | — | — | PROPOSED |
+| 1 | UPG-0006 | Reviewer Summary Quality Scale | P2 | UPG-0003 ✓ | — | PROPOSED (partly piloted) |
 
 ### Wave 2 — Discovery & registry
-| Item | Pri | Depends on | Notes |
-|---|---|---|---|
-| `solution-discovery-00b` | P0 | — | Non-authoritative pre-Stage-1 topology discovery. |
-| `config-discovery` | P2 | solution-discovery-00b | Config surface inside expanded 00b. |
-| `feature-registry` | P2 | — | Feature ID ↔ branch ↔ stage ↔ PR binding; unlocks Wave 4–5 automation. |
+| Wave | Feature ID | Title | Priority | Depends on | Planned/active change | State |
+|---|---|---|---|---|---|---|
+| 2 | UPG-0007 | Expanded 00b Solution Discovery / Feature Topology | P0 | — | — | PROPOSED |
+| 2 | UPG-0008 | Configuration Discovery & Schema Track | P2 | UPG-0007 | — | PROPOSED |
+| 2 | UPG-0009 | Feature Registry / Branch Binding | P2 | — | — | PROPOSED |
 
 ### Wave 3 — Evidence discipline & gates  *(P1)*
-| Item | Pri | Depends on | Notes |
-|---|---|---|---|
-| `verify-only-mode` | P1 | — | Strict read-only verification (never edits evidence). |
-| `readiness-checklist` | P1 | — | Lightweight operational merge/release gate. |
-| `repair-before-next-feature` | P1 | — | Unresolved work blocks new behavioral features (human override allowed). |
-| `stage-4-activation-card` | P1 | — | Small activation card; references, never restates, approved artifacts. |
+| Wave | Feature ID | Title | Priority | Depends on | Planned/active change | State |
+|---|---|---|---|---|---|---|
+| 3 | UPG-0010 | Verification-Only Mode | P1 | — | — | PROPOSED |
+| 3 | UPG-0011 | Lightweight PR / Pre-Release Readiness Checklist | P1 | — | — | PROPOSED |
+| 3 | UPG-0012 | Repair-Before-Next-Feature Workflow Gate | P1 | — | — | PROPOSED |
+| 3 | UPG-0013 | Stage 4 Activation Card | P1 | — | — | PROPOSED |
 
 ### Wave 4 — Reviewer hardening & delivery
-| Item | Pri | Depends on | Notes |
-|---|---|---|---|
-| `reviewer-full-diff` | P2 | reviewer-decision-brief ✓ | Reviewer inspects filtered full diff, not only artifacts. |
-| `reviewer-decision-integrity` | P1 | reviewer pilot ✓ | Bind approval to reviewed provenance (commit + diff_hash + workspace). |
-| `workflow-profiles` | P1 | — | Optional branch/PR/CI profiles (simple / one-branch / split-PR). |
-| `stack-manifest` | P2 | — | Two-layer stack record with diff-triggered reconciliation. |
+| Wave | Feature ID | Title | Priority | Depends on | Planned/active change | State |
+|---|---|---|---|---|---|---|
+| 4 | UPG-0014 | Reviewer Agent with Full Diff Access | P2 | UPG-0003 ✓ | — | PROPOSED |
+| 4 | UPG-0015 | Bind stage approval to reviewed provenance | P1 | UPG-0003 ✓ | — | PROPOSED |
+| 4 | UPG-0016 | Branch / PR / CI Workflow Profiles | P1 | — | — | PROPOSED |
+| 4 | UPG-0017 | Stack Manifest with Automatic Reconciliation | P2 | — | — | PROPOSED |
 
-### Wave 5 — Advanced automation & generators  *(mostly P3 + the big P1 rewrite)*
-| Item | Pri | Depends on | Notes |
-|---|---|---|---|
-| `reviewer-engine-v1` | P1 | reviewer pilot proven | Typed (Rust/Python) reviewer engine replacing the Bash pilot — only after the pilot is proven. |
-| `ci-profile` | P3 | stack-manifest | Map Codeos evidence types onto CI checks. |
-| `stack-drift-detector` | P3 | stack-manifest | Block release on unreconciled dependency/config drift. |
-| `stage-report-generator` | P3 | stage-4-6-reports | Auto-fill Stage 4–6 report skeletons. |
-| `00b-adr-generator` | P3 | solution-discovery-00b | Turn 00b architecture risks into routable ADR candidates. |
-| `approval-dashboard` | P3 | feature-registry, reviewer pilot | Generated cross-feature stage/review/blocker overview. |
-| `release-evidence-package` | P3 | — | Generated pre-release evidence bundle from existing artifacts. |
-| `reviewer-verification-packet` | P3 | verify-only-mode | Reviewer can request read-only verification when confidence is low. |
-| `branch-helper` | P2 | — | Optional branch-naming helper; doc-first. |
+### Wave 5 — Advanced automation & generators  *(mostly P3 + the big P2 rewrite)*
+| Wave | Feature ID | Title | Priority | Depends on | Planned/active change | State |
+|---|---|---|---|---|---|---|
+| 5 | UPG-0018 | Typed reviewer engine (replace Bash pilot) | P2 | UPG-0003 proven | — | PROPOSED |
+| 5 | UPG-0019 | CI Integration Profile | P3 | UPG-0017 | — | PROPOSED |
+| 5 | UPG-0020 | Stack / Config Drift Detector | P3 | UPG-0017 | — | PROPOSED |
+| 5 | UPG-0021 | Stage Report Generator | P3 | UPG-0004 | — | PROPOSED |
+| 5 | UPG-0022 | 00b → ADR Candidate Generator | P3 | UPG-0007 | — | PROPOSED |
+| 5 | UPG-0023 | Human Approval Dashboard | P3 | UPG-0009, UPG-0003 | — | PROPOSED |
+| 5 | UPG-0024 | Pre-Release Evidence Package | P3 | — | — | PROPOSED |
+| 5 | UPG-0025 | Verification Packet for Reviewer Agent | P3 | UPG-0010 | — | PROPOSED |
+| 5 | UPG-0026 | Optional Branch Creation Helper | P2 | — | — | PROPOSED |
+
+### Unsequenced (discovery notes / governance follow-ups — not yet waved)
+| Feature ID | Title | Priority | Depends on | Planned/active change | State |
+|---|---|---|---|---|---|
+| UPG-0027 | Migrating Review Scripts from Bash to a Structured Language | — | — | — | PROPOSED |
+| UPG-0028 | Reviewer self-reference recursion (scoping) | P2 | — | — | PROPOSED |
+| UPG-0029 | REV__ naming + codeos-review.sh support + thread checks | P2 | UPG-0001 | — | PROPOSED |
 
 ---
 
 ## Immediate next pickups
 
-1. `stage-4-6-reports` (Wave 1, P0, no deps) — foundational for later generators/dashboards.
-2. `current-verified-state` (Wave 1, P0, no deps).
+1. UPG-0004 — Structured Stage 4–6 Reports (Wave 1, P0, no deps) — foundational for later generators/dashboards.
+2. UPG-0005 — Current Verified State Block (Wave 1, P0, no deps).
 
-Each is taken as its own self-dev change (the next available change ID) via the 4-step loop,
-with human approval at every gate.
+Each is taken as its own self-dev change (a fresh `CHG-*`) via the 4-step loop, with human
+approval at every gate.
 
 ---
 
-## Guardrails — "do NOT do yet" (from `backlog/features.md`)
+## Guardrails — "do NOT do yet" (from `../backlog/features.md`)
 
 - No full OAP integration doctrine as a core Codeos change.
 - No mandatory PRs at every stage.

@@ -1,7 +1,19 @@
+---
+feature_id: UPG-0006
+slug: reviewer-quality-scale
+title: Reviewer Summary Quality Scale
+status: PROPOSED
+priority: P2
+depends_on: []
+related_features: []
+supersedes: []
+superseded_by: []
+---
+
 # Upgrade: reviewer-quality-scale — Reviewer Summary Quality Scale
 
 **Priority**: P2
-**Status**: BACKLOG
+**Status**: PROPOSED
 **Type**: toolkit-upgrade
 **Related**: reviewer-decision-brief, reviewer-full-diff
 
@@ -61,3 +73,28 @@ axes — keep both.
 ## DBA-philosophy note
 
 No rule touched. Improves reviewer honesty (separates conviction from evidence). Advisory only.
+
+## Feature Thread
+
+> Canonical thread rollup for this feature. Compact links/IDs only; full detail lives in the
+> change records and review files. May be maintained manually.
+
+### Changes
+
+| Change ID | File | Purpose | State |
+|---|---|---|---|
+
+### Reviews
+
+| Review ID | Change ID | Step | Round | Verdict |
+|---|---|---|---|---|
+
+### Findings Tracked Inside This Feature
+
+| Finding ID | Review ID | Classification | Resolution |
+|---|---|---|---|
+
+### Follow-up Features
+
+| Feature ID | Reason | Source finding |
+|---|---|---|

@@ -1,7 +1,19 @@
+---
+feature_id: UPG-0008
+slug: config-discovery
+title: Configuration Discovery and Configuration Schema Track
+status: PROPOSED
+priority: P2
+depends_on: []
+related_features: []
+supersedes: []
+superseded_by: []
+---
+
 # Upgrade: config-discovery — Configuration Discovery and Configuration Schema Track
 
 **Priority**: P2
-**Status**: BACKLOG
+**Status**: PROPOSED
 **Type**: toolkit-upgrade
 **Related**: solution-discovery-00b, stack-manifest
 
@@ -62,3 +74,28 @@ Premature config architecture.
 Touches **artifact authority**: config hypotheses are non-authoritative until routed through
 approved Stages 1–3 or an ADR. Must not let environment assumptions enter implementation
 untraced.
+
+## Feature Thread
+
+> Canonical thread rollup for this feature. Compact links/IDs only; full detail lives in the
+> change records and review files. May be maintained manually.
+
+### Changes
+
+| Change ID | File | Purpose | State |
+|---|---|---|---|
+
+### Reviews
+
+| Review ID | Change ID | Step | Round | Verdict |
+|---|---|---|---|---|
+
+### Findings Tracked Inside This Feature
+
+| Finding ID | Review ID | Classification | Resolution |
+|---|---|---|---|
+
+### Follow-up Features
+
+| Feature ID | Reason | Source finding |
+|---|---|---|

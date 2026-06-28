@@ -1,7 +1,19 @@
+---
+feature_id: UPG-0010
+slug: verify-only-mode
+title: Verification-Only Mode
+status: PROPOSED
+priority: P1
+depends_on: []
+related_features: []
+supersedes: []
+superseded_by: []
+---
+
 # Upgrade: verify-only-mode — Verification-Only Mode
 
 **Priority**: P1
-**Status**: BACKLOG
+**Status**: PROPOSED
 **Type**: toolkit-upgrade
 **Related**: reviewer-verification-packet, readiness-checklist
 
@@ -99,3 +111,28 @@ Any file change invalidates the verification run.
 
 Strengthens **evidence integrity**: keeps verification from silently mutating the very state
 it measures. Read-only by construction; aligns with the reviewer's read-only design.
+
+## Feature Thread
+
+> Canonical thread rollup for this feature. Compact links/IDs only; full detail lives in the
+> change records and review files. May be maintained manually.
+
+### Changes
+
+| Change ID | File | Purpose | State |
+|---|---|---|---|
+
+### Reviews
+
+| Review ID | Change ID | Step | Round | Verdict |
+|---|---|---|---|---|
+
+### Findings Tracked Inside This Feature
+
+| Finding ID | Review ID | Classification | Resolution |
+|---|---|---|---|
+
+### Follow-up Features
+
+| Feature ID | Reason | Source finding |
+|---|---|---|

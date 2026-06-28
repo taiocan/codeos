@@ -1,7 +1,19 @@
+---
+feature_id: UPG-0024
+slug: release-evidence-package
+title: Pre-Release Evidence Package
+status: PROPOSED
+priority: P3
+depends_on: []
+related_features: []
+supersedes: []
+superseded_by: []
+---
+
 # Upgrade: release-evidence-package — Pre-Release Evidence Package
 
 **Priority**: P3
-**Status**: BACKLOG
+**Status**: PROPOSED
 **Type**: toolkit-upgrade
 **Related**: readiness-checklist, reviewer-decision-brief, approval-dashboard
 
@@ -54,3 +66,28 @@ Generate from existing artifacts, do not manually rewrite.
 
 No rule touched. **Generated** from existing artifacts (not a new authored surface) — avoids
 creating a second source of truth.
+
+## Feature Thread
+
+> Canonical thread rollup for this feature. Compact links/IDs only; full detail lives in the
+> change records and review files. May be maintained manually.
+
+### Changes
+
+| Change ID | File | Purpose | State |
+|---|---|---|---|
+
+### Reviews
+
+| Review ID | Change ID | Step | Round | Verdict |
+|---|---|---|---|---|
+
+### Findings Tracked Inside This Feature
+
+| Finding ID | Review ID | Classification | Resolution |
+|---|---|---|---|
+
+### Follow-up Features
+
+| Feature ID | Reason | Source finding |
+|---|---|---|

@@ -30,9 +30,12 @@ note). Anything touching process, policy, behavior, script behavior, template/pr
 meaning, doctrine, stage names, approval rules, or file layout is non-trivial. When unsure,
 treat as non-trivial.
 
-For a trivial change: make the edit and stop. For everything else: anchor it to a `backlog/`
-item (create one if needed), open `changes/[change_id].md` from `templates/codeos-change.md`,
-and run the 4-step loop below.
+For a trivial change: make the edit and stop. For everything else: **select or create the
+Feature Thread** — the `UPG-####` backlog feature this change implements (create a
+`backlog/UPG-####-slug.md` brief with a fresh, never-reused id if none exists) — assign a unique
+`CHG-YYYYMMDD-NNN`, open `changes/UPG-####__CHG-YYYYMMDD-NNN__slug.md` from
+`templates/codeos-change.md` (fill its trace header), and run the 4-step loop below. See
+**Feature Thread & IDs** below for the nomenclature.
 
 ---
 
@@ -49,14 +52,20 @@ Run the review before each gate (see Reviewer Handling). Advance only on an expl
 
 ### Step 1 — Change Intent
 
-**Task:** Produce the Change Intent section of `changes/[change_id].md`.
+**Task:** Select/create the Feature Thread, then produce the Change Intent section of
+`changes/UPG-####__CHG-YYYYMMDD-NNN__slug.md`.
 
 **Rules:**
+- **Feature Thread first:** choose the primary `UPG-####` (create a `backlog/UPG-####-slug.md`
+  brief with a fresh, never-reused id if none exists), assign a unique `CHG-YYYYMMDD-NNN`, and
+  fill the change record's trace header (`feature_id`, `primary_feature_id`, `change_id`,
+  `implements`, …).
 - State *why* (the problem in the toolkit) and *what changes* (name every file touched).
 - State the scope boundary — what will NOT change. Anything not listed is in scope.
 - Record the triage **class**, the **scope axis** (`self-dev only` | `downstream doctrine
-  only` | `both`), and the originating `backlog/` item.
-- Activate the row in `status/self-development.md` (State: IN_PROGRESS, Loop step: 1-Intent).
+  only` | `both`), and the originating `UPG-####`.
+- Activate the row in `status/self-development.md` with **both** Feature ID and Change ID
+  (State: IN_PROGRESS, Loop step: 1-Intent).
 
 **Complete when:**
 - [ ] Why + what-changes stated; every touched file named
@@ -127,21 +136,92 @@ Output: summary of changes + review + **`AWAITING HUMAN APPROVAL TO PROCEED TO S
 - [ ] Every acceptance criterion verified
 - [ ] Consistency sweep clean (or gaps filed/fixed)
 - [ ] Findings scope-triaged
-- [ ] Row marked COMPLETE in `status/self-development.md`; decision logged per CLAUDE.md
+- [ ] Reconciliation written and the compulsory review run
 
 Output: Reconciliation section + review + **`AWAITING HUMAN APPROVAL — SELF-DEVELOPMENT CHANGE COMPLETE`**
 
-Set `status: COMPLETE` in `changes/[change_id].md`.
+**Only after the human approves at this final gate** (the review is advisory; it never closes the
+change by itself): mark the row **COMPLETE** in `status/self-development.md`, set
+`state: COMPLETE` in the change record trace header, and log the decision per CLAUDE.md. Until
+then the change stays **IN_PROGRESS** — matching the dashboard rule that `COMPLETE` requires human
+acceptance.
+
+---
+
+## Feature Thread & IDs (nomenclature)
+
+See `backlog/UPG-0001-feature-thread-traceability.md` for the full model. In short:
+
+| Kind | Format | Meaning |
+|---|---|---|
+| Feature | `UPG-####` | Stable backlog feature/upgrade. Assigned once, never reused or renumbered. |
+| Change | `CHG-YYYYMMDD-NNN` | One self-dev execution against a feature. A change id is **not** a feature id. |
+| Review round | `REV__UPG-####__CHG-…__S<N>__R<N>` | One reviewer run for step `N`, round `M`. Lives only in `review-log` / `reviews/codex/*`. Documented id (not auto-emitted yet — see `UPG-0029`). |
+| Review series | `RVS__UPG-####__CHG-…__S<N>` | The **stable** set of all Step-`N` rounds for a change. Reviewed artifacts reference *this* + `review_state`, never a round (see Self-Reference Boundary). |
+| Finding | `FND__REV__…__NN` | An individual reviewer finding, when explicit tracking is warranted. |
+
+- **Filenames:** features `backlog/UPG-####-slug.md`; changes
+  `changes/UPG-####__CHG-YYYYMMDD-NNN__slug.md`; the primary `UPG-####` is always visible.
+- **Backlog feature header** carries `feature_id`, `slug`, `title`, `status`, `priority`, and the
+  thread-linkage fields (`depends_on`, `related_features`, `supersedes`, `superseded_by`).
+  **`class` and `scope` are declared per change** (Step 1 / the change record + dashboard), not in
+  the backlog header — include them in a feature header only when already known.
+- Every backlog feature file has a `## Feature Thread` rollup (Changes / Reviews / Findings /
+  Follow-up). Keep it compact: ids and links, not full review text.
+- Findings are triaged: IN-SCOPE BLOCKER / IN-SCOPE NON-BLOCKER / OUT-OF-SCOPE BACKLOG / REJECTED.
+
+### Review-Fix Rule
+
+A fix for a reviewer finding **stays inside the same `CHG-*`** when it addresses an IN-SCOPE
+finding, does not alter the approved scope, and only repairs implementation / docs / status /
+acceptance / review-record consistency for the current change.
+
+A fix **creates or links a new `UPG-####`** only when it is OUT-OF-SCOPE BACKLOG, materially
+changes the approved intent/acceptance, introduces a new feature/policy/workflow/file-type/tool
+behavior, or would make the current change unreviewably broad. **A review fix never receives the
+next feature id merely because it happened after a review.**
+
+### Surface ownership (what each file may contain)
+
+| Surface | Owns | Must NOT contain |
+|---|---|---|
+| `changes/UPG-*__CHG-*.md` trace header | feature/change id, `review_series`, current step, `review_state` | exact latest review round |
+| `backlog/UPG-*.md` Feature Thread | related change ids, review-**series** rows, accepted verdict summary | every live round |
+| `status/self-development.md` | operational state, current step, **review state** | round-by-round history |
+| `reviews/review-log.md` | exact rounds, verdicts, packet hashes, human decisions | design prose |
+| `reviews/codex/*.md` | raw reviewer assessment | canonical status |
+
+### Self-Reference Boundary
+
+The compulsory review assesses the very artifacts that record it, so those artifacts **cannot
+freshly name the review currently assessing them.** Therefore:
+
+- Reviewed artifacts carry a stable `review_series` (`RVS__…__S<N>`) + `review_state`
+  (`DRAFT | IN_REVIEW | REVIEWED | ACCEPTED`) — **never** an exact latest round. Exact
+  `REV__…__R<N>` rounds + the human decision live only in `reviews/review-log.md` / `reviews/codex/*`.
+- **Self-reference rule:** an artifact under review is *not required* to contain the current review
+  round; a reviewer finding that it omits the current round is valid **only** if the artifact
+  explicitly claims exact latest-round authority.
+- **Stop rule:** if two consecutive rounds find *only* stale review-bookkeeping caused by the
+  previous round's existence, stop editing the reviewed artifact and resolve by human decision —
+  this recognizes a causal loop, it does not weaken discipline.
+
+(Enforcing this inside the reviewer/packet is tracked in `UPG-0028`; the script is unchanged here.)
 
 ---
 
 ## Reviewer Handling (compulsory, advisory)
 
-Before each gate, run:
+Before each gate, run (the review round `R<N>` increments on each re-review of the same step):
 
 ```
-bash scripts/codeos-review.sh review <change_id> selfdev-step-<N> changes/<change_id>.md <touched-files>
+bash scripts/codeos-review.sh review UPG-####__CHG-YYYYMMDD-NNN selfdev-step-<N> \
+  changes/UPG-####__CHG-YYYYMMDD-NNN__slug.md <touched-files>
 ```
+
+The logical review id is `REV__UPG-####__CHG-YYYYMMDD-NNN__S<N>__R<N>` (a **documented**
+convention; the pilot script still writes its legacy assessment filename — renaming + native
+`REV__` emission is deferred to `UPG-0029`).
 
 - Running the review is **mandatory** at every non-trivial step.
 - The verdict (NO OBJECTION / CHANGES ADVISED / DO NOT ADVANCE) is **advisory** — it informs

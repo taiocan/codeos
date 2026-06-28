@@ -2,7 +2,7 @@
 feature_id: UPG-0001
 slug: feature-thread-traceability
 title: Feature Thread Traceability and Stable ID Nomenclature
-status: IN_PROGRESS
+status: COMPLETE
 priority: P0
 class: self-dev-governance
 scope: self-dev only
@@ -19,7 +19,7 @@ superseded_by: []
 * feature_id: UPG-0001
 * slug: feature-thread-traceability
 * title: Feature Thread Traceability and Stable ID Nomenclature
-* status: IN_PROGRESS
+* status: COMPLETE
 * priority: P0
 * class: self-dev-governance
 * scope: self-dev only
@@ -54,7 +54,10 @@ The system needs a robust traceability model where every related file visibly sh
 
 Introduce a stable Feature Thread model and ID convention so that all work related to the same feature is visible across backlog files, change files, review files, status dashboards, and roadmaps.
 
-The user must be able to answer these questions from filenames and status tables:
+The user must be able to answer these questions from filenames, status tables, change records,
+and the review log (feature/change grouping is visible in filenames and the dashboard;
+**review-round** identity lives in the change record's Feature Thread and `reviews/review-log.md`
+— renaming review *files* to the `REV__…` pattern is deferred to UPG-0029, per acceptance D1):
 
 * Which feature does this change belong to?
 * Which change records implement this feature?
@@ -88,7 +91,7 @@ UPG-####
 Example:
 
 ```text
-UPG-0025
+UPG-0000
 ```
 
 Meaning:
@@ -138,7 +141,7 @@ REV__UPG-####__CHG-YYYYMMDD-NNN__S<N>__R<N>
 Example:
 
 ```text
-REV__UPG-0025__CHG-20260627-001__S4__R2
+REV__UPG-0000__CHG-20260627-001__S4__R2
 ```
 
 Meaning:
@@ -152,6 +155,34 @@ Rules:
 * Review rounds must not create new change numbers.
 * Review history lives in the change record and review files, not as separate feature rows.
 
+### Review series ID
+
+Format:
+
+```text
+RVS__UPG-####__CHG-YYYYMMDD-NNN__S<N>
+```
+
+Example:
+
+```text
+RVS__UPG-0000__CHG-20260627-001__S4
+```
+
+Meaning:
+
+The **set of all review rounds** for one step of one change — a *stable* handle that does not
+change as rounds accumulate.
+
+Rules:
+
+* Reviewed artifacts (change record, this Feature Thread, the dashboard) reference the review
+  **series** (`RVS__…`) plus a `review_state`, **never** an exact latest round.
+* Exact `REV__…__R<N>` rounds and the human decision live **only** in `reviews/review-log.md` and
+  `reviews/codex/*` — never embedded in an artifact that is itself reviewed.
+* This exists to break the self-reference loop (cf. the Review Self-Reference Boundary below /
+  `UPG-0028`): an artifact cannot freshly name the review currently assessing it.
+
 ### Finding ID
 
 Optional format:
@@ -163,7 +194,7 @@ FND__REV__UPG-####__CHG-YYYYMMDD-NNN__S<N>__R<N>__NN
 Example:
 
 ```text
-FND__REV__UPG-0025__CHG-20260627-001__S4__R2__01
+FND__REV__UPG-0000__CHG-20260627-001__S4__R2__01
 ```
 
 Meaning:
@@ -195,7 +226,7 @@ backlog/UPG-####-slug.md
 Example:
 
 ```text
-backlog/UPG-0025-feature-thread-traceability.md
+backlog/UPG-0000-feature-thread-traceability.md
 ```
 
 ### Change records
@@ -209,7 +240,7 @@ changes/UPG-####__CHG-YYYYMMDD-NNN__slug.md
 Example:
 
 ```text
-changes/UPG-0025__CHG-20260627-001__feature-thread-traceability.md
+changes/UPG-0000__CHG-20260627-001__feature-thread-traceability.md
 ```
 
 Rules:
@@ -227,15 +258,15 @@ If a change touches more than one feature, use the primary feature ID in the fil
 Example filename:
 
 ```text
-changes/UPG-0025__CHG-20260627-002__id-migration.md
+changes/UPG-0000__CHG-20260627-002__id-migration.md
 ```
 
 Trace header:
 
 ```yaml
-primary_feature_id: UPG-0025
+primary_feature_id: UPG-0000
 implements:
-  - UPG-0025
+  - UPG-0000
 related_features:
   - UPG-0012
   - UPG-0018
@@ -266,13 +297,13 @@ reviews/codex/REV__UPG-####__CHG-YYYYMMDD-NNN__S<N>__R<N>.md
 Example:
 
 ```text
-reviews/codex/REV__UPG-0025__CHG-20260627-001__S4__R1.md
+reviews/codex/REV__UPG-0000__CHG-20260627-001__S4__R1.md
 ```
 
 Review packet:
 
 ```text
-reviews/codex/REV__UPG-0025__CHG-20260627-001__S4__R1.packet.txt
+reviews/codex/REV__UPG-0000__CHG-20260627-001__S4__R1.packet.txt
 ```
 
 ## Trace Header
@@ -283,7 +314,7 @@ Every related file should include a compact trace header.
 
 ```yaml
 ---
-feature_id: UPG-0025
+feature_id: UPG-0000
 slug: feature-thread-traceability
 title: Feature Thread Traceability and Stable ID Nomenclature
 status: PROPOSED
@@ -297,20 +328,27 @@ superseded_by: []
 ---
 ```
 
+> Note: `class` and `scope` are **declared per change** (Step 1 → change record + the dashboard's
+> Class/Scope columns) and are **optional** in a backlog feature header — include them only when
+> already known for the feature (as here for UPG-0001). The migrated briefs omit them until they
+> are picked up as a change. This keeps headers from carrying speculative governance metadata.
+
 ### Change record header
 
 ```yaml
 ---
-feature_id: UPG-0025
-primary_feature_id: UPG-0025
+feature_id: UPG-0000
+primary_feature_id: UPG-0000
 change_id: CHG-20260627-001
 slug: feature-thread-traceability
 state: IN_PROGRESS
 current_step: 4-Reconcile
 implements:
-  - UPG-0025
+  - UPG-0000
 related_features: []
-latest_review: REV__UPG-0025__CHG-20260627-001__S4__R1
+review_series: RVS__UPG-0000__CHG-20260627-001__S4   # stable; never a live round
+review_state: IN_REVIEW                              # DRAFT | IN_REVIEW | REVIEWED | ACCEPTED
+review_history: reviews/review-log.md                # exact REV__…__R<N> rounds live only here
 fixes_findings: []
 follow_up_of: null
 ---
@@ -320,8 +358,8 @@ follow_up_of: null
 
 ```yaml
 ---
-review_id: REV__UPG-0025__CHG-20260627-001__S4__R1
-feature_id: UPG-0025
+review_id: REV__UPG-0000__CHG-20260627-001__S4__R1
+feature_id: UPG-0000
 change_id: CHG-20260627-001
 step: selfdev-step-4
 round: 1
@@ -344,7 +382,7 @@ Template:
 
 | Change ID | File | Purpose | State |
 |---|---|---|---|
-| CHG-20260627-001 | changes/UPG-0025__CHG-20260627-001__feature-thread-traceability.md | Initial implementation | IN_PROGRESS |
+| CHG-20260627-001 | changes/UPG-0000__CHG-20260627-001__feature-thread-traceability.md | Initial implementation | IN_PROGRESS |
 
 ### Reviews
 
@@ -384,7 +422,7 @@ Example:
 ```markdown
 | Feature ID | Change ID | Class | Scope | Loop step | Latest review | State | Follow-up |
 |---|---|---|---|---|---|---|---|
-| UPG-0025 | CHG-20260627-001 | self-dev-governance | self-dev only | 4-Reconcile | CHANGES ADV S4/R1 | IN_PROGRESS | — |
+| UPG-0000 | CHG-20260627-001 | self-dev-governance | self-dev only | 4-Reconcile | CHANGES ADV S4/R1 | IN_PROGRESS | — |
 ```
 
 Rules:
@@ -411,7 +449,7 @@ Example:
 ```markdown
 | Wave | Feature ID | Title | Priority | Depends on | Planned/active change | State |
 |---|---|---|---|---|---|---|
-| 1 | UPG-0025 | Feature Thread Traceability | P0 | — | CHG-20260627-001 | IN_PROGRESS |
+| 1 | UPG-0000 | Feature Thread Traceability | P0 | — | CHG-20260627-001 | IN_PROGRESS |
 ```
 
 Rules:
@@ -436,6 +474,26 @@ A review fix creates or links a new `UPG-####` only if:
 * it would make the current change unreviewably broad.
 
 A review fix must not receive the next feature ID merely because it happened after a review.
+
+## Review Self-Reference Boundary
+
+Because the compulsory review assesses the very artifacts that record it, those artifacts cannot
+freshly name the review currently assessing them. Separate **stable traceability** from **live
+review chronology**:
+
+* Reviewed artifacts (change record, Feature Thread, dashboard) carry a stable **`review_series`**
+  (`RVS__…__S<N>`) + a `review_state` (`DRAFT | IN_REVIEW | REVIEWED | ACCEPTED`). They never embed
+  an exact latest round.
+* Exact `REV__…__R<N>` rounds, verdicts, packet hashes, and the human decision live **only** in
+  `reviews/review-log.md` and `reviews/codex/*`.
+* **Self-reference rule:** an artifact under review is *not required* to contain the current review
+  round. A reviewer finding that the artifact omits the current round is valid **only** if the
+  artifact explicitly claims exact latest-round authority.
+* **Stop rule:** if two consecutive review rounds find *only* stale review-bookkeeping caused by
+  the previous round's existence, stop editing the reviewed artifact and resolve by human decision.
+
+Enforcing this inside the reviewer/packet itself is tracked in `UPG-0028`; here it is established
+as doctrine + artifact structure.
 
 ## State Rules
 
@@ -609,3 +667,41 @@ changes/UPG-00XX__CHG-YYYYMMDD-001__feature-thread-traceability.md
 ```text
 Codeos: add feature-thread traceability and stable IDs
 ```
+
+---
+
+## Feature Thread
+
+> Canonical thread rollup for this feature. (The sections above titled "Feature Thread Section"
+> and the fenced example define the convention; this is UPG-0001's own live rollup.)
+
+### Changes
+
+| Change ID | File | Purpose | State |
+|---|---|---|---|
+| CHG-20260627-001 | changes/UPG-0001__CHG-20260627-001__feature-thread-traceability.md | Introduce the Feature Thread model + stable IDs; mechanical backlog migration | IN_PROGRESS |
+
+### Reviews
+
+Listed by **review series** (`RVS__…__S<N>`), not live rounds — exact rounds + the human decision
+live in `reviews/review-log.md` (cf. the Review Self-Reference Boundary). Closed steps show the
+accepted outcome; the active step shows its `review_state`.
+
+| Review series | Step | Outcome / state | History |
+|---|---|---|---|
+| RVS__UPG-0001__CHG-20260627-001__S1 | selfdev-step-1 | NO OBJECTION (accepted) | `reviews/review-log.md` |
+| RVS__UPG-0001__CHG-20260627-001__S2 | selfdev-step-2 | NO OBJECTION (accepted) | `reviews/review-log.md` |
+| RVS__UPG-0001__CHG-20260627-001__S3 | selfdev-step-3 | NO OBJECTION (accepted) | `reviews/review-log.md` |
+| RVS__UPG-0001__CHG-20260627-001__S4 | selfdev-step-4 | ACCEPTED by human decision 2026-06-28 (confirming advisory review deferred — Codex rate-limited) | `reviews/review-log.md` |
+
+### Findings Tracked Inside This Feature
+
+| Finding ID | Review ID | Classification | Resolution |
+|---|---|---|---|
+| In-scope blockers (all steps) | S1–S4 review rounds | IN-SCOPE BLOCKER | All resolved inside CHG-20260627-001 — canonical list in the change record `fixes_findings` |
+
+### Follow-up Features
+
+| Feature ID | Reason | Source finding |
+|---|---|---|
+| UPG-0029 | Deferred: review-file `REV__…` renaming + `codeos-review.sh` output-naming support | Step-1/2 scope boundary |

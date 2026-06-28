@@ -1,7 +1,19 @@
+---
+feature_id: UPG-0016
+slug: workflow-profiles
+title: Branch / PR / CI Workflow Profiles
+status: PROPOSED
+priority: P1
+depends_on: []
+related_features: []
+supersedes: []
+superseded_by: []
+---
+
 # Upgrade: workflow-profiles — Branch / PR / CI Workflow Profiles
 
 **Priority**: P1
-**Status**: BACKLOG
+**Status**: PROPOSED
 **Type**: toolkit-upgrade
 **Related**: branch-helper, feature-registry, ci-profile, reviewer-full-diff
 
@@ -93,3 +105,28 @@ small work.
 No rule changed. Explicitly **optional/profile-based** — making any PR cadence mandatory would
 add ceremony without behavioral benefit. The one-commit-per-stage option in Profile B/C is
 what later enables checkpoint-based rollback.
+
+## Feature Thread
+
+> Canonical thread rollup for this feature. Compact links/IDs only; full detail lives in the
+> change records and review files. May be maintained manually.
+
+### Changes
+
+| Change ID | File | Purpose | State |
+|---|---|---|---|
+
+### Reviews
+
+| Review ID | Change ID | Step | Round | Verdict |
+|---|---|---|---|---|
+
+### Findings Tracked Inside This Feature
+
+| Finding ID | Review ID | Classification | Resolution |
+|---|---|---|---|
+
+### Follow-up Features
+
+| Feature ID | Reason | Source finding |
+|---|---|---|

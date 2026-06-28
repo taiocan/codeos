@@ -1,3 +1,15 @@
+---
+feature_id: UPG-0027
+slug: replacing-review-scripts
+title: Migrating Project Review Scripts from Bash to a Structured Language
+status: PROPOSED
+priority: —
+depends_on: []
+related_features: []
+supersedes: []
+superseded_by: []
+---
+
 created by user 26-06-27
 
 Here is the updated, comprehensive feature brief. It now incorporates **Go** and **Python** as formal structural alternatives alongside **Rust**, creating a complete framework for your upcoming architectural context assessment.
@@ -106,3 +118,27 @@ Use this matrix during the context assessment to cross-reference our priorities:
 1. **Context Alignment:** Review the team's current language competencies and determine if adding a compiled language toolchain justifies the initial learning curve.
 2. **Script Auditing:** Identify the target script to be migrated. If the script heavily modifies OS file paths and triggers other CLI tools, **Go** or **Bash** may suffice. If it parses deep code structures, **Python** or **Rust** should be prioritized.
 3. **Prototype Phase:** Implement a 50-line prototype of the target feature in the winning language to validate pipeline integration.
+## Feature Thread
+
+> Canonical thread rollup for this feature. Compact links/IDs only; full detail lives in the
+> change records and review files. May be maintained manually.
+
+### Changes
+
+| Change ID | File | Purpose | State |
+|---|---|---|---|
+
+### Reviews
+
+| Review ID | Change ID | Step | Round | Verdict |
+|---|---|---|---|---|
+
+### Findings Tracked Inside This Feature
+
+| Finding ID | Review ID | Classification | Resolution |
+|---|---|---|---|
+
+### Follow-up Features
+
+| Feature ID | Reason | Source finding |
+|---|---|---|

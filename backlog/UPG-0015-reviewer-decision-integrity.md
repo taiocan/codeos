@@ -1,7 +1,19 @@
+---
+feature_id: UPG-0015
+slug: reviewer-decision-integrity
+title: Bind stage approval to the reviewed provenance
+status: PROPOSED
+priority: P1
+depends_on: []
+related_features: []
+supersedes: []
+superseded_by: []
+---
+
 # Upgrade: reviewer-decision-integrity — Bind stage approval to the reviewed provenance
 
 **Priority**: P1
-**Status**: BACKLOG
+**Status**: PROPOSED
 **Type**: toolkit-upgrade
 **Related**: reviewer-decision-brief, reviewer-engine-v1, reviewer-pipeline (docs/reviewer-pipeline.md), reviewer-artifact-schemas (docs/reviewer-artifact-schemas.md)
 
@@ -78,3 +90,28 @@ are the only non-overridable case.
 Strengthens **artifact authority / runtime evidence** binding at the human gate without moving the
 gate. The reviewer stays advisory; this only makes a recorded *approval* prove it matches the
 reviewed state. Deferred from the v0 advisory pilot, which intentionally stays narrow.
+
+## Feature Thread
+
+> Canonical thread rollup for this feature. Compact links/IDs only; full detail lives in the
+> change records and review files. May be maintained manually.
+
+### Changes
+
+| Change ID | File | Purpose | State |
+|---|---|---|---|
+
+### Reviews
+
+| Review ID | Change ID | Step | Round | Verdict |
+|---|---|---|---|---|
+
+### Findings Tracked Inside This Feature
+
+| Finding ID | Review ID | Classification | Resolution |
+|---|---|---|---|
+
+### Follow-up Features
+
+| Feature ID | Reason | Source finding |
+|---|---|---|

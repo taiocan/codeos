@@ -1,7 +1,19 @@
+---
+feature_id: UPG-0007
+slug: solution-discovery-00b
+title: Expanded 00b Solution Discovery / Feature Topology Stage
+status: PROPOSED
+priority: P0
+depends_on: []
+related_features: []
+supersedes: []
+superseded_by: []
+---
+
 # Upgrade: solution-discovery-00b — Expanded 00b Solution Discovery / Feature Topology Stage
 
 **Priority**: P0
-**Status**: BACKLOG
+**Status**: PROPOSED
 **Type**: toolkit-upgrade
 **Related**: config-discovery, 00b-adr-generator
 
@@ -102,3 +114,28 @@ If this document conflicts with later approved DBA artifacts, the approved DBA a
 Touches **artifact authority**: 00b output must never be treated as approved DBA truth. Only
 Stages 1–3 produce approved behavioral truth. The non-authoritative banner is the guardrail
 that keeps this from eroding intent primacy.
+
+## Feature Thread
+
+> Canonical thread rollup for this feature. Compact links/IDs only; full detail lives in the
+> change records and review files. May be maintained manually.
+
+### Changes
+
+| Change ID | File | Purpose | State |
+|---|---|---|---|
+
+### Reviews
+
+| Review ID | Change ID | Step | Round | Verdict |
+|---|---|---|---|---|
+
+### Findings Tracked Inside This Feature
+
+| Finding ID | Review ID | Classification | Resolution |
+|---|---|---|---|
+
+### Follow-up Features
+
+| Feature ID | Reason | Source finding |
+|---|---|---|

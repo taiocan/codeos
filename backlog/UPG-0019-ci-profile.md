@@ -1,7 +1,19 @@
+---
+feature_id: UPG-0019
+slug: ci-profile
+title: CI Integration Profile
+status: PROPOSED
+priority: P3
+depends_on: []
+related_features: []
+supersedes: []
+superseded_by: []
+---
+
 # Upgrade: ci-profile — CI Integration Profile
 
 **Priority**: P3
-**Status**: BACKLOG
+**Status**: PROPOSED
 **Type**: toolkit-upgrade
 **Related**: workflow-profiles, stack-drift-detector
 
@@ -52,3 +64,28 @@ Start with minimal checks.
 
 No rule touched. CI enforces existing evidence types (schema conformance, no unapproved
 events) — reinforces, rather than alters, the behavioral chain.
+
+## Feature Thread
+
+> Canonical thread rollup for this feature. Compact links/IDs only; full detail lives in the
+> change records and review files. May be maintained manually.
+
+### Changes
+
+| Change ID | File | Purpose | State |
+|---|---|---|---|
+
+### Reviews
+
+| Review ID | Change ID | Step | Round | Verdict |
+|---|---|---|---|---|
+
+### Findings Tracked Inside This Feature
+
+| Finding ID | Review ID | Classification | Resolution |
+|---|---|---|---|
+
+### Follow-up Features
+
+| Feature ID | Reason | Source finding |
+|---|---|---|

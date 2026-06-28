@@ -1,4 +1,4 @@
-# Self-Development Change: [change_id]
+# Self-Development Change: UPG-####__CHG-YYYYMMDD-NNN — slug
 
 <!--
 PURPOSE: Per-change source of truth for a non-trivial change to the Codeos toolkit
@@ -10,7 +10,40 @@ and no replay. Trivial changes do not get a record.
 Workflow: prompts/codeos-self-dev.md (4-step loop)
 Each step requires explicit human approval and a compulsory (advisory) Codex review.
 The live status row lives in status/self-development.md, not here.
+
+FILENAME CONVENTION (Feature Thread model — see backlog/UPG-0001-feature-thread-traceability.md):
+  changes/UPG-####__CHG-YYYYMMDD-NNN__slug.md
+  - UPG-#### = the PRIMARY feature this change implements (visible grouping).
+  - CHG-YYYYMMDD-NNN = the unique change id (execution).
+  - slug describes the concrete change, not the whole roadmap.
+  - Multi-feature change: keep the primary UPG-#### in the filename, list the rest in
+    `related_features`. Use `MULTI__CHG-…` only when there is genuinely no primary feature and
+    the human explicitly approves it (rare).
 -->
+
+<!-- TRACE HEADER (canonical) -->
+```yaml
+feature_id: UPG-####
+primary_feature_id: UPG-####
+change_id: CHG-YYYYMMDD-NNN
+slug: slug
+state: DRAFT            # DRAFT | IN_REVIEW | IN_PROGRESS | BLOCKED | COMPLETE | ABANDONED | SUPERSEDED
+current_step: 1-Intent  # 1-Intent | 2-Acceptance | 3-Implement | 4-Reconcile
+implements:
+  - UPG-####
+related_features: []
+review_series: null     # e.g. RVS__UPG-####__CHG-YYYYMMDD-NNN__S<N> = ALL Step-N reviews for this change (stable)
+review_state: DRAFT     # DRAFT | IN_REVIEW | REVIEWED | ACCEPTED  (operational; NOT a round)
+review_history: reviews/review-log.md   # exact per-round REV__…__R<N> verdicts + human decisions live here, never in this artifact
+fixes_findings: []
+follow_up_of: null
+```
+
+<!-- SELF-REFERENCE BOUNDARY: this artifact is itself reviewed, so it must NOT embed the current
+review round (which does not exist until after the packet is built). Reference the stable review
+SERIES (review_series) + review_state; exact rounds live only in reviews/review-log.md and
+reviews/codex/*. See prompts/codeos-self-dev.md → "Feature Thread & IDs" / "Self-Reference Boundary". -->
+
 
 ## Change Intent
 
@@ -70,13 +103,15 @@ Note decisions, discoveries, and anything deferred (and re-triaged as its own ch
 
 ---
 
-<!-- METADATA -->
+<!-- METADATA (approval) — the canonical trace header is at the top of this file -->
 status: DRAFT
-change_id: [change_id]
+feature_id: UPG-####
+primary_feature_id: UPG-####
+change_id: CHG-YYYYMMDD-NNN
 type: SELF_DEVELOPMENT
 class: [class]
 scope: [self-dev only | downstream doctrine only | both]
-backlog_item: [backlog/[id].md or "—"]
+backlog_item: backlog/UPG-####-slug.md
 step_completed: 0
 approved_by:
 approved_at:

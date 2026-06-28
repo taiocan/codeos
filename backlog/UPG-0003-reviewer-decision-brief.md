@@ -1,7 +1,19 @@
+---
+feature_id: UPG-0003
+slug: reviewer-decision-brief
+title: Reviewer Agent for Stage Gate Decision Briefs
+status: PILOTED
+priority: P0
+depends_on: []
+related_features: []
+supersedes: []
+superseded_by: []
+---
+
 # Upgrade: reviewer-decision-brief — Reviewer Agent for Stage Gate Decision Briefs
 
 **Priority**: P0
-**Status**: BACKLOG
+**Status**: PILOTED
 **Type**: toolkit-upgrade
 **Related**: reviewer-full-diff, reviewer-quality-scale, reviewer-verification-packet
 
@@ -99,3 +111,28 @@ asked.
 Touches the **review flow** and risks **gatekeeping**. Safe only while the reviewer stays
 advisory and read-only; the non-negotiable human-approval gate (rule #1) must remain
 untouched. This is the feature being prototyped first — see `docs/reviewer-pipeline.md`.
+
+## Feature Thread
+
+> Canonical thread rollup for this feature. Compact links/IDs only; full detail lives in the
+> change records and review files. May be maintained manually.
+
+### Changes
+
+| Change ID | File | Purpose | State |
+|---|---|---|---|
+
+### Reviews
+
+| Review ID | Change ID | Step | Round | Verdict |
+|---|---|---|---|---|
+
+### Findings Tracked Inside This Feature
+
+| Finding ID | Review ID | Classification | Resolution |
+|---|---|---|---|
+
+### Follow-up Features
+
+| Feature ID | Reason | Source finding |
+|---|---|---|

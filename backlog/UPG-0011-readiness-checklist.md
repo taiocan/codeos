@@ -1,7 +1,19 @@
+---
+feature_id: UPG-0011
+slug: readiness-checklist
+title: Lightweight PR / Pre-Release Readiness Checklist
+status: PROPOSED
+priority: P1
+depends_on: []
+related_features: []
+supersedes: []
+superseded_by: []
+---
+
 # Upgrade: readiness-checklist — Lightweight PR / Pre-Release Readiness Checklist
 
 **Priority**: P1
-**Status**: BACKLOG
+**Status**: PROPOSED
 **Type**: toolkit-upgrade
 **Related**: release-evidence-package, stack-drift-detector, verify-only-mode
 
@@ -78,3 +90,28 @@ Keep it short and operational. Do not repeat Stage 7.
 
 Adds an **operational gate** distinct from the behavioral stages — it must not duplicate or
 override Stage 7 reconciliation. Decision authority stays with the human.
+
+## Feature Thread
+
+> Canonical thread rollup for this feature. Compact links/IDs only; full detail lives in the
+> change records and review files. May be maintained manually.
+
+### Changes
+
+| Change ID | File | Purpose | State |
+|---|---|---|---|
+
+### Reviews
+
+| Review ID | Change ID | Step | Round | Verdict |
+|---|---|---|---|---|
+
+### Findings Tracked Inside This Feature
+
+| Finding ID | Review ID | Classification | Resolution |
+|---|---|---|---|
+
+### Follow-up Features
+
+| Feature ID | Reason | Source finding |
+|---|---|---|

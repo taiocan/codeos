@@ -1,7 +1,19 @@
+---
+feature_id: UPG-0005
+slug: current-verified-state
+title: Current Verified State Block
+status: PROPOSED
+priority: P0
+depends_on: []
+related_features: []
+supersedes: []
+superseded_by: []
+---
+
 # Upgrade: current-verified-state — Current Verified State Block
 
 **Priority**: P0
-**Status**: BACKLOG
+**Status**: PROPOSED
 **Type**: toolkit-upgrade
 **Related**: feature-registry, repair-before-next-feature
 
@@ -103,3 +115,28 @@ as session scope or forbidden actions.
 No rule changed, but directly protects rule integrity: prevents gate decisions being made
 against stale state. The block is **generated, never authoritative** — artifacts + git remain
 truth.
+
+## Feature Thread
+
+> Canonical thread rollup for this feature. Compact links/IDs only; full detail lives in the
+> change records and review files. May be maintained manually.
+
+### Changes
+
+| Change ID | File | Purpose | State |
+|---|---|---|---|
+
+### Reviews
+
+| Review ID | Change ID | Step | Round | Verdict |
+|---|---|---|---|---|
+
+### Findings Tracked Inside This Feature
+
+| Finding ID | Review ID | Classification | Resolution |
+|---|---|---|---|
+
+### Follow-up Features
+
+| Feature ID | Reason | Source finding |
+|---|---|---|

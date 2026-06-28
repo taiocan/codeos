@@ -9,14 +9,14 @@ faster — without ever becoming a gate.*
 > The persisted hashes, packet copy, and `workspace_dirty` flag are **audit aids**, not a formal
 > guarantee that a human approval is bound to an unchanged repository state. The deeper binding
 > model (approval bound to a reproducible reviewed state, decision-time reverification, rollback
-> semantics) is **deferred** — see `backlog/reviewer-decision-integrity.md`.
+> semantics) is **deferred** — see `backlog/UPG-0015-reviewer-decision-integrity.md`.
 
 > **The Bash implementation is a manual pilot wrapper.** It validates the workflow but is not the
-> intended long-term review engine; the future typed engine is `backlog/reviewer-engine-v1.md`.
+> intended long-term review engine; the future typed engine is `backlog/UPG-0018-reviewer-engine-v1.md`.
 
 ```yaml
 status: PILOT — manual operation; no Claude Code hooks wired
-scope: implements backlog/reviewer-decision-brief.md (#1), pulls in #13 (evidence grade)
+scope: implements backlog/UPG-0003-reviewer-decision-brief.md, pulls in UPG-0006 (evidence grade)
 binding: changes no Codeos non-negotiable rule; CLAUDE.md and the stage prompts untouched
 guarantees: advisory logging only — NOT approval-integrity or rollback (deferred to backlog)
 ```
@@ -47,7 +47,7 @@ Contract + Triage Rule** (so the reviewer classifies each finding as IN-SCOPE BL
 IN-SCOPE NON-BLOCKER / OUT-OF-SCOPE BACKLOG / REJECTED and bases its PR decision only on
 in-scope blockers — this is the scope-drift brake), review context
 (feature/stage/branch/base+review SHA), the DBA rules relevant to the stage, the
-stage-specific checklist (sourced from `backlog/reviewer-decision-brief.md`), the expected
+stage-specific checklist (sourced from `backlog/UPG-0003-reviewer-decision-brief.md`), the expected
 stage output, the artifact contents with hashes, and the secret-filtered diff. See
 `prompts/reviewer-automated.md` for the exact shape.
 
@@ -118,7 +118,7 @@ JSON Schema validation is deferred until pilot use shows it is needed.
   is the human's word (Non-Negotiable Rule 1). Stronger guarantees — binding approval to a
   durable reviewed state (commit + diff hash + workspace snapshot), decision-time reverification,
   hard stops, and rollback semantics — are **deferred** and tracked in
-  `backlog/reviewer-decision-integrity.md`.
+  `backlog/UPG-0015-reviewer-decision-integrity.md`.
 
 ## 5. Coverage and effective concern
 

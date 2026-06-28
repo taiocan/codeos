@@ -1,7 +1,19 @@
+---
+feature_id: UPG-0025
+slug: reviewer-verification-packet
+title: Verification Packet for Reviewer Agent
+status: PROPOSED
+priority: P3
+depends_on: []
+related_features: []
+supersedes: []
+superseded_by: []
+---
+
 # Upgrade: reviewer-verification-packet — Verification Packet for Reviewer Agent
 
 **Priority**: P3
-**Status**: BACKLOG
+**Status**: PROPOSED
 **Type**: toolkit-upgrade
 **Related**: reviewer-decision-brief, verify-only-mode
 
@@ -51,3 +63,28 @@ Verification is read-only; reviewer never edits; human still decides.
 
 No rule touched. Keeps the reviewer **read-only** even when it needs fresh evidence — preserves
 the artifact-production / artifact-assessment separation.
+
+## Feature Thread
+
+> Canonical thread rollup for this feature. Compact links/IDs only; full detail lives in the
+> change records and review files. May be maintained manually.
+
+### Changes
+
+| Change ID | File | Purpose | State |
+|---|---|---|---|
+
+### Reviews
+
+| Review ID | Change ID | Step | Round | Verdict |
+|---|---|---|---|---|
+
+### Findings Tracked Inside This Feature
+
+| Finding ID | Review ID | Classification | Resolution |
+|---|---|---|---|
+
+### Follow-up Features
+
+| Feature ID | Reason | Source finding |
+|---|---|---|

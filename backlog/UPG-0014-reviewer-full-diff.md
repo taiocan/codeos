@@ -1,7 +1,19 @@
+---
+feature_id: UPG-0014
+slug: reviewer-full-diff
+title: Reviewer Agent with Full Diff Access
+status: PROPOSED
+priority: P2
+depends_on: []
+related_features: []
+supersedes: []
+superseded_by: []
+---
+
 # Upgrade: reviewer-full-diff — Reviewer Agent with Full Diff Access
 
 **Priority**: P2
-**Status**: BACKLOG
+**Status**: PROPOSED
 **Type**: toolkit-upgrade
 **Related**: reviewer-decision-brief, reviewer-quality-scale, workflow-profiles
 
@@ -76,3 +88,28 @@ Reviewer must output short decision brief first, details second.
 
 Extends the **advisory** reviewer (read-only). Diff access strengthens traceability checks but
 must respect secret filtering and stay non-gatekeeping.
+
+## Feature Thread
+
+> Canonical thread rollup for this feature. Compact links/IDs only; full detail lives in the
+> change records and review files. May be maintained manually.
+
+### Changes
+
+| Change ID | File | Purpose | State |
+|---|---|---|---|
+
+### Reviews
+
+| Review ID | Change ID | Step | Round | Verdict |
+|---|---|---|---|---|
+
+### Findings Tracked Inside This Feature
+
+| Finding ID | Review ID | Classification | Resolution |
+|---|---|---|---|
+
+### Follow-up Features
+
+| Feature ID | Reason | Source finding |
+|---|---|---|

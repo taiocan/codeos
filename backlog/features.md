@@ -1,4 +1,4 @@
-# Codeos Future Upgrade Backlog — Index
+# Codeos Future Upgrade Backlog — Index & Feature-ID Map
 
 ## Backlog thesis
 
@@ -19,90 +19,60 @@ operational supports around Codeos:
 
 The goal is to speed up Codeos development without weakening DBA advantages.
 
-> Each upgrade now lives in its own file in this directory, as a lightweight
-> *upgrade-brief* (Problem / Upgrade / Scope / Proposed artifact / Design notes / Value /
-> Risk / Guardrail / DBA-philosophy note). This file is the index.
+> Each upgrade lives in its own file as a lightweight *upgrade-brief*. **This file is the
+> authoritative `UPG-#### → file` map** (one row per backlog feature). Dependency-aware
+> sequencing into waves lives in [`../status/roadmap.md`](../status/roadmap.md); live per-change
+> status lives in [`../status/self-development.md`](../status/self-development.md). Stable feature
+> IDs follow the [`UPG-0001`](UPG-0001-feature-thread-traceability.md) Feature Thread model.
 
 ---
 
-## Upgrade index
+## Feature-ID Map (authoritative — one `UPG-####` per file)
 
-### P0 — Highest-priority upgrades
+| Feature ID | File | Title | Pri | Status |
+|---|---|---|---|---|
+| UPG-0001 | [UPG-0001-feature-thread-traceability.md](UPG-0001-feature-thread-traceability.md) | Feature Thread Traceability & Stable IDs | P0 | COMPLETE |
+| UPG-0002 | [UPG-0002-doc-consistency-doctrine-rename.md](UPG-0002-doc-consistency-doctrine-rename.md) | doc-consistency pass after CLAUDE.md→dba-system.md split | — | COMPLETE |
+| UPG-0003 | [UPG-0003-reviewer-decision-brief.md](UPG-0003-reviewer-decision-brief.md) | Reviewer Agent for Stage-Gate Decision Briefs | P0 | PILOTED |
+| UPG-0004 | [UPG-0004-stage-4-6-reports.md](UPG-0004-stage-4-6-reports.md) | Structured Stage 4–6 Reports | P0 | PROPOSED |
+| UPG-0005 | [UPG-0005-current-verified-state.md](UPG-0005-current-verified-state.md) | Current Verified State Block | P0 | PROPOSED |
+| UPG-0006 | [UPG-0006-reviewer-quality-scale.md](UPG-0006-reviewer-quality-scale.md) | Reviewer Summary Quality Scale | P2 | PROPOSED |
+| UPG-0007 | [UPG-0007-solution-discovery-00b.md](UPG-0007-solution-discovery-00b.md) | Expanded 00b Solution Discovery / Feature Topology | P0 | PROPOSED |
+| UPG-0008 | [UPG-0008-config-discovery.md](UPG-0008-config-discovery.md) | Configuration Discovery & Schema Track | P2 | PROPOSED |
+| UPG-0009 | [UPG-0009-feature-registry.md](UPG-0009-feature-registry.md) | Feature Registry / Branch Binding | P2 | PROPOSED |
+| UPG-0010 | [UPG-0010-verify-only-mode.md](UPG-0010-verify-only-mode.md) | Verification-Only Mode | P1 | PROPOSED |
+| UPG-0011 | [UPG-0011-readiness-checklist.md](UPG-0011-readiness-checklist.md) | Lightweight PR / Pre-Release Readiness Checklist | P1 | PROPOSED |
+| UPG-0012 | [UPG-0012-repair-before-next-feature.md](UPG-0012-repair-before-next-feature.md) | Repair-Before-Next-Feature Workflow Gate | P1 | PROPOSED |
+| UPG-0013 | [UPG-0013-stage-4-activation-card.md](UPG-0013-stage-4-activation-card.md) | Stage 4 Activation Card | P1 | PROPOSED |
+| UPG-0014 | [UPG-0014-reviewer-full-diff.md](UPG-0014-reviewer-full-diff.md) | Reviewer Agent with Full Diff Access | P2 | PROPOSED |
+| UPG-0015 | [UPG-0015-reviewer-decision-integrity.md](UPG-0015-reviewer-decision-integrity.md) | Bind stage approval to reviewed provenance | P1 | PROPOSED |
+| UPG-0016 | [UPG-0016-workflow-profiles.md](UPG-0016-workflow-profiles.md) | Branch / PR / CI Workflow Profiles | P1 | PROPOSED |
+| UPG-0017 | [UPG-0017-stack-manifest.md](UPG-0017-stack-manifest.md) | Stack Manifest with Automatic Reconciliation | P2 | PROPOSED |
+| UPG-0018 | [UPG-0018-reviewer-engine-v1.md](UPG-0018-reviewer-engine-v1.md) | Typed reviewer engine to replace the Bash pilot | P2 | PROPOSED |
+| UPG-0019 | [UPG-0019-ci-profile.md](UPG-0019-ci-profile.md) | CI Integration Profile | P3 | PROPOSED |
+| UPG-0020 | [UPG-0020-stack-drift-detector.md](UPG-0020-stack-drift-detector.md) | Stack / Config Drift Detector | P3 | PROPOSED |
+| UPG-0021 | [UPG-0021-stage-report-generator.md](UPG-0021-stage-report-generator.md) | Stage Report Generator | P3 | PROPOSED |
+| UPG-0022 | [UPG-0022-00b-adr-generator.md](UPG-0022-00b-adr-generator.md) | 00b → ADR Candidate Generator | P3 | PROPOSED |
+| UPG-0023 | [UPG-0023-approval-dashboard.md](UPG-0023-approval-dashboard.md) | Human Approval Dashboard | P3 | PROPOSED |
+| UPG-0024 | [UPG-0024-release-evidence-package.md](UPG-0024-release-evidence-package.md) | Pre-Release Evidence Package | P3 | PROPOSED |
+| UPG-0025 | [UPG-0025-reviewer-verification-packet.md](UPG-0025-reviewer-verification-packet.md) | Verification Packet for Reviewer Agent | P3 | PROPOSED |
+| UPG-0026 | [UPG-0026-branch-helper.md](UPG-0026-branch-helper.md) | Optional Branch Creation Helper | P2 | PROPOSED |
+| UPG-0027 | [UPG-0027-replacing-review-scripts.md](UPG-0027-replacing-review-scripts.md) | Migrating Review Scripts from Bash to a Structured Language | — | PROPOSED |
+| UPG-0028 | [UPG-0028-reviewer-self-reference-recursion.md](UPG-0028-reviewer-self-reference-recursion.md) | Reviewer self-reference recursion (scoping) | P2 | PROPOSED |
+| UPG-0029 | [UPG-0029-review-naming-and-thread-tooling.md](UPG-0029-review-naming-and-thread-tooling.md) | REV__ naming + codeos-review.sh support + thread checks | P2 | PROPOSED |
 
-| # | Upgrade | One-line value |
-|---|---|---|
-| 1 | [reviewer-decision-brief](reviewer-decision-brief.md) | Independent reviewer compresses each stage artifact into a decision brief — saves human time, preserves human approval. |
-| 2 | [stage-4-6-reports](stage-4-6-reports.md) | Structured implementation/test/runtime reports make hidden Stage 4–6 work transparent. |
-| 3 | [current-verified-state](current-verified-state.md) | Auto-generated session-start state snapshot prevents stale-branch / stale-artifact mistakes. |
-| 4 | [solution-discovery-00b](solution-discovery-00b.md) | Non-authoritative pre-Stage-1 feature-topology discovery without approving architecture early. |
-
-### P1 — High-value workflow upgrades
-
-| # | Upgrade | One-line value |
-|---|---|---|
-| 5 | [stage-4-activation-card](stage-4-activation-card.md) | Small activation-metadata card (branch, scope, reporting) without duplicating approved artifacts. |
-| 6 | [workflow-profiles](workflow-profiles.md) | Optional branch/PR/CI profiles (simple / one-branch / split-PR), not a mandatory policy. |
-| 7 | [verify-only-mode](verify-only-mode.md) | Strict read-only verification so checks never silently edit the evidence. |
-| 8 | [readiness-checklist](readiness-checklist.md) | Lightweight operational merge/release gate distinct from Stage 7. |
-| 9 | [repair-before-next-feature](repair-before-next-feature.md) | Unresolved work blocks new behavioral features (human override allowed). |
-| 9a | [reviewer-decision-integrity](reviewer-decision-integrity.md) | Bind stage approval to the full reviewed provenance (commit + diff_hash + workspace state); deferred from the v0 advisory pilot. |
-| 9b | [reviewer-engine-v1](reviewer-engine-v1.md) | Typed (Rust/Python) reviewer engine to replace the Bash pilot wrapper; future direction, not the v0 MVP. |
-
-### P2 — Support and maintenance upgrades
-
-| # | Upgrade | One-line value |
-|---|---|---|
-| 10 | [stack-manifest](stack-manifest.md) | Two-layer stack record with diff-triggered reconciliation (no stale manual docs). |
-| 11 | [config-discovery](config-discovery.md) | Surface configuration needs in 00b; formalize only when behavior depends on them. |
-| 12 | [reviewer-full-diff](reviewer-full-diff.md) | Reviewer inspects the filtered full diff, not only stage artifacts. |
-| 13 | [reviewer-quality-scale](reviewer-quality-scale.md) | Reviewer labels evidence quality (A–E) so it never sounds more certain than the evidence. |
-| 14 | [feature-registry](feature-registry.md) | Bind feature ID ↔ branch ↔ stage ↔ PR ↔ status; warn on git/filesystem disagreement. |
-| 15 | [branch-helper](branch-helper.md) | Optional branch-naming helper/convention (doc-first). |
-
-### P3 — Optional later upgrades
-
-| # | Upgrade | One-line value |
-|---|---|---|
-| 16 | [reviewer-verification-packet](reviewer-verification-packet.md) | Reviewer can request read-only verification when confidence is low. |
-| 17 | [ci-profile](ci-profile.md) | Map Codeos evidence types onto CI checks. |
-| 18 | [release-evidence-package](release-evidence-package.md) | Generated pre-release evidence bundle from existing artifacts. |
-| 19 | [stage-report-generator](stage-report-generator.md) | Auto-fill Stage 4–6 report skeletons from git/test/runtime inputs. |
-| 20 | [stack-drift-detector](stack-drift-detector.md) | Block release when dependency/config changed without stack reconciliation. |
-| 21 | [00b-adr-generator](00b-adr-generator.md) | Turn 00b architecture risks into routable ADR candidates. |
-| 22 | [approval-dashboard](approval-dashboard.md) | Generated cross-feature overview of stage/review/blocker status. |
+> Priority `—` = no formal P-rank (a completed cleanup, or a discovery note). Feature IDs are
+> assigned once and never reused. `UPG-0002` and `UPG-0003` are historical/piloted work given IDs
+> during this migration **without** false retroactive sequencing — see their `status`.
+> `UPG-0000` is **reserved for documentation examples** and is never assigned to a real feature.
 
 ---
 
 ## Recommended implementation order
 
-**Sprint 1 — Review burden and transparency** (highest value, lowest risk)
-1. reviewer-decision-brief
-2. stage-4-6-reports
-3. current-verified-state
-
-**Sprint 2 — Discovery and state discipline**
-4. solution-discovery-00b
-5. config-discovery (inside 00b)
-6. feature-registry
-
-**Sprint 3 — Clean evidence and readiness**
-7. verify-only-mode
-8. readiness-checklist
-9. repair-before-next-feature
-
-**Sprint 4 — Optional delivery maturity**
-10. workflow-profiles
-11. reviewer-full-diff
-12. stack-manifest
-
-**Sprint 5 — Advanced automation**
-13. ci-profile
-14. release-evidence-package
-15. stack-drift-detector
-16. approval-dashboard
-
-> Current status: the first upgrade (`reviewer-decision-brief`) is being prototyped as a
-> manual advisory Codex reviewer — see `docs/reviewer-pipeline.md`.
+Sequencing by `UPG-####` is maintained in [`../status/roadmap.md`](../status/roadmap.md)
+(dependency-aware waves + current state). This file does not duplicate the wave plan; the roadmap
+is authoritative for *order*, this map is authoritative for *identity*.
 
 ---
 

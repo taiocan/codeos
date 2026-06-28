@@ -1,7 +1,19 @@
+---
+feature_id: UPG-0012
+slug: repair-before-next-feature
+title: Repair-Before-Next-Feature Workflow Gate
+status: PROPOSED
+priority: P1
+depends_on: []
+related_features: []
+supersedes: []
+superseded_by: []
+---
+
 # Upgrade: repair-before-next-feature — Repair-Before-Next-Feature Workflow Gate
 
 **Priority**: P1
-**Status**: BACKLOG
+**Status**: PROPOSED
 **Type**: toolkit-upgrade
 **Related**: current-verified-state, feature-registry, readiness-checklist
 
@@ -63,3 +75,28 @@ marked as blocked/incomplete.
 
 Adds a **workflow gate**. Preserves human authority via the explicit override; the suspended
 feature must stay marked blocked so the evidence chain is never silently abandoned.
+
+## Feature Thread
+
+> Canonical thread rollup for this feature. Compact links/IDs only; full detail lives in the
+> change records and review files. May be maintained manually.
+
+### Changes
+
+| Change ID | File | Purpose | State |
+|---|---|---|---|
+
+### Reviews
+
+| Review ID | Change ID | Step | Round | Verdict |
+|---|---|---|---|---|
+
+### Findings Tracked Inside This Feature
+
+| Finding ID | Review ID | Classification | Resolution |
+|---|---|---|---|
+
+### Follow-up Features
+
+| Feature ID | Reason | Source finding |
+|---|---|---|

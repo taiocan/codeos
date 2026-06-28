@@ -1,3 +1,15 @@
+---
+feature_id: UPG-0002
+slug: doc-consistency-doctrine-rename
+title: doc-consistency pass after CLAUDE.md to dba-system.md split
+status: COMPLETE
+priority: —
+depends_on: []
+related_features: []
+supersedes: []
+superseded_by: []
+---
+
 # Backlog: doc-consistency pass after CLAUDE.md → dba-system.md split
 
 **Status:** RESOLVED by change `0002-doc-consistency-rename` (2026-06-27). Renamed the 24
@@ -42,3 +54,28 @@ into the split. Triaged at Reconcile as **OUT-OF-SCOPE BACKLOG**.
 - References that genuinely mean the project `CLAUDE.md` or the toolkit self-development
   `CLAUDE.md` are left correct and disambiguated.
 - `grep -rn "CLAUDE\.md" docs/` reviewed line-by-line; no remaining misattribution.
+
+## Feature Thread
+
+> Canonical thread rollup for this feature. Compact links/IDs only; full detail lives in the
+> change records and review files. May be maintained manually.
+
+### Changes
+
+| Change ID | File | Purpose | State |
+|---|---|---|---|
+
+### Reviews
+
+| Review ID | Change ID | Step | Round | Verdict |
+|---|---|---|---|---|
+
+### Findings Tracked Inside This Feature
+
+| Finding ID | Review ID | Classification | Resolution |
+|---|---|---|---|
+
+### Follow-up Features
+
+| Feature ID | Reason | Source finding |
+|---|---|---|

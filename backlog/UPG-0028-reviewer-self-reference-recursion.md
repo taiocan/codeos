@@ -1,3 +1,15 @@
+---
+feature_id: UPG-0028
+slug: reviewer-self-reference-recursion
+title: reviewer self-reference recursion (scoping improvement)
+status: PROPOSED
+priority: P2
+depends_on: []
+related_features: []
+supersedes: []
+superseded_by: []
+---
+
 # Backlog: reviewer self-reference recursion (scoping improvement)
 
 **Status:** open (filed by change `0004-review-fixes`, 2026-06-27)
@@ -23,6 +35,13 @@ roadmap"); rounds 2–5 were all bookkeeping-recursion. Resolved by **human acce
 residual, per the advisory-not-gatekeeping principle — which is correct, but the friction is
 avoidable.
 
+> **Update (UPG-0001, CHG-20260627-001):** the *doctrine + artifact* side is now done — UPG-0001
+> introduced the **review-series id** `RVS__…__S<N>`, the `review_series`/`review_state` trace-header
+> fields, the **Surface ownership** table, and the **Self-Reference Boundary** (self-reference rule
+> + stop rule) in `prompts/codeos-self-dev.md`. Reviewed artifacts no longer embed live rounds.
+> **What remains for UPG-0028:** the *reviewer/packet enforcement* — improvements (1) and (2) below
+> (the script/packet are frozen by UPG-0001's E2, so they belong here).
+
 ## Candidate improvements (pick when worked)
 
 1. **Scope exclusion:** when reviewing a self-development change, exclude the review-tracking
@@ -41,3 +60,28 @@ avoidable.
 Keeps the advisory reviewer from behaving like an enforcement engine on its own bookkeeping
 (the failure mode the doctrine explicitly warns against), without weakening its ability to catch
 substantive findings.
+
+## Feature Thread
+
+> Canonical thread rollup for this feature. Compact links/IDs only; full detail lives in the
+> change records and review files. May be maintained manually.
+
+### Changes
+
+| Change ID | File | Purpose | State |
+|---|---|---|---|
+
+### Reviews
+
+| Review ID | Change ID | Step | Round | Verdict |
+|---|---|---|---|---|
+
+### Findings Tracked Inside This Feature
+
+| Finding ID | Review ID | Classification | Resolution |
+|---|---|---|---|
+
+### Follow-up Features
+
+| Feature ID | Reason | Source finding |
+|---|---|---|

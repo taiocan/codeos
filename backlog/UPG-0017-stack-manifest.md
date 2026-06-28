@@ -1,7 +1,19 @@
+---
+feature_id: UPG-0017
+slug: stack-manifest
+title: Stack Manifest with Automatic Reconciliation
+status: PROPOSED
+priority: P2
+depends_on: []
+related_features: []
+supersedes: []
+superseded_by: []
+---
+
 # Upgrade: stack-manifest — Stack Manifest with Automatic Reconciliation
 
 **Priority**: P2
-**Status**: BACKLOG
+**Status**: PROPOSED
 **Type**: toolkit-upgrade
 **Related**: stack-drift-detector, config-discovery, readiness-checklist
 
@@ -104,3 +116,28 @@ Manifest update is triggered by dependency/config diffs, not by memory.
 
 No behavioral rule touched. Trigger-based (diff-driven), not memory-driven — keeps the record
 honest without adding a manual maintenance burden.
+
+## Feature Thread
+
+> Canonical thread rollup for this feature. Compact links/IDs only; full detail lives in the
+> change records and review files. May be maintained manually.
+
+### Changes
+
+| Change ID | File | Purpose | State |
+|---|---|---|---|
+
+### Reviews
+
+| Review ID | Change ID | Step | Round | Verdict |
+|---|---|---|---|---|
+
+### Findings Tracked Inside This Feature
+
+| Finding ID | Review ID | Classification | Resolution |
+|---|---|---|---|
+
+### Follow-up Features
+
+| Feature ID | Reason | Source finding |
+|---|---|---|

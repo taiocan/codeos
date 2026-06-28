@@ -1,7 +1,19 @@
+---
+feature_id: UPG-0013
+slug: stage-4-activation-card
+title: Stage 4 Activation Card
+status: PROPOSED
+priority: P1
+depends_on: []
+related_features: []
+supersedes: []
+superseded_by: []
+---
+
 # Upgrade: stage-4-activation-card — Stage 4 Activation Card
 
 **Priority**: P1
-**Status**: BACKLOG
+**Status**: PROPOSED
 **Type**: toolkit-upgrade
 **Related**: branch-helper, workflow-profiles, current-verified-state
 
@@ -101,3 +113,28 @@ Do not restate behavior from approved artifacts. Reference them.
 
 No rule changed. Must **reference, not restate** approved artifacts — restating behavior would
 create a second behavioral surface and invite drift.
+
+## Feature Thread
+
+> Canonical thread rollup for this feature. Compact links/IDs only; full detail lives in the
+> change records and review files. May be maintained manually.
+
+### Changes
+
+| Change ID | File | Purpose | State |
+|---|---|---|---|
+
+### Reviews
+
+| Review ID | Change ID | Step | Round | Verdict |
+|---|---|---|---|---|
+
+### Findings Tracked Inside This Feature
+
+| Finding ID | Review ID | Classification | Resolution |
+|---|---|---|---|
+
+### Follow-up Features
+
+| Feature ID | Reason | Source finding |
+|---|---|---|
