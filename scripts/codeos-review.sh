@@ -414,17 +414,63 @@ run_codex() {
   REVIEW_OUTPUT="${out}"
 }
 
+# --- local prechecks ---------------------------------------------------------
+# Fail-closed checks that run before packet build and Codex invocation.
+# Scans only the positional artifact paths and explicit PRECHECK_GUARD_CLEAN paths —
+# not the whole repo, not generated packets, not review logs.
+#
+# Hard fails (exit 2): unfilled template placeholders, forbidden fields, dirty guard paths.
+# Warnings (stderr, exit 0): draft markers (TODO/FIXME/TBD/[to be filled]).
+run_prechecks() {
+  local -a artifacts=("$@")
+  local -a guard_clean=("${PRECHECK_GUARD_CLEAN[@]+"${PRECHECK_GUARD_CLEAN[@]}"}")
+  local a gc warn_fired=0
+
+  for a in "${artifacts[@]+"${artifacts[@]}"}"; do
+    [[ -f "${a}" ]] || continue   # missing artifacts are handled (and represented) by build_packet
+
+    # hard fail: unfilled template placeholders (fixed-string, not a pattern for real IDs)
+    if grep -qF 'UPG-####' "${a}"; then
+      echo "error: precheck failed — literal placeholder 'UPG-####' found in ${a} (fill in the real UPG id)" >&2; exit 2
+    fi
+    if grep -qF 'CHG-YYYYMMDD-NNN' "${a}"; then
+      echo "error: precheck failed — literal placeholder 'CHG-YYYYMMDD-NNN' found in ${a} (fill in the real CHG id)" >&2; exit 2
+    fi
+
+    # hard fail: forbidden field superseded by UPG-0001 (line-anchored to avoid prose matches)
+    if grep -qE '^[[:space:]]*latest_review:' "${a}"; then
+      echo "error: precheck failed — forbidden field 'latest_review:' found in ${a} (use review_state instead)" >&2; exit 2
+    fi
+
+    # warning: unresolved draft markers (do not block)
+    if grep -qiE 'TODO|FIXME|\bTBD\b|\[to be filled\]' "${a}"; then
+      echo "warning: precheck — unresolved draft marker (TODO/FIXME/TBD/[to be filled]) in ${a}" >&2
+      warn_fired=1
+    fi
+  done
+
+  for gc in "${guard_clean[@]+"${guard_clean[@]}"}"; do
+    # hard fail: missing guard path is an error, not a silent pass
+    [[ -f "${gc}" ]] || { echo "error: precheck failed — --guard-clean path not found: ${gc}" >&2; exit 2; }
+    # hard fail: any staged or unstaged change vs HEAD on the guard path
+    git diff --quiet HEAD -- "${gc}" 2>/dev/null || {
+      echo "error: precheck failed — --guard-clean path '${gc}' has uncommitted changes (expected clean)" >&2; exit 2; }
+  done
+}
+
 # --- review ------------------------------------------------------------------
 cmd_review() {
   require_codex
   local feature="$1" stage="$2"; shift 2
-  local fresh=0 scratch=0 print_only=0 artifacts=() sha_only_paths=()
+  local fresh=0 scratch=0 print_only=0 skip_prechecks=0 artifacts=() sha_only_paths=() guard_clean_paths=()
   while [[ $# -gt 0 ]]; do
     case "$1" in
       --fresh) fresh=1; shift ;;
       --scratch) scratch=1; shift ;;
       --print-packet|--dry-run) print_only=1; shift ;;
+      --skip-prechecks) skip_prechecks=1; shift ;;
       --sha-only) [[ $# -ge 2 ]] || { echo "review: --sha-only requires a PATH argument" >&2; exit 2; }; sha_only_paths+=( "$2" ); shift 2 ;;
+      --guard-clean) [[ $# -ge 2 ]] || { echo "review: --guard-clean requires a PATH argument" >&2; exit 2; }; guard_clean_paths+=( "$2" ); shift 2 ;;
       *) artifacts+=( "$1" ); shift ;;
     esac
   done
@@ -433,6 +479,12 @@ cmd_review() {
   # pilot/test runs must not touch the committed log either
   [[ ${scratch} -eq 1 ]] && { mkdir -p "${CODEX_SCRATCH}"; REVIEW_LOG="${CODEX_SCRATCH}/review-log.md"; }
 
+  if [[ ${skip_prechecks} -eq 1 ]]; then
+    echo "warning: prechecks skipped (--skip-prechecks)" >&2
+  else
+    PRECHECK_GUARD_CLEAN=("${guard_clean_paths[@]+"${guard_clean_paths[@]}"}")
+    run_prechecks "${artifacts[@]}"
+  fi
   PACKET_FILE="$(mktemp)"; trap 'rm -f "${PACKET_FILE}"' EXIT
   PACKET_SHA_ONLY=("${sha_only_paths[@]+"${sha_only_paths[@]}"}")
   build_packet "${feature}" "${stage}" "${artifacts[@]}"   # sets PACKET_* globals (no subshell)

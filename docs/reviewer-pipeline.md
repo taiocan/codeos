@@ -294,6 +294,18 @@ scripts/codeos-review.sh review listing-ingestion 2 contracts/listing-ingestion_
 scripts/codeos-review.sh decision listing-ingestion 2 REQUEST_CHANGES "missing failure scenario"
 ```
 
+**Local prechecks** run automatically before the packet is built and before any Codex
+invocation. They scan only the positional artifact paths passed to `review`. Two hard-fail
+checks exit non-zero immediately: (1) a literal unfilled template placeholder (`UPG-####` or
+`CHG-YYYYMMDD-NNN`) in any artifact, and (2) a line-anchored `latest_review:` field (a
+schema field superseded by UPG-0001). A warning is emitted to stderr (but Codex is still
+invoked) for unresolved draft markers: `TODO`, `FIXME`, `TBD`, `[to be filled]`. Pass
+`--guard-clean PATH` (repeatable) to assert that a specific file — e.g. `dba-system.md`
+during a `self-dev only` change — has no uncommitted changes; a non-existent path or a dirty
+path both exit non-zero before Codex. Pass `--skip-prechecks` to bypass all checks (emits a
+visible `warning: prechecks skipped` to stderr); useful for inspecting draft artifacts with
+`--print-packet`.
+
 ---
 
 ## Appendix A — Inert hook snippets (NOT part of the pilot)
