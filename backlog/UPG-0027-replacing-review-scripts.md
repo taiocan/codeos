@@ -100,7 +100,7 @@ Scope:
 | Change ID | File | Purpose | State |
 |---|---|---|---|
 | CHG-20260629-002 | changes/UPG-0027__CHG-20260629-002__focused-reviewer-prompt.md | Focused reviewer task prompt | COMPLETE |
-| CHG-20260629-003 | changes/UPG-0027__CHG-20260629-003__packet-manifest-and-budget.md | Packet manifest and budget report | PLANNED |
+| CHG-20260629-003 | changes/UPG-0027__CHG-20260629-003__packet-manifest-and-budget.md | Packet manifest and budget report | COMPLETE |
 | CHG-20260629-004 | changes/UPG-0027__CHG-20260629-004__prechecks-and-delta-mode.md | Local prechecks and true delta mode | PLANNED |
 
 ### Reviews

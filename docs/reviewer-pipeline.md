@@ -49,6 +49,20 @@ stage-specific checklist (sourced from `backlog/UPG-0003-reviewer-decision-brief
 expected stage output, the artifact contents with hashes, and the secret-filtered diff. See
 `prompts/reviewer-automated.md` for the full packet shape.
 
+Immediately after the reviewer task template and before `REVIEW CONTEXT`, every packet
+includes a **`PACKET MANIFEST`** section listing each artifact with its inclusion mode
+(`full_file`, `path_sha_only`, or `omitted_with_reason`), byte count, and sha256 (where
+content is present), plus the diff size, `review_content_bytes` (full_file artifact bytes +
+diff bytes), `estimated_review_tokens` (~`review_content_bytes / 4`), and `budget_status`.
+If `review_content_bytes` exceeds `CODEOS_PACKET_BUDGET_BYTES` (default 50 000), a warning
+is emitted to stderr and recorded in `budget_status`; the review is never aborted.
+
+Pass `--sha-only PATH` (repeatable) to include a file in the manifest as `path_sha_only`
+(path + sha256 + original byte count) without sending its content to the reviewer. Useful
+for large unchanged reference files where the reviewer only needs to verify identity. If a
+`--sha-only` path does not exist on disk, the script exits non-zero before any Codex
+invocation — a missing guard file is an error, not a quietly omitted artifact.
+
 ## 3. Session continuity — feasibility
 
 **Question:** can one Codex session be opened at the start and reused across every stage,

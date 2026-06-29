@@ -108,6 +108,21 @@ EOF
 build_packet() {
   local feature="$1" stage="$2"; shift 2
   local artifacts=( "$@" )
+  local sha_only_paths=("${PACKET_SHA_ONLY[@]+"${PACKET_SHA_ONLY[@]}"}")
+  # guard: missing --sha-only path exits non-zero before Codex (explicit scope guard, not omitted)
+  local _so
+  for _so in "${sha_only_paths[@]+"${sha_only_paths[@]}"}"; do
+    [[ -f "${_so}" ]] || { echo "error: --sha-only path not found: ${_so}" >&2; exit 2; }
+  done
+  # manifest state — built during artifact processing, written to packet before REVIEW CONTEXT
+  local manifest_sha_only="" manifest_full_artifacts="" review_content_bytes=0 diff_bytes=0
+  local so_bytes so_sha
+  for _so in "${sha_only_paths[@]+"${sha_only_paths[@]}"}"; do
+    so_bytes="$(wc -c < "${_so}")"
+    so_sha="$(sha256_of "${_so}")"
+    PACKET_ARTIFACTS_YAML+="    - path: ${_so}"$'\n'"      sha256: ${so_sha}"$'\n'"      visibility: path_sha_only"$'\n'
+    manifest_sha_only+="    - path: ${_so}"$'\n'"      mode: path_sha_only"$'\n'"      bytes: ${so_bytes}"$'\n'"      sha256: ${so_sha}"$'\n'
+  done
 
   local branch review_sha base_sha approved_stage
   branch="$(git rev-parse --abbrev-ref HEAD)"
@@ -182,36 +197,55 @@ build_packet() {
     exc_add "(diff)" "secret-like content redacted" "diff"
   fi
   [[ -n "${excluded}" ]] && path_excluded=1   # path/size diff exclusions recorded above
+  diff_bytes=${#redacted_diff}
 
   # --- requested artifacts: each is REPRESENTED, never silently dropped —
   #     visibility is one of: shown | shown_redacted | oversize_omitted | missing. ---
   local artifacts_block="" a raw redacted shown_count=0 vis sha
   PACKET_ARTIFACT_EXCLUDED=0
   PACKET_ARTIFACTS_YAML=""
+  local artifact_bytes
   for a in "${artifacts[@]}"; do
     if [[ ! -f "${a}" ]]; then
       artifacts_block+="  --- ${a} (visibility: missing — not shown) ---"$'\n\n'
       PACKET_ARTIFACT_EXCLUDED=1; excluded+="${a}(missing) "; exc_add "${a}" "requested artifact missing" "artifact"
-      PACKET_ARTIFACTS_YAML+="    - path: ${a}"$'\n'"      visibility: missing"$'\n'; continue
+      PACKET_ARTIFACTS_YAML+="    - path: ${a}"$'\n'"      visibility: missing"$'\n'
+      manifest_full_artifacts+="    - path: ${a}"$'\n'"      mode: omitted_with_reason"$'\n'"      reason: requested artifact missing"$'\n'; continue
     fi
-    if [[ "$(wc -c < "${a}")" -gt ${SIZE_LIMIT_BYTES} ]]; then
+    artifact_bytes="$(wc -c < "${a}")"
+    if [[ "${artifact_bytes}" -gt ${SIZE_LIMIT_BYTES} ]]; then
       artifacts_block+="  --- ${a} (visibility: oversize_omitted — over size limit, not shown) ---"$'\n\n'
       PACKET_ARTIFACT_EXCLUDED=1; excluded+="${a}(oversize) "; exc_add "${a}" "requested artifact over size limit" "artifact"
-      PACKET_ARTIFACTS_YAML+="    - path: ${a}"$'\n'"      visibility: oversize_omitted"$'\n'; continue
+      PACKET_ARTIFACTS_YAML+="    - path: ${a}"$'\n'"      visibility: oversize_omitted"$'\n'
+      manifest_full_artifacts+="    - path: ${a}"$'\n'"      mode: omitted_with_reason"$'\n'"      reason: over size limit"$'\n'; continue
     fi
     raw="$(cat "${a}")"; redacted="$(printf '%s\n' "${raw}" | redact_secrets)"; sha="$(sha256_of "${a}")"
     if [[ "${redacted}" != "${raw}" ]]; then
       vis="shown_redacted"; secret_flag=1
       redaction_count=$(( redaction_count + $(grep -c "\[REDACTED" <<<"${redacted}" || true) ))
       excluded+="${a}(secret redacted) "; exc_add "${a}" "secret value redacted in place" "artifact"
+      manifest_full_artifacts+="    - path: ${a}"$'\n'"      mode: full_file"$'\n'"      bytes: ${artifact_bytes}"$'\n'"      sha256: ${sha}"$'\n'"      note: secret value redacted in place"$'\n'
     else
       vis="shown"
+      manifest_full_artifacts+="    - path: ${a}"$'\n'"      mode: full_file"$'\n'"      bytes: ${artifact_bytes}"$'\n'"      sha256: ${sha}"$'\n'
     fi
+    review_content_bytes=$((review_content_bytes + artifact_bytes))
     artifacts_block+="  --- ${a} (sha256: ${sha}, visibility: ${vis}) ---"$'\n'
     artifacts_block+="$(printf '%s\n' "${redacted}" | sed 's/^/    /')"$'\n\n'
     PACKET_ARTIFACTS_YAML+="    - path: ${a}"$'\n'"      sha256: ${sha}"$'\n'"      visibility: ${vis}"$'\n'
     shown_count=$((shown_count + 1))
   done
+
+  review_content_bytes=$((review_content_bytes + diff_bytes))
+
+  # --- budget check (warning only; never aborts) ---
+  local budget_threshold="${CODEOS_PACKET_BUDGET_BYTES:-50000}"
+  local estimated_review_tokens=$(( review_content_bytes / 4 ))
+  local budget_status="OK"
+  if [[ "${review_content_bytes}" -gt "${budget_threshold}" ]]; then
+    budget_status="WARNING — ${review_content_bytes} bytes exceeds CODEOS_PACKET_BUDGET_BYTES=${budget_threshold}"
+    echo "warning: review content is ${review_content_bytes} bytes, exceeds budget of ${budget_threshold} bytes (CODEOS_PACKET_BUDGET_BYTES)" >&2
+  fi
 
   # --- explicit coverage state (most severe wins) ---
   #   FULL_COVERAGE | PARTIAL_COVERAGE | SECRET_REDACTION | CRITICAL_OMISSION | EMPTY_PACKET
@@ -260,6 +294,19 @@ build_packet() {
 
   {
     cat "${task_prompt}"
+    echo
+    echo "PACKET MANIFEST"
+    echo "  generated: $(now_iso)"
+    echo "  task_prompt: ${task_prompt} ($(wc -c < "${task_prompt}") bytes)"
+    echo "  review_content_bytes: ${review_content_bytes}"
+    echo "  estimated_review_tokens: ~${estimated_review_tokens}"
+    echo "  budget_status: ${budget_status}"
+    echo "  items:"
+    printf '%s' "${manifest_sha_only}"
+    printf '%s' "${manifest_full_artifacts}"
+    echo "    - path: (diff)"
+    echo "      mode: full_file"
+    echo "      bytes: ${diff_bytes}"
     echo
     echo "REVIEW CONTEXT"
     echo "  Feature:                ${feature}"
@@ -371,12 +418,13 @@ run_codex() {
 cmd_review() {
   require_codex
   local feature="$1" stage="$2"; shift 2
-  local fresh=0 scratch=0 print_only=0 artifacts=()
+  local fresh=0 scratch=0 print_only=0 artifacts=() sha_only_paths=()
   while [[ $# -gt 0 ]]; do
     case "$1" in
       --fresh) fresh=1; shift ;;
       --scratch) scratch=1; shift ;;
       --print-packet|--dry-run) print_only=1; shift ;;
+      --sha-only) [[ $# -ge 2 ]] || { echo "review: --sha-only requires a PATH argument" >&2; exit 2; }; sha_only_paths+=( "$2" ); shift 2 ;;
       *) artifacts+=( "$1" ); shift ;;
     esac
   done
@@ -386,6 +434,7 @@ cmd_review() {
   [[ ${scratch} -eq 1 ]] && { mkdir -p "${CODEX_SCRATCH}"; REVIEW_LOG="${CODEX_SCRATCH}/review-log.md"; }
 
   PACKET_FILE="$(mktemp)"; trap 'rm -f "${PACKET_FILE}"' EXIT
+  PACKET_SHA_ONLY=("${sha_only_paths[@]+"${sha_only_paths[@]}"}")
   build_packet "${feature}" "${stage}" "${artifacts[@]}"   # sets PACKET_* globals (no subshell)
 
   # safety: inspect exactly what would be sent to Codex, without calling it (no cost, no session)
