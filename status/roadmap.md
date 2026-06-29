@@ -87,12 +87,14 @@ cheap pilot-adjacent wins early.
 |---|---|---|---|---|---|
 | UPG-0027 | Migrating Review Scripts from Bash to a Structured Language | — | — | — | PROPOSED |
 | UPG-0028 | Reviewer self-reference recursion (scoping) | P2 | — | — | PROPOSED |
-| UPG-0029 | REV__ naming + codeos-review.sh support + thread checks | P2 | UPG-0001 | — | PROPOSED |
+| UPG-0029 | Review artifact durability + packet naming policy (+ optional naming/tooling) | P2 | UPG-0001 | — | PROPOSED |
 
 ---
 
 ## Immediate next pickups
 
+0. **UPG-0029 — Review artifact durability + packet naming policy** (narrow, doc-first; the only
+   loose end from UPG-0001 is durable review evidence). Do this small policy pass **before** Wave 1.
 1. UPG-0004 — Structured Stage 4–6 Reports (Wave 1, P0, no deps) — foundational for later generators/dashboards.
 2. UPG-0005 — Current Verified State Block (Wave 1, P0, no deps).
 

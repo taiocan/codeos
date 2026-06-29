@@ -1,7 +1,7 @@
 ---
 feature_id: UPG-0029
 slug: review-naming-and-thread-tooling
-title: Review-file REV__ naming + codeos-review.sh output support + feature-thread checks
+title: Review artifact durability + packet naming policy + feature-thread tooling
 status: PROPOSED
 priority: P2
 depends_on: []
@@ -10,7 +10,11 @@ supersedes: []
 superseded_by: []
 ---
 
-# Upgrade: review-naming-and-thread-tooling — REV__ review naming + thread tooling
+# Upgrade: review-naming-and-thread-tooling — Review artifact durability + packet naming policy
+
+> **Recommended next pickup** (a narrow, doc-first policy pass — may need no script change). Issue
+> #1 below is the primary scope; naming/tooling (#2–#5) stay optional until the manual convention
+> proves insufficient.
 
 **Priority**: P2
 **Status**: PROPOSED
@@ -24,8 +28,12 @@ superseded_by: []
 
 ## Problem
 
-After UPG-0001, the Feature Thread model and IDs are a documented convention, but:
+After UPG-0001, the Feature Thread model and IDs are a documented convention, but gaps remain:
 
+* **Audit-trail durability (primary).** `reviews/review-log.md` references full Codex assessments
+  under `reviews/codex/*` by **path + sha**, but those files are **untracked** — a path+sha pointer
+  to an uncommitted file is not durable for another checkout or reviewer. There is no policy for
+  which review artifacts are committed vs scratch vs summarized.
 * the advisory reviewer (`scripts/codeos-review.sh`) still emits assessment/packet filenames in
   the legacy `${ts}-${feature}-stage-${stage}-${sha}` shape, not the
   `REV__UPG-####__CHG-…__S<N>__R<N>` review-id shape;
@@ -39,16 +47,29 @@ non-goals: "do not add mandatory tooling unless the manual convention proves ins
 
 ## Upgrade
 
-When the manual convention has proven useful, optionally:
+**1. Review-artifact durability policy — the primary, first concrete issue (doc/policy only).**
+Decide which review artifacts are **committed**, **summarized**, or **kept local-only**, and align
+`reviews/review-log.md` references to that decision. Rule:
 
-1. teach `scripts/codeos-review.sh` to derive and emit the `REV__UPG-####__CHG-…__S<N>__R<N>`
+> Commit durable review evidence only when it is referenced as part of the official audit trail.
+> Scratch reviews remain untracked. If a `review-log.md` entry references a full assessment by
+> path+sha, that assessment must **either** be committed **or** the log entry must clearly mark it
+> as local-only / non-durable.
+
+This avoids both extremes — a bloated repo and a fake audit trail — and closes the concrete gap
+inherited from UPG-0001 (path+sha references to untracked `reviews/codex/*` files). This issue may
+need **no script change** at all; scope it narrowly.
+
+Then, only **if/when** the manual convention proves insufficient (optional, later):
+
+2. teach `scripts/codeos-review.sh` to derive and emit the `REV__UPG-####__CHG-…__S<N>__R<N>`
    review id (filename + in-packet/in-log id), keeping it advisory and read-only;
-2. provide a migration to rename historical `reviews/codex/*` files where practical (truthful,
+3. provide a migration to rename historical `reviews/codex/*` files where practical (truthful,
    non-destructive);
-3. add `scripts/check_feature_threads.sh` — a read-only checker for the UPG-0001 acceptance
+4. add `scripts/check_feature_threads.sh` — a read-only checker for the UPG-0001 acceptance
    invariants (unique ids, every active brief has `feature_id` + `## Feature Thread`,
    `features.md` one-to-one map, no plain `000N` used as both feature and change id);
-4. update the two comment-only references to `backlog/reviewer-decision-integrity.md` inside
+5. update the two comment-only references to `backlog/reviewer-decision-integrity.md` inside
    `scripts/codeos-review.sh` to the renamed path (UPG-0001 left these untouched to keep the
    script byte-identical / behavior-frozen).
 
