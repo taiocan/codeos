@@ -70,6 +70,9 @@ layout is **non-trivial** and uses the 4-step loop. When unsure, treat it as non
 `self-dev only` | `downstream doctrine only` | `both`. This prevents accidental drift into
 the downstream master doctrine.
 
+After triage, assign a **review profile** (Step 0a of `prompts/codeos-self-dev.md`); the
+profile governs Codex review cadence and round limits.
+
 ---
 
 ## The 4-Step Self-Development Loop
@@ -79,8 +82,9 @@ Anchor each non-trivial change to a `backlog/` item (create one if none exists).
 [`templates/codeos-change.md`](templates/codeos-change.md) for the change record. One change
 record per non-trivial change: `changes/UPG-####__CHG-YYYYMMDD-NNN__slug.md`.
 
-Each step: **produce output → run the compulsory Codex review → STOP at the gate → human
-approves → next step.**
+Each step: **produce output → run the Codex review if required by profile → STOP at the
+gate → human approves → next step.** (Profile governs review cadence — see Step 0a of
+`prompts/codeos-self-dev.md`.)
 
 1. **Change Intent** — Why (problem in the toolkit), what changes (named files), what stays
    the same (scope boundary), triage class, scope axis, originating backlog id. Start the
@@ -96,20 +100,27 @@ approves → next step.**
 4. **Reconcile** — Verify each acceptance criterion. Sweep the toolkit for stale references,
    orphaned links, and stage-table↔prompt-file drift (grep). For tooling, do a smoke run.
    Apply reviewer **scope triage** (IN-SCOPE BLOCKER / IN-SCOPE NON-BLOCKER /
-   OUT-OF-SCOPE BACKLOG / REJECTED). Mark the row COMPLETE in `status/self-development.md`;
+   OUT-OF-SCOPE BACKLOG / REJECTED / SELF-REFERENCE / REVIEW-BOOKKEEPING). Mark the row COMPLETE in `status/self-development.md`;
    log the decision (see Review Logging).
 
-### Compulsory review, advisory verdict
+### Review cadence and advisory verdict
 
-Run the Codex reviewer at every non-trivial step, before its gate:
+Review cadence is governed by the **review profile** assigned in Step 0a of
+`prompts/codeos-self-dev.md`. High-risk profiles (PROFILE-3 through PROFILE-5) require
+a Codex review before each step gate. Lighter profiles (PROFILE-1, PROFILE-2) may
+limit Codex review to Reconcile only or reduce the round budget, as defined by the
+profile. Human approval at each step transition is required at every profile; reviewer
+output is advisory and non-gatekeeping at every profile.
+
+To run the reviewer:
 
 ```
 bash scripts/codeos-review.sh review UPG-####__CHG-YYYYMMDD-NNN selfdev-step-<N> changes/UPG-####__CHG-YYYYMMDD-NNN__slug.md <touched-files>
 ```
 
-Running the review is **mandatory**. The verdict is **advisory** — NO OBJECTION /
-CHANGES ADVISED / DO NOT ADVANCE inform the human's decision but never auto-block. The
-reviewer is independent, read-only, and non-gatekeeping; the human decides at the gate.
+The verdict is **advisory** — NO OBJECTION / CHANGES ADVISED / DO NOT ADVANCE inform
+the human's decision but never auto-block. The reviewer is independent, read-only, and
+non-gatekeeping; the human decides at the gate.
 
 ### Gate discipline
 
@@ -122,7 +133,7 @@ After each step output (and its review), STOP and state:
 ## What You NEVER Do (self-development)
 
 - Treat a non-trivial change as trivial to skip the loop.
-- Advance a step without running the compulsory review and getting explicit approval.
+- Advance a step without running the review required by your profile and getting explicit approval.
 - Change the downstream doctrine (`dba-system.md`) as a side effect — that requires an
   explicit `downstream-doctrine` (or `both`) scope declaration in Step 1.
 - Rewrite downstream 9-stage substance when only a path/location change is intended.

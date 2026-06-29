@@ -1,0 +1,353 @@
+Critically assess:
+
+SCOPE CONTRACT
+  Assess this artifact against the STATED SCOPE of this stage/PR — the Expected Stage
+  Output below and what the artifacts actually claim — NOT against an ideal final system.
+  A capability the artifacts do not claim to provide is OUT-OF-SCOPE, not a defect.
+  The following are OUT-OF-SCOPE BACKLOG unless THIS artifact explicitly claims to provide
+  them: formal approval-binding enforcement; rollback correctness; COMMIT_BOUND/
+  WORKSPACE_BOUND enforcement; JSON Schema validation; CI validation; exact
+  decision-integrity; per-feature decision ledgers; autonomous approval; enabled hooks.
+
+TRIAGE RULE — classify EVERY finding as exactly one of:
+  IN-SCOPE BLOCKER     breaks the stated goal; creates a FALSE CLAIM in this artifact;
+                       weakens the advisory/read-only/human-gated guarantees; prevents
+                       the work from running; or violates an explicit safety constraint.
+  IN-SCOPE NON-BLOCKER improves it but is not required for this PR.
+  OUT-OF-SCOPE BACKLOG valid, but belongs to a future feature / stronger guarantee.
+  REJECTED             conflicts with the stated scope or Codeos philosophy.
+  Base the PR decision ONLY on IN-SCOPE BLOCKER findings. An OUT-OF-SCOPE BACKLOG finding
+  must NOT cause DO NOT ADVANCE unless this artifact FALSELY CLAIMS to solve it.
+
+REVIEW CONTEXT
+  Feature:                UPG-0030__CHG-20260629-001
+  Stage:                  selfdev-step-1
+  Branch:                 selfdev/upg-0029-review-durability
+  Base commit:            (no base pin)
+  Review commit:          5b82637ed6f78c93e976083a76e8631ef8265299 (+ uncommitted workspace changes)
+  Current approved stage: n/a (non-numeric stage)
+  Evidence coverage:      FULL_COVERAGE
+  Workspace dirty:        yes (uncommitted changes at review time)
+
+DBA RULES RELEVANT TO THIS STAGE
+  - Human approval is required for every stage transition; you are advisory only.
+  - Memory is not truth — assess only what is provided, pinned to the review commit.
+  - Implementation must trace to approved artifacts; no behavior beyond intent+contract+schema.
+  - No events outside the approved event schema; no hidden behavior.
+
+STAGE-SPECIFIC CHECKS
+  - (no stage-specific checklist for stage selfdev-step-1)
+
+EXPECTED STAGE OUTPUT
+  (no expected-output template for stage selfdev-step-1)
+
+ARTIFACTS TO REVIEW
+  --- changes/UPG-0030__CHG-20260629-001__lean-review-profiles.md (sha256: b193f94943e583117263befe3f2148f342a4af44bfd63b4bf45a89359b75ed95, visibility: shown) ---
+    # Self-Development Change: UPG-0030__CHG-20260629-001 — lean-review-profiles
+    
+    <!--
+    PURPOSE: Per-change source of truth for UPG-0030 — Lean Self-Development Review Profiles.
+    Workflow: prompts/codeos-self-dev.md (4-step loop)
+    -->
+    
+    <!-- TRACE HEADER (canonical) -->
+    ```yaml
+    feature_id: UPG-0030
+    primary_feature_id: UPG-0030
+    change_id: CHG-20260629-001
+    slug: lean-review-profiles
+    state: IN_PROGRESS
+    current_step: 1-Intent
+    implements:
+      - UPG-0030
+    related_features:
+      - UPG-0001
+      - UPG-0028
+      - UPG-0029
+    review_series: RVS__UPG-0030__CHG-20260629-001__S1
+    review_state: IN_REVIEW
+    review_history: reviews/review-log.md
+    fixes_findings: []
+    follow_up_of: UPG-0029
+    ```
+    
+    <!-- SELF-REFERENCE BOUNDARY: carry review_series + review_state only; exact rounds live in
+    reviews/review-log.md. See prompts/codeos-self-dev.md → "Self-Reference Boundary". -->
+    
+    ---
+    
+    ## Change Intent
+    
+    **Why (problem in the toolkit):**
+    
+    The self-dev loop has no review-round budgets, no delta review mode, no local pre-review
+    checks, no claim-audit step, no profile assignment, and no named triage category for the
+    self-reference causal loop. All six problems produce the same symptom: reviews multiply
+    until the human intervenes by fiat. UPG-0029 Step 3 ran 6 rounds, UPG-0001 Step 3 ran 8,
+    UPG-0001 Step 4 ran 7 before a Codex usage cap forced the gate.
+    
+    Specifically:
+    
+    1. **No round budgets.** Nothing in `prompts/codeos-self-dev.md` says "after N rounds,
+       escalate to human decision." The loop runs until the human stops it.
+    
+    2. **No delta review mode.** R2+ rounds send the full context packet even when only one
+       line changed. The reviewer re-reads unchanged material, may re-flag resolved issues,
+       and burns token budget on noise.
+    
+    3. **No local pre-review checks.** False universal claims, stale placeholders, mismatched
+       trace-header fields, and scope-boundary violations are deterministically catchable with
+       grep before Codex is invoked. Currently nothing requires this.
+    
+    4. **No claim audit.** Universal quantifiers ("all", "every", "never", "always", "no X")
+       in new or modified prose have been the most common Codex-flagged false-claim source
+       across UPG-0001 and UPG-0029. No guidance requires auditing them before review.
+    
+    5. **No review profile.** All change classes run the same per-step review cadence and
+       there is no round limit. A `backlog-only` change and a `self-dev-governance` change
+       both run full per-step reviews with no ceiling.
+    
+    6. **No SELF-REFERENCE / REVIEW-BOOKKEEPING triage category.** The four existing
+       categories do not name the case where the reviewer flags stale review-bookkeeping
+       caused by the previous round's own existence — a causal loop. The stop rule exists in
+       `prompts/codeos-self-dev.md` but no triage label matches it, so it is not applied
+       consistently.
+    
+    **What changes:**
+    
+    1. **`backlog/UPG-0030-lean-self-development-review-profiles.md`** (this change's backlog
+       brief) — created in Step 1.
+    
+    2. **`changes/UPG-0030__CHG-20260629-001__lean-review-profiles.md`** (this file) —
+       change record, created in Step 1 and extended through Steps 2–4.
+    
+    3. **`backlog/features.md`** — add UPG-0030 row to the Feature-ID Map.
+    
+    4. **`status/self-development.md`** — activate the UPG-0030 / CHG-20260629-001 row
+       (State: IN_PROGRESS, Loop step: 1-Intent).
+    
+    5. **`prompts/codeos-self-dev.md`** — PRIMARY TARGET. Four additions:
+       - Insert **Step 0a — Review Profile** between Step 0 (Triage) and Step 1. Maps
+         class → PROFILE-N; states per-profile cadence (steps bundled or not; max rounds;
+         delta rule); states the budget-exceeded escalation procedure.
+       - Extend **Reviewer Handling**: add local pre-review checklist (run before every
+         Codex call), claim-audit requirement (check universal quantifiers before sending),
+         and exact delta packet spec for R2+.
+       - Add **SELF-REFERENCE / REVIEW-BOOKKEEPING** as a fifth triage category with a
+         disposition rule referencing the existing stop rule.
+       - Update the **Stopping Rules** section to cross-reference the profile budget.
+    
+    6. **`templates/codeos-change.md`** — two lean changes:
+       - Add `review_profile: PROFILE-N` field to the YAML trace header.
+       - Remove the duplicate metadata block at lines 106–118 (the `<!-- METADATA -->` block
+         below the Reconciliation section is a second copy of trace-header fields; the
+         canonical trace header at the top is authoritative).
+    
+    7. **`docs/reviewer-pipeline.md`** — add three sections after §4a:
+       - **§4b Delta review mode**: exact delta packet spec (contents, what to omit).
+       - **§4c Claim audit**: which quantifiers trigger audit; resolution options.
+       - **§4d Review-round budget table**: per-profile round limits and budget-exceeded
+         disposition.
+    
+    8. **`CLAUDE.md`** — ONE sentence cross-reference added immediately after the triage
+       table: "After triage, assign a **review profile** (Step 0a of
+       `prompts/codeos-self-dev.md`); the profile governs review cadence and round limits."
+       No other changes to CLAUDE.md.
+    
+    **Scope boundary — what stays the same:**
+    
+    - `dba-system.md` — not touched; downstream DBA doctrine is out of scope.
+    - `scripts/codeos-review.sh` — not touched; script I/O and output format unchanged.
+    - The 9-stage DBA loop and stage prompts — not touched.
+    - `reviews/review-log.md` — will receive organically appended review entries as work
+      proceeds; no structural changes.
+    - `.gitignore` — not changed.
+    - Naming convention enforcement (`REV__`, `RVS__` filename emission) — remains deferred
+      (tracked in UPG-0029 issues #2–#5).
+    - No new scripts.
+    
+    **Class:** `self-dev-governance` — modifies `CLAUDE.md` and the self-dev loop
+    (`prompts/codeos-self-dev.md`) itself.
+    
+    **Scope axis:** `self-dev only`
+    
+    **Backlog item:** `backlog/UPG-0030-lean-self-development-review-profiles.md`
+    
+    ---
+    
+    ## Acceptance Criteria
+    
+    *(To be filled in Step 2)*
+    
+    ---
+    
+    ## Implementation Notes
+    
+    *(To be filled in Step 3)*
+    
+    ---
+    
+    ## Reconciliation
+    
+    *(To be filled in Step 4)*
+
+  --- backlog/UPG-0030-lean-self-development-review-profiles.md (sha256: ab626a95526cf8b982f4a0462f4fe5aef664ed9bdcd564d5d1b0a4f77c0926d5, visibility: shown) ---
+    ---
+    feature_id: UPG-0030
+    slug: lean-self-development-review-profiles
+    title: Lean Self-Development Review Profiles
+    status: IN_PROGRESS
+    priority: P1
+    depends_on:
+      - UPG-0001
+      - UPG-0029
+    related_features:
+      - UPG-0028
+    supersedes: []
+    superseded_by: []
+    ---
+    
+    # Upgrade: lean-self-development-review-profiles — Lean Self-Development Review Profiles
+    
+    **Priority**: P1
+    **Status**: IN_PROGRESS
+    **Type**: self-dev-governance
+    **Related**: UPG-0001 (feature-thread-traceability), UPG-0028 (reviewer self-reference scoping),
+    UPG-0029 (review artifact durability)
+    
+    > Filed during UPG-0029 (CHG-20260629-001) as the follow-up for the review-loop efficiency
+    > problem first observed there. UPG-0029 ran 6 Codex rounds on Step 3 alone before the human
+    > intervened. This upgrade fixes the process before the next change is implemented.
+    
+    ## Problem
+    
+    The current self-dev loop provides no review-round budgets, no delta review mode, no local
+    pre-review checks, no claim-audit step, no review-profile assignment, and no named triage
+    category for the self-reference causal loop. Concretely:
+    
+    1. **No round budgets.** Nothing in `prompts/codeos-self-dev.md` or `CLAUDE.md` says "after N
+       rounds, escalate to human decision." UPG-0029 Step 3 ran 6 rounds; UPG-0001 Step 3 ran 8
+       rounds; UPG-0001 Step 4 ran 7 rounds before a Codex cap forced the human to decide.
+    
+    2. **No delta review mode.** R2+ reviews send the full context packet even when only one line
+       changed. This wastes reviewer attention and token budget on unchanged material, and can
+       cause the reviewer to re-flag already-resolved issues (or miss the tiny changed line).
+    
+    3. **No local pre-review checks.** Deterministic failures — stale placeholders, false universal
+       claims, mismatched trace-header fields, scope-boundary violations — could be caught by grep
+       before invoking Codex, but currently aren't. UPG-0029 Step 3 R6 found a false "all" claim
+       that a 30-second grep would have caught.
+    
+    4. **No claim audit before review.** Universal quantifiers ("all", "every", "never", "always",
+       "no X") in new or modified prose have been a recurring Codex-flagged false-claim source
+       across UPG-0001 and UPG-0029. No guidance exists to audit these before sending.
+    
+    5. **No review profile assignment.** The loop applies identical per-step review rigor to all
+       change classes. A `backlog-only` change needs one review at most; a `self-dev-governance`
+       change needs per-step reviews with round limits. There is no profile table mapping class →
+       cadence, so every change implicitly runs at maximum rigor.
+    
+    6. **No SELF-REFERENCE / REVIEW-BOOKKEEPING triage category.** The four existing categories
+       (IN-SCOPE BLOCKER / IN-SCOPE NON-BLOCKER / OUT-OF-SCOPE BACKLOG / REJECTED) don't name
+       the case where the reviewer flags that review records themselves are stale — a causal
+       loop. The self-reference stop rule (two consecutive rounds find only bookkeeping churn →
+       human decision) exists in `prompts/codeos-self-dev.md`, but no triage label matches it.
+    
+    ## Proposed solution
+    
+    Add a **review profile** step (Step 0a) after triage that maps change class → review cadence.
+    Profiles are numbered 0–5 (lightest to heaviest). Update `prompts/codeos-self-dev.md` as the
+    primary operational home for all profile logic, local checks, claim audit, delta spec, and
+    budget table. Give `CLAUDE.md` a one-line cross-reference only. Add supporting sections to
+    `docs/reviewer-pipeline.md`. Add a `review_profile` field to `templates/codeos-change.md`.
+    
+    **Profiles:**
+    
+    | Profile | For class | Cadence | Max rounds/step | Bundling |
+    |---|---|---|---|---|
+    | PROFILE-0 | `trivial` | No review | — | — |
+    | PROFILE-1 | `backlog-only` | 1 review, at Reconcile only | 2 | Steps 1+2 always bundled |
+    | PROFILE-2 | `documentation` (normative) | 1 review per step (or Steps 1+2 bundled by profile) | 2 | Steps 1+2 may be bundled by profile |
+    | PROFILE-3 | `template` / `prompt` / `script-tooling` | 1 review per step, R2+ delta | 3 | Human decision only |
+    | PROFILE-4 | `downstream-doctrine` | 1 review per step, R2+ delta | 3 | Human decision only |
+    | PROFILE-5 | `self-dev-governance` | 1 review per step, R2+ delta | 3 | Human decision only |
+    
+    **Budget exceeded:** when the per-step round limit is reached, fix any remaining findings
+    inline and escalate to human decision. Do not run further Codex rounds automatically.
+    
+    ## Scope
+    
+    **Self-dev only.** No changes to `dba-system.md` or `scripts/codeos-review.sh`.
+    
+    ## Files touched by CHG-20260629-001
+    
+    See the Feature Thread below.
+    
+    ---
+    
+    ## Feature Thread
+    
+    ### Changes
+    
+    | Change ID | File | Purpose | State |
+    |---|---|---|---|
+    | CHG-20260629-001 | changes/UPG-0030__CHG-20260629-001__lean-review-profiles.md | Add review profiles, delta mode, local checks, claim audit, round budgets, SELF-REFERENCE triage | IN_PROGRESS |
+    
+    ### Reviews
+    
+    | Review series | Step | Verdict summary |
+    |---|---|---|
+    | RVS__UPG-0030__CHG-20260629-001__S1 | 1-Intent | (pending) |
+    
+    ### Findings
+    
+    (none yet)
+    
+    ### Follow-up
+    
+    (none yet)
+
+DIFF TO REVIEW (base->review, secret/size filtered)
+diff --git a/backlog/features.md b/backlog/features.md
+index ce0a7f0..d91da3d 100644
+--- a/backlog/features.md
++++ b/backlog/features.md
+@@ -59,7 +59,8 @@ The goal is to speed up Codeos development without weakening DBA advantages.
+ | UPG-0026 | [UPG-0026-branch-helper.md](UPG-0026-branch-helper.md) | Optional Branch Creation Helper | P2 | PROPOSED |
+ | UPG-0027 | [UPG-0027-replacing-review-scripts.md](UPG-0027-replacing-review-scripts.md) | Migrating Review Scripts from Bash to a Structured Language | — | PROPOSED |
+ | UPG-0028 | [UPG-0028-reviewer-self-reference-recursion.md](UPG-0028-reviewer-self-reference-recursion.md) | Reviewer self-reference recursion (scoping) | P2 | PROPOSED |
+-| UPG-0029 | [UPG-0029-review-naming-and-thread-tooling.md](UPG-0029-review-naming-and-thread-tooling.md) | Review artifact durability + packet naming policy | P2 | PROPOSED |
++| UPG-0029 | [UPG-0029-review-naming-and-thread-tooling.md](UPG-0029-review-naming-and-thread-tooling.md) | Review artifact durability + packet naming policy | P2 | COMPLETE |
++| UPG-0030 | [UPG-0030-lean-self-development-review-profiles.md](UPG-0030-lean-self-development-review-profiles.md) | Lean Self-Development Review Profiles | P1 | IN_PROGRESS |
+ 
+ > Priority `—` = no formal P-rank (a completed cleanup, or a discovery note). Feature IDs are
+ > assigned once and never reused. `UPG-0002` and `UPG-0003` are historical/piloted work given IDs
+diff --git a/status/self-development.md b/status/self-development.md
+index ccb989e..8245b4c 100644
+--- a/status/self-development.md
++++ b/status/self-development.md
+@@ -25,6 +25,7 @@
+ | — (reviewer findings) | 0004-review-fixes | documentation / self-dev-governance | self-dev only | 4-Reconcile | CHANGES ADV (accepted) | COMPLETE | — |
+ | UPG-0001 | CHG-20260627-001 | self-dev-governance | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S4; rounds in review-log) | COMPLETE | UPG-0029 |
+ | UPG-0029 | CHG-20260629-001 | documentation | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S4; rounds in review-log) | COMPLETE | UPG-0030 |
++| UPG-0030 | CHG-20260629-001 | self-dev-governance | self-dev only | 1-Intent | IN_REVIEW (RVS__UPG-0030__CHG-20260629-001__S1; rounds in review-log) | IN_PROGRESS | — |
+ 
+ <!--
+ Identity   : Feature ID = UPG-#### (stable). Change ID = CHG-YYYYMMDD-NNN (one execution), or a
+
+INSTRUCTIONS
+  If this is a resumed session, ignore any earlier-session conclusions unless they are
+  re-established by THIS packet; assess only the evidence above, pinned to this commit.
+  Give your full critical assessment (operational, ranked by severity, with concrete
+  better-designs). For EACH finding emit:
+    Finding: / Severity: High|Medium|Low / Classification: <one of the TRIAGE RULE labels>
+    Evidence: <file/line> / Why: <short> / Required action: fix now|optional fix|backlog|reject
+    Scope reason: <why it does/does not belong to this PR's scope>
+  Then emit:
+    PR decision: ADVANCE | REQUEST CHANGES | DO NOT ADVANCE   (based ONLY on in-scope blockers)
+    Scope drift warning: yes|no — <is anything pulling this PR beyond its stated scope?>
+  Then on the LAST two lines emit exactly (map ADVANCE->NO OBJECTION,
+  REQUEST CHANGES->CHANGES ADVISED, DO NOT ADVANCE->DO NOT ADVANCE):
+    LOG SUMMARY: <NO OBJECTION | CHANGES ADVISED | DO NOT ADVANCE | UNCLASSIFIED> — <single most important point>
+      (use UNCLASSIFIED if you genuinely cannot classify the artifact safely)
+    EVIDENCE: <A|B|C|D|E>   (optional)

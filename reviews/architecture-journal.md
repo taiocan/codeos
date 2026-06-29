@@ -74,3 +74,27 @@ just shifts the lag by one round. (Earlier seen, less acutely, in the `0001–00
 doctrine + artifact structure landed here (Self-Reference Boundary in `prompts/codeos-self-dev.md`);
 teaching the reviewer/packet to honor it is `UPG-0028`. Builds on [[AJ-001]] (singular contract)
 and [[AJ-002]] (reproducible-from-committed-artifacts).
+
+---
+
+## AJ-004 — Adding a triage category requires sweeping every prose enumeration, not just the primary table
+
+*Origin: UPG-0030 / CHG-20260629-001 (lean-review-profiles), Steps 3–4, multiple rounds.*
+
+When a new triage category is introduced (here: `SELF-REFERENCE / REVIEW-BOOKKEEPING` as the fifth
+category), it is easy to add it to the **primary triage table** and miss every **inline prose
+enumeration** scattered across governance docs. UPG-0030 required fixes in four separate locations
+across three review rounds before all enumerations were consistent:
+
+- `prompts/codeos-self-dev.md` — Step 4 checklist and Feature Thread triage list (both missed initially)
+- `templates/codeos-change.md` — Reconciliation triage table (missed initially)
+- `CLAUDE.md` — Step 4 loop summary (caught by R3 budget-exhaustion inline fix)
+- `docs/reviewer-pipeline.md` — §2 Scope Contract triage rule (caught by R3 budget-exhaustion inline fix)
+
+**Lesson / how to apply:** When any governed taxonomy changes (triage categories, scope-axis values,
+profile names, verdict labels), treat it as a **cross-doc refactor**: grep the whole toolkit for
+every place the old enumeration appears before declaring the change complete. Do not rely on the
+primary table being the only place the list is written. The acceptance criteria for any such change
+must explicitly require a grep sweep and name the files expected to contain enumerations, rather
+than just asserting "updated everywhere." See [[AJ-003]] for the related self-reference pattern
+that makes catching these missed instances even harder inside review rounds.

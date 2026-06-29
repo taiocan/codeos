@@ -2,7 +2,7 @@
 feature_id: UPG-0029
 slug: review-naming-and-thread-tooling
 title: Review artifact durability + packet naming policy + feature-thread tooling
-status: PROPOSED
+status: COMPLETE
 priority: P2
 depends_on: []
 related_features: []
@@ -12,12 +12,13 @@ superseded_by: []
 
 # Upgrade: review-naming-and-thread-tooling — Review artifact durability + packet naming policy
 
-> **Recommended next pickup** (a narrow, doc-first policy pass — may need no script change). Issue
-> #1 below is the primary scope; naming/tooling (#2–#5) stay optional until the manual convention
-> proves insufficient.
+> **Status note (added CHG-20260629-001):** Issue #1 (review artifact durability policy) was
+> implemented and completed by UPG-0029 / CHG-20260629-001. Issues #2–#5 (naming convention,
+> migration, tooling) remain deferred; they are explicitly optional until the manual convention
+> proves insufficient (per UPG-0001's non-goals). The problem/upgrade text below is historical.
 
 **Priority**: P2
-**Status**: PROPOSED
+**Status**: COMPLETE
 **Type**: toolkit-upgrade
 **Related**: UPG-0001 (feature-thread-traceability), reviewer pipeline
 
@@ -100,7 +101,7 @@ insufficient.
 
 | Change ID | File | Purpose | State |
 |---|---|---|---|
-| CHG-20260629-001 | changes/UPG-0029__CHG-20260629-001__review-durability.md | Review artifact durability policy (doc-only; issue #1) | IN_PROGRESS |
+| CHG-20260629-001 | changes/UPG-0029__CHG-20260629-001__review-durability.md | Review artifact durability policy (doc-only; issue #1) | COMPLETE |
 
 ### Reviews
 

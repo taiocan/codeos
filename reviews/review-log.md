@@ -654,3 +654,267 @@ S4 R2 (IN-SCOPE BLOCKER): Implementation Notes item 2 false — "Identifies all 
 R2 budget exhausted per plan; both fixes applied inline; no open in-scope blockers remain.
 All acceptance criteria A1–D1: PASS (verified by grep/git diff in Reconciliation section).
 Advancing to: COMPLETE
+
+## 2026-06-29T05:04:36Z REVIEW — UPG-0030__CHG-20260629-001 — Stage selfdev-step-1
+Base: (no base pin)  Review: 5b82637ed6f78c93e976083a76e8631ef8265299  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 7ac5306272b80e7a4899ada7dd527c1a3af93734dac8b01d311be9fe704c621d
+Reviewer: codex default-model (session 019f11c0-a436-7081-97b0-83cee6c7fe3f)
+Codex concern: DO NOT ADVANCE
+Effective concern: DO NOT ADVANCE
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: DO NOT ADVANCE — the proposed profile design weakens compulsory per-step review/human gates, and the problem statement contains a direct false claim about current `backlog-only` handling
+Full assessment: reviews/codex/2026-06-29T050436Z-UPG-0030__CHG-20260629-001-stage-selfdev-step-1-5b82637.md (sha256:92589b66d982755c393ac9d0137fedfc04ceae067a155d31dd790d67719591ce)
+Reviewed packet: reviews/codex/packets/2026-06-29T050436Z-UPG-0030__CHG-20260629-001-stage-selfdev-step-1-5b82637.packet.txt (sha256:ea64df86ab318552eb0f766717af66404cef7a13981a57e38c49dec66c6e9777)
+Human decision: (append with: codeos-review.sh decision UPG-0030__CHG-20260629-001 selfdev-step-1 <DECISION> "<reason>")
+
+## 2026-06-29T05:17:15Z REVIEW — UPG-0030__CHG-20260629-001 — Stage selfdev-step-1
+Base: (no base pin)  Review: 5b82637ed6f78c93e976083a76e8631ef8265299  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 4e02547a77cc636ece107bfea1e56517199c5fb087d9d0b4715b9183b720e025
+Reviewer: codex default-model (session 019f11c0-a436-7081-97b0-83cee6c7fe3f)
+Codex concern: DO NOT ADVANCE
+Effective concern: DO NOT ADVANCE
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: DO NOT ADVANCE — the class-to-profile design is still internally inconsistent, and the packet also omits and contradicts a touched UPG-0029 artifact
+Full assessment: reviews/codex/2026-06-29T051715Z-UPG-0030__CHG-20260629-001-stage-selfdev-step-1-5b82637.md (sha256:89c6d2751bab07cfe62c370929bc124b28d288728df7494b502ed3072781ff2c)
+Reviewed packet: reviews/codex/packets/2026-06-29T051715Z-UPG-0030__CHG-20260629-001-stage-selfdev-step-1-5b82637.packet.txt (sha256:c18276c9271c29ee4b5c36541162bd67e02ad4d59213492045e2947c2f330e46)
+Human decision: (append with: codeos-review.sh decision UPG-0030__CHG-20260629-001 selfdev-step-1 <DECISION> "<reason>")
+
+## 2026-06-29T05:25:09Z REVIEW — UPG-0030__CHG-20260629-001 — Stage selfdev-step-1
+Base: (no base pin)  Review: 5b82637ed6f78c93e976083a76e8631ef8265299  Branch: selfdev/upg-0029-review-durability
+Diff-hash: a91cf6eca4d54179f0b455803172439fc7db552f7309d1b2327f46ebd94c6545
+Reviewer: codex default-model (session 019f11c0-a436-7081-97b0-83cee6c7fe3f)
+Codex concern: DO NOT ADVANCE
+Effective concern: DO NOT ADVANCE
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: DO NOT ADVANCE — the proposed bundled-step review profiles still lack a coherent way to be represented in the existing step/review bookkeeping model
+Full assessment: reviews/codex/2026-06-29T052509Z-UPG-0030__CHG-20260629-001-stage-selfdev-step-1-5b82637.md (sha256:7a571abfece20fc159b0b64a9bf7c168571849fd1d9d4da0239084bf26ca4c96)
+Reviewed packet: reviews/codex/packets/2026-06-29T052509Z-UPG-0030__CHG-20260629-001-stage-selfdev-step-1-5b82637.packet.txt (sha256:dbce94e4b8855977e6fd0c1859e54ebaa20877494fe9605a8f6e4c4dcdf61d07)
+Human decision: (append with: codeos-review.sh decision UPG-0030__CHG-20260629-001 selfdev-step-1 <DECISION> "<reason>")
+
+## 2026-06-29T10:45:00Z HUMAN DECISION — UPG-0030__CHG-20260629-001 — Stage selfdev-step-1 (budget exhausted)
+
+Decision: ESCALATED TO HUMAN — R3 budget exhausted (under the selected review profile). Two in-scope
+blockers remain; fixes applied inline were not sufficient. Awaiting human decision on design direction.
+S1 R3 (IN-SCOPE BLOCKER 1): step-bundling (PROFILE-1/2 "Steps 1+2 always/may bundle") has no
+  representation in current_step / review_series / dashboard Loop step — all single-step fields.
+S1 R3 (IN-SCOPE BLOCKER 2): CLAUDE.md §Compulsory review says "Run the Codex reviewer at every
+  non-trivial step" — directly contradicts the proposed profile-based cadence; one-line
+  cross-reference is insufficient to resolve the contradiction.
+Human decision determines design direction before any further work on Step 1.
+
+## 2026-06-29T11:00:00Z HUMAN DECISION — UPG-0030__CHG-20260629-001 — Stage selfdev-step-1
+
+Decision: Design direction approved (R3 blockers resolved by human direction; no further Codex
+round required — budget exhausted, human decision is the gate).
+
+R3 Finding 1 (step-bundling bookkeeping): RESOLVED — Option B chosen. Step bundling is gate
+  behavior only; no schema change. current_step, review_series, and dashboard Loop step always
+  advance step-by-step. "Bundled" means one human approval covers both steps at a single gate;
+  the bookkeeping still records steps 1 and 2 as concrete sequential states.
+  Fix applied: updated profile table Bundling column and added explanatory prose in both backlog
+  brief and change record.
+
+R3 Finding 2 (CLAUDE.md blanket rule contradiction): RESOLVED — Option A chosen. CLAUDE.md
+  §"Compulsory review, advisory verdict" updated to §"Review cadence and advisory verdict":
+  blanket per-step rule replaced with profile-governed cadence language. Command syntax, advisory/
+  non-gatekeeping invariants, and human-approval primacy unchanged. Change record scope item 8
+  updated to reflect two minimal CLAUDE.md changes (not one sentence only).
+
+R3 Finding 3 (UPG-0029 brief reads like active proposal): RESOLVED (non-blocker addressed).
+  Opening "Recommended next pickup" replaced with a past-tense status note naming CHG-20260629-001
+  as the completing change and marking issues #2–#5 as explicitly deferred.
+
+Step 1 intent is now complete and consistent. Advancing to human gate for Step 1 approval.
+
+## 2026-06-29T05:51:07Z REVIEW — UPG-0030__CHG-20260629-001 — Stage selfdev-step-2
+Base: (no base pin)  Review: 5b82637ed6f78c93e976083a76e8631ef8265299  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 1128b58d511e79d5fa9da010195ebdfeeaed3e07d6f3e16e6c911b77adf56b4e
+Reviewer: codex default-model (session 019f11c0-a436-7081-97b0-83cee6c7fe3f)
+Codex concern: DO NOT ADVANCE
+Effective concern: DO NOT ADVANCE
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: DO NOT ADVANCE — the acceptance contract still encodes bundled human gates that conflict with the explicit per-step human-approval rule, and it leaves the primary prompt’s contradictory blanket review language insufficiently constrained
+Full assessment: reviews/codex/2026-06-29T055107Z-UPG-0030__CHG-20260629-001-stage-selfdev-step-2-5b82637.md (sha256:8b7028a1fd78f4b0d6974c6cbe3b179ff60134feb09c560396a2a8ef6f94dc46)
+Reviewed packet: reviews/codex/packets/2026-06-29T055107Z-UPG-0030__CHG-20260629-001-stage-selfdev-step-2-5b82637.packet.txt (sha256:1152b511a2bcb213183cca5988cac861971e66ae69b0989a4b234911188b4add)
+Human decision: (append with: codeos-review.sh decision UPG-0030__CHG-20260629-001 selfdev-step-2 <DECISION> "<reason>")
+
+## 2026-06-29T11:15:00Z HUMAN DECISION — UPG-0030__CHG-20260629-001 — Stage selfdev-step-2 R1
+
+Decision: APPROVED with fixes — R1 blockers resolved; proceed to R2 delta.
+S2 R1 Finding 1 (bundled gates violate per-step approval safety rule): RESOLVED — Option A
+  chosen. Step bundling removed from profiles entirely. Profiles now vary only Codex review
+  cadence and round budgets; human approval at each step transition remains required at
+  every profile. Profile table Bundling column removed; "Step bundling" note paragraph
+  removed; policy-change declarations in change record, backlog brief, and CLAUDE.md updated
+  to reflect that the per-step human approval invariant is unchanged.
+S2 R1 Finding 2 (AC B2 misses prompts/codeos-self-dev.md blanket language): already applied.
+S2 R1 Finding 3 (F2 false claim — "at most 1 review total" vs max 2 rounds): already applied.
+R2 delta to follow: focused on bundling removal, per-step approval consistency, CLAUDE.md
+cadence wording, and UPG-0029 status fix.
+
+## 2026-06-29T05:59:22Z REVIEW — UPG-0030__CHG-20260629-001 — Stage selfdev-step-2
+Base: (no base pin)  Review: 5b82637ed6f78c93e976083a76e8631ef8265299  Branch: selfdev/upg-0029-review-durability
+Diff-hash: b8a4b3f50c8d8486a2f6090b8b1ee3e8d74d3573557df2b041020322e82a0c93
+Reviewer: codex default-model (session 019f11c0-a436-7081-97b0-83cee6c7fe3f)
+Codex concern: DO NOT ADVANCE
+Effective concern: DO NOT ADVANCE
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: DO NOT ADVANCE — the Step 2 packet still contains false companion-artifact state: the backlog brief both understates the `CLAUDE.md` change and leaves Step 1 marked pending
+Full assessment: reviews/codex/2026-06-29T055922Z-UPG-0030__CHG-20260629-001-stage-selfdev-step-2-5b82637.md (sha256:e07e9d1e1aa5cbd33b1b7d164b7adf1b587a069bd7651937f918a2bed4403bc8)
+Reviewed packet: reviews/codex/packets/2026-06-29T055922Z-UPG-0030__CHG-20260629-001-stage-selfdev-step-2-5b82637.packet.txt (sha256:cfde62c9c2880b0b6839a0c074a5818f13621a39e8e0b24a8262d5ecdc71a893)
+Human decision: (append with: codeos-review.sh decision UPG-0030__CHG-20260629-001 selfdev-step-2 <DECISION> "<reason>")
+
+## 2026-06-29T06:01:26Z REVIEW — UPG-0030__CHG-20260629-001 — Stage selfdev-step-2
+Base: (no base pin)  Review: 5b82637ed6f78c93e976083a76e8631ef8265299  Branch: selfdev/upg-0029-review-durability
+Diff-hash: b8a4b3f50c8d8486a2f6090b8b1ee3e8d74d3573557df2b041020322e82a0c93
+Reviewer: codex default-model (session 019f11c0-a436-7081-97b0-83cee6c7fe3f)
+Codex concern: DO NOT ADVANCE
+Effective concern: DO NOT ADVANCE
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: DO NOT ADVANCE — the Step 2 contract still does not fully require removal of all blanket per-step review language from the governing self-dev workflow text
+Full assessment: reviews/codex/2026-06-29T060126Z-UPG-0030__CHG-20260629-001-stage-selfdev-step-2-5b82637.md (sha256:cd874f70a6a1844ac84ea514be6b1ae2efc04c0f2dd6bd5a20b54dff87da95c2)
+Reviewed packet: reviews/codex/packets/2026-06-29T060126Z-UPG-0030__CHG-20260629-001-stage-selfdev-step-2-5b82637.packet.txt (sha256:c4600082939c24b556a31ff8cdcc33874d781e79920556515de7d9d943fe4212)
+Human decision: (append with: codeos-review.sh decision UPG-0030__CHG-20260629-001 selfdev-step-2 <DECISION> "<reason>")
+
+## 2026-06-29T11:30:00Z HUMAN DECISION — UPG-0030__CHG-20260629-001 — Stage selfdev-step-2 (budget exhausted)
+
+Decision: ESCALATED TO HUMAN — R3 budget exhausted (under the selected review profile). One in-scope
+blocker remains; fix applied inline. Awaiting human decision on Step 2 approval.
+S2 R3 (IN-SCOPE BLOCKER): AC criterion B2 was too narrow — only checked one grep phrase but
+  CLAUDE.md:82-83 and prompts/codeos-self-dev.md:8-9,44-49,226-229 contain four additional
+  blanket-review statements not covered by B2. Fix applied: B2 expanded to explicitly name
+  all five problematic locations with section-by-section verification requirement, plus a
+  comprehensive grep check for the Reconcile step. "What changes" item 5 also updated to
+  explicitly list the §Your Role and §4-step loop summary updates as implementation targets.
+No open in-scope blockers remain after the inline fix. Awaiting human approval of Step 2.
+
+## 2026-06-29T06:13:32Z REVIEW — UPG-0030__CHG-20260629-001 — Stage selfdev-step-3
+Base: (no base pin)  Review: 5b82637ed6f78c93e976083a76e8631ef8265299  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 4d23bb3c10f0b54092f420ee7332f962a10a76ca0ddf6fc923ebb54993bb0222
+Reviewer: codex default-model (session 019f11c0-a436-7081-97b0-83cee6c7fe3f)
+Codex concern: DO NOT ADVANCE
+Effective concern: DO NOT ADVANCE
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: DO NOT ADVANCE — the implementation is only partially wired: the live change record omits `review_profile`, and the prompt/template still contradict the new review-profile and five-category triage model
+Full assessment: reviews/codex/2026-06-29T061332Z-UPG-0030__CHG-20260629-001-stage-selfdev-step-3-5b82637.md (sha256:8e46cb51dd1fa5f41676d8acfcb0579d1798f1e68521d253e3f9aea3ba8465a7)
+Reviewed packet: reviews/codex/packets/2026-06-29T061332Z-UPG-0030__CHG-20260629-001-stage-selfdev-step-3-5b82637.packet.txt (sha256:1cf17b5d46f7b81577ad3dbbae74c4d537fefe2ae8754bee4b1035da5e10ce95)
+Human decision: (append with: codeos-review.sh decision UPG-0030__CHG-20260629-001 selfdev-step-3 <DECISION> "<reason>")
+
+## 2026-06-29T06:19:16Z REVIEW — UPG-0030__CHG-20260629-001 — Stage selfdev-step-3
+Base: (no base pin)  Review: 5b82637ed6f78c93e976083a76e8631ef8265299  Branch: selfdev/upg-0029-review-durability
+Diff-hash: acce76681c9c78222271d864a69da60d0ae3105d198f88bacc9d32c2d1fd769c
+Reviewer: codex default-model (session 019f11c0-a436-7081-97b0-83cee6c7fe3f)
+Codex concern: DO NOT ADVANCE
+Effective concern: DO NOT ADVANCE
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: DO NOT ADVANCE — the implementation contains scope creep into UPG-0027 and still leaves the UPG-0030 source-of-truth artifacts internally inconsistent
+Full assessment: reviews/codex/2026-06-29T061916Z-UPG-0030__CHG-20260629-001-stage-selfdev-step-3-5b82637.md (sha256:9a22dfb5e7d273e76d0d62e0ab4f2feec98f4dd782e2921d24b9200f10ec8ef9)
+Reviewed packet: reviews/codex/packets/2026-06-29T061916Z-UPG-0030__CHG-20260629-001-stage-selfdev-step-3-5b82637.packet.txt (sha256:77f59193b53e1396f0185ef377e0cde0988160c947d75ca138d04477c3a258b5)
+Human decision: (append with: codeos-review.sh decision UPG-0030__CHG-20260629-001 selfdev-step-3 <DECISION> "<reason>")
+
+## 2026-06-29T13:08:16Z REVIEW — UPG-0030__CHG-20260629-001 — Stage selfdev-step-3
+Base: (no base pin)  Review: 5b82637ed6f78c93e976083a76e8631ef8265299  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 457e2d68a3b987ed89a138b7f6b9ce1a5426b9440bff086fa3151f709f0efd10
+Reviewer: codex default-model (session 019f11c0-a436-7081-97b0-83cee6c7fe3f)
+Codex concern: DO NOT ADVANCE
+Effective concern: DO NOT ADVANCE
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: DO NOT ADVANCE — the new five-category review taxonomy is only partially implemented, leaving `CLAUDE.md` and `docs/reviewer-pipeline.md` on the old four-category contract
+Full assessment: reviews/codex/2026-06-29T130816Z-UPG-0030__CHG-20260629-001-stage-selfdev-step-3-5b82637.md (sha256:5161107e119b64694ad3ae6975bf8f2e34bc2f646fca36f7fd52051201dbb7da)
+Reviewed packet: reviews/codex/packets/2026-06-29T130816Z-UPG-0030__CHG-20260629-001-stage-selfdev-step-3-5b82637.packet.txt (sha256:b7011ed85ee832968de7e54a532049c466c6fa70e37de58cb3c6c981e2933c6a)
+Human decision: (append with: codeos-review.sh decision UPG-0030__CHG-20260629-001 selfdev-step-3 <DECISION> "<reason>")
+
+## 2026-06-29 BUDGET-EXHAUSTED — UPG-0030__CHG-20260629-001 — Stage selfdev-step-3
+Step 3 R3 was the final allowed round under PROFILE-5 (max 3 rounds/step). Budget exhausted.
+Two in-scope blockers found in R3 were fixed inline (no further Codex round):
+  1. CLAUDE.md Step 4 triage list: added SELF-REFERENCE / REVIEW-BOOKKEEPING as fifth category.
+  2. docs/reviewer-pipeline.md §2 Scope Contract description: added SELF-REFERENCE / REVIEW-BOOKKEEPING.
+Also fixed before R3 (from R2 blockers):
+  3. UPG-0027 workspace scope creep: restored to committed state (git checkout).
+  4. Change record CLAUDE.md scope: updated from two to three declared changes.
+  5. review_profile field placement: moved to after review_series per AC D1.
+  6. Naming canonicalized: SELF-REFERENCE / REVIEW-BOOKKEEPING (slash) everywhere.
+Escalating to human at Step 3 gate. Human decides whether inline fixes are sufficient to advance.
+Human decision: (pending)
+
+## 2026-06-29T15:24:46Z HUMAN DECISION — UPG-0030__CHG-20260629-001 — Stage selfdev-step-3
+Commit at decision: 5b82637ed6f78c93e976083a76e8631ef8265299
+Decision: APPROVE_STAGE
+Reason/next: Human override after budget exhaustion (3/3 rounds). Two R3 inline fixes applied: CLAUDE.md Step 4 triage + docs/reviewer-pipeline.md §2 Scope Contract now both include SELF-REFERENCE / REVIEW-BOOKKEEPING as fifth category. Advance to Step 4.
+Verified against: reviews/codex/2026-06-29T130816Z-UPG-0030__CHG-20260629-001-stage-selfdev-step-3-5b82637.md
+Artifact integrity (informational audit, not a gate):
+  MATCH   changes/UPG-0030__CHG-20260629-001__lean-review-profiles.md
+  MATCH   prompts/codeos-self-dev.md
+  MATCH   templates/codeos-change.md
+  CHANGED docs/reviewer-pipeline.md (reviewed 43ffe4ffd44c / now 7d9fe6813e78)
+  CHANGED CLAUDE.md (reviewed 1ae1d0a0187e / now a95e5559a7a8)
+
+## 2026-06-29T15:30:00Z REVIEW — UPG-0030__CHG-20260629-001 — Stage selfdev-step-4
+Base: (no base pin)  Review: 5b82637ed6f78c93e976083a76e8631ef8265299  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 101060d6c64d36a820d73a6c526616962bf4291481eec15c2adb5371ca37b8fb
+Reviewer: codex default-model (session 019f11c0-a436-7081-97b0-83cee6c7fe3f)
+Codex concern: DO NOT ADVANCE
+Effective concern: DO NOT ADVANCE
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: DO NOT ADVANCE — the Step 4 reconciliation still overclaims evidence and scope, including an unsupported `UPG-0027` revert and an unsupported PASS for C4
+Full assessment: reviews/codex/2026-06-29T153000Z-UPG-0030__CHG-20260629-001-stage-selfdev-step-4-5b82637.md (sha256:ea9dff3ad6acf6009e7d02fc219a4583cec3753a19329856583a7bc708884512)
+Reviewed packet: reviews/codex/packets/2026-06-29T153000Z-UPG-0030__CHG-20260629-001-stage-selfdev-step-4-5b82637.packet.txt (sha256:5183bd906b8a96f9031caa2b05448eda52264a3ac6c90270da1b097a5bdb7db4)
+Human decision: (append with: codeos-review.sh decision UPG-0030__CHG-20260629-001 selfdev-step-4 <DECISION> "<reason>")
+
+## 2026-06-29T15:33:34Z REVIEW — UPG-0030__CHG-20260629-001 — Stage selfdev-step-4
+Base: (no base pin)  Review: 5b82637ed6f78c93e976083a76e8631ef8265299  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 89416f2a739e0520f70d8517467b5eb78e1064ebf4a795e38406ee7036ab9401
+Reviewer: codex default-model (session 019f11c0-a436-7081-97b0-83cee6c7fe3f)
+Codex concern: DO NOT ADVANCE
+Effective concern: DO NOT ADVANCE
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: DO NOT ADVANCE — the Step 4 packet still overclaims: `C4` is not fully evidenced, and `docs/reviewer-pipeline.md` still falsely says `CLAUDE.md` was untouched
+Full assessment: reviews/codex/2026-06-29T153334Z-UPG-0030__CHG-20260629-001-stage-selfdev-step-4-5b82637.md (sha256:895f66712416444bff4bf5fc7614b7c4a7e8615eea602dcc6cb8ea35fb44ceec)
+Reviewed packet: reviews/codex/packets/2026-06-29T153334Z-UPG-0030__CHG-20260629-001-stage-selfdev-step-4-5b82637.packet.txt (sha256:924b1b9628b94c39672480d977bb81d723fc5b7387645e5253eb0f1cc65cfb9f)
+Human decision: (append with: codeos-review.sh decision UPG-0030__CHG-20260629-001 selfdev-step-4 <DECISION> "<reason>")
+
+## 2026-06-29T15:35:41Z REVIEW — UPG-0030__CHG-20260629-001 — Stage selfdev-step-4
+Base: (no base pin)  Review: 5b82637ed6f78c93e976083a76e8631ef8265299  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 878cac4ddac3ac0562591a77d22d9a8212de8fea3df1e6f73c693cf31e709928
+Reviewer: codex default-model (session 019f11c0-a436-7081-97b0-83cee6c7fe3f)
+Codex concern: DO NOT ADVANCE
+Effective concern: DO NOT ADVANCE
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: DO NOT ADVANCE — the Step 4 source-of-truth still misstates what changed in `docs/reviewer-pipeline.md`
+Full assessment: reviews/codex/2026-06-29T153541Z-UPG-0030__CHG-20260629-001-stage-selfdev-step-4-5b82637.md (sha256:e1c3919167e25a74eb3645ce7d54f5e7f0a084b8ad71ddc6aaa9d37fc397514f)
+Reviewed packet: reviews/codex/packets/2026-06-29T153541Z-UPG-0030__CHG-20260629-001-stage-selfdev-step-4-5b82637.packet.txt (sha256:b40ac6ab023c3a858fb9a3f9b66e50b4846346509dbda38ed5cb6d7a44d093e5)
+Human decision: (append with: codeos-review.sh decision UPG-0030__CHG-20260629-001 selfdev-step-4 <DECISION> "<reason>")
+
+## 2026-06-29 BUDGET-EXHAUSTED — UPG-0030__CHG-20260629-001 — Stage selfdev-step-4
+Step 4 R3 was the final allowed round under PROFILE-5 (max 3 rounds/step). Budget exhausted.
+One IN-SCOPE BLOCKER fixed inline (no further Codex round):
+  Change record item 7 and Implementation Notes item 3: updated to describe all five
+  docs/reviewer-pipeline.md changes (three new sections + §2 triage text + binding: field fix).
+One IN-SCOPE NON-BLOCKER accepted as-is:
+  UPG-0027 workspace-cleanup row in findings table noted as noise; not a UPG-0030 finding.
+Escalating to human at Step 4 gate. Human decides whether inline fix is sufficient to close.
+Human decision: (pending)
+
+## 2026-06-29T15:40:32Z HUMAN DECISION — UPG-0030__CHG-20260629-001 — Stage selfdev-step-4
+Commit at decision: 5b82637ed6f78c93e976083a76e8631ef8265299
+Decision: APPROVE_STAGE
+Reason/next: Human override after budget exhaustion (3/3 rounds). R3 blocker: change record misstated docs/reviewer-pipeline.md scope (three to five changes) — fixed inline. R3 non-blocker: UPG-0027 noise in findings table — accepted as-is. Change COMPLETE.
+Verified against: reviews/codex/2026-06-29T153541Z-UPG-0030__CHG-20260629-001-stage-selfdev-step-4-5b82637.md
+Artifact integrity (informational audit, not a gate):
+  CHANGED changes/UPG-0030__CHG-20260629-001__lean-review-profiles.md (reviewed bdd59b33dc22 / now 856cfa3cf1d7)
+  MATCH   prompts/codeos-self-dev.md
+  MATCH   templates/codeos-change.md
+  MATCH   docs/reviewer-pipeline.md
+  MATCH   CLAUDE.md

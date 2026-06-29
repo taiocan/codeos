@@ -17,7 +17,7 @@ faster — without ever becoming a gate.*
 ```yaml
 status: PILOT — manual operation; no Claude Code hooks wired
 scope: implements backlog/UPG-0003-reviewer-decision-brief.md, pulls in UPG-0006 (evidence grade)
-binding: changes no Codeos non-negotiable rule; CLAUDE.md and the stage prompts untouched
+binding: changes no Codeos non-negotiable rule; stage prompts untouched
 guarantees: advisory logging only — NOT approval-integrity or rollback (deferred to backlog)
 ```
 
@@ -44,8 +44,8 @@ The visible instruction is just `Critically assess:` — Codex's default-model c
 assessment is the best feedback, so it is not role-primed. What makes the review
 *DBA-specific* rather than generic is the **evidence packet** beneath that line: the **Scope
 Contract + Triage Rule** (so the reviewer classifies each finding as IN-SCOPE BLOCKER /
-IN-SCOPE NON-BLOCKER / OUT-OF-SCOPE BACKLOG / REJECTED and bases its PR decision only on
-in-scope blockers — this is the scope-drift brake), review context
+IN-SCOPE NON-BLOCKER / OUT-OF-SCOPE BACKLOG / REJECTED / SELF-REFERENCE / REVIEW-BOOKKEEPING
+and bases its PR decision only on in-scope blockers — this is the scope-drift brake), review context
 (feature/stage/branch/base+review SHA), the DBA rules relevant to the stage, the
 stage-specific checklist (sourced from `backlog/UPG-0003-reviewer-decision-brief.md`), the expected
 stage output, the artifact contents with hashes, and the secret-filtered diff. See
@@ -144,6 +144,65 @@ does neither creates a fake audit trail — a checkout cannot verify it, and ano
 cannot read it.
 
 See `reviews/review-log.md` header for the retroactive classification of pre-policy entries.
+
+## 4b. Delta review mode (R2+)
+
+When running R2 or later for the same step, send a **delta packet** rather than the full
+context. A delta packet contains only:
+
+1. The specific acceptance criterion or claim under challenge (verbatim from the change record)
+2. Changed lines since the previous round — exact unified diff of affected files only; no
+   surrounding unchanged context
+3. One-line per-finding summary from the previous round: finding description,
+   IN-SCOPE BLOCKER|NON-BLOCKER classification, and what was changed to resolve it
+4. Current trace header state: `state`, `current_step`, `review_state` only
+
+A delta packet must **NOT** include:
+- Full backlog catalogs or feature briefs
+- Full prior assessment prose
+- Unchanged file contents
+- Unrelated documents (roadmap, dba-system.md, downstream doctrine, etc.)
+- The full change record if only one section changed
+
+**Round trigger:** use delta mode for R2 and every subsequent round at the same step. R1 always
+gets the full packet.
+
+## 4c. Claim audit
+
+Before every Codex call, scan all new or modified prose for **universal quantifiers**: "all",
+"every", "never", "always", "no X", "any", "none". For each instance:
+
+1. **Provide evidence** — confirm the claim is literally true; state how you would verify it.
+2. **Weaken** — replace with "most", "typically", "in most cases", or a conditional if the
+   claim is not universal.
+3. **Remove** — if the claim adds no value or cannot be defended.
+
+Universal claims without evidence are the most common source of Codex-flagged false claims
+across UPG-0001 and UPG-0029. Running this audit before calling Codex prevents a class of
+blockers that would otherwise cost a full review round.
+
+## 4d. Review-round budget table
+
+| Profile | Applies when | Max rounds/step | Budget-exceeded action |
+|---|---|---|---|
+| PROFILE-0 | `trivial` / direct-edit `backlog-only` | 0 (no review) | — |
+| PROFILE-1 | Escalated `backlog-only` | 2 (Reconcile only) | Fix inline; escalate to human |
+| PROFILE-2 | `documentation` | 2 (per step) | Fix inline; escalate to human |
+| PROFILE-3 | `template` / `prompt` / `script-tooling` | 3 (per step) | Fix inline; escalate to human |
+| PROFILE-4 | `downstream-doctrine` | 3 (per step) | Fix inline; escalate to human |
+| PROFILE-5 | `self-dev-governance` | 3 (per step) | Fix inline; escalate to human |
+
+**Budget-exceeded escalation procedure:**
+1. Fix any remaining in-scope findings inline without running another Codex round.
+2. Append a budget-exhausted entry to `reviews/review-log.md` describing what was fixed and
+   what remains.
+3. Escalate to the human at the gate — present the findings, what was fixed, and what requires
+   human judgment.
+4. Do not run further Codex rounds automatically. The human decides whether any remaining issue
+   warrants another round (which counts against the budget) or can be accepted as-is.
+
+SELF-REFERENCE / REVIEW-BOOKKEEPING findings found at budget exhaustion are always resolved by
+human decision without further review.
 
 ## 5. Coverage and effective concern
 

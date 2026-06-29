@@ -8,7 +8,7 @@ This is NOT a downstream DBA feature. It has no behavioral contract, no event sc
 and no replay. Trivial changes do not get a record.
 
 Workflow: prompts/codeos-self-dev.md (4-step loop)
-Each step requires explicit human approval and a compulsory (advisory) Codex review.
+Each step requires explicit human approval; Codex review cadence is governed by the assigned review profile (see prompts/codeos-self-dev.md Step 0a).
 The live status row lives in status/self-development.md, not here.
 
 FILENAME CONVENTION (Feature Thread model — see backlog/UPG-0001-feature-thread-traceability.md):
@@ -33,6 +33,7 @@ implements:
   - UPG-####
 related_features: []
 review_series: null     # e.g. RVS__UPG-####__CHG-YYYYMMDD-NNN__S<N> = ALL Step-N reviews for this change (stable)
+review_profile: PROFILE-N  # PROFILE-0 through PROFILE-5 (assigned in Step 0a of prompts/codeos-self-dev.md)
 review_state: DRAFT     # DRAFT | IN_REVIEW | REVIEWED | ACCEPTED  (operational; NOT a round)
 review_history: reviews/review-log.md   # exact per-round REV__…__R<N> verdicts + human decisions live here, never in this artifact
 fixes_findings: []
@@ -99,19 +100,6 @@ Note decisions, discoveries, and anything deferred (and re-triaged as its own ch
 
 | Finding | Triage | Action |
 |---|---|---|
-| [finding] | IN-SCOPE BLOCKER / IN-SCOPE NON-BLOCKER / OUT-OF-SCOPE BACKLOG / REJECTED | [fixed / filed to backlog / dismissed] |
+| [finding] | IN-SCOPE BLOCKER / IN-SCOPE NON-BLOCKER / OUT-OF-SCOPE BACKLOG / REJECTED / SELF-REFERENCE / REVIEW-BOOKKEEPING | [fixed / filed to backlog / dismissed] |
 
 ---
-
-<!-- METADATA (approval) — the canonical trace header is at the top of this file -->
-status: DRAFT
-feature_id: UPG-####
-primary_feature_id: UPG-####
-change_id: CHG-YYYYMMDD-NNN
-type: SELF_DEVELOPMENT
-class: [class]
-scope: [self-dev only | downstream doctrine only | both]
-backlog_item: backlog/UPG-####-slug.md
-step_completed: 0
-approved_by:
-approved_at:
