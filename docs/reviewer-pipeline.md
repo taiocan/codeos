@@ -105,8 +105,9 @@ JSON Schema validation is deferred until pilot use shows it is needed.
   recorded in the assessment and the log. It contains the full context, artifact contents,
   filtered diff, and the exclusion/redaction list — so for uncommitted artifacts, since-edited
   files, and filtered diffs you can prove precisely what Codex saw, not merely a hash of it.
-  Real stage reviews are committed with the feature branch; pilot/test runs use
-  `reviews/codex/_scratch/` (gitignored).
+  Going forward (see §4a), stage reviews that are part of the official audit trail are
+  committed with the feature branch; pilot/test runs use `reviews/codex/_scratch/` (gitignored).
+  Pre-policy reviews were not committed — see §4a and the `reviews/review-log.md` header.
 - `reviews/review-log.md` is **append-only**. The REVIEW entry records **both** the raw
   `Codex concern` and the `Effective concern` (after the coverage floor), the coverage state,
   redaction count, hashes, and links. The human decision is a **separately appended** entry
@@ -119,6 +120,30 @@ JSON Schema validation is deferred until pilot use shows it is needed.
   durable reviewed state (commit + diff hash + workspace snapshot), decision-time reverification,
   hard stops, and rollback semantics — are **deferred** and tracked in
   `backlog/UPG-0015-reviewer-decision-integrity.md`.
+
+## 4a. Review artifact durability policy
+
+Not all review artifacts need to be committed. This policy (established by UPG-0029 /
+CHG-20260629-001) defines which artifacts are **committed (durable)**, which are **scratch
+(local-only)**, and what `reviews/review-log.md` references must satisfy.
+
+**Committed / durable:** A review assessment or packet is *committed (durable)* when it is
+cited in `reviews/review-log.md` by path+sha without a `[local-only]` marker, and the file
+is committed to the repository. Such files are verifiable from a fresh checkout — another
+reviewer can locate and read them. Place durable files under `reviews/codex/` (root) and
+`reviews/codex/packets/`; commit them with the feature branch.
+
+**Scratch / local-only:** Pilot runs, test reviews, and exploratory assessments that will
+not be cited in the official log are kept local-only. Place them under
+`reviews/codex/_scratch/` (gitignored); they are never committed.
+
+**The rule for `review-log.md` references:** A log entry that references a full assessment
+by path+sha must *either* point to a file that is committed to the repository, *or* the log
+entry must explicitly mark the reference as `[local-only]` / non-durable. A reference that
+does neither creates a fake audit trail — a checkout cannot verify it, and another reviewer
+cannot read it.
+
+See `reviews/review-log.md` header for the retroactive classification of pre-policy entries.
 
 ## 5. Coverage and effective concern
 

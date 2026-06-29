@@ -31,9 +31,11 @@ superseded_by: []
 After UPG-0001, the Feature Thread model and IDs are a documented convention, but gaps remain:
 
 * **Audit-trail durability (primary).** `reviews/review-log.md` references full Codex assessments
-  under `reviews/codex/*` by **path + sha**, but those files are **untracked** — a path+sha pointer
-  to an uncommitted file is not durable for another checkout or reviewer. There is no policy for
-  which review artifacts are committed vs scratch vs summarized.
+  under `reviews/codex/*` by **path + sha**, but most of those files are **untracked** — 27 of 28
+  referenced assessments are not committed (one pre-UPG-0029 assessment is already committed; all
+  packet files are untracked). A path+sha pointer to an uncommitted file is not durable for another
+  checkout or reviewer. There is no policy for which review artifacts are committed vs scratch vs
+  summarized.
 * the advisory reviewer (`scripts/codeos-review.sh`) still emits assessment/packet filenames in
   the legacy `${ts}-${feature}-stage-${stage}-${sha}` shape, not the
   `REV__UPG-####__CHG-…__S<N>__R<N>` review-id shape;
@@ -98,6 +100,7 @@ insufficient.
 
 | Change ID | File | Purpose | State |
 |---|---|---|---|
+| CHG-20260629-001 | changes/UPG-0029__CHG-20260629-001__review-durability.md | Review artifact durability policy (doc-only; issue #1) | IN_PROGRESS |
 
 ### Reviews
 

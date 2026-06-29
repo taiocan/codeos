@@ -12,6 +12,18 @@ advisory and read-only; APPROVE belongs to the human. See docs/reviewer-pipeline
 > entries below predate the convention and are left intact (append-only). Native `REV__…`
 > assessment filenames are deferred to `UPG-0029`.
 
+> **Review artifact durability (established by UPG-0029 / CHG-20260629-001, Step 3).**
+> **Policy effective point:** the commit that lands UPG-0029. Entries created before that
+> commit are **pre-policy**. With one exception, pre-policy `Full assessment:` and
+> `Reviewed packet:` path+sha references point to **local-only** files — assessment files
+> existed on disk but were not committed. This is documented retroactively, not an error.
+> **Exception:** `reviews/codex/2026-06-27T044240Z-reviewer-pipeline-stage-0-5e01520.md`
+> was committed before this policy and is durable.
+> **Going forward:** entries created after the commit that lands UPG-0029 must either
+> reference committed review artifacts or explicitly mark the reference `[local-only]`
+> / non-durable.
+> See `docs/reviewer-pipeline.md §4a` for the full policy.
+
 ## 2026-06-27T04:42:40Z REVIEW — reviewer-pipeline — Stage 0
 Base: (uncommitted artifact)  Review: 5e015206c3b9759d0b9ecd7a1889e454ff30fd6d  Branch: feature/backlog-split-and-reviewer
 Diff-hash: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
@@ -418,3 +430,227 @@ Artifact integrity (informational audit, not a gate):
   MATCH   prompts/codeos-self-dev.md
   MATCH   templates/codeos-change.md
   MATCH   backlog/UPG-0001-feature-thread-traceability.md
+
+## 2026-06-29T03:53:15Z REVIEW — UPG-0029__CHG-20260629-001 — Stage selfdev-step-1
+Base: (no base pin)  Review: 9f2a87d8bb54834b07836e2abd8eb33626549b30  Branch: selfdev/upg-0029-review-durability
+Diff-hash: b1fba83d6fc6797ab8c3f360d97c17190fe31b31ac52429309c3a1309aa77316
+Reviewer: codex default-model (session 019f117f-857f-7c21-9483-f1da1fbf1dfe)
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: B
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: CHANGES ADVISED — the Step 1 intent text overstates current repo state and is not yet a complete file inventory
+Full assessment: reviews/codex/2026-06-29T035315Z-UPG-0029__CHG-20260629-001-stage-selfdev-step-1-9f2a87d.md (sha256:f194e1dc6ae84e74d4ee6e7573cd23545f982d416d8a8b7506cb9842bdf68e22)
+Reviewed packet: reviews/codex/packets/2026-06-29T035315Z-UPG-0029__CHG-20260629-001-stage-selfdev-step-1-9f2a87d.packet.txt (sha256:e2959964d15ca9510637079ea722bdec2c6fb0793ca48461e17795ef65bfd59f)
+Human decision: (append with: codeos-review.sh decision UPG-0029__CHG-20260629-001 selfdev-step-1 <DECISION> "<reason>")
+
+## 2026-06-29T03:55:35Z REVIEW — UPG-0029__CHG-20260629-001 — Stage selfdev-step-1
+Base: (no base pin)  Review: 9f2a87d8bb54834b07836e2abd8eb33626549b30  Branch: selfdev/upg-0029-review-durability
+Diff-hash: b1fba83d6fc6797ab8c3f360d97c17190fe31b31ac52429309c3a1309aa77316
+Reviewer: codex default-model (session 019f117f-857f-7c21-9483-f1da1fbf1dfe)
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: B
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: CHANGES ADVISED — the durability rationale still contains factual overstatements in both the backlog brief and the Step 1 change record
+Full assessment: reviews/codex/2026-06-29T035535Z-UPG-0029__CHG-20260629-001-stage-selfdev-step-1-9f2a87d.md (sha256:005bc5ed8a75c794484c13b8f531438851b375cc967706017a7b86367340835c)
+Reviewed packet: reviews/codex/packets/2026-06-29T035535Z-UPG-0029__CHG-20260629-001-stage-selfdev-step-1-9f2a87d.packet.txt (sha256:bf81098fca38137ca3e8725fa5c0e60a5ef2fdf5d9686bf6d2b23ca9d928b8e2)
+Human decision: (append with: codeos-review.sh decision UPG-0029__CHG-20260629-001 selfdev-step-1 <DECISION> "<reason>")
+
+## 2026-06-29T03:56:52Z REVIEW — UPG-0029__CHG-20260629-001 — Stage selfdev-step-1
+Base: (no base pin)  Review: 9f2a87d8bb54834b07836e2abd8eb33626549b30  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 3bc2ba8f31f11bff3972f63ada9a935f6bad074286ec77c5485c7d80b1f25674
+Reviewer: codex default-model (session 019f117f-857f-7c21-9483-f1da1fbf1dfe)
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: B
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — the Step 1 intent is now accurate and complete for the stated doc-only durability-policy scope
+Full assessment: reviews/codex/2026-06-29T035652Z-UPG-0029__CHG-20260629-001-stage-selfdev-step-1-9f2a87d.md (sha256:f1af21c0c3379ee4f18ada760cf652c6875887e74ce05ea268c9147be8d3fea2)
+Reviewed packet: reviews/codex/packets/2026-06-29T035652Z-UPG-0029__CHG-20260629-001-stage-selfdev-step-1-9f2a87d.packet.txt (sha256:e23dd53c132076af4160f08822702e432d356e5e3aa467557b3ee9241e3bdf21)
+Human decision: (append with: codeos-review.sh decision UPG-0029__CHG-20260629-001 selfdev-step-1 <DECISION> "<reason>")
+
+## 2026-06-29 HUMAN DECISION — UPG-0029__CHG-20260629-001 — selfdev-step-1
+
+Decision: APPROVE_STAGE (Step 1 → Step 2)
+Rounds: R1 CHANGES ADVISED → R2 CHANGES ADVISED → R3 NO OBJECTION
+Fixes landed: (1) backlog brief overclaim "all files untracked" corrected to "27 of 28 referenced
+assessments untracked, one already committed"; (2) change record same overclaim + wrong "29+" count
+corrected to 27; (3) change record file itself added to the file inventory (was omitted); (4) scope
+boundary present-tense false claim ("already marked local-only") changed to future-tense (Step 3
+action). R3 verdict: NO OBJECTION.
+Human decision: Step 1 Change Intent accepted.
+
+## 2026-06-29T04:04:25Z REVIEW — UPG-0029__CHG-20260629-001 — Stage selfdev-step-2
+Base: (no base pin)  Review: 9f2a87d8bb54834b07836e2abd8eb33626549b30  Branch: selfdev/upg-0029-review-durability
+Diff-hash: c24dd55f7b4302052a450af48ced1204977f8215c43c34025a4b200c8b2474eb
+Reviewer: codex default-model (session 019f117f-857f-7c21-9483-f1da1fbf1dfe)
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: B
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: CHANGES ADVISED — the Step-2 packet still has false/inconsistent review-state bookkeeping and several acceptance checks are not verifiable as written
+Full assessment: reviews/codex/2026-06-29T040425Z-UPG-0029__CHG-20260629-001-stage-selfdev-step-2-9f2a87d.md (sha256:0d94fa27152df301f7c4fae1907902653c335f567f4ebea35fa5b004beac6a62)
+Reviewed packet: reviews/codex/packets/2026-06-29T040425Z-UPG-0029__CHG-20260629-001-stage-selfdev-step-2-9f2a87d.packet.txt (sha256:3ed88d5e127ca11048e5451bbce0bdd80751395a86c2db70e0d980a312e4487c)
+Human decision: (append with: codeos-review.sh decision UPG-0029__CHG-20260629-001 selfdev-step-2 <DECISION> "<reason>")
+
+## 2026-06-29T04:06:57Z REVIEW — UPG-0029__CHG-20260629-001 — Stage selfdev-step-2
+Base: (no base pin)  Review: 9f2a87d8bb54834b07836e2abd8eb33626549b30  Branch: selfdev/upg-0029-review-durability
+Diff-hash: c6461bf42ca1c11731608e8054bcf945c1636ca2c830b86b17b24e6092175385
+Reviewer: codex default-model (session 019f117f-857f-7c21-9483-f1da1fbf1dfe)
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: B
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: CHANGES ADVISED — the Step-2 acceptance contract still contains a broken verification command for the append-only check
+Full assessment: reviews/codex/2026-06-29T040657Z-UPG-0029__CHG-20260629-001-stage-selfdev-step-2-9f2a87d.md (sha256:d5ba95e87f1cd6b54f11547320339c5fb7279d6541cf7c4b01886e5d695f2b75)
+Reviewed packet: reviews/codex/packets/2026-06-29T040657Z-UPG-0029__CHG-20260629-001-stage-selfdev-step-2-9f2a87d.packet.txt (sha256:9296917040ce3ab5e834cfedb44c6957532642711f53978da205bf6f85e0012b)
+Human decision: (append with: codeos-review.sh decision UPG-0029__CHG-20260629-001 selfdev-step-2 <DECISION> "<reason>")
+
+## 2026-06-29T04:08:40Z REVIEW — UPG-0029__CHG-20260629-001 — Stage selfdev-step-2
+Base: (no base pin)  Review: 9f2a87d8bb54834b07836e2abd8eb33626549b30  Branch: selfdev/upg-0029-review-durability
+Diff-hash: c6461bf42ca1c11731608e8054bcf945c1636ca2c830b86b17b24e6092175385
+Reviewer: codex default-model (session 019f117f-857f-7c21-9483-f1da1fbf1dfe)
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: B
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — the Step-2 acceptance contract is now coherent, internally consistent, and operationally verifiable for the stated doc-only scope
+Full assessment: reviews/codex/2026-06-29T040840Z-UPG-0029__CHG-20260629-001-stage-selfdev-step-2-9f2a87d.md (sha256:3b6ef5818b82a032d293944c1ece6cd197ddb4430a783b204f7c461f5f5d348f)
+Reviewed packet: reviews/codex/packets/2026-06-29T040840Z-UPG-0029__CHG-20260629-001-stage-selfdev-step-2-9f2a87d.packet.txt (sha256:642af087ba06d8d2a3fcb5150daf714bc9e869d9ca16cf1fb248dc3380aedf50)
+Human decision: (append with: codeos-review.sh decision UPG-0029__CHG-20260629-001 selfdev-step-2 <DECISION> "<reason>")
+
+## 2026-06-29 HUMAN DECISION — UPG-0029__CHG-20260629-001 — selfdev-step-2
+
+Decision: APPROVE_STAGE (Step 2 → Step 3)
+Rounds: R1 CHANGES ADVISED → R2 CHANGES ADVISED → R3 NO OBJECTION
+Fixes landed: (1) review_series/review_state inconsistency between change record (null/DRAFT) and
+dashboard (S1/IN_REVIEW) — both now reference S2/IN_REVIEW; (2) A2/A3 diff commands pinned to full
+base SHA 9f2a87d8bb54834b07836e2abd8eb33626549b30; (3) B2 broken \| pipe-escape in markdown table
+replaced with prose description; (4) all short SHAs expanded to full 40-char form. R3 verdict: NO OBJECTION.
+Human decision: Step 2 Acceptance Criteria accepted.
+
+## 2026-06-29T04:13:43Z REVIEW — UPG-0029__CHG-20260629-001 — Stage selfdev-step-3
+Base: (no base pin)  Review: 9f2a87d8bb54834b07836e2abd8eb33626549b30  Branch: selfdev/upg-0029-review-durability
+Diff-hash: f102c00529e1b2d90999782ea26a7f4e9e2c93186004ae5c9dd7124f4267cf94
+Reviewer: codex default-model (session 019f117f-857f-7c21-9483-f1da1fbf1dfe)
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: B
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: CHANGES ADVISED — the new retroactive durability note is mis-scoped and the updated policy docs still contradict themselves
+Full assessment: reviews/codex/2026-06-29T041343Z-UPG-0029__CHG-20260629-001-stage-selfdev-step-3-9f2a87d.md (sha256:f92d877dffb9fe3a5aabc4570e7bf2c5dfd430ae0317667da4b59c64565f3076)
+Reviewed packet: reviews/codex/packets/2026-06-29T041343Z-UPG-0029__CHG-20260629-001-stage-selfdev-step-3-9f2a87d.packet.txt (sha256:0f2dabd83537f6e6dde31a91c45b5897123dda2c3fc7ed4fb7d013162457b0f0)
+Human decision: (append with: codeos-review.sh decision UPG-0029__CHG-20260629-001 selfdev-step-3 <DECISION> "<reason>")
+
+## 2026-06-29T04:16:26Z REVIEW — UPG-0029__CHG-20260629-001 — Stage selfdev-step-3
+Base: (no base pin)  Review: 9f2a87d8bb54834b07836e2abd8eb33626549b30  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 4b61afd603509694663a367d492a2740428296e8a8063c66a4404ee9967294d0
+Reviewer: codex default-model (session 019f117f-857f-7c21-9483-f1da1fbf1dfe)
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: B
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: CHANGES ADVISED — the retroactive durability note still misstates which review-log entries it covers, so the Step-3 implementation is not yet fully truthful
+Full assessment: reviews/codex/2026-06-29T041626Z-UPG-0029__CHG-20260629-001-stage-selfdev-step-3-9f2a87d.md (sha256:3c93b637931e10ab4a439732d75c2a0350d548c2f5853051f6ada6455c32f240)
+Reviewed packet: reviews/codex/packets/2026-06-29T041626Z-UPG-0029__CHG-20260629-001-stage-selfdev-step-3-9f2a87d.packet.txt (sha256:f4cc27e889fc09376783956f33e1cf6901b414dce5e23ceda686178ecd500d47)
+Human decision: (append with: codeos-review.sh decision UPG-0029__CHG-20260629-001 selfdev-step-3 <DECISION> "<reason>")
+
+## 2026-06-29T04:18:27Z REVIEW — UPG-0029__CHG-20260629-001 — Stage selfdev-step-3
+Base: (no base pin)  Review: 9f2a87d8bb54834b07836e2abd8eb33626549b30  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 4b61afd603509694663a367d492a2740428296e8a8063c66a4404ee9967294d0
+Reviewer: codex default-model (session 019f117f-857f-7c21-9483-f1da1fbf1dfe)
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: B
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: CHANGES ADVISED — the Step-3 artifacts still misstate both the actual going-forward rule and the true pre-policy boundary
+Full assessment: reviews/codex/2026-06-29T041827Z-UPG-0029__CHG-20260629-001-stage-selfdev-step-3-9f2a87d.md (sha256:2da251f1fe03e4f99c1921201c611b029c7f8b6c90f34c8b18f00bbd9a3bfea0)
+Reviewed packet: reviews/codex/packets/2026-06-29T041827Z-UPG-0029__CHG-20260629-001-stage-selfdev-step-3-9f2a87d.packet.txt (sha256:b82d7f1d9c3d07f82c94564adb535e991a1d24637834a93fe8e68c5302145d63)
+Human decision: (append with: codeos-review.sh decision UPG-0029__CHG-20260629-001 selfdev-step-3 <DECISION> "<reason>")
+
+## 2026-06-29T04:20:31Z REVIEW — UPG-0029__CHG-20260629-001 — Stage selfdev-step-3
+Base: (no base pin)  Review: 9f2a87d8bb54834b07836e2abd8eb33626549b30  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 4b61afd603509694663a367d492a2740428296e8a8063c66a4404ee9967294d0
+Reviewer: codex default-model (session 019f117f-857f-7c21-9483-f1da1fbf1dfe)
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: B
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: CHANGES ADVISED — the Step-3 change record still states the pre-policy boundary too narrowly relative to the implemented log note
+Full assessment: reviews/codex/2026-06-29T042031Z-UPG-0029__CHG-20260629-001-stage-selfdev-step-3-9f2a87d.md (sha256:8d909c4011e9c32f132d2174995dd6286202a081cb75e5f7d93da6a10f6a9d22)
+Reviewed packet: reviews/codex/packets/2026-06-29T042031Z-UPG-0029__CHG-20260629-001-stage-selfdev-step-3-9f2a87d.packet.txt (sha256:b21e25be2dafa7066c1a31f3f0c99c5e787b82a0d5e396016967b4d2864f8e43)
+Human decision: (append with: codeos-review.sh decision UPG-0029__CHG-20260629-001 selfdev-step-3 <DECISION> "<reason>")
+
+## 2026-06-29T04:22:10Z REVIEW — UPG-0029__CHG-20260629-001 — Stage selfdev-step-3
+Base: (no base pin)  Review: 9f2a87d8bb54834b07836e2abd8eb33626549b30  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 4b61afd603509694663a367d492a2740428296e8a8063c66a4404ee9967294d0
+Reviewer: codex default-model (session 019f117f-857f-7c21-9483-f1da1fbf1dfe)
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: B
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: CHANGES ADVISED — the Step-3 durability policy still contradicts itself on whether log-referenced review artifacts must always be committed or may be explicitly local-only
+Full assessment: reviews/codex/2026-06-29T042210Z-UPG-0029__CHG-20260629-001-stage-selfdev-step-3-9f2a87d.md (sha256:b99502c1d32ded4937df40cbb10f6d9eb515c65fc167e795ce63fa591da8aa2e)
+Reviewed packet: reviews/codex/packets/2026-06-29T042210Z-UPG-0029__CHG-20260629-001-stage-selfdev-step-3-9f2a87d.packet.txt (sha256:71eebee49658ce706e8fd08d054574ce82aef7f933018a135adc05693eb569af)
+Human decision: (append with: codeos-review.sh decision UPG-0029__CHG-20260629-001 selfdev-step-3 <DECISION> "<reason>")
+
+## 2026-06-29T04:45:15Z REVIEW — UPG-0029__CHG-20260629-001 — Stage selfdev-step-3
+Base: (no base pin)  Review: 9f2a87d8bb54834b07836e2abd8eb33626549b30  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 279f06fe1ad32f1592bba439c63db8eb5e2b423cb33a2dd8007c3613aede6d3e
+Reviewer: codex default-model (session 019f117f-857f-7c21-9483-f1da1fbf1dfe)
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: B
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: CHANGES ADVISED — the Step-3 durability policy still overstates pre-policy references as all local-only even though it names a committed exception
+Full assessment: reviews/codex/2026-06-29T044515Z-UPG-0029__CHG-20260629-001-stage-selfdev-step-3-9f2a87d.md (sha256:24d4e1acb82c08751d28dc1628f6c48067a21e3d9bb8e4d81f7653f23d8882f6)
+Reviewed packet: reviews/codex/packets/2026-06-29T044515Z-UPG-0029__CHG-20260629-001-stage-selfdev-step-3-9f2a87d.packet.txt (sha256:cefa88d202bf6a6d0928cea670415bc64216fa25dc6f9344e0441b27f6e94a16)
+Human decision: (append with: codeos-review.sh decision UPG-0029__CHG-20260629-001 selfdev-step-3 <DECISION> "<reason>")
+
+## 2026-06-29T10:00:00Z HUMAN DECISION — UPG-0029__CHG-20260629-001 — Stage selfdev-step-3
+
+Decision: APPROVED
+Step: 3-Implement
+Round budget: exhausted (R6 was the one allowed delta review per plan)
+R6 finding (IN-SCOPE BLOCKER): "durability policy overstates pre-policy references as all local-only even though it names a committed exception."
+Fix applied: changed "All … reference local-only files" → "With one exception, pre-policy … references point to local-only files" in both `reviews/review-log.md` header and `changes/UPG-0029__CHG-20260629-001__review-durability.md` Intent §3. No open in-scope blockers remain after fix.
+Override rationale: round budget exhausted per plan; fix is minimal and accurate; human decision to close Step 3 rather than run further rounds.
+Advancing to: Step 4-Reconcile (review series RVS__UPG-0029__CHG-20260629-001__S4)
+
+## 2026-06-29T04:53:54Z REVIEW — UPG-0029__CHG-20260629-001 — Stage selfdev-step-4
+Base: (no base pin)  Review: 9f2a87d8bb54834b07836e2abd8eb33626549b30  Branch: selfdev/upg-0029-review-durability
+Diff-hash: cd0b6dac52fc588a172e94c271bec0dbad71160cf968719720b9cf0d5522676d
+Reviewer: codex default-model (session 019f117f-857f-7c21-9483-f1da1fbf1dfe)
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: B
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: CHANGES ADVISED — the Step-4 change record still contains a stale false claim that the dashboard row was only advanced to 3-Implement
+Full assessment: reviews/codex/2026-06-29T045354Z-UPG-0029__CHG-20260629-001-stage-selfdev-step-4-9f2a87d.md (sha256:55e8db18a6abdd993899e7e74b3bd2821d4ca3fb366f5c0b891a5bf889933c3c)
+Reviewed packet: reviews/codex/packets/2026-06-29T045354Z-UPG-0029__CHG-20260629-001-stage-selfdev-step-4-9f2a87d.packet.txt (sha256:c34324bb15e549f09daa78b30d9427e70ff2f8fbd9768a2582463d52bfcec49c)
+Human decision: (append with: codeos-review.sh decision UPG-0029__CHG-20260629-001 selfdev-step-4 <DECISION> "<reason>")
+
+## 2026-06-29T04:55:19Z REVIEW — UPG-0029__CHG-20260629-001 — Stage selfdev-step-4
+Base: (no base pin)  Review: 9f2a87d8bb54834b07836e2abd8eb33626549b30  Branch: selfdev/upg-0029-review-durability
+Diff-hash: cd0b6dac52fc588a172e94c271bec0dbad71160cf968719720b9cf0d5522676d
+Reviewer: codex default-model (session 019f117f-857f-7c21-9483-f1da1fbf1dfe)
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: B
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: CHANGES ADVISED — the Step-4 change record still falsely says all pre-policy review-artifact references were local-only despite the named committed exception
+Full assessment: reviews/codex/2026-06-29T045519Z-UPG-0029__CHG-20260629-001-stage-selfdev-step-4-9f2a87d.md (sha256:d2fc12dab10b92a24259aac8bb06896ef8cbf29895cc2cb473e92494f2957f82)
+Reviewed packet: reviews/codex/packets/2026-06-29T045519Z-UPG-0029__CHG-20260629-001-stage-selfdev-step-4-9f2a87d.packet.txt (sha256:2fc5635e3fb4e162782295cf3d792046ed0ca26a73d3137d7125567efdaeb765)
+Human decision: (append with: codeos-review.sh decision UPG-0029__CHG-20260629-001 selfdev-step-4 <DECISION> "<reason>")
+
+## 2026-06-29T10:30:00Z HUMAN DECISION — UPG-0029__CHG-20260629-001 — Stage selfdev-step-4
+
+Decision: APPROVED — Step 4-Reconcile accepted by human decision. UPG-0029 / CHG-20260629-001: COMPLETE.
+S4 R1 (IN-SCOPE BLOCKER): Implementation Notes item 4 stale — said "advanced to 3-Implement" only.
+  Fix: updated to record dashboard advances at both Step 3 (→ 3-Implement) and Step 4 (→ 4-Reconcile).
+S4 R2 (IN-SCOPE BLOCKER): Implementation Notes item 2 false — "Identifies all pre-policy references as local-only."
+  Fix: "With one exception, identifies pre-policy path+sha references as local-only; names the committed exception."
+R2 budget exhausted per plan; both fixes applied inline; no open in-scope blockers remain.
+All acceptance criteria A1–D1: PASS (verified by grep/git diff in Reconciliation section).
+Advancing to: COMPLETE
