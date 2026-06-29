@@ -255,27 +255,11 @@ build_packet() {
   checks="$(stage_checks "${stage}")"
   expected="$(stage_expected "${stage}")"
 
+  local task_prompt="${REPO_ROOT}/prompts/codeos-reviewer-task.md"
+  [[ -f "${task_prompt}" ]] || { echo "error: reviewer task template not found: ${task_prompt}" >&2; exit 2; }
+
   {
-    echo "Critically assess:"
-    echo
-    echo "SCOPE CONTRACT"
-    echo "  Assess this artifact against the STATED SCOPE of this stage/PR — the Expected Stage"
-    echo "  Output below and what the artifacts actually claim — NOT against an ideal final system."
-    echo "  A capability the artifacts do not claim to provide is OUT-OF-SCOPE, not a defect."
-    echo "  The following are OUT-OF-SCOPE BACKLOG unless THIS artifact explicitly claims to provide"
-    echo "  them: formal approval-binding enforcement; rollback correctness; COMMIT_BOUND/"
-    echo "  WORKSPACE_BOUND enforcement; JSON Schema validation; CI validation; exact"
-    echo "  decision-integrity; per-feature decision ledgers; autonomous approval; enabled hooks."
-    echo
-    echo "TRIAGE RULE — classify EVERY finding as exactly one of:"
-    echo "  IN-SCOPE BLOCKER     breaks the stated goal; creates a FALSE CLAIM in this artifact;"
-    echo "                       weakens the advisory/read-only/human-gated guarantees; prevents"
-    echo "                       the work from running; or violates an explicit safety constraint."
-    echo "  IN-SCOPE NON-BLOCKER improves it but is not required for this PR."
-    echo "  OUT-OF-SCOPE BACKLOG valid, but belongs to a future feature / stronger guarantee."
-    echo "  REJECTED             conflicts with the stated scope or Codeos philosophy."
-    echo "  Base the PR decision ONLY on IN-SCOPE BLOCKER findings. An OUT-OF-SCOPE BACKLOG finding"
-    echo "  must NOT cause DO NOT ADVANCE unless this artifact FALSELY CLAIMS to solve it."
+    cat "${task_prompt}"
     echo
     echo "REVIEW CONTEXT"
     echo "  Feature:                ${feature}"
@@ -308,23 +292,6 @@ build_packet() {
     echo "DIFF TO REVIEW (base->review, secret/size filtered)"
     [[ -n "${excluded}" ]] && echo "  [excluded/redacted: ${excluded}] manual security review required"
     printf '%s\n' "${redacted_diff}"
-    echo
-    echo "INSTRUCTIONS"
-    echo "  If this is a resumed session, ignore any earlier-session conclusions unless they are"
-    echo "  re-established by THIS packet; assess only the evidence above, pinned to this commit."
-    echo "  Give your full critical assessment (operational, ranked by severity, with concrete"
-    echo "  better-designs). For EACH finding emit:"
-    echo "    Finding: / Severity: High|Medium|Low / Classification: <one of the TRIAGE RULE labels>"
-    echo "    Evidence: <file/line> / Why: <short> / Required action: fix now|optional fix|backlog|reject"
-    echo "    Scope reason: <why it does/does not belong to this PR's scope>"
-    echo "  Then emit:"
-    echo "    PR decision: ADVANCE | REQUEST CHANGES | DO NOT ADVANCE   (based ONLY on in-scope blockers)"
-    echo "    Scope drift warning: yes|no — <is anything pulling this PR beyond its stated scope?>"
-    echo "  Then on the LAST two lines emit exactly (map ADVANCE->NO OBJECTION,"
-    echo "  REQUEST CHANGES->CHANGES ADVISED, DO NOT ADVANCE->DO NOT ADVANCE):"
-    echo "    LOG SUMMARY: <NO OBJECTION | CHANGES ADVISED | DO NOT ADVANCE | UNCLASSIFIED> — <single most important point>"
-    echo "      (use UNCLASSIFIED if you genuinely cannot classify the artifact safely)"
-    echo "    EVIDENCE: <A|B|C|D|E>   (optional)"
   } > "${PACKET_FILE}"
 }
 

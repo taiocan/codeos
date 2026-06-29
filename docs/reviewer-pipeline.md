@@ -40,16 +40,14 @@ documents the prompt/packet convention.
 
 ## 2. The minimal prompt, the rich packet
 
-The visible instruction is just `Critically assess:` — Codex's default-model critical
-assessment is the best feedback, so it is not role-primed. What makes the review
-*DBA-specific* rather than generic is the **evidence packet** beneath that line: the **Scope
-Contract + Triage Rule** (so the reviewer classifies each finding as IN-SCOPE BLOCKER /
-IN-SCOPE NON-BLOCKER / OUT-OF-SCOPE BACKLOG / REJECTED / SELF-REFERENCE / REVIEW-BOOKKEEPING
-and bases its PR decision only on in-scope blockers — this is the scope-drift brake), review context
-(feature/stage/branch/base+review SHA), the DBA rules relevant to the stage, the
-stage-specific checklist (sourced from `backlog/UPG-0003-reviewer-decision-brief.md`), the expected
-stage output, the artifact contents with hashes, and the secret-filtered diff. See
-`prompts/reviewer-automated.md` for the exact shape.
+The static reviewer task — five focused questions, what-not-to-do guidance, five-category
+triage rule, and required output shape — is defined in `prompts/codeos-reviewer-task.md`
+and injected at the top of every packet by `scripts/codeos-review.sh`. What makes the
+review *DBA-specific* rather than generic is the **evidence packet** that follows: review
+context (feature/stage/branch/base+review SHA), the DBA rules relevant to the stage, the
+stage-specific checklist (sourced from `backlog/UPG-0003-reviewer-decision-brief.md`), the
+expected stage output, the artifact contents with hashes, and the secret-filtered diff. See
+`prompts/reviewer-automated.md` for the full packet shape.
 
 ## 3. Session continuity — feasibility
 
