@@ -1,0 +1,791 @@
+Reviewer task:
+
+SCOPE CONTRACT
+  Assess this artifact against the STATED SCOPE of this stage/PR — the Expected Stage
+  Output below and what the artifacts actually claim — NOT against an ideal final system.
+  A capability the artifacts do not claim to provide is OUT-OF-SCOPE, not a defect.
+  The following are OUT-OF-SCOPE BACKLOG unless THIS artifact explicitly claims to provide
+  them: formal approval-binding enforcement; rollback correctness; COMMIT_BOUND/
+  WORKSPACE_BOUND enforcement; JSON Schema validation; CI validation; exact
+  decision-integrity; per-feature decision ledgers; autonomous approval; enabled hooks.
+
+YOUR TASK — answer these five questions using only the evidence in the packet:
+  1. Acceptance criteria: Does the artifact satisfy each of its stated acceptance criteria?
+     Cite evidence for each criterion (or note its absence).
+  2. Claim support: Are universal or strong claims (all, every, never, always, no X) in the
+     artifact supported by evidence in the packet? Any unverifiable strong claim is a candidate
+     finding only if it affects acceptance, scope, safety, decision integrity, or the artifact's
+     stated guarantees.
+  3. Scope drift: Is there any change beyond the stated scope boundary? (Files not in the
+     "What changes" list; behavior changes not in the intent; downstream doctrine modified
+     rather than read.)
+  4. In-scope blockers: Are there facts that, if left in, would make the artifact wrong,
+     unsafe, or internally contradictory?
+  5. Finding classification: Classify every finding you raise as exactly one of the five
+     TRIAGE RULE categories below.
+
+TRIAGE RULE — classify EVERY finding as exactly one of:
+  IN-SCOPE BLOCKER         breaks the stated goal; creates a FALSE CLAIM in this artifact;
+                           weakens the advisory/read-only/human-gated guarantees; prevents
+                           the work from running; or violates an explicit safety constraint.
+  IN-SCOPE NON-BLOCKER     improves it but is not required for this PR.
+  OUT-OF-SCOPE BACKLOG     valid, but belongs to a future feature / stronger guarantee.
+  REJECTED                 conflicts with the stated scope or Codeos philosophy.
+  SELF-REFERENCE /         review records that are stale because of the previous round's
+  REVIEW-BOOKKEEPING       own existence (causal loop); not a real artifact defect.
+  Base the PR decision ONLY on IN-SCOPE BLOCKER findings. An OUT-OF-SCOPE BACKLOG finding
+  must NOT cause DO NOT ADVANCE unless this artifact FALSELY CLAIMS to solve it.
+
+WHAT NOT TO DO
+  - Do not flag style or wording issues as blockers unless the wording creates a false claim,
+    contradiction, parser breakage, or wrong governance instruction.
+  - Do not re-review unchanged full context when the packet is in delta mode.
+  - Do not treat local-only review history as a blocker unless the artifact falsely
+    claims the review artifacts are committed/durable.
+
+INSTRUCTIONS
+  If this is a resumed session, ignore any earlier-session conclusions unless they are
+  re-established by THIS packet; assess only the evidence above, pinned to this commit.
+  Give a focused assessment of this artifact against the stated scope, acceptance criteria,
+  and evidence in this packet. Rank findings by severity. Suggest a better design only when
+  needed to explain a required fix for an IN-SCOPE BLOCKER.
+
+  Limit findings to the top 3 IN-SCOPE BLOCKERS. Additional non-blocking observations may be
+  summarized in one short paragraph only if useful.
+
+  For EACH finding emit:
+    Finding: / Severity: High|Medium|Low / Classification: <one of the TRIAGE RULE labels>
+    Evidence: <file/line> / Why: <short> / Required action: fix now|optional fix|backlog|reject
+    Scope reason: <why it does/does not belong to this PR's scope>
+  Then emit:
+    PR decision: ADVANCE | REQUEST CHANGES | DO NOT ADVANCE   (based ONLY on in-scope blockers)
+    Scope drift warning: yes|no — <is anything pulling this PR beyond its stated scope?>
+  Then on the LAST two lines emit exactly (map ADVANCE->NO OBJECTION,
+  REQUEST CHANGES->CHANGES ADVISED, DO NOT ADVANCE->DO NOT ADVANCE):
+    LOG SUMMARY: <NO OBJECTION | CHANGES ADVISED | DO NOT ADVANCE | UNCLASSIFIED> — <single most important point>
+      (use UNCLASSIFIED if you genuinely cannot classify the artifact safely)
+    EVIDENCE: <A|B|C|D|E>   (optional)
+
+PACKET MANIFEST
+  generated: 2026-06-30T20:45:11Z
+  task_prompt: /home/arc/projects/claude/Codeos/prompts/codeos-reviewer-task.md (4381 bytes)
+  review_content_bytes: 27288
+  estimated_review_tokens: ~6822
+  budget_status: OK
+  packet_mode: full
+  delta_base: none
+  items:
+    - path: changes/UPG-0005__CHG-20260630-004__current-verified-state.md
+      mode: full_file
+      bytes: 7819
+      sha256: 4816b7217183cadb87ad71149118dbf99a6f2f0b9ee2af9fa6a14df023746ddc
+    - path: prompts/00-session-start.md
+      mode: full_file
+      bytes: 6213
+      sha256: d9472974577b5b05597b429db4417b6375999aa32c50b5b6c40b8bc187561023
+    - path: templates/project-CLAUDE.md
+      mode: full_file
+      bytes: 2087
+      sha256: 5dceae3334a551500fca5fb648c7bba7fda7d92bb32d76186ab67ee42ad0f75e
+    - path: backlog/UPG-0005-current-verified-state.md
+      mode: full_file
+      bytes: 3378
+      sha256: 9b54fa358300c5fc19af5e989376474e5ecb44a09ffab380a4c59e10be147121
+    - path: (diff)
+      mode: full_file
+      bytes: 7791
+
+REVIEW CONTEXT
+  Feature:                UPG-0005__CHG-20260630-004
+  Stage:                  selfdev-step-3
+  Branch:                 selfdev/upg-0029-review-durability
+  Base commit:            (no base pin)
+  Review commit:          9645a4f61611645d3defb0870308c67756f7ff97 (+ uncommitted workspace changes)
+  Current approved stage: n/a (non-numeric stage)
+  Evidence coverage:      FULL_COVERAGE
+  Workspace dirty:        yes (uncommitted changes at review time)
+
+DBA RULES RELEVANT TO THIS STAGE
+  - Human approval is required for every stage transition; you are advisory only.
+  - Memory is not truth — assess only what is provided, pinned to the review commit.
+  - Implementation must trace to approved artifacts; no behavior beyond intent+contract+schema.
+  - No events outside the approved event schema; no hidden behavior.
+
+STAGE-SPECIFIC CHECKS
+  - (no stage-specific checklist for stage selfdev-step-3)
+
+EXPECTED STAGE OUTPUT
+  (no expected-output template for stage selfdev-step-3)
+
+ARTIFACTS TO REVIEW
+  --- changes/UPG-0005__CHG-20260630-004__current-verified-state.md (sha256: 4816b7217183cadb87ad71149118dbf99a6f2f0b9ee2af9fa6a14df023746ddc, visibility: shown) ---
+    ---
+    change_id: CHG-20260630-004
+    feature_id: UPG-0005
+    slug: current-verified-state
+    triage_class: prompt + template
+    scope_axis: self-dev only
+    review_profile: PROFILE-3
+    review_series: RVS__UPG-0005__CHG-20260630-004__S4
+    review_state: NOT_STARTED
+    status: IN_PROGRESS
+    loop_step: 1-Intent
+    ---
+    
+    # Change: UPG-0005 / CHG-20260630-004 — Current Verified State Block
+    
+    ## TRACE HEADER
+    
+    ```yaml
+    change_id: CHG-20260630-004
+    feature_id: UPG-0005
+    slug: current-verified-state
+    triage_class: prompt + template
+    scope_axis: self-dev only
+    review_profile: PROFILE-3
+    corrects: ~
+    corrected_by: ~
+    follow_up_of: ~
+    ```
+    
+    ---
+    
+    ## Step 1 — Change Intent
+    
+    ### Problem
+    
+    Long-running Codeos work can resume from stale chat context: wrong branch, outdated artifact
+    content cached in memory, dirty working tree with uncommitted partial changes, or a working
+    tree that is clean but points to a different commit than the one under review. The current
+    `prompts/00-session-start.md` asks Claude to read doctrine, identify the session type, and
+    check the feature registry — but does not ask it to verify the repository's current state
+    from first principles. Claude can report the wrong branch, the wrong HEAD, and never notice.
+    
+    ### What changes
+    
+    | File | Change |
+    |---|---|
+    | `prompts/00-session-start.md` | Add a new Step 3 (CVS generation) between the codebase-digest step and the session-type step; shift former Steps 3–6 to Steps 4–7. |
+    | `templates/project-CLAUDE.md` | Add a one-line note to the At Session Start instructions: the session-start prompt includes a state-verification step. |
+    | `backlog/UPG-0005-current-verified-state.md` | Feature Thread table: add this change. |
+    | `status/self-development.md` | Activate row for this change. |
+    | `status/roadmap.md` | Wave 1 UPG-0005 row: update planned change to CHG-20260630-004 and state to IN_PROGRESS. |
+    | `backlog/features.md` | Added "Future candidates" section with review-runner diagnostics backlog note. |
+    | `changes/UPG-0005__CHG-20260630-004__current-verified-state.md` | This change record. |
+    
+    ### What stays the same (scope boundary)
+    
+    - `dba-system.md` — NOT in scope. The CVS block is a session-initialization behavior, not
+      DBA architectural doctrine (not about stages, event schemas, or non-negotiable rules). The
+      brief says "add the rule to CLAUDE.md" — in downstream projects, the CLAUDE.md is generated
+      from `templates/project-CLAUDE.md`. There is no reason to embed this rule in the core
+      doctrine.
+    - Stage prompts 01–09 — NOT in scope for this change. The brief mentions triggering CVS
+      before Stage 4, 7, and 9 transitions. That is deferred: it would require modifying each
+      stage prompt file (out of scope for a single focused change) and is better done once the
+      session-start CVS step is proven.
+    - `scripts/`, `docs/`, `patterns/` — no changes.
+    
+    ### Triage class: `prompt` + `template`
+    
+    The change modifies a prompt (session-start step flow) and a template (project-CLAUDE.md).
+    It does NOT modify `dba-system.md`. Triage class is `prompt + template`, which uses the
+    4-step loop with PROFILE-3 (Codex review before each step gate).
+    
+    ### Scope axis: `self-dev only`
+    
+    We are changing toolkit artifacts (`prompts/`, `templates/`). We are not modifying the
+    downstream DBA doctrine (`dba-system.md`). Scope axis is `self-dev only`.
+    
+    ### Review profile: PROFILE-3
+    
+    Prompt + template change. PROFILE-3: Codex review before each step gate. Human approval at
+    all four step gates; reviewer output is advisory and non-gatekeeping.
+    
+    ### Originating backlog item
+    
+    `backlog/UPG-0005-current-verified-state.md` — Current Verified State Block.
+    
+    ---
+    
+    ## Step 2 — Acceptance Criteria
+    
+    **A1 — CVS step fires at every downstream DBA session start**
+    After the change, `prompts/00-session-start.md` contains a numbered step instructing Claude to
+    run the CVS git commands (`git branch --show-current`, `git rev-parse --short HEAD`,
+    `git status --short`) and report the results before proceeding to session-type determination.
+    
+    **A2 — All CVS fields are generated from repo state, not filled manually**
+    The CVS step specifies shell commands to run; it does not ask Claude to fill in a static
+    template from memory. The commands are the canonical source (git, filesystem), not chat state.
+    
+    **A3 — Registry/filesystem disagreement triggers a stop**
+    If `features/registry.yaml` exists, Claude must compare each feature's reported stage against
+    the presence of the corresponding artifact files: stage ≥ 1 → `intents/<feature_id>*.md`
+    exists; stage ≥ 2 → `contracts/<feature_id>*.md` exists; stage ≥ 3 →
+    `events/<feature_id>*.md` exists. If any expected artifact is absent (or vice versa — artifact
+    present but registry reports an earlier stage), the CVS step instructs Claude to surface the
+    specific mismatch and stop for human clarification, not silently resolve it.
+    
+    **A4 — Former Steps 3–6 are renumbered correctly with operational meaning unchanged**
+    Existing Steps 3 (session type), 4 (feature registry), 5 (session context), and 6 (final
+    confirmation) become Steps 4–7. Operational meaning is unchanged; only renumbering and
+    cross-reference edits (e.g. "see Step 4" → "see Step 5") are permitted.
+    
+    **A5 — `templates/project-CLAUDE.md` "At Session Start" instructions reflect the new step**
+    The template's At Session Start list gains a note that `prompts/00-session-start.md` Step 3
+    includes repository state verification, so new project CLAUDE.md files communicate this to users.
+    
+    **A6 — Scope boundary held: `dba-system.md` and stage prompts 01–09 are untouched**
+    `git diff --exit-code -- dba-system.md 'prompts/0[1-9]-*.md'` exits 0 (no changes to those
+    files).
+    
+    **A7 — Declared artifacts pass precheck**
+    ```bash
+    bash scripts/codeos-review.sh review UPG-0005__CHG-20260630-004 selfdev-step-3 \
+      --mode full --print-packet \
+      changes/UPG-0005__CHG-20260630-004__current-verified-state.md \
+      prompts/00-session-start.md \
+      templates/project-CLAUDE.md \
+      backlog/UPG-0005-current-verified-state.md
+    ```
+    exits 0 for the precheck (no bare placeholder tokens; no unresolved `UPG-####` or
+    `CHG-YYYYMMDD-NNN`).
+    
+    **A8 — No files outside the declared set are touched**
+    The complete set of allowed touched files is exactly:
+    - `changes/UPG-0005__CHG-20260630-004__current-verified-state.md`
+    - `prompts/00-session-start.md`
+    - `templates/project-CLAUDE.md`
+    - `backlog/UPG-0005-current-verified-state.md`
+    - `backlog/features.md`
+    - `status/self-development.md`
+    - `status/roadmap.md`
+    
+    No other file is modified.
+    
+    ---
+    
+    ## Step 3 — Implementation
+    
+    ### Changes made
+    
+    **`prompts/00-session-start.md`**
+    - Inserted new Step 3 (CVS generation) between the codebase-digest step (Step 2b) and the
+      session-type step.
+    - Step 3 has three sub-steps:
+      - 3a: run `git branch --show-current`, `git rev-parse --short HEAD`, `git status --short`
+        and report branch, commit, and working-tree cleanliness.
+      - 3b: if `features/registry.yaml` exists, compare each in-flight feature's reported stage
+        against artifact file presence in `intents/`, `contracts/`, `events/`; stop if mismatch.
+        If registry absent, report the Active Features table from `CLAUDE.md` as-is.
+      - 3c: `ls intents/ contracts/ events/ tests/` and report each directory's contents.
+      - Closes with a required confirmation line: `CURRENT STATE VERIFIED — …`
+    - Former Steps 3–6 (session type, feature registry, session context, final confirmation)
+      renumbered to Steps 4–7. Operational content unchanged; only step numbers and the
+      "from Step 3" cross-reference in the Session Context block updated to "from Step 4".
+    
+    **`templates/project-CLAUDE.md`**
+    - At Session Start item 2: added parenthetical `(Step 3 generates the Current Verified
+      State: branch, commit, working tree, and registry/filesystem agreement)`.
+    
+    ---
+    
+    ## Step 4 — Reconcile
+    
+    *(Not yet filled.)*
+
+  --- prompts/00-session-start.md (sha256: d9472974577b5b05597b429db4417b6375999aa32c50b5b6c40b8bc187561023, visibility: shown) ---
+    # DBA Session Start
+    
+    <!--
+    HOW TO USE THIS FILE:
+    Paste the filled-in version of this prompt at the start of every Claude Code session.
+    Fill in the [BRACKETS] sections before pasting.
+    Claude will read .codeos/dba-system.md and orient itself for the session.
+    -->
+    
+    ---
+    
+    You are operating in **Declarative Behavioral Architecture (DBA)** mode for this project.
+    
+    **Step 1:** Read `.codeos/dba-system.md` now (the authoritative DBA doctrine). Confirm you have read it by stating the 3 non-negotiable rules.
+    
+    **Step 2:** Read the project `CLAUDE.md` (in the project root). Note the Active Features table.
+    
+    **Step 2b:** If `docs/codebase-digest.md` exists in the project root, read it now. Confirm you have read it by stating: "Structural digest read — [N] critical hubs, [N] god functions noted." If it does not exist, state: "No structural digest found — proceeding without structural orientation."
+    
+    **Step 3:** Generate the Current Verified State block before proceeding. Run each command below and report the output.
+    
+    **3a — Repository state:**
+    ```bash
+    git branch --show-current
+    git rev-parse --short HEAD
+    git status --short
+    ```
+    Report:
+    - Branch: `<output>`
+    - Commit: `<output>`
+    - Working tree: clean / dirty — list every modified and untracked file if any
+    
+    **3b — Active feature state:**
+    
+    If `features/registry.yaml` exists, read it. For each feature whose status is not COMPLETE:
+    - Stage ≥ 1 → check that `intents/<feature_id>*.md` exists.
+    - Stage ≥ 2 → check that `contracts/<feature_id>*.md` exists.
+    - Stage ≥ 3 → check that `events/<feature_id>*.md` exists.
+    
+    If any expected artifact file is absent, or if an artifact is present but the registry reports a stage that does not require it yet: **STOP immediately** and report the specific mismatch to the human before continuing. Do not silently resolve the disagreement.
+    
+    If `features/registry.yaml` does not exist: read the Active Features table from `CLAUDE.md` and report it as-is.
+    
+    Report:
+    - Active feature: `<feature_id>` or `none`
+    - Current stage: `<N>` or `unknown`
+    - Registry/filesystem: `match` or `MISMATCH — <describe>`
+    
+    **3c — Artifact directories:**
+    ```bash
+    ls intents/   2>/dev/null || echo "(none)"
+    ls contracts/ 2>/dev/null || echo "(none)"
+    ls events/    2>/dev/null || echo "(none)"
+    ls tests/     2>/dev/null || echo "(none)"
+    ```
+    Report each directory as a one-line list of filenames.
+    
+    After completing 3a–3c, state:
+    `CURRENT STATE VERIFIED — Branch: <branch>, Commit: <sha>, Tree: <clean|dirty>, Feature: <id|none>, Stage: <N|unknown>`
+    
+    Then proceed to Step 4.
+    
+    ---
+    
+    **Step 4:** Determine the session type from the options below and confirm it:
+    
+    ---
+    
+    ### Session Type
+    
+    **A — Feature Brief (new feature discovery)**
+    Use when: starting a new feature, uncertain about scope, or the feature has not been written as a DBA intent yet.
+    Prompt to load: `.codeos/prompts/00b-feature-brief.md`
+    Output: a completed Feature Brief in `backlog/[feature_id].md`, ready to become Stage 1 input.
+    
+    **B — Feature Stage Work (continuing or starting a feature in the DBA loop)**
+    Use when: a feature has an approved intent (or brief) and you are advancing through Stages 1–9.
+    Prompt to load: the appropriate stage prompt for the feature's current stage.
+    
+    **C — Architectural Refinement**
+    Use when: the change is structural, not behavioral — workspace restructuring, shared library extraction, dependency consolidation, test infrastructure, naming normalization.
+    No behavioral contract or event schema is required.
+    Prompt to load: `.codeos/prompts/10-arch-refine.md`
+    
+    **D — Existing Codebase Onboarding**
+    Use when: working code exists in `modules/` but has no approved DBA artifacts.
+    Goal: produce draft Feature Briefs and Intents for existing modules so they can enter the Stage 1 review queue.
+    Prompt to load: `.codeos/prompts/00c-onboarding.md`
+    Output: `HYPOTHESIZED_INTENT` draft briefs in `backlog/` and draft intents in `intents/` + registry entries. None are APPROVED — all require Stage 1 review before advancing.
+    
+    ---
+    
+    **Step 5:** Check the feature registry. If `features/registry.yaml` exists, read it and report the current status of all features. State any features that are blocked on approval.
+    
+    **Step 6:** Use the following session context:
+    
+    ## Session Context
+    
+    **Today's goal:**
+    [Human fills in: e.g., "Complete Stage 2 contract for user_login feature"]
+    
+    **Session type:** [A / B / C — from Step 4]
+    
+    **Current feature or refinement:**
+    
+    | ID | Type | Current Stage | Status |
+    |---|---|---|---|
+    | [feature_id] | [Feature / Arch Refinement] | [Stage N or step name] | [DRAFT/APPROVED/IN_PROGRESS] |
+    
+    **This session's scope:**
+    [Human fills in: e.g., "Only work on user_login. Do not touch payment features."]
+    
+    **Any session-specific forbidden actions:**
+    [Human fills in, or "none"]
+    
+    **Structural context** (if `docs/codebase-digest.md` exists):
+    [Human fills in, or "see codebase-digest.md" — e.g., "We will be modifying cmd_export (god function, 30 fan-out). Contract clause required before touching it."]
+    
+    ---
+    
+    **Library documentation:** When working on implementation stages (4, 5) or architectural refinements that involve external libraries, use the **Context7 MCP tool** to fetch current library documentation rather than relying on training data. This applies especially to Rust crates (Tokio, Serde, Reqwest, Clap) and any dependency where API surface or version compatibility matters. Invoke with the library name — Context7 returns current, version-accurate docs.
+    
+    ---
+    
+    **Forbidden action (structural):** Behavioral modification of a function listed in `docs/codebase-digest.md` as a Critical Hub or God Function requires explicit contract coverage for that change. Non-behavioral modifications (performance, extraction of helpers, testability work) that do not change observable outputs are exempt.
+    
+    **Step 7:** After reading and confirming, state:
+    - You are in DBA mode
+    - The session type (A, B, C, or D)
+    - Which feature(s) or refinement you'll work on
+    - Which stage or step you are currently at
+    - What you will produce this session
+    
+    Then **STOP** and wait for the human to begin.
+    
+    Do not start producing artifacts, writing code, or analyzing anything until the human explicitly says to proceed.
+
+  --- templates/project-CLAUDE.md (sha256: 5dceae3334a551500fca5fb648c7bba7fda7d92bb32d76186ab67ee42ad0f75e, visibility: shown) ---
+    # [PROJECT_NAME] — CLAUDE.md
+    
+    This project uses **Declarative Behavioral Architecture (DBA)** / **Intent-Driven System (IDS)** methodology.
+    
+    ## Toolkit
+    
+    The DBA toolkit is at `.codeos/` (symlinked from `/home/arc/projects/claude/Codeos`).
+    
+    **At the start of every Claude Code session — read `.codeos/dba-system.md` before doing any
+    work; it is the authoritative Codeos DBA doctrine (the full 9-stage operating instructions).**
+    1. Read `.codeos/dba-system.md` — authoritative DBA doctrine; read it first, in full
+    2. Read `.codeos/prompts/00-session-start.md` — session orientation template (Step 3 generates the Current Verified State: branch, commit, working tree, and registry/filesystem agreement)
+    3. Check the Active Features table below for current stage status
+    4. Ask what the human wants to work on this session, then STOP and wait
+    
+    ## Project Intent
+    
+    <!-- Human fills in after running dba-init.sh — what this project exists to do -->
+    [Project intent goes here]
+    
+    ## Active Features
+    
+    <!-- Human maintains this table — update stage and status as work progresses -->
+    
+    | Feature ID | Description | Current Stage | Status |
+    |---|---|---|---|
+    | | | | |
+    
+    Stages: 1-Intent / 2-Contract / 3-Schema / 4-Implement / 5-Tests / 6-Observe / 7-Reconcile / 8-Replay / 9-Refine
+    
+    Status: DRAFT / APPROVED / IN_PROGRESS / COMPLETE
+    
+    ## Human Approval Gates
+    
+    Every stage output requires explicit human approval before Claude advances.
+    
+    After presenting any stage output, Claude **STOPS** and states: `AWAITING HUMAN APPROVAL`
+    
+    Valid approval signals: `APPROVED`, `approved`, `yes proceed`, `lgtm`
+    Anything else is treated as a revision request.
+    
+    ## Runtime Events
+    
+    All runtime events are appended to: `events/runtime_events.jsonl`
+    This file is **append-only**. Claude must never delete or modify existing lines.
+    
+    ## Project-Specific Conventions
+    
+    <!-- Human fills in any project-specific event prefixes, module names, tech stack -->
+    Language/runtime: [e.g., Rust, Python, Node.js]
+    Test framework: [e.g., cargo test, pytest, vitest]
+    Event prefix: [e.g., all events prefixed with ProjectName]
+
+  --- backlog/UPG-0005-current-verified-state.md (sha256: 9b54fa358300c5fc19af5e989376474e5ecb44a09ffab380a4c59e10be147121, visibility: shown) ---
+    ---
+    feature_id: UPG-0005
+    slug: current-verified-state
+    title: Current Verified State Block
+    status: PROPOSED
+    priority: P0
+    depends_on: []
+    related_features: []
+    supersedes: []
+    superseded_by: []
+    ---
+    
+    # Upgrade: current-verified-state — Current Verified State Block
+    
+    **Priority**: P0
+    **Status**: PROPOSED
+    **Type**: toolkit-upgrade
+    **Related**: feature-registry, repair-before-next-feature
+    
+    ## Problem
+    
+    Long-running Codeos work can continue from stale chat memory, wrong branch, old artifacts,
+    dirty working tree, or unresolved gaps.
+    
+    ## Upgrade
+    
+    Add a mandatory current-state snapshot at session start and before sensitive stage
+    transitions.
+    
+    ## Scope
+    
+    Session start (Stage 0) and before sensitive stage transitions.
+    
+    ## Proposed artifact(s)
+    
+    Best implementation:
+    1. add the rule to `CLAUDE.md`;
+    2. implement the actual block in `prompts/00-session-start.md`;
+    3. optionally update `templates/project-CLAUDE.md` so new projects inherit it.
+    
+    Important design decision: the current verified state should be generated automatically each
+    session. It should not be a hand-maintained document that becomes stale.
+    
+    ## Design notes
+    
+    Proposed block:
+    
+    ```markdown
+    # Current Verified State
+    
+    Repository:
+    Branch:
+    Commit SHA:
+    Working tree:
+    - clean / dirty
+    - untracked files:
+    
+    Active feature:
+    Current approved stage:
+    Approved artifacts present:
+    - Intent:
+    - Contract:
+    - Event schema:
+    
+    Implementation exists:
+    Tests exist:
+    Runtime events available:
+    Last reconciliation status:
+    Last replay status:
+    Open GAP/MISMATCH/MISSING items:
+    Open Stage 9 refinements:
+    Open Stage 10 architectural issues:
+    Session scope:
+    Forbidden actions this session:
+    ```
+    
+    Automatic data sources:
+    
+    ```bash
+    git branch --show-current
+    git rev-parse --short HEAD
+    git status --short
+    ls intents/
+    ls contracts/
+    ls events/
+    ls tests/
+    ls reviews/
+    ```
+    
+    If Codeos has a feature registry, Claude should read it. If the registry and filesystem
+    disagree, Claude must report the disagreement and stop for human clarification.
+    
+    When updated:
+    - at Stage 0 session start;
+    - before Stage 4 implementation;
+    - before Stage 7 reconciliation;
+    - before Stage 9 refinement;
+    - before pre-release/readiness review.
+    
+    ## Value
+    
+    Very high. Prevents stale-state mistakes and makes reviewer-agent work more reliable.
+    
+    ## Risk
+    
+    It becomes stale if stored as manually edited text.
+    
+    ## Guardrail
+    
+    Generate it from repo state. Do not manually maintain it except for explicit human notes such
+    as session scope or forbidden actions.
+    
+    ## DBA-philosophy note
+    
+    No rule changed, but directly protects rule integrity: prevents gate decisions being made
+    against stale state. The block is **generated, never authoritative** — artifacts + git remain
+    truth.
+    
+    ## Feature Thread
+    
+    > Canonical thread rollup for this feature. Compact links/IDs only; full detail lives in the
+    > change records and review files. May be maintained manually.
+    
+    ### Changes
+    
+    | Change ID | File | Purpose | State |
+    |---|---|---|---|
+    | CHG-20260630-004 | `changes/UPG-0005__CHG-20260630-004__current-verified-state.md` | Add CVS generation step to session-start prompt; note in project-CLAUDE.md template | IN_PROGRESS |
+    
+    ### Reviews
+    
+    | Review ID | Change ID | Step | Round | Verdict |
+    |---|---|---|---|---|
+    
+    ### Findings Tracked Inside This Feature
+    
+    | Finding ID | Review ID | Classification | Resolution |
+    |---|---|---|---|
+    
+    ### Follow-up Features
+    
+    | Feature ID | Reason | Source finding |
+    |---|---|---|
+
+DIFF TO REVIEW (base->review, secret/size filtered)
+diff --git a/backlog/UPG-0005-current-verified-state.md b/backlog/UPG-0005-current-verified-state.md
+index 9bfcb07..75ee8b9 100644
+--- a/backlog/UPG-0005-current-verified-state.md
++++ b/backlog/UPG-0005-current-verified-state.md
+@@ -125,6 +125,7 @@ truth.
+ 
+ | Change ID | File | Purpose | State |
+ |---|---|---|---|
++| CHG-20260630-004 | `changes/UPG-0005__CHG-20260630-004__current-verified-state.md` | Add CVS generation step to session-start prompt; note in project-CLAUDE.md template | IN_PROGRESS |
+ 
+ ### Reviews
+ 
+diff --git a/backlog/features.md b/backlog/features.md
+index ca2bb3f..169cc6b 100644
+--- a/backlog/features.md
++++ b/backlog/features.md
+@@ -78,6 +78,14 @@ is authoritative for *order*, this map is authoritative for *identity*.
+ 
+ ---
+ 
++## Future candidates (no UPG-#### assigned yet)
++
++| Candidate | Description |
++|---|---|
++| review-runner diagnostics | A `diagnose` subcommand for `codeos-review.sh` that independently checks: Codex CLI availability, trivial session creation, session ID parsing, minimal packet review, assessment write, and review-log append. Open only if API/session errors recur during a real review; must not change review semantics, packet construction, scope rules, or reviewer policy. |
++
++---
++
+ ## What not to do yet
+ 
+ - Do not add full OAP integration doctrine as a core Codeos change.
+diff --git a/prompts/00-session-start.md b/prompts/00-session-start.md
+index 9653598..290f914 100644
+--- a/prompts/00-session-start.md
++++ b/prompts/00-session-start.md
+@@ -17,7 +17,52 @@ You are operating in **Declarative Behavioral Architecture (DBA)** mode for this
+ 
+ **Step 2b:** If `docs/codebase-digest.md` exists in the project root, read it now. Confirm you have read it by stating: "Structural digest read — [N] critical hubs, [N] god functions noted." If it does not exist, state: "No structural digest found — proceeding without structural orientation."
+ 
+-**Step 3:** Determine the session type from the options below and confirm it:
++**Step 3:** Generate the Current Verified State block before proceeding. Run each command below and report the output.
++
++**3a — Repository state:**
++```bash
++git branch --show-current
++git rev-parse --short HEAD
++git status --short
++```
++Report:
++- Branch: `<output>`
++- Commit: `<output>`
++- Working tree: clean / dirty — list every modified and untracked file if any
++
++**3b — Active feature state:**
++
++If `features/registry.yaml` exists, read it. For each feature whose status is not COMPLETE:
++- Stage ≥ 1 → check that `intents/<feature_id>*.md` exists.
++- Stage ≥ 2 → check that `contracts/<feature_id>*.md` exists.
++- Stage ≥ 3 → check that `events/<feature_id>*.md` exists.
++
++If any expected artifact file is absent, or if an artifact is present but the registry reports a stage that does not require it yet: **STOP immediately** and report the specific mismatch to the human before continuing. Do not silently resolve the disagreement.
++
++If `features/registry.yaml` does not exist: read the Active Features table from `CLAUDE.md` and report it as-is.
++
++Report:
++- Active feature: `<feature_id>` or `none`
++- Current stage: `<N>` or `unknown`
++- Registry/filesystem: `match` or `MISMATCH — <describe>`
++
++**3c — Artifact directories:**
++```bash
++ls intents/   2>/dev/null || echo "(none)"
++ls contracts/ 2>/dev/null || echo "(none)"
++ls events/    2>/dev/null || echo "(none)"
++ls tests/     2>/dev/null || echo "(none)"
++```
++Report each directory as a one-line list of filenames.
++
++After completing 3a–3c, state:
++`CURRENT STATE VERIFIED — Branch: <branch>, Commit: <sha>, Tree: <clean|dirty>, Feature: <id|none>, Stage: <N|unknown>`
++
++Then proceed to Step 4.
++
++---
++
++**Step 4:** Determine the session type from the options below and confirm it:
+ 
+ ---
+ 
+@@ -45,16 +90,16 @@ Output: `HYPOTHESIZED_INTENT` draft briefs in `backlog/` and draft intents in `i
+ 
+ ---
+ 
+-**Step 4:** Check the feature registry. If `features/registry.yaml` exists, read it and report the current status of all features. State any features that are blocked on approval.
++**Step 5:** Check the feature registry. If `features/registry.yaml` exists, read it and report the current status of all features. State any features that are blocked on approval.
+ 
+-**Step 5:** Use the following session context:
++**Step 6:** Use the following session context:
+ 
+ ## Session Context
+ 
+ **Today's goal:**
+ [Human fills in: e.g., "Complete Stage 2 contract for user_login feature"]
+ 
+-**Session type:** [A / B / C — from Step 3]
++**Session type:** [A / B / C — from Step 4]
+ 
+ **Current feature or refinement:**
+ 
+@@ -79,7 +124,7 @@ Output: `HYPOTHESIZED_INTENT` draft briefs in `backlog/` and draft intents in `i
+ 
+ **Forbidden action (structural):** Behavioral modification of a function listed in `docs/codebase-digest.md` as a Critical Hub or God Function requires explicit contract coverage for that change. Non-behavioral modifications (performance, extraction of helpers, testability work) that do not change observable outputs are exempt.
+ 
+-**Step 6:** After reading and confirming, state:
++**Step 7:** After reading and confirming, state:
+ - You are in DBA mode
+ - The session type (A, B, C, or D)
+ - Which feature(s) or refinement you'll work on
+diff --git a/status/roadmap.md b/status/roadmap.md
+index e7c95df..e40476b 100644
+--- a/status/roadmap.md
++++ b/status/roadmap.md
+@@ -43,7 +43,7 @@ cheap pilot-adjacent wins early.
+ | Wave | Feature ID | Title | Priority | Depends on | Planned/active change | State |
+ |---|---|---|---|---|---|---|
+ | 1 | UPG-0004 | Structured Stage 4–6 Reports | P0 | — | CHG-20260630-001 | COMPLETE |
+-| 1 | UPG-0005 | Current Verified State Block | P0 | — | — | PROPOSED |
++| 1 | UPG-0005 | Current Verified State Block | P0 | — | CHG-20260630-004 | IN_PROGRESS |
+ | 1 | UPG-0006 | Reviewer Summary Quality Scale | P2 | UPG-0003 ✓ | — | PROPOSED (partly piloted) |
+ 
+ ### Wave 2 — Discovery & registry
+diff --git a/status/self-development.md b/status/self-development.md
+index 373fb33..2643a0f 100644
+--- a/status/self-development.md
++++ b/status/self-development.md
+@@ -33,6 +33,7 @@
+ | UPG-0004 | CHG-20260630-001 | template | self-dev only | 4-Reconcile | ACCEPTED (Steps 2–4 reviewed; R2 NO OBJECTION at each gate) | COMPLETE | UPG-0031 |
+ | UPG-0031 | CHG-20260630-002 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (Step 4 R2 NO OBJECTION; corrected by CHG-20260630-003) | COMPLETE | — |
+ | UPG-0031 | CHG-20260630-003 | script-tooling + documentation | self-dev only | 4-Reconcile | ACCEPTED (all 5 ACs verified; corrects false B8b in CHG-20260630-002) | COMPLETE | — |
++| UPG-0005 | CHG-20260630-004 | prompt + template | self-dev only | 3-Implement | PROFILE-3 / APPROVED (Steps 1–2) | IN_PROGRESS | — |
+ 
+ <!--
+ Identity   : Feature ID = UPG-#### (stable). Change ID = CHG-YYYYMMDD-NNN (one execution), or a
+diff --git a/templates/project-CLAUDE.md b/templates/project-CLAUDE.md
+index b76fe89..3fa6b10 100644
+--- a/templates/project-CLAUDE.md
++++ b/templates/project-CLAUDE.md
+@@ -9,7 +9,7 @@ The DBA toolkit is at `.codeos/` (symlinked from `/home/arc/projects/claude/Code
+ **At the start of every Claude Code session — read `.codeos/dba-system.md` before doing any
+ work; it is the authoritative Codeos DBA doctrine (the full 9-stage operating instructions).**
+ 1. Read `.codeos/dba-system.md` — authoritative DBA doctrine; read it first, in full
+-2. Read `.codeos/prompts/00-session-start.md` — session orientation template
++2. Read `.codeos/prompts/00-session-start.md` — session orientation template (Step 3 generates the Current Verified State: branch, commit, working tree, and registry/filesystem agreement)
+ 3. Check the Active Features table below for current stage status
+ 4. Ask what the human wants to work on this session, then STOP and wait
+ 

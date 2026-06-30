@@ -17,7 +17,52 @@ You are operating in **Declarative Behavioral Architecture (DBA)** mode for this
 
 **Step 2b:** If `docs/codebase-digest.md` exists in the project root, read it now. Confirm you have read it by stating: "Structural digest read — [N] critical hubs, [N] god functions noted." If it does not exist, state: "No structural digest found — proceeding without structural orientation."
 
-**Step 3:** Determine the session type from the options below and confirm it:
+**Step 3:** Generate the Current Verified State block before proceeding. Run each command below and report the output.
+
+**3a — Repository state:**
+```bash
+git branch --show-current
+git rev-parse --short HEAD
+git status --short
+```
+Report:
+- Branch: `<output>`
+- Commit: `<output>`
+- Working tree: clean / dirty — list every modified and untracked file if any
+
+**3b — Active feature state:**
+
+If `features/registry.yaml` exists, read it. For each feature whose status is not COMPLETE:
+- Stage ≥ 1 → check that `intents/<feature_id>*.md` exists.
+- Stage ≥ 2 → check that `contracts/<feature_id>*.md` exists.
+- Stage ≥ 3 → check that `events/<feature_id>*.md` exists.
+
+If any expected artifact file is absent, or if an artifact is present but the registry reports a stage that does not require it yet: **STOP immediately** and report the specific mismatch to the human before continuing. Do not silently resolve the disagreement.
+
+If `features/registry.yaml` does not exist: read the Active Features table from `CLAUDE.md` and report it as-is.
+
+Report:
+- Active feature: `<feature_id>` or `none`
+- Current stage: `<N>` or `unknown`
+- Registry/filesystem: `match` or `MISMATCH — <describe>`
+
+**3c — Artifact directories:**
+```bash
+ls intents/   2>/dev/null || echo "(none)"
+ls contracts/ 2>/dev/null || echo "(none)"
+ls events/    2>/dev/null || echo "(none)"
+ls tests/     2>/dev/null || echo "(none)"
+```
+Report each directory as a one-line list of filenames.
+
+After completing 3a–3c, state:
+`CURRENT STATE VERIFIED — Branch: <branch>, Commit: <sha>, Tree: <clean|dirty>, Feature: <id|none>, Stage: <N|unknown>`
+
+Then proceed to Step 4.
+
+---
+
+**Step 4:** Determine the session type from the options below and confirm it:
 
 ---
 
@@ -45,16 +90,16 @@ Output: `HYPOTHESIZED_INTENT` draft briefs in `backlog/` and draft intents in `i
 
 ---
 
-**Step 4:** Check the feature registry. If `features/registry.yaml` exists, read it and report the current status of all features. State any features that are blocked on approval.
+**Step 5:** Check the feature registry. If `features/registry.yaml` exists, read it and report the current status of all features. State any features that are blocked on approval.
 
-**Step 5:** Use the following session context:
+**Step 6:** Use the following session context:
 
 ## Session Context
 
 **Today's goal:**
 [Human fills in: e.g., "Complete Stage 2 contract for user_login feature"]
 
-**Session type:** [A / B / C — from Step 3]
+**Session type:** [A / B / C — from Step 4]
 
 **Current feature or refinement:**
 
@@ -79,7 +124,7 @@ Output: `HYPOTHESIZED_INTENT` draft briefs in `backlog/` and draft intents in `i
 
 **Forbidden action (structural):** Behavioral modification of a function listed in `docs/codebase-digest.md` as a Critical Hub or God Function requires explicit contract coverage for that change. Non-behavioral modifications (performance, extraction of helpers, testability work) that do not change observable outputs are exempt.
 
-**Step 6:** After reading and confirming, state:
+**Step 7:** After reading and confirming, state:
 - You are in DBA mode
 - The session type (A, B, C, or D)
 - Which feature(s) or refinement you'll work on

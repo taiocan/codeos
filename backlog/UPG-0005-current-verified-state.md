@@ -2,7 +2,7 @@
 feature_id: UPG-0005
 slug: current-verified-state
 title: Current Verified State Block
-status: PROPOSED
+status: COMPLETE
 priority: P0
 depends_on: []
 related_features: []
@@ -125,6 +125,7 @@ truth.
 
 | Change ID | File | Purpose | State |
 |---|---|---|---|
+| CHG-20260630-004 | `changes/UPG-0005__CHG-20260630-004__current-verified-state.md` | Add CVS generation step to session-start prompt; note in project-CLAUDE.md template | COMPLETE |
 
 ### Reviews
 
