@@ -1,0 +1,322 @@
+Critically assess:
+
+SCOPE CONTRACT
+  Assess this artifact against the STATED SCOPE of this stage/PR — the Expected Stage
+  Output below and what the artifacts actually claim — NOT against an ideal final system.
+  A capability the artifacts do not claim to provide is OUT-OF-SCOPE, not a defect.
+  The following are OUT-OF-SCOPE BACKLOG unless THIS artifact explicitly claims to provide
+  them: formal approval-binding enforcement; rollback correctness; COMMIT_BOUND/
+  WORKSPACE_BOUND enforcement; JSON Schema validation; CI validation; exact
+  decision-integrity; per-feature decision ledgers; autonomous approval; enabled hooks.
+
+TRIAGE RULE — classify EVERY finding as exactly one of:
+  IN-SCOPE BLOCKER     breaks the stated goal; creates a FALSE CLAIM in this artifact;
+                       weakens the advisory/read-only/human-gated guarantees; prevents
+                       the work from running; or violates an explicit safety constraint.
+  IN-SCOPE NON-BLOCKER improves it but is not required for this PR.
+  OUT-OF-SCOPE BACKLOG valid, but belongs to a future feature / stronger guarantee.
+  REJECTED             conflicts with the stated scope or Codeos philosophy.
+  Base the PR decision ONLY on IN-SCOPE BLOCKER findings. An OUT-OF-SCOPE BACKLOG finding
+  must NOT cause DO NOT ADVANCE unless this artifact FALSELY CLAIMS to solve it.
+
+REVIEW CONTEXT
+  Feature:                UPG-0029__CHG-20260629-001
+  Stage:                  selfdev-step-4
+  Branch:                 selfdev/upg-0029-review-durability
+  Base commit:            (no base pin)
+  Review commit:          9f2a87d8bb54834b07836e2abd8eb33626549b30 (+ uncommitted workspace changes)
+  Current approved stage: n/a (non-numeric stage)
+  Evidence coverage:      FULL_COVERAGE
+  Workspace dirty:        yes (uncommitted changes at review time)
+
+DBA RULES RELEVANT TO THIS STAGE
+  - Human approval is required for every stage transition; you are advisory only.
+  - Memory is not truth — assess only what is provided, pinned to the review commit.
+  - Implementation must trace to approved artifacts; no behavior beyond intent+contract+schema.
+  - No events outside the approved event schema; no hidden behavior.
+
+STAGE-SPECIFIC CHECKS
+  - (no stage-specific checklist for stage selfdev-step-4)
+
+EXPECTED STAGE OUTPUT
+  (no expected-output template for stage selfdev-step-4)
+
+ARTIFACTS TO REVIEW
+  --- changes/UPG-0029__CHG-20260629-001__review-durability.md (sha256: 13df35dac7931e77f2cf92baa6e90c63ec3802ed852422f9e9f6986414517013, visibility: shown) ---
+    # Self-Development Change: UPG-0029__CHG-20260629-001 — review-durability
+    
+    <!--
+    PURPOSE: Per-change source of truth for UPG-0029 — Review artifact durability policy.
+    Workflow: prompts/codeos-self-dev.md (4-step loop)
+    -->
+    
+    <!-- TRACE HEADER (canonical) -->
+    ```yaml
+    feature_id: UPG-0029
+    primary_feature_id: UPG-0029
+    change_id: CHG-20260629-001
+    slug: review-durability
+    state: IN_PROGRESS
+    current_step: 4-Reconcile
+    implements:
+      - UPG-0029
+    related_features:
+      - UPG-0001
+      - UPG-0003
+    review_series: RVS__UPG-0029__CHG-20260629-001__S4
+    review_state: PENDING
+    review_history: reviews/review-log.md
+    fixes_findings: []
+    follow_up_of: UPG-0001
+    ```
+    
+    <!-- SELF-REFERENCE BOUNDARY: carry review_series + review_state only; exact rounds live in
+    reviews/review-log.md. See prompts/codeos-self-dev.md → "Self-Reference Boundary". -->
+    
+    ---
+    
+    ## Change Intent
+    
+    **Why (problem in the toolkit):**
+    
+    After UPG-0001, `reviews/review-log.md` contains 30+ entries of the form:
+    
+    ```
+    Full assessment: reviews/codex/<timestamp>-<slug>.md (sha256:<hash>)
+    Reviewed packet: reviews/codex/packets/<timestamp>-<slug>.packet.txt (sha256:<hash>)
+    ```
+    
+    Almost all of those files are **untracked** — not committed to the repo. One assessment
+    (`2026-06-27T044240Z-reviewer-pipeline-stage-0-5e01520.md`) is already committed; the
+    remaining 27 assessment files and all packet files in `reviews/codex/packets/` are
+    untracked (27 of 28 `Full assessment:` entries reference uncommitted files). The `.gitignore` carves out `reviews/codex/_scratch/` for scratch/test
+    assessments, but the referenced root-level assessment files in `reviews/codex/` are not
+    gitignored — they are simply not being committed. A path+sha pointer in the log to an
+    uncommitted file is not reproducible from the committed tree: a fresh checkout cannot
+    verify the assessment, and another reviewer cannot read it. Without a policy, the log
+    claims traceability that a checkout cannot always satisfy.
+    
+    There is no documented policy — anywhere in `docs/`, `CLAUDE.md`, or the review log
+    itself — stating which review artifacts should be committed vs. kept local-only vs.
+    treated as scratch. UPG-0001 explicitly deferred this to UPG-0029 as a concrete
+    OUT-OF-SCOPE BACKLOG finding.
+    
+    **What changes:**
+    
+    1. **`changes/UPG-0029__CHG-20260629-001__review-durability.md`** (this file) —
+       the change record for this self-dev execution (created in Step 1, extended in Steps 2–4).
+    
+    2. **`docs/reviewer-pipeline.md`** — add a "Review artifact durability" section
+       documenting the policy: which artifacts are committed (durable), which are scratch
+       (local-only, never committed), and the rule for `review-log.md` references.
+    
+    3. **`reviews/review-log.md`** — add a header note establishing the policy effective point
+       (the commit that lands UPG-0029) as the durability boundary. All log entries created before
+       that commit are pre-policy. With one exception, pre-policy path+sha references to review
+       artifacts point to local-only files (assessment files existed on disk but were not committed).
+       The exception — `2026-06-27T044240Z-reviewer-pipeline-stage-0-5e01520.md` — was already
+       committed and is durable. This is documented retroactively, not an error. Entries created
+       after the commit that lands UPG-0029 must either reference committed review artifacts or
+       explicitly mark the reference `[local-only]` / non-durable.
+    
+    4. **`backlog/UPG-0029-review-naming-and-thread-tooling.md`** — Feature Thread:
+       populate the Changes table row for CHG-20260629-001.
+    
+    5. **`status/self-development.md`** — activate the UPG-0029 / CHG-20260629-001 row
+       (State: IN_PROGRESS) and advance the Loop step column at each step.
+    
+    **Scope boundary — what stays the same:**
+    
+    - `scripts/codeos-review.sh` — not touched; script I/O behavior, filenames, and
+      output format unchanged. Emitting `REV__`-shaped filenames is deferred (UPG-0029
+      issues #2–#5).
+    - `dba-system.md` — not touched.
+    - `CLAUDE.md` — not touched.
+    - The untracked `reviews/codex/*` assessment files — not committed, not deleted.
+      The policy is doc-only; committing 30+ historical assessments retroactively is
+      out of scope. The retroactive log header note (added in Step 3) will document
+      their local-only/pre-policy status.
+    - `.gitignore` — not changed. The existing `reviews/codex/_scratch/` rule is correct;
+      the root `reviews/codex/` is intentionally not gitignored (durable files committed
+      there going forward will be tracked automatically).
+    - Naming convention enforcement (`REV__`, `RVS__` filename emission) — deferred.
+    - No new scripts.
+    
+    **Class:** `documentation` (normative) — defines a policy in `docs/reviewer-pipeline.md`
+    and aligns the review log with it.
+    
+    **Scope axis:** `self-dev only`
+    
+    **Backlog item:** `backlog/UPG-0029-review-naming-and-thread-tooling.md`
+    
+    ---
+    
+    ## Acceptance Criteria
+    
+    | # | Criterion | How it will be verified |
+    |---|---|---|
+    | A1 | **Policy section present in docs.** `docs/reviewer-pipeline.md` contains a "Review artifact durability" section that defines all three categories (committed/durable, scratch/local-only, and the rule for `review-log.md` path+sha references), and states the going-forward rule: a log entry that references a full assessment by path+sha must either reference a committed file or be explicitly marked local-only/non-durable. | Read `docs/reviewer-pipeline.md`; confirm the section exists and all three categories + the rule are stated. |
+    | A2 | **Policy is doc-only — no script behavior changed.** `scripts/codeos-review.sh` is byte-identical to its state at the start of this change (base commit `9f2a87d8bb54834b07836e2abd8eb33626549b30`). | `git diff 9f2a87d8bb54834b07836e2abd8eb33626549b30 -- scripts/codeos-review.sh` returns empty. |
+    | A3 | **No downstream doctrine changed.** `dba-system.md` is untouched since base commit `9f2a87d8bb54834b07836e2abd8eb33626549b30`. | `git diff 9f2a87d8bb54834b07836e2abd8eb33626549b30 -- dba-system.md` returns empty. |
+    | B1 | **Retroactive log header note present.** `reviews/review-log.md` has a header note (above all review entries) that: (a) identifies pre-policy entries as referencing local-only files; (b) names the one already-committed exception; (c) states the going-forward rule. | Read the header section of `reviews/review-log.md`; confirm all three elements are present. |
+    | B2 | **Append-only invariant preserved.** The log header note is an addition only — no existing review entry lines are modified, deleted, or reordered. | Run `git diff 9f2a87d8bb54834b07836e2abd8eb33626549b30 -- reviews/review-log.md` and confirm: (1) the output contains no lines beginning with `-` other than the `---` diff header; (2) all existing entry content is intact. |
+    | C1 | **Cross-reference integrity.** Any file paths or section links introduced in the new `docs/reviewer-pipeline.md` section resolve to existing files or sections in the committed tree. | Manually inspect each link/path in the new section; `ls`/`grep` to confirm each target exists. |
+    | C2 | **Change record and dashboard consistent.** The change record trace header matches the dashboard row (feature_id, change_id, current_step, state). | Read both files and compare. |
+    | D1 | **Feature Thread populated.** `backlog/UPG-0029-review-naming-and-thread-tooling.md` Feature Thread / Changes table has a row for CHG-20260629-001. | `grep "CHG-20260629-001" backlog/UPG-0029-review-naming-and-thread-tooling.md` returns a hit in the Feature Thread section. |
+    
+    ---
+    
+    ## Implementation Notes
+    
+    **Edits made (Step 3):**
+    
+    1. **`docs/reviewer-pipeline.md`** — added new section `## 4a. Review artifact durability
+       policy` between sections 4 and 5 (no existing section renumbered). Defines committed/durable,
+       scratch/local-only, and the rule for `review-log.md` path+sha references. Refers to the
+       `reviews/review-log.md` header for the retroactive classification of pre-policy entries.
+    
+    2. **`reviews/review-log.md`** — added a second blockquote to the header (after the existing
+       Feature Thread identification note, before the first review entry). Identifies all pre-policy
+       path+sha references as local-only, names the one committed exception, and states the
+       going-forward rule. Append-only: no existing entry lines were modified.
+    
+    3. **`backlog/UPG-0029-review-naming-and-thread-tooling.md`** — Feature Thread Changes table
+       populated in Step 1; problem statement corrected in Step 1 (accurate counts). No further
+       body edits needed in Step 3.
+    
+    4. **`status/self-development.md`** — dashboard row advanced to 3-Implement (Step 3); advanced
+       to 4-Reconcile (Step 4).
+    
+    5. **`changes/UPG-0029__CHG-20260629-001__review-durability.md`** (this file) — trace header
+       advanced at each step; Implementation Notes filled (Step 3); Reconciliation section added (Step 4).
+    
+    **Cross-references checked:** the new `docs/reviewer-pipeline.md §4a` refers to
+    `reviews/review-log.md` (exists); the `reviews/review-log.md` header note refers back to
+    `docs/reviewer-pipeline.md §4a` (exists). `scripts/codeos-review.sh` and `dba-system.md`
+    not touched.
+    
+    ---
+    
+    ## Reconciliation
+    
+    **Verification of acceptance criteria (Step 4):**
+    
+    | # | Criterion | Evidence | Result |
+    |---|---|---|---|
+    | A1 | Policy section present in docs | `grep -n "Review artifact durability" docs/reviewer-pipeline.md` → line 124: `## 4a. Review artifact durability policy`. All three categories confirmed: `grep -n "Committed / durable\|Scratch / local-only\|The rule for" docs/reviewer-pipeline.md` → lines 130, 136, 140. Going-forward rule stated at line 140. | PASS |
+    | A2 | No script behavior changed | `git diff 9f2a87d8bb54834b07836e2abd8eb33626549b30 -- scripts/codeos-review.sh` → empty (0 bytes) | PASS |
+    | A3 | No downstream doctrine changed | `git diff 9f2a87d8bb54834b07836e2abd8eb33626549b30 -- dba-system.md` → empty (0 bytes) | PASS |
+    | B1 | Retroactive log header note present | Header contains (a) `Entries created before that commit are **pre-policy**` + pre-policy reference classification; (b) `**Exception:** reviews/codex/2026-06-27T044240Z-reviewer-pipeline-stage-0-5e01520.md was committed before this policy and is durable`; (c) `**Going forward:** entries created after the commit that lands UPG-0029 must either reference committed review artifacts or explicitly mark the reference [local-only] / non-durable`. All three elements confirmed at lines 15–25 of `reviews/review-log.md`. | PASS |
+    | B2 | Append-only invariant preserved | `git diff 9f2a87d8bb54834b07836e2abd8eb33626549b30 -- reviews/review-log.md \| grep "^-" \| grep -v "^---" \| wc -l` → 0. No existing entry lines removed or modified. | PASS |
+    | C1 | Cross-reference integrity | All paths in §4a and surrounding §4: `reviews/review-log.md` (exists), `docs/reviewer-artifact-schemas.md` (exists), `reviews/codex/_scratch/` (exists), `backlog/UPG-0015-reviewer-decision-integrity.md` (exists). All confirmed by `ls`. | PASS |
+    | C2 | Change record and dashboard consistent | Change record: `feature_id: UPG-0029`, `change_id: CHG-20260629-001`, `current_step: 4-Reconcile`, `state: IN_PROGRESS`. Dashboard row: `UPG-0029 \| CHG-20260629-001 \| documentation \| self-dev only \| 4-Reconcile \| PENDING … \| IN_PROGRESS`. Fields match. | PASS |
+    | D1 | Feature Thread populated | `grep "CHG-20260629-001" backlog/UPG-0029-review-naming-and-thread-tooling.md` → line 103 in Feature Thread Changes table. | PASS |
+    
+    **Scope sweep:** `git diff 9f2a87d8... -- dba-system.md scripts/codeos-review.sh` both empty. CLAUDE.md untouched. `.gitignore` untouched. No new scripts. No retroactive commits of historical assessments. No orphaned links found — §4a cross-references all resolve. Stage-table and prompt-file drift not applicable (no stage tables touched). Naming convention enforcement (REV__/RVS__ emission) confirmed deferred.
+    
+    **All criteria: PASS. Ready for Step 4 Codex review.**
+
+DIFF TO REVIEW (base->review, secret/size filtered)
+diff --git a/backlog/UPG-0029-review-naming-and-thread-tooling.md b/backlog/UPG-0029-review-naming-and-thread-tooling.md
+index 999e1f7..34cc0e6 100644
+--- a/backlog/UPG-0029-review-naming-and-thread-tooling.md
++++ b/backlog/UPG-0029-review-naming-and-thread-tooling.md
+@@ -31,9 +31,11 @@ superseded_by: []
+ After UPG-0001, the Feature Thread model and IDs are a documented convention, but gaps remain:
+ 
+ * **Audit-trail durability (primary).** `reviews/review-log.md` references full Codex assessments
+-  under `reviews/codex/*` by **path + sha**, but those files are **untracked** — a path+sha pointer
+-  to an uncommitted file is not durable for another checkout or reviewer. There is no policy for
+-  which review artifacts are committed vs scratch vs summarized.
++  under `reviews/codex/*` by **path + sha**, but most of those files are **untracked** — 27 of 28
++  referenced assessments are not committed (one pre-UPG-0029 assessment is already committed; all
++  packet files are untracked). A path+sha pointer to an uncommitted file is not durable for another
++  checkout or reviewer. There is no policy for which review artifacts are committed vs scratch vs
++  summarized.
+ * the advisory reviewer (`scripts/codeos-review.sh`) still emits assessment/packet filenames in
+   the legacy `${ts}-${feature}-stage-${stage}-${sha}` shape, not the
+   `REV__UPG-####__CHG-…__S<N>__R<N>` review-id shape;
+@@ -98,6 +100,7 @@ insufficient.
+ 
+ | Change ID | File | Purpose | State |
+ |---|---|---|---|
++| CHG-20260629-001 | changes/UPG-0029__CHG-20260629-001__review-durability.md | Review artifact durability policy (doc-only; issue #1) | IN_PROGRESS |
+ 
+ ### Reviews
+ 
+diff --git a/docs/reviewer-pipeline.md b/docs/reviewer-pipeline.md
+index d8d2939..45291e2 100644
+--- a/docs/reviewer-pipeline.md
++++ b/docs/reviewer-pipeline.md
+@@ -105,8 +105,9 @@ JSON Schema validation is deferred until pilot use shows it is needed.
+   recorded in the assessment and the log. It contains the full context, artifact contents,
+   filtered diff, and the exclusion/redaction list — so for uncommitted artifacts, since-edited
+   files, and filtered diffs you can prove precisely what Codex saw, not merely a hash of it.
+-  Real stage reviews are committed with the feature branch; pilot/test runs use
+-  `reviews/codex/_scratch/` (gitignored).
++  Going forward (see §4a), stage reviews that are part of the official audit trail are
++  committed with the feature branch; pilot/test runs use `reviews/codex/_scratch/` (gitignored).
++  Pre-policy reviews were not committed — see §4a and the `reviews/review-log.md` header.
+ - `reviews/review-log.md` is **append-only**. The REVIEW entry records **both** the raw
+   `Codex concern` and the `Effective concern` (after the coverage floor), the coverage state,
+   redaction count, hashes, and links. The human decision is a **separately appended** entry
+@@ -120,6 +121,30 @@ JSON Schema validation is deferred until pilot use shows it is needed.
+   hard stops, and rollback semantics — are **deferred** and tracked in
+   `backlog/UPG-0015-reviewer-decision-integrity.md`.
+ 
++## 4a. Review artifact durability policy
++
++Not all review artifacts need to be committed. This policy (established by UPG-0029 /
++CHG-20260629-001) defines which artifacts are **committed (durable)**, which are **scratch
++(local-only)**, and what `reviews/review-log.md` references must satisfy.
++
++**Committed / durable:** A review assessment or packet is *committed (durable)* when it is
++cited in `reviews/review-log.md` by path+sha without a `[local-only]` marker, and the file
++is committed to the repository. Such files are verifiable from a fresh checkout — another
++reviewer can locate and read them. Place durable files under `reviews/codex/` (root) and
++`reviews/codex/packets/`; commit them with the feature branch.
++
++**Scratch / local-only:** Pilot runs, test reviews, and exploratory assessments that will
++not be cited in the official log are kept local-only. Place them under
++`reviews/codex/_scratch/` (gitignored); they are never committed.
++
++**The rule for `review-log.md` references:** A log entry that references a full assessment
++by path+sha must *either* point to a file that is committed to the repository, *or* the log
++entry must explicitly mark the reference as `[local-only]` / non-durable. A reference that
++does neither creates a fake audit trail — a checkout cannot verify it, and another reviewer
++cannot read it.
++
++See `reviews/review-log.md` header for the retroactive classification of pre-policy entries.
++
+ ## 5. Coverage and effective concern
+ 
+ Defined normatively in [`reviewer-artifact-schemas.md`](reviewer-artifact-schemas.md) (coverage
+diff --git a/status/self-development.md b/status/self-development.md
+index c6083f0..234ccbb 100644
+--- a/status/self-development.md
++++ b/status/self-development.md
+@@ -24,6 +24,7 @@
+ | — (planning) | 0003-implementation-roadmap | backlog-only / planning | self-dev only | 4-Reconcile | CHANGES ADV →0004 | COMPLETE | — |
+ | — (reviewer findings) | 0004-review-fixes | documentation / self-dev-governance | self-dev only | 4-Reconcile | CHANGES ADV (accepted) | COMPLETE | — |
+ | UPG-0001 | CHG-20260627-001 | self-dev-governance | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S4; rounds in review-log) | COMPLETE | UPG-0029 |
++| UPG-0029 | CHG-20260629-001 | documentation | self-dev only | 4-Reconcile | PENDING (RVS__UPG-0029__CHG-20260629-001__S4; Step 3 APPROVED) | IN_PROGRESS | — |
+ 
+ <!--
+ Identity   : Feature ID = UPG-#### (stable). Change ID = CHG-YYYYMMDD-NNN (one execution), or a
+
+INSTRUCTIONS
+  If this is a resumed session, ignore any earlier-session conclusions unless they are
+  re-established by THIS packet; assess only the evidence above, pinned to this commit.
+  Give your full critical assessment (operational, ranked by severity, with concrete
+  better-designs). For EACH finding emit:
+    Finding: / Severity: High|Medium|Low / Classification: <one of the TRIAGE RULE labels>
+    Evidence: <file/line> / Why: <short> / Required action: fix now|optional fix|backlog|reject
+    Scope reason: <why it does/does not belong to this PR's scope>
+  Then emit:
+    PR decision: ADVANCE | REQUEST CHANGES | DO NOT ADVANCE   (based ONLY on in-scope blockers)
+    Scope drift warning: yes|no — <is anything pulling this PR beyond its stated scope?>
+  Then on the LAST two lines emit exactly (map ADVANCE->NO OBJECTION,
+  REQUEST CHANGES->CHANGES ADVISED, DO NOT ADVANCE->DO NOT ADVANCE):
+    LOG SUMMARY: <NO OBJECTION | CHANGES ADVISED | DO NOT ADVANCE | UNCLASSIFIED> — <single most important point>
+      (use UNCLASSIFIED if you genuinely cannot classify the artifact safely)
+    EVIDENCE: <A|B|C|D|E>   (optional)

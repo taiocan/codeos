@@ -1,0 +1,998 @@
+Critically assess:
+
+SCOPE CONTRACT
+  Assess this artifact against the STATED SCOPE of this stage/PR — the Expected Stage
+  Output below and what the artifacts actually claim — NOT against an ideal final system.
+  A capability the artifacts do not claim to provide is OUT-OF-SCOPE, not a defect.
+  The following are OUT-OF-SCOPE BACKLOG unless THIS artifact explicitly claims to provide
+  them: formal approval-binding enforcement; rollback correctness; COMMIT_BOUND/
+  WORKSPACE_BOUND enforcement; JSON Schema validation; CI validation; exact
+  decision-integrity; per-feature decision ledgers; autonomous approval; enabled hooks.
+
+TRIAGE RULE — classify EVERY finding as exactly one of:
+  IN-SCOPE BLOCKER     breaks the stated goal; creates a FALSE CLAIM in this artifact;
+                       weakens the advisory/read-only/human-gated guarantees; prevents
+                       the work from running; or violates an explicit safety constraint.
+  IN-SCOPE NON-BLOCKER improves it but is not required for this PR.
+  OUT-OF-SCOPE BACKLOG valid, but belongs to a future feature / stronger guarantee.
+  REJECTED             conflicts with the stated scope or Codeos philosophy.
+  Base the PR decision ONLY on IN-SCOPE BLOCKER findings. An OUT-OF-SCOPE BACKLOG finding
+  must NOT cause DO NOT ADVANCE unless this artifact FALSELY CLAIMS to solve it.
+
+REVIEW CONTEXT
+  Feature:                UPG-0029__CHG-20260629-001
+  Stage:                  selfdev-step-2
+  Branch:                 selfdev/upg-0029-review-durability
+  Base commit:            (no base pin)
+  Review commit:          9f2a87d8bb54834b07836e2abd8eb33626549b30 (+ uncommitted workspace changes)
+  Current approved stage: n/a (non-numeric stage)
+  Evidence coverage:      FULL_COVERAGE
+  Workspace dirty:        yes (uncommitted changes at review time)
+
+DBA RULES RELEVANT TO THIS STAGE
+  - Human approval is required for every stage transition; you are advisory only.
+  - Memory is not truth — assess only what is provided, pinned to the review commit.
+  - Implementation must trace to approved artifacts; no behavior beyond intent+contract+schema.
+  - No events outside the approved event schema; no hidden behavior.
+
+STAGE-SPECIFIC CHECKS
+  - (no stage-specific checklist for stage selfdev-step-2)
+
+EXPECTED STAGE OUTPUT
+  (no expected-output template for stage selfdev-step-2)
+
+ARTIFACTS TO REVIEW
+  --- changes/UPG-0029__CHG-20260629-001__review-durability.md (sha256: 43d07b3433a5b70de4368abae4b9c4b03ae396f1f27fd331402768ff9b9e27f4, visibility: shown) ---
+    # Self-Development Change: UPG-0029__CHG-20260629-001 — review-durability
+    
+    <!--
+    PURPOSE: Per-change source of truth for UPG-0029 — Review artifact durability policy.
+    Workflow: prompts/codeos-self-dev.md (4-step loop)
+    -->
+    
+    <!-- TRACE HEADER (canonical) -->
+    ```yaml
+    feature_id: UPG-0029
+    primary_feature_id: UPG-0029
+    change_id: CHG-20260629-001
+    slug: review-durability
+    state: IN_PROGRESS
+    current_step: 2-Acceptance
+    implements:
+      - UPG-0029
+    related_features:
+      - UPG-0001
+      - UPG-0003
+    review_series: null
+    review_state: DRAFT
+    review_history: reviews/review-log.md
+    fixes_findings: []
+    follow_up_of: UPG-0001
+    ```
+    
+    <!-- SELF-REFERENCE BOUNDARY: carry review_series + review_state only; exact rounds live in
+    reviews/review-log.md. See prompts/codeos-self-dev.md → "Self-Reference Boundary". -->
+    
+    ---
+    
+    ## Change Intent
+    
+    **Why (problem in the toolkit):**
+    
+    After UPG-0001, `reviews/review-log.md` contains 30+ entries of the form:
+    
+    ```
+    Full assessment: reviews/codex/<timestamp>-<slug>.md (sha256:<hash>)
+    Reviewed packet: reviews/codex/packets/<timestamp>-<slug>.packet.txt (sha256:<hash>)
+    ```
+    
+    Almost all of those files are **untracked** — not committed to the repo. One assessment
+    (`2026-06-27T044240Z-reviewer-pipeline-stage-0-5e01520.md`) is already committed; the
+    remaining 27 assessment files and all packet files in `reviews/codex/packets/` are
+    untracked (27 of 28 `Full assessment:` entries reference uncommitted files). The `.gitignore` carves out `reviews/codex/_scratch/` for scratch/test
+    assessments, but the referenced root-level assessment files in `reviews/codex/` are not
+    gitignored — they are simply not being committed. A path+sha pointer in the log to an
+    uncommitted file is not reproducible from the committed tree: a fresh checkout cannot
+    verify the assessment, and another reviewer cannot read it. Without a policy, the log
+    claims traceability that a checkout cannot always satisfy.
+    
+    There is no documented policy — anywhere in `docs/`, `CLAUDE.md`, or the review log
+    itself — stating which review artifacts should be committed vs. kept local-only vs.
+    treated as scratch. UPG-0001 explicitly deferred this to UPG-0029 as a concrete
+    OUT-OF-SCOPE BACKLOG finding.
+    
+    **What changes:**
+    
+    1. **`changes/UPG-0029__CHG-20260629-001__review-durability.md`** (this file) —
+       the change record for this self-dev execution (created in Step 1, extended in Steps 2–4).
+    
+    2. **`docs/reviewer-pipeline.md`** — add a "Review artifact durability" section
+       documenting the policy: which artifacts are committed (durable), which are scratch
+       (local-only, never committed), and the rule for `review-log.md` references.
+    
+    3. **`reviews/review-log.md`** — add a header note declaring the pre-policy status of
+       all existing entries: the path+sha references in entries prior to this change
+       reference local-only files (assessment files were not committed before the policy
+       existed; the single exception, `2026-06-27T044240Z-reviewer-pipeline-stage-0-5e01520.md`,
+       was already committed); this is documented retroactively, not an error. Going forward,
+       any log entry that references a full assessment by path+sha must reference a committed file.
+    
+    4. **`backlog/UPG-0029-review-naming-and-thread-tooling.md`** — Feature Thread:
+       populate the Changes table row for CHG-20260629-001.
+    
+    5. **`status/self-development.md`** — activate the UPG-0029 / CHG-20260629-001 row
+       (State: IN_PROGRESS, Loop step: 1-Intent).
+    
+    **Scope boundary — what stays the same:**
+    
+    - `scripts/codeos-review.sh` — not touched; script I/O behavior, filenames, and
+      output format unchanged. Emitting `REV__`-shaped filenames is deferred (UPG-0029
+      issues #2–#5).
+    - `dba-system.md` — not touched.
+    - `CLAUDE.md` — not touched.
+    - The untracked `reviews/codex/*` assessment files — not committed, not deleted.
+      The policy is doc-only; committing 30+ historical assessments retroactively is
+      out of scope. The retroactive log header note (added in Step 3) will document
+      their local-only/pre-policy status.
+    - `.gitignore` — not changed. The existing `reviews/codex/_scratch/` rule is correct;
+      the root `reviews/codex/` is intentionally not gitignored (durable files committed
+      there going forward will be tracked automatically).
+    - Naming convention enforcement (`REV__`, `RVS__` filename emission) — deferred.
+    - No new scripts.
+    
+    **Class:** `documentation` (normative) — defines a policy in `docs/reviewer-pipeline.md`
+    and aligns the review log with it.
+    
+    **Scope axis:** `self-dev only`
+    
+    **Backlog item:** `backlog/UPG-0029-review-naming-and-thread-tooling.md`
+    
+    ---
+    
+    ## Acceptance Criteria
+    
+    | # | Criterion | How it will be verified |
+    |---|---|---|
+    | A1 | **Policy section present in docs.** `docs/reviewer-pipeline.md` contains a "Review artifact durability" section that defines all three categories (committed/durable, scratch/local-only, and the rule for `review-log.md` path+sha references), and states the going-forward rule: a log entry that references a full assessment by path+sha must either reference a committed file or be explicitly marked local-only/non-durable. | Read `docs/reviewer-pipeline.md`; confirm the section exists and all three categories + the rule are stated. |
+    | A2 | **Policy is doc-only — no script behavior changed.** `scripts/codeos-review.sh` is byte-identical to its state at the start of this change. | `git diff HEAD -- scripts/codeos-review.sh` returns empty. |
+    | A3 | **No downstream doctrine changed.** `dba-system.md` is untouched. | `git diff HEAD -- dba-system.md` returns empty. |
+    | B1 | **Retroactive log header note present.** `reviews/review-log.md` has a header note (above all review entries) that: (a) identifies pre-policy entries as referencing local-only files; (b) names the one already-committed exception; (c) states the going-forward rule. | Read the header section of `reviews/review-log.md`; confirm all three elements are present. |
+    | B2 | **Append-only invariant preserved.** The log header note is an addition only — no existing review entry lines are modified, deleted, or reordered. | `git diff -- reviews/review-log.md` shows only additions (`+` lines); no `-` lines in the existing entries block. |
+    | C1 | **Cross-reference integrity.** Any file paths or section links introduced in the new `docs/reviewer-pipeline.md` section resolve to existing files or sections in the committed tree. | Manually inspect each link/path in the new section; `ls`/`grep` to confirm each target exists. |
+    | C2 | **Change record and dashboard consistent.** The change record trace header matches the dashboard row (feature_id, change_id, current_step, state). | Read both files and compare. |
+    | D1 | **Feature Thread populated.** `backlog/UPG-0029-review-naming-and-thread-tooling.md` Feature Thread / Changes table has a row for CHG-20260629-001. | `grep "CHG-20260629-001" backlog/UPG-0029-review-naming-and-thread-tooling.md` returns a hit in the Feature Thread section. |
+    
+    ---
+    
+    ## Implementation Notes
+    
+    *(To be filled in Step 3)*
+    
+    ---
+    
+    ## Reconciliation
+    
+    *(To be filled in Step 4)*
+
+  --- docs/reviewer-pipeline.md (sha256: 0e1570a8eb5f22c833e378cbefd9cfd6ec568870eea328801c78d4dfddbd6ead, visibility: shown) ---
+    # Codeos Reviewer Pipeline — Manual Advisory Codex Reviewer
+    
+    *A read-only, advisory, cross-model reviewer for the DBA stage gates. It compresses each
+    stage artifact into a critical assessment and an append-only log entry so the human decides
+    faster — without ever becoming a gate.*
+    
+    > **v0 is a manual advisory review logging pilot.** It records review evidence and human
+    > decisions, but it does **not** enforce complete approval-integrity or rollback correctness.
+    > The persisted hashes, packet copy, and `workspace_dirty` flag are **audit aids**, not a formal
+    > guarantee that a human approval is bound to an unchanged repository state. The deeper binding
+    > model (approval bound to a reproducible reviewed state, decision-time reverification, rollback
+    > semantics) is **deferred** — see `backlog/UPG-0015-reviewer-decision-integrity.md`.
+    
+    > **The Bash implementation is a manual pilot wrapper.** It validates the workflow but is not the
+    > intended long-term review engine; the future typed engine is `backlog/UPG-0018-reviewer-engine-v1.md`.
+    
+    ```yaml
+    status: PILOT — manual operation; no Claude Code hooks wired
+    scope: implements backlog/UPG-0003-reviewer-decision-brief.md, pulls in UPG-0006 (evidence grade)
+    binding: changes no Codeos non-negotiable rule; CLAUDE.md and the stage prompts untouched
+    guarantees: advisory logging only — NOT approval-integrity or rollback (deferred to backlog)
+    ```
+    
+    ---
+    
+    ## 1. Roles
+    
+    - **Claude Code** runs the DBA development loop (Stages 1–9) and STOPs at
+      `AWAITING HUMAN APPROVAL`.
+    - **Codex** is the independent reviewer, invoked **read-only** (`-s read-only`) by
+      `scripts/codeos-review.sh`. Running a different model family gives cross-model adversarial
+      review (less self-review circularity); running read-only means it *physically cannot edit
+      artifacts* — it can only assess.
+    - **The human** decides. The reviewer recommends with non-gatekeeping vocabulary; `APPROVE`
+      is reserved for the human.
+    
+    This inherits the stance of `prompts/pipeline-reviewer.md` (the interactive Reviewer
+    Activation Package). This pipeline is the *automated* path; `prompts/reviewer-automated.md`
+    documents the prompt/packet convention.
+    
+    ## 2. The minimal prompt, the rich packet
+    
+    The visible instruction is just `Critically assess:` — Codex's default-model critical
+    assessment is the best feedback, so it is not role-primed. What makes the review
+    *DBA-specific* rather than generic is the **evidence packet** beneath that line: the **Scope
+    Contract + Triage Rule** (so the reviewer classifies each finding as IN-SCOPE BLOCKER /
+    IN-SCOPE NON-BLOCKER / OUT-OF-SCOPE BACKLOG / REJECTED and bases its PR decision only on
+    in-scope blockers — this is the scope-drift brake), review context
+    (feature/stage/branch/base+review SHA), the DBA rules relevant to the stage, the
+    stage-specific checklist (sourced from `backlog/UPG-0003-reviewer-decision-brief.md`), the expected
+    stage output, the artifact contents with hashes, and the secret-filtered diff. See
+    `prompts/reviewer-automated.md` for the exact shape.
+    
+    ## 3. Session continuity — feasibility
+    
+    **Question:** can one Codex session be opened at the start and reused across every stage,
+    instead of a fresh session per stage?
+    
+    **Answer: yes — via `codex exec resume <session_id>`, not a held-open process.** This was
+    verified against Codex 0.114: the first review for a feature runs `codex exec` and the
+    session id is captured from the Codex startup banner (`session id: <uuid>`); later reviews
+    run `codex exec resume <id>`, which rehydrates the full prior conversation (a resumed session
+    correctly recalled context across separate processes in testing) while each call is a
+    crash-safe fresh process. This is the "same continuous session" semantically, achieved
+    durably. (`codex mcp-server` is a future alternative; a held-open live process was rejected
+    as fragile.)
+    
+    Invocation details that matter (0.114): `codex exec` takes `-s read-only` and `--cd`;
+    `codex exec resume` takes **neither** — sandbox is set via `-c sandbox_mode="read-only"` and
+    the working dir is the current dir. The script handles this difference.
+    
+    **Sessions are feature-scoped** — `.codeos-state/codex-sessions/<feature>.json`. Continuity
+    is valuable *within* a feature and dangerous *across* features, so a different feature gets
+    its own session and `--fresh` forces a brand-new one (use it for safety-sensitive stages,
+    reviewer/human disagreement, or suspected anchoring on stale/pre-correction context).
+    
+    **Memory is never truth.** Every review re-reads the artifacts and diff from disk pinned to
+    the review commit SHA, and records that SHA + per-artifact SHA256 + a diff hash. Session
+    memory aids cross-stage drift detection; the disk + hashes are authoritative. This is the
+    guardrail against the stale-context failure mode that DBA otherwise warns about.
+    
+    Session-id capture is **deterministic / fail-closed**: the id is parsed from the bootstrap
+    call's own banner output, so it is exactly the session just created. If no id can be parsed,
+    the script aborts and logs nothing.
+    
+    Sessions are also **version-pinned**: the session record stores the `codex --version` that
+    created it, and a resume across a changed Codex build is refused — the script starts a fresh
+    session instead of resuming under a different parser/behavior.
+    
+    ## 4. Evidence durability + append-only log
+    
+    The exact on-disk shapes of every persisted artifact below — packet, assessment header,
+    session state, REVIEW entry, HUMAN DECISION entry — are specified as **v0 normative schemas**
+    in [`reviewer-artifact-schemas.md`](reviewer-artifact-schemas.md), including required fields,
+    allowed enum values, and the lightweight fail-closed validation the script applies. Full
+    JSON Schema validation is deferred until pilot use shows it is needed.
+    
+    - The **full** Codex assessment is saved under `reviews/codex/<ts>-<feature>-stage-<N>-<sha>.md`,
+      opening with a self-contained YAML metadata header (feature/stage/branch/base+review
+      commit/artifacts+sha256/diff_hash/coverage_state/redaction_count/secret_redaction/
+      excluded_paths/reviewed_packet+sha256/codex_concern/effective_concern/evidence) so the file
+      is auditable on its own.
+    - The **exact bytes that were reviewed** are persisted as the canonical packet under
+      `reviews/codex/packets/<ts>-<feature>-stage-<N>-<sha>.packet.txt`, with its own SHA256
+      recorded in the assessment and the log. It contains the full context, artifact contents,
+      filtered diff, and the exclusion/redaction list — so for uncommitted artifacts, since-edited
+      files, and filtered diffs you can prove precisely what Codex saw, not merely a hash of it.
+      Real stage reviews are committed with the feature branch; pilot/test runs use
+      `reviews/codex/_scratch/` (gitignored).
+    - `reviews/review-log.md` is **append-only**. The REVIEW entry records **both** the raw
+      `Codex concern` and the `Effective concern` (after the coverage floor), the coverage state,
+      redaction count, hashes, and links. The human decision is a **separately appended** entry
+      via `codeos-review.sh decision …` — prior entries are never edited. As a **best-effort audit
+      aid**, that command re-hashes the named reviewed artifacts and records MATCH / CHANGED per
+      artifact; a `CHANGED` line is flagged (and a warning printed) but **never blocks** the
+      decision. **The decision command records the human's choice; it does not enforce approval
+      eligibility, refuse approvals, or bind approval to a reproducible reviewed state.** `APPROVE`
+      is the human's word (Non-Negotiable Rule 1). Stronger guarantees — binding approval to a
+      durable reviewed state (commit + diff hash + workspace snapshot), decision-time reverification,
+      hard stops, and rollback semantics — are **deferred** and tracked in
+      `backlog/UPG-0015-reviewer-decision-integrity.md`.
+    
+    ## 5. Coverage and effective concern
+    
+    Defined normatively in [`reviewer-artifact-schemas.md`](reviewer-artifact-schemas.md) (coverage
+    rules). In summary: two filtering layers run before anything reaches Codex — **path exclusion**
+    (`.env*`, `*.pem`, `secrets/*`, size limit, …) applies to the **diff and incidental files only**,
+    and **content redaction** blanks secret-like values in place in both the diff and requested
+    artifacts. A requested artifact is therefore never silently dropped — it is `shown`,
+    `shown_redacted`, `oversize_omitted`, or `missing`. The resulting `coverage_state` fixes the
+    **minimum effective concern** (an evidence-coverage gap is a verdict floor, not a footnote). This
+    is about *how complete the evidence was*, not approval eligibility. When anything is
+    excluded/redacted, or on a critical/empty state, the log flags **MANUAL SECURITY REVIEW
+    REQUIRED**. `workspace_dirty` is recorded as descriptive audit context only.
+    
+    ## 6. Concern-level semantics + human responsibility
+    
+    - **NO OBJECTION** — no material reason to stop found; *this is not approval*.
+    - **CHANGES ADVISED** — issues that should be addressed or consciously waived.
+    - **DO NOT ADVANCE** — a material DBA risk; the human should not approve without resolving or
+      explicitly overriding.
+    - **UNCLASSIFIED** — malformed/insufficient reviewer output (no parseable `LOG SUMMARY`);
+      treated as **HIGH attention / manual review required**, never neutral.
+    
+    Evidence grade (optional, backlog #13): `EVIDENCE: A–E` — concern level is *what the reviewer
+    thinks*; evidence grade is *how well supported it is*. If absent, the log records
+    `Evidence: not reported`; #13 is not "done" until the reviewer reliably emits it.
+    
+    > **The reviewer reduces human reading load; it does not reduce human responsibility.** A
+    > human may approve a stage against the reviewer, but must record the reason in the HUMAN
+    > DECISION entry when doing so. The reviewer is evidence compression, not decision transfer.
+    
+    ## 7. What a good review looks like (calibration)
+    
+    This pipeline was itself shaped by several rounds of real Codex review of its own plan. The
+    qualities that made those reviews valuable are the bar the automated reviewer aims at:
+    
+    - **Operational, not only philosophical** — it named concrete bugs (append-only violations,
+      wrong state locations, brittle session capture), not just abstractions.
+    - **Ranked by severity** — required corrections separated from optional improvements.
+    - **Concrete better-designs** — every objection came with a specific proposed fix.
+    - **Honest about tradeoffs** — e.g. flagging when a "one cheap call" claim was really a
+      mini-pilot.
+    - **Ends with a clear decision** — approve / approve-with-fixes / do-not-approve, per area.
+    
+    The stage-specific checklists encode this intent; the packet's INSTRUCTIONS line asks for
+    exactly this shape.
+    
+    ## 8. DBA-philosophy scorecard
+    
+    | Capability | DBA impact | Why |
+    |---|---|---|
+    | Cross-model Codex reviewer, read-only | **Positive** | Adversarial second model; cannot edit artifacts |
+    | Feature-scoped session via `exec resume` | **Neutral** | Re-reads artifacts + SHA-pins every review; `--fresh` escape hatch; no cross-feature bleed |
+    | Durable assessments + append-only log (no mutable fields) | **Aligned** | Mirrors `runtime_events.jsonl` + existing append-only Decision Log |
+    | Advisory concern field (non-gatekeeping words) | **Neutral** | `APPROVE` reserved for the human |
+    | Secret/diff filtering | **Positive** | Reduces common credential-leakage risk in the review packet (heuristic, not a guarantee) |
+    | Automated hooks | **Risky → kept inert** | Documented (Appendix), not wired |
+    | Autonomous stage approval | **Negative — violates rule #1** | Rejected/deferred (Appendix) |
+    
+    ## 9. Acceptance criteria (mini-design gate)
+    
+    read-only reviewer edits no artifacts · review output durable (full assessment saved) ·
+    sessions feature-scoped · reviewed state pinned (base+review SHA, artifact hash) · malformed
+    output → UNCLASSIFIED/high-attention · secret/large-diff filtering present · no hooks active ·
+    no core rules changed.
+    
+    ## 10. Usage
+    
+    ```bash
+    # record the base commit for a stage (so review diffs base->review, not just HEAD)
+    scripts/codeos-review.sh stage-start listing-ingestion 2
+    
+    # review an artifact (resumes the feature's Codex session; --fresh starts a new one)
+    scripts/codeos-review.sh review listing-ingestion 2 contracts/listing-ingestion_contract.md
+    
+    # after the human decides, append the decision (never edits prior log entries)
+    scripts/codeos-review.sh decision listing-ingestion 2 REQUEST_CHANGES "missing failure scenario"
+    ```
+    
+    ---
+    
+    ## Appendix A — Inert hook snippets (NOT part of the pilot)
+    
+    These are provided for a *future* phase only. **Do not add them to `.claude/settings.json`
+    yet** — the pilot runs the script manually until the advisory reviewer has a proven track
+    record. A guarded `Stop` hook keyed on a sentinel avoids reviewing every stop.
+    
+    The hook delegates to a small wrapper rather than an inline one-liner, because the cleanup
+    must be **success-gated** (do not consume the request if the review failed) and the artifact
+    paths must be **quoted/arrayed** (never word-split a `jq` expansion):
+    
+    ```jsonc
+    // .claude/settings.json — illustrative ONLY, not enabled
+    {
+      "hooks": {
+        "Stop": [
+          { "command": "scripts/codeos-review-hook.sh" }   // no-op unless the sentinel exists
+        ]
+      }
+    }
+    ```
+    
+    ```bash
+    # scripts/codeos-review-hook.sh — illustrative ONLY
+    #!/usr/bin/env bash
+    set -euo pipefail
+    req=".codeos-state/review-request.json"
+    [[ -f "${req}" ]] || exit 0                       # nothing requested → no-op
+    feature="$(jq -r '.feature' "${req}")"
+    stage="$(jq -r '.stage' "${req}")"
+    mapfile -t paths < <(jq -r '.artifacts[]' "${req}")   # array-safe, no word-splitting
+    # abort WITHOUT deleting the sentinel if the request is unparseable or names no artifacts
+    [[ -n "${feature}" && -n "${stage}" && ${#paths[@]} -gt 0 ]] || {
+      echo "review-hook: malformed/empty request; sentinel preserved" >&2; exit 1; }
+    if scripts/codeos-review.sh review "${feature}" "${stage}" "${paths[@]}"; then
+      rm -f "${req}"                                  # consume the sentinel ONLY on success
+    fi
+    ```
+    
+    ## Appendix B — Rejected / Deferred — Not Approved for Implementation
+    
+    **Autonomous stage approval.** Letting the reviewer approve stages for "simple" features
+    contradicts **non-negotiable rule #1** (every stage transition requires explicit human
+    approval) and converts DBA from *synchronous prevention* (the gate blocks a bad transition)
+    to *asynchronous detection + rollback* (it happens, is caught later, is reverted). Recorded
+    for traceability only. It would separately require: per-feature human opt-in, one commit per
+    stage, feature-registry support (#14), a rollback design, low-risk-only scope that **never**
+    includes safety/authorization/invariant contracts, a hard stop on any `DO NOT ADVANCE` or
+    low-evidence review, and an amendment to the human-approval invariant. Not built toward now.
+
+  --- reviews/review-log.md (sha256: 6dd3f4f579db0fcfbbc3e423564fb0dfda74f54bf442ff8abefa33e54bace216, visibility: shown) ---
+    # Codeos Review Log (append-only, v0)
+    
+    Append-only record of automated advisory reviews and the human decisions that follow them.
+    Entries are NEVER edited — a human decision is a separately appended entry. The reviewer is
+    advisory and read-only; APPROVE belongs to the human. See docs/reviewer-pipeline.md.
+    
+    (v0 layout: one global log. Per-feature logs are a documented future layout.)
+    
+    > **Feature Thread identification (from UPG-0001).** New entries identify **both** the feature
+    > and the change: run the reviewer with the change token `UPG-####__CHG-YYYYMMDD-NNN` so each
+    > REVIEW/DECISION entry names the feature and the change (review-round `R<N>` per step). Older
+    > entries below predate the convention and are left intact (append-only). Native `REV__…`
+    > assessment filenames are deferred to `UPG-0029`.
+    
+    ## 2026-06-27T04:42:40Z REVIEW — reviewer-pipeline — Stage 0
+    Base: (uncommitted artifact)  Review: 5e015206c3b9759d0b9ecd7a1889e454ff30fd6d  Branch: feature/backlog-split-and-reviewer
+    Diff-hash: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+    Reviewer: codex default-model (session 019f0761-38e7-71f0-bfda-0757da4a7332)
+    Concern: DO NOT ADVANCE
+    Evidence: B
+    Log summary: DO NOT ADVANCE — the design does not durably preserve what was reviewed and can treat partially hidden evidence as a valid review
+    Full assessment: reviews/codex/2026-06-27T044240Z-reviewer-pipeline-stage-0-5e01520.md (sha256:05951c26f4c1bcbcf352c8f6d9e44021a76c3317baac5c2318490defe0e52a07)
+    Human decision: (append with: codeos-review.sh decision reviewer-pipeline 0 <DECISION> "<reason>")
+    
+    ## 2026-06-27T04:56:20Z HUMAN DECISION — reviewer-pipeline — Stage 0
+    Commit reviewed: 5e015206c3b9759d0b9ecd7a1889e454ff30fd6d
+    Decision: REQUEST_CHANGES
+    Reason/next: Accepted reviewer findings; addressed in script+doc — (#1) persist exact reviewed packet + re-hash artifacts at decision time; (#2) coverage gaps now downgrade the verdict (unshowable artifact -> DO NOT ADVANCE, partial -> NO OBJECTION becomes CHANGES ADVISED) and redaction applies to artifacts too; (#3) version-pinned sessions; (#4) success-gated, quote-safe hook snippet.
+    Verified against: reviews/codex/2026-06-27T044240Z-reviewer-pipeline-stage-0-5e01520.md
+    Artifact integrity:
+      CHANGED docs/reviewer-pipeline.md (reviewed 76a580021861 / now 392374f24c3b)
+    
+    ## 2026-06-27T16:30:34Z REVIEW — dsplit-0003 — Stage selfdev-step-4
+    Base: c5992f5aefc573a398c71934abb77cb7543aecd4  Review: 2563e37971f1f35c47ed34e420c0285807ac66be  Branch: feature/backlog-split-and-reviewer
+    Diff-hash: 77d5dd006333440635ee36277a850b8a90142fabfd009ce3b218bbe9bfb0e5d3
+    Reviewer: codex default-model (session 019f09e3-472c-7eb0-b98e-23a7041a58df)
+    Codex concern: CHANGES ADVISED
+    Effective concern: CHANGES ADVISED
+    Evidence: A
+    Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+    Log summary: CHANGES ADVISED — the roadmap content is broadly coherent, but the artifact prematurely marks itself approved and complete at the very gate where approval is still being requested.
+    Full assessment: reviews/codex/2026-06-27T163034Z-dsplit-0003-stage-selfdev-step-4-2563e37.md (sha256:bdc2ba0f904a48cc74e04f1c01b69566a4e8b260436da97a2fa3b8a1aa07ed65)
+    Reviewed packet: reviews/codex/packets/2026-06-27T163034Z-dsplit-0003-stage-selfdev-step-4-2563e37.packet.txt (sha256:f60da9674084416f13dba3b991419b4427a4723a1d12d3f664f3eefa614035d6)
+    Human decision: (append with: codeos-review.sh decision dsplit-0003 selfdev-step-4 <DECISION> "<reason>")
+    
+    ## 2026-06-27T16:30:45Z HUMAN DECISION — dsplit-0003 — Stage selfdev-step-4
+    Commit at decision: 2563e37971f1f35c47ed34e420c0285807ac66be
+    Decision: REQUEST_CHANGES
+    Reason/next: Accepted reviewer findings. BLOCKER-1: status/self-development.md header still named backlog/features.md as 'the roadmap' — fixing to point at status/roadmap.md (catalog vs roadmap). BLOCKER-2: 0001-0003 marked COMPLETE without a review record — now logging advisory verdicts and populating the Review field. NON-BLOCKER-3: tightening over-absolute roadmap wording re self-dev change numbering. Fixes tracked as change 0004-review-fixes.
+    Verified against: reviews/codex/2026-06-27T163034Z-dsplit-0003-stage-selfdev-step-4-2563e37.md
+    Artifact integrity (informational audit, not a gate):
+      MATCH   changes/0003-implementation-roadmap.md
+    
+    ## 2026-06-27T16:35:18Z REVIEW — 0004-review-fixes — Stage selfdev-step-4
+    Base: 2563e37971f1f35c47ed34e420c0285807ac66be  Review: 2563e37971f1f35c47ed34e420c0285807ac66be  Branch: feature/backlog-split-and-reviewer
+    Diff-hash: 1216e70333d622e81a8269665a3e2621f1bce00d0fe8206727d449ef1ecd99fa
+    Reviewer: codex default-model (session 019f09ee-1483-79a0-97a6-665d8861b4bf)
+    Codex concern: CHANGES ADVISED
+    Effective concern: CHANGES ADVISED
+    Evidence: A
+    Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+    Log summary: CHANGES ADVISED — the packet fixes the original review-record issues but introduces new false claims about `0004`’s completion state and the next roadmap IDs
+    Full assessment: reviews/codex/2026-06-27T163518Z-0004-review-fixes-stage-selfdev-step-4-2563e37.md (sha256:414af43117ebc7f311e14e3605d96e2d1da9b436225c1f0e747402822acfa940)
+    Reviewed packet: reviews/codex/packets/2026-06-27T163518Z-0004-review-fixes-stage-selfdev-step-4-2563e37.packet.txt (sha256:acae4620d1918d42242ce4e8fdfc8f341b6291b2a53171d93a25d1e1be730d53)
+    Human decision: (append with: codeos-review.sh decision 0004-review-fixes selfdev-step-4 <DECISION> "<reason>")
+    
+    ## 2026-06-27T16:39:09Z REVIEW — 0004-review-fixes — Stage selfdev-step-4
+    Base: 2563e37971f1f35c47ed34e420c0285807ac66be  Review: 2563e37971f1f35c47ed34e420c0285807ac66be  Branch: feature/backlog-split-and-reviewer
+    Diff-hash: 9254c9fead92a02923feac7eca5f27b58935462a48e8bf5a0063f56ca3f8baea
+    Reviewer: codex default-model (session 019f09ee-1483-79a0-97a6-665d8861b4bf)
+    Codex concern: CHANGES ADVISED
+    Effective concern: CHANGES ADVISED
+    Evidence: A
+    Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+    Log summary: CHANGES ADVISED — the dashboard’s new completion rule still contradicts the completed `0001`–`0003` rows
+    Full assessment: reviews/codex/2026-06-27T163909Z-0004-review-fixes-stage-selfdev-step-4-2563e37.md (sha256:7c2e60b6a00a2cb0f9ab37e8303720fe13e433192f4874fd90ebf723878d4e01)
+    Reviewed packet: reviews/codex/packets/2026-06-27T163909Z-0004-review-fixes-stage-selfdev-step-4-2563e37.packet.txt (sha256:bcd0f5de9340c71167bf2823dc7f6566a11d429957e554df283b6b2ab726f2e2)
+    Human decision: (append with: codeos-review.sh decision 0004-review-fixes selfdev-step-4 <DECISION> "<reason>")
+    
+    ## 2026-06-27T16:41:12Z REVIEW — 0004-review-fixes — Stage selfdev-step-4
+    Base: 2563e37971f1f35c47ed34e420c0285807ac66be  Review: 2563e37971f1f35c47ed34e420c0285807ac66be  Branch: feature/backlog-split-and-reviewer
+    Diff-hash: 4adfeffcfe88b2ea4cbc8d3b0f497bdce1b89ce668893964d44ee9aed144c19e
+    Reviewer: codex default-model (session 019f09ee-1483-79a0-97a6-665d8861b4bf)
+    Codex concern: CHANGES ADVISED
+    Effective concern: CHANGES ADVISED
+    Evidence: A
+    Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+    Log summary: CHANGES ADVISED — the `0004` dashboard row still reports the wrong latest review round
+    Full assessment: reviews/codex/2026-06-27T164112Z-0004-review-fixes-stage-selfdev-step-4-2563e37.md (sha256:9b531d268e94c0ece870e7a68d12b58246590e889c4975eead05ff077dce9052)
+    Reviewed packet: reviews/codex/packets/2026-06-27T164112Z-0004-review-fixes-stage-selfdev-step-4-2563e37.packet.txt (sha256:4ded79257fa9189e60634ede269ad544387fb26e90a5d86a390619739e12cc98)
+    Human decision: (append with: codeos-review.sh decision 0004-review-fixes selfdev-step-4 <DECISION> "<reason>")
+    
+    ## 2026-06-27T16:44:24Z HUMAN DECISION — 0004-review-fixes — Stage selfdev-step-4
+    Commit at decision: 2563e37971f1f35c47ed34e420c0285807ac66be
+    Decision: APPROVE_STAGE
+    Reason/next: Substantive finding (status-dashboard roadmap pointer) resolved. Residual CHANGES ADVISED verdicts are self-referential bookkeeping-recursion — the reviewer reviewing the dashboard/record that tracks its own review. Per the advisory-not-gatekeeping principle, accepting the residual as non-blocking and finalizing. Recursion limitation filed to backlog for reviewer-scoping improvement.
+    Verified against: reviews/codex/2026-06-27T164112Z-0004-review-fixes-stage-selfdev-step-4-2563e37.md
+    Artifact integrity (informational audit, not a gate):
+      CHANGED changes/0004-review-fixes.md (reviewed 46d9864e9782 / now 99fe2d702a69)
+      CHANGED status/self-development.md (reviewed 5afa58f49c78 / now 530399bf84ce)
+      MATCH   status/roadmap.md
+    
+    ## 2026-06-27T17:19:14Z REVIEW — UPG-0001__CHG-20260627-001 — Stage selfdev-step-1
+    Base: (no base pin)  Review: 89269f1344d54d585d09fd881aa965b934bb30fc  Branch: feature/backlog-split-and-reviewer
+    Diff-hash: 4591aa7e439d81be60094892c112530031014f90853b909e9a36a8bfbedc3af9
+    Reviewer: codex default-model (session 019f0a15-774b-7b90-85fd-4bf9245db690)
+    Codex concern: DO NOT ADVANCE
+    Effective concern: DO NOT ADVANCE
+    Evidence: A
+    Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+    Log summary: DO NOT ADVANCE — Step 1 does not yet present a single consistent scope contract for review traceability and historical migration
+    Full assessment: reviews/codex/2026-06-27T171914Z-UPG-0001__CHG-20260627-001-stage-selfdev-step-1-89269f1.md (sha256:7a35aad2c851b0d53da6020b318302ff084db7659bdefec927c84e6944d0d46e)
+    Reviewed packet: reviews/codex/packets/2026-06-27T171914Z-UPG-0001__CHG-20260627-001-stage-selfdev-step-1-89269f1.packet.txt (sha256:7856065d162323f44316615979662429242522537c74d670080462a150ab364d)
+    Human decision: (append with: codeos-review.sh decision UPG-0001__CHG-20260627-001 selfdev-step-1 <DECISION> "<reason>")
+    
+    ## 2026-06-27T17:23:00Z REVIEW — UPG-0001__CHG-20260627-001 — Stage selfdev-step-1
+    Base: (no base pin)  Review: 89269f1344d54d585d09fd881aa965b934bb30fc  Branch: feature/backlog-split-and-reviewer
+    Diff-hash: 893e99daca557bb35262292a66d55c125309e3058e0de197fa07acba10bed04b
+    Reviewer: codex default-model (session 019f0a15-774b-7b90-85fd-4bf9245db690)
+    Codex concern: CHANGES ADVISED
+    Effective concern: CHANGES ADVISED
+    Evidence: A
+    Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+    Log summary: CHANGES ADVISED — The Step 1 contract is mostly coherent now, but the brief still defines conflicting feature-state values
+    Full assessment: reviews/codex/2026-06-27T172300Z-UPG-0001__CHG-20260627-001-stage-selfdev-step-1-89269f1.md (sha256:2198f48f8362638856be632d6d05016f5437a7a1739e1353a9a5ae360566d207)
+    Reviewed packet: reviews/codex/packets/2026-06-27T172300Z-UPG-0001__CHG-20260627-001-stage-selfdev-step-1-89269f1.packet.txt (sha256:d781c9a227e791634ddaa8337857d482848bb8ac979af69f7a45a7777952c8fe)
+    Human decision: (append with: codeos-review.sh decision UPG-0001__CHG-20260627-001 selfdev-step-1 <DECISION> "<reason>")
+    
+    ## 2026-06-27T17:25:28Z REVIEW — UPG-0001__CHG-20260627-001 — Stage selfdev-step-1
+    Base: (no base pin)  Review: 89269f1344d54d585d09fd881aa965b934bb30fc  Branch: feature/backlog-split-and-reviewer
+    Diff-hash: 893e99daca557bb35262292a66d55c125309e3058e0de197fa07acba10bed04b
+    Reviewer: codex default-model (session 019f0a15-774b-7b90-85fd-4bf9245db690)
+    Codex concern: NO OBJECTION
+    Effective concern: NO OBJECTION
+    Evidence: A
+    Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+    Log summary: NO OBJECTION — The Step 1 scope contract is now coherent; only minor transitional documentation mismatches remain
+    Full assessment: reviews/codex/2026-06-27T172528Z-UPG-0001__CHG-20260627-001-stage-selfdev-step-1-89269f1.md (sha256:83285daf44d28dc81ed09e2a60d0e53781ee72f7b3fe1924ab68bfc00eeab0ad)
+    Reviewed packet: reviews/codex/packets/2026-06-27T172528Z-UPG-0001__CHG-20260627-001-stage-selfdev-step-1-89269f1.packet.txt (sha256:1ed4f7d4b20f88bbdb6eae357ca3599d23bf61967f4aadf198fe2d8559cca7f1)
+    Human decision: (append with: codeos-review.sh decision UPG-0001__CHG-20260627-001 selfdev-step-1 <DECISION> "<reason>")
+    
+    ## 2026-06-27T17:35:27Z HUMAN DECISION — UPG-0001__CHG-20260627-001 — Stage selfdev-step-1
+    Commit at decision: 89269f1344d54d585d09fd881aa965b934bb30fc
+    Decision: APPROVE_STAGE
+    Reason/next: Step 1 Change Intent accepted. Advisory review converged R1 DO NOT ADVANCE -> R3 NO OBJECTION after reconciling the originating brief to the human-narrowed scope (review-traceability AC#9, historical-no-rename migration step 8, state-vocabulary enum). Proceed to Step 2.
+    Verified against: reviews/codex/2026-06-27T172528Z-UPG-0001__CHG-20260627-001-stage-selfdev-step-1-89269f1.md
+    Artifact integrity (informational audit, not a gate):
+      CHANGED changes/UPG-0001__CHG-20260627-001__feature-thread-traceability.md (reviewed ce8d8f9f431c / now 0e833afdfa09)
+      MATCH   backlog/UPG-0001-feature-thread-traceability.md
+      CHANGED status/self-development.md (reviewed 1aac172ddc72 / now 0b9003606a07)
+    
+    ## 2026-06-27T17:39:19Z REVIEW — UPG-0001__CHG-20260627-001 — Stage selfdev-step-2
+    Base: (no base pin)  Review: 89269f1344d54d585d09fd881aa965b934bb30fc  Branch: feature/backlog-split-and-reviewer
+    Diff-hash: a32bcdc40324ca7c9e0541b28b516e30f8355092e7f28fdb2bb6fb2618f0c485
+    Reviewer: codex default-model (session 019f0a15-774b-7b90-85fd-4bf9245db690)
+    Codex concern: CHANGES ADVISED
+    Effective concern: CHANGES ADVISED
+    Evidence: A
+    Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+    Log summary: CHANGES ADVISED — Several Step 2 acceptance checks are not reliably verifiable as written, and one of them narrows the Step 1 review-identification contract
+    Full assessment: reviews/codex/2026-06-27T173919Z-UPG-0001__CHG-20260627-001-stage-selfdev-step-2-89269f1.md (sha256:5c1cf7b487c3fdf45d56e9a7367cc2e33a99e32ee39596a3ccba056edd7c28b5)
+    Reviewed packet: reviews/codex/packets/2026-06-27T173919Z-UPG-0001__CHG-20260627-001-stage-selfdev-step-2-89269f1.packet.txt (sha256:4759920a267c21c4b73452b9114a35530f961779c4103c09e9a8241a32c07fda)
+    Human decision: (append with: codeos-review.sh decision UPG-0001__CHG-20260627-001 selfdev-step-2 <DECISION> "<reason>")
+    
+    ## 2026-06-27T17:42:30Z REVIEW — UPG-0001__CHG-20260627-001 — Stage selfdev-step-2
+    Base: (no base pin)  Review: 89269f1344d54d585d09fd881aa965b934bb30fc  Branch: feature/backlog-split-and-reviewer
+    Diff-hash: a32bcdc40324ca7c9e0541b28b516e30f8355092e7f28fdb2bb6fb2618f0c485
+    Reviewer: codex default-model (session 019f0a15-774b-7b90-85fd-4bf9245db690)
+    Codex concern: CHANGES ADVISED
+    Effective concern: CHANGES ADVISED
+    Evidence: A
+    Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+    Log summary: CHANGES ADVISED — Two Step 2 checks still are not operationally verifiable as written
+    Full assessment: reviews/codex/2026-06-27T174230Z-UPG-0001__CHG-20260627-001-stage-selfdev-step-2-89269f1.md (sha256:1f1e298273453e9f86495f5a655b7580ede125e66fe5d0cc8570600de0cf2ae7)
+    Reviewed packet: reviews/codex/packets/2026-06-27T174230Z-UPG-0001__CHG-20260627-001-stage-selfdev-step-2-89269f1.packet.txt (sha256:8fcca27bce23b6526d0caecb00219f0fb5b3c5d44492353e8912a353dc6793ee)
+    Human decision: (append with: codeos-review.sh decision UPG-0001__CHG-20260627-001 selfdev-step-2 <DECISION> "<reason>")
+    
+    ## 2026-06-28T05:12:36Z REVIEW — UPG-0001__CHG-20260627-001 — Stage selfdev-step-2
+    Base: (no base pin)  Review: 89269f1344d54d585d09fd881aa965b934bb30fc  Branch: feature/backlog-split-and-reviewer
+    Diff-hash: a32bcdc40324ca7c9e0541b28b516e30f8355092e7f28fdb2bb6fb2618f0c485
+    Reviewer: codex default-model (session 019f0a15-774b-7b90-85fd-4bf9245db690)
+    Codex concern: CHANGES ADVISED
+    Effective concern: CHANGES ADVISED
+    Evidence: A
+    Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+    Log summary: CHANGES ADVISED — `C2` still defines two different verification methods, so the Step 2 acceptance contract is not yet singular
+    Full assessment: reviews/codex/2026-06-28T051236Z-UPG-0001__CHG-20260627-001-stage-selfdev-step-2-89269f1.md (sha256:a414b41e4906307d650858badd9fcf922fb4b1828729cfd886596904bab1df30)
+    Reviewed packet: reviews/codex/packets/2026-06-28T051236Z-UPG-0001__CHG-20260627-001-stage-selfdev-step-2-89269f1.packet.txt (sha256:9f9315525b84881ed780be9f1ee1c62fc360e60fadd449bc443ee61aadc09e98)
+    Human decision: (append with: codeos-review.sh decision UPG-0001__CHG-20260627-001 selfdev-step-2 <DECISION> "<reason>")
+    
+    ## 2026-06-28T05:14:03Z REVIEW — UPG-0001__CHG-20260627-001 — Stage selfdev-step-2
+    Base: (no base pin)  Review: 89269f1344d54d585d09fd881aa965b934bb30fc  Branch: feature/backlog-split-and-reviewer
+    Diff-hash: a32bcdc40324ca7c9e0541b28b516e30f8355092e7f28fdb2bb6fb2618f0c485
+    Reviewer: codex default-model (session 019f0a15-774b-7b90-85fd-4bf9245db690)
+    Codex concern: NO OBJECTION
+    Effective concern: NO OBJECTION
+    Evidence: A
+    Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+    Log summary: NO OBJECTION — The Step 2 acceptance contract is now coherent and checkable; only minor transitional dashboard wording remains
+    Full assessment: reviews/codex/2026-06-28T051403Z-UPG-0001__CHG-20260627-001-stage-selfdev-step-2-89269f1.md (sha256:4418fbb6280340f8a2f7d89c641510dc994f47e833e74947ffa3a0bb0837ab42)
+    Reviewed packet: reviews/codex/packets/2026-06-28T051403Z-UPG-0001__CHG-20260627-001-stage-selfdev-step-2-89269f1.packet.txt (sha256:6fd1d3d48945e46596409a715f997499848860f91a4d928f0113ea3c95966679)
+    Human decision: (append with: codeos-review.sh decision UPG-0001__CHG-20260627-001 selfdev-step-2 <DECISION> "<reason>")
+    
+    ## 2026-06-28T05:19:43Z HUMAN DECISION — UPG-0001__CHG-20260627-001 — Stage selfdev-step-2
+    Commit at decision: 89269f1344d54d585d09fd881aa965b934bb30fc
+    Decision: APPROVE_STAGE
+    Reason/next: Step 2 Acceptance Criteria accepted. Advisory review converged R1 CHANGES ADVISED -> R4 NO OBJECTION; all seven required contracts present (A2,C1,C2,B1,D2,E1,E2) with every git-based check pinned to base 89269f1 / a baseline commit. Human authorized the pre-migration baseline commit with constraints. Proceed to Step 3.
+    Verified against: reviews/codex/2026-06-28T051403Z-UPG-0001__CHG-20260627-001-stage-selfdev-step-2-89269f1.md
+    Artifact integrity (informational audit, not a gate):
+      CHANGED changes/UPG-0001__CHG-20260627-001__feature-thread-traceability.md (reviewed a92f7e30d3e3 / now 5486502b4644)
+      MATCH   backlog/UPG-0001-feature-thread-traceability.md
+      CHANGED status/self-development.md (reviewed ee2858a79712 / now c022486a436b)
+    
+    ## 2026-06-28T05:41:33Z REVIEW — UPG-0001__CHG-20260627-001 — Stage selfdev-step-3
+    Base: (no base pin)  Review: b835016183f078f1a567e7bca7157c32c5f082ca  Branch: feature/backlog-split-and-reviewer
+    Diff-hash: e06ac41648b51966d3869dd4fc455160d14bbd362ea719011606d00389d4df5b
+    Reviewer: codex default-model (session 019f0a15-774b-7b90-85fd-4bf9245db690)
+    Codex concern: CHANGES ADVISED
+    Effective concern: CHANGES ADVISED
+    Evidence: A
+    Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+    Log summary: CHANGES ADVISED — Step 3 is broadly aligned, but it still overclaims committed-artifact reproducibility and leaves migrated brief states internally inconsistent
+    Full assessment: reviews/codex/2026-06-28T054133Z-UPG-0001__CHG-20260627-001-stage-selfdev-step-3-b835016.md (sha256:5472f58b648202fe518657d7f4c77091cf137d968541f9cd41059d50aa2b8e7a)
+    Reviewed packet: reviews/codex/packets/2026-06-28T054133Z-UPG-0001__CHG-20260627-001-stage-selfdev-step-3-b835016.packet.txt (sha256:7a11ba35ad2866ceb1a661a5b5b178859d987372fbb2293e3457f64b4ebf053e)
+    Human decision: (append with: codeos-review.sh decision UPG-0001__CHG-20260627-001 selfdev-step-3 <DECISION> "<reason>")
+    
+    ## 2026-06-28T05:46:05Z REVIEW — UPG-0001__CHG-20260627-001 — Stage selfdev-step-3
+    Base: (no base pin)  Review: b835016183f078f1a567e7bca7157c32c5f082ca  Branch: feature/backlog-split-and-reviewer
+    Diff-hash: 67c952789e85b2fb4df25895d1ac6b0c0b759b2c65d270d553994540a0eee218
+    Reviewer: codex default-model (session 019f0a15-774b-7b90-85fd-4bf9245db690)
+    Codex concern: CHANGES ADVISED
+    Effective concern: CHANGES ADVISED
+    Evidence: A
+    Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+    Log summary: CHANGES ADVISED — The Step 3 packet still has an internal scope-traceability contradiction around the newly allowed status-token normalization
+    Full assessment: reviews/codex/2026-06-28T054605Z-UPG-0001__CHG-20260627-001-stage-selfdev-step-3-b835016.md (sha256:f6789469457329f4e7d8bb32c0d01176cc282b8b811e0e9527aee13672b3dc48)
+    Reviewed packet: reviews/codex/packets/2026-06-28T054605Z-UPG-0001__CHG-20260627-001-stage-selfdev-step-3-b835016.packet.txt (sha256:6c25d7c8e355f249b8645847e299c508a36c7dd6ec38bae02eee2b1b2c100a19)
+    Human decision: (append with: codeos-review.sh decision UPG-0001__CHG-20260627-001 selfdev-step-3 <DECISION> "<reason>")
+    
+    ## 2026-06-28T05:48:20Z REVIEW — UPG-0001__CHG-20260627-001 — Stage selfdev-step-3
+    Base: (no base pin)  Review: b835016183f078f1a567e7bca7157c32c5f082ca  Branch: feature/backlog-split-and-reviewer
+    Diff-hash: ccbb64a0383fc2313d2b5b0285e38a20c02a32bfd6e0b779fb3a38e1771bcc96
+    Reviewer: codex default-model (session 019f0a15-774b-7b90-85fd-4bf9245db690)
+    Codex concern: CHANGES ADVISED
+    Effective concern: CHANGES ADVISED
+    Evidence: A
+    Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+    Log summary: CHANGES ADVISED — The Step 3 packet still falsely claims cross-reference cleanup is complete while legacy renamed-brief paths remain in reviewer docs/prompts
+    Full assessment: reviews/codex/2026-06-28T054820Z-UPG-0001__CHG-20260627-001-stage-selfdev-step-3-b835016.md (sha256:5df18388f6ac89f1278b91050d70248f44b63476a3c3f49e4f08d4ba49128248)
+    Reviewed packet: reviews/codex/packets/2026-06-28T054820Z-UPG-0001__CHG-20260627-001-stage-selfdev-step-3-b835016.packet.txt (sha256:504293649df67c5acfbd97e174457c2ccd4e4f5ca94d230d99fc3eae162fdaab)
+    Human decision: (append with: codeos-review.sh decision UPG-0001__CHG-20260627-001 selfdev-step-3 <DECISION> "<reason>")
+    
+    ## 2026-06-28T05:52:44Z REVIEW — UPG-0001__CHG-20260627-001 — Stage selfdev-step-3
+    Base: (no base pin)  Review: b835016183f078f1a567e7bca7157c32c5f082ca  Branch: feature/backlog-split-and-reviewer
+    Diff-hash: cb427af4c7499c9e4e9a897d9288cd36a418b2b23a9bdf8af9dedeca200419cd
+    Reviewer: codex default-model (session 019f0a15-774b-7b90-85fd-4bf9245db690)
+    Codex concern: CHANGES ADVISED
+    Effective concern: CHANGES ADVISED
+    Evidence: A
+    Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+    Log summary: CHANGES ADVISED — the change record still falsely claims to enumerate every touched file while omitting files it later admits were edited
+    Full assessment: reviews/codex/2026-06-28T055244Z-UPG-0001__CHG-20260627-001-stage-selfdev-step-3-b835016.md (sha256:4d6d6dfbea277fc30e6c9607875dc7ab9a3547c094474ff2c73611fbd965da01)
+    Reviewed packet: reviews/codex/packets/2026-06-28T055244Z-UPG-0001__CHG-20260627-001-stage-selfdev-step-3-b835016.packet.txt (sha256:f2f8555eddd5efff4a595d62401ee46abc3ce477e9dca1e626c4d816040e85d5)
+    Human decision: (append with: codeos-review.sh decision UPG-0001__CHG-20260627-001 selfdev-step-3 <DECISION> "<reason>")
+    
+    ## 2026-06-28T05:55:35Z REVIEW — UPG-0001__CHG-20260627-001 — Stage selfdev-step-3
+    Base: (no base pin)  Review: b835016183f078f1a567e7bca7157c32c5f082ca  Branch: feature/backlog-split-and-reviewer
+    Diff-hash: 8d6a2141ed43347272b120b65c80ad20b739ef7e5c7a37a3926d50a0782ebc7c
+    Reviewer: codex default-model (session 019f0a15-774b-7b90-85fd-4bf9245db690)
+    Codex concern: CHANGES ADVISED
+    Effective concern: CHANGES ADVISED
+    Evidence: A
+    Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+    Log summary: CHANGES ADVISED — E4 currently claims a clean grep-based cross-reference sweep that its own stated command does not actually satisfy
+    Full assessment: reviews/codex/2026-06-28T055535Z-UPG-0001__CHG-20260627-001-stage-selfdev-step-3-b835016.md (sha256:9a115a605ffac6e3382ccc996a0176b2185a2c156bcc7cf3adf09e2fe880c2ab)
+    Reviewed packet: reviews/codex/packets/2026-06-28T055535Z-UPG-0001__CHG-20260627-001-stage-selfdev-step-3-b835016.packet.txt (sha256:e252ca1ed9abaa5fcb4773e4841fe87b4c3bebb99868f712c15a5aac95e09f7b)
+    Human decision: (append with: codeos-review.sh decision UPG-0001__CHG-20260627-001 selfdev-step-3 <DECISION> "<reason>")
+    
+    ## 2026-06-28T05:57:55Z REVIEW — UPG-0001__CHG-20260627-001 — Stage selfdev-step-3
+    Base: (no base pin)  Review: b835016183f078f1a567e7bca7157c32c5f082ca  Branch: feature/backlog-split-and-reviewer
+    Diff-hash: 50f24b32638952ff86a0d415986c56f8258a9d0a41347f54d1d16864ea7ab3d3
+    Reviewer: codex default-model (session 019f0a15-774b-7b90-85fd-4bf9245db690)
+    Codex concern: CHANGES ADVISED
+    Effective concern: CHANGES ADVISED
+    Evidence: A
+    Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+    Log summary: CHANGES ADVISED — E4 still overclaims its cross-reference proof because the stated command deduplicates to two missing paths, not “those three”
+    Full assessment: reviews/codex/2026-06-28T055755Z-UPG-0001__CHG-20260627-001-stage-selfdev-step-3-b835016.md (sha256:4bf5644fe9f3f1c09ef1a7abcdc6efb64185be3d4b80ce5e7708908476ad2dbd)
+    Reviewed packet: reviews/codex/packets/2026-06-28T055755Z-UPG-0001__CHG-20260627-001-stage-selfdev-step-3-b835016.packet.txt (sha256:3104b16e674a7b409b28f72ccc7fb764ef2aecbe9d326719960bd6bc4d4316f4)
+    Human decision: (append with: codeos-review.sh decision UPG-0001__CHG-20260627-001 selfdev-step-3 <DECISION> "<reason>")
+    
+    ## 2026-06-28T06:04:47Z REVIEW — UPG-0001__CHG-20260627-001 — Stage selfdev-step-3
+    Base: (no base pin)  Review: b835016183f078f1a567e7bca7157c32c5f082ca  Branch: feature/backlog-split-and-reviewer
+    Diff-hash: da4f36d298b98960a8b83a1aa4355c11345b8b460be206922ca8b7bf2da46348
+    Reviewer: codex default-model (session 019f0a15-774b-7b90-85fd-4bf9245db690)
+    Codex concern: CHANGES ADVISED
+    Effective concern: CHANGES ADVISED
+    Evidence: A
+    Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+    Log summary: CHANGES ADVISED — E4 still overclaims cross-reference integrity by saying every referenced backlog path resolves while its own proof reports two intentional non-resolving paths
+    Full assessment: reviews/codex/2026-06-28T060447Z-UPG-0001__CHG-20260627-001-stage-selfdev-step-3-b835016.md (sha256:671d4b40afa9e58dff72a7683200fca959c368919728fa71ecd9c1f6e4afcd68)
+    Reviewed packet: reviews/codex/packets/2026-06-28T060447Z-UPG-0001__CHG-20260627-001-stage-selfdev-step-3-b835016.packet.txt (sha256:f9d158b3f2ab8886e20f76321f91e128cac14749bbe2872f3c0f494f2d80c3c8)
+    Human decision: (append with: codeos-review.sh decision UPG-0001__CHG-20260627-001 selfdev-step-3 <DECISION> "<reason>")
+    
+    ## 2026-06-28T06:06:47Z REVIEW — UPG-0001__CHG-20260627-001 — Stage selfdev-step-3
+    Base: (no base pin)  Review: b835016183f078f1a567e7bca7157c32c5f082ca  Branch: feature/backlog-split-and-reviewer
+    Diff-hash: f4bf055edcbded40879344108b062b71d47fd4a379e3db5e073baddea2229a7d
+    Reviewer: codex default-model (session 019f0a15-774b-7b90-85fd-4bf9245db690)
+    Codex concern: NO OBJECTION
+    Effective concern: NO OBJECTION
+    Evidence: A
+    Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+    Log summary: NO OBJECTION — the Step 3 artifact’s remaining cross-reference claim now matches its own verification method and documented exceptions
+    Full assessment: reviews/codex/2026-06-28T060647Z-UPG-0001__CHG-20260627-001-stage-selfdev-step-3-b835016.md (sha256:0c33a17e52c1eb171188e5d73f3212e101bbfd50a6cebef7a971023ec2db4b12)
+    Reviewed packet: reviews/codex/packets/2026-06-28T060647Z-UPG-0001__CHG-20260627-001-stage-selfdev-step-3-b835016.packet.txt (sha256:57443388f1de28e20810637c6c10aaf859fffda3d698cea09678c0fd8dbe2164)
+    Human decision: (append with: codeos-review.sh decision UPG-0001__CHG-20260627-001 selfdev-step-3 <DECISION> "<reason>")
+    
+    ## 2026-06-28T06:15:22Z HUMAN DECISION — UPG-0001__CHG-20260627-001 — Stage selfdev-step-3
+    Commit at decision: b835016183f078f1a567e7bca7157c32c5f082ca
+    Decision: APPROVE_STAGE
+    Reason/next: Step 3 Implement accepted. Advisory review converged R1 CHANGES ADVISED -> R8 NO OBJECTION. 27 briefs migrated mechanically (UPG-0002..0028), features.md/roadmap/dashboard/template/prompt/CLAUDE updated, UPG-0029 follow-up filed, cross-ref links fixed. Guardrails held: dba-system.md unchanged, scripts/codeos-review.sh byte-identical. Proceed to Step 4 Reconcile.
+    Verified against: reviews/codex/2026-06-28T060647Z-UPG-0001__CHG-20260627-001-stage-selfdev-step-3-b835016.md
+    Artifact integrity (informational audit, not a gate):
+      CHANGED changes/UPG-0001__CHG-20260627-001__feature-thread-traceability.md (reviewed 54ec433cb658 / now 0a4eb38fc463)
+      MATCH   backlog/features.md
+      MATCH   status/roadmap.md
+      CHANGED status/self-development.md (reviewed 2f0bbf950608 / now 7f58235bbd3f)
+      MATCH   prompts/codeos-self-dev.md
+      MATCH   templates/codeos-change.md
+      MATCH   CLAUDE.md
+    
+    ## 2026-06-28T06:20:15Z REVIEW — UPG-0001__CHG-20260627-001 — Stage selfdev-step-4
+    Base: (no base pin)  Review: b835016183f078f1a567e7bca7157c32c5f082ca  Branch: feature/backlog-split-and-reviewer
+    Diff-hash: 25d26a31c3eda04189de5c17fcde750f15e2988bed4439d97011576a045e0a93
+    Reviewer: codex default-model (session 019f0a15-774b-7b90-85fd-4bf9245db690)
+    Codex concern: CHANGES ADVISED
+    Effective concern: CHANGES ADVISED
+    Evidence: A
+    Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+    Log summary: CHANGES ADVISED — the Step 4 packet is missing recorded Step 4 advisory review evidence and overclaims a tooling smoke across Steps 1–4
+    Full assessment: reviews/codex/2026-06-28T062015Z-UPG-0001__CHG-20260627-001-stage-selfdev-step-4-b835016.md (sha256:2d9125007db2173b2fd56fba41f3e36c0eb965df76b450ecbf2b2a6fc3a16ed7)
+    Reviewed packet: reviews/codex/packets/2026-06-28T062015Z-UPG-0001__CHG-20260627-001-stage-selfdev-step-4-b835016.packet.txt (sha256:e23bdd96a6793bbb8544a4ac1aedbf796e0914c906ee63a200566d7ffd17e7f0)
+    Human decision: (append with: codeos-review.sh decision UPG-0001__CHG-20260627-001 selfdev-step-4 <DECISION> "<reason>")
+    
+    ## 2026-06-28T06:23:08Z REVIEW — UPG-0001__CHG-20260627-001 — Stage selfdev-step-4
+    Base: (no base pin)  Review: b835016183f078f1a567e7bca7157c32c5f082ca  Branch: feature/backlog-split-and-reviewer
+    Diff-hash: 862f07657f159c9b8d6779d9ad453acc5cfcc417f3e052b30254f7c6be57a61a
+    Reviewer: codex default-model (session 019f0a15-774b-7b90-85fd-4bf9245db690)
+    Codex concern: CHANGES ADVISED
+    Effective concern: CHANGES ADVISED
+    Evidence: A
+    Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+    Log summary: CHANGES ADVISED — the Step-4 packet breaks its own triage rule by using a non-permitted finding classification
+    Full assessment: reviews/codex/2026-06-28T062308Z-UPG-0001__CHG-20260627-001-stage-selfdev-step-4-b835016.md (sha256:c5ec6aa467d4c4cd781a393ba34ac6a84bc8eccb0c02285f0aced2d0567aa7de)
+    Reviewed packet: reviews/codex/packets/2026-06-28T062308Z-UPG-0001__CHG-20260627-001-stage-selfdev-step-4-b835016.packet.txt (sha256:89fd70445eddfab9de97a6f5526f55d0ad51d7b97b75190b15f3ee72ece85e9c)
+    Human decision: (append with: codeos-review.sh decision UPG-0001__CHG-20260627-001 selfdev-step-4 <DECISION> "<reason>")
+    
+    ## 2026-06-28T06:25:11Z REVIEW — UPG-0001__CHG-20260627-001 — Stage selfdev-step-4
+    Base: (no base pin)  Review: b835016183f078f1a567e7bca7157c32c5f082ca  Branch: feature/backlog-split-and-reviewer
+    Diff-hash: 2f430d551fc9acc72dae804791d103a2199de1d46b4ca1e683222c4cc9e3816c
+    Reviewer: codex default-model (session 019f0a15-774b-7b90-85fd-4bf9245db690)
+    Codex concern: CHANGES ADVISED
+    Effective concern: CHANGES ADVISED
+    Evidence: A
+    Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+    Log summary: CHANGES ADVISED — the packet still contains false traceability/validation claims in its own Step-4 evidence
+    Full assessment: reviews/codex/2026-06-28T062511Z-UPG-0001__CHG-20260627-001-stage-selfdev-step-4-b835016.md (sha256:11b35afa728625beecc7bd834596b4ae6c90b50736ba7d9e428f134ae84b7c12)
+    Reviewed packet: reviews/codex/packets/2026-06-28T062511Z-UPG-0001__CHG-20260627-001-stage-selfdev-step-4-b835016.packet.txt (sha256:5cc8e765877b4882f5d9dcd6dadcb69e54bb84ab2fdde288c991520843c079ef)
+    Human decision: (append with: codeos-review.sh decision UPG-0001__CHG-20260627-001 selfdev-step-4 <DECISION> "<reason>")
+    
+    ## 2026-06-28T06:28:43Z REVIEW — UPG-0001__CHG-20260627-001 — Stage selfdev-step-4
+    Base: (no base pin)  Review: b835016183f078f1a567e7bca7157c32c5f082ca  Branch: feature/backlog-split-and-reviewer
+    Diff-hash: 2f404b721af44f9b779ee31bcb298439b9c15e326f504cf6f9a974af0480fbdc
+    Reviewer: codex default-model (session 019f0a15-774b-7b90-85fd-4bf9245db690)
+    Codex concern: CHANGES ADVISED
+    Effective concern: CHANGES ADVISED
+    Evidence: A
+    Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+    Log summary: CHANGES ADVISED — the packet falsely reports the latest Step 4 review as `r1` even though multiple Step 4 reviews are already logged
+    Full assessment: reviews/codex/2026-06-28T062843Z-UPG-0001__CHG-20260627-001-stage-selfdev-step-4-b835016.md (sha256:fc755964241aef567c074a1ddfb288f4c6a29ea14a38d5b877e2257afd0d95ce)
+    Reviewed packet: reviews/codex/packets/2026-06-28T062843Z-UPG-0001__CHG-20260627-001-stage-selfdev-step-4-b835016.packet.txt (sha256:d7496928394b62265be16068234eae4b6bc0e78c5ebd76703c062ff9907e0250)
+    Human decision: (append with: codeos-review.sh decision UPG-0001__CHG-20260627-001 selfdev-step-4 <DECISION> "<reason>")
+    
+    ## 2026-06-28T06:32:44Z REVIEW — UPG-0001__CHG-20260627-001 — Stage selfdev-step-4
+    Base: (no base pin)  Review: b835016183f078f1a567e7bca7157c32c5f082ca  Branch: feature/backlog-split-and-reviewer
+    Diff-hash: 763d997918ca00f339bbcd849b6980ac8cf8f40ed63fd7b95452642c2935374b
+    Reviewer: codex default-model (session 019f0a15-774b-7b90-85fd-4bf9245db690)
+    Codex concern: CHANGES ADVISED
+    Effective concern: CHANGES ADVISED
+    Evidence: A
+    Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+    Log summary: CHANGES ADVISED — the new traceability model still contradicts itself on what a valid Step-4 review identifier/capability is
+    Full assessment: reviews/codex/2026-06-28T063244Z-UPG-0001__CHG-20260627-001-stage-selfdev-step-4-b835016.md (sha256:3baeb92aebfa36c0657225d327c2f0308477f81d41e1f071c100b34811c66cf7)
+    Reviewed packet: reviews/codex/packets/2026-06-28T063244Z-UPG-0001__CHG-20260627-001-stage-selfdev-step-4-b835016.packet.txt (sha256:71a450db0e9d2aa4ba66c3df3defbbad956639f8faf1b5dbb4de8f7afb74de75)
+    Human decision: (append with: codeos-review.sh decision UPG-0001__CHG-20260627-001 selfdev-step-4 <DECISION> "<reason>")
+    
+    ## 2026-06-28T06:52:10Z REVIEW — UPG-0001__CHG-20260627-001 — Stage selfdev-step-4
+    Base: (no base pin)  Review: b835016183f078f1a567e7bca7157c32c5f082ca  Branch: feature/backlog-split-and-reviewer
+    Diff-hash: 4d75d99a31e0848468585f8c32554f521b36b251c7ab20e17ec389f89a1562c9
+    Reviewer: codex default-model (session 019f0a15-774b-7b90-85fd-4bf9245db690)
+    Codex concern: UNCLASSIFIED
+    Effective concern: UNCLASSIFIED
+    Evidence: not reported
+    Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+    Log summary: UNCLASSIFIED — no parseable summary; HIGH attention, manual review required
+    Full assessment: reviews/codex/2026-06-28T065210Z-UPG-0001__CHG-20260627-001-stage-selfdev-step-4-b835016.md (sha256:75ad728db5270081b2bc108809bed1398d2d9ae81e3c08a958a581998d15457e)
+    Reviewed packet: reviews/codex/packets/2026-06-28T065210Z-UPG-0001__CHG-20260627-001-stage-selfdev-step-4-b835016.packet.txt (sha256:aa0eee72ed7ac62838cfd102d324d15ba1f5e7d3c277fbfd2b9d88511eb51055)
+    Human decision: (append with: codeos-review.sh decision UPG-0001__CHG-20260627-001 selfdev-step-4 <DECISION> "<reason>")
+    
+    ## 2026-06-28T06:55:01Z HUMAN DECISION — UPG-0001__CHG-20260627-001 — Stage selfdev-step-4
+    Commit at decision: b835016183f078f1a567e7bca7157c32c5f082ca
+    Decision: APPROVE_STAGE
+    Reason/next: Step 4 accepted by HUMAN DECISION (Self-Reference Boundary stop rule). The RVS review-series model (review_series + review_state; rounds only in review-log) eliminates the self-reference loop by design. All local acceptance criteria A1-E4 + F1 PASS; guardrails frozen (dba-system.md and scripts/codeos-review.sh byte-identical vs base 89269f1). The single confirming advisory review was rate-limited by the Codex usage cap (logged UNCLASSIFIED = tooling failure, not a verdict) and is deferred. UPG-0001 / CHG-20260627-001 is COMPLETE.
+    Verified against: reviews/codex/2026-06-28T065210Z-UPG-0001__CHG-20260627-001-stage-selfdev-step-4-b835016.md
+    Artifact integrity (informational audit, not a gate):
+      MATCH   changes/UPG-0001__CHG-20260627-001__feature-thread-traceability.md
+      MATCH   status/self-development.md
+      MATCH   prompts/codeos-self-dev.md
+      MATCH   templates/codeos-change.md
+      MATCH   backlog/UPG-0001-feature-thread-traceability.md
+    
+    ## 2026-06-29T03:53:15Z REVIEW — UPG-0029__CHG-20260629-001 — Stage selfdev-step-1
+    Base: (no base pin)  Review: 9f2a87d8bb54834b07836e2abd8eb33626549b30  Branch: selfdev/upg-0029-review-durability
+    Diff-hash: b1fba83d6fc6797ab8c3f360d97c17190fe31b31ac52429309c3a1309aa77316
+    Reviewer: codex default-model (session 019f117f-857f-7c21-9483-f1da1fbf1dfe)
+    Codex concern: CHANGES ADVISED
+    Effective concern: CHANGES ADVISED
+    Evidence: B
+    Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+    Log summary: CHANGES ADVISED — the Step 1 intent text overstates current repo state and is not yet a complete file inventory
+    Full assessment: reviews/codex/2026-06-29T035315Z-UPG-0029__CHG-20260629-001-stage-selfdev-step-1-9f2a87d.md (sha256:f194e1dc6ae84e74d4ee6e7573cd23545f982d416d8a8b7506cb9842bdf68e22)
+    Reviewed packet: reviews/codex/packets/2026-06-29T035315Z-UPG-0029__CHG-20260629-001-stage-selfdev-step-1-9f2a87d.packet.txt (sha256:e2959964d15ca9510637079ea722bdec2c6fb0793ca48461e17795ef65bfd59f)
+    Human decision: (append with: codeos-review.sh decision UPG-0029__CHG-20260629-001 selfdev-step-1 <DECISION> "<reason>")
+    
+    ## 2026-06-29T03:55:35Z REVIEW — UPG-0029__CHG-20260629-001 — Stage selfdev-step-1
+    Base: (no base pin)  Review: 9f2a87d8bb54834b07836e2abd8eb33626549b30  Branch: selfdev/upg-0029-review-durability
+    Diff-hash: b1fba83d6fc6797ab8c3f360d97c17190fe31b31ac52429309c3a1309aa77316
+    Reviewer: codex default-model (session 019f117f-857f-7c21-9483-f1da1fbf1dfe)
+    Codex concern: CHANGES ADVISED
+    Effective concern: CHANGES ADVISED
+    Evidence: B
+    Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+    Log summary: CHANGES ADVISED — the durability rationale still contains factual overstatements in both the backlog brief and the Step 1 change record
+    Full assessment: reviews/codex/2026-06-29T035535Z-UPG-0029__CHG-20260629-001-stage-selfdev-step-1-9f2a87d.md (sha256:005bc5ed8a75c794484c13b8f531438851b375cc967706017a7b86367340835c)
+    Reviewed packet: reviews/codex/packets/2026-06-29T035535Z-UPG-0029__CHG-20260629-001-stage-selfdev-step-1-9f2a87d.packet.txt (sha256:bf81098fca38137ca3e8725fa5c0e60a5ef2fdf5d9686bf6d2b23ca9d928b8e2)
+    Human decision: (append with: codeos-review.sh decision UPG-0029__CHG-20260629-001 selfdev-step-1 <DECISION> "<reason>")
+    
+    ## 2026-06-29T03:56:52Z REVIEW — UPG-0029__CHG-20260629-001 — Stage selfdev-step-1
+    Base: (no base pin)  Review: 9f2a87d8bb54834b07836e2abd8eb33626549b30  Branch: selfdev/upg-0029-review-durability
+    Diff-hash: 3bc2ba8f31f11bff3972f63ada9a935f6bad074286ec77c5485c7d80b1f25674
+    Reviewer: codex default-model (session 019f117f-857f-7c21-9483-f1da1fbf1dfe)
+    Codex concern: NO OBJECTION
+    Effective concern: NO OBJECTION
+    Evidence: B
+    Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+    Log summary: NO OBJECTION — the Step 1 intent is now accurate and complete for the stated doc-only durability-policy scope
+    Full assessment: reviews/codex/2026-06-29T035652Z-UPG-0029__CHG-20260629-001-stage-selfdev-step-1-9f2a87d.md (sha256:f1af21c0c3379ee4f18ada760cf652c6875887e74ce05ea268c9147be8d3fea2)
+    Reviewed packet: reviews/codex/packets/2026-06-29T035652Z-UPG-0029__CHG-20260629-001-stage-selfdev-step-1-9f2a87d.packet.txt (sha256:e23dd53c132076af4160f08822702e432d356e5e3aa467557b3ee9241e3bdf21)
+    Human decision: (append with: codeos-review.sh decision UPG-0029__CHG-20260629-001 selfdev-step-1 <DECISION> "<reason>")
+    
+    ## 2026-06-29 HUMAN DECISION — UPG-0029__CHG-20260629-001 — selfdev-step-1
+    
+    Decision: APPROVE_STAGE (Step 1 → Step 2)
+    Rounds: R1 CHANGES ADVISED → R2 CHANGES ADVISED → R3 NO OBJECTION
+    Fixes landed: (1) backlog brief overclaim "all files untracked" corrected to "27 of 28 referenced
+    assessments untracked, one already committed"; (2) change record same overclaim + wrong "29+" count
+    corrected to 27; (3) change record file itself added to the file inventory (was omitted); (4) scope
+    boundary present-tense false claim ("already marked local-only") changed to future-tense (Step 3
+    action). R3 verdict: NO OBJECTION.
+    Human decision: Step 1 Change Intent accepted.
+
+  --- status/self-development.md (sha256: be90648fa9c4c52a4325b820dfcebe6d962e3558c401ecbae177a58f96c07bef, visibility: shown) ---
+    # Self-Development Status
+    
+    > Live dashboard for in-flight Codeos toolkit changes. **Mutable** — maintained by the
+    > 4-step self-development loop (see repo-root `CLAUDE.md` and `prompts/codeos-self-dev.md`).
+    > The stable rulebook is `CLAUDE.md`; per-change detail is in
+    > `changes/UPG-####__CHG-YYYYMMDD-NNN__slug.md`; the wave plan is `status/roadmap.md`; the
+    > authoritative feature-id map is `backlog/features.md`.
+    >
+    > **Identity is split** (see `backlog/UPG-0001-feature-thread-traceability.md`): a **Feature ID**
+    > (`UPG-####`, stable) names the backlog feature; a **Change ID** (`CHG-YYYYMMDD-NNN`) names one
+    > execution against it. A historical row may carry a legacy change-stem in **Change ID** and `—`
+    > in **Feature ID** when no backlog feature exists.
+    >
+    > Step 1 activates a row; each step updates **Loop step** and **Latest review**. Reconcile marks
+    > **State: COMPLETE** once the step's compulsory (advisory) review has run **and** the human has
+    > accepted the result — NO OBJECTION, or CHANGES ADVISED with residual non-blocking findings
+    > accepted or tracked to a named **Follow-up** `UPG-####`. The review informs the human; it never
+    > gates by itself. A change with open, unaccepted in-scope findings stays **IN_PROGRESS**.
+    
+    | Feature ID | Change ID | Class | Scope | Loop step | Review (state / accepted outcome) | State | Follow-up |
+    |---|---|---|---|---|---|---|---|
+    | — | 0001-claude-split | self-dev-governance + downstream-doctrine | both | 4-Reconcile | CHANGES ADV →0004 | COMPLETE | — |
+    | UPG-0002 | 0002-doc-consistency-rename | documentation | downstream doctrine only | 4-Reconcile | CHANGES ADV →0004 | COMPLETE | — |
+    | — (planning) | 0003-implementation-roadmap | backlog-only / planning | self-dev only | 4-Reconcile | CHANGES ADV →0004 | COMPLETE | — |
+    | — (reviewer findings) | 0004-review-fixes | documentation / self-dev-governance | self-dev only | 4-Reconcile | CHANGES ADV (accepted) | COMPLETE | — |
+    | UPG-0001 | CHG-20260627-001 | self-dev-governance | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S4; rounds in review-log) | COMPLETE | UPG-0029 |
+    | UPG-0029 | CHG-20260629-001 | documentation | self-dev only | 2-Acceptance | IN_REVIEW (RVS__UPG-0029__CHG-20260629-001__S1; rounds in review-log) | IN_PROGRESS | — |
+    
+    <!--
+    Identity   : Feature ID = UPG-#### (stable). Change ID = CHG-YYYYMMDD-NNN (one execution), or a
+                 legacy change-stem (0001..0004) for historical/piloted work recorded truthfully.
+    Loop step  : 1-Intent / 2-Acceptance / 3-Implement / 4-Reconcile / —
+    Review     : review STATE/outcome, not a live round — in-flight: `review_state` (IN_REVIEW…) + the
+                 review series `RVS__…__S<N>`; closed: the accepted verdict summary. Exact `REV__…__R<N>`
+                 rounds + human decisions live ONLY in reviews/review-log.md (Self-Reference Boundary).
+                 `→UPG-####` / `→NNNN` = findings tracked to a follow-up.
+    State      : PROPOSED / IN_PROGRESS / BLOCKED / COMPLETE (+ feature states PILOTED/SUPERSEDED/ABANDONED)
+    Follow-up  : UPG-#### tracking out-of-scope findings from this change, or —
+    -->
+
+DIFF TO REVIEW (base->review, secret/size filtered)
+diff --git a/backlog/UPG-0029-review-naming-and-thread-tooling.md b/backlog/UPG-0029-review-naming-and-thread-tooling.md
+index 999e1f7..34cc0e6 100644
+--- a/backlog/UPG-0029-review-naming-and-thread-tooling.md
++++ b/backlog/UPG-0029-review-naming-and-thread-tooling.md
+@@ -31,9 +31,11 @@ superseded_by: []
+ After UPG-0001, the Feature Thread model and IDs are a documented convention, but gaps remain:
+ 
+ * **Audit-trail durability (primary).** `reviews/review-log.md` references full Codex assessments
+-  under `reviews/codex/*` by **path + sha**, but those files are **untracked** — a path+sha pointer
+-  to an uncommitted file is not durable for another checkout or reviewer. There is no policy for
+-  which review artifacts are committed vs scratch vs summarized.
++  under `reviews/codex/*` by **path + sha**, but most of those files are **untracked** — 27 of 28
++  referenced assessments are not committed (one pre-UPG-0029 assessment is already committed; all
++  packet files are untracked). A path+sha pointer to an uncommitted file is not durable for another
++  checkout or reviewer. There is no policy for which review artifacts are committed vs scratch vs
++  summarized.
+ * the advisory reviewer (`scripts/codeos-review.sh`) still emits assessment/packet filenames in
+   the legacy `${ts}-${feature}-stage-${stage}-${sha}` shape, not the
+   `REV__UPG-####__CHG-…__S<N>__R<N>` review-id shape;
+@@ -98,6 +100,7 @@ insufficient.
+ 
+ | Change ID | File | Purpose | State |
+ |---|---|---|---|
++| CHG-20260629-001 | changes/UPG-0029__CHG-20260629-001__review-durability.md | Review artifact durability policy (doc-only; issue #1) | IN_PROGRESS |
+ 
+ ### Reviews
+ 
+diff --git a/status/self-development.md b/status/self-development.md
+index c6083f0..5ff1bb7 100644
+--- a/status/self-development.md
++++ b/status/self-development.md
+@@ -24,6 +24,7 @@
+ | — (planning) | 0003-implementation-roadmap | backlog-only / planning | self-dev only | 4-Reconcile | CHANGES ADV →0004 | COMPLETE | — |
+ | — (reviewer findings) | 0004-review-fixes | documentation / self-dev-governance | self-dev only | 4-Reconcile | CHANGES ADV (accepted) | COMPLETE | — |
+ | UPG-0001 | CHG-20260627-001 | self-dev-governance | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S4; rounds in review-log) | COMPLETE | UPG-0029 |
++| UPG-0029 | CHG-20260629-001 | documentation | self-dev only | 2-Acceptance | IN_REVIEW (RVS__UPG-0029__CHG-20260629-001__S1; rounds in review-log) | IN_PROGRESS | — |
+ 
+ <!--
+ Identity   : Feature ID = UPG-#### (stable). Change ID = CHG-YYYYMMDD-NNN (one execution), or a
+
+INSTRUCTIONS
+  If this is a resumed session, ignore any earlier-session conclusions unless they are
+  re-established by THIS packet; assess only the evidence above, pinned to this commit.
+  Give your full critical assessment (operational, ranked by severity, with concrete
+  better-designs). For EACH finding emit:
+    Finding: / Severity: High|Medium|Low / Classification: <one of the TRIAGE RULE labels>
+    Evidence: <file/line> / Why: <short> / Required action: fix now|optional fix|backlog|reject
+    Scope reason: <why it does/does not belong to this PR's scope>
+  Then emit:
+    PR decision: ADVANCE | REQUEST CHANGES | DO NOT ADVANCE   (based ONLY on in-scope blockers)
+    Scope drift warning: yes|no — <is anything pulling this PR beyond its stated scope?>
+  Then on the LAST two lines emit exactly (map ADVANCE->NO OBJECTION,
+  REQUEST CHANGES->CHANGES ADVISED, DO NOT ADVANCE->DO NOT ADVANCE):
+    LOG SUMMARY: <NO OBJECTION | CHANGES ADVISED | DO NOT ADVANCE | UNCLASSIFIED> — <single most important point>
+      (use UNCLASSIFIED if you genuinely cannot classify the artifact safely)
+    EVIDENCE: <A|B|C|D|E>   (optional)

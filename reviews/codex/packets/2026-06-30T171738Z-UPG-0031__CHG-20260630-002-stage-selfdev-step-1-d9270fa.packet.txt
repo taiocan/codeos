@@ -1,0 +1,463 @@
+Reviewer task:
+
+SCOPE CONTRACT
+  Assess this artifact against the STATED SCOPE of this stage/PR — the Expected Stage
+  Output below and what the artifacts actually claim — NOT against an ideal final system.
+  A capability the artifacts do not claim to provide is OUT-OF-SCOPE, not a defect.
+  The following are OUT-OF-SCOPE BACKLOG unless THIS artifact explicitly claims to provide
+  them: formal approval-binding enforcement; rollback correctness; COMMIT_BOUND/
+  WORKSPACE_BOUND enforcement; JSON Schema validation; CI validation; exact
+  decision-integrity; per-feature decision ledgers; autonomous approval; enabled hooks.
+
+YOUR TASK — answer these five questions using only the evidence in the packet:
+  1. Acceptance criteria: Does the artifact satisfy each of its stated acceptance criteria?
+     Cite evidence for each criterion (or note its absence).
+  2. Claim support: Are universal or strong claims (all, every, never, always, no X) in the
+     artifact supported by evidence in the packet? Any unverifiable strong claim is a candidate
+     finding only if it affects acceptance, scope, safety, decision integrity, or the artifact's
+     stated guarantees.
+  3. Scope drift: Is there any change beyond the stated scope boundary? (Files not in the
+     "What changes" list; behavior changes not in the intent; downstream doctrine modified
+     rather than read.)
+  4. In-scope blockers: Are there facts that, if left in, would make the artifact wrong,
+     unsafe, or internally contradictory?
+  5. Finding classification: Classify every finding you raise as exactly one of the five
+     TRIAGE RULE categories below.
+
+TRIAGE RULE — classify EVERY finding as exactly one of:
+  IN-SCOPE BLOCKER         breaks the stated goal; creates a FALSE CLAIM in this artifact;
+                           weakens the advisory/read-only/human-gated guarantees; prevents
+                           the work from running; or violates an explicit safety constraint.
+  IN-SCOPE NON-BLOCKER     improves it but is not required for this PR.
+  OUT-OF-SCOPE BACKLOG     valid, but belongs to a future feature / stronger guarantee.
+  REJECTED                 conflicts with the stated scope or Codeos philosophy.
+  SELF-REFERENCE /         review records that are stale because of the previous round's
+  REVIEW-BOOKKEEPING       own existence (causal loop); not a real artifact defect.
+  Base the PR decision ONLY on IN-SCOPE BLOCKER findings. An OUT-OF-SCOPE BACKLOG finding
+  must NOT cause DO NOT ADVANCE unless this artifact FALSELY CLAIMS to solve it.
+
+WHAT NOT TO DO
+  - Do not flag style or wording issues as blockers unless the wording creates a false claim,
+    contradiction, parser breakage, or wrong governance instruction.
+  - Do not re-review unchanged full context when the packet is in delta mode.
+  - Do not treat local-only review history as a blocker unless the artifact falsely
+    claims the review artifacts are committed/durable.
+
+INSTRUCTIONS
+  If this is a resumed session, ignore any earlier-session conclusions unless they are
+  re-established by THIS packet; assess only the evidence above, pinned to this commit.
+  Give a focused assessment of this artifact against the stated scope, acceptance criteria,
+  and evidence in this packet. Rank findings by severity. Suggest a better design only when
+  needed to explain a required fix for an IN-SCOPE BLOCKER.
+
+  Limit findings to the top 3 IN-SCOPE BLOCKERS. Additional non-blocking observations may be
+  summarized in one short paragraph only if useful.
+
+  For EACH finding emit:
+    Finding: / Severity: High|Medium|Low / Classification: <one of the TRIAGE RULE labels>
+    Evidence: <file/line> / Why: <short> / Required action: fix now|optional fix|backlog|reject
+    Scope reason: <why it does/does not belong to this PR's scope>
+  Then emit:
+    PR decision: ADVANCE | REQUEST CHANGES | DO NOT ADVANCE   (based ONLY on in-scope blockers)
+    Scope drift warning: yes|no — <is anything pulling this PR beyond its stated scope?>
+  Then on the LAST two lines emit exactly (map ADVANCE->NO OBJECTION,
+  REQUEST CHANGES->CHANGES ADVISED, DO NOT ADVANCE->DO NOT ADVANCE):
+    LOG SUMMARY: <NO OBJECTION | CHANGES ADVISED | DO NOT ADVANCE | UNCLASSIFIED> — <single most important point>
+      (use UNCLASSIFIED if you genuinely cannot classify the artifact safely)
+    EVIDENCE: <A|B|C|D|E>   (optional)
+
+PACKET MANIFEST
+  generated: 2026-06-30T17:14:25Z
+  task_prompt: /home/arc/projects/claude/Codeos/prompts/codeos-reviewer-task.md (4381 bytes)
+  review_content_bytes: 18159
+  estimated_review_tokens: ~4539
+  budget_status: OK
+  packet_mode: full
+  delta_base: none
+  items:
+    - path: changes/UPG-0031__CHG-20260630-002__review-delta-working-tree.md
+      mode: full_file
+      bytes: 7631
+      sha256: c015d80594050c8c19b79f4bcabe4a9d1e7a0c9918d04bdac6d043276aba47e9
+    - path: backlog/UPG-0031-review-delta-mode-fix.md
+      mode: full_file
+      bytes: 3780
+      sha256: cd0fceded229624bea17439b5ab4d2cca42193eca67c86942b7357436069ce8e
+    - path: status/self-development.md
+      mode: full_file
+      bytes: 4119
+      sha256: 3658fd09773c6ea15ed519c2650531a02d547383945eef935ab790f6731b2ce4
+    - path: (diff)
+      mode: full_file
+      bytes: 2629
+
+REVIEW CONTEXT
+  Feature:                UPG-0031__CHG-20260630-002
+  Stage:                  selfdev-step-1
+  Branch:                 selfdev/upg-0029-review-durability
+  Base commit:            (no base pin)
+  Review commit:          d9270fa8db3a5ee18de8d161431d594edf4fa55a (+ uncommitted workspace changes)
+  Current approved stage: n/a (non-numeric stage)
+  Evidence coverage:      FULL_COVERAGE
+  Workspace dirty:        yes (uncommitted changes at review time)
+
+DBA RULES RELEVANT TO THIS STAGE
+  - Human approval is required for every stage transition; you are advisory only.
+  - Memory is not truth — assess only what is provided, pinned to the review commit.
+  - Implementation must trace to approved artifacts; no behavior beyond intent+contract+schema.
+  - No events outside the approved event schema; no hidden behavior.
+
+STAGE-SPECIFIC CHECKS
+  - (no stage-specific checklist for stage selfdev-step-1)
+
+EXPECTED STAGE OUTPUT
+  (no expected-output template for stage selfdev-step-1)
+
+ARTIFACTS TO REVIEW
+  --- changes/UPG-0031__CHG-20260630-002__review-delta-working-tree.md (sha256: c015d80594050c8c19b79f4bcabe4a9d1e7a0c9918d04bdac6d043276aba47e9, visibility: shown) ---
+    # Self-Development Change: UPG-0031__CHG-20260630-002 — review-delta-working-tree
+    
+    <!--
+    PURPOSE: Per-change source of truth for a non-trivial change to the Codeos toolkit
+    itself (prompts, templates, docs, patterns, scripts).
+    
+    Workflow: prompts/codeos-self-dev.md (4-step loop)
+    Each step requires explicit human approval; Codex review cadence is governed by the
+    assigned review profile (see prompts/codeos-self-dev.md Step 0a).
+    The live status row lives in status/self-development.md, not here.
+    -->
+    
+    <!-- TRACE HEADER (canonical) -->
+    ```yaml
+    feature_id: UPG-0031
+    primary_feature_id: UPG-0031
+    change_id: CHG-20260630-002
+    slug: review-delta-working-tree
+    state: IN_PROGRESS
+    current_step: 1-Intent
+    implements:
+      - UPG-0031
+    related_features:
+      - UPG-0027
+      - UPG-0030
+    review_series: null
+    review_profile: PROFILE-3
+    review_state: DRAFT
+    review_history: reviews/review-log.md
+    fixes_findings: []
+    follow_up_of: UPG-0004
+    ```
+    
+    <!-- SELF-REFERENCE BOUNDARY -->
+    
+    ## Change Intent
+    
+    **Why (problem in the toolkit):**
+    
+    `scripts/codeos-review.sh` delta mode uses `git diff "${delta_base}" HEAD -- <paths>` at four
+    sites. This only sees committed changes between the base and HEAD. When review fixes are
+    uncommitted, HEAD has not moved, the diff is empty, and the packet reports `EMPTY_PACKET`.
+    Codex is then invoked with zero reviewable content, producing an unactionable DO NOT ADVANCE.
+    
+    This stalled UPG-0004 Step 2 (the change record fixes were in the working tree but not
+    committed, so R2 delta review saw no content). The root cause was identified externally and
+    confirmed by reading the script.
+    
+    Two additional related defects:
+    - No fail-closed guard prevents Codex from being called with an EMPTY_PACKET.
+    - Untracked new artifact files produce silent EMPTY_PACKET in delta mode rather than a clear
+      diagnostic (because `git diff <base> HEAD` cannot see untracked files at all).
+    
+    A fourth related issue: the precheck grep for `UPG-####` fires on comment/legend-section prose,
+    requiring `--skip-prechecks` workarounds. This is a usability defect in the precheck.
+    
+    **What changes:**
+    
+    1. `scripts/codeos-review.sh` — four targeted edits:
+       - **Fix A (4 sites, delta mode)**: remove `HEAD` from delta-mode `git diff` calls. `git diff
+         "${delta_base}" -- <paths>` compares the base commit to the working tree (staged + unstaged
+         tracked changes). Sites: line 159 (`raw_diff`), line 160 (`changed_files`), line 185
+         (`filtered_diff`), line 231 (per-artifact delta detection).
+       - **Fix B (1 site, untracked artifact guard)**: in the per-artifact loop in `build_packet`,
+         when `delta_mode == "delta"`, check `git ls-files --error-unmatch "$a"` before attempting
+         a diff. If the artifact is untracked, exit 5 with a clear diagnostic.
+       - **Fix C (1 site, EMPTY_PACKET guard)**: in `cmd_review`, after the `print_only` block and
+         before `run_codex`, exit 4 if `PACKET_COVERAGE_STATE == EMPTY_PACKET`. The `print_only`
+         block itself should exit nonzero (exit 4) when coverage is EMPTY_PACKET, so inspection is
+         still possible but the nonzero signals the empty state to callers.
+       - **Fix D (1 site, precheck false-positive)**: tighten the `UPG-####` grep in `run_prechecks`
+         to skip HTML comment blocks (`<!-- … -->`) and lines whose content is clearly documentation
+         of the filename convention rather than an unfilled placeholder field.
+    
+    2. `backlog/UPG-0031-review-delta-mode-fix.md` — Feature Thread Changes table row activated.
+    
+    3. `status/self-development.md` — operational row activated for UPG-0031 / CHG-20260630-002.
+    
+    **Bookkeeping artifact:**
+    
+    - `changes/UPG-0031__CHG-20260630-002__review-delta-working-tree.md` — this change record.
+    
+    **Scope boundary — what stays the same:**
+    
+    - `dba-system.md` — not touched.
+    - `prompts/` — not touched.
+    - `templates/` — not touched.
+    - `docs/` — not touched unless a comment inside `codeos-review.sh` references a doc path
+      that needs updating (unlikely; will be confirmed in Reconcile).
+    - Packet format, review log format, session handling — unchanged.
+    - Advisory/read-only/non-gatekeeping guarantees — unchanged.
+    - `--mode full` behavior — unchanged.
+    
+    **Class:** `script-tooling`
+    **Scope axis:** `self-dev only`
+    **Review profile:** `PROFILE-3`
+    **Backlog item:** `backlog/UPG-0031-review-delta-mode-fix.md`
+    
+    ---
+    
+    ## Acceptance Criteria
+    
+    <!-- Delta mode working-tree fix (B1–B4) -->
+    
+    | # | Criterion | How it will be verified |
+    |---|---|---|
+    | B1 | Delta mode with uncommitted tracked artifact changes produces a non-empty diff | Smoke test: modify an artifact without committing; run `--mode delta --base <sha> --print-packet`; confirm `review_content_bytes > 0` and `coverage_state` is not `EMPTY_PACKET` |
+    | B2 | Delta mode with no artifact changes (nothing committed or uncommitted since base) produces `EMPTY_PACKET` and the script exits 4 before calling Codex | Smoke test: run delta review with no changes to artifact paths; confirm exit 4, no Codex session created |
+    | B3 | `--mode full` behavior and packet content are identical before and after this change | Smoke test: run `--mode full --print-packet` on the same artifacts before and after; `diff` the output (excluding `generated:` timestamp) |
+    | B4 | `git diff HEAD -- .` (working tree) behavior — the existing non-delta code path at line 165–166 — is unchanged | Read the script after changes; confirm lines 161–167 of the non-delta branch are byte-identical to before |
+    
+    <!-- Untracked artifact guard (B5) -->
+    
+    | # | Criterion | How it will be verified |
+    |---|---|---|
+    | B5 | Passing an untracked file as a positional artifact in delta mode exits 5 with a diagnostic naming the file and suggesting `--mode full` or staging | Smoke test: create a temp untracked file; run delta review; confirm exit 5 and diagnostic message |
+    
+    <!-- EMPTY_PACKET fail-closed guard (B6–B7) -->
+    
+    | # | Criterion | How it will be verified |
+    |---|---|---|
+    | B6 | Live delta review with `EMPTY_PACKET` exits 4 before calling Codex; no session is created, no assessment file written | Smoke test: trigger EMPTY_PACKET (delta with no changes); confirm exit 4; confirm no new file under `reviews/codex/` |
+    | B7 | `--print-packet` with `EMPTY_PACKET` still prints the packet metadata and exits nonzero; Codex is not called | Smoke test: run `--mode delta --print-packet` with no changes; confirm packet metadata printed; confirm exit nonzero; confirm no Codex session created |
+    
+    <!-- Precheck false-positive (B8) -->
+    
+    | # | Criterion | How it will be verified |
+    |---|---|---|
+    | B8 | `run_prechecks` does not fail on `UPG-####` appearing inside HTML comment blocks or filename-convention documentation lines in an artifact | Smoke test: run `review` (without `--skip-prechecks`) on `status/self-development.md` and `changes/UPG-0031__CHG-20260630-002__review-delta-working-tree.md`; confirm precheck passes |
+    
+    <!-- Scope boundary (B9) -->
+    
+    | # | Criterion | How it will be verified |
+    |---|---|---|
+    | B9 | `dba-system.md`, `prompts/`, `templates/`, `docs/` are unchanged | `git diff <base_sha> -- dba-system.md prompts/ templates/ docs/` → empty |
+    
+    <!-- Bookkeeping (B10–B11) -->
+    
+    | # | Criterion | How it will be verified |
+    |---|---|---|
+    | B10 | `backlog/UPG-0031-review-delta-mode-fix.md` Feature Thread Changes table has a row for CHG-20260630-002 | Read-through: row exists and is correctly filled |
+    | B11 | `status/self-development.md` has an operational row for UPG-0031 / CHG-20260630-002; Loop step reflects current gate | Read-through: row exists at correct step |
+    
+    ---
+    
+    ## Implementation Notes
+    
+    <!-- Filled in Step 3 -->
+    
+    ---
+    
+    ## Reconciliation
+    
+    <!-- Filled in Step 4 -->
+
+  --- backlog/UPG-0031-review-delta-mode-fix.md (sha256: cd0fceded229624bea17439b5ab4d2cca42193eca67c86942b7357436069ce8e, visibility: shown) ---
+    ---
+    feature_id: UPG-0031
+    slug: review-delta-mode-fix
+    title: Review script delta-mode working-tree fix + fail-closed EMPTY_PACKET guard
+    status: PROPOSED
+    priority: P1
+    depends_on:
+      - UPG-0027
+    related_features:
+      - UPG-0030
+    supersedes: []
+    superseded_by: []
+    ---
+    
+    # Upgrade: review-delta-mode-fix — Review script delta-mode working-tree fix + fail-closed EMPTY_PACKET guard
+    
+    **Priority**: P1
+    **Status**: PROPOSED
+    **Type**: script-tooling
+    **Related**: scripts/codeos-review.sh
+    
+    ## Problem
+    
+    `scripts/codeos-review.sh` delta mode computes diffs with `git diff "${delta_base}" HEAD -- <paths>`.
+    This compares the base commit to HEAD only. When review fixes are uncommitted, `HEAD` has not moved
+    and the diff is empty, producing `EMPTY_PACKET`. Codex is then called with zero reviewable content
+    and returns a DO NOT ADVANCE that cannot be actioned.
+    
+    Two defects:
+    1. Delta mode is commit-only — excludes working-tree (staged/unstaged) changes to tracked files.
+    2. No fail-closed guard before Codex invocation when the packet is empty.
+    
+    A third edge case: untracked new artifact files cannot be compared in delta mode at all; delta
+    mode should fail closed with a clear diagnostic rather than silently producing EMPTY_PACKET.
+    
+    Additionally: the precheck script greps for literal `UPG-####` but hits false positives in
+    comment/legend sections of files like `status/self-development.md` and change record template
+    comments (filed as OUT-OF-SCOPE from UPG-0004; tracked here).
+    
+    ## Upgrade
+    
+    Fix all four issues in `scripts/codeos-review.sh`:
+    
+    1. **Delta mode working-tree diff** — remove `HEAD` from the four delta-mode `git diff` calls
+       so they compare `<base>` to the working tree (staged + unstaged tracked changes).
+    
+    2. **Untracked artifact guard** — in the per-artifact loop (delta mode), fail closed before
+       Codex with a clear diagnostic if a positional artifact is untracked:
+       ```
+       error: artifact is untracked; delta review cannot compare it to base: <path>
+              Stage, commit, or rerun with --mode full restricted to explicit artifacts.
+       ```
+    
+    3. **EMPTY_PACKET fail-closed guard** — after `build_packet` and after the `print_only` block,
+       exit before calling `run_codex` if `PACKET_COVERAGE_STATE == EMPTY_PACKET`. The guard must
+       not block `--print-packet` inspection.
+    
+    4. **Precheck false-positive** — tighten the `UPG-####` grep to exclude comment/HTML-comment
+       blocks and legend sections. The grep currently fires on documentation-only uses of the
+       placeholder pattern (e.g. `changes/UPG-####__CHG-YYYYMMDD-NNN__slug.md` in a comment).
+    
+    ## Scope
+    
+    `self-dev only`. Changes only `scripts/codeos-review.sh`. No downstream doctrine changes.
+    No prompt changes. No template changes.
+    
+    ## Value
+    
+    Prevents silent EMPTY_PACKET Codex calls that produce unactionable DO NOT ADVANCE artifacts.
+    Fixes the delta-mode commit-only limitation that stalled UPG-0004. Reduces --skip-prechecks
+    workarounds for comment-section false positives.
+    
+    ## Guardrail
+    
+    All four fixes must be narrowly targeted. No packet format changes, no new subcommands, no
+    advisory/read-only/non-gatekeeping guarantee changes. Existing `--mode full` behavior unchanged.
+    
+    ---
+    
+    ## Feature Thread
+    
+    > Canonical thread rollup for this feature.
+    
+    ### Changes
+    
+    | Change ID | File | Purpose | State |
+    |---|---|---|---|
+    | CHG-20260630-002 | changes/UPG-0031__CHG-20260630-002__review-delta-working-tree.md | Fix delta-mode working-tree diff, untracked guard, EMPTY_PACKET guard, precheck false-positive | IN_PROGRESS |
+    
+    ### Reviews
+    
+    | Review ID | Change ID | Step | Round | Verdict |
+    |---|---|---|---|---|
+    
+    ### Findings Tracked Inside This Feature
+    
+    | Finding ID | Review ID | Classification | Resolution |
+    |---|---|---|---|
+    
+    ### Follow-up Features
+    
+    | Feature ID | Reason | Source finding |
+    |---|---|---|
+
+  --- status/self-development.md (sha256: 3658fd09773c6ea15ed519c2650531a02d547383945eef935ab790f6731b2ce4, visibility: shown) ---
+    # Self-Development Status
+    
+    > Live dashboard for in-flight Codeos toolkit changes. **Mutable** — maintained by the
+    > 4-step self-development loop (see repo-root `CLAUDE.md` and `prompts/codeos-self-dev.md`).
+    > The stable rulebook is `CLAUDE.md`; per-change detail is in
+    > `changes/UPG-####__CHG-YYYYMMDD-NNN__slug.md`; the wave plan is `status/roadmap.md`; the
+    > authoritative feature-id map is `backlog/features.md`.
+    >
+    > **Identity is split** (see `backlog/UPG-0001-feature-thread-traceability.md`): a **Feature ID**
+    > (`UPG-####`, stable) names the backlog feature; a **Change ID** (`CHG-YYYYMMDD-NNN`) names one
+    > execution against it. A historical row may carry a legacy change-stem in **Change ID** and `—`
+    > in **Feature ID** when no backlog feature exists.
+    >
+    > Step 1 activates a row; each step updates **Loop step** and **Latest review**. Reconcile marks
+    > **State: COMPLETE** once the step's compulsory (advisory) review has run **and** the human has
+    > accepted the result — NO OBJECTION, or CHANGES ADVISED with residual non-blocking findings
+    > accepted or tracked to a named **Follow-up** `UPG-####`. The review informs the human; it never
+    > gates by itself. A change with open, unaccepted in-scope findings stays **IN_PROGRESS**.
+    
+    | Feature ID | Change ID | Class | Scope | Loop step | Review (state / accepted outcome) | State | Follow-up |
+    |---|---|---|---|---|---|---|---|
+    | — | 0001-claude-split | self-dev-governance + downstream-doctrine | both | 4-Reconcile | CHANGES ADV →0004 | COMPLETE | — |
+    | UPG-0002 | 0002-doc-consistency-rename | documentation | downstream doctrine only | 4-Reconcile | CHANGES ADV →0004 | COMPLETE | — |
+    | — (planning) | 0003-implementation-roadmap | backlog-only / planning | self-dev only | 4-Reconcile | CHANGES ADV →0004 | COMPLETE | — |
+    | — (reviewer findings) | 0004-review-fixes | documentation / self-dev-governance | self-dev only | 4-Reconcile | CHANGES ADV (accepted) | COMPLETE | — |
+    | UPG-0001 | CHG-20260627-001 | self-dev-governance | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S4; rounds in review-log) | COMPLETE | UPG-0029 |
+    | UPG-0029 | CHG-20260629-001 | documentation | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S4; rounds in review-log) | COMPLETE | UPG-0030 |
+    | UPG-0030 | CHG-20260629-001 | self-dev-governance | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S4; rounds in review-log) | COMPLETE | — |
+    | UPG-0027 | CHG-20260629-002 | prompt / script-tooling | self-dev only | 4-Reconcile | ACCEPTED (NO OBJECTION) | COMPLETE | — |
+    | UPG-0027 | CHG-20260629-003 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (NO OBJECTION) | COMPLETE | — |
+    | UPG-0027 | CHG-20260629-004 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (human approved; all 12 ACs verified by functional test) | COMPLETE | — |
+    | UPG-0027 | CHG-20260629-005 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (human approved; all 14 ACs verified by functional test) | COMPLETE | — |
+    | UPG-0004 | CHG-20260630-001 | template | self-dev only | 4-Reconcile | ACCEPTED (Steps 2–4 reviewed; R2 NO OBJECTION at each gate) | COMPLETE | UPG-0031 |
+    | UPG-0031 | CHG-20260630-002 | script-tooling | self-dev only | 1-Intent | DRAFT | IN_PROGRESS | — |
+    
+    <!--
+    Identity   : Feature ID = UPG-#### (stable). Change ID = CHG-YYYYMMDD-NNN (one execution), or a
+                 legacy change-stem (0001..0004) for historical/piloted work recorded truthfully.
+    Loop step  : 1-Intent / 2-Acceptance / 3-Implement / 4-Reconcile / —
+    Review     : review STATE/outcome, not a live round — in-flight: `review_state` (IN_REVIEW…) + the
+                 review series `RVS__…__S<N>`; closed: the accepted verdict summary. Exact `REV__…__R<N>`
+                 rounds + human decisions live ONLY in reviews/review-log.md (Self-Reference Boundary).
+                 `→UPG-####` / `→NNNN` = findings tracked to a follow-up.
+    State      : PROPOSED / IN_PROGRESS / BLOCKED / COMPLETE (+ feature states PILOTED/SUPERSEDED/ABANDONED)
+    Follow-up  : UPG-#### tracking out-of-scope findings from this change, or —
+    -->
+
+DIFF TO REVIEW (base->review, secret/size filtered)
+diff --git a/backlog/UPG-0004-stage-4-6-reports.md b/backlog/UPG-0004-stage-4-6-reports.md
+index 2195cb8..0ae7f2d 100644
+--- a/backlog/UPG-0004-stage-4-6-reports.md
++++ b/backlog/UPG-0004-stage-4-6-reports.md
+@@ -131,6 +131,7 @@ evidence chain that reconciliation (Stage 7) consumes.
+ 
+ | Change ID | File | Purpose | State |
+ |---|---|---|---|
++| CHG-20260630-001 | changes/UPG-0004__CHG-20260630-001__stage-4-6-report-template.md | Create templates/stage-4-6-report.md | COMPLETE |
+ 
+ ### Reviews
+ 
+diff --git a/backlog/features.md b/backlog/features.md
+index a389c9b..090ccd5 100644
+--- a/backlog/features.md
++++ b/backlog/features.md
+@@ -61,6 +61,7 @@ The goal is to speed up Codeos development without weakening DBA advantages.
+ | UPG-0028 | [UPG-0028-reviewer-self-reference-recursion.md](UPG-0028-reviewer-self-reference-recursion.md) | Reviewer self-reference recursion (scoping) | P2 | PROPOSED |
+ | UPG-0029 | [UPG-0029-review-naming-and-thread-tooling.md](UPG-0029-review-naming-and-thread-tooling.md) | Review artifact durability + packet naming policy | P2 | COMPLETE |
+ | UPG-0030 | [UPG-0030-lean-self-development-review-profiles.md](UPG-0030-lean-self-development-review-profiles.md) | Lean Self-Development Review Profiles | P1 | COMPLETE |
++| UPG-0031 | [UPG-0031-review-delta-mode-fix.md](UPG-0031-review-delta-mode-fix.md) | Review script delta-mode working-tree fix + fail-closed EMPTY_PACKET guard | P1 | PROPOSED |
+ 
+ > Priority `—` = no formal P-rank (a completed cleanup, or a discovery note). Feature IDs are
+ > assigned once and never reused. `UPG-0002` and `UPG-0003` are historical/piloted work given IDs
+diff --git a/status/self-development.md b/status/self-development.md
+index d1b7d5f..954c24b 100644
+--- a/status/self-development.md
++++ b/status/self-development.md
+@@ -30,6 +30,8 @@
+ | UPG-0027 | CHG-20260629-003 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (NO OBJECTION) | COMPLETE | — |
+ | UPG-0027 | CHG-20260629-004 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (human approved; all 12 ACs verified by functional test) | COMPLETE | — |
+ | UPG-0027 | CHG-20260629-005 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (human approved; all 14 ACs verified by functional test) | COMPLETE | — |
++| UPG-0004 | CHG-20260630-001 | template | self-dev only | 4-Reconcile | ACCEPTED (Steps 2–4 reviewed; R2 NO OBJECTION at each gate) | COMPLETE | UPG-0031 |
++| UPG-0031 | CHG-20260630-002 | script-tooling | self-dev only | 1-Intent | DRAFT | IN_PROGRESS | — |
+ 
+ <!--
+ Identity   : Feature ID = UPG-#### (stable). Change ID = CHG-YYYYMMDD-NNN (one execution), or a

@@ -1,0 +1,908 @@
+Critically assess:
+
+SCOPE CONTRACT
+  Assess this artifact against the STATED SCOPE of this stage/PR — the Expected Stage
+  Output below and what the artifacts actually claim — NOT against an ideal final system.
+  A capability the artifacts do not claim to provide is OUT-OF-SCOPE, not a defect.
+  The following are OUT-OF-SCOPE BACKLOG unless THIS artifact explicitly claims to provide
+  them: formal approval-binding enforcement; rollback correctness; COMMIT_BOUND/
+  WORKSPACE_BOUND enforcement; JSON Schema validation; CI validation; exact
+  decision-integrity; per-feature decision ledgers; autonomous approval; enabled hooks.
+
+TRIAGE RULE — classify EVERY finding as exactly one of:
+  IN-SCOPE BLOCKER     breaks the stated goal; creates a FALSE CLAIM in this artifact;
+                       weakens the advisory/read-only/human-gated guarantees; prevents
+                       the work from running; or violates an explicit safety constraint.
+  IN-SCOPE NON-BLOCKER improves it but is not required for this PR.
+  OUT-OF-SCOPE BACKLOG valid, but belongs to a future feature / stronger guarantee.
+  REJECTED             conflicts with the stated scope or Codeos philosophy.
+  Base the PR decision ONLY on IN-SCOPE BLOCKER findings. An OUT-OF-SCOPE BACKLOG finding
+  must NOT cause DO NOT ADVANCE unless this artifact FALSELY CLAIMS to solve it.
+
+REVIEW CONTEXT
+  Feature:                UPG-0001__CHG-20260627-001
+  Stage:                  selfdev-step-2
+  Branch:                 feature/backlog-split-and-reviewer
+  Base commit:            (no base pin)
+  Review commit:          89269f1344d54d585d09fd881aa965b934bb30fc (+ uncommitted workspace changes)
+  Current approved stage: n/a (non-numeric stage)
+  Evidence coverage:      FULL_COVERAGE
+  Workspace dirty:        yes (uncommitted changes at review time)
+
+DBA RULES RELEVANT TO THIS STAGE
+  - Human approval is required for every stage transition; you are advisory only.
+  - Memory is not truth — assess only what is provided, pinned to the review commit.
+  - Implementation must trace to approved artifacts; no behavior beyond intent+contract+schema.
+  - No events outside the approved event schema; no hidden behavior.
+
+STAGE-SPECIFIC CHECKS
+  - (no stage-specific checklist for stage selfdev-step-2)
+
+EXPECTED STAGE OUTPUT
+  (no expected-output template for stage selfdev-step-2)
+
+ARTIFACTS TO REVIEW
+  --- changes/UPG-0001__CHG-20260627-001__feature-thread-traceability.md (sha256: 347383d605e71a5a35c5b6c1a2ad3bda6676f7695e0277da16b3869642cc0a18, visibility: shown) ---
+    # Self-Development Change: UPG-0001__CHG-20260627-001 — feature-thread-traceability
+    
+    <!--
+    PURPOSE: Per-change source of truth for a non-trivial change to the Codeos toolkit itself.
+    This change is executed through the 4-step Self-Development Loop (prompts/codeos-self-dev.md).
+    Each step requires explicit human approval and a compulsory (advisory) Codex review.
+    The live status row lives in status/self-development.md, not here.
+    
+    This change DOGFOODS the Feature Thread scheme it introduces: its own filename carries the
+    primary feature ID (UPG-0001) and a unique change ID (CHG-20260627-001), and the trace header
+    below uses the new convention before the template is formally updated in Step 3.
+    -->
+    
+    <!-- TRACE HEADER (new convention introduced by this very change) -->
+    ```yaml
+    feature_id: UPG-0001
+    primary_feature_id: UPG-0001
+    change_id: CHG-20260627-001
+    slug: feature-thread-traceability
+    state: IN_PROGRESS
+    current_step: 2-Acceptance
+    implements:
+      - UPG-0001
+    related_features: []
+    latest_review: REV__UPG-0001__CHG-20260627-001__S1__R3   # NO OBJECTION (advisory); review files not renamed (deferred)
+    fixes_findings:
+      - "S1/R1 IN-SCOPE BLOCKER: brief AC#9 vs narrowed review-traceability — reconciled in brief"
+      - "S1/R1 IN-SCOPE BLOCKER: brief migration step 8 vs historical-not-renamed — reconciled in brief"
+      - "S1/R2 IN-SCOPE BLOCKER: brief state-vocabulary case inconsistency — normalized to canonical enum"
+    follow_up_of: null
+    ```
+    
+    ## Change Intent
+    
+    **Why (problem in the toolkit):**
+    Codeos currently conflates four distinct identities and has no visible traceability spine:
+    1. the stable backlog feature/upgrade,
+    2. the concrete self-development change that implements it,
+    3. review rounds for that change,
+    4. follow-up fixes or backlog items born from reviewer findings.
+    
+    The recent roadmap/review-fix work exposed the failure mode: a review fix (`0004-review-fixes`)
+    was assigned the next numeric ID as if it were the next *feature*, and iterative review rounds
+    created bookkeeping that drifted from the change record and the dashboard. There is no way to
+    answer, from filenames and status tables alone, "which feature does this change/review belong
+    to?" This change introduces a stable Feature Thread model and ID nomenclature so every related
+    file visibly shows which feature it belongs to.
+    
+    **What changes (every file touched):**
+    
+    *Convention / governance definitions*
+    - `templates/codeos-change.md` — replace the metadata block with the new trace header
+      (`feature_id`, `primary_feature_id`, `change_id`, `slug`, `state`, `current_step`,
+      `implements`, `related_features`, `latest_review`, `fixes_findings`, `follow_up_of`); document
+      the `changes/UPG-####__CHG-YYYYMMDD-NNN__slug.md` filename convention and the rare `MULTI` case.
+    - `prompts/codeos-self-dev.md` — Step 1 creates/selects a Feature Thread + `CHG-*` ID before
+      opening the change record; add review-round (`R<N>`) + finding-classification vocabulary;
+      document the Review-Fix Rule (in-scope fix stays in the same `CHG-*`; only OUT-OF-SCOPE
+      BACKLOG spawns a new `UPG-####`).
+    - `CLAUDE.md` — consistency pass: update the Self-Development File Layout block and
+      `changes/[change_id].md` references to the new naming; add a one-line pointer to the ID model.
+    
+    *Dashboards / catalog / roadmap*
+    - `status/self-development.md` — new columns
+      `Feature ID | Change ID | Class | Scope | Loop step | Latest review | State | Follow-up`;
+      historical rows keep their existing IDs in Change ID with Feature ID mapped or `—` + note.
+    - `status/roadmap.md` — re-keyed by `UPG-####`
+      (`Wave | Feature ID | Title | Priority | Depends on | Planned/active change | State`);
+      Current-State entries labelled explicitly as Change IDs.
+    - `backlog/features.md` — becomes the authoritative `UPG-#### → one file` map.
+    
+    *Backlog briefs (full but MECHANICAL migration)*
+    - Rename every active brief to `backlog/UPG-####-slug.md`; prepend the backlog feature header;
+      append a `## Feature Thread` section. (This feature's own brief was renamed to
+      `backlog/UPG-0001-feature-thread-traceability.md` and given its header in Step 1.)
+    
+    *Review records*
+    - `reviews/review-log.md` — header note that new entries identify both feature and change;
+      existing append-only entries left intact. The `REV__UPG-####__CHG-…__S<N>__R<N>` id is
+      documented as the manual naming — documented, not required (see scope boundary).
+    
+    **Scope boundary — what stays the same:**
+    - `dba-system.md` (downstream DBA doctrine) is **not touched** — scope is `self-dev only`. Any
+      edit that appears to need a doctrine change stops and re-triages.
+    - **Mechanical migration only:** briefs receive *only* trace headers, feature IDs, new
+      filenames, Feature-Thread sections, and cross-reference updates. No brief-body substance is
+      rewritten, re-prioritized, or re-worded. Any substantive brief change discovered mid-migration
+      is stopped and re-triaged as its own change.
+    - **Review-file renaming is deferred.** This change renames no existing review file and does not
+      change `scripts/codeos-review.sh` behavior/output naming. The acceptance bar (relaxing the
+      brief's strict AC #9): a review must identify its feature and change in *at least one* of
+      filename, packet content, review-log entry, or the change record's Feature Thread. Actual
+      `REV__…` file renaming + `codeos-review.sh` emission is filed as a follow-up `UPG-####`.
+    - Historical change records `changes/0001..0004` are recorded as historical/piloted — **not
+      renamed**, with no invented CHG IDs or dates.
+    
+    **Class:** self-dev-governance
+    **Scope axis:** self-dev only
+    **Backlog item:** backlog/UPG-0001-feature-thread-traceability.md
+    
+    ---
+    
+    ## Acceptance Criteria
+    
+    Consistency contracts this change must satisfy. Each is checkable in Step 4 by the named method.
+    "Active brief" = a non-historical backlog feature file (`backlog/UPG-####-slug.md`). Criteria are
+    grouped; the seven contracts the human required in Step 2 are tagged **[req]**.
+    
+    **Pinned base for all `git`-based checks.** Every diff/scope-guard check below is computed
+    against the recorded pre-change base commit **`89269f1`** (the `HEAD` before this change; all of
+    this change's edits are uncommitted working-tree changes), with rename detection (`-M`) — **not**
+    against the dirty working tree. This makes the acceptance tests reproducible despite the reviewer
+    running with no base pin and a dirty workspace. The literal SHA `89269f1` (not `HEAD`) remains the
+    base for scope-guard checks (E1/E2). For the mechanical-migration check (C2), the **first Step-3
+    action is a pre-migration baseline commit `<BASELINE_SHA>`** (recorded in Implementation Notes)
+    that first adds the two briefs untracked at `89269f1` — so **every** brief is tracked at the
+    baseline and the whole migration is diffable from committed artifacts, with **no session-external
+    state**. (This reuses the toolkit's own base-pinning model — cf. `codeos-review.sh stage-start
+    --base`.)
+    
+    ### A. Identity & numbering
+    
+    | # | Criterion | How verified in Step 4 |
+    |---|---|---|
+    | A1 | Every active backlog brief has exactly one `feature_id` (brief AC#1). | `grep -rn "^feature_id:" backlog/UPG-*.md`; count == number of active briefs; no duplicate value (`… \| sort \| uniq -d` empty). |
+    | A2 | **[req] UPG numbering rule:** `UPG-0001` = this feature; remaining active briefs numbered in **roadmap order** (Current-State/piloted first, Wave 1→5, then the two loose briefs). IDs assigned once, never reused; piloted/complete briefs get IDs marked truthfully (no false sequencing). | Read `backlog/features.md` map; assert `UPG-0001` == feature-thread-traceability; assert assignment order matches `status/roadmap.md`; `uniq -d` on the UPG list is empty. |
+    | A3 | `backlog/features.md` maps each `UPG-####` to **exactly one** existing backlog file (brief AC#6). | For each map row, `test -f` the target; assert one-to-one (no UPG mapped twice; no file mapped twice). |
+    | A4 | Change-record trace header lists `feature_id`, `primary_feature_id`, `change_id`, `implements` (brief AC#5). | Read this change record's trace header. |
+    | A5 | Every **non-trivial change** filename carries the primary `UPG-####` **and** a unique `CHG-*` (brief AC#3/AC#4). | `ls changes/UPG-*__CHG-*` includes this change; `CHG-*` values unique. Historical `0001..0004` are exempt by C1. |
+    
+    ### B. Visibility ("at all times, in all related files")
+    
+    | # | Criterion | How verified in Step 4 |
+    |---|---|---|
+    | B1 | **[req] Feature ID + Change ID visibility:** the feature owning a change is identifiable **from the filename alone** (brief AC#12); opening a brief's `## Feature Thread` shows its changes, reviews, tracked findings, and follow-ups (brief AC#13). | Inspect this change's filename (`UPG-0001__CHG-…`); inspect `backlog/UPG-0001-…` Feature Thread → lists `CHG-20260627-001`. |
+    | B2 | Every active backlog brief has a `## Feature Thread` section (brief AC#2). | `grep -L "## Feature Thread" backlog/UPG-*.md` returns empty. |
+    | B3 | `status/self-development.md` separates **Feature ID** from **Change ID** columns (brief AC#8). | Read dashboard header; every active row has distinct, populated Feature ID and Change ID cells. |
+    | B4 | `status/roadmap.md` uses `UPG-####` as the primary key with the required columns; Current-State entries are explicitly labelled **Change IDs**, not feature IDs (brief AC#7). | Read roadmap header row; wave rows lead with `UPG-`; Current-State table column header says Change ID. |
+    
+    ### C. Migration boundaries
+    
+    | # | Criterion | How verified in Step 4 |
+    |---|---|---|
+    | C1 | **[req] Historical 0001–0004 mapping rule:** existing change records `changes/0001..0004` are **not** renamed, receive **no** invented `CHG-*` IDs or dates, and appear truthfully as historical/piloted in the dashboard (Change ID = existing stem; Feature ID = mapped UPG where a brief exists, else `—` + note). No false retroactive sequencing (brief AC#11). | `ls changes/` shows `0001..0004` unchanged; `grep -E "CHG-2026" ` finds none attached to them; read dashboard historical rows. |
+    | C2 | **[req] Mechanical-only backlog migration:** active briefs are changed **only** by trace header / `feature_id` / new filename / `## Feature Thread` section / cross-reference updates — **no** brief-body substance, prose, or priority rewritten. | Rename-aware diff against the pinned base: `git diff -M 89269f1 -- backlog/` shows, **per active brief**, only added YAML front-matter + an appended `## Feature Thread` section (plus any cross-reference link edits enumerated in Implementation Notes); **no body line modified or deleted**. Briefs untracked at the base are compared against their recorded scratchpad snapshot (sha256 in Implementation Notes) the same way. `UPG-0001`'s own brief additionally carries its already-approved Step-1 scope reconciliations. |
+    | C3 | No plain `000N` is used as **both** a feature ID and a change ID anywhere (brief AC#14). | `grep -rn "000[0-9]" status/ changes/ backlog/ docs/ README.md prompts/ templates/`; every remaining hit is unambiguously a Change ID (historical) — none labelled a feature. |
+    
+    ### D. Review model
+    
+    | # | Criterion | How verified in Step 4 |
+    |---|---|---|
+    | D1 | A review identifies **both** the feature and the change in **at least one** of: review filename, packet content, review-log entry, or the change record's Feature Thread (relaxed brief AC#9). | Confirm **at least one** of the four surfaces carries both IDs — the criterion does **not** require all of them. (In this change two already do: a `grep "UPG-0001__CHG-20260627-001" reviews/review-log.md` hit and the change-record `latest_review`/Feature-Thread id — but a single surface satisfies the contract.) |
+    | D2 | **[req] Review-fix rule:** an in-scope finding's fix **stays inside the same `CHG-*`**; only an **OUT-OF-SCOPE BACKLOG** finding creates/links a new `UPG-####` — a fix never gets the next feature ID just for happening after a review (brief AC#10). | Read the Review-Fix Rule wording in `prompts/codeos-self-dev.md`; confirm this change's own S1/R1–R2 in-scope fixes stayed inside `CHG-20260627-001` (no new feature minted). |
+    
+    ### E. Scope-drift / governance guards (self-dev-governance)
+    
+    | # | Criterion | How verified in Step 4 |
+    |---|---|---|
+    | E1 | **[req] No `dba-system.md` change** (scope axis = self-dev only). | Against the pinned base: `git diff 89269f1 -- dba-system.md` empty (tracked file; pinned, not workspace-relative). |
+    | E2 | **[req] No `scripts/codeos-review.sh` behavior change** — the `REV__…` id is documented-only; review-file renaming + script support are deferred. | Against the pinned base: `git diff 89269f1 -- scripts/codeos-review.sh` empty. |
+    | E3 | The deferred script-tooling work exists as its **own** filed backlog `UPG-####` (not folded into this change). | Read the filed follow-up brief: assert it has its **own** unique `feature_id` (≠ `UPG-0001`) and that its Problem/Goal name the deferred work (`REV__…` review-file renaming + `codeos-review.sh` emission; optionally `scripts/check_feature_threads.sh`). E2 (`git diff 89269f1 -- scripts/codeos-review.sh` empty) independently confirms none of that work is folded into this change. |
+    | E4 | Cross-reference integrity: `features.md` ↔ briefs ↔ `roadmap.md` ↔ dashboard agree on IDs/states; renames leave **no** dangling links. | Orphaned-link grep sweep (old filenames / `[change_id]` placeholders) clean or fixed. |
+    
+    ---
+    
+    ## Implementation Notes
+    
+    <!-- Filled in Step 3. -->
+    
+    ---
+    
+    ## Reconciliation
+    
+    <!-- Filled in Step 4. -->
+    
+    ---
+    
+    <!-- METADATA -->
+    status: IN_PROGRESS
+    change_id: CHG-20260627-001
+    feature_id: UPG-0001
+    type: SELF_DEVELOPMENT
+    class: self-dev-governance
+    scope: self-dev only
+    backlog_item: backlog/UPG-0001-feature-thread-traceability.md
+    step_completed: 1
+    approved_by: human (Primoz Gorjup) — Step 1 Change Intent
+    approved_at: 2026-06-27
+
+  --- backlog/UPG-0001-feature-thread-traceability.md (sha256: 6b1d7a2264fd6768a31cee143ce94b757fdea8e9214a4d08f03eda30e49e087d, visibility: shown) ---
+    ---
+    feature_id: UPG-0001
+    slug: feature-thread-traceability
+    title: Feature Thread Traceability and Stable ID Nomenclature
+    status: IN_PROGRESS
+    priority: P0
+    class: self-dev-governance
+    scope: self-dev only
+    depends_on: []
+    related_features: []
+    supersedes: []
+    superseded_by: []
+    ---
+    
+    # Feature Brief: Feature Thread Traceability and Stable ID Nomenclature
+    
+    ## Metadata
+    
+    * feature_id: UPG-0001
+    * slug: feature-thread-traceability
+    * title: Feature Thread Traceability and Stable ID Nomenclature
+    * status: IN_PROGRESS
+    * priority: P0
+    * class: self-dev-governance
+    * scope: self-dev only
+    * depends_on:
+    
+      * UPG for Codeos self-development split, if assigned
+      * UPG for implementation roadmap, if assigned
+    * related_files:
+    
+      * backlog/features.md
+      * status/roadmap.md
+      * status/self-development.md
+      * templates/codeos-change.md
+      * prompts/codeos-self-dev.md
+      * reviews/review-log.md
+      * scripts/codeos-review.sh
+    
+    ## Problem
+    
+    Codeos currently risks confusing four different identities:
+    
+    1. the stable backlog feature or upgrade;
+    2. the concrete self-development change that implements it;
+    3. review rounds for that change;
+    4. follow-up fixes or backlog items created from reviewer findings.
+    
+    The recent roadmap/review-fix work showed the failure mode clearly: a review fix for one change was assigned the next numeric ID, making it look like the next feature. Then review rounds created fresh bookkeeping facts, causing the dashboard and change records to fall out of sync.
+    
+    The system needs a robust traceability model where every related file visibly shows which feature it belongs to, without requiring the user to open every change record and inspect metadata.
+    
+    ## Goal
+    
+    Introduce a stable Feature Thread model and ID convention so that all work related to the same feature is visible across backlog files, change files, review files, status dashboards, and roadmaps.
+    
+    The user must be able to answer these questions from filenames and status tables:
+    
+    * Which feature does this change belong to?
+    * Which change records implement this feature?
+    * Which review rounds belong to this change?
+    * Which review findings were fixed inside the same change?
+    * Which findings became follow-up backlog features?
+    * Which features are planned, active, complete, superseded, or blocked?
+    
+    ## Core Concept: Feature Thread
+    
+    A Feature Thread is the persistent identity and traceability spine for one Codeos upgrade.
+    
+    A feature is the stable thing.
+    
+    A change is one execution attempt against a feature.
+    
+    A review is evidence about one step of one change.
+    
+    A finding is either resolved inside the current change or promoted to a new backlog feature.
+    
+    ## ID Types
+    
+    ### Stable feature ID
+    
+    Format:
+    
+    ```text
+    UPG-####
+    ```
+    
+    Example:
+    
+    ```text
+    UPG-0025
+    ```
+    
+    Meaning:
+    
+    A stable backlog feature or upgrade ID. It is assigned once, never reused, and never renumbered.
+    
+    Rules:
+    
+    * Every non-trivial backlog feature file must have exactly one `feature_id`.
+    * The `feature_id` is authoritative over filename order.
+    * IDs are never reused after abandonment, merge, supersession, deletion, or completion.
+    * Historical/piloted work may receive IDs during migration without pretending it originally followed the new process.
+    
+    ### Change ID
+    
+    Format:
+    
+    ```text
+    CHG-YYYYMMDD-NNN
+    ```
+    
+    Example:
+    
+    ```text
+    CHG-20260627-001
+    ```
+    
+    Meaning:
+    
+    One self-development execution record through the 4-step Codeos loop.
+    
+    Rules:
+    
+    * A change ID is not a feature ID.
+    * A change may implement one feature, part of one feature, or, with explicit approval, a small group of related features.
+    * Review fixes for in-scope findings stay inside the same change.
+    * A new change is created only when the current change is closed, scope changes, or an out-of-scope backlog item is accepted.
+    
+    ### Review round ID
+    
+    Format:
+    
+    ```text
+    REV__UPG-####__CHG-YYYYMMDD-NNN__S<N>__R<N>
+    ```
+    
+    Example:
+    
+    ```text
+    REV__UPG-0025__CHG-20260627-001__S4__R2
+    ```
+    
+    Meaning:
+    
+    One reviewer run for one step of one change.
+    
+    Rules:
+    
+    * Review rounds are not features.
+    * Review rounds are not change records.
+    * Review rounds must not create new change numbers.
+    * Review history lives in the change record and review files, not as separate feature rows.
+    
+    ### Finding ID
+    
+    Optional format:
+    
+    ```text
+    FND__REV__UPG-####__CHG-YYYYMMDD-NNN__S<N>__R<N>__NN
+    ```
+    
+    Example:
+    
+    ```text
+    FND__REV__UPG-0025__CHG-20260627-001__S4__R2__01
+    ```
+    
+    Meaning:
+    
+    A specific reviewer finding that needs explicit tracking.
+    
+    Rules:
+    
+    * Use finding IDs only when the finding needs explicit resolution tracking.
+    * Findings are classified as:
+    
+      * IN-SCOPE BLOCKER
+      * IN-SCOPE NON-BLOCKER
+      * OUT-OF-SCOPE BACKLOG
+      * REJECTED
+    * IN-SCOPE BLOCKER findings are fixed inside the same change.
+    * OUT-OF-SCOPE BACKLOG findings create or link to a new `UPG-####`.
+    
+    ## Required Filename Convention
+    
+    ### Backlog feature files
+    
+    Pattern:
+    
+    ```text
+    backlog/UPG-####-slug.md
+    ```
+    
+    Example:
+    
+    ```text
+    backlog/UPG-0025-feature-thread-traceability.md
+    ```
+    
+    ### Change records
+    
+    Pattern:
+    
+    ```text
+    changes/UPG-####__CHG-YYYYMMDD-NNN__slug.md
+    ```
+    
+    Example:
+    
+    ```text
+    changes/UPG-0025__CHG-20260627-001__feature-thread-traceability.md
+    ```
+    
+    Rules:
+    
+    * Every non-trivial change filename must include the primary `UPG-####`.
+    * The filename must also include the unique `CHG-*` ID.
+    * The feature ID in the filename gives immediate visual grouping.
+    * The change ID preserves execution uniqueness.
+    * The slug should describe the concrete change, not the entire roadmap.
+    
+    ### Multiple-feature changes
+    
+    If a change touches more than one feature, use the primary feature ID in the filename and list additional affected features in metadata.
+    
+    Example filename:
+    
+    ```text
+    changes/UPG-0025__CHG-20260627-002__id-migration.md
+    ```
+    
+    Trace header:
+    
+    ```yaml
+    primary_feature_id: UPG-0025
+    implements:
+      - UPG-0025
+    related_features:
+      - UPG-0012
+      - UPG-0018
+    ```
+    
+    Use `MULTI` only when there is genuinely no primary feature and the human explicitly approves a multi-feature change.
+    
+    Example:
+    
+    ```text
+    changes/MULTI__CHG-20260627-003__roadmap-dashboard-alignment.md
+    ```
+    
+    This should be rare.
+    
+    ### Review files
+    
+    > **Documented manual convention — not enforced or auto-emitted by this change.** Renaming
+    > existing review files and adding `scripts/codeos-review.sh` support are a deferred follow-up
+    > `UPG-####` (see Migration Plan step 9 and Acceptance Criterion 9).
+    
+    Pattern:
+    
+    ```text
+    reviews/codex/REV__UPG-####__CHG-YYYYMMDD-NNN__S<N>__R<N>.md
+    ```
+    
+    Example:
+    
+    ```text
+    reviews/codex/REV__UPG-0025__CHG-20260627-001__S4__R1.md
+    ```
+    
+    Review packet:
+    
+    ```text
+    reviews/codex/REV__UPG-0025__CHG-20260627-001__S4__R1.packet.txt
+    ```
+    
+    ## Trace Header
+    
+    Every related file should include a compact trace header.
+    
+    ### Backlog feature file header
+    
+    ```yaml
+    ---
+    feature_id: UPG-0025
+    slug: feature-thread-traceability
+    title: Feature Thread Traceability and Stable ID Nomenclature
+    status: PROPOSED
+    priority: P0
+    class: self-dev-governance
+    scope: self-dev only
+    depends_on: []
+    related_features: []
+    supersedes: []
+    superseded_by: []
+    ---
+    ```
+    
+    ### Change record header
+    
+    ```yaml
+    ---
+    feature_id: UPG-0025
+    primary_feature_id: UPG-0025
+    change_id: CHG-20260627-001
+    slug: feature-thread-traceability
+    state: IN_PROGRESS
+    current_step: 4-Reconcile
+    implements:
+      - UPG-0025
+    related_features: []
+    latest_review: REV__UPG-0025__CHG-20260627-001__S4__R1
+    fixes_findings: []
+    follow_up_of: null
+    ---
+    ```
+    
+    ### Review record header
+    
+    ```yaml
+    ---
+    review_id: REV__UPG-0025__CHG-20260627-001__S4__R1
+    feature_id: UPG-0025
+    change_id: CHG-20260627-001
+    step: selfdev-step-4
+    round: 1
+    verdict: CHANGES ADVISED
+    evidence: A
+    coverage: FULL_COVERAGE
+    ---
+    ```
+    
+    ## Feature Thread Section
+    
+    Every backlog feature file must include a `## Feature Thread` section.
+    
+    Template:
+    
+    ```markdown
+    ## Feature Thread
+    
+    ### Changes
+    
+    | Change ID | File | Purpose | State |
+    |---|---|---|---|
+    | CHG-20260627-001 | changes/UPG-0025__CHG-20260627-001__feature-thread-traceability.md | Initial implementation | IN_PROGRESS |
+    
+    ### Reviews
+    
+    | Review ID | Change ID | Step | Round | Verdict |
+    |---|---|---|---|---|
+    
+    ### Findings Tracked Inside This Feature
+    
+    | Finding ID | Review ID | Classification | Resolution |
+    |---|---|---|---|
+    
+    ### Follow-up Features
+    
+    | Feature ID | Reason | Source finding |
+    |---|---|---|
+    ```
+    
+    Rules:
+    
+    * This section is the canonical thread rollup.
+    * It may be manually maintained initially.
+    * It should stay compact: links and IDs, not full review text.
+    * Full details remain in change records and review files.
+    
+    ## Dashboard Model
+    
+    `status/self-development.md` should separate feature identity from change identity.
+    
+    Required columns:
+    
+    ```text
+    Feature ID | Change ID | Class | Scope | Loop step | Latest review | State | Follow-up
+    ```
+    
+    Example:
+    
+    ```markdown
+    | Feature ID | Change ID | Class | Scope | Loop step | Latest review | State | Follow-up |
+    |---|---|---|---|---|---|---|---|
+    | UPG-0025 | CHG-20260627-001 | self-dev-governance | self-dev only | 4-Reconcile | CHANGES ADV S4/R1 | IN_PROGRESS | — |
+    ```
+    
+    Rules:
+    
+    * `Feature ID` identifies the backlog feature.
+    * `Change ID` identifies the active implementation record.
+    * `Latest review` is informational only.
+    * Detailed review history lives in the change record and review files.
+    * The dashboard must not try to encode every review finding.
+    * If review findings are tracked to a future feature, use `Follow-up: UPG-####`.
+    
+    ## Roadmap Model
+    
+    `status/roadmap.md` should use feature IDs as primary keys.
+    
+    Required columns:
+    
+    ```text
+    Wave | Feature ID | Title | Priority | Depends on | Planned/active change | State
+    ```
+    
+    Example:
+    
+    ```markdown
+    | Wave | Feature ID | Title | Priority | Depends on | Planned/active change | State |
+    |---|---|---|---|---|---|---|
+    | 1 | UPG-0025 | Feature Thread Traceability | P0 | — | CHG-20260627-001 | IN_PROGRESS |
+    ```
+    
+    Rules:
+    
+    * Roadmap sequencing is by `UPG-####`.
+    * Change IDs are execution details.
+    * Existing pilot work may be recorded as current state without retroactive false sequencing.
+    
+    ## Review-Fix Rule
+    
+    A review fix remains inside the same `CHG-*` if:
+    
+    * it addresses an IN-SCOPE BLOCKER;
+    * it does not alter the approved scope;
+    * it only repairs implementation, documentation, status, acceptance, or review-record consistency for the current change.
+    
+    A review fix creates or links a new `UPG-####` only if:
+    
+    * it is OUT-OF-SCOPE BACKLOG;
+    * it changes the approved intent or acceptance criteria materially;
+    * it introduces a new feature, policy, workflow, file type, or tool behavior;
+    * it would make the current change unreviewably broad.
+    
+    A review fix must not receive the next feature ID merely because it happened after a review.
+    
+    ## State Rules
+    
+    Feature state values:
+    
+    ```text
+    PROPOSED
+    PLANNED
+    IN_PROGRESS
+    PILOTED
+    COMPLETE
+    BLOCKED
+    SUPERSEDED
+    ABANDONED
+    ```
+    
+    Change state values:
+    
+    ```text
+    DRAFT
+    IN_REVIEW
+    IN_PROGRESS
+    BLOCKED
+    COMPLETE
+    ABANDONED
+    SUPERSEDED
+    ```
+    
+    Review verdict values:
+    
+    ```text
+    NO OBJECTION
+    CHANGES ADVISED
+    DO NOT ADVANCE
+    SKIPPED
+    ```
+    
+    Rules:
+    
+    * A feature can remain `IN_PROGRESS` across multiple changes.
+    * A change becomes `COMPLETE` only after its in-scope blockers are resolved or explicitly accepted by the human.
+    * Advisory findings tracked to future `UPG-####` items do not prevent the current change from closing if they are out of scope.
+    * Historical pilot work may be marked `PILOTED` instead of being forced into false `COMPLETE` sequencing.
+    
+    ## Required File Updates
+    
+    This feature should update:
+    
+    ```text
+    prompts/codeos-self-dev.md
+    templates/codeos-change.md
+    status/self-development.md
+    status/roadmap.md
+    backlog/features.md
+    backlog/*.md
+    reviews/review-log.md
+    docs/codeos-manual.md, if it describes self-dev IDs
+    README.md, if it describes self-dev workflow
+    ```
+    
+    Optional later tooling:
+    
+    ```text
+    scripts/check_feature_threads.sh
+    scripts/codeos-review.sh packet naming support
+    ```
+    
+    Do not add mandatory tooling unless the manual convention proves insufficient.
+    
+    ## Migration Plan
+    
+    1. Assign stable `UPG-####` IDs to every active backlog feature file.
+    2. Rename backlog files to `backlog/UPG-####-slug.md`, or keep filenames and add front matter if renaming is too disruptive.
+    3. Update `backlog/features.md` to map each `UPG-####` to one backlog file.
+    4. Update `status/roadmap.md` to sequence features by `UPG-####`.
+    5. Update `status/self-development.md` to include both `Feature ID` and `Change ID`.
+    6. Update `templates/codeos-change.md` with the new trace header and filename convention.
+    7. Update `prompts/codeos-self-dev.md` so Step 1 creates or selects the feature thread before creating a change record.
+    8. **New** change records use `changes/UPG-####__CHG-YYYYMMDD-NNN__slug.md`. **Existing**
+       historical change records (`changes/0001..0004`) are **not** renamed and receive **no**
+       invented `CHG-*` IDs or dates — they are recorded truthfully as historical/piloted (see
+       step 10).
+    9. The `REV__UPG-####__CHG-…__S<N>__R<N>` review id is **documented** as the manual naming
+       convention. Actual review-file renaming and `codeos-review.sh` output support are a
+       **deferred follow-up `UPG-####`** — reviewer behavior is not changed by this work.
+    10. Record historical exceptions truthfully instead of pretending old pilot work followed the new scheme.
+    
+    ## Acceptance Criteria
+    
+    1. Every active backlog feature file contains a unique `feature_id`.
+    2. Every active backlog feature file has a `## Feature Thread` section.
+    3. Every non-trivial change filename includes the primary `UPG-####`.
+    4. Every non-trivial change filename includes a unique `CHG-*`.
+    5. Every change record trace header lists `feature_id`, `primary_feature_id`, `change_id`, and `implements`.
+    6. `backlog/features.md` maps each `UPG-####` to exactly one backlog file.
+    7. `status/roadmap.md` uses `UPG-####` as the primary feature identity.
+    8. `status/self-development.md` separates `Feature ID` from `Change ID`.
+    9. Each review identifies both the feature and the change in **at least one** of: the review
+       filename, the packet content, a review-log entry, or the change record's Feature Thread.
+       (Renaming review files to the `REV__…` pattern and teaching `scripts/codeos-review.sh` to
+       emit it is a **deferred follow-up `UPG-####`**, not required by this change.)
+    10. No in-scope review fix is represented as a new backlog feature unless explicitly triaged OUT-OF-SCOPE BACKLOG.
+    11. Existing historical/piloted work is represented truthfully without false retroactive sequencing.
+    12. The user can identify which feature a change file belongs to by filename alone.
+    13. The user can open the backlog feature file and see all related changes, reviews, tracked findings, and follow-up features.
+    14. Grep checks find no remaining prose that treats plain `0003`, `0004`, etc. as both feature IDs and change IDs.
+    
+    ## Verification
+    
+    Run:
+    
+    ```bash
+    grep -rn "feature_id:" backlog/
+    grep -rn "UPG-" backlog/ status/ changes/ reviews/ README.md docs/ prompts/ templates/
+    grep -rn "CHG-" changes/ status/ reviews/ prompts/ templates/
+    grep -rn "000[0-9]" status/ changes/ backlog/ docs/ README.md prompts/ templates/
+    ```
+    
+    Manual checks:
+    
+    * no duplicated `UPG-####`;
+    * no duplicated `CHG-*`;
+    * every change filename includes a visible feature ID;
+    * every dashboard row separates feature and change identity;
+    * roadmap rows use feature IDs, not change numbers;
+    * review fixes are recorded inside the current change unless explicitly promoted to backlog;
+    * the Feature Thread section in each backlog file lists related changes and follow-ups.
+    
+    ## Supported Scenarios
+    
+    This feature must support:
+    
+    1. trivial direct edit with no change record;
+    2. one feature implemented by one change;
+    3. one feature implemented by multiple changes;
+    4. one change touching multiple approved related features;
+    5. review fixes inside the same change;
+    6. out-of-scope reviewer findings promoted to new backlog features;
+    7. abandoned changes;
+    8. superseded features;
+    9. historical pilot work predating the thread model;
+    10. roadmap-only planning changes;
+    11. docs-only normative changes;
+    12. script/tooling changes;
+    13. downstream-doctrine changes;
+    14. self-dev-governance changes.
+    
+    ## Non-Goals
+    
+    This feature does not:
+    
+    * implement any roadmap feature beyond the ID/thread system;
+    * change the downstream DBA doctrine;
+    * redesign the reviewer pipeline;
+    * turn the reviewer into an enforcement engine;
+    * require a PR per feature;
+    * require generated dashboards;
+    * require mandatory automation before the convention is proven;
+    * force historical pilot work into false numbering.
+    
+    ## Suggested Change Record
+    
+    Use this as the implementation change:
+    
+    ```text
+    changes/UPG-00XX__CHG-YYYYMMDD-001__feature-thread-traceability.md
+    ```
+    
+    ## Suggested Commit Title
+    
+    ```text
+    Codeos: add feature-thread traceability and stable IDs
+    ```
+
+  --- status/self-development.md (sha256: ee2858a797120d9139b6b2a2044feef799cf0037997e23a13e688825c1948844, visibility: shown) ---
+    # Self-Development Status
+    
+    > Live dashboard for in-flight Codeos toolkit changes. **Mutable** — maintained by the
+    > 4-step self-development loop (see repo-root `CLAUDE.md` and `prompts/codeos-self-dev.md`).
+    > The stable rulebook is `CLAUDE.md`; per-change detail is in `changes/[change_id].md`;
+    > the roadmap (wave plan) is `status/roadmap.md`; the stable backlog catalog is
+    > `backlog/features.md`.
+    >
+    > Step 1 activates a row; each step updates **Loop step** and **Review**. Reconcile marks
+    > **State: COMPLETE** once the step's compulsory (advisory) review has run **and** the human
+    > has accepted the result — NO OBJECTION, or CHANGES ADVISED with residual non-blocking
+    > findings accepted or tracked to a named follow-up (e.g. `→0004`). The review informs the
+    > human; it never gates by itself. A change with open, unaccepted findings stays **IN_PROGRESS**.
+    
+    | Backlog item | Change ID | Class | Loop step | Review | State |
+    |---|---|---|---|---|---|
+    | — | 0001-claude-split | self-dev-governance + downstream-doctrine | 4-Reconcile | CHANGES ADV →0004 | COMPLETE |
+    | backlog/doc-consistency-doctrine-rename | 0002-doc-consistency-rename | documentation | 4-Reconcile | CHANGES ADV →0004 | COMPLETE |
+    | — (whole-backlog planning) | 0003-implementation-roadmap | backlog-only / self-dev planning | 4-Reconcile | CHANGES ADV →0004 | COMPLETE |
+    | — (reviewer findings) | 0004-review-fixes | documentation / self-dev-governance | 4-Reconcile | CHANGES ADV (accepted) | COMPLETE |
+    | backlog/UPG-0001-feature-thread-traceability.md | CHG-20260627-001 | self-dev-governance | 2-Acceptance | NO OBJ (r3) | IN_PROGRESS |
+    
+    <!--
+    Loop step : 1-Intent / 2-Acceptance / 3-Implement / 4-Reconcile / —
+    Review    : latest advisory verdict — NO OBJ / CHANGES ADV / DO NOT ADV / —
+                suffix `→NNNN` = findings tracked to follow-up change NNNN
+                suffix `(rN)`  = review round N of an iterative review
+    State     : BACKLOG / IN_PROGRESS / BLOCKED / COMPLETE
+    -->
+
+DIFF TO REVIEW (base->review, secret/size filtered)
+diff --git a/status/self-development.md b/status/self-development.md
+index 86015dc..16b3f14 100644
+--- a/status/self-development.md
++++ b/status/self-development.md
+@@ -18,6 +18,7 @@
+ | backlog/doc-consistency-doctrine-rename | 0002-doc-consistency-rename | documentation | 4-Reconcile | CHANGES ADV →0004 | COMPLETE |
+ | — (whole-backlog planning) | 0003-implementation-roadmap | backlog-only / self-dev planning | 4-Reconcile | CHANGES ADV →0004 | COMPLETE |
+ | — (reviewer findings) | 0004-review-fixes | documentation / self-dev-governance | 4-Reconcile | CHANGES ADV (accepted) | COMPLETE |
++| backlog/UPG-0001-feature-thread-traceability.md | CHG-20260627-001 | self-dev-governance | 2-Acceptance | NO OBJ (r3) | IN_PROGRESS |
+ 
+ <!--
+ Loop step : 1-Intent / 2-Acceptance / 3-Implement / 4-Reconcile / —
+
+INSTRUCTIONS
+  If this is a resumed session, ignore any earlier-session conclusions unless they are
+  re-established by THIS packet; assess only the evidence above, pinned to this commit.
+  Give your full critical assessment (operational, ranked by severity, with concrete
+  better-designs). For EACH finding emit:
+    Finding: / Severity: High|Medium|Low / Classification: <one of the TRIAGE RULE labels>
+    Evidence: <file/line> / Why: <short> / Required action: fix now|optional fix|backlog|reject
+    Scope reason: <why it does/does not belong to this PR's scope>
+  Then emit:
+    PR decision: ADVANCE | REQUEST CHANGES | DO NOT ADVANCE   (based ONLY on in-scope blockers)
+    Scope drift warning: yes|no — <is anything pulling this PR beyond its stated scope?>
+  Then on the LAST two lines emit exactly (map ADVANCE->NO OBJECTION,
+  REQUEST CHANGES->CHANGES ADVISED, DO NOT ADVANCE->DO NOT ADVANCE):
+    LOG SUMMARY: <NO OBJECTION | CHANGES ADVISED | DO NOT ADVANCE | UNCLASSIFIED> — <single most important point>
+      (use UNCLASSIFIED if you genuinely cannot classify the artifact safely)
+    EVIDENCE: <A|B|C|D|E>   (optional)

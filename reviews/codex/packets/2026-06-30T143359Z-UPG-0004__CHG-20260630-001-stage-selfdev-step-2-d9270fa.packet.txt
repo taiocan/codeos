@@ -1,0 +1,465 @@
+Reviewer task:
+
+SCOPE CONTRACT
+  Assess this artifact against the STATED SCOPE of this stage/PR — the Expected Stage
+  Output below and what the artifacts actually claim — NOT against an ideal final system.
+  A capability the artifacts do not claim to provide is OUT-OF-SCOPE, not a defect.
+  The following are OUT-OF-SCOPE BACKLOG unless THIS artifact explicitly claims to provide
+  them: formal approval-binding enforcement; rollback correctness; COMMIT_BOUND/
+  WORKSPACE_BOUND enforcement; JSON Schema validation; CI validation; exact
+  decision-integrity; per-feature decision ledgers; autonomous approval; enabled hooks.
+
+YOUR TASK — answer these five questions using only the evidence in the packet:
+  1. Acceptance criteria: Does the artifact satisfy each of its stated acceptance criteria?
+     Cite evidence for each criterion (or note its absence).
+  2. Claim support: Are universal or strong claims (all, every, never, always, no X) in the
+     artifact supported by evidence in the packet? Any unverifiable strong claim is a candidate
+     finding only if it affects acceptance, scope, safety, decision integrity, or the artifact's
+     stated guarantees.
+  3. Scope drift: Is there any change beyond the stated scope boundary? (Files not in the
+     "What changes" list; behavior changes not in the intent; downstream doctrine modified
+     rather than read.)
+  4. In-scope blockers: Are there facts that, if left in, would make the artifact wrong,
+     unsafe, or internally contradictory?
+  5. Finding classification: Classify every finding you raise as exactly one of the five
+     TRIAGE RULE categories below.
+
+TRIAGE RULE — classify EVERY finding as exactly one of:
+  IN-SCOPE BLOCKER         breaks the stated goal; creates a FALSE CLAIM in this artifact;
+                           weakens the advisory/read-only/human-gated guarantees; prevents
+                           the work from running; or violates an explicit safety constraint.
+  IN-SCOPE NON-BLOCKER     improves it but is not required for this PR.
+  OUT-OF-SCOPE BACKLOG     valid, but belongs to a future feature / stronger guarantee.
+  REJECTED                 conflicts with the stated scope or Codeos philosophy.
+  SELF-REFERENCE /         review records that are stale because of the previous round's
+  REVIEW-BOOKKEEPING       own existence (causal loop); not a real artifact defect.
+  Base the PR decision ONLY on IN-SCOPE BLOCKER findings. An OUT-OF-SCOPE BACKLOG finding
+  must NOT cause DO NOT ADVANCE unless this artifact FALSELY CLAIMS to solve it.
+
+WHAT NOT TO DO
+  - Do not flag style or wording issues as blockers unless the wording creates a false claim,
+    contradiction, parser breakage, or wrong governance instruction.
+  - Do not re-review unchanged full context when the packet is in delta mode.
+  - Do not treat local-only review history as a blocker unless the artifact falsely
+    claims the review artifacts are committed/durable.
+
+INSTRUCTIONS
+  If this is a resumed session, ignore any earlier-session conclusions unless they are
+  re-established by THIS packet; assess only the evidence above, pinned to this commit.
+  Give a focused assessment of this artifact against the stated scope, acceptance criteria,
+  and evidence in this packet. Rank findings by severity. Suggest a better design only when
+  needed to explain a required fix for an IN-SCOPE BLOCKER.
+
+  Limit findings to the top 3 IN-SCOPE BLOCKERS. Additional non-blocking observations may be
+  summarized in one short paragraph only if useful.
+
+  For EACH finding emit:
+    Finding: / Severity: High|Medium|Low / Classification: <one of the TRIAGE RULE labels>
+    Evidence: <file/line> / Why: <short> / Required action: fix now|optional fix|backlog|reject
+    Scope reason: <why it does/does not belong to this PR's scope>
+  Then emit:
+    PR decision: ADVANCE | REQUEST CHANGES | DO NOT ADVANCE   (based ONLY on in-scope blockers)
+    Scope drift warning: yes|no — <is anything pulling this PR beyond its stated scope?>
+  Then on the LAST two lines emit exactly (map ADVANCE->NO OBJECTION,
+  REQUEST CHANGES->CHANGES ADVISED, DO NOT ADVANCE->DO NOT ADVANCE):
+    LOG SUMMARY: <NO OBJECTION | CHANGES ADVISED | DO NOT ADVANCE | UNCLASSIFIED> — <single most important point>
+      (use UNCLASSIFIED if you genuinely cannot classify the artifact safely)
+    EVIDENCE: <A|B|C|D|E>   (optional)
+
+PACKET MANIFEST
+  generated: 2026-06-30T14:24:33Z
+  task_prompt: /home/arc/projects/claude/Codeos/prompts/codeos-reviewer-task.md (4381 bytes)
+  review_content_bytes: 13840
+  estimated_review_tokens: ~3460
+  budget_status: OK
+  packet_mode: full
+  delta_base: none
+  items:
+    - path: changes/UPG-0004__CHG-20260630-001__stage-4-6-report-template.md
+      mode: full_file
+      bytes: 6623
+      sha256: 4a21cadfe9871bbfc839f6767d71551ce8b9991f8e81e8ddec84f85cc3c465ba
+    - path: backlog/UPG-0004-stage-4-6-reports.md
+      mode: full_file
+      bytes: 3080
+      sha256: c4f4a096f4a0fee78ea9f7932da1ee3be8268414c56f81e2f514314b56a643e7
+    - path: (diff)
+      mode: full_file
+      bytes: 4137
+
+REVIEW CONTEXT
+  Feature:                UPG-0004__CHG-20260630-001
+  Stage:                  selfdev-step-2
+  Branch:                 selfdev/upg-0029-review-durability
+  Base commit:            (no base pin)
+  Review commit:          d9270fa8db3a5ee18de8d161431d594edf4fa55a (+ uncommitted workspace changes)
+  Current approved stage: n/a (non-numeric stage)
+  Evidence coverage:      FULL_COVERAGE
+  Workspace dirty:        yes (uncommitted changes at review time)
+
+DBA RULES RELEVANT TO THIS STAGE
+  - Human approval is required for every stage transition; you are advisory only.
+  - Memory is not truth — assess only what is provided, pinned to the review commit.
+  - Implementation must trace to approved artifacts; no behavior beyond intent+contract+schema.
+  - No events outside the approved event schema; no hidden behavior.
+
+STAGE-SPECIFIC CHECKS
+  - (no stage-specific checklist for stage selfdev-step-2)
+
+EXPECTED STAGE OUTPUT
+  (no expected-output template for stage selfdev-step-2)
+
+ARTIFACTS TO REVIEW
+  --- changes/UPG-0004__CHG-20260630-001__stage-4-6-report-template.md (sha256: 4a21cadfe9871bbfc839f6767d71551ce8b9991f8e81e8ddec84f85cc3c465ba, visibility: shown) ---
+    # Self-Development Change: UPG-0004__CHG-20260630-001 — stage-4-6-report-template
+    
+    <!--
+    PURPOSE: Per-change source of truth for a non-trivial change to the Codeos toolkit
+    itself (prompts, templates, docs, patterns, scripts).
+    
+    This is NOT a downstream DBA feature. It has no behavioral contract, no event schema,
+    and no replay. Trivial changes do not get a record.
+    
+    Workflow: prompts/codeos-self-dev.md (4-step loop)
+    Each step requires explicit human approval; Codex review cadence is governed by the assigned review profile (see prompts/codeos-self-dev.md Step 0a).
+    The live status row lives in status/self-development.md, not here.
+    
+    FILENAME CONVENTION (Feature Thread model — see backlog/UPG-0001-feature-thread-traceability.md):
+      changes/UPG-####__CHG-YYYYMMDD-NNN__slug.md
+      - UPG-#### = the PRIMARY feature this change implements (visible grouping).
+      - CHG-YYYYMMDD-NNN = the unique change id (execution).
+      - slug describes the concrete change, not the whole roadmap.
+    -->
+    
+    <!-- TRACE HEADER (canonical) -->
+    ```yaml
+    feature_id: UPG-0004
+    primary_feature_id: UPG-0004
+    change_id: CHG-20260630-001
+    slug: stage-4-6-report-template
+    state: IN_PROGRESS
+    current_step: 2-Acceptance
+    implements:
+      - UPG-0004
+    related_features: []
+    review_series: null
+    review_profile: PROFILE-3
+    review_state: DRAFT
+    review_history: reviews/review-log.md
+    fixes_findings: []
+    follow_up_of: null
+    ```
+    
+    <!-- SELF-REFERENCE BOUNDARY -->
+    
+    
+    ## Change Intent
+    
+    **Why (problem in the toolkit):**
+    
+    Stages 4, 5, and 6 of the DBA pipeline (Implementation, Tests, Runtime Evidence) are where
+    most hidden work happens. The current toolkit provides no structured template for what must be
+    reported at each stage. Practitioners produce short prose summaries that do not show:
+    
+    - which contract clauses were implemented vs skipped (Stage 4)
+    - which test categories exist, which are missing, and why gaps are acceptable (Stage 5)
+    - how the system was run, what was captured, and whether the log is safe to commit (Stage 6)
+    
+    This leaves Stage 7 Reconciliation without reliable, comparable evidence to reconcile against.
+    It also makes reviewer scope assessment harder — the reviewer cannot tell what the practitioner
+    claims was done vs what is simply absent from the report.
+    
+    **What changes:**
+    
+    1. `templates/stage-4-6-report.md` — new file. Three structured report templates in one file:
+       - Stage 4 Implementation Report
+       - Stage 5 Test Report
+       - Stage 6 Runtime Evidence Report
+    
+       Each template is a filled-field markdown form. Each template explicitly instructs
+       practitioners that fields must not be left empty; when there is no content, the field must
+       say `none`, `not run`, or `not applicable`. This CHG does not add script-level enforcement.
+    
+    2. `backlog/UPG-0004-stage-4-6-reports.md` — Feature Thread row activated (Change entry).
+    
+    3. `status/self-development.md` — operational row activated for `UPG-0004` / `CHG-20260630-001`.
+    
+    4. `status/roadmap.md` — Current State table and Unsequenced section updated to reflect
+       UPG-0027/0029/0030 as COMPLETE; Immediate next pickups updated to show UPG-0004 as
+       current. (This roadmap maintenance is part of the same session and would otherwise be an
+       unlisted workspace change; declared here to keep scope clean.)
+    
+    **Bookkeeping artifact:**
+    
+    - `changes/UPG-0004__CHG-20260630-001__stage-4-6-report-template.md` — this change record.
+    
+    **Scope boundary — what stays the same:**
+    
+    - `dba-system.md` — **not touched**. Mandating use of this template in the downstream doctrine
+      is a follow-on `downstream-doctrine` CHG. This CHG makes the template available; adoption is
+      a separate scope decision.
+    - All other templates, prompts, scripts, docs — unchanged.
+    - No stage names, approval rules, or DBA philosophy changes.
+    
+    **Class:** `template`
+    **Scope axis:** `self-dev only`
+    **Backlog item:** `backlog/UPG-0004-stage-4-6-reports.md`
+    
+    ---
+    
+    ## Acceptance Criteria
+    
+    <!-- Template existence and structure (A1–A3) -->
+    
+    | # | Criterion | How it will be verified |
+    |---|---|---|
+    | A1 | `templates/stage-4-6-report.md` exists and contains three clearly delimited report sections: Stage 4 Implementation Report, Stage 5 Test Report, Stage 6 Runtime Evidence Report | `ls templates/stage-4-6-report.md` exits 0; `grep "Stage 4\|Stage 5\|Stage 6" templates/stage-4-6-report.md` returns a heading for each |
+    | A2 | Each template section contains every field listed in the backlog design notes for that stage — no field from the design notes is omitted | Read-through: compare each section of `templates/stage-4-6-report.md` field-by-field against `backlog/UPG-0004-stage-4-6-reports.md` design notes; every listed field present |
+    | A3 | Each template section includes an explicit instruction that empty fields must say `none`, `not run`, or `not applicable` — and states that this is a template instruction, not script enforcement | `grep -c "none.*not run\|not applicable" templates/stage-4-6-report.md` → match in each section; no claim of automated validation |
+    
+    <!-- Field quality (A4–A6) -->
+    
+    | # | Criterion | How it will be verified |
+    |---|---|---|
+    | A4 | Stage 4 fields cover: approved artifacts used, files changed, contract clauses implemented, schema events emitted, unimplemented clauses, assumptions, blocked items, unexpected complexity | Read-through against the Stage 4 design note |
+    | A5 | Stage 5 fields cover: behavioral tests, failure-mode tests, invariant tests, telemetry/event tests, replay tests, pass/fail/skip counts, known gaps, and why gaps are acceptable or not | Read-through against the Stage 5 design note |
+    | A6 | Stage 6 fields cover: how the system was run, input fixture, runtime command, log path, events captured, unexpected/missing events, correlation chains, sanitization status, raw-log commit decision, replay fixtures, known runtime gaps | Read-through against the Stage 6 design note |
+    
+    <!-- DBA traceability (A7) -->
+    
+    | # | Criterion | How it will be verified |
+    |---|---|---|
+    | A7 | The template header or preamble states which DBA stages the report applies to and that it feeds Stage 7 Reconciliation — so a practitioner encountering the file understands its purpose without reading the backlog brief | Read-through: header section names Stage 4, 5, 6 and mentions Stage 7 Reconciliation as consumer |
+    
+    <!-- Scope boundary (A8) -->
+    
+    | # | Criterion | How it will be verified |
+    |---|---|---|
+    | A8 | `dba-system.md` is unchanged; no script changes; no prompt changes | `git diff HEAD -- dba-system.md scripts/ prompts/` → empty |
+    
+    ---
+    
+    ## Implementation Notes
+    
+    <!-- Filled in Step 3 -->
+    
+    ---
+    
+    ## Reconciliation
+    
+    <!-- Filled in Step 4 -->
+
+  --- backlog/UPG-0004-stage-4-6-reports.md (sha256: c4f4a096f4a0fee78ea9f7932da1ee3be8268414c56f81e2f514314b56a643e7, visibility: shown) ---
+    ---
+    feature_id: UPG-0004
+    slug: stage-4-6-reports
+    title: Structured Stage 4–6 Reports
+    status: PROPOSED
+    priority: P0
+    depends_on: []
+    related_features: []
+    supersedes: []
+    superseded_by: []
+    ---
+    
+    # Upgrade: stage-4-6-reports — Structured Stage 4–6 Reports
+    
+    **Priority**: P0
+    **Status**: PROPOSED
+    **Type**: toolkit-upgrade
+    **Related**: stage-report-generator, current-verified-state
+    
+    ## Problem
+    
+    Stage 4, 5, and 6 are where most hidden work happens. Short end-of-stage summaries do not
+    show enough detail about what was changed, tested, skipped, assumed, or observed.
+    
+    ## Upgrade
+    
+    Require structured reports for implementation, test creation, and runtime execution.
+    
+    ## Scope
+    
+    Stages 4–6 only.
+    
+    ## Proposed artifact(s)
+    
+    `templates/stage-4-6-report.md`
+    
+    ## Design notes
+    
+    Stage 4 Implementation Report:
+    
+    ```markdown
+    # Stage 4 Implementation Report
+    
+    Feature:
+    Approved artifacts used:
+    - Intent:
+    - Contract:
+    - Event schema:
+    
+    Files changed:
+    Files inspected but not changed:
+    Contract clauses implemented:
+    Schema events emitted:
+    Correlation ID propagation:
+    Runtime artifacts touched:
+    Unimplemented clauses:
+    Assumptions:
+    Blocked items:
+    Requires earlier-stage change:
+    Unexpected complexity:
+    ```
+    
+    Stage 5 Test Report:
+    
+    ```markdown
+    # Stage 5 Test Report
+    
+    Feature:
+    Approved artifacts used:
+    Behavioral tests added:
+    Failure-mode tests added:
+    Invariant tests added:
+    Telemetry/event tests added:
+    Replay tests added:
+    Tests run:
+    Tests passed:
+    Tests failed:
+    Tests skipped:
+    Tests not run:
+    Known test gaps:
+    Why gaps are acceptable or not acceptable:
+    ```
+    
+    Stage 6 Runtime Evidence Report:
+    
+    ```markdown
+    # Stage 6 Runtime Evidence Report
+    
+    Feature:
+    How the system was run:
+    Input fixture/scenario:
+    Runtime command:
+    Runtime log path:
+    Events captured:
+    Unexpected events:
+    Missing expected events:
+    Correlation chains observed:
+    Sanitization status:
+    Raw logs committed:
+    - yes/no
+    - if yes, why safe:
+    Derived replay fixtures produced:
+    Ready for reconciliation:
+    Known runtime gaps:
+    ```
+    
+    ## Value
+    
+    Very high. This directly addresses the transparency gap. It lets the human and reviewer see
+    what happened behind Stage 4–6.
+    
+    ## Risk
+    
+    Reports become verbose boilerplate.
+    
+    ## Guardrail
+    
+    Each field must be concise. Empty sections must say `none`, `not run`, or `not applicable`.
+    
+    ## DBA-philosophy note
+    
+    No non-negotiable rule touched. Pure transparency aid for Stages 4–6; strengthens the
+    evidence chain that reconciliation (Stage 7) consumes.
+    
+    ## Feature Thread
+    
+    > Canonical thread rollup for this feature. Compact links/IDs only; full detail lives in the
+    > change records and review files. May be maintained manually.
+    
+    ### Changes
+    
+    | Change ID | File | Purpose | State |
+    |---|---|---|---|
+    | CHG-20260630-001 | changes/UPG-0004__CHG-20260630-001__stage-4-6-report-template.md | Create templates/stage-4-6-report.md | IN_PROGRESS |
+    
+    ### Reviews
+    
+    | Review ID | Change ID | Step | Round | Verdict |
+    |---|---|---|---|---|
+    
+    ### Findings Tracked Inside This Feature
+    
+    | Finding ID | Review ID | Classification | Resolution |
+    |---|---|---|---|
+    
+    ### Follow-up Features
+    
+    | Feature ID | Reason | Source finding |
+    |---|---|---|
+
+DIFF TO REVIEW (base->review, secret/size filtered)
+diff --git a/backlog/UPG-0004-stage-4-6-reports.md b/backlog/UPG-0004-stage-4-6-reports.md
+index 2195cb8..2026e0c 100644
+--- a/backlog/UPG-0004-stage-4-6-reports.md
++++ b/backlog/UPG-0004-stage-4-6-reports.md
+@@ -131,6 +131,7 @@ evidence chain that reconciliation (Stage 7) consumes.
+ 
+ | Change ID | File | Purpose | State |
+ |---|---|---|---|
++| CHG-20260630-001 | changes/UPG-0004__CHG-20260630-001__stage-4-6-report-template.md | Create templates/stage-4-6-report.md | IN_PROGRESS |
+ 
+ ### Reviews
+ 
+diff --git a/status/roadmap.md b/status/roadmap.md
+index 2ea1034..8f22126 100644
+--- a/status/roadmap.md
++++ b/status/roadmap.md
+@@ -27,6 +27,9 @@ Entries under **Change ID** are self-development *change* records (execution), n
+ | `0004-review-fixes` | — (reviewer findings) | DONE | Advisory-review follow-up fixes. |
+ | — | UPG-0003 | PILOTED | `reviewer-decision-brief`: advisory Bash reviewer (`scripts/codeos-review.sh` + `docs/reviewer-pipeline.md`). Manual, read-only, non-gatekeeping. |
+ | `CHG-20260627-001` | UPG-0001 | COMPLETE | Feature Thread traceability + stable IDs (review-series self-reference boundary; accepted by decision 2026-06-28). |
++| `CHG-20260629-001` | UPG-0029 | COMPLETE | Review artifact durability + packet naming policy (2026-06-29). |
++| `CHG-20260629-001` | UPG-0030 | COMPLETE | Lean self-development review profiles (2026-06-29). |
++| CHG-20260629-002–005 | UPG-0027 | COMPLETE | Lean review runner + packet architecture: focused reviewer prompt, packet manifest, local prechecks, delta mode (2026-06-29–30). |
+ 
+ (`UPG-0006` reviewer-quality-scale is **partially piloted** — the reviewer already emits an
+ evidence grade; the full scale is scheduled in Wave 1.)
+@@ -85,18 +88,18 @@ cheap pilot-adjacent wins early.
+ ### Unsequenced (discovery notes / governance follow-ups — not yet waved)
+ | Feature ID | Title | Priority | Depends on | Planned/active change | State |
+ |---|---|---|---|---|---|
+-| UPG-0027 | Migrating Review Scripts from Bash to a Structured Language | — | — | — | PROPOSED |
++| UPG-0027 | Lean Review Runner and Packet Architecture | — | — | CHG-20260629-002–005 | COMPLETE |
+ | UPG-0028 | Reviewer self-reference recursion (scoping) | P2 | — | — | PROPOSED |
+-| UPG-0029 | Review artifact durability + packet naming policy (+ optional naming/tooling) | P2 | UPG-0001 | — | PROPOSED |
++| UPG-0029 | Review artifact durability + packet naming policy | P2 | UPG-0001 | CHG-20260629-001 | COMPLETE |
++| UPG-0030 | Lean self-development review profiles | P2 | — | CHG-20260629-001 | COMPLETE |
+ 
+ ---
+ 
+ ## Immediate next pickups
+ 
+-0. **UPG-0029 — Review artifact durability + packet naming policy** (narrow, doc-first; the only
+-   loose end from UPG-0001 is durable review evidence). Do this small policy pass **before** Wave 1.
+-1. UPG-0004 — Structured Stage 4–6 Reports (Wave 1, P0, no deps) — foundational for later generators/dashboards.
++1. **UPG-0004 — Structured Stage 4–6 Reports** (Wave 1, P0, no deps) — foundational for later generators/dashboards. IN PROGRESS.
+ 2. UPG-0005 — Current Verified State Block (Wave 1, P0, no deps).
++3. UPG-0006 — Reviewer Summary Quality Scale (Wave 1, P2, dep on UPG-0003 ✓).
+ 
+ Each is taken as its own self-dev change (a fresh `CHG-*`) via the 4-step loop, with human
+ approval at every gate.
+diff --git a/status/self-development.md b/status/self-development.md
+index d1b7d5f..3d7a289 100644
+--- a/status/self-development.md
++++ b/status/self-development.md
+@@ -30,6 +30,7 @@
+ | UPG-0027 | CHG-20260629-003 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (NO OBJECTION) | COMPLETE | — |
+ | UPG-0027 | CHG-20260629-004 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (human approved; all 12 ACs verified by functional test) | COMPLETE | — |
+ | UPG-0027 | CHG-20260629-005 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (human approved; all 14 ACs verified by functional test) | COMPLETE | — |
++| UPG-0004 | CHG-20260630-001 | template | self-dev only | 2-Acceptance | DRAFT | IN_PROGRESS | — |
+ 
+ <!--
+ Identity   : Feature ID = UPG-#### (stable). Change ID = CHG-YYYYMMDD-NNN (one execution), or a

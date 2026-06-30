@@ -1,0 +1,576 @@
+---
+reviewed:
+  feature: reviewer-pipeline
+  stage: 0
+  branch: feature/backlog-split-and-reviewer
+  base_commit: 48c36bf4abe096686b5ac350437fefe2ae1f4153
+  review_commit: 48c36bf4abe096686b5ac350437fefe2ae1f4153
+  artifacts:
+    - path: docs/reviewer-pipeline.md
+      sha256: 33a8f979bdfe89476065c1ba257ee7ac3c0d68dbbc171d353ce3f2a633d18aa4
+      visibility: shown
+    - path: docs/reviewer-artifact-schemas.md
+      sha256: b8c952613f9b7e23c32fc2449d0356c77dd57f47e55431842a6eb966efbfd64d
+      visibility: shown
+  diff_hash: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+  coverage_state: FULL_COVERAGE
+  provenance_integrity: COMMIT_BOUND
+  workspace_dirty: false
+  redaction_count: 0
+  secret_redaction: false
+  excluded_paths: []
+  reviewed_packet: packets/2026-06-27T061310Z-reviewer-pipeline-stage-0-48c36bf.packet.txt
+  reviewed_packet_sha256: fc2cd21c1ee73f22af28045e9f6fdc19d3f79e613fd46da402f8da27650cc869
+  reviewer: "codex (session 019f07b4-3052-7850-acbd-8ba810c0ae93)"
+  codex_concern: DO NOT ADVANCE
+  effective_concern: DO NOT ADVANCE
+  evidence: A
+---
+
+OpenAI Codex v0.114.0 (research preview)
+--------
+workdir: /home/arc/projects/claude/Codeos
+model: gpt-5.4
+provider: openai
+approval: never
+sandbox: read-only
+reasoning effort: high
+reasoning summaries: none
+session id: 019f07b4-3052-7850-acbd-8ba810c0ae93
+--------
+user
+Critically assess:
+
+REVIEW CONTEXT
+  Feature:                reviewer-pipeline
+  Stage:                  0
+  Branch:                 feature/backlog-split-and-reviewer
+  Base commit:            48c36bf4abe096686b5ac350437fefe2ae1f4153
+  Review commit:          48c36bf4abe096686b5ac350437fefe2ae1f4153
+  Current approved stage: -1
+  Evidence coverage:      FULL_COVERAGE
+  Provenance integrity:   COMMIT_BOUND
+
+DBA RULES RELEVANT TO THIS STAGE
+  - Human approval is required for every stage transition; you are advisory only.
+  - Memory is not truth — assess only what is provided, pinned to the review commit.
+  - Implementation must trace to approved artifacts; no behavior beyond intent+contract+schema.
+  - No events outside the approved event schema; no hidden behavior.
+
+STAGE-SPECIFIC CHECKS
+  - (no stage-specific checklist for stage 0)
+
+EXPECTED STAGE OUTPUT
+  (no expected-output template for stage 0)
+
+ARTIFACTS TO REVIEW
+  --- docs/reviewer-pipeline.md (sha256: 33a8f979bdfe89476065c1ba257ee7ac3c0d68dbbc171d353ce3f2a633d18aa4, visibility: shown) ---
+    # Codeos Reviewer Pipeline — Manual Advisory Codex Reviewer
+    
+    *A read-only, advisory, cross-model reviewer for the DBA stage gates. It compresses each
+    stage artifact into a critical assessment and an append-only log entry so the human decides
+    faster — without ever becoming a gate.*
+    
+    ```yaml
+    status: PILOT — manual operation; no Claude Code hooks wired
+    scope: implements backlog/reviewer-decision-brief.md (#1), pulls in #13 (evidence grade)
+    binding: changes no Codeos non-negotiable rule; CLAUDE.md and the stage prompts untouched
+    ```
+    
+    ---
+    
+    ## 1. Roles
+    
+    - **Claude Code** runs the DBA development loop (Stages 1–9) and STOPs at
+      `AWAITING HUMAN APPROVAL`.
+    - **Codex** is the independent reviewer, invoked **read-only** (`-s read-only`) by
+      `scripts/codeos-review.sh`. Running a different model family gives cross-model adversarial
+      review (less self-review circularity); running read-only means it *physically cannot edit
+      artifacts* — it can only assess.
+    - **The human** decides. The reviewer recommends with non-gatekeeping vocabulary; `APPROVE`
+      is reserved for the human.
+    
+    This inherits the stance of `prompts/pipeline-reviewer.md` (the interactive Reviewer
+    Activation Package). This pipeline is the *automated* path; `prompts/reviewer-automated.md`
+    documents the prompt/packet convention.
+    
+    ## 2. The minimal prompt, the rich packet
+    
+    The visible instruction is just `Critically assess:` — Codex's default-model critical
+    assessment is the best feedback, so it is not role-primed. What makes the review
+    *DBA-specific* rather than generic is the **evidence packet** beneath that line: review
+    context (feature/stage/branch/base+review SHA), the DBA rules relevant to the stage, the
+    stage-specific checklist (sourced from `backlog/reviewer-decision-brief.md`), the expected
+    stage output, the artifact contents with hashes, and the secret-filtered diff. See
+    `prompts/reviewer-automated.md` for the exact shape.
+    
+    ## 3. Session continuity — feasibility
+    
+    **Question:** can one Codex session be opened at the start and reused across every stage,
+    instead of a fresh session per stage?
+    
+    **Answer: yes — via `codex exec resume <session_id>`, not a held-open process.** This was
+    verified against Codex 0.114: the first review for a feature runs `codex exec` and the
+    session id is captured from the Codex startup banner (`session id: <uuid>`); later reviews
+    run `codex exec resume <id>`, which rehydrates the full prior conversation (a resumed session
+    correctly recalled context across separate processes in testing) while each call is a
+    crash-safe fresh process. This is the "same continuous session" semantically, achieved
+    durably. (`codex mcp-server` is a future alternative; a held-open live process was rejected
+    as fragile.)
+    
+    Invocation details that matter (0.114): `codex exec` takes `-s read-only` and `--cd`;
+    `codex exec resume` takes **neither** — sandbox is set via `-c sandbox_mode="read-only"` and
+    the working dir is the current dir. The script handles this difference.
+    
+    **Sessions are feature-scoped** — `.codeos-state/codex-sessions/<feature>.json`. Continuity
+    is valuable *within* a feature and dangerous *across* features, so a different feature gets
+    its own session and `--fresh` forces a brand-new one (use it for safety-sensitive stages,
+    reviewer/human disagreement, or suspected anchoring on stale/pre-correction context).
+    
+    **Memory is never truth.** Every review re-reads the artifacts and diff from disk pinned to
+    the review commit SHA, and records that SHA + per-artifact SHA256 + a diff hash. Session
+    memory aids cross-stage drift detection; the disk + hashes are authoritative. This is the
+    guardrail against the stale-context failure mode that DBA otherwise warns about.
+    
+    Session-id capture is **deterministic / fail-closed**: the id is parsed from the bootstrap
+    call's own banner output, so it is exactly the session just created. If no id can be parsed,
+    the script aborts and logs nothing.
+    
+    Sessions are also **version-pinned**: the session record stores the `codex --version` that
+    created it, and a resume across a changed Codex build is refused — the script starts a fresh
+    session instead of resuming under a different parser/behavior.
+    
+    ## 4. Evidence durability + append-only log
+    
+    The exact on-disk shapes of every persisted artifact below — packet, assessment header,
+    session state, REVIEW entry, HUMAN DECISION entry — are specified as **v0 normative schemas**
+    in [`reviewer-artifact-schemas.md`](reviewer-artifact-schemas.md), including required fields,
+    allowed enum values, and the lightweight fail-closed validation the script applies. Full
+    JSON Schema validation is deferred until pilot use shows it is needed.
+    
+    - The **full** Codex assessment is saved under `reviews/codex/<ts>-<feature>-stage-<N>-<sha>.md`,
+      opening with a self-contained YAML metadata header (feature/stage/branch/base+review
+      commit/artifacts+sha256/diff_hash/coverage_state/redaction_count/secret_redaction/
+      excluded_paths/reviewed_packet+sha256/codex_concern/effective_concern/evidence) so the file
+      is auditable on its own.
+    - The **exact bytes that were reviewed** are persisted as the canonical packet under
+      `reviews/codex/packets/<ts>-<feature>-stage-<N>-<sha>.packet.txt`, with its own SHA256
+      recorded in the assessment and the log. It contains the full context, artifact contents,
+      filtered diff, and the exclusion/redaction list — so for uncommitted artifacts, since-edited
+      files, and filtered diffs you can prove precisely what Codex saw, not merely a hash of it.
+      Real stage reviews are committed with the feature branch; pilot/test runs use
+      `reviews/codex/_scratch/` (gitignored).
+    - `reviews/review-log.md` is **append-only**. The REVIEW entry records **both** the raw
+      `Codex concern` and the `Effective concern` (after coverage adjustment), the coverage state,
+      redaction count, hashes, and links. The human decision is a **separately appended** entry
+      via `codeos-review.sh decision …` — prior entries are never edited. That command also
+      **re-verifies the reviewed state at decision time** and records MATCH / CHANGED per artifact.
+      **`APPROVE_STAGE` eligibility is governed entirely by the authoritative matrix in
+      [`reviewer-artifact-schemas.md`](reviewer-artifact-schemas.md)** (its *Approval eligibility*
+      rule): a `COMMIT_BOUND` review is eligible when HEAD still equals `review_commit`, the tree is
+      clean, and artifacts hash-match; a `WORKSPACE_BOUND` review is eligible only when the decision
+      re-verifies artifact SHA + diff hash + packet SHA + `workspace_dirty`. **`UNBOUND` /
+      `CRITICAL_OMISSION` / `EMPTY_PACKET` are hard stops that `--force` cannot override** — approval
+      must trace to evidence the reviewer actually saw. `SECRET_REDACTION` and `PARTIAL_COVERAGE` are
+      *not* hard stops but require an explicit `--force` waiver (`[SECURITY WAIVER]` /
+      `[COVERAGE WAIVER]`); a provenance mismatch requires a `[STALE OVERRIDE]` / `[WORKSPACE
+      OVERRIDE]`. `REQUEST_CHANGES` / `STOP` always record. The REVIEW entry's SHAs + the appended HUMAN DECISION entry (with its
+      `Rollback:` line) are what let a human later identify the last sound "OK point" to return to.
+      Deeper provenance binding (durable workspace snapshots, structured decision ledgers) is
+      tracked in `backlog/reviewer-decision-integrity.md`.
+    
+    ## 5. Coverage, provenance, and effective concern
+    
+    These are **not** restated here — they are defined once, normatively, in the
+    [authoritative matrix](reviewer-artifact-schemas.md#the-authoritative-matrix). In summary: two
+    filtering layers run before anything reaches Codex — **path exclusion** (`.env*`, `*.pem`,
+    `secrets/*`, size limit, …) applies to the **diff and incidental files only**, and **content
+    redaction** blanks secret-like values in place in both the diff and requested artifacts. A
+    requested artifact is therefore never silently dropped — it is `shown`, `shown_redacted`,
+    `oversize_omitted`, or `missing`. The resulting `coverage_state` and `provenance_integrity`
+    select the matrix row, which fixes the **minimum effective concern** (a coverage gap is a
+    verdict floor, not a footnote) and the **approval eligibility** and **rollback meaning**. When
+    anything is excluded/redacted, or on a critical/empty/unbound row, the log flags
+    **MANUAL SECURITY REVIEW REQUIRED**.
+    
+    ## 6. Concern-level semantics + human responsibility
+    
+    - **NO OBJECTION** — no material reason to stop found; *this is not approval*.
+    - **CHANGES ADVISED** — issues that should be addressed or consciously waived.
+    - **DO NOT ADVANCE** — a material DBA risk; the human should not approve without resolving or
+      explicitly overriding.
+    - **UNCLASSIFIED** — malformed/insufficient reviewer output (no parseable `LOG SUMMARY`);
+      treated as **HIGH attention / manual review required**, never neutral.
+    
+    Evidence grade (optional, backlog #13): `EVIDENCE: A–E` — concern level is *what the reviewer
+    thinks*; evidence grade is *how well supported it is*. If absent, the log records
+    `Evidence: not reported`; #13 is not "done" until the reviewer reliably emits it.
+    
+    > **The reviewer reduces human reading load; it does not reduce human responsibility.** A
+    > human may approve a stage against the reviewer, but must record the reason in the HUMAN
+    > DECISION entry when doing so. The reviewer is evidence compression, not decision transfer.
+    
+    ## 7. What a good review looks like (calibration)
+    
+    This pipeline was itself shaped by several rounds of real Codex review of its own plan. The
+    qualities that made those reviews valuable are the bar the automated reviewer aims at:
+    
+    - **Operational, not only philosophical** — it named concrete bugs (append-only violations,
+      wrong state locations, brittle session capture), not just abstractions.
+    - **Ranked by severity** — required corrections separated from optional improvements.
+    - **Concrete better-designs** — every objection came with a specific proposed fix.
+    - **Honest about tradeoffs** — e.g. flagging when a "one cheap call" claim was really a
+      mini-pilot.
+    - **Ends with a clear decision** — approve / approve-with-fixes / do-not-approve, per area.
+    
+    The stage-specific checklists encode this intent; the packet's INSTRUCTIONS line asks for
+    exactly this shape.
+    
+    ## 8. DBA-philosophy scorecard
+    
+    | Capability | DBA impact | Why |
+    |---|---|---|
+    | Cross-model Codex reviewer, read-only | **Positive** | Adversarial second model; cannot edit artifacts |
+    | Feature-scoped session via `exec resume` | **Neutral** | Re-reads artifacts + SHA-pins every review; `--fresh` escape hatch; no cross-feature bleed |
+    | Durable assessments + append-only log (no mutable fields) | **Aligned** | Mirrors `runtime_events.jsonl` + existing append-only Decision Log |
+    | Advisory concern field (non-gatekeeping words) | **Neutral** | `APPROVE` reserved for the human |
+    | Secret/diff filtering | **Positive** | Reduces common credential-leakage risk in the review packet (heuristic, not a guarantee) |
+    | Automated hooks | **Risky → kept inert** | Documented (Appendix), not wired |
+    | Autonomous stage approval | **Negative — violates rule #1** | Rejected/deferred (Appendix) |
+    
+    ## 9. Acceptance criteria (mini-design gate)
+    
+    read-only reviewer edits no artifacts · review output durable (full assessment saved) ·
+    sessions feature-scoped · reviewed state pinned (base+review SHA, artifact hash) · malformed
+    output → UNCLASSIFIED/high-attention · secret/large-diff filtering present · no hooks active ·
+    no core rules changed.
+    
+    ## 10. Usage
+    
+    ```bash
+    # record the base commit for a stage (so review diffs base->review, not just HEAD)
+    scripts/codeos-review.sh stage-start listing-ingestion 2
+    
+    # review an artifact (resumes the feature's Codex session; --fresh starts a new one)
+    scripts/codeos-review.sh review listing-ingestion 2 contracts/listing-ingestion_contract.md
+    
+    # after the human decides, append the decision (never edits prior log entries)
+    scripts/codeos-review.sh decision listing-ingestion 2 REQUEST_CHANGES "missing failure scenario"
+    ```
+    
+    ---
+    
+    ## Appendix A — Inert hook snippets (NOT part of the pilot)
+    
+    These are provided for a *future* phase only. **Do not add them to `.claude/settings.json`
+    yet** — the pilot runs the script manually until the advisory reviewer has a proven track
+    record. A guarded `Stop` hook keyed on a sentinel avoids reviewing every stop.
+    
+    The hook delegates to a small wrapper rather than an inline one-liner, because the cleanup
+    must be **success-gated** (do not consume the request if the review failed) and the artifact
+    paths must be **quoted/arrayed** (never word-split a `jq` expansion):
+    
+    ```jsonc
+    // .claude/settings.json — illustrative ONLY, not enabled
+    {
+      "hooks": {
+        "Stop": [
+          { "command": "scripts/codeos-review-hook.sh" }   // no-op unless the sentinel exists
+        ]
+      }
+    }
+    ```
+    
+    ```bash
+    # scripts/codeos-review-hook.sh — illustrative ONLY
+    #!/usr/bin/env bash
+    set -euo pipefail
+    req=".codeos-state/review-request.json"
+    [[ -f "${req}" ]] || exit 0                       # nothing requested → no-op
+    feature="$(jq -r '.feature' "${req}")"
+    stage="$(jq -r '.stage' "${req}")"
+    mapfile -t paths < <(jq -r '.artifacts[]' "${req}")   # array-safe, no word-splitting
+    # abort WITHOUT deleting the sentinel if the request is unparseable or names no artifacts
+    [[ -n "${feature}" && -n "${stage}" && ${#paths[@]} -gt 0 ]] || {
+      echo "review-hook: malformed/empty request; sentinel preserved" >&2; exit 1; }
+    if scripts/codeos-review.sh review "${feature}" "${stage}" "${paths[@]}"; then
+      rm -f "${req}"                                  # consume the sentinel ONLY on success
+    fi
+    ```
+    
+    ## Appendix B — Rejected / Deferred — Not Approved for Implementation
+    
+    **Autonomous stage approval.** Letting the reviewer approve stages for "simple" features
+    contradicts **non-negotiable rule #1** (every stage transition requires explicit human
+    approval) and converts DBA from *synchronous prevention* (the gate blocks a bad transition)
+    to *asynchronous detection + rollback* (it happens, is caught later, is reverted). Recorded
+    for traceability only. It would separately require: per-feature human opt-in, one commit per
+    stage, feature-registry support (#14), a rollback design, low-risk-only scope that **never**
+    includes safety/authorization/invariant contracts, a hard stop on any `DO NOT ADVANCE` or
+    low-evidence review, and an amendment to the human-approval invariant. Not built toward now.
+
+  --- docs/reviewer-artifact-schemas.md (sha256: b8c952613f9b7e23c32fc2449d0356c77dd57f47e55431842a6eb966efbfd64d, visibility: shown) ---
+    # Reviewer Pipeline — Artifact Schemas + Provenance/Coverage Matrix (v0)
+    
+    Normative v0 shapes for the on-disk artifacts produced by `scripts/codeos-review.sh`, and the
+    **single authoritative matrix** that governs coverage, provenance, the effective concern, and
+    approval eligibility. `docs/reviewer-pipeline.md` is descriptive and refers here; where the two
+    disagree, **this document wins**.
+    
+    ## Schema authority
+    
+    - These v0 schemas define the **intended on-disk shape** for the manual reviewer pilot, and the
+      matrix below is the authoritative rule set the script implements.
+    - **Full machine-readable JSON Schema validation is deferred** unless pilot use shows it is
+      needed; that and parser hardening / CI validation are tracked as backlog, not in this pilot.
+    - The **Enums** and the **matrix** are authoritative; prose elsewhere must not restate
+      conflicting rules.
+    
+    ## Enums
+    
+    | Field | Allowed values |
+    |---|---|
+    | `codex_concern` | `NO OBJECTION` \| `CHANGES ADVISED` \| `DO NOT ADVANCE` \| `UNCLASSIFIED` |
+    | `effective_concern` | `NO OBJECTION` \| `CHANGES ADVISED` \| `DO NOT ADVANCE` \| `UNCLASSIFIED` |
+    | `evidence` | `A` \| `B` \| `C` \| `D` \| `E` \| `not reported` |
+    | `human decision` | `APPROVE STAGE` \| `REQUEST CHANGES` \| `STOP` (CLI tokens: `APPROVE_STAGE` \| `REQUEST_CHANGES` \| `STOP`) |
+    | `coverage_state` | `FULL_COVERAGE` \| `PARTIAL_COVERAGE` \| `SECRET_REDACTION` \| `CRITICAL_OMISSION` \| `EMPTY_PACKET` |
+    | `provenance_integrity` | `COMMIT_BOUND` \| `WORKSPACE_BOUND` \| `UNBOUND` |
+    | artifact `visibility` | `shown` \| `shown_redacted` \| `oversize_omitted` \| `missing` |
+    | booleans | `true` \| `false` |
+    
+    Concern severity order (used for the effective-concern floor):
+    `NO OBJECTION` < `CHANGES ADVISED` < `UNCLASSIFIED` < `DO NOT ADVANCE`.
+    
+    `UNCLASSIFIED` is a **first-class** verdict: the reviewer may emit it in `LOG SUMMARY` to mean
+    "I cannot classify this safely", and the pipeline also assigns it to malformed/unparseable
+    output.
+    
+    ## THE AUTHORITATIVE MATRIX
+    
+    **Two orthogonal axes.** `provenance_integrity` is the *binding mode* (is the reviewed state a
+    durable, re-verifiable thing?). `coverage_state` is *how complete the evidence was*. They are
+    recorded independently and combine to decide approval eligibility.
+    
+    ### Axis A — `coverage_state` → packet rendering, effective-concern floor, waiver
+    
+    `coverage_state` is a single value (most severe wins):
+    `EMPTY_PACKET` > `CRITICAL_OMISSION` > `SECRET_REDACTION` > `PARTIAL_COVERAGE` > `FULL_COVERAGE`.
+    `effective_concern` = the more severe of the Codex concern and the **floor** below.
+    
+    | `coverage_state` | Condition / packet rendering | Min `effective_concern` (floor) | Eligibility effect |
+    |---|---|---|---|
+    | `FULL_COVERAGE` | every requested artifact `shown`; nothing redacted/excluded | none (Codex concern as emitted) | none |
+    | `SECRET_REDACTION` | a requested artifact `shown_redacted` (secret value blanked in place) | `CHANGES ADVISED` | requires a **security waiver** (`--force`) |
+    | `PARTIAL_COVERAGE` | a non-requested/supplemental diff path was path/size-excluded | `CHANGES ADVISED` | requires a **coverage waiver** (`--force`) |
+    | `CRITICAL_OMISSION` | a requested artifact is `missing` or `oversize_omitted` (not shown) | `DO NOT ADVANCE` | **HARD STOP** (see Axis B) |
+    | `EMPTY_PACKET` | no requested artifact content and no useful diff | `UNCLASSIFIED` | **HARD STOP** |
+    
+    Secret *path* rules (`.env*`, `*.pem`, `secrets/*`, size limit, …) apply to **non-requested
+    diff paths and incidental files only**. A *requested* artifact is never silently dropped — it is
+    `shown`, `shown_redacted`, `oversize_omitted`, or `missing`.
+    
+    ### Axis B — `provenance_integrity` → reverification, rollback, eligibility
+    
+    | `provenance_integrity` | When | Decision-time reverification | Rollback meaning | Approvable? |
+    |---|---|---|---|---|
+    | `COMMIT_BOUND` | coverage not critical/empty; clean workspace; `review_commit` holds the reviewed content | `HEAD == review_commit`, tree clean, artifacts hash-match | exact git commit (`review_commit`) | yes (subject to Axis-A waiver) |
+    | `WORKSPACE_BOUND` | coverage not critical/empty; reviewed content uncommitted; artifact text + SHA + diff hash + packet SHA + `workspace_dirty` saved | re-verify artifact SHA **and** diff hash **and** packet SHA **and** `workspace_dirty` still match | NOT exact until a stage commit is made (logged as workspace-bound) | yes (subject to Axis-A waiver) |
+    | `UNBOUND` | `CRITICAL_OMISSION` / `EMPTY_PACKET`, or a self-contradictory state (base == review SHA, non-empty diff, clean tree) | n/a | none | **no — HARD STOP, not `--force`'able** |
+    
+    ### Approval-eligibility rule (single source of truth)
+    
+    `APPROVE_STAGE` is appended **iff**:
+    1. `provenance_integrity != UNBOUND` and `coverage_state ∉ {CRITICAL_OMISSION, EMPTY_PACKET}` —
+       otherwise it is a **hard stop** that **`--force` cannot override** (approval must trace to
+       evidence the reviewer actually saw); **and**
+    2. the Axis-B reverification for the binding mode passes (or `--force` records a
+       `[STALE OVERRIDE]` / `[WORKSPACE OVERRIDE]`); **and**
+    3. any Axis-A waiver is supplied — `SECRET_REDACTION` needs `--force` (`[SECURITY WAIVER]`),
+       `PARTIAL_COVERAGE` needs `--force` (`[COVERAGE WAIVER]`).
+    
+    `REQUEST_CHANGES` / `STOP` are always recorded.
+    
+    ---
+    
+    ## 1. Review packet (text sent to Codex; canonical copy under `reviews/codex/packets/`)
+    
+    `Critically assess:` then: **REVIEW CONTEXT** (`Feature`, `Stage`, `Branch`, `Base commit`,
+    `Review commit` — the packet text may append a human-readable `(+ uncommitted workspace
+    changes)` marker; the persisted `review_commit` field is the pure SHA — `Current approved
+    stage`, `Evidence coverage` = `coverage_state`, `Provenance integrity`); **DBA RULES**;
+    **STAGE-SPECIFIC CHECKS**; **EXPECTED STAGE OUTPUT**; **ARTIFACTS TO REVIEW** (each requested
+    artifact rendered per its `visibility`); **DIFF TO REVIEW** (secret/size-filtered; withholding
+    noted); **INSTRUCTIONS** (requests `LOG SUMMARY:` + optional `EVIDENCE:`). The persisted packet
+    file is the **canonical reviewed bytes**; its SHA256 is recorded in the assessment and log.
+    
+    ## 2. Saved Codex assessment — YAML metadata header
+    
+    File `reviews/codex/<ts>-<feature>-stage-<N>-<sha>.md`, opening with a `---` YAML block; required keys:
+    
+    | Key | Type | Notes |
+    |---|---|---|
+    | `feature` | string | |
+    | `stage` | integer | |
+    | `branch` | string | |
+    | `base_commit` | string | git SHA, or `(no base pin)` when no stage-start was recorded |
+    | `review_commit` | string | git SHA — **machine-pure** (no suffix); dirty bit is `workspace_dirty` |
+    | `artifacts` | list of `{path, visibility[, sha256]}` | one entry per **requested** artifact; `sha256` present for `shown`/`shown_redacted`; may be `[]` only for `EMPTY_PACKET` |
+    | `diff_hash` | string (sha256) | |
+    | `coverage_state` | enum | |
+    | `provenance_integrity` | enum | |
+    | `workspace_dirty` | bool | |
+    | `redaction_count` | integer | |
+    | `secret_redaction` | bool | |
+    | `excluded_paths` | list of `{path, reason, affected_section}` | `[]` when none; `affected_section` is `diff` or `artifact` |
+    | `reviewed_packet` | string | `packets/<file>.packet.txt` |
+    | `reviewed_packet_sha256` | string (sha256) | |
+    | `reviewer` | string | e.g. `codex (session <uuid>)` |
+    | `codex_concern` | enum | pure enum value |
+    | `effective_concern` | enum | pure enum value (validated) |
+    | `effective_concern_note` | string | optional; present only when the floor/override changed the value |
+    | `evidence` | enum | |
+    
+    Body (after the closing `---`): the full Codex assessment text, verbatim.
+    
+    ## 3. Feature-scoped Codex session state — JSON
+    
+    File `.codeos-state/codex-sessions/<feature>.json` (gitignored). Required: `feature`,
+    `session_id` (UUID), `codex_version`, `created_at` (ISO 8601 UTC). A session file that exists
+    but lacks `session_id` is **malformed → fail-closed**.
+    
+    ## 4. REVIEW entry — `reviews/review-log.md` (append-only)
+    
+    ```
+    ## <ISO ts> REVIEW — <feature> — Stage <N>
+    Base: <sha|(no base pin)>  Review: <sha>  Branch: <branch>
+    Diff-hash: <sha256>
+    Reviewer: codex <model> (session <uuid>)
+    Codex concern: <enum>
+    Effective concern: <enum>
+    Evidence: <enum>
+    Coverage: <coverage_state>; provenance: <provenance_integrity>; redactions: <int>; workspace_dirty: <bool>[; note: <text>]
+    [Rollback: NOT exact until a stage commit is made (workspace-bound review)]   # WORKSPACE_BOUND only
+    Log summary: <text>
+    Full assessment: <path> (sha256:<hex>)
+    Reviewed packet: <path> (sha256:<hex>)
+    [Coverage gap: <coverage_state> — ... — MANUAL SECURITY REVIEW REQUIRED]   # when applicable
+    Human decision: (append with: codeos-review.sh decision ...)
+    ```
+    
+    ## 5. HUMAN DECISION entry — `reviews/review-log.md` (append-only)
+    
+    ```
+    ## <ISO ts> HUMAN DECISION — <feature> — Stage <N>
+    Commit reviewed: <sha>
+    Decision: <APPROVE_STAGE|REQUEST_CHANGES|STOP>[ [<STALE OVERRIDE|WORKSPACE OVERRIDE|SECURITY WAIVER|COVERAGE WAIVER|UNREVIEWED OVERRIDE> — ...]]
+    Reason/next: <text>
+    [Verified against: <assessment path>]
+    [Rollback: exact git commit <sha> | NOT exact until a stage commit is made (workspace-bound review)]
+    [Artifact integrity:
+      MATCH   <path>
+      CHANGED <path> (reviewed <hex> / now <hex>)]
+    ```
+    
+    Entries are **append-only**; a decision is never written into a prior entry. `APPROVE_STAGE`
+    eligibility follows the matrix's *Approval eligibility* column; an ineligible mode is refused
+    (nothing logged) unless `--force "<reason>"` records the named override/waiver.
+    
+    ## Lightweight validation (v0)
+    
+    Before writing the assessment + REVIEW entry, the script **fails closed** (exit 4) if: a
+    required scalar is empty (`feature`, `stage`, `base_commit`, `review_commit`, `diff_hash`,
+    `coverage_state`, `provenance_integrity`, `reviewed_packet_sha256`); an enum value
+    (`coverage_state`, `provenance_integrity`, `codex_concern`, `effective_concern`, `evidence`) is
+    off-list; or the packet SHA256 / a shown artifact's record is missing. This is a
+    required-field/enum guard only — full structural JSON Schema validation is deferred.
+
+DIFF TO REVIEW (base->review, secret/size filtered)
+
+
+INSTRUCTIONS
+  If this is a resumed session, ignore any earlier-session conclusions unless they are
+  re-established by THIS packet; assess only the evidence above, pinned to this commit.
+  Give your full critical assessment first (operational, ranked by severity, with
+  concrete better-designs; separate required fixes from optional ones; end with a
+  clear judgement). Then on the LAST two lines emit exactly:
+    LOG SUMMARY: <NO OBJECTION | CHANGES ADVISED | DO NOT ADVANCE | UNCLASSIFIED> — <single most important point>
+      (use UNCLASSIFIED if you genuinely cannot classify the artifact safely)
+    EVIDENCE: <A|B|C|D|E>   (optional)
+
+mcp startup: no servers
+codex
+I’m reviewing the two design docs as the authoritative artifact set for stage 0, focusing on internal contradictions, approval integrity, and any place the pilot would let the human log a decision that the stated matrix forbids.
+codex
+I have enough context to check the design for consistency. Next I’m pulling exact line numbers from the two docs so I can anchor any findings to the committed text rather than paraphrase.
+exec
+/bin/bash -lc 'nl -ba docs/reviewer-artifact-schemas.md' in /home/arc/projects/claude/Codeosexec
+/bin/bash -lc 'nl -ba docs/reviewer-pipeline.md' in /home/arc/projects/claude/Codeos succeeded in 0ms:
+     1	# Reviewer Pipeline — Artifact Schemas + Provenance/Coverage Matrix (v0)
+     2	
+     3	Normative v0 shapes for the on-disk artifacts produced by `scripts/codeos-review.sh`, and the
+     4	**single authoritative matrix** that governs coverage, provenance, the effective concern, and
+     5	approval eligibility. `docs/reviewer-pipeline.md` is descriptive and refers here; where the two
+     6	disagree, **this document wins**.
+     7	
+     8	## Schema authority
+     9	
+    10	- These v0 schemas define the **intended on-disk shape** for the manual reviewer pilot, and the
+    11	  matrix below is the authoritative rule set the script implements.
+    12	- **Full machine-readable JSON Schema validation is deferred** unless pilot use shows it is
+    13	  needed; that and parser hardening / CI validation are tracked as backlog, not in this pilot.
+    14	- The **Enums** and the **matrix** are authoritative; prose elsewhere must not restate
+    15	  conflicting rules.
+    16	
+    17	## Enums
+    18	
+    19	| Field | Allowed values |
+    20	|---|---|
+ succeeded in 0ms:
+     1	# Codeos Reviewer Pipeline — Manual Advisory Codex Reviewer
+     2	
+     3	*A read-only, advisory, cross-model reviewer for the DBA stage gates. It compresses each
+     4	stage artifact into a critical assessment and an append-only log entry so the human decides
+     5	faster — without ever becoming a gate.*
+     6	
+     7	```yaml
+     8	status: PILOT — manual operation; no Claude Code hooks wired
+     9	scope: implements backlog/reviewer-decision-brief.md (#1), pulls in #13 (evidence grade)
+    10	binding: changes no Codeos non-negotiable rule; CLAUDE.md and the stage prompts untouched
+    11	```
+    12	
+    13	---
+    14	
+    15	## 1. Roles
+    16	
+    17	- **Claude Code** runs the DBA development loop (Stages 1–9) and STOPs at
+    18	  `AWAITING HUMAN APPROVAL`.
+    19	- **Codex** is the independent reviewer, invoked **read-only** (`-s read-only`) by
+    20	  `scripts/codeos-review.sh`. Running a different model family gives cross-model adversarial
+codex
+1. High: `COMMIT_BOUND` approval is internally unreachable if review artifacts are stored in the repo as specified. [reviewer-pipeline.md](/home/arc/projects/claude/Codeos/docs/reviewer-pipeline.md:84) says the assessment and packet are written under `reviews/codex/...` and real reviews are committed with the feature branch. But the approval rule requires `HEAD == review_commit` and a clean tree for `COMMIT_BOUND` [reviewer-pipeline.md](/home/arc/projects/claude/Codeos/docs/reviewer-pipeline.md:103), [reviewer-artifact-schemas.md](/home/arc/projects/claude/Codeos/docs/reviewer-artifact-schemas.md:65), [reviewer-artifact-schemas.md](/home/arc/projects/claude/Codeos/docs/reviewer-artifact-schemas.md:71). Writing the review files makes the tree dirty; committing them makes `HEAD != review_commit`. In practice this turns the documented happy path into an impossible state or forces unnecessary stale/workspace overrides. Required fix: choose one binding model and state it consistently, for example keep review artifacts outside the tracked tree until after decision, or define a separate evidence commit and verify that instead of requiring `HEAD == review_commit`.
+
+2. High: the HUMAN DECISION schema reintroduces a force path that the matrix explicitly forbids. The authoritative matrix says `UNBOUND`, `CRITICAL_OMISSION`, and `EMPTY_PACKET` are hard stops that are not `--force`-able [reviewer-artifact-schemas.md](/home/arc/projects/claude/Codeos/docs/reviewer-artifact-schemas.md:67), [reviewer-artifact-schemas.md](/home/arc/projects/claude/Codeos/docs/reviewer-artifact-schemas.md:72), and the descriptive doc repeats that [reviewer-pipeline.md](/home/arc/projects/claude/Codeos/docs/reviewer-pipeline.md:106). But the decision entry format still advertises `UNREVIEWED OVERRIDE` as an allowed override token [reviewer-artifact-schemas.md](/home/arc/projects/claude/Codeos/docs/reviewer-artifact-schemas.md:154), and the paragraph below says ineligible modes are refused unless `--force` records the named override/waiver [reviewer-artifact-schemas.md](/home/arc/projects/claude/Codeos/docs/reviewer-artifact-schemas.md:163). That is a safety-critical contradiction. Required fix: remove `UNREVIEWED OVERRIDE` from the v0 schema or mark it explicitly invalid/reserved so the docs cannot be read as permitting approval without reviewed evidence.
+
+3. Medium: the spec claims the canonical packet is the authoritative reviewed byte stream, but `COMMIT_BOUND` reverification does not actually re-bind approval to that saved evidence. The packet SHA is persisted and described as the exact bytes Codex saw [reviewer-pipeline.md](/home/arc/projects/claude/Codeos/docs/reviewer-pipeline.md:89), [reviewer-artifact-schemas.md](/home/arc/projects/claude/Codeos/docs/reviewer-artifact-schemas.md:92), yet the `COMMIT_BOUND` check only requires `HEAD == review_commit`, clean tree, and artifact hash match [reviewer-artifact-schemas.md](/home/arc/projects/claude/Codeos/docs/reviewer-artifact-schemas.md:65). Only `WORKSPACE_BOUND` requires packet-SHA reverification [reviewer-artifact-schemas.md](/home/arc/projects/claude/Codeos/docs/reviewer-artifact-schemas.md:66). If the packet or saved assessment is altered before decision, the approval can still succeed while pointing at mutated evidence. Required fix: re-hash the saved packet and assessment for all approval paths, not only workspace-bound ones.
+
+Assumption: this is a spec-only review of the two provided docs; no script implementation was reviewed, so I am treating contradictions in the written contract as defects in the stage-0 artifact itself.
+
+Judgement: do not advance until the binding model and override vocabulary are reconciled. Both issues affect whether an approval can be trusted to trace to the reviewed evidence.
+
+LOG SUMMARY: DO NOT ADVANCE — the spec’s `COMMIT_BOUND` path is self-contradictory and the decision schema exposes a forbidden override path
+EVIDENCE: A
+tokens used
+23,741
+1. High: `COMMIT_BOUND` approval is internally unreachable if review artifacts are stored in the repo as specified. [reviewer-pipeline.md](/home/arc/projects/claude/Codeos/docs/reviewer-pipeline.md:84) says the assessment and packet are written under `reviews/codex/...` and real reviews are committed with the feature branch. But the approval rule requires `HEAD == review_commit` and a clean tree for `COMMIT_BOUND` [reviewer-pipeline.md](/home/arc/projects/claude/Codeos/docs/reviewer-pipeline.md:103), [reviewer-artifact-schemas.md](/home/arc/projects/claude/Codeos/docs/reviewer-artifact-schemas.md:65), [reviewer-artifact-schemas.md](/home/arc/projects/claude/Codeos/docs/reviewer-artifact-schemas.md:71). Writing the review files makes the tree dirty; committing them makes `HEAD != review_commit`. In practice this turns the documented happy path into an impossible state or forces unnecessary stale/workspace overrides. Required fix: choose one binding model and state it consistently, for example keep review artifacts outside the tracked tree until after decision, or define a separate evidence commit and verify that instead of requiring `HEAD == review_commit`.
+
+2. High: the HUMAN DECISION schema reintroduces a force path that the matrix explicitly forbids. The authoritative matrix says `UNBOUND`, `CRITICAL_OMISSION`, and `EMPTY_PACKET` are hard stops that are not `--force`-able [reviewer-artifact-schemas.md](/home/arc/projects/claude/Codeos/docs/reviewer-artifact-schemas.md:67), [reviewer-artifact-schemas.md](/home/arc/projects/claude/Codeos/docs/reviewer-artifact-schemas.md:72), and the descriptive doc repeats that [reviewer-pipeline.md](/home/arc/projects/claude/Codeos/docs/reviewer-pipeline.md:106). But the decision entry format still advertises `UNREVIEWED OVERRIDE` as an allowed override token [reviewer-artifact-schemas.md](/home/arc/projects/claude/Codeos/docs/reviewer-artifact-schemas.md:154), and the paragraph below says ineligible modes are refused unless `--force` records the named override/waiver [reviewer-artifact-schemas.md](/home/arc/projects/claude/Codeos/docs/reviewer-artifact-schemas.md:163). That is a safety-critical contradiction. Required fix: remove `UNREVIEWED OVERRIDE` from the v0 schema or mark it explicitly invalid/reserved so the docs cannot be read as permitting approval without reviewed evidence.
+
+3. Medium: the spec claims the canonical packet is the authoritative reviewed byte stream, but `COMMIT_BOUND` reverification does not actually re-bind approval to that saved evidence. The packet SHA is persisted and described as the exact bytes Codex saw [reviewer-pipeline.md](/home/arc/projects/claude/Codeos/docs/reviewer-pipeline.md:89), [reviewer-artifact-schemas.md](/home/arc/projects/claude/Codeos/docs/reviewer-artifact-schemas.md:92), yet the `COMMIT_BOUND` check only requires `HEAD == review_commit`, clean tree, and artifact hash match [reviewer-artifact-schemas.md](/home/arc/projects/claude/Codeos/docs/reviewer-artifact-schemas.md:65). Only `WORKSPACE_BOUND` requires packet-SHA reverification [reviewer-artifact-schemas.md](/home/arc/projects/claude/Codeos/docs/reviewer-artifact-schemas.md:66). If the packet or saved assessment is altered before decision, the approval can still succeed while pointing at mutated evidence. Required fix: re-hash the saved packet and assessment for all approval paths, not only workspace-bound ones.
+
+Assumption: this is a spec-only review of the two provided docs; no script implementation was reviewed, so I am treating contradictions in the written contract as defects in the stage-0 artifact itself.
+
+Judgement: do not advance until the binding model and override vocabulary are reconciled. Both issues affect whether an approval can be trusted to trace to the reviewed evidence.
+
+LOG SUMMARY: DO NOT ADVANCE — the spec’s `COMMIT_BOUND` path is self-contradictory and the decision schema exposes a forbidden override path
+EVIDENCE: A
