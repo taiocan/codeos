@@ -42,7 +42,7 @@ cheap pilot-adjacent wins early.
 ### Wave 1 — Transparency & state  *(P0, no deps, highest value / lowest risk)*
 | Wave | Feature ID | Title | Priority | Depends on | Planned/active change | State |
 |---|---|---|---|---|---|---|
-| 1 | UPG-0004 | Structured Stage 4–6 Reports | P0 | — | — | PROPOSED |
+| 1 | UPG-0004 | Structured Stage 4–6 Reports | P0 | — | CHG-20260630-001 | COMPLETE |
 | 1 | UPG-0005 | Current Verified State Block | P0 | — | — | PROPOSED |
 | 1 | UPG-0006 | Reviewer Summary Quality Scale | P2 | UPG-0003 ✓ | — | PROPOSED (partly piloted) |
 
@@ -85,18 +85,19 @@ cheap pilot-adjacent wins early.
 ### Unsequenced (discovery notes / governance follow-ups — not yet waved)
 | Feature ID | Title | Priority | Depends on | Planned/active change | State |
 |---|---|---|---|---|---|
-| UPG-0027 | Migrating Review Scripts from Bash to a Structured Language | — | — | — | PROPOSED |
+| UPG-0027 | Lean Review Runner and Packet Architecture | P0 | — | CHG-20260629-002…005 | COMPLETE |
 | UPG-0028 | Reviewer self-reference recursion (scoping) | P2 | — | — | PROPOSED |
-| UPG-0029 | Review artifact durability + packet naming policy (+ optional naming/tooling) | P2 | UPG-0001 | — | PROPOSED |
+| UPG-0029 | Review artifact durability + packet naming policy | P2 | UPG-0001 | CHG-20260629-001 | COMPLETE |
+| UPG-0030 | Lean Self-Development Review Profiles | P1 | — | CHG-20260629-001 | COMPLETE |
+| UPG-0031 | Review script delta-mode fix + fail-closed guard | P1 | UPG-0027 | CHG-20260630-002/003 | COMPLETE |
 
 ---
 
 ## Immediate next pickups
 
-0. **UPG-0029 — Review artifact durability + packet naming policy** (narrow, doc-first; the only
-   loose end from UPG-0001 is durable review evidence). Do this small policy pass **before** Wave 1.
-1. UPG-0004 — Structured Stage 4–6 Reports (Wave 1, P0, no deps) — foundational for later generators/dashboards.
-2. UPG-0005 — Current Verified State Block (Wave 1, P0, no deps).
+1. **UPG-0005 — Current Verified State Block** (Wave 1, P0, no deps) — next open Wave 1 item after
+   UPG-0004 completion. Foundational for later dashboards and evidence-packaging features.
+2. UPG-0006 — Reviewer Summary Quality Scale (Wave 1, P2, UPG-0003 ✓).
 
 Each is taken as its own self-dev change (a fresh `CHG-*`) via the 4-step loop, with human
 approval at every gate.
