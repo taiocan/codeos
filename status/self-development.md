@@ -33,6 +33,7 @@
 | UPG-0004 | CHG-20260630-001 | template | self-dev only | 4-Reconcile | ACCEPTED (Steps 2–4 reviewed; R2 NO OBJECTION at each gate) | COMPLETE | UPG-0031 |
 | UPG-0031 | CHG-20260630-002 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (Step 4 R2 NO OBJECTION; corrected by CHG-20260630-003) | COMPLETE | — |
 | UPG-0031 | CHG-20260630-003 | script-tooling + documentation | self-dev only | 4-Reconcile | ACCEPTED (all 5 ACs verified; corrects false B8b in CHG-20260630-002) | COMPLETE | — |
+| UPG-0005 | CHG-20260630-004 | prompt + template | self-dev only | 4-Reconcile | ACCEPTED (Step 3 R2 NO OBJECTION; Step 4 R1 CHANGES ADVISED — F1 fixed, F2 REVIEW-BOOKKEEPING) | COMPLETE | — |
 
 <!--
 Identity   : Feature ID = UPG-#### (stable). Change ID = CHG-YYYYMMDD-NNN (one execution), or a

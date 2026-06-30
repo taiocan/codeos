@@ -2,12 +2,12 @@
 feature_id: UPG-0018
 slug: reviewer-engine-v1
 title: Typed reviewer engine to replace the Bash pilot
-status: PROPOSED
+status: SUPERSEDED
 priority: P2
 depends_on: []
 related_features: []
 supersedes: []
-superseded_by: []
+superseded_by: [UPG-0032]
 ---
 
 # Upgrade: reviewer-engine-v1 — Typed reviewer engine to replace the Bash pilot

@@ -1,0 +1,617 @@
+Reviewer task:
+
+SCOPE CONTRACT
+  Assess this artifact against the STATED SCOPE of this stage/PR — the Expected Stage
+  Output below and what the artifacts actually claim — NOT against an ideal final system.
+  A capability the artifacts do not claim to provide is OUT-OF-SCOPE, not a defect.
+  The following are OUT-OF-SCOPE BACKLOG unless THIS artifact explicitly claims to provide
+  them: formal approval-binding enforcement; rollback correctness; COMMIT_BOUND/
+  WORKSPACE_BOUND enforcement; JSON Schema validation; CI validation; exact
+  decision-integrity; per-feature decision ledgers; autonomous approval; enabled hooks.
+
+YOUR TASK — answer these five questions using only the evidence in the packet:
+  1. Acceptance criteria: Does the artifact satisfy each of its stated acceptance criteria?
+     Cite evidence for each criterion (or note its absence).
+  2. Claim support: Are universal or strong claims (all, every, never, always, no X) in the
+     artifact supported by evidence in the packet? Any unverifiable strong claim is a candidate
+     finding only if it affects acceptance, scope, safety, decision integrity, or the artifact's
+     stated guarantees.
+  3. Scope drift: Is there any change beyond the stated scope boundary? (Files not in the
+     "What changes" list; behavior changes not in the intent; downstream doctrine modified
+     rather than read.)
+  4. In-scope blockers: Are there facts that, if left in, would make the artifact wrong,
+     unsafe, or internally contradictory?
+  5. Finding classification: Classify every finding you raise as exactly one of the five
+     TRIAGE RULE categories below.
+
+TRIAGE RULE — classify EVERY finding as exactly one of:
+  IN-SCOPE BLOCKER         breaks the stated goal; creates a FALSE CLAIM in this artifact;
+                           weakens the advisory/read-only/human-gated guarantees; prevents
+                           the work from running; or violates an explicit safety constraint.
+  IN-SCOPE NON-BLOCKER     improves it but is not required for this PR.
+  OUT-OF-SCOPE BACKLOG     valid, but belongs to a future feature / stronger guarantee.
+  REJECTED                 conflicts with the stated scope or Codeos philosophy.
+  SELF-REFERENCE /         review records that are stale because of the previous round's
+  REVIEW-BOOKKEEPING       own existence (causal loop); not a real artifact defect.
+  Base the PR decision ONLY on IN-SCOPE BLOCKER findings. An OUT-OF-SCOPE BACKLOG finding
+  must NOT cause DO NOT ADVANCE unless this artifact FALSELY CLAIMS to solve it.
+
+WHAT NOT TO DO
+  - Do not flag style or wording issues as blockers unless the wording creates a false claim,
+    contradiction, parser breakage, or wrong governance instruction.
+  - Do not re-review unchanged full context when the packet is in delta mode.
+  - Do not treat local-only review history as a blocker unless the artifact falsely
+    claims the review artifacts are committed/durable.
+
+INSTRUCTIONS
+  If this is a resumed session, ignore any earlier-session conclusions unless they are
+  re-established by THIS packet; assess only the evidence above, pinned to this commit.
+  Give a focused assessment of this artifact against the stated scope, acceptance criteria,
+  and evidence in this packet. Rank findings by severity. Suggest a better design only when
+  needed to explain a required fix for an IN-SCOPE BLOCKER.
+
+  Limit findings to the top 3 IN-SCOPE BLOCKERS. Additional non-blocking observations may be
+  summarized in one short paragraph only if useful.
+
+  For EACH finding emit:
+    Finding: / Severity: High|Medium|Low / Classification: <one of the TRIAGE RULE labels>
+    Evidence: <file/line> / Why: <short> / Required action: fix now|optional fix|backlog|reject
+    Scope reason: <why it does/does not belong to this PR's scope>
+  Then emit:
+    PR decision: ADVANCE | REQUEST CHANGES | DO NOT ADVANCE   (based ONLY on in-scope blockers)
+    Scope drift warning: yes|no — <is anything pulling this PR beyond its stated scope?>
+  Then on the LAST two lines emit exactly (map ADVANCE->NO OBJECTION,
+  REQUEST CHANGES->CHANGES ADVISED, DO NOT ADVANCE->DO NOT ADVANCE):
+    LOG SUMMARY: <NO OBJECTION | CHANGES ADVISED | DO NOT ADVANCE | UNCLASSIFIED> — <single most important point>
+      (use UNCLASSIFIED if you genuinely cannot classify the artifact safely)
+    EVIDENCE: <A|B|C|D|E>   (optional)
+
+PACKET MANIFEST
+  generated: 2026-06-30T21:18:04Z
+  task_prompt: /home/arc/projects/claude/Codeos/prompts/codeos-reviewer-task.md (4381 bytes)
+  review_content_bytes: 22130
+  estimated_review_tokens: ~5532
+  budget_status: OK
+  packet_mode: full
+  delta_base: none
+  items:
+    - path: changes/UPG-0007__CHG-20260630-005__solution-discovery-00b.md
+      mode: full_file
+      bytes: 3975
+      sha256: da2cfefd4c6002fe269885b880598e9a58fbb347ae6f518d7bf6927d67b40e10
+    - path: backlog/UPG-0007-solution-discovery-00b.md
+      mode: full_file
+      bytes: 3593
+      sha256: 929bb3ea192250dabba8baf0b3cbda620f9c49ab7208fb6ae5ec2a1ba467a672
+    - path: (diff)
+      mode: full_file
+      bytes: 14562
+
+REVIEW CONTEXT
+  Feature:                UPG-0007__CHG-20260630-005
+  Stage:                  selfdev-step-1
+  Branch:                 selfdev/upg-0029-review-durability
+  Base commit:            (no base pin)
+  Review commit:          9645a4f61611645d3defb0870308c67756f7ff97 (+ uncommitted workspace changes)
+  Current approved stage: n/a (non-numeric stage)
+  Evidence coverage:      FULL_COVERAGE
+  Workspace dirty:        yes (uncommitted changes at review time)
+
+DBA RULES RELEVANT TO THIS STAGE
+  - Human approval is required for every stage transition; you are advisory only.
+  - Memory is not truth — assess only what is provided, pinned to the review commit.
+  - Implementation must trace to approved artifacts; no behavior beyond intent+contract+schema.
+  - No events outside the approved event schema; no hidden behavior.
+
+STAGE-SPECIFIC CHECKS
+  - (no stage-specific checklist for stage selfdev-step-1)
+
+EXPECTED STAGE OUTPUT
+  (no expected-output template for stage selfdev-step-1)
+
+ARTIFACTS TO REVIEW
+  --- changes/UPG-0007__CHG-20260630-005__solution-discovery-00b.md (sha256: da2cfefd4c6002fe269885b880598e9a58fbb347ae6f518d7bf6927d67b40e10, visibility: shown) ---
+    ---
+    change_id: CHG-20260630-005
+    feature_id: UPG-0007
+    slug: solution-discovery-00b
+    triage_class: prompt
+    scope_axis: self-dev only
+    review_profile: PROFILE-3
+    review_series: RVS__UPG-0007__CHG-20260630-005__S4
+    review_state: NOT_STARTED
+    status: IN_PROGRESS
+    loop_step: 1-Intent
+    ---
+    
+    # Change: UPG-0007 / CHG-20260630-005 — Expanded 00b Solution Discovery
+    
+    ## TRACE HEADER
+    
+    ```yaml
+    change_id: CHG-20260630-005
+    feature_id: UPG-0007
+    slug: solution-discovery-00b
+    triage_class: prompt
+    scope_axis: self-dev only
+    review_profile: PROFILE-3
+    corrects: ~
+    corrected_by: ~
+    follow_up_of: ~
+    ```
+    
+    ---
+    
+    ## Step 1 — Change Intent
+    
+    ### Problem
+    
+    `prompts/00b-feature-brief.md` handles individual feature discovery well — one feature at a
+    time, interview-style, producing a single feature brief. But there is no prompt for the
+    earlier, broader question: *what features should exist at all?* Before a team can run
+    00b-feature-brief interviews, they need to understand the problem domain, identify candidate
+    feature families, surface shared vocabulary, spot architectural pressure points, and decide
+    what to defer entirely. Without this stage, the first feature brief appears from nowhere and
+    Stage 1 must implicitly carry the topology reasoning it was never asked to do.
+    
+    The result is: premature feature entry into the DBA loop, scope creep as undiscovered
+    dependencies surface late, and architectural decisions embedded in individual intents that
+    should have been explicit non-decisions at the domain level.
+    
+    ### What changes
+    
+    | File | Change |
+    |---|---|
+    | `prompts/00b-solution-discovery.md` | NEW — solution discovery prompt for pre-feature-brief domain exploration. Covers: domain problem, candidate feature topology, shared vocabulary, event families, configuration hypotheses, architectural risks, and explicit non-decisions. Every output artifact carries the non-authoritative banner. |
+    | `prompts/00-session-start.md` | Add Session Type E (Solution Discovery) pointing at the new prompt, alongside the existing Session Types A–D. |
+    | `backlog/UPG-0007-solution-discovery-00b.md` | Feature Thread: add this change. |
+    | `status/self-development.md` | Activate row for this change. |
+    | `status/roadmap.md` | Wave 2 UPG-0007 row: update planned change and state to IN_PROGRESS. |
+    | `changes/UPG-0007__CHG-20260630-005__solution-discovery-00b.md` | This change record. |
+    
+    ### What stays the same (scope boundary)
+    
+    - `dba-system.md` — NOT in scope. The doctrine's prompt table (`| Feature Brief (pre-Stage 1) | .codeos/prompts/00b-feature-brief.md |`) is intentionally not updated here. The new prompt is usable without a doctrine table entry; the table update is a follow-on `downstream-doctrine` change once the prompt is proven.
+    - `prompts/00b-feature-brief.md` — NOT modified. Solution discovery is upstream of (and separate from) individual feature briefs; the two prompts work in sequence, not as replacements.
+    - Stage prompts 01–09 — NOT in scope.
+    - `templates/` — NOT in scope. The non-authoritative banner lives in the prompt, not in a template.
+    - `scripts/` — no changes.
+    
+    ### Triage class: `prompt`
+    
+    Creating one new prompt (`00b-solution-discovery.md`) and updating one existing prompt
+    (`00-session-start.md` — adding Session Type E). Class is `prompt`. 4-step loop with
+    PROFILE-3 review cadence.
+    
+    ### Scope axis: `self-dev only`
+    
+    No changes to `dba-system.md`. We are changing toolkit prompt files only.
+    
+    ### Review profile: PROFILE-3
+    
+    Prompt class, downstream-facing (used by downstream DBA projects). Codex review before each
+    step gate; human approval at all four gates; reviewer output is advisory and non-gatekeeping.
+    
+    ### Originating backlog item
+    
+    `backlog/UPG-0007-solution-discovery-00b.md` — Expanded 00b Solution Discovery / Feature
+    Topology Stage.
+    
+    ---
+    
+    ## Step 2 — Acceptance Criteria
+    
+    *(Not yet filled — awaiting Step 1 human approval.)*
+    
+    ---
+    
+    ## Step 3 — Implementation
+    
+    *(Not yet filled.)*
+    
+    ---
+    
+    ## Step 4 — Reconcile
+    
+    *(Not yet filled.)*
+
+  --- backlog/UPG-0007-solution-discovery-00b.md (sha256: 929bb3ea192250dabba8baf0b3cbda620f9c49ab7208fb6ae5ec2a1ba467a672, visibility: shown) ---
+    ---
+    feature_id: UPG-0007
+    slug: solution-discovery-00b
+    title: Expanded 00b Solution Discovery / Feature Topology Stage
+    status: PROPOSED
+    priority: P0
+    depends_on: []
+    related_features: []
+    supersedes: []
+    superseded_by: []
+    ---
+    
+    # Upgrade: solution-discovery-00b — Expanded 00b Solution Discovery / Feature Topology Stage
+    
+    **Priority**: P0
+    **Status**: PROPOSED
+    **Type**: toolkit-upgrade
+    **Related**: config-discovery, 00b-adr-generator
+    
+    ## Problem
+    
+    Codeos is strong once a feature enters Stage 1. But before Stage 1, there is a need to
+    brainstorm possible features, common vocabulary, event families, configuration needs,
+    architecture pressure, and shared concepts without prematurely approving architecture or
+    feature lists.
+    
+    ## Upgrade
+    
+    Expand Stage 00b into a non-authoritative solution discovery stage.
+    
+    ## Scope
+    
+    Pre-Stage-1 discovery.
+    
+    ## Proposed artifact(s)
+    
+    `prompts/00b-solution-discovery.md`
+    
+    Optional output: `docs/solution-discovery.md`
+    
+    Core principle: 00b output is not approved DBA truth. It is planning hypothesis only. Only
+    Stage 1 intent, Stage 2 contract, and Stage 3 event schema become approved behavioral truth.
+    
+    ## Design notes
+    
+    00b output structure:
+    
+    ```markdown
+    # Solution Discovery / Feature Topology
+    
+    Product/domain problem:
+    User/workflow context:
+    Candidate actors:
+    Candidate feature list:
+    Candidate outcomes:
+    Shared vocabulary/concepts:
+    Possible event families:
+    Potential event spine pressure:
+    Potential shared infrastructure:
+    Potential configuration requirements:
+    Potential configuration schema:
+    External integrations:
+    Data persistence needs:
+    Operational constraints:
+    Security/privacy concerns:
+    Likely failure modes:
+    Potential Stage 10 / ADR needs:
+    Architecture risks:
+    Vertical drift risks:
+    Recommended first feature:
+    Features to defer:
+    Explicit non-decisions:
+    What must NOT be treated as approved:
+    ```
+    
+    Configuration discovery — 00b should identify configuration needs early:
+    
+    ```markdown
+    # Configuration Hypotheses
+    
+    Config item:
+    Purpose:
+    Feature(s) likely affected:
+    Default:
+    Required/optional:
+    Secret/non-secret:
+    Environment-specific:
+    Runtime-changeable:
+    Needs schema validation:
+    Potential event impact:
+    ```
+    
+    ## Value
+    
+    Very high. This helps identify common denominators across multiple future features without
+    losing DBA advantages.
+    
+    ## Risk
+    
+    The model may treat 00b hypotheses as approved architecture.
+    
+    ## Guardrail
+    
+    Every 00b artifact must contain:
+    
+    ```text
+    This document is non-authoritative planning material.
+    It does not approve features, architecture, contracts, schemas, events, or implementation.
+    If this document conflicts with later approved DBA artifacts, the approved DBA artifacts win.
+    ```
+    
+    ## DBA-philosophy note
+    
+    Touches **artifact authority**: 00b output must never be treated as approved DBA truth. Only
+    Stages 1–3 produce approved behavioral truth. The non-authoritative banner is the guardrail
+    that keeps this from eroding intent primacy.
+    
+    ## Feature Thread
+    
+    > Canonical thread rollup for this feature. Compact links/IDs only; full detail lives in the
+    > change records and review files. May be maintained manually.
+    
+    ### Changes
+    
+    | Change ID | File | Purpose | State |
+    |---|---|---|---|
+    | CHG-20260630-005 | `changes/UPG-0007__CHG-20260630-005__solution-discovery-00b.md` | New 00b solution-discovery prompt + Session Type E in session-start | IN_PROGRESS |
+    
+    ### Reviews
+    
+    | Review ID | Change ID | Step | Round | Verdict |
+    |---|---|---|---|---|
+    
+    ### Findings Tracked Inside This Feature
+    
+    | Finding ID | Review ID | Classification | Resolution |
+    |---|---|---|---|
+    
+    ### Follow-up Features
+    
+    | Feature ID | Reason | Source finding |
+    |---|---|---|
+
+DIFF TO REVIEW (base->review, secret/size filtered)
+diff --git a/backlog/UPG-0005-current-verified-state.md b/backlog/UPG-0005-current-verified-state.md
+index 9bfcb07..0f450c1 100644
+--- a/backlog/UPG-0005-current-verified-state.md
++++ b/backlog/UPG-0005-current-verified-state.md
+@@ -2,7 +2,7 @@
+ feature_id: UPG-0005
+ slug: current-verified-state
+ title: Current Verified State Block
+-status: PROPOSED
++status: COMPLETE
+ priority: P0
+ depends_on: []
+ related_features: []
+@@ -125,6 +125,7 @@ truth.
+ 
+ | Change ID | File | Purpose | State |
+ |---|---|---|---|
++| CHG-20260630-004 | `changes/UPG-0005__CHG-20260630-004__current-verified-state.md` | Add CVS generation step to session-start prompt; note in project-CLAUDE.md template | COMPLETE |
+ 
+ ### Reviews
+ 
+diff --git a/backlog/UPG-0007-solution-discovery-00b.md b/backlog/UPG-0007-solution-discovery-00b.md
+index 816096d..0c31223 100644
+--- a/backlog/UPG-0007-solution-discovery-00b.md
++++ b/backlog/UPG-0007-solution-discovery-00b.md
+@@ -124,6 +124,7 @@ that keeps this from eroding intent primacy.
+ 
+ | Change ID | File | Purpose | State |
+ |---|---|---|---|
++| CHG-20260630-005 | `changes/UPG-0007__CHG-20260630-005__solution-discovery-00b.md` | New 00b solution-discovery prompt + Session Type E in session-start | IN_PROGRESS |
+ 
+ ### Reviews
+ 
+diff --git a/backlog/UPG-0018-reviewer-engine-v1.md b/backlog/UPG-0018-reviewer-engine-v1.md
+index 2ea411d..ea44bd6 100644
+--- a/backlog/UPG-0018-reviewer-engine-v1.md
++++ b/backlog/UPG-0018-reviewer-engine-v1.md
+@@ -2,12 +2,12 @@
+ feature_id: UPG-0018
+ slug: reviewer-engine-v1
+ title: Typed reviewer engine to replace the Bash pilot
+-status: PROPOSED
++status: SUPERSEDED
+ priority: P2
+ depends_on: []
+ related_features: []
+ supersedes: []
+-superseded_by: []
++superseded_by: [UPG-0032]
+ ---
+ 
+ # Upgrade: reviewer-engine-v1 — Typed reviewer engine to replace the Bash pilot
+diff --git a/backlog/features.md b/backlog/features.md
+index ca2bb3f..81a9a14 100644
+--- a/backlog/features.md
++++ b/backlog/features.md
+@@ -35,7 +35,7 @@ The goal is to speed up Codeos development without weakening DBA advantages.
+ | UPG-0002 | [UPG-0002-doc-consistency-doctrine-rename.md](UPG-0002-doc-consistency-doctrine-rename.md) | doc-consistency pass after CLAUDE.md→dba-system.md split | — | COMPLETE |
+ | UPG-0003 | [UPG-0003-reviewer-decision-brief.md](UPG-0003-reviewer-decision-brief.md) | Reviewer Agent for Stage-Gate Decision Briefs | P0 | PILOTED |
+ | UPG-0004 | [UPG-0004-stage-4-6-reports.md](UPG-0004-stage-4-6-reports.md) | Structured Stage 4–6 Reports | P0 | PROPOSED |
+-| UPG-0005 | [UPG-0005-current-verified-state.md](UPG-0005-current-verified-state.md) | Current Verified State Block | P0 | PROPOSED |
++| UPG-0005 | [UPG-0005-current-verified-state.md](UPG-0005-current-verified-state.md) | Current Verified State Block | P0 | COMPLETE |
+ | UPG-0006 | [UPG-0006-reviewer-quality-scale.md](UPG-0006-reviewer-quality-scale.md) | Reviewer Summary Quality Scale | P2 | PROPOSED |
+ | UPG-0007 | [UPG-0007-solution-discovery-00b.md](UPG-0007-solution-discovery-00b.md) | Expanded 00b Solution Discovery / Feature Topology | P0 | PROPOSED |
+ | UPG-0008 | [UPG-0008-config-discovery.md](UPG-0008-config-discovery.md) | Configuration Discovery & Schema Track | P2 | PROPOSED |
+@@ -48,7 +48,8 @@ The goal is to speed up Codeos development without weakening DBA advantages.
+ | UPG-0015 | [UPG-0015-reviewer-decision-integrity.md](UPG-0015-reviewer-decision-integrity.md) | Bind stage approval to reviewed provenance | P1 | PROPOSED |
+ | UPG-0016 | [UPG-0016-workflow-profiles.md](UPG-0016-workflow-profiles.md) | Branch / PR / CI Workflow Profiles | P1 | PROPOSED |
+ | UPG-0017 | [UPG-0017-stack-manifest.md](UPG-0017-stack-manifest.md) | Stack Manifest with Automatic Reconciliation | P2 | PROPOSED |
+-| UPG-0018 | [UPG-0018-reviewer-engine-v1.md](UPG-0018-reviewer-engine-v1.md) | Typed reviewer engine to replace the Bash pilot | P2 | PROPOSED |
++| UPG-0018 | [UPG-0018-reviewer-engine-v1.md](UPG-0018-reviewer-engine-v1.md) | Typed reviewer engine to replace the Bash pilot | P2 | SUPERSEDED by UPG-0032 |
++| UPG-0032 | [UPG-0032-rust-reviewer-engine-multi-provider.md](UPG-0032-rust-reviewer-engine-multi-provider.md) | Rust Reviewer Engine with Multi-Provider Support | P2 | PROPOSED |
+ | UPG-0019 | [UPG-0019-ci-profile.md](UPG-0019-ci-profile.md) | CI Integration Profile | P3 | PROPOSED |
+ | UPG-0020 | [UPG-0020-stack-drift-detector.md](UPG-0020-stack-drift-detector.md) | Stack / Config Drift Detector | P3 | PROPOSED |
+ | UPG-0021 | [UPG-0021-stage-report-generator.md](UPG-0021-stage-report-generator.md) | Stage Report Generator | P3 | PROPOSED |
+@@ -78,6 +79,14 @@ is authoritative for *order*, this map is authoritative for *identity*.
+ 
+ ---
+ 
++## Future candidates (no UPG-#### assigned yet)
++
++| Candidate | Description |
++|---|---|
++| review-runner diagnostics | A `diagnose` subcommand for `codeos-review.sh` that independently checks: Codex CLI availability, trivial session creation, session ID parsing, minimal packet review, assessment write, and review-log append. Open only if API/session errors recur during a real review; must not change review semantics, packet construction, scope rules, or reviewer policy. |
++
++---
++
+ ## What not to do yet
+ 
+ - Do not add full OAP integration doctrine as a core Codeos change.
+diff --git a/prompts/00-session-start.md b/prompts/00-session-start.md
+index 9653598..290f914 100644
+--- a/prompts/00-session-start.md
++++ b/prompts/00-session-start.md
+@@ -17,7 +17,52 @@ You are operating in **Declarative Behavioral Architecture (DBA)** mode for this
+ 
+ **Step 2b:** If `docs/codebase-digest.md` exists in the project root, read it now. Confirm you have read it by stating: "Structural digest read — [N] critical hubs, [N] god functions noted." If it does not exist, state: "No structural digest found — proceeding without structural orientation."
+ 
+-**Step 3:** Determine the session type from the options below and confirm it:
++**Step 3:** Generate the Current Verified State block before proceeding. Run each command below and report the output.
++
++**3a — Repository state:**
++```bash
++git branch --show-current
++git rev-parse --short HEAD
++git status --short
++```
++Report:
++- Branch: `<output>`
++- Commit: `<output>`
++- Working tree: clean / dirty — list every modified and untracked file if any
++
++**3b — Active feature state:**
++
++If `features/registry.yaml` exists, read it. For each feature whose status is not COMPLETE:
++- Stage ≥ 1 → check that `intents/<feature_id>*.md` exists.
++- Stage ≥ 2 → check that `contracts/<feature_id>*.md` exists.
++- Stage ≥ 3 → check that `events/<feature_id>*.md` exists.
++
++If any expected artifact file is absent, or if an artifact is present but the registry reports a stage that does not require it yet: **STOP immediately** and report the specific mismatch to the human before continuing. Do not silently resolve the disagreement.
++
++If `features/registry.yaml` does not exist: read the Active Features table from `CLAUDE.md` and report it as-is.
++
++Report:
++- Active feature: `<feature_id>` or `none`
++- Current stage: `<N>` or `unknown`
++- Registry/filesystem: `match` or `MISMATCH — <describe>`
++
++**3c — Artifact directories:**
++```bash
++ls intents/   2>/dev/null || echo "(none)"
++ls contracts/ 2>/dev/null || echo "(none)"
++ls events/    2>/dev/null || echo "(none)"
++ls tests/     2>/dev/null || echo "(none)"
++```
++Report each directory as a one-line list of filenames.
++
++After completing 3a–3c, state:
++`CURRENT STATE VERIFIED — Branch: <branch>, Commit: <sha>, Tree: <clean|dirty>, Feature: <id|none>, Stage: <N|unknown>`
++
++Then proceed to Step 4.
++
++---
++
++**Step 4:** Determine the session type from the options below and confirm it:
+ 
+ ---
+ 
+@@ -45,16 +90,16 @@ Output: `HYPOTHESIZED_INTENT` draft briefs in `backlog/` and draft intents in `i
+ 
+ ---
+ 
+-**Step 4:** Check the feature registry. If `features/registry.yaml` exists, read it and report the current status of all features. State any features that are blocked on approval.
++**Step 5:** Check the feature registry. If `features/registry.yaml` exists, read it and report the current status of all features. State any features that are blocked on approval.
+ 
+-**Step 5:** Use the following session context:
++**Step 6:** Use the following session context:
+ 
+ ## Session Context
+ 
+ **Today's goal:**
+ [Human fills in: e.g., "Complete Stage 2 contract for user_login feature"]
+ 
+-**Session type:** [A / B / C — from Step 3]
++**Session type:** [A / B / C — from Step 4]
+ 
+ **Current feature or refinement:**
+ 
+@@ -79,7 +124,7 @@ Output: `HYPOTHESIZED_INTENT` draft briefs in `backlog/` and draft intents in `i
+ 
+ **Forbidden action (structural):** Behavioral modification of a function listed in `docs/codebase-digest.md` as a Critical Hub or God Function requires explicit contract coverage for that change. Non-behavioral modifications (performance, extraction of helpers, testability work) that do not change observable outputs are exempt.
+ 
+-**Step 6:** After reading and confirming, state:
++**Step 7:** After reading and confirming, state:
+ - You are in DBA mode
+ - The session type (A, B, C, or D)
+ - Which feature(s) or refinement you'll work on
+diff --git a/status/roadmap.md b/status/roadmap.md
+index e7c95df..7d311f0 100644
+--- a/status/roadmap.md
++++ b/status/roadmap.md
+@@ -43,13 +43,13 @@ cheap pilot-adjacent wins early.
+ | Wave | Feature ID | Title | Priority | Depends on | Planned/active change | State |
+ |---|---|---|---|---|---|---|
+ | 1 | UPG-0004 | Structured Stage 4–6 Reports | P0 | — | CHG-20260630-001 | COMPLETE |
+-| 1 | UPG-0005 | Current Verified State Block | P0 | — | — | PROPOSED |
++| 1 | UPG-0005 | Current Verified State Block | P0 | — | CHG-20260630-004 | COMPLETE |
+ | 1 | UPG-0006 | Reviewer Summary Quality Scale | P2 | UPG-0003 ✓ | — | PROPOSED (partly piloted) |
+ 
+ ### Wave 2 — Discovery & registry
+ | Wave | Feature ID | Title | Priority | Depends on | Planned/active change | State |
+ |---|---|---|---|---|---|---|
+-| 2 | UPG-0007 | Expanded 00b Solution Discovery / Feature Topology | P0 | — | — | PROPOSED |
++| 2 | UPG-0007 | Expanded 00b Solution Discovery / Feature Topology | P0 | — | CHG-20260630-005 | IN_PROGRESS |
+ | 2 | UPG-0008 | Configuration Discovery & Schema Track | P2 | UPG-0007 | — | PROPOSED |
+ | 2 | UPG-0009 | Feature Registry / Branch Binding | P2 | — | — | PROPOSED |
+ 
+@@ -64,15 +64,16 @@ cheap pilot-adjacent wins early.
+ ### Wave 4 — Reviewer hardening & delivery
+ | Wave | Feature ID | Title | Priority | Depends on | Planned/active change | State |
+ |---|---|---|---|---|---|---|
+-| 4 | UPG-0014 | Reviewer Agent with Full Diff Access | P2 | UPG-0003 ✓ | — | PROPOSED |
+-| 4 | UPG-0015 | Bind stage approval to reviewed provenance | P1 | UPG-0003 ✓ | — | PROPOSED |
++| 4 | UPG-0032 | Rust Reviewer Engine with Multi-Provider Support | P2 | UPG-0027 ✓ | — | PROPOSED |
++| 4 | UPG-0014 | Reviewer Agent with Full Diff Access | P2 | UPG-0032 | — | PROPOSED |
++| 4 | UPG-0015 | Bind stage approval to reviewed provenance | P1 | UPG-0032 | — | PROPOSED |
+ | 4 | UPG-0016 | Branch / PR / CI Workflow Profiles | P1 | — | — | PROPOSED |
+ | 4 | UPG-0017 | Stack Manifest with Automatic Reconciliation | P2 | — | — | PROPOSED |
+ 
+ ### Wave 5 — Advanced automation & generators  *(mostly P3 + the big P2 rewrite)*
+ | Wave | Feature ID | Title | Priority | Depends on | Planned/active change | State |
+ |---|---|---|---|---|---|---|
+-| 5 | UPG-0018 | Typed reviewer engine (replace Bash pilot) | P2 | UPG-0003 proven | — | PROPOSED |
++| 5 | UPG-0018 | Typed reviewer engine (replace Bash pilot) | P2 | — | — | SUPERSEDED by UPG-0032 |
+ | 5 | UPG-0019 | CI Integration Profile | P3 | UPG-0017 | — | PROPOSED |
+ | 5 | UPG-0020 | Stack / Config Drift Detector | P3 | UPG-0017 | — | PROPOSED |
+ | 5 | UPG-0021 | Stage Report Generator | P3 | UPG-0004 | — | PROPOSED |
+@@ -95,9 +96,8 @@ cheap pilot-adjacent wins early.
+ 
+ ## Immediate next pickups
+ 
+-1. **UPG-0005 — Current Verified State Block** (Wave 1, P0, no deps) — next open Wave 1 item after
+-   UPG-0004 completion. Foundational for later dashboards and evidence-packaging features.
+-2. UPG-0006 — Reviewer Summary Quality Scale (Wave 1, P2, UPG-0003 ✓).
++1. **UPG-0006 — Reviewer Summary Quality Scale** (Wave 1, P2, UPG-0003 ✓) — next open Wave 1 item after UPG-0005 completion.
++2. UPG-0007 — Expanded 00b Solution Discovery / Feature Topology (Wave 2, P0, no deps).
+ 
+ Each is taken as its own self-dev change (a fresh `CHG-*`) via the 4-step loop, with human
+ approval at every gate.
+diff --git a/status/self-development.md b/status/self-development.md
+index 373fb33..b678f7f 100644
+--- a/status/self-development.md
++++ b/status/self-development.md
+@@ -33,6 +33,8 @@
+ | UPG-0004 | CHG-20260630-001 | template | self-dev only | 4-Reconcile | ACCEPTED (Steps 2–4 reviewed; R2 NO OBJECTION at each gate) | COMPLETE | UPG-0031 |
+ | UPG-0031 | CHG-20260630-002 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (Step 4 R2 NO OBJECTION; corrected by CHG-20260630-003) | COMPLETE | — |
+ | UPG-0031 | CHG-20260630-003 | script-tooling + documentation | self-dev only | 4-Reconcile | ACCEPTED (all 5 ACs verified; corrects false B8b in CHG-20260630-002) | COMPLETE | — |
++| UPG-0005 | CHG-20260630-004 | prompt + template | self-dev only | 4-Reconcile | ACCEPTED (Step 3 R2 NO OBJECTION; Step 4 R1 CHANGES ADVISED — F1 fixed, F2 REVIEW-BOOKKEEPING) | COMPLETE | — |
++| UPG-0007 | CHG-20260630-005 | prompt | self-dev only | 1-Intent | NOT_STARTED | IN_PROGRESS | — |
+ 
+ <!--
+ Identity   : Feature ID = UPG-#### (stable). Change ID = CHG-YYYYMMDD-NNN (one execution), or a
+diff --git a/templates/project-CLAUDE.md b/templates/project-CLAUDE.md
+index b76fe89..3fa6b10 100644
+--- a/templates/project-CLAUDE.md
++++ b/templates/project-CLAUDE.md
+@@ -9,7 +9,7 @@ The DBA toolkit is at `.codeos/` (symlinked from `/home/arc/projects/claude/Code
+ **At the start of every Claude Code session — read `.codeos/dba-system.md` before doing any
+ work; it is the authoritative Codeos DBA doctrine (the full 9-stage operating instructions).**
+ 1. Read `.codeos/dba-system.md` — authoritative DBA doctrine; read it first, in full
+-2. Read `.codeos/prompts/00-session-start.md` — session orientation template
++2. Read `.codeos/prompts/00-session-start.md` — session orientation template (Step 3 generates the Current Verified State: branch, commit, working tree, and registry/filesystem agreement)
+ 3. Check the Active Features table below for current stage status
+ 4. Ask what the human wants to work on this session, then STOP and wait
+ 

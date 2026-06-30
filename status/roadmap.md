@@ -43,7 +43,7 @@ cheap pilot-adjacent wins early.
 | Wave | Feature ID | Title | Priority | Depends on | Planned/active change | State |
 |---|---|---|---|---|---|---|
 | 1 | UPG-0004 | Structured Stage 4–6 Reports | P0 | — | CHG-20260630-001 | COMPLETE |
-| 1 | UPG-0005 | Current Verified State Block | P0 | — | — | PROPOSED |
+| 1 | UPG-0005 | Current Verified State Block | P0 | — | CHG-20260630-004 | COMPLETE |
 | 1 | UPG-0006 | Reviewer Summary Quality Scale | P2 | UPG-0003 ✓ | — | PROPOSED (partly piloted) |
 
 ### Wave 2 — Discovery & registry
@@ -64,15 +64,16 @@ cheap pilot-adjacent wins early.
 ### Wave 4 — Reviewer hardening & delivery
 | Wave | Feature ID | Title | Priority | Depends on | Planned/active change | State |
 |---|---|---|---|---|---|---|
-| 4 | UPG-0014 | Reviewer Agent with Full Diff Access | P2 | UPG-0003 ✓ | — | PROPOSED |
-| 4 | UPG-0015 | Bind stage approval to reviewed provenance | P1 | UPG-0003 ✓ | — | PROPOSED |
+| 4 | UPG-0032 | Rust Reviewer Engine with Multi-Provider Support | P2 | UPG-0027 ✓ | — | PROPOSED |
+| 4 | UPG-0014 | Reviewer Agent with Full Diff Access | P2 | UPG-0032 | — | PROPOSED |
+| 4 | UPG-0015 | Bind stage approval to reviewed provenance | P1 | UPG-0032 | — | PROPOSED |
 | 4 | UPG-0016 | Branch / PR / CI Workflow Profiles | P1 | — | — | PROPOSED |
 | 4 | UPG-0017 | Stack Manifest with Automatic Reconciliation | P2 | — | — | PROPOSED |
 
 ### Wave 5 — Advanced automation & generators  *(mostly P3 + the big P2 rewrite)*
 | Wave | Feature ID | Title | Priority | Depends on | Planned/active change | State |
 |---|---|---|---|---|---|---|
-| 5 | UPG-0018 | Typed reviewer engine (replace Bash pilot) | P2 | UPG-0003 proven | — | PROPOSED |
+| 5 | UPG-0018 | Typed reviewer engine (replace Bash pilot) | P2 | — | — | SUPERSEDED by UPG-0032 |
 | 5 | UPG-0019 | CI Integration Profile | P3 | UPG-0017 | — | PROPOSED |
 | 5 | UPG-0020 | Stack / Config Drift Detector | P3 | UPG-0017 | — | PROPOSED |
 | 5 | UPG-0021 | Stage Report Generator | P3 | UPG-0004 | — | PROPOSED |
@@ -95,9 +96,8 @@ cheap pilot-adjacent wins early.
 
 ## Immediate next pickups
 
-1. **UPG-0005 — Current Verified State Block** (Wave 1, P0, no deps) — next open Wave 1 item after
-   UPG-0004 completion. Foundational for later dashboards and evidence-packaging features.
-2. UPG-0006 — Reviewer Summary Quality Scale (Wave 1, P2, UPG-0003 ✓).
+1. **UPG-0006 — Reviewer Summary Quality Scale** (Wave 1, P2, UPG-0003 ✓) — next open Wave 1 item after UPG-0005 completion.
+2. UPG-0007 — Expanded 00b Solution Discovery / Feature Topology (Wave 2, P0, no deps).
 
 Each is taken as its own self-dev change (a fresh `CHG-*`) via the 4-step loop, with human
 approval at every gate.

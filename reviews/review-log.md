@@ -1210,3 +1210,103 @@ Reason/next: No Codex review required (PROFILE-1 corrective; human prescribed al
   Artifact fix: line 100 backtick-wrapped; B3c transcript to blockquote; false B8b
   transcript replaced with corrected transcript + root-cause note.
   Marking UPG-0031 CHG-20260630-003 COMPLETE. AJ-008 added to architecture journal.
+
+## 2026-06-30T20:20:41Z REVIEW — e2e-verify — Stage pipeline-check
+Base: (no base pin)  Review: 9645a4f61611645d3defb0870308c67756f7ff97  Branch: selfdev/upg-0029-review-durability
+Diff-hash: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+Reviewer: codex default-model (session 019f1a2f-7f15-7f51-93d6-06a236b710cc)
+Codex concern: DO NOT ADVANCE
+Effective concern: DO NOT ADVANCE
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: false
+Log summary: DO NOT ADVANCE — the status file marks work `COMPLETE` using unsupported and internally inconsistent acceptance/verification claims
+Full assessment: reviews/codex/2026-06-30T202041Z-e2e-verify-stage-pipeline-check-9645a4f.md (sha256:b9d0328828d7162fc09e84fcea9ae3c12c8ea48612f754946431df88cd99588d)
+Reviewed packet: reviews/codex/packets/2026-06-30T202041Z-e2e-verify-stage-pipeline-check-9645a4f.packet.txt (sha256:0e7c7bd12504a23af117e58a1e101257bf6411812806451f48fb4189cda3044a)
+Human decision: (append with: codeos-review.sh decision e2e-verify pipeline-check <DECISION> "<reason>")
+
+## 2026-06-30T20:44:35Z REVIEW — UPG-0005__CHG-20260630-004 — Stage selfdev-step-2
+Base: (no base pin)  Review: 9645a4f61611645d3defb0870308c67756f7ff97  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 8c51fb102c52c6a91495ee0b5ca82ef2649204e7e5d850da4a1d89e99b01dc6d
+Reviewer: codex default-model (session 019f1a44-b7aa-7840-9ef5-15997ee8805f)
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: B
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: CHANGES ADVISED — Step 3 overclaims registry/filesystem mismatch coverage and the packet does not establish all stated acceptance criteria
+Full assessment: reviews/codex/2026-06-30T204435Z-UPG-0005__CHG-20260630-004-stage-selfdev-step-2-9645a4f.md (sha256:efaa262c81656511aeb75499dfaf54639fd78d228f2cb94766d99d26fdef3543)
+Reviewed packet: reviews/codex/packets/2026-06-30T204435Z-UPG-0005__CHG-20260630-004-stage-selfdev-step-2-9645a4f.packet.txt (sha256:d4b3d1fccee13349061ff8f7f4e951a6563269d52134e5c7bde29c66282104e9)
+Human decision: (append with: codeos-review.sh decision UPG-0005__CHG-20260630-004 selfdev-step-2 <DECISION> "<reason>")
+
+## 2026-06-30T20:46:07Z REVIEW — UPG-0005__CHG-20260630-004 — Stage selfdev-step-3
+Base: (no base pin)  Review: 9645a4f61611645d3defb0870308c67756f7ff97  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 8c51fb102c52c6a91495ee0b5ca82ef2649204e7e5d850da4a1d89e99b01dc6d
+Reviewer: codex default-model (session 019f1a44-b7aa-7840-9ef5-15997ee8805f)
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: B
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: CHANGES ADVISED — the Step 3 mismatch check does not meet A3 as written, and the packet does not establish all stated acceptance criteria
+Full assessment: reviews/codex/2026-06-30T204607Z-UPG-0005__CHG-20260630-004-stage-selfdev-step-3-9645a4f.md (sha256:b4c5d3dd07a0d4009a4a0efd5c1e8e12fee568c49b43b48c81afb2763117e503)
+Reviewed packet: reviews/codex/packets/2026-06-30T204607Z-UPG-0005__CHG-20260630-004-stage-selfdev-step-3-9645a4f.packet.txt (sha256:39d5b4b2e6407cbc2c7765bd3c1b71c8d60ecb227083553028862abbe9acb569)
+Human decision: (append with: codeos-review.sh decision UPG-0005__CHG-20260630-004 selfdev-step-3 <DECISION> "<reason>")
+
+## 2026-06-30T20:50:34Z REVIEW — UPG-0005__CHG-20260630-004 — Stage selfdev-step-3
+Base: (no base pin)  Review: 9645a4f61611645d3defb0870308c67756f7ff97  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 8c51fb102c52c6a91495ee0b5ca82ef2649204e7e5d850da4a1d89e99b01dc6d
+Reviewer: codex default-model (session 019f1a44-b7aa-7840-9ef5-15997ee8805f)
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: B
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — the Step 3 implementation now matches its narrowed acceptance criteria and stays within scope
+Full assessment: reviews/codex/2026-06-30T205034Z-UPG-0005__CHG-20260630-004-stage-selfdev-step-3-9645a4f.md (sha256:9235c2c60fa53691a8e8ec17818535004b6841fee351e6de3500e9d729dd5b3f)
+Reviewed packet: reviews/codex/packets/2026-06-30T205034Z-UPG-0005__CHG-20260630-004-stage-selfdev-step-3-9645a4f.packet.txt (sha256:58cf39e2095013fcadbf26a6206a4936ea5e315a9ee78feb6127dfc3e0463b12)
+Human decision: (append with: codeos-review.sh decision UPG-0005__CHG-20260630-004 selfdev-step-3 <DECISION> "<reason>")
+
+## 2026-06-30T20:52:20Z HUMAN DECISION — UPG-0005__CHG-20260630-004 — Stage selfdev-step-3
+Commit at decision: 9645a4f61611645d3defb0870308c67756f7ff97
+Decision: APPROVE_STAGE
+Reason/next: Human approved Step 3 after R1 CHANGES ADVISED (B1 A3-narrowed, B2 A7-reframed, B3 frontmatter fixed) and R2 NO OBJECTION.
+Verified against: reviews/codex/2026-06-30T205034Z-UPG-0005__CHG-20260630-004-stage-selfdev-step-3-9645a4f.md
+Artifact integrity (informational audit, not a gate):
+  MATCH   changes/UPG-0005__CHG-20260630-004__current-verified-state.md
+  MATCH   prompts/00-session-start.md
+  MATCH   templates/project-CLAUDE.md
+  MATCH   backlog/UPG-0005-current-verified-state.md
+
+## 2026-06-30T20:54:47Z REVIEW — UPG-0005__CHG-20260630-004 — Stage selfdev-step-4
+Base: (no base pin)  Review: 9645a4f61611645d3defb0870308c67756f7ff97  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 8c51fb102c52c6a91495ee0b5ca82ef2649204e7e5d850da4a1d89e99b01dc6d
+Reviewer: codex default-model (session 019f1a44-b7aa-7840-9ef5-15997ee8805f)
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: B
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: CHANGES ADVISED — the packet’s implementation is fine, but its change-tracking state still contradicts the Step 4 reconcile stage
+Full assessment: reviews/codex/2026-06-30T205447Z-UPG-0005__CHG-20260630-004-stage-selfdev-step-4-9645a4f.md (sha256:cba52820a104fa4193434bc6ad0f0d84cd8b0b03b7cd8396eefe7a66e166c1ea)
+Reviewed packet: reviews/codex/packets/2026-06-30T205447Z-UPG-0005__CHG-20260630-004-stage-selfdev-step-4-9645a4f.packet.txt (sha256:80ec8b5896900d5fd579cd14cf9273a4f0a0a83e2a9104d19ae59f1f17ac1af6)
+Human decision: (append with: codeos-review.sh decision UPG-0005__CHG-20260630-004 selfdev-step-4 <DECISION> "<reason>")
+
+## 2026-06-30T20:58:43Z HUMAN DECISION — UPG-0005__CHG-20260630-004 — Stage selfdev-step-4
+Commit at decision: 9645a4f61611645d3defb0870308c67756f7ff97
+Decision: APPROVE_STAGE
+Reason/next: Human approved Step 4 Reconcile. F1 stale-frontmatter fixed in-scope; F2 SELF-REFERENCE/REVIEW-BOOKKEEPING accepted as non-blocker. All 8 ACs verified. Functional scope clean.
+Verified against: reviews/codex/2026-06-30T205447Z-UPG-0005__CHG-20260630-004-stage-selfdev-step-4-9645a4f.md
+Artifact integrity (informational audit, not a gate):
+  CHANGED changes/UPG-0005__CHG-20260630-004__current-verified-state.md (reviewed 38d629454752 / now f6904e9f4de7)
+  MATCH   prompts/00-session-start.md
+  MATCH   templates/project-CLAUDE.md
+  MATCH   backlog/UPG-0005-current-verified-state.md
+
+## 2026-06-30T21:20:19Z REVIEW — UPG-0007__CHG-20260630-005 — Stage selfdev-step-1
+Base: (no base pin)  Review: 9645a4f61611645d3defb0870308c67756f7ff97  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 660eba46cec43579adb9eacdf0d6bae408cf08a2a0ba94d603d6d023e5d74386
+Reviewer: codex default-model (session 019f1a65-7927-71a2-8d7d-4057b74e5097)
+Codex concern: DO NOT ADVANCE
+Effective concern: DO NOT ADVANCE
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: DO NOT ADVANCE — The packet does not contain the claimed `00b` solution-discovery / Session Type E change and includes explicit scope drift.
+Full assessment: reviews/codex/2026-06-30T212019Z-UPG-0007__CHG-20260630-005-stage-selfdev-step-1-9645a4f.md (sha256:472ec172114f386af0ce6d32f68294f0d5d67b5d80d69badd9a455ba3494d6b0)
+Reviewed packet: reviews/codex/packets/2026-06-30T212019Z-UPG-0007__CHG-20260630-005-stage-selfdev-step-1-9645a4f.packet.txt (sha256:eb4e5b02a86289406431d667fd13fbdcdda9986c4467cabc285f9c1ba041f14f)
+Human decision: (append with: codeos-review.sh decision UPG-0007__CHG-20260630-005 selfdev-step-1 <DECISION> "<reason>")

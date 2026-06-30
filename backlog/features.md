@@ -35,7 +35,7 @@ The goal is to speed up Codeos development without weakening DBA advantages.
 | UPG-0002 | [UPG-0002-doc-consistency-doctrine-rename.md](UPG-0002-doc-consistency-doctrine-rename.md) | doc-consistency pass after CLAUDE.md→dba-system.md split | — | COMPLETE |
 | UPG-0003 | [UPG-0003-reviewer-decision-brief.md](UPG-0003-reviewer-decision-brief.md) | Reviewer Agent for Stage-Gate Decision Briefs | P0 | PILOTED |
 | UPG-0004 | [UPG-0004-stage-4-6-reports.md](UPG-0004-stage-4-6-reports.md) | Structured Stage 4–6 Reports | P0 | PROPOSED |
-| UPG-0005 | [UPG-0005-current-verified-state.md](UPG-0005-current-verified-state.md) | Current Verified State Block | P0 | PROPOSED |
+| UPG-0005 | [UPG-0005-current-verified-state.md](UPG-0005-current-verified-state.md) | Current Verified State Block | P0 | COMPLETE |
 | UPG-0006 | [UPG-0006-reviewer-quality-scale.md](UPG-0006-reviewer-quality-scale.md) | Reviewer Summary Quality Scale | P2 | PROPOSED |
 | UPG-0007 | [UPG-0007-solution-discovery-00b.md](UPG-0007-solution-discovery-00b.md) | Expanded 00b Solution Discovery / Feature Topology | P0 | PROPOSED |
 | UPG-0008 | [UPG-0008-config-discovery.md](UPG-0008-config-discovery.md) | Configuration Discovery & Schema Track | P2 | PROPOSED |
@@ -48,7 +48,8 @@ The goal is to speed up Codeos development without weakening DBA advantages.
 | UPG-0015 | [UPG-0015-reviewer-decision-integrity.md](UPG-0015-reviewer-decision-integrity.md) | Bind stage approval to reviewed provenance | P1 | PROPOSED |
 | UPG-0016 | [UPG-0016-workflow-profiles.md](UPG-0016-workflow-profiles.md) | Branch / PR / CI Workflow Profiles | P1 | PROPOSED |
 | UPG-0017 | [UPG-0017-stack-manifest.md](UPG-0017-stack-manifest.md) | Stack Manifest with Automatic Reconciliation | P2 | PROPOSED |
-| UPG-0018 | [UPG-0018-reviewer-engine-v1.md](UPG-0018-reviewer-engine-v1.md) | Typed reviewer engine to replace the Bash pilot | P2 | PROPOSED |
+| UPG-0018 | [UPG-0018-reviewer-engine-v1.md](UPG-0018-reviewer-engine-v1.md) | Typed reviewer engine to replace the Bash pilot | P2 | SUPERSEDED by UPG-0032 |
+| UPG-0032 | [UPG-0032-rust-reviewer-engine-multi-provider.md](UPG-0032-rust-reviewer-engine-multi-provider.md) | Rust Reviewer Engine with Multi-Provider Support | P2 | PROPOSED |
 | UPG-0019 | [UPG-0019-ci-profile.md](UPG-0019-ci-profile.md) | CI Integration Profile | P3 | PROPOSED |
 | UPG-0020 | [UPG-0020-stack-drift-detector.md](UPG-0020-stack-drift-detector.md) | Stack / Config Drift Detector | P3 | PROPOSED |
 | UPG-0021 | [UPG-0021-stage-report-generator.md](UPG-0021-stage-report-generator.md) | Stage Report Generator | P3 | PROPOSED |
@@ -75,6 +76,14 @@ The goal is to speed up Codeos development without weakening DBA advantages.
 Sequencing by `UPG-####` is maintained in [`../status/roadmap.md`](../status/roadmap.md)
 (dependency-aware waves + current state). This file does not duplicate the wave plan; the roadmap
 is authoritative for *order*, this map is authoritative for *identity*.
+
+---
+
+## Future candidates (no UPG-#### assigned yet)
+
+| Candidate | Description |
+|---|---|
+| review-runner diagnostics | A `diagnose` subcommand for `codeos-review.sh` that independently checks: Codex CLI availability, trivial session creation, session ID parsing, minimal packet review, assessment write, and review-log append. Open only if API/session errors recur during a real review; must not change review semantics, packet construction, scope rules, or reviewer policy. |
 
 ---
 
