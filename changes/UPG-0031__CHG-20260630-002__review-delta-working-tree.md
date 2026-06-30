@@ -29,6 +29,7 @@ review_state: DRAFT
 review_history: reviews/review-log.md
 fixes_findings: []
 follow_up_of: UPG-0004
+corrected_by: CHG-20260630-003
 ```
 
 <!-- SELF-REFERENCE BOUNDARY -->
