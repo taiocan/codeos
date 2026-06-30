@@ -156,8 +156,9 @@ build_packet() {
   local changed_files f keep_pathspec=()
   if [[ "${delta_mode}" == "delta" ]]; then
     # delta mode: diff scoped to positional artifact paths only (--sha-only paths excluded)
-    raw_diff="$(git diff "${delta_base}" HEAD -- "${artifacts[@]}" 2>/dev/null || true)"
-    mapfile -t changed_files < <(git diff --name-only "${delta_base}" HEAD -- "${artifacts[@]}" ':(exclude)reviews' ':(exclude).codeos-state' 2>/dev/null || true)
+    # compare base commit to working tree (staged + unstaged tracked changes), not HEAD
+    raw_diff="$(git diff "${delta_base}" -- "${artifacts[@]}" 2>/dev/null || true)"
+    mapfile -t changed_files < <(git diff --name-only "${delta_base}" -- "${artifacts[@]}" ':(exclude)reviews' ':(exclude).codeos-state' 2>/dev/null || true)
   elif [[ -n "${base_sha}" ]]; then
     raw_diff="$(git diff "${base_sha}" -- . 2>/dev/null || true)"
     mapfile -t changed_files < <(git diff --name-only "${base_sha}" -- . ':(exclude)reviews' ':(exclude).codeos-state' 2>/dev/null || true)
@@ -182,7 +183,7 @@ build_packet() {
 
   if [[ ${#keep_pathspec[@]} -gt 0 ]]; then
     if [[ "${delta_mode}" == "delta" ]]; then
-      filtered_diff="$(git diff "${delta_base}" HEAD -- "${keep_pathspec[@]}" 2>/dev/null || true)"
+      filtered_diff="$(git diff "${delta_base}" -- "${keep_pathspec[@]}" 2>/dev/null || true)"
     elif [[ -n "${base_sha}" ]]; then
       filtered_diff="$(git diff "${base_sha}" -- "${keep_pathspec[@]}" 2>/dev/null || true)"
     else
@@ -228,7 +229,13 @@ build_packet() {
     sha="$(sha256_of "${a}")"
     if [[ "${delta_mode}" == "delta" ]]; then
       # delta mode: metadata only in ARTIFACTS TO REVIEW; diff content is in the DIFF section
-      if git diff --quiet "${delta_base}" HEAD -- "${a}" 2>/dev/null; then
+      # untracked files cannot be compared by git diff; fail closed with a clear diagnostic
+      if ! git ls-files --error-unmatch "${a}" >/dev/null 2>&1; then
+        echo "error: artifact is untracked; delta review cannot compare it to base: ${a}" >&2
+        echo "       Stage the file, commit it, or rerun with --mode full for explicit artifacts." >&2
+        exit 5
+      fi
+      if git diff --quiet "${delta_base}" -- "${a}" 2>/dev/null; then
         artifacts_block+="  --- ${a} (mode: path_sha_only, sha256: ${sha}, bytes: ${artifact_bytes}) ---"$'\n\n'
         manifest_full_artifacts+="    - path: ${a}"$'\n'"      mode: path_sha_only"$'\n'"      bytes: ${artifact_bytes}"$'\n'"      sha256: ${sha}"$'\n'
         PACKET_ARTIFACTS_YAML+="    - path: ${a}"$'\n'"      sha256: ${sha}"$'\n'"      visibility: path_sha_only"$'\n'
@@ -375,7 +382,7 @@ build_packet() {
     echo "ARTIFACTS TO REVIEW"
     printf '%s' "${artifacts_block}"
     if [[ "${delta_mode}" == "delta" ]]; then
-      echo "DELTA DIFF (${delta_base}->HEAD, artifact paths only, secret/size filtered)"
+      echo "DELTA DIFF (${delta_base}->working tree, artifact paths only, secret/size filtered)"
     else
       echo "DIFF TO REVIEW (base->review, secret/size filtered)"
     fi
@@ -472,10 +479,20 @@ run_prechecks() {
     [[ -f "${a}" ]] || continue   # missing artifacts are handled (and represented) by build_packet
 
     # hard fail: unfilled template placeholders (fixed-string, not a pattern for real IDs)
-    if grep -qF 'UPG-####' "${a}"; then
+    # Technique: strip HTML comment blocks (<!-- ... -->), remove blockquote lines, then remove
+    # allowed documentation occurrences at the occurrence level (not the line level) before
+    # checking for remaining bare placeholders. This prevents a documentation pattern elsewhere
+    # on the same line from masking a real unfilled placeholder field on that line.
+    if sed '/<!--/,/-->/d' "${a}" \
+         | grep -vE '^\s*>' \
+         | sed 's/`[^`]*`//g; s/→UPG-####//g; s/UPG-####__[^[:space:]]*/UPG-FILLED__/g' \
+         | grep -qF 'UPG-####'; then
       echo "error: precheck failed — literal placeholder 'UPG-####' found in ${a} (fill in the real UPG id)" >&2; exit 2
     fi
-    if grep -qF 'CHG-YYYYMMDD-NNN' "${a}"; then
+    if sed '/<!--/,/-->/d' "${a}" \
+         | grep -vE '^\s*>' \
+         | sed 's/`[^`]*`//g; s/→CHG-YYYYMMDD-NNN//g; s/CHG-YYYYMMDD-NNN__[^[:space:]]*/CHG-FILLED__/g' \
+         | grep -qF 'CHG-YYYYMMDD-NNN'; then
       echo "error: precheck failed — literal placeholder 'CHG-YYYYMMDD-NNN' found in ${a} (fill in the real CHG id)" >&2; exit 2
     fi
 
@@ -555,7 +572,19 @@ cmd_review() {
   if [[ ${print_only} -eq 1 ]]; then
     cat "${PACKET_FILE}"
     [[ -n "${PACKET_EXCLUDED}" ]] && echo "# [excluded/redacted: ${PACKET_EXCLUDED}]" >&2
+    [[ "${PACKET_COVERAGE_STATE}" == "EMPTY_PACKET" ]] && exit 4   # empty packet; nonzero signals caller
     exit 0
+  fi
+
+  # fail-closed: empty packet produces no useful review; abort before invoking Codex
+  if [[ "${PACKET_COVERAGE_STATE}" == "EMPTY_PACKET" ]]; then
+    echo "error: review packet is empty (EMPTY_PACKET) — no reviewable content found." >&2
+    if [[ "${PACKET_DELTA_MODE}" == "delta" ]]; then
+      echo "       Delta mode: ensure tracked artifacts have working-tree changes since --base," >&2
+      echo "       or use --mode full with explicit artifact paths." >&2
+    fi
+    echo "       Inspect the packet with --print-packet before rerunning." >&2
+    exit 4
   fi
 
   local pre_status; pre_status="$(git status --porcelain)"
