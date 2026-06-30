@@ -124,3 +124,37 @@ When a fix modifies a function that is called by all review modes (e.g., `run_pr
 **Why:** Mode-specific scope claims are only safe if the changed code is inside a branch that is exclusive to that mode. Shared functions crossed by multiple modes cannot be protected by a single-mode "unchanged" claim.
 
 **How to apply:** Before writing scope boundaries and guardrails for any script change, enumerate every function and code path touched by the change. For each one, check which modes invoke it. If a changed function is called in modes other than the one being targeted, the scope boundary must either exclude those modes from the "unchanged" claim or explicitly state that precheck/shared behavior is intentionally changed. See [[AJ-005]] for the related pattern of template instruction vs. enforcement boundary.
+
+---
+
+## AJ-008 — Pipeline step ordering matters: filter composition can silently hide content
+
+*Origin: UPG-0031 / CHG-20260630-003 (precheck-filter-correction), 2026-06-30.*
+
+When a text filter is implemented as a pipeline of `sed`/`grep` steps, the **order of steps
+determines what each subsequent step can see**. A step can silently hide content from all
+later steps — even content that would have been caught. Here: `sed '/<!--/,/-->/d'` ran before
+inline code span removal. A code span containing `` `<!-- … -->` `` opened an HTML-comment
+deletion range at the line containing `` `<!--``, and because GNU sed checks the range-end
+pattern only from the NEXT line after the range-start match, the range stayed open until the
+next `-->` in the file — silently deleting an entire section (lines 72–113 in the affected
+file). The acceptance-criterion smoke test happened to be on a line inside that deleted range,
+so it never reached the grep, producing a false PASS.
+
+**Why this is subtle:** The deleted section did not contain a real unfilled placeholder — so
+the test's conclusion (no placeholder found) was accidentally correct. The error was invisible
+until post-commit verification tried the precheck on the same file and got `exit: 2`.
+
+**How to apply:**
+1. When writing a multi-step filter pipeline, write the steps in "narrowest first" order:
+   remove inline/code content first, then block-level constructs (HTML comments), then
+   line-level constructs (blockquotes). This prevents a block-level pattern inside inline
+   content from prematurely opening/closing a deletion range.
+2. When writing smoke tests, choose test inputs that cover lines that the filter has NOT
+   accidentally hidden. A smoke test that passes because its target line was silently deleted
+   is equivalent to no test at all.
+3. For precheck-style filters that use sed range deletion: verify that an inline example of
+   the range-start pattern (inside a code span) does NOT cause a real placeholder on the
+   immediately following line to be skipped. This is the regression test added by AJ-008's
+   resolution (C2 in CHG-20260630-003). See [[AJ-003]] for the related self-reference loop
+   pattern and [[AJ-007]] for the shared-function scope-claim problem.

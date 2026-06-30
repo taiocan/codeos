@@ -93,6 +93,7 @@ exit 2.
 | Change ID | File | Purpose | State |
 |---|---|---|---|
 | CHG-20260630-002 | changes/UPG-0031__CHG-20260630-002__review-delta-working-tree.md | Fix delta-mode working-tree diff, untracked guard, EMPTY_PACKET guard, precheck false-positive | COMPLETE |
+| CHG-20260630-003 | changes/UPG-0031__CHG-20260630-003__precheck-filter-correction.md | Corrective: fix precheck filter ordering (code spans before HTML comments) + artifact formatting | COMPLETE |
 
 ### Reviews
 

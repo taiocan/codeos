@@ -1182,3 +1182,31 @@ Artifact integrity (informational audit, not a gate):
   MATCH   scripts/codeos-review.sh
   MATCH   backlog/UPG-0031-review-delta-mode-fix.md
   MATCH   status/self-development.md
+
+## 2026-06-30 POST-COMPLETION FINDING — UPG-0031 / CHG-20260630-002 — B8b false PASS
+Commit at finding: 502f870 (post-commit verification by human + assistant)
+Finding: B8b acceptance criterion ("precheck on the change record itself passes") was
+  falsely recorded as PASS. Actual run: exit 2. Three root causes identified:
+  (1) precheck pipeline ran HTML-comment strip before code-span removal, causing
+  `` `<!-- … -->` `` on line 72 to silently swallow lines 73–113 via sed range expansion;
+  (2) bare prose `UPG-####` on line 100 was masked by that accidental deletion — newly
+  exposed after fixing the filter order; (3) fenced code block in B3c transcript (line 241)
+  contained `'UPG-####'` not handled by backtick-span filter.
+Human decision: reopen UPG-0031 with corrective CHG-20260630-003; do not accept COMPLETE
+  state until all root causes fixed and verified.
+
+## 2026-06-30 HUMAN DECISION — UPG-0031__CHG-20260630-003 — Stage 4-Reconcile (corrective)
+Commit at decision: (working tree, post-correction)
+Decision: APPROVE_STAGE
+Reason/next: No Codex review required (PROFILE-1 corrective; human prescribed all ACs
+  and fixes). All 5 ACs verified:
+  C1 — precheck on change record exits 0 (PASS)
+  C2 — inline code span with <!-- no longer swallows next line (PASS — exits 2 on UPG-####
+       on line immediately after `` `<!-- test -->` ``)
+  C3 — status/self-development.md exits 0 (PASS)
+  C4 — real bare placeholder exits 2 (PASS)
+  C5 — bash -n syntax check (PASS)
+  Script fix: code spans stripped before HTML comment range deletion (both checks).
+  Artifact fix: line 100 backtick-wrapped; B3c transcript to blockquote; false B8b
+  transcript replaced with corrected transcript + root-cause note.
+  Marking UPG-0031 CHG-20260630-003 COMPLETE. AJ-008 added to architecture journal.
