@@ -97,7 +97,7 @@ requiring `--skip-prechecks` workarounds. This is a usability defect in the prec
 - `--mode full` diff/packet content behavior — unchanged (Fix A only affects delta-mode diff
   calls; the non-delta `git diff HEAD -- .` branch is not touched).
 - `--mode full` precheck behavior — intentionally changed by Fix D: artifacts that previously
-  produced false positives (UPG-#### in blockquotes, HTML comments, or code spans) now pass
+  produced false positives (`UPG-####` in blockquotes, HTML comments, or code spans) now pass
   the precheck in both modes. The fail-closed guarantee for real unfilled placeholders is
   retained.
 
@@ -237,10 +237,8 @@ B3b — precheck on `status/self-development.md` without `--skip-prechecks`:
 exit: 0
 ```
 B3c — real unfilled placeholder (`feature_id: UPG-####` in a bare file):
-```
-error: precheck failed — literal placeholder 'UPG-####' found in /tmp/real-ph.md (fill in the real UPG id)
-exit: 2
-```
+> error: precheck failed — literal placeholder `'UPG-####'` found in /tmp/real-ph.md (fill in the real UPG id)
+> exit: 2
 
 B5 — untracked artifact (`backlog/UPG-0031-review-delta-mode-fix.md`) in delta mode:
 ```
@@ -267,11 +265,42 @@ exit: 4
 codex/*.md count after: 67
 ```
 
-B8 — precheck on `changes/UPG-0031__CHG-20260630-002__review-delta-working-tree.md` without `--skip-prechecks`:
-```
-(packet content begins — no error line before it)
-exit: 0
-```
+B8 — precheck on `changes/UPG-0031__CHG-20260630-002__review-delta-working-tree.md` without `--skip-prechecks`
+(corrected by CHG-20260630-003; original transcript was false):
+> (packet content begins — no error line before it)
+> exit: 0
+
+**Post-completion verification defect and correction (CHG-20260630-003):**
+
+Post-commit verification (2026-06-30) found B8b falsely recorded as PASS. Two root causes:
+
+1. **Inline code span / HTML comment range interaction**: The original precheck pipeline ran
+   `sed '/<!--/,/-->/d'` before stripping inline code spans. A code span containing `<!--`
+   (e.g., `` `<!-- … -->` `` on line 72 of this file) opened a sed deletion range that swallowed
+   all subsequent lines until the next `-->` (here: the AC section comment at line 113). This
+   silently hid lines 73–113 — including the scope-boundary prose on line 100 — from the grep,
+   masking what would have been a false-positive hit. The original B8b "PASS" was an artifact
+   of this hidden deletion, not a correct pass.
+
+   Fix (CHG-20260630-003): the precheck now strips inline code spans FIRST
+   (`sed 's/\`[^`]*\`//g'`), then strips HTML comment blocks. This makes HTML comment
+   removal safe against inline code spans.
+
+2. **Bare prose placeholder on line 100**: After the script fix, line 100
+   (`produced false positives (UPG-#### in blockquotes…)`) was correctly exposed to the grep
+   and would have triggered a false positive. The word `UPG-####` in that sentence was a
+   literal placeholder token written without a code span.
+
+   Fix (CHG-20260630-003): wrapped `UPG-####` in backticks on line 100.
+
+3. **Fenced code block in B3c transcript (line 241)**: The error-message transcript
+   contained `'UPG-####'` (single-quoted) inside a fenced code block. The backtick-span
+   filter does not handle fenced code blocks, so the literal token survived to the grep.
+
+   Fix (CHG-20260630-003): converted the B3c transcript to blockquote format; blockquote
+   lines are explicitly filtered by the precheck (`grep -vE '^\s*>'`).
+
+Bare prose `UPG-####` / `CHG-YYYYMMDD-NNN` remains intentionally fail-closed.
 
 **Stale-reference sweep:** Delta diff header at `scripts/codeos-review.sh:385` now says
 `${delta_base}->working tree`. The only remaining `HEAD` reference near delta code is

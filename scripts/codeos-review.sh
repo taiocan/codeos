@@ -479,19 +479,21 @@ run_prechecks() {
     [[ -f "${a}" ]] || continue   # missing artifacts are handled (and represented) by build_packet
 
     # hard fail: unfilled template placeholders (fixed-string, not a pattern for real IDs)
-    # Technique: strip HTML comment blocks (<!-- ... -->), remove blockquote lines, then remove
-    # allowed documentation occurrences at the occurrence level (not the line level) before
-    # checking for remaining bare placeholders. This prevents a documentation pattern elsewhere
-    # on the same line from masking a real unfilled placeholder field on that line.
-    if sed '/<!--/,/-->/d' "${a}" \
+    # Technique: strip inline code spans FIRST (prevents `<!-- ... -->` inside a code span
+    # from opening an HTML-comment deletion range on subsequent lines), then strip HTML
+    # comment blocks, remove blockquote lines, then remove allowed documentation occurrences
+    # at the occurrence level before checking for remaining bare placeholders.
+    if sed 's/`[^`]*`//g' "${a}" \
+         | sed '/<!--/,/-->/d' \
          | grep -vE '^\s*>' \
-         | sed 's/`[^`]*`//g; s/→UPG-####//g; s/UPG-####__[^[:space:]]*/UPG-FILLED__/g' \
+         | sed 's/→UPG-####//g; s/UPG-####__[^[:space:]]*/UPG-FILLED__/g' \
          | grep -qF 'UPG-####'; then
       echo "error: precheck failed — literal placeholder 'UPG-####' found in ${a} (fill in the real UPG id)" >&2; exit 2
     fi
-    if sed '/<!--/,/-->/d' "${a}" \
+    if sed 's/`[^`]*`//g' "${a}" \
+         | sed '/<!--/,/-->/d' \
          | grep -vE '^\s*>' \
-         | sed 's/`[^`]*`//g; s/→CHG-YYYYMMDD-NNN//g; s/CHG-YYYYMMDD-NNN__[^[:space:]]*/CHG-FILLED__/g' \
+         | sed 's/→CHG-YYYYMMDD-NNN//g; s/CHG-YYYYMMDD-NNN__[^[:space:]]*/CHG-FILLED__/g' \
          | grep -qF 'CHG-YYYYMMDD-NNN'; then
       echo "error: precheck failed — literal placeholder 'CHG-YYYYMMDD-NNN' found in ${a} (fill in the real CHG id)" >&2; exit 2
     fi
