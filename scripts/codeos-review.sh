@@ -109,6 +109,8 @@ build_packet() {
   local feature="$1" stage="$2"; shift 2
   local artifacts=( "$@" )
   local sha_only_paths=("${PACKET_SHA_ONLY[@]+"${PACKET_SHA_ONLY[@]}"}")
+  local delta_mode="${PACKET_DELTA_MODE:-full}"
+  local delta_base="${PACKET_DELTA_BASE:-}"
   # guard: missing --sha-only path exits non-zero before Codex (explicit scope guard, not omitted)
   local _so
   for _so in "${sha_only_paths[@]+"${sha_only_paths[@]}"}"; do
@@ -149,17 +151,18 @@ build_packet() {
   # --- diff, path-excluded then content-redacted ---
   local raw_diff excluded="" filtered_diff=""
   PACKET_EXC_PATH=(); PACKET_EXC_REASON=(); PACKET_EXC_SECTION=()   # structured exclusion record
-  if [[ -n "${base_sha}" ]]; then
-    raw_diff="$(git diff "${base_sha}" -- . 2>/dev/null || true)"
-  else
-    raw_diff="$(git diff HEAD -- . 2>/dev/null || true)"   # working-tree changes vs HEAD
-  fi
 
   # path exclusion: drop hunks for excluded files (computed from changed-file list)
   local changed_files f keep_pathspec=()
-  if [[ -n "${base_sha}" ]]; then
+  if [[ "${delta_mode}" == "delta" ]]; then
+    # delta mode: diff scoped to positional artifact paths only (--sha-only paths excluded)
+    raw_diff="$(git diff "${delta_base}" HEAD -- "${artifacts[@]}" 2>/dev/null || true)"
+    mapfile -t changed_files < <(git diff --name-only "${delta_base}" HEAD -- "${artifacts[@]}" ':(exclude)reviews' ':(exclude).codeos-state' 2>/dev/null || true)
+  elif [[ -n "${base_sha}" ]]; then
+    raw_diff="$(git diff "${base_sha}" -- . 2>/dev/null || true)"
     mapfile -t changed_files < <(git diff --name-only "${base_sha}" -- . ':(exclude)reviews' ':(exclude).codeos-state' 2>/dev/null || true)
   else
+    raw_diff="$(git diff HEAD -- . 2>/dev/null || true)"   # working-tree changes vs HEAD
     mapfile -t changed_files < <(git diff --name-only HEAD -- . ':(exclude)reviews' ':(exclude).codeos-state' 2>/dev/null || true)
   fi
   for f in "${changed_files[@]}"; do
@@ -178,7 +181,9 @@ build_packet() {
   done
 
   if [[ ${#keep_pathspec[@]} -gt 0 ]]; then
-    if [[ -n "${base_sha}" ]]; then
+    if [[ "${delta_mode}" == "delta" ]]; then
+      filtered_diff="$(git diff "${delta_base}" HEAD -- "${keep_pathspec[@]}" 2>/dev/null || true)"
+    elif [[ -n "${base_sha}" ]]; then
       filtered_diff="$(git diff "${base_sha}" -- "${keep_pathspec[@]}" 2>/dev/null || true)"
     else
       filtered_diff="$(git diff HEAD -- "${keep_pathspec[@]}" 2>/dev/null || true)"
@@ -200,8 +205,9 @@ build_packet() {
   diff_bytes=${#redacted_diff}
 
   # --- requested artifacts: each is REPRESENTED, never silently dropped —
-  #     visibility is one of: shown | shown_redacted | oversize_omitted | missing. ---
-  local artifacts_block="" a raw redacted shown_count=0 vis sha
+  #     full mode visibility: shown | shown_redacted | oversize_omitted | missing
+  #     delta mode: delta_diff | path_sha_only | omitted_with_reason ---
+  local artifacts_block="" a raw redacted shown_count=0 delta_diff_count=0 vis sha reason_note
   PACKET_ARTIFACT_EXCLUDED=0
   PACKET_ARTIFACTS_YAML=""
   local artifact_bytes
@@ -219,21 +225,45 @@ build_packet() {
       PACKET_ARTIFACTS_YAML+="    - path: ${a}"$'\n'"      visibility: oversize_omitted"$'\n'
       manifest_full_artifacts+="    - path: ${a}"$'\n'"      mode: omitted_with_reason"$'\n'"      reason: over size limit"$'\n'; continue
     fi
-    raw="$(cat "${a}")"; redacted="$(printf '%s\n' "${raw}" | redact_secrets)"; sha="$(sha256_of "${a}")"
-    if [[ "${redacted}" != "${raw}" ]]; then
-      vis="shown_redacted"; secret_flag=1
-      redaction_count=$(( redaction_count + $(grep -c "\[REDACTED" <<<"${redacted}" || true) ))
-      excluded+="${a}(secret redacted) "; exc_add "${a}" "secret value redacted in place" "artifact"
-      manifest_full_artifacts+="    - path: ${a}"$'\n'"      mode: full_file"$'\n'"      bytes: ${artifact_bytes}"$'\n'"      sha256: ${sha}"$'\n'"      note: secret value redacted in place"$'\n'
+    sha="$(sha256_of "${a}")"
+    if [[ "${delta_mode}" == "delta" ]]; then
+      # delta mode: metadata only in ARTIFACTS TO REVIEW; diff content is in the DIFF section
+      if git diff --quiet "${delta_base}" HEAD -- "${a}" 2>/dev/null; then
+        artifacts_block+="  --- ${a} (mode: path_sha_only, sha256: ${sha}, bytes: ${artifact_bytes}) ---"$'\n\n'
+        manifest_full_artifacts+="    - path: ${a}"$'\n'"      mode: path_sha_only"$'\n'"      bytes: ${artifact_bytes}"$'\n'"      sha256: ${sha}"$'\n'
+        PACKET_ARTIFACTS_YAML+="    - path: ${a}"$'\n'"      sha256: ${sha}"$'\n'"      visibility: path_sha_only"$'\n'
+      else
+        reason_note=""
+        git cat-file -e "${delta_base}:${a}" 2>/dev/null || reason_note="new_at_base"
+        if [[ -n "${reason_note}" ]]; then
+          artifacts_block+="  --- ${a} (mode: delta_diff, reason: ${reason_note}, sha256: ${sha}, bytes: ${artifact_bytes}) ---"$'\n\n'
+          manifest_full_artifacts+="    - path: ${a}"$'\n'"      mode: delta_diff"$'\n'"      bytes: ${artifact_bytes}"$'\n'"      sha256: ${sha}"$'\n'"      reason: ${reason_note}"$'\n'
+        else
+          artifacts_block+="  --- ${a} (mode: delta_diff, sha256: ${sha}, bytes: ${artifact_bytes}) ---"$'\n\n'
+          manifest_full_artifacts+="    - path: ${a}"$'\n'"      mode: delta_diff"$'\n'"      bytes: ${artifact_bytes}"$'\n'"      sha256: ${sha}"$'\n'
+        fi
+        PACKET_ARTIFACTS_YAML+="    - path: ${a}"$'\n'"      sha256: ${sha}"$'\n'"      visibility: delta_diff"$'\n'
+        delta_diff_count=$((delta_diff_count + 1))
+      fi
+      shown_count=$((shown_count + 1))
     else
-      vis="shown"
-      manifest_full_artifacts+="    - path: ${a}"$'\n'"      mode: full_file"$'\n'"      bytes: ${artifact_bytes}"$'\n'"      sha256: ${sha}"$'\n'
+      # full mode: inline content in ARTIFACTS TO REVIEW
+      raw="$(cat "${a}")"; redacted="$(printf '%s\n' "${raw}" | redact_secrets)"
+      if [[ "${redacted}" != "${raw}" ]]; then
+        vis="shown_redacted"; secret_flag=1
+        redaction_count=$(( redaction_count + $(grep -c "\[REDACTED" <<<"${redacted}" || true) ))
+        excluded+="${a}(secret redacted) "; exc_add "${a}" "secret value redacted in place" "artifact"
+        manifest_full_artifacts+="    - path: ${a}"$'\n'"      mode: full_file"$'\n'"      bytes: ${artifact_bytes}"$'\n'"      sha256: ${sha}"$'\n'"      note: secret value redacted in place"$'\n'
+      else
+        vis="shown"
+        manifest_full_artifacts+="    - path: ${a}"$'\n'"      mode: full_file"$'\n'"      bytes: ${artifact_bytes}"$'\n'"      sha256: ${sha}"$'\n'
+      fi
+      review_content_bytes=$((review_content_bytes + artifact_bytes))
+      artifacts_block+="  --- ${a} (sha256: ${sha}, visibility: ${vis}) ---"$'\n'
+      artifacts_block+="$(printf '%s\n' "${redacted}" | sed 's/^/    /')"$'\n\n'
+      PACKET_ARTIFACTS_YAML+="    - path: ${a}"$'\n'"      sha256: ${sha}"$'\n'"      visibility: ${vis}"$'\n'
+      shown_count=$((shown_count + 1))
     fi
-    review_content_bytes=$((review_content_bytes + artifact_bytes))
-    artifacts_block+="  --- ${a} (sha256: ${sha}, visibility: ${vis}) ---"$'\n'
-    artifacts_block+="$(printf '%s\n' "${redacted}" | sed 's/^/    /')"$'\n\n'
-    PACKET_ARTIFACTS_YAML+="    - path: ${a}"$'\n'"      sha256: ${sha}"$'\n'"      visibility: ${vis}"$'\n'
-    shown_count=$((shown_count + 1))
   done
 
   review_content_bytes=$((review_content_bytes + diff_bytes))
@@ -250,7 +280,8 @@ build_packet() {
   # --- explicit coverage state (most severe wins) ---
   #   FULL_COVERAGE | PARTIAL_COVERAGE | SECRET_REDACTION | CRITICAL_OMISSION | EMPTY_PACKET
   local state coverage
-  if [[ ${shown_count} -eq 0 && -z "${redacted_diff//[$' \t\n']/}" ]]; then
+  if [[ "${delta_mode}" == "delta" && ${delta_diff_count} -eq 0 && -z "${redacted_diff//[$' \t\n']/}" ]] || \
+     [[ "${delta_mode}" != "delta" && ${shown_count} -eq 0 && -z "${redacted_diff//[$' \t\n']/}" ]]; then
     state="EMPTY_PACKET"; coverage="empty"
   elif [[ "${PACKET_ARTIFACT_EXCLUDED}" -eq 1 ]]; then
     state="CRITICAL_OMISSION"; coverage="critical"
@@ -301,11 +332,17 @@ build_packet() {
     echo "  review_content_bytes: ${review_content_bytes}"
     echo "  estimated_review_tokens: ~${estimated_review_tokens}"
     echo "  budget_status: ${budget_status}"
+    echo "  packet_mode: ${delta_mode}"
+    echo "  delta_base: ${delta_base:-none}"
     echo "  items:"
     printf '%s' "${manifest_sha_only}"
     printf '%s' "${manifest_full_artifacts}"
     echo "    - path: (diff)"
-    echo "      mode: full_file"
+    if [[ "${delta_mode}" == "delta" ]]; then
+      echo "      mode: delta_diff"
+    else
+      echo "      mode: full_file"
+    fi
     echo "      bytes: ${diff_bytes}"
     echo
     echo "REVIEW CONTEXT"
@@ -313,6 +350,7 @@ build_packet() {
     echo "  Stage:                  ${stage}"
     echo "  Branch:                 ${branch}"
     echo "  Base commit:            ${PACKET_BASE_SHA}"
+    [[ "${delta_mode}" == "delta" ]] && echo "  Delta base:             ${delta_base}"
     echo "  Review commit:          ${review_sha}$([[ ${workspace_dirty} -eq 1 ]] && echo ' (+ uncommitted workspace changes)')"
     echo "  Current approved stage: ${approved_stage}"
     echo "  Evidence coverage:      ${state}"
@@ -336,7 +374,11 @@ build_packet() {
     echo
     echo "ARTIFACTS TO REVIEW"
     printf '%s' "${artifacts_block}"
-    echo "DIFF TO REVIEW (base->review, secret/size filtered)"
+    if [[ "${delta_mode}" == "delta" ]]; then
+      echo "DELTA DIFF (${delta_base}->HEAD, artifact paths only, secret/size filtered)"
+    else
+      echo "DIFF TO REVIEW (base->review, secret/size filtered)"
+    fi
     [[ -n "${excluded}" ]] && echo "  [excluded/redacted: ${excluded}] manual security review required"
     printf '%s\n' "${redacted_diff}"
   } > "${PACKET_FILE}"
@@ -462,19 +504,37 @@ run_prechecks() {
 cmd_review() {
   require_codex
   local feature="$1" stage="$2"; shift 2
-  local fresh=0 scratch=0 print_only=0 skip_prechecks=0 artifacts=() sha_only_paths=() guard_clean_paths=()
+  local fresh=0 scratch=0 print_only=0 skip_prechecks=0 mode="full" delta_base=""
+  local artifacts=() sha_only_paths=() guard_clean_paths=()
   while [[ $# -gt 0 ]]; do
     case "$1" in
       --fresh) fresh=1; shift ;;
       --scratch) scratch=1; shift ;;
       --print-packet|--dry-run) print_only=1; shift ;;
       --skip-prechecks) skip_prechecks=1; shift ;;
+      --mode) [[ $# -ge 2 ]] || { echo "review: --mode requires an argument (full or delta)" >&2; exit 2; }; mode="$2"; shift 2 ;;
+      --base) [[ $# -ge 2 ]] || { echo "review: --base requires a SHA argument" >&2; exit 2; }; delta_base="$2"; shift 2 ;;
       --sha-only) [[ $# -ge 2 ]] || { echo "review: --sha-only requires a PATH argument" >&2; exit 2; }; sha_only_paths+=( "$2" ); shift 2 ;;
       --guard-clean) [[ $# -ge 2 ]] || { echo "review: --guard-clean requires a PATH argument" >&2; exit 2; }; guard_clean_paths+=( "$2" ); shift 2 ;;
       *) artifacts+=( "$1" ); shift ;;
     esac
   done
   [[ ${#artifacts[@]} -gt 0 ]] || { echo "review: provide at least one artifact path" >&2; exit 2; }
+
+  # --- --mode / --base validation (all exit 2 before precheck or packet build) ---
+  [[ "${mode}" == "full" || "${mode}" == "delta" ]] || { echo "review: --mode must be 'full' or 'delta', got '${mode}'" >&2; exit 2; }
+  if [[ "${mode}" == "delta" ]]; then
+    [[ -n "${delta_base}" ]] || { echo "review: --mode delta requires --base <sha>" >&2; exit 2; }
+    [[ "${delta_base}" =~ ^[0-9a-fA-F]{7,40}$ ]] || { echo "review: --base value is not a valid hex SHA: '${delta_base}'" >&2; exit 2; }
+    git rev-parse --verify "${delta_base}^{commit}" >/dev/null 2>&1 || { echo "review: --base '${delta_base}' does not resolve to a valid commit" >&2; exit 2; }
+  fi
+  # --- --sha-only / positional artifact conflict (exit 2; no silent precedence) ---
+  local _so_chk _art_chk
+  for _so_chk in "${sha_only_paths[@]+"${sha_only_paths[@]}"}"; do
+    for _art_chk in "${artifacts[@]+"${artifacts[@]}"}"; do
+      [[ "${_art_chk}" == "${_so_chk}" ]] && { echo "review: path '${_so_chk}' passed both as positional artifact and --sha-only; pass as one or the other" >&2; exit 2; }
+    done
+  done
 
   # pilot/test runs must not touch the committed log either
   [[ ${scratch} -eq 1 ]] && { mkdir -p "${CODEX_SCRATCH}"; REVIEW_LOG="${CODEX_SCRATCH}/review-log.md"; }
@@ -487,6 +547,8 @@ cmd_review() {
   fi
   PACKET_FILE="$(mktemp)"; trap 'rm -f "${PACKET_FILE}"' EXIT
   PACKET_SHA_ONLY=("${sha_only_paths[@]+"${sha_only_paths[@]}"}")
+  PACKET_DELTA_MODE="${mode}"
+  PACKET_DELTA_BASE="${delta_base}"
   build_packet "${feature}" "${stage}" "${artifacts[@]}"   # sets PACKET_* globals (no subshell)
 
   # safety: inspect exactly what would be sent to Codex, without calling it (no cost, no session)

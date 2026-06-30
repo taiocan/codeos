@@ -2,7 +2,7 @@
 feature_id: UPG-0027
 slug: lean-review-runner-packet-architecture
 title: Lean Review Runner and Packet Architecture
-status: IN_PROGRESS
+status: COMPLETE
 priority: P0
 depends_on:
   - UPG-0030
@@ -102,7 +102,7 @@ Scope:
 | CHG-20260629-002 | changes/UPG-0027__CHG-20260629-002__focused-reviewer-prompt.md | Focused reviewer task prompt | COMPLETE |
 | CHG-20260629-003 | changes/UPG-0027__CHG-20260629-003__packet-manifest-and-budget.md | Packet manifest and budget report | COMPLETE |
 | CHG-20260629-004 | changes/UPG-0027__CHG-20260629-004__local-prechecks.md | Local prechecks and guard-clean flag | COMPLETE |
-| CHG-20260629-005 | changes/UPG-0027__CHG-20260629-005__delta-mode.md | True delta packet mode | PLANNED |
+| CHG-20260629-005 | changes/UPG-0027__CHG-20260629-005__delta-mode.md | True delta packet mode | COMPLETE |
 
 ### Reviews
 

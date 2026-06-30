@@ -159,6 +159,8 @@ See `reviews/review-log.md` header for the retroactive classification of pre-pol
 
 ## 4b. Delta review mode (R2+)
 
+CLI: `bash scripts/codeos-review.sh review <feature> <stage> <artifacts…> --mode delta --base <sha>`
+
 When running R2 or later for the same step, send a **delta packet** rather than the full
 context. A delta packet contains only:
 

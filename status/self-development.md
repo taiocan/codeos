@@ -29,6 +29,7 @@
 | UPG-0027 | CHG-20260629-002 | prompt / script-tooling | self-dev only | 4-Reconcile | ACCEPTED (NO OBJECTION) | COMPLETE | — |
 | UPG-0027 | CHG-20260629-003 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (NO OBJECTION) | COMPLETE | — |
 | UPG-0027 | CHG-20260629-004 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (human approved; all 12 ACs verified by functional test) | COMPLETE | — |
+| UPG-0027 | CHG-20260629-005 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (human approved; all 14 ACs verified by functional test) | COMPLETE | — |
 
 <!--
 Identity   : Feature ID = UPG-#### (stable). Change ID = CHG-YYYYMMDD-NNN (one execution), or a
