@@ -98,3 +98,29 @@ primary table being the only place the list is written. The acceptance criteria 
 must explicitly require a grep sweep and name the files expected to contain enumerations, rather
 than just asserting "updated everywhere." See [[AJ-003]] for the related self-reference pattern
 that makes catching these missed instances even harder inside review rounds.
+
+## AJ-005 — Template instruction ≠ mechanical enforcement; state the boundary explicitly
+
+**Source:** UPG-0004 / CHG-20260630-001, Step 1 review (2026-06-30)
+
+When a template says "field X must not be empty — write `none` if absent," that is an instruction to practitioners enforced by human review, not by a script. If Step 1 describes the rule without qualifying this, a reviewer will flag it as a false claim (implying validation exists when it does not). Fix: always pair a template rule with an explicit statement — "This CHG does not add script-level enforcement" — so the claim is scoped to what the template actually does. Applies to all future template and prompt CHGs that introduce must/required/not-permitted language.
+
+## AJ-006 — Acceptance criteria referencing loop-step names become stale at every gate transition
+
+**Source:** UPG-0004 / CHG-20260630-001, Steps 3–4 (2026-06-30)
+
+An acceptance criterion written as "status row shows step 2-Acceptance" becomes a false claim the moment the step advances. This is a predictable self-reference trap: the criterion correctly described the state when written, but each gate update invalidates it without any mistake in the implementation.
+
+**Fix pattern:** Criteria for bookkeeping state should be written dynamically — "Loop step reflects the current step at the time of verification" — rather than hardcoding a step name. The same applies to any criterion that asserts the value of a field that is expected to change during the change's own lifecycle (e.g. `current_step`, `state`, `review_state`).
+
+**How to apply:** In Step 2, scan acceptance criteria for any that hardcode a value that will be mutated by the change's own 4-step progression. Replace the hardcoded value with a dynamic description. Catches the same class of bug as [[AJ-003]] (self-reference boundary) but at the AC-level rather than the artifact-content level.
+
+## AJ-007 — A change to a shared function invalidates mode-specific "behavior unchanged" scope claims
+
+**Source:** UPG-0031 / CHG-20260630-002, Steps 3–4 (2026-06-30)
+
+When a fix modifies a function that is called by all review modes (e.g., `run_prechecks`, called regardless of `--mode delta` or `--mode full`), scope claims such as "existing `--mode full` behavior unchanged" are false — even when the intent was to fix only delta-mode behavior. The precheck change (Fix D) affected both modes, making the guardrail and scope boundary wrong before they were reviewed.
+
+**Why:** Mode-specific scope claims are only safe if the changed code is inside a branch that is exclusive to that mode. Shared functions crossed by multiple modes cannot be protected by a single-mode "unchanged" claim.
+
+**How to apply:** Before writing scope boundaries and guardrails for any script change, enumerate every function and code path touched by the change. For each one, check which modes invoke it. If a changed function is called in modes other than the one being targeted, the scope boundary must either exclude those modes from the "unchanged" claim or explicitly state that precheck/shared behavior is intentionally changed. See [[AJ-005]] for the related pattern of template instruction vs. enforcement boundary.
