@@ -444,12 +444,14 @@ run_codex() {
     fi
   fi
 
-  local out
+  local out _t_start _t_end
+  local _effort="${CODEOS_REASONING_EFFORT:-high}"
+  _t_start="$(date +%s%N)"
   if [[ -n "${session_id}" ]]; then
     # resume: no -s/--cd flags on this subcommand; sandbox is set via config override
-    out="$(codex exec resume "${session_id}" -c sandbox_mode="read-only" - < "${packet_file}" 2>&1)" || true
+    out="$(codex exec resume "${session_id}" -c sandbox_mode="read-only" -c model_reasoning_effort="${_effort}" - < "${packet_file}" 2>&1)" || true
   else
-    out="$(codex exec -s read-only --cd "${REPO_ROOT}" - < "${packet_file}" 2>&1)" || true
+    out="$(codex exec -s read-only --cd "${REPO_ROOT}" -c model_reasoning_effort="${_effort}" - < "${packet_file}" 2>&1)" || true
     session_id="$(printf '%s\n' "${out}" | grep -oE 'session id: [0-9a-fA-F-]+' | head -1 | awk '{print $3}' || true)"
     if [[ -z "${session_id}" ]]; then
       echo "error: could not capture a Codex session id from output — aborting (fail-closed)." >&2
@@ -459,8 +461,12 @@ run_codex() {
     printf '{ "feature": "%s", "session_id": "%s", "codex_version": "%s", "created_at": "%s" }\n' \
       "${feature}" "${session_id}" "${codex_ver}" "$(now_iso)" > "${sess_file}"
   fi
+  _t_end="$(date +%s%N)"
   REVIEW_SESSION="${session_id}"
   REVIEW_OUTPUT="${out}"
+  REVIEW_ELAPSED_MS=$(( (_t_end - _t_start) / 1000000 ))
+  REVIEW_RECONNECT_COUNT="$(printf '%s\n' "${out}" | grep -c 'stream disconnected' || true)"
+  REVIEW_EFFORT="${_effort}"
 }
 
 # --- local prechecks ---------------------------------------------------------
@@ -700,6 +706,9 @@ cmd_review() {
     echo "  effective_concern: ${effective_concern}"
     [[ -n "${coverage_note}" ]] && echo "  effective_concern_note: ${coverage_note}"
     echo "  evidence: ${evidence}"
+    echo "  reasoning_effort: ${REVIEW_EFFORT}"
+    echo "  reconnect_count: ${REVIEW_RECONNECT_COUNT}"
+    echo "  elapsed_ms: ${REVIEW_ELAPSED_MS}"
     echo "---"
     echo
     printf '%s\n' "${REVIEW_OUTPUT}"
@@ -715,6 +724,7 @@ cmd_review() {
     echo "Base: ${PACKET_BASE_SHA}  Review: ${PACKET_REVIEW_SHA}  Branch: ${PACKET_BRANCH}"
     echo "Diff-hash: ${PACKET_DIFF_HASH}"
     echo "Reviewer: codex default-model (session ${REVIEW_SESSION})"
+    echo "Effort: ${REVIEW_EFFORT}   Wall time: ${REVIEW_ELAPSED_MS}ms   Reconnects: ${REVIEW_RECONNECT_COUNT}"
     echo "Codex concern: ${codex_concern}"
     echo "Effective concern: ${effective_concern}"
     echo "Evidence: ${evidence}"
@@ -736,6 +746,7 @@ cmd_review() {
 
   echo "review logged: ${REVIEW_LOG}"
   echo "  codex concern: ${codex_concern}   effective concern: ${effective_concern}   evidence: ${evidence}"
+  echo "  effort: ${REVIEW_EFFORT}   elapsed: ${REVIEW_ELAPSED_MS}ms   reconnects: ${REVIEW_RECONNECT_COUNT}"
   echo "  coverage: ${PACKET_COVERAGE_STATE} (redactions: ${PACKET_REDACTION_COUNT})"
   echo "  assessment: ${assessment_file}"
   echo "  packet: ${packet_saved}"

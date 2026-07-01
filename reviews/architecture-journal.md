@@ -158,3 +158,29 @@ until post-commit verification tried the precheck on the same file and got `exit
    immediately following line to be skipped. This is the regression test added by AJ-008's
    resolution (C2 in CHG-20260630-003). See [[AJ-003]] for the related self-reference loop
    pattern and [[AJ-007]] for the shared-function scope-claim problem.
+
+---
+
+## AJ-009 — Review packet isolation breaks when multiple UPGs share uncommitted changes to the same status files
+
+*Origin: UPG-0033 / CHG-20260701-001 (review-script-instrumentation), Step 1 R1 review, 2026-07-01.*
+
+When two UPGs are simultaneously in-flight (here: UPG-0007 and UPG-0033), and both have
+uncommitted changes to shared bookkeeping files (`status/self-development.md`,
+`status/roadmap.md`), a packet review for one UPG captures the other UPG's diff noise.
+The reviewer correctly flags this as scope drift (F3 in Step 1 R1).
+
+**Why this matters:** The finding is correct at the signal level — the packet is not clean
+— but the root cause is workspace state, not the change under review. If acted on literally
+without understanding the cause, it would block valid changes every time two features are
+in-flight simultaneously.
+
+**Short-term fix:** Pass `--sha-only` for shared status files when reviewing a single-UPG
+change. This excludes their content from the packet diff while still recording their hashes
+for integrity.
+
+**Deferred architectural question:** Whether the packet generator should be scoped to only
+the file list declared in a change's "What changes" table, rather than the full
+working-tree diff. This would make packet isolation a property of the declared scope rather
+than a reviewer workaround. Logged as a future backlog candidate. See [[AJ-007]] for the
+shared-function scope-claim problem.

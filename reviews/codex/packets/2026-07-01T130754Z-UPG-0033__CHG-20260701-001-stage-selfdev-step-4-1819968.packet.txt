@@ -1,0 +1,597 @@
+Reviewer task:
+
+SCOPE CONTRACT
+  Assess this artifact against the STATED SCOPE of this stage/PR — the Expected Stage
+  Output below and what the artifacts actually claim — NOT against an ideal final system.
+  A capability the artifacts do not claim to provide is OUT-OF-SCOPE, not a defect.
+  The following are OUT-OF-SCOPE BACKLOG unless THIS artifact explicitly claims to provide
+  them: formal approval-binding enforcement; rollback correctness; COMMIT_BOUND/
+  WORKSPACE_BOUND enforcement; JSON Schema validation; CI validation; exact
+  decision-integrity; per-feature decision ledgers; autonomous approval; enabled hooks.
+
+YOUR TASK — answer these five questions using only the evidence in the packet:
+  1. Acceptance criteria: Does the artifact satisfy each of its stated acceptance criteria?
+     Cite evidence for each criterion (or note its absence).
+  2. Claim support: Are universal or strong claims (all, every, never, always, no X) in the
+     artifact supported by evidence in the packet? Any unverifiable strong claim is a candidate
+     finding only if it affects acceptance, scope, safety, decision integrity, or the artifact's
+     stated guarantees.
+  3. Scope drift: Is there any change beyond the stated scope boundary? (Files not in the
+     "What changes" list; behavior changes not in the intent; downstream doctrine modified
+     rather than read.)
+  4. In-scope blockers: Are there facts that, if left in, would make the artifact wrong,
+     unsafe, or internally contradictory?
+  5. Finding classification: Classify every finding you raise as exactly one of the five
+     TRIAGE RULE categories below.
+
+TRIAGE RULE — classify EVERY finding as exactly one of:
+  IN-SCOPE BLOCKER         breaks the stated goal; creates a FALSE CLAIM in this artifact;
+                           weakens the advisory/read-only/human-gated guarantees; prevents
+                           the work from running; or violates an explicit safety constraint.
+  IN-SCOPE NON-BLOCKER     improves it but is not required for this PR.
+  OUT-OF-SCOPE BACKLOG     valid, but belongs to a future feature / stronger guarantee.
+  REJECTED                 conflicts with the stated scope or Codeos philosophy.
+  SELF-REFERENCE /         review records that are stale because of the previous round's
+  REVIEW-BOOKKEEPING       own existence (causal loop); not a real artifact defect.
+  Base the PR decision ONLY on IN-SCOPE BLOCKER findings. An OUT-OF-SCOPE BACKLOG finding
+  must NOT cause DO NOT ADVANCE unless this artifact FALSELY CLAIMS to solve it.
+
+WHAT NOT TO DO
+  - Do not flag style or wording issues as blockers unless the wording creates a false claim,
+    contradiction, parser breakage, or wrong governance instruction.
+  - Do not re-review unchanged full context when the packet is in delta mode.
+  - Do not treat local-only review history as a blocker unless the artifact falsely
+    claims the review artifacts are committed/durable.
+
+INSTRUCTIONS
+  If this is a resumed session, ignore any earlier-session conclusions unless they are
+  re-established by THIS packet; assess only the evidence above, pinned to this commit.
+  Give a focused assessment of this artifact against the stated scope, acceptance criteria,
+  and evidence in this packet. Rank findings by severity. Suggest a better design only when
+  needed to explain a required fix for an IN-SCOPE BLOCKER.
+
+  Limit findings to the top 3 IN-SCOPE BLOCKERS. Additional non-blocking observations may be
+  summarized in one short paragraph only if useful.
+
+  For EACH finding emit:
+    Finding: / Severity: High|Medium|Low / Classification: <one of the TRIAGE RULE labels>
+    Evidence: <file/line> / Why: <short> / Required action: fix now|optional fix|backlog|reject
+    Scope reason: <why it does/does not belong to this PR's scope>
+  Then emit:
+    PR decision: ADVANCE | REQUEST CHANGES | DO NOT ADVANCE   (based ONLY on in-scope blockers)
+    Scope drift warning: yes|no — <is anything pulling this PR beyond its stated scope?>
+  Then on the LAST two lines emit exactly (map ADVANCE->NO OBJECTION,
+  REQUEST CHANGES->CHANGES ADVISED, DO NOT ADVANCE->DO NOT ADVANCE):
+    LOG SUMMARY: <NO OBJECTION | CHANGES ADVISED | DO NOT ADVANCE | UNCLASSIFIED> — <single most important point>
+      (use UNCLASSIFIED if you genuinely cannot classify the artifact safely)
+    EVIDENCE: <A|B|C|D|E>   (optional)
+
+PACKET MANIFEST
+  generated: 2026-07-01T13:05:52Z
+  task_prompt: /home/arc/projects/claude/Codeos/prompts/codeos-reviewer-task.md (4381 bytes)
+  review_content_bytes: 21802
+  estimated_review_tokens: ~5450
+  budget_status: OK
+  packet_mode: full
+  delta_base: none
+  items:
+    - path: scripts/codeos-review.sh
+      mode: path_sha_only
+      bytes: 45305
+      sha256: 74a5288e4aca40d36514abdd56d8892cd813598fb78f59710358612bab610f76
+    - path: status/self-development.md
+      mode: path_sha_only
+      bytes: 4788
+      sha256: 9b0a3115408063154d5d030b623b8386250092e3d00c1002d62afa2633c251cf
+    - path: status/roadmap.md
+      mode: path_sha_only
+      bytes: 7063
+      sha256: cca9555e3d0f9c30abe4dbdced2b9471d3b22d561ef6e740aaaf0302e6079ef2
+    - path: backlog/features.md
+      mode: path_sha_only
+      bytes: 8685
+      sha256: d979eb764956434c548694fc770952e8b382088c007c36a77b5cb5edfddf05f7
+    - path: changes/UPG-0033__CHG-20260701-001__review-script-instrumentation.md
+      mode: full_file
+      bytes: 11750
+      sha256: 091d92c209098c1872402b5ca883bd21bff5742bebb3a8fbc290727fbd55e2a9
+    - path: backlog/UPG-0033-review-script-instrumentation.md
+      mode: full_file
+      bytes: 2913
+      sha256: 1d90a5e1ab1e3481db9fae14e53a9b0963125556c3f2c4e102965ef2685d716a
+    - path: (diff)
+      mode: full_file
+      bytes: 7139
+
+REVIEW CONTEXT
+  Feature:                UPG-0033__CHG-20260701-001
+  Stage:                  selfdev-step-4
+  Branch:                 selfdev/upg-0029-review-durability
+  Base commit:            (no base pin)
+  Review commit:          1819968530799a4cfb47f2d295893fcc433ebd69 (+ uncommitted workspace changes)
+  Current approved stage: n/a (non-numeric stage)
+  Evidence coverage:      FULL_COVERAGE
+  Workspace dirty:        yes (uncommitted changes at review time)
+
+DBA RULES RELEVANT TO THIS STAGE
+  - Human approval is required for every stage transition; you are advisory only.
+  - Memory is not truth — assess only what is provided, pinned to the review commit.
+  - Implementation must trace to approved artifacts; no behavior beyond intent+contract+schema.
+  - No events outside the approved event schema; no hidden behavior.
+
+STAGE-SPECIFIC CHECKS
+  - (no stage-specific checklist for stage selfdev-step-4)
+
+EXPECTED STAGE OUTPUT
+  (no expected-output template for stage selfdev-step-4)
+
+ARTIFACTS TO REVIEW
+  --- changes/UPG-0033__CHG-20260701-001__review-script-instrumentation.md (sha256: 091d92c209098c1872402b5ca883bd21bff5742bebb3a8fbc290727fbd55e2a9, visibility: shown) ---
+    ---
+    change_id: CHG-20260701-001
+    feature_id: UPG-0033
+    slug: review-script-instrumentation
+    triage_class: script-tooling
+    scope_axis: self-dev only
+    review_profile: PROFILE-3
+    review_series: RVS__UPG-0033__CHG-20260701-001__S4
+    review_state: IN_REVIEW
+    status: IN_PROGRESS
+    loop_step: 4-Reconcile
+    ---
+    
+    # Change: UPG-0033 / CHG-20260701-001 — Review Script Instrumentation
+    
+    ## TRACE HEADER
+    
+    ```yaml
+    feature_id: UPG-0033
+    primary_feature_id: UPG-0033
+    change_id: CHG-20260701-001
+    slug: review-script-instrumentation
+    state: IN_PROGRESS
+    current_step: 4-Reconcile
+    implements:
+      - UPG-0033
+    related_features: []
+    review_series: RVS__UPG-0033__CHG-20260701-001__S3
+    review_profile: PROFILE-3
+    review_state: IN_REVIEW
+    review_history: reviews/review-log.md
+    triage_class: script-tooling
+    scope_axis: self-dev only
+    corrects: ~
+    corrected_by: ~
+    follow_up_of: ~
+    fixes_findings: []
+    ```
+    
+    ---
+    
+    ## Step 1 — Change Intent
+    
+    ### Problem
+    
+    `codeos-review.sh` provides no operational visibility into individual review runs:
+    
+    1. **Silent wrong reasoning-effort key.** The script passed `-c reasoning_effort=...` to
+       `codex exec` which Codex silently ignores. The correct key is `model_reasoning_effort`.
+       Consequently all reviews have run at Codex's built-in default (`high`) regardless of any
+       caller intent, and there is no controllable effort lever exposed to operators.
+    
+    2. **No wall-clock timing.** Review duration is not recorded anywhere — not in the YAML
+       header, not in the log entry. This makes effort-vs-quality tradeoffs invisible and blocks
+       any systematic duration analysis.
+    
+    3. **No reconnect metric.** When Codex's WebSocket disconnects and retries during a review,
+       the event is buried inside the full assessment file. There is no aggregatable field to
+       track reconnect rate across reviews or distinguish a transient network failure from a
+       systematic problem.
+    
+    These gaps were discovered during a post-incident investigation of a WebSocket idle-timeout
+    (2026-07-01 05:14Z, `session 019f1a65`). The investigation confirmed: the disconnect was a
+    one-off transient; all reviews ran at `high` effort despite the presence of the (broken) key
+    in the script; and `medium` effort produces equivalent verdicts 65% faster for this artifact
+    class.
+    
+    **Implementation note:** This is an already-implemented investigation fix. The script
+    changes were applied during the investigation that uncovered the problems. Steps 1–2 document
+    intent and acceptance criteria; Step 3 claims and verifies the existing implementation.
+    
+    ### What changes
+    
+    | File | Change |
+    |---|---|
+    | `scripts/codeos-review.sh` | (1) Fix reasoning-effort key from `reasoning_effort` to `model_reasoning_effort` in both `codex exec` calls (fresh + resume). (2) Expose `CODEOS_REASONING_EFFORT` env var (default `high`) so callers can override without editing the script. (3) Record wall-clock time around the Codex call as `REVIEW_ELAPSED_MS`. (4) Count `stream disconnected` occurrences in Codex output as `REVIEW_RECONNECT_COUNT`. (5) Add `reasoning_effort`, `reconnect_count`, `elapsed_ms` to the review YAML header. (6) Add `Effort: ... Wall time: ...ms Reconnects: ...` line to each review log entry. (7) Add `effort: ... elapsed: ...ms reconnects: ...` line to stdout summary. |
+    | `backlog/UPG-0033-review-script-instrumentation.md` | NEW — feature brief for this upgrade. |
+    | `changes/UPG-0033__CHG-20260701-001__review-script-instrumentation.md` | NEW — this change record. |
+    | `backlog/features.md` | UPG-0033 row added to feature-ID map. |
+    | `status/self-development.md` | UPG-0033 row activated at Step 3-Implement. |
+    | `status/roadmap.md` | UPG-0033 row added to Unsequenced section. |
+    
+    ### What stays the same (scope boundary)
+    
+    - **Default effort level unchanged.** `CODEOS_REASONING_EFFORT` defaults to `high`, matching
+      Codex's built-in default. The reasoning-effort key was previously silently ignored by Codex,
+      so this change makes the key effective for the first time rather than altering default
+      behavior. Historical review verdicts are unaffected by the key fix.
+    - **Packet format** — unchanged. No packet content, size limits, or coverage logic touched.
+    - **Verdict format** — unchanged. New YAML fields are strictly additive; existing fields
+      unchanged.
+    - **Log format** — append-only invariant preserved. One new informational line per entry;
+      existing line order and content unchanged.
+    - **v0 schema validation** — unchanged. New fields are not part of the required schema.
+    - **`stage-start` and `decision` subcommands** — not touched.
+    - **All prompt, template, doctrine, and packet files** — NOT in scope.
+    - **`dba-system.md`** — NOT in scope.
+    
+    ### Triage class: `script-tooling`
+    
+    Adds instrumentation to `codeos-review.sh` and fixes a silently-broken config key.
+    Bookkeeping files (feature brief, change record, index/status rows) are also modified.
+    4-step loop, PROFILE-3.
+    
+    ### Scope axis: `self-dev only`
+    
+    No downstream doctrine changes.
+    
+    ### Review profile: PROFILE-3
+    
+    Script-tooling class. Codex review before each step gate; human approval at all four gates.
+    
+    ### Originating backlog item
+    
+    `backlog/UPG-0033-review-script-instrumentation.md`
+    
+    ---
+    
+    ## Step 2 — Acceptance Criteria
+    
+    ### AC-1: Reasoning-effort key is correct
+    
+    `scripts/codeos-review.sh` passes `-c model_reasoning_effort=<value>` (not
+    `-c reasoning_effort=<value>`) to both `codex exec` (fresh) and `codex exec resume` calls.
+    Verification: `grep -n 'model_reasoning_effort' scripts/codeos-review.sh` returns hits in
+    both the fresh-session and resume-session branches inside `run_codex()`.
+    
+    ### AC-2: Env-var default preserves historical behavior
+    
+    `CODEOS_REASONING_EFFORT` defaults to `high` when unset. Callers can override by exporting
+    the variable before invoking the script. The default means existing pipelines that do not
+    set the var produce the same reasoning effort as before this change.
+    Verification: `grep 'CODEOS_REASONING_EFFORT:-high' scripts/codeos-review.sh` returns a hit.
+    
+    ### AC-3: Elapsed time is recorded
+    
+    Every review run populates `REVIEW_ELAPSED_MS` with a non-negative integer (milliseconds)
+    measured by `date +%s%N` before and after the `codex exec` call.
+    Verification: inspect `run_codex()` for `_t_start`/`_t_end` and the assignment
+    `REVIEW_ELAPSED_MS=$(( (_t_end - _t_start) / 1000000 ))`.
+    
+    ### AC-4: Reconnect count is recorded
+    
+    Every review run sets `REVIEW_RECONNECT_COUNT` by counting occurrences of
+    `stream disconnected` in the Codex output. Zero is a valid value (no disconnects).
+    Verification: `grep 'REVIEW_RECONNECT_COUNT' scripts/codeos-review.sh` returns the
+    `grep -c 'stream disconnected'` assignment.
+    
+    ### AC-5: New fields appear in review YAML header
+    
+    The assessment file written by `write_assessment()` contains three new additive fields
+    after the `evidence` line: `reasoning_effort`, `reconnect_count`, `elapsed_ms`.
+    Verification: `grep -n 'reasoning_effort\|reconnect_count\|elapsed_ms' scripts/codeos-review.sh`
+    returns hits inside the assessment YAML block.
+    
+    ### AC-6: New line appears in review log entry
+    
+    Each entry appended to `reviews/review-log.md` contains one new line of the form
+    `Effort: <value>   Wall time: <ms>ms   Reconnects: <count>` after the `Reviewer:` line.
+    Verification: grep the log-append block in the script.
+    
+    ### AC-7: New line appears in stdout summary
+    
+    The `review` subcommand prints `  effort: <value>   elapsed: <ms>ms   reconnects: <count>`
+    to stdout alongside the existing summary lines.
+    Verification: grep the stdout-summary block.
+    
+    ### AC-8: No behavioral change to existing subcommands
+    
+    `stage-start` and `decision` subcommands do not call `run_codex()` and are unaffected.
+    Packet construction, verdict parsing, coverage logic, and log-append invariants are
+    unchanged. Verification: diff shows no edits outside `run_codex()` and the three output
+    blocks (YAML header, log entry, stdout summary).
+    
+    ---
+    
+    ## Step 3 — Implementation
+    
+    **Status:** Implementation complete (applied during investigation, 2026-07-01).
+    
+    ### Changes in `scripts/codeos-review.sh`
+    
+    **`run_codex()` — instrumentation additions (around lines 447–478):**
+    
+    Added before the `codex exec` calls:
+    ```bash
+    local out _t_start _t_end
+    local _effort="${CODEOS_REASONING_EFFORT:-high}"
+    _t_start="$(date +%s%N)"
+    ```
+    
+    Changed in both branches (fresh and resume):
+    ```bash
+    # before: -c reasoning_effort="${CODEOS_REASONING_EFFORT:-high}"
+    # after:
+    -c model_reasoning_effort="${_effort}"
+    ```
+    
+    Added after the `codex exec` calls:
+    ```bash
+    _t_end="$(date +%s%N)"
+    REVIEW_SESSION="${session_id}"
+    REVIEW_OUTPUT="${out}"
+    REVIEW_ELAPSED_MS=$(( (_t_end - _t_start) / 1000000 ))
+    REVIEW_RECONNECT_COUNT="$(printf '%s\n' "${out}" | grep -c 'stream disconnected' || true)"
+    REVIEW_EFFORT="${_effort}"
+    ```
+    
+    **Assessment YAML header — new fields (after `evidence` line):**
+    ```bash
+    echo "  reasoning_effort: ${REVIEW_EFFORT}"
+    echo "  reconnect_count: ${REVIEW_RECONNECT_COUNT}"
+    echo "  elapsed_ms: ${REVIEW_ELAPSED_MS}"
+    ```
+    
+    **Review log entry — new line (after `Reviewer:` line):**
+    ```bash
+    echo "Effort: ${REVIEW_EFFORT}   Wall time: ${REVIEW_ELAPSED_MS}ms   Reconnects: ${REVIEW_RECONNECT_COUNT}"
+    ```
+    
+    **Stdout summary — new line:**
+    ```bash
+    echo "  effort: ${REVIEW_EFFORT}   elapsed: ${REVIEW_ELAPSED_MS}ms   reconnects: ${REVIEW_RECONNECT_COUNT}"
+    ```
+    
+    All other script logic (packet construction, precheck, session management, verdict parsing,
+    coverage check, log-append, `stage-start`, `decision`) is unchanged.
+    
+    ---
+    
+    ## Step 4 — Reconcile
+    
+    ### AC Verification
+    
+    | AC | Check | Result |
+    |---|---|---|
+    | AC-1 | `grep -n 'model_reasoning_effort' scripts/codeos-review.sh` → hits at lines 452, 454 (both fresh + resume branches) | PASS |
+    | AC-2 | `grep -n 'CODEOS_REASONING_EFFORT:-high' scripts/codeos-review.sh` → hit at line 448 | PASS |
+    | AC-3 | `_t_start`/`_t_end` at lines 449/464; `REVIEW_ELAPSED_MS` assigned at line 467 | PASS |
+    | AC-4 | `REVIEW_RECONNECT_COUNT` assigned via `grep -c 'stream disconnected'` at line 468 | PASS |
+    | AC-5 | `reasoning_effort`/`reconnect_count`/`elapsed_ms` emitted at lines 709–711 | PASS |
+    | AC-6 | `Effort: ... Wall time: ...ms Reconnects: ...` at line 727 | PASS |
+    | AC-7 | `effort: ... elapsed: ...ms reconnects: ...` at line 749 | PASS |
+    | AC-8 | `run_codex` called only at line 599 (review subcommand); `stage-start` (line 79) and `decision` (line 761) do not call it | PASS |
+    
+    ### Cross-reference sweep
+    
+    | Reference | Target | Status |
+    |---|---|---|
+    | Change record → `backlog/UPG-0033-review-script-instrumentation.md` | exists | OK |
+    | Backlog brief Feature Thread → change record | exists | OK |
+    | `backlog/features.md` UPG-0033 row | exists at line 66 | OK |
+    | `status/self-development.md` UPG-0033 row | exists | OK |
+    | `status/roadmap.md` UPG-0033 row | exists at line 94 | OK |
+    
+    No stage-table↔prompt-file drift (script-tooling change; no prompt files touched). No orphaned links.
+    
+    ### Reviewer scope triage
+    
+    | Finding | Source | Triage | Disposition |
+    |---|---|---|---|
+    | F1/F-A: implementation predated Step 1 | Step 1 R1, Step 3 R1 | REVIEW-BOOKKEEPING | Reviewer applies standard loop rule; human accepted investigation-first as a one-time exception, not a new rule. |
+    | F2a: "What changes" table incomplete | Step 1 R1 | IN-SCOPE NON-BLOCKER | Fixed: expanded table to all six files. |
+    | F2b: "only codeos-review.sh" prose contradiction | Step 1 R2 | IN-SCOPE NON-BLOCKER | Fixed: updated triage description and backlog scope. |
+    | F3/F-B: UPG-0007 diff drift in packet | All rounds | OUT-OF-SCOPE BACKLOG | AJ-009 — workspace constraint; root cause is both UPGs uncommitted simultaneously. Not a UPG-0033 scope defect. |
+    | F-C: overclaiming compatibility guarantee | Step 3 R1 | IN-SCOPE NON-BLOCKER | Fixed: weakened claim to accurately describe ignored-key behavior. |
+
+  --- backlog/UPG-0033-review-script-instrumentation.md (sha256: 1d90a5e1ab1e3481db9fae14e53a9b0963125556c3f2c4e102965ef2685d716a, visibility: shown) ---
+    ---
+    feature_id: UPG-0033
+    slug: review-script-instrumentation
+    title: Review Script Instrumentation — Timing, Reconnect Count, Reasoning Effort
+    status: IN_PROGRESS
+    priority: P1
+    depends_on: [UPG-0027]
+    related_features: []
+    supersedes: []
+    superseded_by: []
+    ---
+    
+    # Upgrade: review-script-instrumentation — Review Script Instrumentation
+    
+    **Priority**: P1
+    **Status**: IN_PROGRESS
+    **Type**: script-tooling
+    
+    ## Problem
+    
+    `codeos-review.sh` emits no operational metrics per review run:
+    
+    1. **No timing.** There is no wall-clock record of how long a Codex call takes, making
+       effort-vs-quality tradeoffs unanalysable and slow reviews invisible in the log.
+    
+    2. **Wrong reasoning-effort key.** The script passed `-c reasoning_effort=...` which Codex
+       silently ignores. The correct key is `model_reasoning_effort`. All reviews have therefore
+       run at Codex's built-in default (`high`) regardless of intent, and callers had no
+       controllable lever.
+    
+    3. **No reconnect visibility.** When Codex's WebSocket disconnects and retries, the event is
+       buried in the raw assessment file. There is no aggregatable metric to track reconnect rate
+       across reviews or distinguish transient from systematic network failures.
+    
+    Discovered during a post-incident investigation of a WebSocket idle-timeout (2026-07-01).
+    
+    ## Upgrade
+    
+    Add three instrumentation outputs to every review run, all additive and backward-compatible:
+    
+    - `CODEOS_REASONING_EFFORT` env var (default `high`) — passes the correct
+      `model_reasoning_effort` key to `codex exec` fresh and resume calls.
+    - Wall-clock timing (`elapsed_ms`) around the Codex call.
+    - Reconnect count (`reconnect_count`) from `stream disconnected` occurrences in Codex output.
+    - Three new fields in the review YAML header: `reasoning_effort`, `reconnect_count`, `elapsed_ms`.
+    - One new line in the review log entry: `Effort: ... Wall time: ...ms Reconnects: ...`
+    
+    ## Scope
+    
+    Primary change: `scripts/codeos-review.sh`. Bookkeeping: feature brief, change record, `backlog/features.md`, `status/self-development.md`, `status/roadmap.md`. No prompt, template, doctrine, or packet-format changes.
+    
+    ## Value
+    
+    Enables: duration baseline across review history, effort-level A/B comparison (confirmed
+    `medium` is 65% faster than `high` with identical verdict for this artifact class), and
+    reliable disconnect rate monitoring without manual grep of raw assessment files.
+    
+    ## Feature Thread
+    
+    ### Changes
+    
+    | Change ID | File | Purpose | State |
+    |---|---|---|---|
+    | CHG-20260701-001 | `changes/UPG-0033__CHG-20260701-001__review-script-instrumentation.md` | Add instrumentation to codeos-review.sh | IN_PROGRESS |
+    
+    ### Reviews
+    
+    | Review ID | Change ID | Step | Round | Verdict |
+    |---|---|---|---|---|
+    
+    ### Findings Tracked Inside This Feature
+    
+    | Finding ID | Review ID | Classification | Resolution |
+    |---|---|---|---|
+    
+    ### Follow-up Features
+    
+    | Feature ID | Reason | Source finding |
+    |---|---|---|
+
+DIFF TO REVIEW (base->review, secret/size filtered)
+diff --git a/backlog/UPG-0007-solution-discovery-00b.md b/backlog/UPG-0007-solution-discovery-00b.md
+index 816096d..0c31223 100644
+--- a/backlog/UPG-0007-solution-discovery-00b.md
++++ b/backlog/UPG-0007-solution-discovery-00b.md
+@@ -124,6 +124,7 @@ that keeps this from eroding intent primacy.
+ 
+ | Change ID | File | Purpose | State |
+ |---|---|---|---|
++| CHG-20260630-005 | `changes/UPG-0007__CHG-20260630-005__solution-discovery-00b.md` | New 00b solution-discovery prompt + Session Type E in session-start | IN_PROGRESS |
+ 
+ ### Reviews
+ 
+diff --git a/backlog/features.md b/backlog/features.md
+index 81a9a14..d5395d5 100644
+--- a/backlog/features.md
++++ b/backlog/features.md
+@@ -63,6 +63,7 @@ The goal is to speed up Codeos development without weakening DBA advantages.
+ | UPG-0029 | [UPG-0029-review-naming-and-thread-tooling.md](UPG-0029-review-naming-and-thread-tooling.md) | Review artifact durability + packet naming policy | P2 | COMPLETE |
+ | UPG-0030 | [UPG-0030-lean-self-development-review-profiles.md](UPG-0030-lean-self-development-review-profiles.md) | Lean Self-Development Review Profiles | P1 | COMPLETE |
+ | UPG-0031 | [UPG-0031-review-delta-mode-fix.md](UPG-0031-review-delta-mode-fix.md) | Review script delta-mode working-tree fix + fail-closed EMPTY_PACKET guard | P1 | COMPLETE |
++| UPG-0033 | [UPG-0033-review-script-instrumentation.md](UPG-0033-review-script-instrumentation.md) | Review Script Instrumentation — Timing, Reconnect Count, Reasoning Effort | P1 | IN_PROGRESS |
+ 
+ > Priority `—` = no formal P-rank (a completed cleanup, or a discovery note). Feature IDs are
+ > assigned once and never reused. `UPG-0002` and `UPG-0003` are historical/piloted work given IDs
+diff --git a/scripts/codeos-review.sh b/scripts/codeos-review.sh
+index 763f729..8da984d 100755
+--- a/scripts/codeos-review.sh
++++ b/scripts/codeos-review.sh
+@@ -444,12 +444,14 @@ run_codex() {
+     fi
+   fi
+ 
+-  local out
++  local out _t_start _t_end
++  local _effort="${CODEOS_REASONING_EFFORT:-high}"
++  _t_start="$(date +%s%N)"
+   if [[ -n "${session_id}" ]]; then
+     # resume: no -s/--cd flags on this subcommand; sandbox is set via config override
+-    out="$(codex exec resume "${session_id}" -c sandbox_mode="read-only" - < "${packet_file}" 2>&1)" || true
++    out="$(codex exec resume "${session_id}" -c sandbox_mode="read-only" -c model_reasoning_effort="${_effort}" - < "${packet_file}" 2>&1)" || true
+   else
+-    out="$(codex exec -s read-only --cd "${REPO_ROOT}" - < "${packet_file}" 2>&1)" || true
++    out="$(codex exec -s read-only --cd "${REPO_ROOT}" -c model_reasoning_effort="${_effort}" - < "${packet_file}" 2>&1)" || true
+     session_id="$(printf '%s\n' "${out}" | grep -oE 'session id: [0-9a-fA-F-]+' | head -1 | awk '{print $3}' || true)"
+     if [[ -z "${session_id}" ]]; then
+       echo "error: could not capture a Codex session id from output — aborting (fail-closed)." >&2
+@@ -459,8 +461,12 @@ run_codex() {
+     printf '{ "feature": "%s", "session_id": "%s", "codex_version": "%s", "created_at": "%s" }\n' \
+       "${feature}" "${session_id}" "${codex_ver}" "$(now_iso)" > "${sess_file}"
+   fi
++  _t_end="$(date +%s%N)"
+   REVIEW_SESSION="${session_id}"
+   REVIEW_OUTPUT="${out}"
++  REVIEW_ELAPSED_MS=$(( (_t_end - _t_start) / 1000000 ))
++  REVIEW_RECONNECT_COUNT="$(printf '%s\n' "${out}" | grep -c 'stream disconnected' || true)"
++  REVIEW_EFFORT="${_effort}"
+ }
+ 
+ # --- local prechecks ---------------------------------------------------------
+@@ -700,6 +706,9 @@ cmd_review() {
+     echo "  effective_concern: ${effective_concern}"
+     [[ -n "${coverage_note}" ]] && echo "  effective_concern_note: ${coverage_note}"
+     echo "  evidence: ${evidence}"
++    echo "  reasoning_effort: ${REVIEW_EFFORT}"
++    echo "  reconnect_count: ${REVIEW_RECONNECT_COUNT}"
++    echo "  elapsed_ms: ${REVIEW_ELAPSED_MS}"
+     echo "---"
+     echo
+     printf '%s\n' "${REVIEW_OUTPUT}"
+@@ -715,6 +724,7 @@ cmd_review() {
+     echo "Base: ${PACKET_BASE_SHA}  Review: ${PACKET_REVIEW_SHA}  Branch: ${PACKET_BRANCH}"
+     echo "Diff-hash: ${PACKET_DIFF_HASH}"
+     echo "Reviewer: codex default-model (session ${REVIEW_SESSION})"
++    echo "Effort: ${REVIEW_EFFORT}   Wall time: ${REVIEW_ELAPSED_MS}ms   Reconnects: ${REVIEW_RECONNECT_COUNT}"
+     echo "Codex concern: ${codex_concern}"
+     echo "Effective concern: ${effective_concern}"
+     echo "Evidence: ${evidence}"
+@@ -736,6 +746,7 @@ cmd_review() {
+ 
+   echo "review logged: ${REVIEW_LOG}"
+   echo "  codex concern: ${codex_concern}   effective concern: ${effective_concern}   evidence: ${evidence}"
++  echo "  effort: ${REVIEW_EFFORT}   elapsed: ${REVIEW_ELAPSED_MS}ms   reconnects: ${REVIEW_RECONNECT_COUNT}"
+   echo "  coverage: ${PACKET_COVERAGE_STATE} (redactions: ${PACKET_REDACTION_COUNT})"
+   echo "  assessment: ${assessment_file}"
+   echo "  packet: ${packet_saved}"
+diff --git a/status/roadmap.md b/status/roadmap.md
+index d379dfe..0258468 100644
+--- a/status/roadmap.md
++++ b/status/roadmap.md
+@@ -49,7 +49,7 @@ cheap pilot-adjacent wins early.
+ ### Wave 2 — Discovery & registry
+ | Wave | Feature ID | Title | Priority | Depends on | Planned/active change | State |
+ |---|---|---|---|---|---|---|
+-| 2 | UPG-0007 | Expanded 00b Solution Discovery / Feature Topology | P0 | — | — | PROPOSED |
++| 2 | UPG-0007 | Expanded 00b Solution Discovery / Feature Topology | P0 | — | CHG-20260630-005 | IN_PROGRESS |
+ | 2 | UPG-0008 | Configuration Discovery & Schema Track | P2 | UPG-0007 | — | PROPOSED |
+ | 2 | UPG-0009 | Feature Registry / Branch Binding | P2 | — | — | PROPOSED |
+ 
+@@ -91,6 +91,7 @@ cheap pilot-adjacent wins early.
+ | UPG-0029 | Review artifact durability + packet naming policy | P2 | UPG-0001 | CHG-20260629-001 | COMPLETE |
+ | UPG-0030 | Lean Self-Development Review Profiles | P1 | — | CHG-20260629-001 | COMPLETE |
+ | UPG-0031 | Review script delta-mode fix + fail-closed guard | P1 | UPG-0027 | CHG-20260630-002/003 | COMPLETE |
++| UPG-0033 | Review Script Instrumentation — Timing, Reconnect Count, Reasoning Effort | P1 | UPG-0027 | CHG-20260701-001 | IN_PROGRESS |
+ 
+ ---
+ 
+diff --git a/status/self-development.md b/status/self-development.md
+index 982d05f..e8ef6d7 100644
+--- a/status/self-development.md
++++ b/status/self-development.md
+@@ -34,6 +34,8 @@
+ | UPG-0031 | CHG-20260630-002 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (Step 4 R2 NO OBJECTION; corrected by CHG-20260630-003) | COMPLETE | — |
+ | UPG-0031 | CHG-20260630-003 | script-tooling + documentation | self-dev only | 4-Reconcile | ACCEPTED (all 5 ACs verified; corrects false B8b in CHG-20260630-002) | COMPLETE | — |
+ | UPG-0005 | CHG-20260630-004 | prompt + template | self-dev only | 4-Reconcile | ACCEPTED (Step 3 R2 NO OBJECTION; Step 4 R1 CHANGES ADVISED — F1 fixed, F2 REVIEW-BOOKKEEPING) | COMPLETE | — |
++| UPG-0007 | CHG-20260630-005 | prompt | self-dev only | 1-Intent | NOT_STARTED | IN_PROGRESS | — |
++| UPG-0033 | CHG-20260701-001 | script-tooling | self-dev only | 4-Reconcile | IN_REVIEW (RVS__…__S4) | IN_PROGRESS | — |
+ 
+ <!--
+ Identity   : Feature ID = UPG-#### (stable). Change ID = CHG-YYYYMMDD-NNN (one execution), or a

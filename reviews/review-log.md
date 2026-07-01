@@ -1310,3 +1310,123 @@ Log summary: DO NOT ADVANCE — The packet does not contain the claimed `00b` so
 Full assessment: reviews/codex/2026-06-30T212019Z-UPG-0007__CHG-20260630-005-stage-selfdev-step-1-9645a4f.md (sha256:472ec172114f386af0ce6d32f68294f0d5d67b5d80d69badd9a455ba3494d6b0)
 Reviewed packet: reviews/codex/packets/2026-06-30T212019Z-UPG-0007__CHG-20260630-005-stage-selfdev-step-1-9645a4f.packet.txt (sha256:eb4e5b02a86289406431d667fd13fbdcdda9986c4467cabc285f9c1ba041f14f)
 Human decision: (append with: codeos-review.sh decision UPG-0007__CHG-20260630-005 selfdev-step-1 <DECISION> "<reason>")
+
+## 2026-06-30T21:29:21Z REVIEW — UPG-0007__CHG-20260630-005 — Stage selfdev-step-1
+Base: (no base pin)  Review: 1819968530799a4cfb47f2d295893fcc433ebd69  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 67b761acb3c89d645940bf128dbc12f74b735c6c4a34f0968e8af22a835ae6fc
+Reviewer: codex default-model (session 019f1a65-7927-71a2-8d7d-4057b74e5097)
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: B
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — This Step 1 packet is internally consistent and stays within its stated scope.
+Full assessment: reviews/codex/2026-06-30T212921Z-UPG-0007__CHG-20260630-005-stage-selfdev-step-1-1819968.md (sha256:e812aafbe1202cc8140844934a26bb8bec39f7760783b7d65c1ea277ccee29cc)
+Reviewed packet: reviews/codex/packets/2026-06-30T212921Z-UPG-0007__CHG-20260630-005-stage-selfdev-step-1-1819968.packet.txt (sha256:530d2e08971b49aea545c48db3f4ab304499e81ebc1d7f71e423b0ee3ab8fec0)
+Human decision: (append with: codeos-review.sh decision UPG-0007__CHG-20260630-005 selfdev-step-1 <DECISION> "<reason>")
+
+## 2026-07-01T05:14:53Z REVIEW — UPG-0007__CHG-20260630-005 — Stage selfdev-step-1
+Base: (no base pin)  Review: 1819968530799a4cfb47f2d295893fcc433ebd69  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 67b761acb3c89d645940bf128dbc12f74b735c6c4a34f0968e8af22a835ae6fc
+Reviewer: codex default-model (session 019f1a65-7927-71a2-8d7d-4057b74e5097)
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: B
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — The Step 1 intent packet is internally consistent and stays within its stated scope.
+Full assessment: reviews/codex/2026-07-01T051453Z-UPG-0007__CHG-20260630-005-stage-selfdev-step-1-1819968.md (sha256:78e0acfa5c3539a8f1a9d2fe9b8854de96c720d5ec1a90d733a1d9802781b5a0)
+Reviewed packet: reviews/codex/packets/2026-07-01T051453Z-UPG-0007__CHG-20260630-005-stage-selfdev-step-1-1819968.packet.txt (sha256:ff4bffcb37987bb99a19db36e54c63dee8b6f5d24b6f8efc7e5273744616dbf7)
+Human decision: (append with: codeos-review.sh decision UPG-0007__CHG-20260630-005 selfdev-step-1 <DECISION> "<reason>")
+
+## 2026-07-01T11:39:34Z REVIEW — UPG-0033__CHG-20260701-001 — Stage selfdev-step-1
+Base: (no base pin)  Review: 1819968530799a4cfb47f2d295893fcc433ebd69  Branch: selfdev/upg-0029-review-durability
+Diff-hash: c34d558b77abfe5fcf92d94dd34e92ba0a9514f02c911b4bba24c808bfbd8c52
+Reviewer: codex default-model (session 019f1d78-a9af-7e70-9f2e-03e28ebfa422)
+Effort: high   Wall time: 101041ms   Reconnects: 3
+Codex concern: DO NOT ADVANCE
+Effective concern: DO NOT ADVANCE
+Evidence: B
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: DO NOT ADVANCE — the packet violates its own Step 1 and scope boundaries by shipping implementation plus unrelated changes
+Full assessment: reviews/codex/2026-07-01T113934Z-UPG-0033__CHG-20260701-001-stage-selfdev-step-1-1819968.md (sha256:aa4ef536d524b8223d0c382ea478f80525ae88caf1821e0b46f246eef52e6edc)
+Reviewed packet: reviews/codex/packets/2026-07-01T113934Z-UPG-0033__CHG-20260701-001-stage-selfdev-step-1-1819968.packet.txt (sha256:f411edf258d29425dcf11970c21b971a26c5d6ff30037e909220a950e4839737)
+Human decision: (append with: codeos-review.sh decision UPG-0033__CHG-20260701-001 selfdev-step-1 <DECISION> "<reason>")
+
+## 2026-07-01T12:03:55Z HUMAN DECISION — UPG-0033__CHG-20260701-001 — Stage selfdev-step-1
+Commit at decision: 1819968530799a4cfb47f2d295893fcc433ebd69
+Decision: REQUEST_CHANGES
+Reason/next: All 3 blockers are evidence/traceability defects, not substantive objections to the instrumentation itself. Approved fixes: (1) acknowledge pre-done implementation in Step 1 text; (2) expand What-changes table to all bookkeeping files; (3) use --sha-only for mixed-content status files in re-review to isolate UPG-0007 working-tree drift.
+Verified against: reviews/codex/2026-07-01T113934Z-UPG-0033__CHG-20260701-001-stage-selfdev-step-1-1819968.md
+Artifact integrity (informational audit, not a gate):
+  MATCH   changes/UPG-0033__CHG-20260701-001__review-script-instrumentation.md
+  MATCH   backlog/UPG-0033-review-script-instrumentation.md
+  MATCH   status/self-development.md
+  MATCH   status/roadmap.md
+
+## 2026-07-01T12:07:24Z REVIEW — UPG-0033__CHG-20260701-001 — Stage selfdev-step-1
+Base: (no base pin)  Review: 1819968530799a4cfb47f2d295893fcc433ebd69  Branch: selfdev/upg-0029-review-durability
+Diff-hash: c34d558b77abfe5fcf92d94dd34e92ba0a9514f02c911b4bba24c808bfbd8c52
+Reviewer: codex default-model (session 019f1d78-a9af-7e70-9f2e-03e28ebfa422)
+Effort: high   Wall time: 61342ms   Reconnects: 3
+Codex concern: DO NOT ADVANCE
+Effective concern: DO NOT ADVANCE
+Evidence: B
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: DO NOT ADVANCE — the packet admits the implementation predated Step 1 approval and still includes out-of-scope drift
+Full assessment: reviews/codex/2026-07-01T120724Z-UPG-0033__CHG-20260701-001-stage-selfdev-step-1-1819968.md (sha256:af44699c22ef666ca7b5dcf51415ece5945e9c781f01113a451b2e25fdbe45d7)
+Reviewed packet: reviews/codex/packets/2026-07-01T120724Z-UPG-0033__CHG-20260701-001-stage-selfdev-step-1-1819968.packet.txt (sha256:35f44719c04c39d59398a69b1e2693aabaf7eca0e53a5c84048f145a1a14f295)
+Human decision: (append with: codeos-review.sh decision UPG-0033__CHG-20260701-001 selfdev-step-1 <DECISION> "<reason>")
+
+## 2026-07-01T12:11:43Z HUMAN DECISION — UPG-0033__CHG-20260701-001 — Stage selfdev-step-1
+Commit at decision: 1819968530799a4cfb47f2d295893fcc433ebd69
+Decision: REQUEST_CHANGES
+Reason/next: F1: restructuring change as already-implemented investigation fix — advancing to Step 3 directly (Steps 1+2 collapsed with implementation). F2: removing contradictory 'only codeos-review.sh' prose in triage description and backlog scope. F3: UPG-0007 working-tree drift is a packet-isolation tooling limitation (AJ-009), not a scope defect in this change; logged and deferred.
+Verified against: reviews/codex/2026-07-01T120724Z-UPG-0033__CHG-20260701-001-stage-selfdev-step-1-1819968.md
+Artifact integrity (informational audit, not a gate):
+  MATCH   changes/UPG-0033__CHG-20260701-001__review-script-instrumentation.md
+  MATCH   backlog/UPG-0033-review-script-instrumentation.md
+
+## 2026-07-01T12:16:06Z REVIEW — UPG-0033__CHG-20260701-001 — Stage selfdev-step-3
+Base: (no base pin)  Review: 1819968530799a4cfb47f2d295893fcc433ebd69  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 8306cb72fc55fb759e598f88f6b1cfe508b7193b2f6de1e4ce6a7a2c2fb6c0cc
+Reviewer: codex default-model (session 019f1d78-a9af-7e70-9f2e-03e28ebfa422)
+Effort: high   Wall time: 92189ms   Reconnects: 6
+Codex concern: DO NOT ADVANCE
+Effective concern: DO NOT ADVANCE
+Evidence: B
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: DO NOT ADVANCE — the packet still includes out-of-scope `UPG-0007` changes and overclaims staged traceability/compatibility
+Full assessment: reviews/codex/2026-07-01T121606Z-UPG-0033__CHG-20260701-001-stage-selfdev-step-3-1819968.md (sha256:2496470a5c7860adb57e42c42d8af1b418b35b74f22e429febbe9554e0ace3ff)
+Reviewed packet: reviews/codex/packets/2026-07-01T121606Z-UPG-0033__CHG-20260701-001-stage-selfdev-step-3-1819968.packet.txt (sha256:516144ed6897e543f5b6e6681fb311cd1c7e4ed196d278525e4cb5ad7948a661)
+Human decision: (append with: codeos-review.sh decision UPG-0033__CHG-20260701-001 selfdev-step-3 <DECISION> "<reason>")
+
+## 2026-07-01T13:04:45Z HUMAN DECISION — UPG-0033__CHG-20260701-001 — Stage selfdev-step-3
+Commit at decision: 1819968530799a4cfb47f2d295893fcc433ebd69
+Decision: REQUEST_CHANGES
+Reason/next: F-A: accepted exception — implementation-before-governance is a documented investigative pattern for this change only; not a new general rule (human decision, not reviewer override). F-B: known tooling limitation (AJ-009) — UPG-0007 working-tree drift is a workspace constraint shared by both active UPGs, non-blocking for UPG-0033 scope. F-C: fixed — weakened compatibility claim to accurately state the key was previously ignored, not that behavior was guaranteed identical. Advance to Step 4.
+Verified against: reviews/codex/2026-07-01T121606Z-UPG-0033__CHG-20260701-001-stage-selfdev-step-3-1819968.md
+Artifact integrity (informational audit, not a gate):
+  CHANGED changes/UPG-0033__CHG-20260701-001__review-script-instrumentation.md (reviewed f75ad852c8fa / now 5b5879dd9b6a)
+  MATCH   backlog/UPG-0033-review-script-instrumentation.md
+
+## 2026-07-01T13:07:54Z REVIEW — UPG-0033__CHG-20260701-001 — Stage selfdev-step-4
+Base: (no base pin)  Review: 1819968530799a4cfb47f2d295893fcc433ebd69  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 90db74443408e45451b2ba440a30309dec80f40cf49a4b714076cb068cb8d35d
+Reviewer: codex default-model (session 019f1d78-a9af-7e70-9f2e-03e28ebfa422)
+Effort: high   Wall time: 121898ms   Reconnects: 7
+Codex concern: DO NOT ADVANCE
+Effective concern: DO NOT ADVANCE
+Evidence: B
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: DO NOT ADVANCE — the packet still has scope drift and unresolved provenance contradictions in the Stage 4 artifact
+Full assessment: reviews/codex/2026-07-01T130754Z-UPG-0033__CHG-20260701-001-stage-selfdev-step-4-1819968.md (sha256:1572913d6dafafa93860f6096b2afc34ab8aaf2eea0e579ac70e7ddae7bec46f)
+Reviewed packet: reviews/codex/packets/2026-07-01T130754Z-UPG-0033__CHG-20260701-001-stage-selfdev-step-4-1819968.packet.txt (sha256:26d66e5a4e44505870dc0ad632770fb476913eb449ffb625bc0ef3bf225fea84)
+Human decision: (append with: codeos-review.sh decision UPG-0033__CHG-20260701-001 selfdev-step-4 <DECISION> "<reason>")
+
+## 2026-07-01T13:09:35Z HUMAN DECISION — UPG-0033__CHG-20260701-001 — Stage selfdev-step-4
+Commit at decision: 1819968530799a4cfb47f2d295893fcc433ebd69
+Decision: APPROVE_STAGE
+Reason/next: Finding 1 (F-A): REVIEW-BOOKKEEPING — investigation-first exception accepted by human; not a new rule. Finding 2 (TRACE HEADER S3/S4 inconsistency): fixed — review_series in TRACE HEADER updated to __S4. Finding 3 (F-B): OUT-OF-SCOPE BACKLOG (AJ-009) — UPG-0007 working-tree drift is a packet-isolation tooling limitation; non-blocking for UPG-0033. All 8 ACs verified. Cross-reference sweep clean. APPROVED.
+Verified against: reviews/codex/2026-07-01T130754Z-UPG-0033__CHG-20260701-001-stage-selfdev-step-4-1819968.md
+Artifact integrity (informational audit, not a gate):
+  CHANGED changes/UPG-0033__CHG-20260701-001__review-script-instrumentation.md (reviewed 091d92c20909 / now 02b5492c3c83)
+  MATCH   backlog/UPG-0033-review-script-instrumentation.md

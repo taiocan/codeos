@@ -49,7 +49,7 @@ cheap pilot-adjacent wins early.
 ### Wave 2 — Discovery & registry
 | Wave | Feature ID | Title | Priority | Depends on | Planned/active change | State |
 |---|---|---|---|---|---|---|
-| 2 | UPG-0007 | Expanded 00b Solution Discovery / Feature Topology | P0 | — | — | PROPOSED |
+| 2 | UPG-0007 | Expanded 00b Solution Discovery / Feature Topology | P0 | — | CHG-20260630-005 | IN_PROGRESS |
 | 2 | UPG-0008 | Configuration Discovery & Schema Track | P2 | UPG-0007 | — | PROPOSED |
 | 2 | UPG-0009 | Feature Registry / Branch Binding | P2 | — | — | PROPOSED |
 
@@ -91,6 +91,7 @@ cheap pilot-adjacent wins early.
 | UPG-0029 | Review artifact durability + packet naming policy | P2 | UPG-0001 | CHG-20260629-001 | COMPLETE |
 | UPG-0030 | Lean Self-Development Review Profiles | P1 | — | CHG-20260629-001 | COMPLETE |
 | UPG-0031 | Review script delta-mode fix + fail-closed guard | P1 | UPG-0027 | CHG-20260630-002/003 | COMPLETE |
+| UPG-0033 | Review Script Instrumentation — Timing, Reconnect Count, Reasoning Effort | P1 | UPG-0027 | CHG-20260701-001 | COMPLETE |
 
 ---
 
