@@ -121,6 +121,7 @@ it measures. Read-only by construction; aligns with the reviewer's read-only des
 
 | Change ID | File | Purpose | State |
 |---|---|---|---|
+| CHG-20260701-002 | `changes/UPG-0010__CHG-20260701-002__verify-only-mode.md` | New verify-only prompt — read-only verification mode with anti-blur git checks and report format | COMPLETE |
 
 ### Reviews
 

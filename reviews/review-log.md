@@ -1672,3 +1672,145 @@ Artifact integrity (informational audit, not a gate):
   MATCH   backlog/UPG-0007-solution-discovery-00b.md
   MATCH   prompts/00b-solution-discovery.md
   MATCH   prompts/00-session-start.md
+
+## 2026-07-01T14:34:36Z REVIEW — UPG-0010__CHG-20260701-002 — Stage selfdev-step-1
+Base: (no base pin)  Review: 75bf03649783f2a8c9277a7a876c76e38a41672e  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 510ef216505dd1072376c751626179b5314a27013c98c036d397d2f5c50a0d3f
+Reviewer: codex default-model (session 019f1e18-e304-7ad2-926c-389145ae9d5f)
+Effort: high   Wall time: 103036ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: B
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — Step 1 intent and status bookkeeping are internally consistent; no in-scope blocker is evidenced in the packet
+Full assessment: reviews/codex/2026-07-01T143436Z-UPG-0010__CHG-20260701-002-stage-selfdev-step-1-75bf036.md (sha256:0b539d94e9abacc5b0ab5524cf41df702cce4da5e7a33a9e9185b2d541eb829a)
+Reviewed packet: reviews/codex/packets/2026-07-01T143436Z-UPG-0010__CHG-20260701-002-stage-selfdev-step-1-75bf036.packet.txt (sha256:dd281fd790fac635309e148c040c3759b90998b8c997d6e3550b7f820f3af472)
+Human decision: (append with: codeos-review.sh decision UPG-0010__CHG-20260701-002 selfdev-step-1 <DECISION> "<reason>")
+
+## 2026-07-01T14:52:54Z HUMAN DECISION — UPG-0010__CHG-20260701-002 — Stage selfdev-step-1
+Commit at decision: 75bf03649783f2a8c9277a7a876c76e38a41672e
+Decision: APPROVE_STAGE
+Reason/next: R1 NO OBJECTION evidence B. Scope well-bounded, dba-system.md deferral declared. Proceeding to Step 2.
+Verified against: reviews/codex/2026-07-01T143436Z-UPG-0010__CHG-20260701-002-stage-selfdev-step-1-75bf036.md
+Artifact integrity (informational audit, not a gate):
+  MATCH   changes/UPG-0010__CHG-20260701-002__verify-only-mode.md
+  MATCH   backlog/UPG-0010-verify-only-mode.md
+
+## 2026-07-01T14:54:56Z REVIEW — UPG-0010__CHG-20260701-002 — Stage selfdev-step-2
+Base: (no base pin)  Review: 75bf03649783f2a8c9277a7a876c76e38a41672e  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 388786b722686fff7e9074a1d2160816854b84d11d6863f773b169804813c87d
+Reviewer: codex default-model (session 019f1e18-e304-7ad2-926c-389145ae9d5f)
+Effort: high   Wall time: 72793ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: B
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — Step 2 defines a coherent, scoped acceptance contract without making premature implementation claims
+Full assessment: reviews/codex/2026-07-01T145456Z-UPG-0010__CHG-20260701-002-stage-selfdev-step-2-75bf036.md (sha256:48ec67f0c7e754b930393f848cbd2d37349e7cbf0ab12f084a72e54352c5347c)
+Reviewed packet: reviews/codex/packets/2026-07-01T145456Z-UPG-0010__CHG-20260701-002-stage-selfdev-step-2-75bf036.packet.txt (sha256:3d0c5927e8e7e6f8a19b37b0ab16c2fe7b371489db7a972e5d1de8189d483d77)
+Human decision: (append with: codeos-review.sh decision UPG-0010__CHG-20260701-002 selfdev-step-2 <DECISION> "<reason>")
+
+## 2026-07-01T14:56:07Z HUMAN DECISION — UPG-0010__CHG-20260701-002 — Stage selfdev-step-2
+Commit at decision: 75bf03649783f2a8c9277a7a876c76e38a41672e
+Decision: APPROVE_STAGE
+Reason/next: R1 NO OBJECTION evidence B. All 7 ACs accepted. Proceeding to Step 3.
+Verified against: reviews/codex/2026-07-01T145456Z-UPG-0010__CHG-20260701-002-stage-selfdev-step-2-75bf036.md
+Artifact integrity (informational audit, not a gate):
+  MATCH   changes/UPG-0010__CHG-20260701-002__verify-only-mode.md
+  MATCH   backlog/UPG-0010-verify-only-mode.md
+
+## 2026-07-01T14:58:31Z REVIEW — UPG-0010__CHG-20260701-002 — Stage selfdev-step-3
+Base: (no base pin)  Review: 75bf03649783f2a8c9277a7a876c76e38a41672e  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 7391cbd815fefd2c91a779dcf2235d56f577380b3585a44b314763878c2e96db
+Reviewer: codex default-model (session 019f1e18-e304-7ad2-926c-389145ae9d5f)
+Effort: high   Wall time: 83842ms   Reconnects: 0
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: CHANGES ADVISED — AC-2 is not fully met because the prompt does not name all prohibited actions as the implementation summary claims
+Full assessment: reviews/codex/2026-07-01T145831Z-UPG-0010__CHG-20260701-002-stage-selfdev-step-3-75bf036.md (sha256:6cd76f0ec5914f38262a1b06a0ec910f18e51c123283c1e38d4a06057c20a1c7)
+Reviewed packet: reviews/codex/packets/2026-07-01T145831Z-UPG-0010__CHG-20260701-002-stage-selfdev-step-3-75bf036.packet.txt (sha256:37fa331f22f8a40b37b1fee860fdb53fd54bcc361083885bc60cb5abf6fe923f)
+Human decision: (append with: codeos-review.sh decision UPG-0010__CHG-20260701-002 selfdev-step-3 <DECISION> "<reason>")
+
+## 2026-07-01T14:59:14Z HUMAN DECISION — UPG-0010__CHG-20260701-002 — Stage selfdev-step-3
+Commit at decision: 75bf03649783f2a8c9277a7a876c76e38a41672e
+Decision: REQUEST_CHANGES
+Reason/next: Finding legitimate: Step 3 notes claimed verbatim coverage of AC-2 but prompt says 'Rewrite assertions or test logic' vs AC's 'Rewriting tests'. Fix: removed 'verbatim' claim; notes now accurately describe the substantive equivalence and the deliberate precision improvement.
+Verified against: reviews/codex/2026-07-01T145831Z-UPG-0010__CHG-20260701-002-stage-selfdev-step-3-75bf036.md
+Artifact integrity (informational audit, not a gate):
+  CHANGED changes/UPG-0010__CHG-20260701-002__verify-only-mode.md (reviewed 688abaa8080b / now 2c1db845f5fc)
+  MATCH   backlog/UPG-0010-verify-only-mode.md
+  MATCH   prompts/verify-only.md
+
+## 2026-07-01T15:00:00Z REVIEW — UPG-0010__CHG-20260701-002 — Stage selfdev-step-3
+Base: (no base pin)  Review: 75bf03649783f2a8c9277a7a876c76e38a41672e  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 7391cbd815fefd2c91a779dcf2235d56f577380b3585a44b314763878c2e96db
+Reviewer: codex default-model (session 019f1e18-e304-7ad2-926c-389145ae9d5f)
+Effort: high   Wall time: 45671ms   Reconnects: 0
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: CHANGES ADVISED — AC-2 still fails because the prompt does not name `rewriting tests` as required by the acceptance contract
+Full assessment: reviews/codex/2026-07-01T150000Z-UPG-0010__CHG-20260701-002-stage-selfdev-step-3-75bf036.md (sha256:d1413e5ed9264ad174bd0130cd7b28e7db68a47f835182d46847cef24294403e)
+Reviewed packet: reviews/codex/packets/2026-07-01T150000Z-UPG-0010__CHG-20260701-002-stage-selfdev-step-3-75bf036.packet.txt (sha256:40f3f29359c0b89a6629258321cd639a69eac3746fe217ec0e8bc700e5c306f4)
+Human decision: (append with: codeos-review.sh decision UPG-0010__CHG-20260701-002 selfdev-step-3 <DECISION> "<reason>")
+
+## 2026-07-01T15:00:46Z HUMAN DECISION — UPG-0010__CHG-20260701-002 — Stage selfdev-step-3
+Commit at decision: 75bf03649783f2a8c9277a7a876c76e38a41672e
+Decision: REQUEST_CHANGES
+Reason/next: Finding legitimate: prompt used 'Rewrite assertions or test logic' but AC-2 contract term is 'Rewriting tests'. Fix: updated prompt to 'Rewrite tests' matching AC exactly; simplified Step 3 notes.
+Verified against: reviews/codex/2026-07-01T150000Z-UPG-0010__CHG-20260701-002-stage-selfdev-step-3-75bf036.md
+Artifact integrity (informational audit, not a gate):
+  CHANGED changes/UPG-0010__CHG-20260701-002__verify-only-mode.md (reviewed 2c1db845f5fc / now e9005bfea7ab)
+  MATCH   backlog/UPG-0010-verify-only-mode.md
+  CHANGED prompts/verify-only.md (reviewed bbc4e823b117 / now 8549612e17a0)
+
+## 2026-07-01T15:01:33Z REVIEW — UPG-0010__CHG-20260701-002 — Stage selfdev-step-3
+Base: (no base pin)  Review: 75bf03649783f2a8c9277a7a876c76e38a41672e  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 7391cbd815fefd2c91a779dcf2235d56f577380b3585a44b314763878c2e96db
+Reviewer: codex default-model (session 019f1e18-e304-7ad2-926c-389145ae9d5f)
+Effort: high   Wall time: 45557ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: B
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — the Step 3 prompt implementation satisfies the stated acceptance criteria within scope
+Full assessment: reviews/codex/2026-07-01T150133Z-UPG-0010__CHG-20260701-002-stage-selfdev-step-3-75bf036.md (sha256:b72cc1f0b5732dcbbae3444726d14a4bb2cdccb06ba06c20e0a729bac2b7cdd9)
+Reviewed packet: reviews/codex/packets/2026-07-01T150133Z-UPG-0010__CHG-20260701-002-stage-selfdev-step-3-75bf036.packet.txt (sha256:f7a98d57344d6657eaea47040b09dd043014e5ebd2a6fa07ec75f625695e32dc)
+Human decision: (append with: codeos-review.sh decision UPG-0010__CHG-20260701-002 selfdev-step-3 <DECISION> "<reason>")
+
+## 2026-07-01T15:09:10Z HUMAN DECISION — UPG-0010__CHG-20260701-002 — Stage selfdev-step-3
+Commit at decision: 75bf03649783f2a8c9277a7a876c76e38a41672e
+Decision: APPROVE_STAGE
+Reason/next: R3 NO OBJECTION evidence B. All 7 ACs satisfied. Proceeding to Step 4.
+Verified against: reviews/codex/2026-07-01T150133Z-UPG-0010__CHG-20260701-002-stage-selfdev-step-3-75bf036.md
+Artifact integrity (informational audit, not a gate):
+  MATCH   changes/UPG-0010__CHG-20260701-002__verify-only-mode.md
+  MATCH   backlog/UPG-0010-verify-only-mode.md
+  MATCH   prompts/verify-only.md
+
+## 2026-07-01T15:10:51Z REVIEW — UPG-0010__CHG-20260701-002 — Stage selfdev-step-4
+Base: (no base pin)  Review: 75bf03649783f2a8c9277a7a876c76e38a41672e  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 5b923ea0af42bff5e45accda78293e300998763ce662e52a8160fed299b2cd4a
+Reviewer: codex default-model (session 019f1e18-e304-7ad2-926c-389145ae9d5f)
+Effort: high   Wall time: 49403ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: B
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — the Step 4 reconcile record supports all stated acceptance criteria and stays within scope
+Full assessment: reviews/codex/2026-07-01T151051Z-UPG-0010__CHG-20260701-002-stage-selfdev-step-4-75bf036.md (sha256:3c051e92fe460c847095986001ab1a4620446c59a29f4b896de81fee0f634a2e)
+Reviewed packet: reviews/codex/packets/2026-07-01T151051Z-UPG-0010__CHG-20260701-002-stage-selfdev-step-4-75bf036.packet.txt (sha256:d970d567f7b2da0502b69fcf30a814e92e576ebf8255ac28dbb2a925ef4963f1)
+Human decision: (append with: codeos-review.sh decision UPG-0010__CHG-20260701-002 selfdev-step-4 <DECISION> "<reason>")
+
+## 2026-07-01T15:13:42Z HUMAN DECISION — UPG-0010__CHG-20260701-002 — Stage selfdev-step-4
+Commit at decision: 75bf03649783f2a8c9277a7a876c76e38a41672e
+Decision: APPROVE_STAGE
+Reason/next: R1 NO OBJECTION evidence B. All 7 ACs verified. All findings resolved. Marking COMPLETE.
+Verified against: reviews/codex/2026-07-01T151051Z-UPG-0010__CHG-20260701-002-stage-selfdev-step-4-75bf036.md
+Artifact integrity (informational audit, not a gate):
+  MATCH   changes/UPG-0010__CHG-20260701-002__verify-only-mode.md
+  MATCH   backlog/UPG-0010-verify-only-mode.md
+  MATCH   prompts/verify-only.md
