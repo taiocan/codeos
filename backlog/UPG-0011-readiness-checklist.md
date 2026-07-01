@@ -2,7 +2,7 @@
 feature_id: UPG-0011
 slug: readiness-checklist
 title: Lightweight PR / Pre-Release Readiness Checklist
-status: PROPOSED
+status: COMPLETE
 priority: P1
 depends_on: []
 related_features: []

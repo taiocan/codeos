@@ -39,6 +39,7 @@
 | UPG-0010 | CHG-20260701-002 | prompt | self-dev only | 4-Reconcile | ACCEPTED (Steps 1–4 reviewed; Step 4 R1 NO OBJECTION; all 7 ACs verified) | COMPLETE | — |
 | UPG-0011 | CHG-20260701-003 | template | self-dev only | 4-Reconcile | ACCEPTED (Steps 1–4 reviewed; Step 4 R2 NO OBJECTION; all 9 ACs verified) | COMPLETE | — |
 | UPG-0012 | CHG-20260701-004 | prompt | self-dev only | 4-Reconcile | ACCEPTED (Steps 1–4 reviewed; Step 4 R1 NO OBJECTION; all 8 ACs verified) | COMPLETE | — |
+| UPG-0013 | CHG-20260701-005 | template | self-dev only | 4-Reconcile | ACCEPTED (Steps 1–4 reviewed; Step 4 R1 NO OBJECTION; all 8 ACs verified) | COMPLETE | — |
 
 <!--
 Identity   : Feature ID = UPG-#### (stable). Change ID = CHG-YYYYMMDD-NNN (one execution), or a

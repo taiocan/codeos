@@ -59,7 +59,7 @@ cheap pilot-adjacent wins early.
 | 3 | UPG-0010 | Verification-Only Mode | P1 | — | CHG-20260701-002 | COMPLETE |
 | 3 | UPG-0011 | Lightweight PR / Pre-Release Readiness Checklist | P1 | — | CHG-20260701-003 | COMPLETE |
 | 3 | UPG-0012 | Repair-Before-Next-Feature Workflow Gate | P1 | — | CHG-20260701-004 | COMPLETE |
-| 3 | UPG-0013 | Stage 4 Activation Card | P1 | — | — | PROPOSED |
+| 3 | UPG-0013 | Stage 4 Activation Card | P1 | — | CHG-20260701-005 | COMPLETE |
 
 ### Wave 4 — Reviewer hardening & delivery
 | Wave | Feature ID | Title | Priority | Depends on | Planned/active change | State |

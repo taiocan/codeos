@@ -2,7 +2,7 @@
 feature_id: UPG-0012
 slug: repair-before-next-feature
 title: Repair-Before-Next-Feature Workflow Gate
-status: PROPOSED
+status: COMPLETE
 priority: P1
 depends_on: []
 related_features: []

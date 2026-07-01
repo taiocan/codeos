@@ -2,7 +2,7 @@
 feature_id: UPG-0013
 slug: stage-4-activation-card
 title: Stage 4 Activation Card
-status: PROPOSED
+status: COMPLETE
 priority: P1
 depends_on: []
 related_features: []
@@ -123,6 +123,7 @@ create a second behavioral surface and invite drift.
 
 | Change ID | File | Purpose | State |
 |---|---|---|---|
+| CHG-20260701-005 | `changes/UPG-0013__CHG-20260701-005__stage-4-activation-card.md` | New stage-4-activation-card template — metadata-only card referencing approved artifacts without restating behavior | COMPLETE |
 
 ### Reviews
 

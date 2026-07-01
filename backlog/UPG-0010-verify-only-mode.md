@@ -2,7 +2,7 @@
 feature_id: UPG-0010
 slug: verify-only-mode
 title: Verification-Only Mode
-status: PROPOSED
+status: COMPLETE
 priority: P1
 depends_on: []
 related_features: []

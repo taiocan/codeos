@@ -2050,3 +2050,120 @@ Artifact integrity (informational audit, not a gate):
   MATCH   changes/UPG-0012__CHG-20260701-004__repair-before-next-feature.md
   MATCH   backlog/UPG-0012-repair-before-next-feature.md
   MATCH   prompts/00-session-start.md
+
+## 2026-07-01T16:54:28Z REVIEW — UPG-0013__CHG-20260701-005 — Stage selfdev-step-1
+Base: (no base pin)  Review: 89b0429ea0dffc85795af4733a3820671b022469  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 831e533b5731b8359c43f96353d3adca2cd7822c4fc72ebf77c3d185504f9923
+Reviewer: codex default-model (session 019f1e99-1a37-7f40-a236-d3381823a4a0)
+Effort: high   Wall time: 91328ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: B
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — Intent-stage artifact is internally consistent and presents no in-scope blocker
+Full assessment: reviews/codex/2026-07-01T165428Z-UPG-0013__CHG-20260701-005-stage-selfdev-step-1-89b0429.md (sha256:af4c7f9718fb2c05b8f6c050d379cca9e30ad988c5101e81885a657fb67d3d1a)
+Reviewed packet: reviews/codex/packets/2026-07-01T165428Z-UPG-0013__CHG-20260701-005-stage-selfdev-step-1-89b0429.packet.txt (sha256:c769a211eb52aa029cf6dabff0ffdca320d8e05e6ed371f2ed3ee2fd2d47c707)
+Human decision: (append with: codeos-review.sh decision UPG-0013__CHG-20260701-005 selfdev-step-1 <DECISION> "<reason>")
+
+## 2026-07-01T17:01:30Z HUMAN DECISION — UPG-0013__CHG-20260701-005 — Stage selfdev-step-1
+Commit at decision: 89b0429ea0dffc85795af4733a3820671b022469
+Decision: APPROVE_STAGE
+Reason/next: R1 NO OBJECTION evidence B. Intent is clear and scoped. Human provided 6 explicit ACs protecting against activation card becoming a second behavioral surface. Proceeding to Step 2.
+Verified against: reviews/codex/2026-07-01T165428Z-UPG-0013__CHG-20260701-005-stage-selfdev-step-1-89b0429.md
+Artifact integrity (informational audit, not a gate):
+  MATCH   changes/UPG-0013__CHG-20260701-005__stage-4-activation-card.md
+  MATCH   backlog/UPG-0013-stage-4-activation-card.md
+
+## 2026-07-01T17:03:47Z REVIEW — UPG-0013__CHG-20260701-005 — Stage selfdev-step-2
+Base: (no base pin)  Review: 89b0429ea0dffc85795af4733a3820671b022469  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 2abd932633a663503bae38cd5201baeef1f46868914ad3a1d2fa2e4e32737155
+Reviewer: codex default-model (session 019f1e99-1a37-7f40-a236-d3381823a4a0)
+Effort: high   Wall time: 92038ms   Reconnects: 0
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: B
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: CHANGES ADVISED — The Step 2 acceptance contract has contradictions and one incomplete scope-boundary verification
+Full assessment: reviews/codex/2026-07-01T170347Z-UPG-0013__CHG-20260701-005-stage-selfdev-step-2-89b0429.md (sha256:33701481aace2ff65d4947899afbcd97d85e4c4b04284890dd7a01f65778e352)
+Reviewed packet: reviews/codex/packets/2026-07-01T170347Z-UPG-0013__CHG-20260701-005-stage-selfdev-step-2-89b0429.packet.txt (sha256:5369fe4a4fc52b2dcc246a71010f75e504d28f79c6ea8290ca6aff3190022040)
+Human decision: (append with: codeos-review.sh decision UPG-0013__CHG-20260701-005 selfdev-step-2 <DECISION> "<reason>")
+
+## 2026-07-01T17:05:04Z HUMAN DECISION — UPG-0013__CHG-20260701-005 — Stage selfdev-step-2
+Commit at decision: 89b0429ea0dffc85795af4733a3820671b022469
+Decision: REQUEST_CHANGES
+Reason/next: F1: AC-1 said 'pointer fields only' across the whole template — false for operational metadata sections. Fixed: scoped pointer-only rule to behavioral artifact references section only. F2: AC-3 said 'not a reusable multi-stage artifact' — contradicts backlog scope ('Stage 4 primarily, optionally Stage 5-6'). Fixed: aligned to backlog. F3: AC-8 verification only checked prompts/00-session-start.md but claimed to cover 01-09. Fixed: extended to list all 00-09 stage prompts explicitly.
+Verified against: reviews/codex/2026-07-01T170347Z-UPG-0013__CHG-20260701-005-stage-selfdev-step-2-89b0429.md
+Artifact integrity (informational audit, not a gate):
+  CHANGED changes/UPG-0013__CHG-20260701-005__stage-4-activation-card.md (reviewed daf83fc3ed5c / now 05018cd31a90)
+  MATCH   backlog/UPG-0013-stage-4-activation-card.md
+
+## 2026-07-01T17:06:13Z REVIEW — UPG-0013__CHG-20260701-005 — Stage selfdev-step-2
+Base: (no base pin)  Review: 89b0429ea0dffc85795af4733a3820671b022469  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 2abd932633a663503bae38cd5201baeef1f46868914ad3a1d2fa2e4e32737155
+Reviewer: codex default-model (session 019f1e99-1a37-7f40-a236-d3381823a4a0)
+Effort: high   Wall time: 67917ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: B
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — The revised Step 2 acceptance criteria now align with the stated Stage 4 activation-card scope
+Full assessment: reviews/codex/2026-07-01T170613Z-UPG-0013__CHG-20260701-005-stage-selfdev-step-2-89b0429.md (sha256:a8107bc99af61eb15f9a9b291206de19f4a80db83f658bd7f5cfbc9aaef9e63a)
+Reviewed packet: reviews/codex/packets/2026-07-01T170613Z-UPG-0013__CHG-20260701-005-stage-selfdev-step-2-89b0429.packet.txt (sha256:ac1afb6af01489a15a8dafad264f4c2ea8e85e25bb125b9f08e86c6b992581eb)
+Human decision: (append with: codeos-review.sh decision UPG-0013__CHG-20260701-005 selfdev-step-2 <DECISION> "<reason>")
+
+## 2026-07-01T17:48:27Z HUMAN DECISION — UPG-0013__CHG-20260701-005 — Stage selfdev-step-2
+Commit at decision: 89b0429ea0dffc85795af4733a3820671b022469
+Decision: APPROVE_STAGE
+Reason/next: R2 NO OBJECTION evidence B. All 8 ACs sound after R1 fixes. Proceeding to Step 3.
+Verified against: reviews/codex/2026-07-01T170613Z-UPG-0013__CHG-20260701-005-stage-selfdev-step-2-89b0429.md
+Artifact integrity (informational audit, not a gate):
+  MATCH   changes/UPG-0013__CHG-20260701-005__stage-4-activation-card.md
+  MATCH   backlog/UPG-0013-stage-4-activation-card.md
+
+## 2026-07-01T17:51:02Z REVIEW — UPG-0013__CHG-20260701-005 — Stage selfdev-step-3
+Base: (no base pin)  Review: 89b0429ea0dffc85795af4733a3820671b022469  Branch: selfdev/upg-0029-review-durability
+Diff-hash: dd70419052d807dafc9e8039857c4d54b8fe44185392e32ecd07277524f42aa5
+Reviewer: codex default-model (session 019f1e99-1a37-7f40-a236-d3381823a4a0)
+Effort: high   Wall time: 107875ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: B
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — The new template matches the accepted Stage 4 activation-card scope and its Step 3 implementation claims
+Full assessment: reviews/codex/2026-07-01T175102Z-UPG-0013__CHG-20260701-005-stage-selfdev-step-3-89b0429.md (sha256:de2097c564942e6d0bc242a8fe5af5ba511812afe1dbe1e84470250c1c0c7559)
+Reviewed packet: reviews/codex/packets/2026-07-01T175102Z-UPG-0013__CHG-20260701-005-stage-selfdev-step-3-89b0429.packet.txt (sha256:aa90b198806c675f678a67c26a21cb5f53ecd372b110cc909857262e2fa2a056)
+Human decision: (append with: codeos-review.sh decision UPG-0013__CHG-20260701-005 selfdev-step-3 <DECISION> "<reason>")
+
+## 2026-07-01T17:55:37Z HUMAN DECISION — UPG-0013__CHG-20260701-005 — Stage selfdev-step-3
+Commit at decision: 89b0429ea0dffc85795af4733a3820671b022469
+Decision: APPROVE_STAGE
+Reason/next: R1 NO OBJECTION evidence B. Template clean. Proceeding to Step 4.
+Verified against: reviews/codex/2026-07-01T175102Z-UPG-0013__CHG-20260701-005-stage-selfdev-step-3-89b0429.md
+Artifact integrity (informational audit, not a gate):
+  MATCH   changes/UPG-0013__CHG-20260701-005__stage-4-activation-card.md
+  MATCH   templates/stage-4-activation-card.md
+  MATCH   backlog/UPG-0013-stage-4-activation-card.md
+
+## 2026-07-01T17:57:15Z REVIEW — UPG-0013__CHG-20260701-005 — Stage selfdev-step-4
+Base: (no base pin)  Review: 89b0429ea0dffc85795af4733a3820671b022469  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 090002201395b64df5f39eac13448927ccc1fdd1936c0487f5e792d1b565b2f8
+Reviewer: codex default-model (session 019f1e99-1a37-7f40-a236-d3381823a4a0)
+Effort: high   Wall time: 54484ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: B
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — The Step 4 reconcile packet is internally consistent and the implemented template matches the stated scope and ACs
+Full assessment: reviews/codex/2026-07-01T175715Z-UPG-0013__CHG-20260701-005-stage-selfdev-step-4-89b0429.md (sha256:4528a168a90e0ea5b92970ec76b0aaa559b8d0f34af8a1c500af306e2de75566)
+Reviewed packet: reviews/codex/packets/2026-07-01T175715Z-UPG-0013__CHG-20260701-005-stage-selfdev-step-4-89b0429.packet.txt (sha256:dde9915213f537cf1b70f9c86bd7466e6643aafe9e76b6714e137e7e44319a9c)
+Human decision: (append with: codeos-review.sh decision UPG-0013__CHG-20260701-005 selfdev-step-4 <DECISION> "<reason>")
+
+## 2026-07-01T18:00:22Z HUMAN DECISION — UPG-0013__CHG-20260701-005 — Stage selfdev-step-4
+Commit at decision: 89b0429ea0dffc85795af4733a3820671b022469
+Decision: APPROVE_STAGE
+Reason/next: R1 NO OBJECTION evidence B. All 8 ACs verified. Marking COMPLETE.
+Verified against: reviews/codex/2026-07-01T175715Z-UPG-0013__CHG-20260701-005-stage-selfdev-step-4-89b0429.md
+Artifact integrity (informational audit, not a gate):
+  MATCH   changes/UPG-0013__CHG-20260701-005__stage-4-activation-card.md
+  MATCH   templates/stage-4-activation-card.md
+  MATCH   backlog/UPG-0013-stage-4-activation-card.md
