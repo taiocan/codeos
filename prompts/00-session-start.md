@@ -88,6 +88,12 @@ Goal: produce draft Feature Briefs and Intents for existing modules so they can 
 Prompt to load: `.codeos/prompts/00c-onboarding.md`
 Output: `HYPOTHESIZED_INTENT` draft briefs in `backlog/` and draft intents in `intents/` + registry entries. None are APPROVED — all require Stage 1 review before advancing.
 
+**E — Solution Discovery** *(optional, advisory)*
+Use when: exploring a new problem domain before writing individual Feature Briefs — to map candidate feature families, shared vocabulary, event hypotheses, configuration needs, and architectural risks.
+This session type is **optional and non-gating**. Features may enter Stage 1 (Intent Capture) without a prior Solution Discovery session. The standard DBA path — Intent → Contract → Schema → Implement → Tests → Runtime → Reconcile → Replay → Refinement — is unchanged.
+Prompt to load: `.codeos/prompts/00b-solution-discovery.md`
+Output: non-authoritative planning material only. No output from Session Type E is an approved DBA artifact. Findings outside the session's stated scope are recorded as backlog candidates, not automatically incorporated.
+
 ---
 
 **Step 5:** Check the feature registry. If `features/registry.yaml` exists, read it and report the current status of all features. State any features that are blocked on approval.
@@ -99,7 +105,7 @@ Output: `HYPOTHESIZED_INTENT` draft briefs in `backlog/` and draft intents in `i
 **Today's goal:**
 [Human fills in: e.g., "Complete Stage 2 contract for user_login feature"]
 
-**Session type:** [A / B / C — from Step 4]
+**Session type:** [A / B / C / D / E — from Step 4]
 
 **Current feature or refinement:**
 
@@ -126,7 +132,7 @@ Output: `HYPOTHESIZED_INTENT` draft briefs in `backlog/` and draft intents in `i
 
 **Step 7:** After reading and confirming, state:
 - You are in DBA mode
-- The session type (A, B, C, or D)
+- The session type (A, B, C, D, or E)
 - Which feature(s) or refinement you'll work on
 - Which stage or step you are currently at
 - What you will produce this session

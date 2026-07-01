@@ -1,0 +1,876 @@
+Reviewer task:
+
+SCOPE CONTRACT
+  Assess this artifact against the STATED SCOPE of this stage/PR — the Expected Stage
+  Output below and what the artifacts actually claim — NOT against an ideal final system.
+  A capability the artifacts do not claim to provide is OUT-OF-SCOPE, not a defect.
+  The following are OUT-OF-SCOPE BACKLOG unless THIS artifact explicitly claims to provide
+  them: formal approval-binding enforcement; rollback correctness; COMMIT_BOUND/
+  WORKSPACE_BOUND enforcement; JSON Schema validation; CI validation; exact
+  decision-integrity; per-feature decision ledgers; autonomous approval; enabled hooks.
+
+YOUR TASK — answer these five questions using only the evidence in the packet:
+  1. Acceptance criteria: Does the artifact satisfy each of its stated acceptance criteria?
+     Cite evidence for each criterion (or note its absence).
+  2. Claim support: Are universal or strong claims (all, every, never, always, no X) in the
+     artifact supported by evidence in the packet? Any unverifiable strong claim is a candidate
+     finding only if it affects acceptance, scope, safety, decision integrity, or the artifact's
+     stated guarantees.
+  3. Scope drift: Is there any change beyond the stated scope boundary? (Files not in the
+     "What changes" list; behavior changes not in the intent; downstream doctrine modified
+     rather than read.)
+  4. In-scope blockers: Are there facts that, if left in, would make the artifact wrong,
+     unsafe, or internally contradictory?
+  5. Finding classification: Classify every finding you raise as exactly one of the five
+     TRIAGE RULE categories below.
+
+TRIAGE RULE — classify EVERY finding as exactly one of:
+  IN-SCOPE BLOCKER         breaks the stated goal; creates a FALSE CLAIM in this artifact;
+                           weakens the advisory/read-only/human-gated guarantees; prevents
+                           the work from running; or violates an explicit safety constraint.
+  IN-SCOPE NON-BLOCKER     improves it but is not required for this PR.
+  OUT-OF-SCOPE BACKLOG     valid, but belongs to a future feature / stronger guarantee.
+  REJECTED                 conflicts with the stated scope or Codeos philosophy.
+  SELF-REFERENCE /         review records that are stale because of the previous round's
+  REVIEW-BOOKKEEPING       own existence (causal loop); not a real artifact defect.
+  Base the PR decision ONLY on IN-SCOPE BLOCKER findings. An OUT-OF-SCOPE BACKLOG finding
+  must NOT cause DO NOT ADVANCE unless this artifact FALSELY CLAIMS to solve it.
+
+WHAT NOT TO DO
+  - Do not flag style or wording issues as blockers unless the wording creates a false claim,
+    contradiction, parser breakage, or wrong governance instruction.
+  - Do not re-review unchanged full context when the packet is in delta mode.
+  - Do not treat local-only review history as a blocker unless the artifact falsely
+    claims the review artifacts are committed/durable.
+
+INSTRUCTIONS
+  If this is a resumed session, ignore any earlier-session conclusions unless they are
+  re-established by THIS packet; assess only the evidence above, pinned to this commit.
+  Give a focused assessment of this artifact against the stated scope, acceptance criteria,
+  and evidence in this packet. Rank findings by severity. Suggest a better design only when
+  needed to explain a required fix for an IN-SCOPE BLOCKER.
+
+  Limit findings to the top 3 IN-SCOPE BLOCKERS. Additional non-blocking observations may be
+  summarized in one short paragraph only if useful.
+
+  For EACH finding emit:
+    Finding: / Severity: High|Medium|Low / Classification: <one of the TRIAGE RULE labels>
+    Evidence: <file/line> / Why: <short> / Required action: fix now|optional fix|backlog|reject
+    Scope reason: <why it does/does not belong to this PR's scope>
+  Then emit:
+    PR decision: ADVANCE | REQUEST CHANGES | DO NOT ADVANCE   (based ONLY on in-scope blockers)
+    Scope drift warning: yes|no — <is anything pulling this PR beyond its stated scope?>
+  Then on the LAST two lines emit exactly (map ADVANCE->NO OBJECTION,
+  REQUEST CHANGES->CHANGES ADVISED, DO NOT ADVANCE->DO NOT ADVANCE):
+    LOG SUMMARY: <NO OBJECTION | CHANGES ADVISED | DO NOT ADVANCE | UNCLASSIFIED> — <single most important point>
+      (use UNCLASSIFIED if you genuinely cannot classify the artifact safely)
+    EVIDENCE: <A|B|C|D|E>   (optional)
+
+PACKET MANIFEST
+  generated: 2026-07-01T13:45:32Z
+  task_prompt: /home/arc/projects/claude/Codeos/prompts/codeos-reviewer-task.md (4381 bytes)
+  review_content_bytes: 31087
+  estimated_review_tokens: ~7771
+  budget_status: OK
+  packet_mode: full
+  delta_base: none
+  items:
+    - path: status/self-development.md
+      mode: path_sha_only
+      bytes: 4867
+      sha256: d283b649217fb86dd7bce005a42956b1f740ec4292916d1fe34a3bda825f7693
+    - path: status/roadmap.md
+      mode: path_sha_only
+      bytes: 7060
+      sha256: f794074bf5561c6ce41df0eae4e8a30ad9a3c99841e3cbe849afe32758386048
+    - path: backlog/features.md
+      mode: path_sha_only
+      bytes: 8685
+      sha256: d979eb764956434c548694fc770952e8b382088c007c36a77b5cb5edfddf05f7
+    - path: changes/UPG-0007__CHG-20260630-005__solution-discovery-00b.md
+      mode: full_file
+      bytes: 10485
+      sha256: 92d36d0abefa82b121ca52ca777569438864375c12e4eeb0ad43d1f738c6c4cb
+    - path: backlog/UPG-0007-solution-discovery-00b.md
+      mode: full_file
+      bytes: 3593
+      sha256: 929bb3ea192250dabba8baf0b3cbda620f9c49ab7208fb6ae5ec2a1ba467a672
+    - path: prompts/00b-solution-discovery.md
+      mode: full_file
+      bytes: 6796
+      sha256: 83895d02540c3b4a7dcef88dc04c868a15227d8a9f6dfa4fe27e5dfd0ed5f353
+    - path: prompts/00-session-start.md
+      mode: full_file
+      bytes: 7040
+      sha256: e55411047786f931068c25ca9b2c23439153a1b3111ae35c2be0f03e1d93e24f
+    - path: (diff)
+      mode: full_file
+      bytes: 3173
+
+REVIEW CONTEXT
+  Feature:                UPG-0007__CHG-20260630-005
+  Stage:                  selfdev-step-3
+  Branch:                 selfdev/upg-0029-review-durability
+  Base commit:            (no base pin)
+  Review commit:          02e6847032d5cc1a2804eb82adef783827a29c24 (+ uncommitted workspace changes)
+  Current approved stage: n/a (non-numeric stage)
+  Evidence coverage:      FULL_COVERAGE
+  Workspace dirty:        yes (uncommitted changes at review time)
+
+DBA RULES RELEVANT TO THIS STAGE
+  - Human approval is required for every stage transition; you are advisory only.
+  - Memory is not truth — assess only what is provided, pinned to the review commit.
+  - Implementation must trace to approved artifacts; no behavior beyond intent+contract+schema.
+  - No events outside the approved event schema; no hidden behavior.
+
+STAGE-SPECIFIC CHECKS
+  - (no stage-specific checklist for stage selfdev-step-3)
+
+EXPECTED STAGE OUTPUT
+  (no expected-output template for stage selfdev-step-3)
+
+ARTIFACTS TO REVIEW
+  --- changes/UPG-0007__CHG-20260630-005__solution-discovery-00b.md (sha256: 92d36d0abefa82b121ca52ca777569438864375c12e4eeb0ad43d1f738c6c4cb, visibility: shown) ---
+    ---
+    change_id: CHG-20260630-005
+    feature_id: UPG-0007
+    slug: solution-discovery-00b
+    triage_class: prompt
+    scope_axis: self-dev only
+    review_profile: PROFILE-3
+    review_series: RVS__UPG-0007__CHG-20260630-005__S3
+    review_state: DRAFT
+    status: IN_PROGRESS
+    loop_step: 3-Implement
+    ---
+    
+    # Change: UPG-0007 / CHG-20260630-005 — Expanded 00b Solution Discovery
+    
+    ## TRACE HEADER
+    
+    ```yaml
+    feature_id: UPG-0007
+    primary_feature_id: UPG-0007
+    change_id: CHG-20260630-005
+    slug: solution-discovery-00b
+    state: IN_PROGRESS
+    current_step: 3-Implement
+    implements:
+      - UPG-0007
+    related_features: []
+    review_series: RVS__UPG-0007__CHG-20260630-005__S3
+    review_profile: PROFILE-3
+    review_state: DRAFT
+    review_history: reviews/review-log.md
+    triage_class: prompt
+    scope_axis: self-dev only
+    corrects: ~
+    corrected_by: ~
+    follow_up_of: ~
+    fixes_findings: []
+    ```
+    
+    ---
+    
+    ## Step 1 — Change Intent
+    
+    ### Problem
+    
+    `prompts/00b-feature-brief.md` handles individual feature discovery well — one feature at a
+    time, interview-style, producing a single feature brief. But there is no prompt for the
+    earlier, broader question: *what features should exist at all?* Before a team can run
+    00b-feature-brief interviews, they need to understand the problem domain, identify candidate
+    feature families, surface shared vocabulary, spot architectural pressure points, and decide
+    what to defer entirely. Without this stage, the first feature brief appears from nowhere and
+    Stage 1 must implicitly carry the topology reasoning it was never asked to do.
+    
+    The result is: premature feature entry into the DBA loop, scope creep as undiscovered
+    dependencies surface late, and architectural decisions embedded in individual intents that
+    should have been explicit non-decisions at the domain level.
+    
+    ### What changes
+    
+    | File | Change |
+    |---|---|
+    | `prompts/00b-solution-discovery.md` | NEW — solution discovery prompt for pre-feature-brief domain exploration. Covers: domain problem, candidate feature topology, shared vocabulary, event families, configuration hypotheses, architectural risks, and explicit non-decisions. Every output artifact carries the non-authoritative banner. |
+    | `prompts/00-session-start.md` | Add Session Type E (Solution Discovery) pointing at the new prompt, alongside the existing Session Types A–D. |
+    | `backlog/UPG-0007-solution-discovery-00b.md` | Feature Thread: add this change. |
+    | `status/self-development.md` | Activate row for this change. |
+    | `status/roadmap.md` | Wave 2 UPG-0007 row: update planned change and state to IN_PROGRESS. |
+    | `changes/UPG-0007__CHG-20260630-005__solution-discovery-00b.md` | This change record. |
+    
+    ### What stays the same (scope boundary)
+    
+    - `dba-system.md` — NOT in scope. The doctrine's prompt table (`| Feature Brief (pre-Stage 1) | .codeos/prompts/00b-feature-brief.md |`) is intentionally not updated here. The new prompt is usable without a doctrine table entry; the table update is a follow-on `downstream-doctrine` change once the prompt is proven.
+    - `prompts/00b-feature-brief.md` — NOT modified. Solution discovery is upstream of (and separate from) individual feature briefs; the two prompts work in sequence, not as replacements.
+    - Stage prompts 01–09 — NOT in scope.
+    - `templates/` — NOT in scope. The non-authoritative banner lives in the prompt, not in a template.
+    - `scripts/` — no changes.
+    
+    ### Triage class: `prompt`
+    
+    Creating one new prompt (`00b-solution-discovery.md`) and updating one existing prompt
+    (`00-session-start.md` — adding Session Type E). Class is `prompt`. 4-step loop with
+    PROFILE-3 review cadence.
+    
+    ### Scope axis: `self-dev only`
+    
+    No changes to `dba-system.md`. We are changing toolkit prompt files only.
+    
+    ### Review profile: PROFILE-3
+    
+    Prompt class, downstream-facing (used by downstream DBA projects). Codex review before each
+    step gate; human approval at all four gates; reviewer output is advisory and non-gatekeeping.
+    
+    ### Originating backlog item
+    
+    `backlog/UPG-0007-solution-discovery-00b.md` — Expanded 00b Solution Discovery / Feature
+    Topology Stage.
+    
+    ---
+    
+    ## Step 2 — Acceptance Criteria
+    
+    ### AC-1: New prompt file exists and is well-formed
+    
+    `prompts/00b-solution-discovery.md` is created. It contains:
+    - A clear purpose statement explaining that this is pre-feature-brief domain exploration.
+    - Coverage of: domain problem framing, candidate feature topology, shared vocabulary, event
+      family hypotheses, configuration hypotheses, architectural risks, and explicit non-decisions.
+    - The exact three-line non-authoritative banner on every output artifact:
+      ```
+      This document is non-authoritative planning material.
+      It does not approve features, architecture, contracts, schemas, events, or implementation.
+      If this document conflicts with later approved DBA artifacts, the approved DBA artifacts win.
+      ```
+    
+    Verification: file exists; the three-line banner appears verbatim (or as a block the practitioner
+    is instructed to include); all topic areas addressed.
+    
+    ### AC-2: Session Type E added to session-start prompt
+    
+    `prompts/00-session-start.md` lists Session Type E (Solution Discovery) alongside the
+    existing Session Types A–D. The entry points to `prompts/00b-solution-discovery.md` and
+    describes when to use it (exploring a new problem domain before committing to feature briefs).
+    
+    Verification: `grep -n "Session Type E" prompts/00-session-start.md` returns a hit; link to
+    `00b-solution-discovery.md` present.
+    
+    ### AC-3: Session Type E is advisory and does not create a mandatory DBA stage
+    
+    This is the primary governance constraint for this change. All of the following must hold:
+    
+    - Session Type E **may** trigger additional solution exploration.
+    - Session Type E **may** produce recommendations, alternatives, or open questions.
+    - Session Type E **does not** alter the DBA stage sequence (Stages 1–9 are unchanged).
+    - Session Type E **does not** become a mandatory step for feature delivery.
+    - A feature **may** progress through the normal DBA loop without a Session Type E having
+      been run.
+    - The **absence** of Session Type E cannot block feature progression.
+    
+    Verification: the new prompt and the session-start entry use advisory language throughout
+    ("may", "can", "optional", "candidates"); neither file introduces language that makes
+    Solution Discovery a prerequisite for Stage 1 or any other stage.
+    
+    ### AC-4: Out-of-scope findings become backlog candidates, not automatic scope expansion
+    
+    Session Type E may surface valid improvements beyond the active discovery session's scope.
+    Such findings **must** be recorded as backlog candidates for later evaluation rather than
+    automatically incorporated into the current work. The prompt instructs practitioners to defer
+    out-of-scope discoveries explicitly.
+    
+    This mirrors the principle already in force for reviewer findings: advisory tools gather
+    evidence; they do not auto-expand scope. The specific backlog tracking mechanism is left to
+    the downstream project (e.g., a feature list, a to-do, or a backlog file) — the prompt does
+    not impose Codeos-internal bookkeeping schemes on downstream users.
+    
+    Verification: the new prompt includes explicit instruction that outputs are candidates for
+    further evaluation, and that items outside the active discovery session's stated scope should
+    be recorded for later, not acted on immediately.
+    
+    ### AC-5: `prompts/00b-feature-brief.md` is unchanged
+    
+    The existing individual-feature-brief prompt is not modified. Solution discovery is upstream
+    of (and complementary to) individual feature briefs; they work in sequence.
+    
+    Verification: the file is not listed in the `What changes` table and does not appear in the
+    Step 3 implementation diff.
+    
+    ### AC-6: `dba-system.md` is unchanged
+    
+    The downstream doctrine prompt table is not updated in this change (deferring to a follow-on
+    `downstream-doctrine` change once the prompt is proven). No other `dba-system.md` content
+    is modified.
+    
+    Verification: the file is not listed in the `What changes` table and does not appear in the
+    Step 3 implementation diff.
+    
+    ### AC-7: Stage prompts 01–09 and `templates/` are unchanged
+    
+    No stage prompts or template files are modified.
+    
+    Verification: none of these paths are listed in the `What changes` table and none appear in
+    the Step 3 implementation diff.
+    
+    ---
+    
+    ## Step 3 — Implementation
+    
+    ### `prompts/00b-solution-discovery.md` (NEW)
+    
+    New prompt file for Session Type E. Key design decisions:
+    
+    - **Role declaration** opens with an explicit advisory/non-gating statement so the constraint
+      is the first thing read, not buried in a later section.
+    - **"What This Session Is NOT" section** lists five explicit non-gates: not a prerequisite for
+      Session A/B, not an approval activity, not a replacement for Stages 1–9, not a reviewer gate.
+      Includes a redirect rule: if the human asks for intents/contracts/schemas during this session,
+      decline and redirect.
+    - **Discovery areas** (seven) are presented as optional and exploreable in any order. All
+      outputs are labeled CANDIDATE or HYPOTHESIZED inline to keep non-authoritative status visible
+      throughout, not only on the banner.
+    - **Out-of-scope findings** section explicitly instructs the facilitator to surface and defer
+      findings outside the session scope as backlog candidates, not incorporate them automatically.
+    - **Three-line non-authoritative banner** appears verbatim in both the output format section
+      (instructed) and the suggested document template — satisfying AC-1.
+    - **After Discovery** section closes by restating the full DBA path
+      (Intent → Contract → Schema → Implement → …) and labeling this prompt as "upstream context,
+      not a new stage" — satisfying AC-3.
+    
+    ### `prompts/00-session-start.md` (UPDATED)
+    
+    Session Type E added after Type D, before the Step 5 separator. Design decisions:
+    
+    - Labeled **`*(optional, advisory)*`** in the heading to make its status visible at a glance.
+    - Opening sentence states the use-case (exploration before Feature Briefs).
+    - Second paragraph restates **optional and non-gating** and reproduces the full standard DBA
+      path inline, so a reader scanning session types sees the primary path without needing to
+      look elsewhere.
+    - Output description explicitly states no output is an approved DBA artifact and that
+      out-of-scope findings become backlog candidates — satisfying AC-3 and AC-4.
+    - Session context label at Step 6 (`[A / B / C — from Step 4]`) is unchanged — the human
+      fills in E if they choose it, as with all other types.
+    
+    ---
+    
+    ## Step 4 — Reconcile
+    
+    *(Not yet filled.)*
+
+  --- backlog/UPG-0007-solution-discovery-00b.md (sha256: 929bb3ea192250dabba8baf0b3cbda620f9c49ab7208fb6ae5ec2a1ba467a672, visibility: shown) ---
+    ---
+    feature_id: UPG-0007
+    slug: solution-discovery-00b
+    title: Expanded 00b Solution Discovery / Feature Topology Stage
+    status: PROPOSED
+    priority: P0
+    depends_on: []
+    related_features: []
+    supersedes: []
+    superseded_by: []
+    ---
+    
+    # Upgrade: solution-discovery-00b — Expanded 00b Solution Discovery / Feature Topology Stage
+    
+    **Priority**: P0
+    **Status**: PROPOSED
+    **Type**: toolkit-upgrade
+    **Related**: config-discovery, 00b-adr-generator
+    
+    ## Problem
+    
+    Codeos is strong once a feature enters Stage 1. But before Stage 1, there is a need to
+    brainstorm possible features, common vocabulary, event families, configuration needs,
+    architecture pressure, and shared concepts without prematurely approving architecture or
+    feature lists.
+    
+    ## Upgrade
+    
+    Expand Stage 00b into a non-authoritative solution discovery stage.
+    
+    ## Scope
+    
+    Pre-Stage-1 discovery.
+    
+    ## Proposed artifact(s)
+    
+    `prompts/00b-solution-discovery.md`
+    
+    Optional output: `docs/solution-discovery.md`
+    
+    Core principle: 00b output is not approved DBA truth. It is planning hypothesis only. Only
+    Stage 1 intent, Stage 2 contract, and Stage 3 event schema become approved behavioral truth.
+    
+    ## Design notes
+    
+    00b output structure:
+    
+    ```markdown
+    # Solution Discovery / Feature Topology
+    
+    Product/domain problem:
+    User/workflow context:
+    Candidate actors:
+    Candidate feature list:
+    Candidate outcomes:
+    Shared vocabulary/concepts:
+    Possible event families:
+    Potential event spine pressure:
+    Potential shared infrastructure:
+    Potential configuration requirements:
+    Potential configuration schema:
+    External integrations:
+    Data persistence needs:
+    Operational constraints:
+    Security/privacy concerns:
+    Likely failure modes:
+    Potential Stage 10 / ADR needs:
+    Architecture risks:
+    Vertical drift risks:
+    Recommended first feature:
+    Features to defer:
+    Explicit non-decisions:
+    What must NOT be treated as approved:
+    ```
+    
+    Configuration discovery — 00b should identify configuration needs early:
+    
+    ```markdown
+    # Configuration Hypotheses
+    
+    Config item:
+    Purpose:
+    Feature(s) likely affected:
+    Default:
+    Required/optional:
+    Secret/non-secret:
+    Environment-specific:
+    Runtime-changeable:
+    Needs schema validation:
+    Potential event impact:
+    ```
+    
+    ## Value
+    
+    Very high. This helps identify common denominators across multiple future features without
+    losing DBA advantages.
+    
+    ## Risk
+    
+    The model may treat 00b hypotheses as approved architecture.
+    
+    ## Guardrail
+    
+    Every 00b artifact must contain:
+    
+    ```text
+    This document is non-authoritative planning material.
+    It does not approve features, architecture, contracts, schemas, events, or implementation.
+    If this document conflicts with later approved DBA artifacts, the approved DBA artifacts win.
+    ```
+    
+    ## DBA-philosophy note
+    
+    Touches **artifact authority**: 00b output must never be treated as approved DBA truth. Only
+    Stages 1–3 produce approved behavioral truth. The non-authoritative banner is the guardrail
+    that keeps this from eroding intent primacy.
+    
+    ## Feature Thread
+    
+    > Canonical thread rollup for this feature. Compact links/IDs only; full detail lives in the
+    > change records and review files. May be maintained manually.
+    
+    ### Changes
+    
+    | Change ID | File | Purpose | State |
+    |---|---|---|---|
+    | CHG-20260630-005 | `changes/UPG-0007__CHG-20260630-005__solution-discovery-00b.md` | New 00b solution-discovery prompt + Session Type E in session-start | IN_PROGRESS |
+    
+    ### Reviews
+    
+    | Review ID | Change ID | Step | Round | Verdict |
+    |---|---|---|---|---|
+    
+    ### Findings Tracked Inside This Feature
+    
+    | Finding ID | Review ID | Classification | Resolution |
+    |---|---|---|---|
+    
+    ### Follow-up Features
+    
+    | Feature ID | Reason | Source finding |
+    |---|---|---|
+
+  --- prompts/00b-solution-discovery.md (sha256: 83895d02540c3b4a7dcef88dc04c868a15227d8a9f6dfa4fe27e5dfd0ed5f353, visibility: shown) ---
+    # Solution Discovery: Pre-Feature-Brief Domain Exploration
+    
+    ## Your Role
+    
+    You are an advisory discovery facilitator. Your job is to help the human map an
+    unfamiliar problem domain — identifying candidate feature families, shared vocabulary,
+    architectural pressure points, and explicit non-decisions — before any Feature Brief
+    is written.
+    
+    **This session is optional and non-gating.** Its outputs are planning candidates, not
+    approved DBA artifacts. A feature may enter Stage 1 without a prior Solution Discovery
+    session. Nothing produced here is authoritative.
+    
+    ---
+    
+    ## When to Use This Prompt
+    
+    Use Session Type E when the team wants to explore a new problem domain before writing
+    individual Feature Briefs — to surface what kinds of features might exist, what vocabulary
+    they will share, what configuration needs will appear, and what to defer entirely.
+    
+    Do NOT use this prompt as a substitute for Stage 1 (Intent Capture). It is upstream of
+    Stage 1 and produces candidates for Feature Briefs, not approved intents.
+    
+    ---
+    
+    ## What This Session Is NOT
+    
+    - Not a gate before Feature Stage Work (Session Type B)
+    - Not a prerequisite for writing a Feature Brief (Session Type A)
+    - Not an approval activity — no artifact produced here is approved
+    - Not a replacement for Stages 1–9 of the DBA loop
+    - Not a reviewer or approval gate — its outputs inform; they do not block
+    
+    If the human asks to write intents, contracts, event schemas, or implementation during
+    this session: decline and explain that those belong in Stage 1 and beyond. Redirect to
+    the appropriate session type.
+    
+    ---
+    
+    ## Discovery Areas
+    
+    Work through whichever areas are relevant to the session. You do not need to cover
+    all of them. Ask the human which areas they want to explore, then proceed.
+    
+    ### 1. Domain Problem Framing
+    
+    - What is the core problem this domain is trying to solve?
+    - Who are the primary human actors? What do they need to do?
+    - What currently happens without this system? What workarounds exist?
+    - What does success look like at the domain level (not the individual feature level)?
+    
+    ### 2. Candidate Feature Topology
+    
+    - What major capability clusters might exist in this domain?
+    - Which clusters are likely to appear in Stage 1 first? Which might be deferred?
+    - Which clusters are independent? Which share vocabulary or data?
+    - Are there capabilities that seem necessary but warrant validation before committing?
+    
+    Label all outputs as CANDIDATE — not approved features.
+    
+    ### 3. Shared Vocabulary
+    
+    - What domain terms will multiple features need to define consistently?
+    - Are there status values, lifecycle states, or relationship types that need early consensus?
+    - Where do vocabulary conflicts exist between different stakeholders or problem frames?
+    
+    ### 4. Event Family Hypotheses
+    
+    - What runtime events does this domain likely produce? (Examples only — not a schema.)
+    - Which events are likely high-frequency vs. low-frequency?
+    - Are there events that span multiple feature clusters?
+    
+    Label all as HYPOTHESIZED — not approved event schemas.
+    
+    ### 5. Configuration Hypotheses
+    
+    - What configuration needs are likely to appear across multiple features?
+    - Are there environment-specific or deployment-specific concerns worth surfacing early?
+    - Which configuration items might block Stage 1 if left undiscovered?
+    
+    Label all as HYPOTHESIZED.
+    
+    ### 6. Architectural Risks
+    
+    - What design decisions, if made incorrectly in early features, would be hard to change later?
+    - Where do you expect the DBA loop to be most expensive (most back-and-forth) in this domain?
+    - Are there external dependencies or integration points that carry significant uncertainty?
+    
+    ### 7. Explicit Non-Decisions
+    
+    - What might this domain accidentally become if Stage 1 intents are written too broadly?
+    - What is explicitly out of scope for v1 across this entire domain?
+    - What adjacent problem spaces should be consciously deferred?
+    
+    ---
+    
+    ## Handling Out-of-Scope Findings
+    
+    During discovery, you may surface improvements or decisions outside the session's stated
+    scope. Record these as **backlog candidates for later evaluation** — do not incorporate
+    them into the current discovery output without the human's explicit decision to expand scope.
+    
+    When you identify an out-of-scope finding, state:
+    > "This appears to be outside the current scope. I'm noting it as a backlog candidate:
+    > [brief description]. Do you want to include it in this session or keep it separate?"
+    
+    Do not act on out-of-scope findings without explicit human approval.
+    
+    ---
+    
+    ## Output Format
+    
+    For each discovery area covered, produce a clearly labeled section. Use CANDIDATE or
+    HYPOTHESIZED labels throughout so the non-authoritative status is visible inline.
+    
+    **Every output document must begin with the following banner verbatim:**
+    
+    ---
+    
+    > This document is non-authoritative planning material.
+    > It does not approve features, architecture, contracts, schemas, events, or implementation.
+    > If this document conflicts with later approved DBA artifacts, the approved DBA artifacts win.
+    
+    ---
+    
+    Suggested structure:
+    
+    ```markdown
+    # Solution Discovery: [Domain Name]
+    
+    > This document is non-authoritative planning material.
+    > It does not approve features, architecture, contracts, schemas, events, or implementation.
+    > If this document conflicts with later approved DBA artifacts, the approved DBA artifacts win.
+    
+    ## Candidate Feature Topology
+    [CANDIDATE clusters with brief rationale for each]
+    
+    ## Shared Vocabulary (candidates)
+    [Terms, definitions as currently understood]
+    
+    ## Event Family Hypotheses
+    [HYPOTHESIZED events — names and rough descriptions only]
+    
+    ## Configuration Hypotheses
+    [HYPOTHESIZED config needs]
+    
+    ## Architectural Risks
+    [Named risks with brief explanation]
+    
+    ## Explicit Non-Decisions
+    [What is deferred and why]
+    
+    ## Backlog Candidates (out of scope for this session)
+    [Items surfaced but not explored — record for later]
+    ```
+    
+    Save as `docs/solution-discovery-[domain].md` or any location the project uses for
+    planning documents. There is no required path.
+    
+    ---
+    
+    ## After Discovery
+    
+    When the session is complete, state:
+    
+    ---
+    
+    **Solution Discovery: COMPLETE**
+    
+    This is advisory planning material. None of these outputs are approved DBA artifacts.
+    
+    To continue with feature work:
+    1. Identify which candidate features to prioritize.
+    2. Start a new session using **Session Type A** (Feature Brief) for each candidate you
+       want to develop into a DBA feature.
+    3. Use this discovery output as background context for those briefs — not as a binding
+       specification. Stage 1 (Intent Capture) is the authoritative entry point.
+    
+    The standard DBA path remains: **Intent → Contract → Schema → Implement → Tests →
+    Runtime → Reconcile → Replay → Refinement**. This document is upstream context, not a
+    new stage in that sequence.
+    
+    ---
+
+  --- prompts/00-session-start.md (sha256: e55411047786f931068c25ca9b2c23439153a1b3111ae35c2be0f03e1d93e24f, visibility: shown) ---
+    # DBA Session Start
+    
+    <!--
+    HOW TO USE THIS FILE:
+    Paste the filled-in version of this prompt at the start of every Claude Code session.
+    Fill in the [BRACKETS] sections before pasting.
+    Claude will read .codeos/dba-system.md and orient itself for the session.
+    -->
+    
+    ---
+    
+    You are operating in **Declarative Behavioral Architecture (DBA)** mode for this project.
+    
+    **Step 1:** Read `.codeos/dba-system.md` now (the authoritative DBA doctrine). Confirm you have read it by stating the 3 non-negotiable rules.
+    
+    **Step 2:** Read the project `CLAUDE.md` (in the project root). Note the Active Features table.
+    
+    **Step 2b:** If `docs/codebase-digest.md` exists in the project root, read it now. Confirm you have read it by stating: "Structural digest read — [N] critical hubs, [N] god functions noted." If it does not exist, state: "No structural digest found — proceeding without structural orientation."
+    
+    **Step 3:** Generate the Current Verified State block before proceeding. Run each command below and report the output.
+    
+    **3a — Repository state:**
+    ```bash
+    git branch --show-current
+    git rev-parse --short HEAD
+    git status --short
+    ```
+    Report:
+    - Branch: `<output>`
+    - Commit: `<output>`
+    - Working tree: clean / dirty — list every modified and untracked file if any
+    
+    **3b — Active feature state:**
+    
+    If `features/registry.yaml` exists, read it. For each feature whose status is not COMPLETE:
+    - Stage ≥ 1 → check that `intents/<feature_id>*.md` exists.
+    - Stage ≥ 2 → check that `contracts/<feature_id>*.md` exists.
+    - Stage ≥ 3 → check that `events/<feature_id>*.md` exists.
+    
+    If any expected artifact file is absent, or if an artifact is present but the registry reports a stage that does not require it yet: **STOP immediately** and report the specific mismatch to the human before continuing. Do not silently resolve the disagreement.
+    
+    If `features/registry.yaml` does not exist: read the Active Features table from `CLAUDE.md` and report it as-is.
+    
+    Report:
+    - Active feature: `<feature_id>` or `none`
+    - Current stage: `<N>` or `unknown`
+    - Registry/filesystem: `match` or `MISMATCH — <describe>`
+    
+    **3c — Artifact directories:**
+    ```bash
+    ls intents/   2>/dev/null || echo "(none)"
+    ls contracts/ 2>/dev/null || echo "(none)"
+    ls events/    2>/dev/null || echo "(none)"
+    ls tests/     2>/dev/null || echo "(none)"
+    ```
+    Report each directory as a one-line list of filenames.
+    
+    After completing 3a–3c, state:
+    `CURRENT STATE VERIFIED — Branch: <branch>, Commit: <sha>, Tree: <clean|dirty>, Feature: <id|none>, Stage: <N|unknown>`
+    
+    Then proceed to Step 4.
+    
+    ---
+    
+    **Step 4:** Determine the session type from the options below and confirm it:
+    
+    ---
+    
+    ### Session Type
+    
+    **A — Feature Brief (new feature discovery)**
+    Use when: starting a new feature, uncertain about scope, or the feature has not been written as a DBA intent yet.
+    Prompt to load: `.codeos/prompts/00b-feature-brief.md`
+    Output: a completed Feature Brief in `backlog/[feature_id].md`, ready to become Stage 1 input.
+    
+    **B — Feature Stage Work (continuing or starting a feature in the DBA loop)**
+    Use when: a feature has an approved intent (or brief) and you are advancing through Stages 1–9.
+    Prompt to load: the appropriate stage prompt for the feature's current stage.
+    
+    **C — Architectural Refinement**
+    Use when: the change is structural, not behavioral — workspace restructuring, shared library extraction, dependency consolidation, test infrastructure, naming normalization.
+    No behavioral contract or event schema is required.
+    Prompt to load: `.codeos/prompts/10-arch-refine.md`
+    
+    **D — Existing Codebase Onboarding**
+    Use when: working code exists in `modules/` but has no approved DBA artifacts.
+    Goal: produce draft Feature Briefs and Intents for existing modules so they can enter the Stage 1 review queue.
+    Prompt to load: `.codeos/prompts/00c-onboarding.md`
+    Output: `HYPOTHESIZED_INTENT` draft briefs in `backlog/` and draft intents in `intents/` + registry entries. None are APPROVED — all require Stage 1 review before advancing.
+    
+    **E — Solution Discovery** *(optional, advisory)*
+    Use when: exploring a new problem domain before writing individual Feature Briefs — to map candidate feature families, shared vocabulary, event hypotheses, configuration needs, and architectural risks.
+    This session type is **optional and non-gating**. Features may enter Stage 1 (Intent Capture) without a prior Solution Discovery session. The standard DBA path — Intent → Contract → Schema → Implement → Tests → Runtime → Reconcile → Replay → Refinement — is unchanged.
+    Prompt to load: `.codeos/prompts/00b-solution-discovery.md`
+    Output: non-authoritative planning material only. No output from Session Type E is an approved DBA artifact. Findings outside the session's stated scope are recorded as backlog candidates, not automatically incorporated.
+    
+    ---
+    
+    **Step 5:** Check the feature registry. If `features/registry.yaml` exists, read it and report the current status of all features. State any features that are blocked on approval.
+    
+    **Step 6:** Use the following session context:
+    
+    ## Session Context
+    
+    **Today's goal:**
+    [Human fills in: e.g., "Complete Stage 2 contract for user_login feature"]
+    
+    **Session type:** [A / B / C — from Step 4]
+    
+    **Current feature or refinement:**
+    
+    | ID | Type | Current Stage | Status |
+    |---|---|---|---|
+    | [feature_id] | [Feature / Arch Refinement] | [Stage N or step name] | [DRAFT/APPROVED/IN_PROGRESS] |
+    
+    **This session's scope:**
+    [Human fills in: e.g., "Only work on user_login. Do not touch payment features."]
+    
+    **Any session-specific forbidden actions:**
+    [Human fills in, or "none"]
+    
+    **Structural context** (if `docs/codebase-digest.md` exists):
+    [Human fills in, or "see codebase-digest.md" — e.g., "We will be modifying cmd_export (god function, 30 fan-out). Contract clause required before touching it."]
+    
+    ---
+    
+    **Library documentation:** When working on implementation stages (4, 5) or architectural refinements that involve external libraries, use the **Context7 MCP tool** to fetch current library documentation rather than relying on training data. This applies especially to Rust crates (Tokio, Serde, Reqwest, Clap) and any dependency where API surface or version compatibility matters. Invoke with the library name — Context7 returns current, version-accurate docs.
+    
+    ---
+    
+    **Forbidden action (structural):** Behavioral modification of a function listed in `docs/codebase-digest.md` as a Critical Hub or God Function requires explicit contract coverage for that change. Non-behavioral modifications (performance, extraction of helpers, testability work) that do not change observable outputs are exempt.
+    
+    **Step 7:** After reading and confirming, state:
+    - You are in DBA mode
+    - The session type (A, B, C, or D)
+    - Which feature(s) or refinement you'll work on
+    - Which stage or step you are currently at
+    - What you will produce this session
+    
+    Then **STOP** and wait for the human to begin.
+    
+    Do not start producing artifacts, writing code, or analyzing anything until the human explicitly says to proceed.
+
+DIFF TO REVIEW (base->review, secret/size filtered)
+diff --git a/backlog/UPG-0007-solution-discovery-00b.md b/backlog/UPG-0007-solution-discovery-00b.md
+index 816096d..0c31223 100644
+--- a/backlog/UPG-0007-solution-discovery-00b.md
++++ b/backlog/UPG-0007-solution-discovery-00b.md
+@@ -124,6 +124,7 @@ that keeps this from eroding intent primacy.
+ 
+ | Change ID | File | Purpose | State |
+ |---|---|---|---|
++| CHG-20260630-005 | `changes/UPG-0007__CHG-20260630-005__solution-discovery-00b.md` | New 00b solution-discovery prompt + Session Type E in session-start | IN_PROGRESS |
+ 
+ ### Reviews
+ 
+diff --git a/prompts/00-session-start.md b/prompts/00-session-start.md
+index 290f914..0100fdb 100644
+--- a/prompts/00-session-start.md
++++ b/prompts/00-session-start.md
+@@ -88,6 +88,12 @@ Goal: produce draft Feature Briefs and Intents for existing modules so they can
+ Prompt to load: `.codeos/prompts/00c-onboarding.md`
+ Output: `HYPOTHESIZED_INTENT` draft briefs in `backlog/` and draft intents in `intents/` + registry entries. None are APPROVED — all require Stage 1 review before advancing.
+ 
++**E — Solution Discovery** *(optional, advisory)*
++Use when: exploring a new problem domain before writing individual Feature Briefs — to map candidate feature families, shared vocabulary, event hypotheses, configuration needs, and architectural risks.
++This session type is **optional and non-gating**. Features may enter Stage 1 (Intent Capture) without a prior Solution Discovery session. The standard DBA path — Intent → Contract → Schema → Implement → Tests → Runtime → Reconcile → Replay → Refinement — is unchanged.
++Prompt to load: `.codeos/prompts/00b-solution-discovery.md`
++Output: non-authoritative planning material only. No output from Session Type E is an approved DBA artifact. Findings outside the session's stated scope are recorded as backlog candidates, not automatically incorporated.
++
+ ---
+ 
+ **Step 5:** Check the feature registry. If `features/registry.yaml` exists, read it and report the current status of all features. State any features that are blocked on approval.
+diff --git a/status/self-development.md b/status/self-development.md
+index c27eaaf..f0a8c86 100644
+--- a/status/self-development.md
++++ b/status/self-development.md
+@@ -34,7 +34,7 @@
+ | UPG-0031 | CHG-20260630-002 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (Step 4 R2 NO OBJECTION; corrected by CHG-20260630-003) | COMPLETE | — |
+ | UPG-0031 | CHG-20260630-003 | script-tooling + documentation | self-dev only | 4-Reconcile | ACCEPTED (all 5 ACs verified; corrects false B8b in CHG-20260630-002) | COMPLETE | — |
+ | UPG-0005 | CHG-20260630-004 | prompt + template | self-dev only | 4-Reconcile | ACCEPTED (Step 3 R2 NO OBJECTION; Step 4 R1 CHANGES ADVISED — F1 fixed, F2 REVIEW-BOOKKEEPING) | COMPLETE | — |
+-| UPG-0007 | CHG-20260630-005 | prompt | self-dev only | 1-Intent | NOT_STARTED | IN_PROGRESS | — |
++| UPG-0007 | CHG-20260630-005 | prompt | self-dev only | 3-Implement | DRAFT (RVS__…__S3) | IN_PROGRESS | — |
+ | UPG-0033 | CHG-20260701-001 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (all 8 ACs verified; F-A investigation-first exception accepted; F-B AJ-009 deferred) | COMPLETE | — |
+ 
+ <!--

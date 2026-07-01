@@ -124,6 +124,7 @@ that keeps this from eroding intent primacy.
 
 | Change ID | File | Purpose | State |
 |---|---|---|---|
+| CHG-20260630-005 | `changes/UPG-0007__CHG-20260630-005__solution-discovery-00b.md` | New 00b solution-discovery prompt + Session Type E in session-start | COMPLETE |
 
 ### Reviews
 
