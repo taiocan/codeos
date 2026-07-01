@@ -2,7 +2,7 @@
 feature_id: UPG-0008
 slug: config-discovery
 title: Configuration Discovery and Configuration Schema Track
-status: PROPOSED
+status: COMPLETE
 priority: P2
 depends_on: []
 related_features: []
@@ -84,6 +84,7 @@ untraced.
 
 | Change ID | File | Purpose | State |
 |---|---|---|---|
+| CHG-20260701-006 | `changes/UPG-0008__CHG-20260701-006__config-discovery.md` | Add Candidate Configuration Requirements section to prompts/00b-solution-discovery.md as hypothesis-only discovery area | COMPLETE |
 
 ### Reviews
 

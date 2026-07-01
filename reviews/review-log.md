@@ -2167,3 +2167,167 @@ Artifact integrity (informational audit, not a gate):
   MATCH   changes/UPG-0013__CHG-20260701-005__stage-4-activation-card.md
   MATCH   templates/stage-4-activation-card.md
   MATCH   backlog/UPG-0013-stage-4-activation-card.md
+
+## 2026-07-01T18:16:43Z REVIEW — UPG-0008__CHG-20260701-006 — Stage selfdev-step-1
+Base: (no base pin)  Review: 513f20fda5e437c1be3a91794dc6f4099e98ae3e  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 2774695b5ea9983c5a4b60d5c3c8c734ffb712d641368c24b5249a152c29558b
+Reviewer: codex default-model (session 019f1ee4-30d4-7100-8fc0-c286ddcbeaed)
+Effort: high   Wall time: 103172ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: B
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — the packet is consistent with an intent-stage draft and shows no in-scope blocker
+Full assessment: reviews/codex/2026-07-01T181643Z-UPG-0008__CHG-20260701-006-stage-selfdev-step-1-513f20f.md (sha256:0fefb9caa5251b47ffc5e65ad95be95cb3c631d3dea0fd81043a92386a89cbb2)
+Reviewed packet: reviews/codex/packets/2026-07-01T181643Z-UPG-0008__CHG-20260701-006-stage-selfdev-step-1-513f20f.packet.txt (sha256:3df9439f2ff6495486ecbe8f1f1a4520de1071dc4cf6827338659b8d4431dfcd)
+Human decision: (append with: codeos-review.sh decision UPG-0008__CHG-20260701-006 selfdev-step-1 <DECISION> "<reason>")
+
+## 2026-07-01T18:27:09Z HUMAN DECISION — UPG-0008__CHG-20260701-006 — Stage selfdev-step-1
+Commit at decision: 513f20fda5e437c1be3a91794dc6f4099e98ae3e
+Decision: APPROVE_STAGE
+Reason/next: R1 NO OBJECTION evidence B. Intent clear, value understood. Proceeding to Step 2.
+Verified against: reviews/codex/2026-07-01T181643Z-UPG-0008__CHG-20260701-006-stage-selfdev-step-1-513f20f.md
+Artifact integrity (informational audit, not a gate):
+  MATCH   changes/UPG-0008__CHG-20260701-006__config-discovery.md
+  MATCH   backlog/UPG-0008-config-discovery.md
+
+## 2026-07-01T18:29:20Z REVIEW — UPG-0008__CHG-20260701-006 — Stage selfdev-step-2
+Base: (no base pin)  Review: 513f20fda5e437c1be3a91794dc6f4099e98ae3e  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 9c06808e2f14790527b399e2b08dc8198a7a20f96f464ccad5d4c7d46b24bbd6
+Reviewer: codex default-model (session 019f1ee4-30d4-7100-8fc0-c286ddcbeaed)
+Effort: high   Wall time: 87034ms   Reconnects: 0
+Codex concern: DO NOT ADVANCE
+Effective concern: DO NOT ADVANCE
+Evidence: B
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: DO NOT ADVANCE — the acceptance criteria are not yet reliable because AC-2 is contradictory and AC-1/AC-5 can false-pass
+Full assessment: reviews/codex/2026-07-01T182920Z-UPG-0008__CHG-20260701-006-stage-selfdev-step-2-513f20f.md (sha256:914515cc12e1c22f821897e7d539fc181af0b9754f23f358f03ae386c6ca6ad3)
+Reviewed packet: reviews/codex/packets/2026-07-01T182920Z-UPG-0008__CHG-20260701-006-stage-selfdev-step-2-513f20f.packet.txt (sha256:7864c92ef85b8c0fd309fe0d723af55e5e23b759ca209411bc91ef87c1e7da09)
+Human decision: (append with: codeos-review.sh decision UPG-0008__CHG-20260701-006 selfdev-step-2 <DECISION> "<reason>")
+
+## 2026-07-01T18:30:22Z HUMAN DECISION — UPG-0008__CHG-20260701-006 — Stage selfdev-step-2
+Commit at decision: 513f20fda5e437c1be3a91794dc6f4099e98ae3e
+Decision: REQUEST_CHANGES
+Reason/next: F1: AC-2 said 'twelve fields' but listed eleven — contradictory. Fixed: removed the mention of twelve, consistently says eleven. F2: AC-1 grep could hit anywhere in file — didn't prove numbered section. Fixed: verification now requires ^## [0-9].*Config pattern. F3: AC-5 grep on ^## can't prove banner preservation or no duplication. Fixed: added grep -c = 1 check for single numbered config section, plus banner verification.
+Verified against: reviews/codex/2026-07-01T182920Z-UPG-0008__CHG-20260701-006-stage-selfdev-step-2-513f20f.md
+Artifact integrity (informational audit, not a gate):
+  CHANGED changes/UPG-0008__CHG-20260701-006__config-discovery.md (reviewed 8febfd45531c / now 98ec543b78ee)
+  MATCH   backlog/UPG-0008-config-discovery.md
+
+## 2026-07-01T18:31:15Z REVIEW — UPG-0008__CHG-20260701-006 — Stage selfdev-step-2
+Base: (no base pin)  Review: 513f20fda5e437c1be3a91794dc6f4099e98ae3e  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 9c06808e2f14790527b399e2b08dc8198a7a20f96f464ccad5d4c7d46b24bbd6
+Reviewer: codex default-model (session 019f1ee4-30d4-7100-8fc0-c286ddcbeaed)
+Effort: high   Wall time: 53140ms   Reconnects: 0
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: B
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: CHANGES ADVISED — AC-3 and AC-5 still allow false-pass verification of the advisory-only guarantees
+Full assessment: reviews/codex/2026-07-01T183115Z-UPG-0008__CHG-20260701-006-stage-selfdev-step-2-513f20f.md (sha256:c7b1e368b6f3d645eb0811cec0cf4c5f36a9e2ec22de2ee9b4b030bf480cf9db)
+Reviewed packet: reviews/codex/packets/2026-07-01T183115Z-UPG-0008__CHG-20260701-006-stage-selfdev-step-2-513f20f.packet.txt (sha256:c953ea8068bffc447733f1c25aff311bcf100a9299a1e59f46a8f299d60c382e)
+Human decision: (append with: codeos-review.sh decision UPG-0008__CHG-20260701-006 selfdev-step-2 <DECISION> "<reason>")
+
+## 2026-07-01T18:32:48Z HUMAN DECISION — UPG-0008__CHG-20260701-006 — Stage selfdev-step-2
+Commit at decision: 513f20fda5e437c1be3a91794dc6f4099e98ae3e
+Decision: REQUEST_CHANGES
+Reason/next: F1: AC-3 grep could false-pass from unrelated occurrence in file. Fixed: anchored verification to section with grep -A 5 on heading then grep for advisory terms. F2: AC-5 claimed 'verbatim' and 'no conflict' which can't be proven by proposed checks. Fixed: dropped overclaims; 'verbatim' → banner still present in head -10; 'no conflict' → covered by AC-7 scope boundary.
+Verified against: reviews/codex/2026-07-01T183115Z-UPG-0008__CHG-20260701-006-stage-selfdev-step-2-513f20f.md
+Artifact integrity (informational audit, not a gate):
+  CHANGED changes/UPG-0008__CHG-20260701-006__config-discovery.md (reviewed 98ec543b78ee / now 0a07b903ad01)
+  MATCH   backlog/UPG-0008-config-discovery.md
+
+## 2026-07-01T18:34:00Z REVIEW — UPG-0008__CHG-20260701-006 — Stage selfdev-step-2
+Base: (no base pin)  Review: 513f20fda5e437c1be3a91794dc6f4099e98ae3e  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 9c06808e2f14790527b399e2b08dc8198a7a20f96f464ccad5d4c7d46b24bbd6
+Reviewer: codex default-model (session 019f1ee4-30d4-7100-8fc0-c286ddcbeaed)
+Effort: high   Wall time: 71271ms   Reconnects: 0
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: B
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: CHANGES ADVISED — AC-5 still makes a false claim about what changed and what AC-7 verifies
+Full assessment: reviews/codex/2026-07-01T183400Z-UPG-0008__CHG-20260701-006-stage-selfdev-step-2-513f20f.md (sha256:cf8551221b88dd69cde0c063b972fef6a0e845a9efa5699d066e805b973312ea)
+Reviewed packet: reviews/codex/packets/2026-07-01T183400Z-UPG-0008__CHG-20260701-006-stage-selfdev-step-2-513f20f.packet.txt (sha256:fc0f6c86d45f2d32767f103bd352561a1a4f251aa126bc1bcaed78d026b7b0b4)
+Human decision: (append with: codeos-review.sh decision UPG-0008__CHG-20260701-006 selfdev-step-2 <DECISION> "<reason>")
+
+## 2026-07-01T18:37:44Z HUMAN DECISION — UPG-0008__CHG-20260701-006 — Stage selfdev-step-2
+Commit at decision: 513f20fda5e437c1be3a91794dc6f4099e98ae3e
+Decision: APPROVE_STAGE
+Reason/next: R3 CHANGES ADVISED — round budget reached. Inline fix: removed false claim that AC-7 covers non-modification of existing 00b sections. Human approved over budget at R3. Proceeding to Step 3.
+Verified against: reviews/codex/2026-07-01T183400Z-UPG-0008__CHG-20260701-006-stage-selfdev-step-2-513f20f.md
+Artifact integrity (informational audit, not a gate):
+  CHANGED changes/UPG-0008__CHG-20260701-006__config-discovery.md (reviewed 0a07b903ad01 / now 8e1f615fc9ec)
+  MATCH   backlog/UPG-0008-config-discovery.md
+
+## 2026-07-01T18:40:33Z REVIEW — UPG-0008__CHG-20260701-006 — Stage selfdev-step-3
+Base: (no base pin)  Review: 513f20fda5e437c1be3a91794dc6f4099e98ae3e  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 1607c241ece6a443e72ab121f8fdeec23060b2027efed72c2ac0c196b931006f
+Reviewer: codex default-model (session 019f1ee4-30d4-7100-8fc0-c286ddcbeaed)
+Effort: high   Wall time: 70497ms   Reconnects: 0
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: B
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: CHANGES ADVISED — the prompt change is in scope, but the Step 3 acceptance/verification text still mismatches the implemented `###` structure
+Full assessment: reviews/codex/2026-07-01T184033Z-UPG-0008__CHG-20260701-006-stage-selfdev-step-3-513f20f.md (sha256:1bfd0f87c4e697467c83ef2d9ec1ff1c8ea98cf12d623d6a39a20a44df7bae82)
+Reviewed packet: reviews/codex/packets/2026-07-01T184033Z-UPG-0008__CHG-20260701-006-stage-selfdev-step-3-513f20f.packet.txt (sha256:f554c7c3fc53b68e8e856596c9147c2c0e80cfa9d96e4e413b87956931018e3d)
+Human decision: (append with: codeos-review.sh decision UPG-0008__CHG-20260701-006 selfdev-step-3 <DECISION> "<reason>")
+
+## 2026-07-01T18:41:17Z HUMAN DECISION — UPG-0008__CHG-20260701-006 — Stage selfdev-step-3
+Commit at decision: 513f20fda5e437c1be3a91794dc6f4099e98ae3e
+Decision: REQUEST_CHANGES
+Reason/next: F1: AC-1 body text still said '## section' — fixed to '### discovery area'. F2: AC-3 grep still used '^## [0-9]' — fixed to '^### [0-9]'. F3: AC-5 body said '## heading' — fixed to '### discovery-area heading'. All three are the same root cause: heading level mismatch in acceptance text vs implementation.
+Verified against: reviews/codex/2026-07-01T184033Z-UPG-0008__CHG-20260701-006-stage-selfdev-step-3-513f20f.md
+Artifact integrity (informational audit, not a gate):
+  CHANGED changes/UPG-0008__CHG-20260701-006__config-discovery.md (reviewed 5bb1a4fe50fd / now 716e812dc36c)
+  MATCH   prompts/00b-solution-discovery.md
+  MATCH   backlog/UPG-0008-config-discovery.md
+
+## 2026-07-01T18:42:13Z REVIEW — UPG-0008__CHG-20260701-006 — Stage selfdev-step-3
+Base: (no base pin)  Review: 513f20fda5e437c1be3a91794dc6f4099e98ae3e  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 1607c241ece6a443e72ab121f8fdeec23060b2027efed72c2ac0c196b931006f
+Reviewer: codex default-model (session 019f1ee4-30d4-7100-8fc0-c286ddcbeaed)
+Effort: high   Wall time: 55847ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: B
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — the Step 3 prompt implementation matches the scoped acceptance criteria and preserves the advisory-only guarantees
+Full assessment: reviews/codex/2026-07-01T184213Z-UPG-0008__CHG-20260701-006-stage-selfdev-step-3-513f20f.md (sha256:cb65eb54bea2414ccb3aba72dead115e347dcfda62098e2af74fe7354039fe59)
+Reviewed packet: reviews/codex/packets/2026-07-01T184213Z-UPG-0008__CHG-20260701-006-stage-selfdev-step-3-513f20f.packet.txt (sha256:5a195a6923ca1aaf3cc456655a474c527fb4717bdc84110ccc1bd0f67db6a052)
+Human decision: (append with: codeos-review.sh decision UPG-0008__CHG-20260701-006 selfdev-step-3 <DECISION> "<reason>")
+
+## 2026-07-01T18:46:10Z HUMAN DECISION — UPG-0008__CHG-20260701-006 — Stage selfdev-step-3
+Commit at decision: 513f20fda5e437c1be3a91794dc6f4099e98ae3e
+Decision: APPROVE_STAGE
+Reason/next: R2 NO OBJECTION evidence B. All heading-level mismatches resolved. Proceeding to Step 4.
+Verified against: reviews/codex/2026-07-01T184213Z-UPG-0008__CHG-20260701-006-stage-selfdev-step-3-513f20f.md
+Artifact integrity (informational audit, not a gate):
+  MATCH   changes/UPG-0008__CHG-20260701-006__config-discovery.md
+  MATCH   prompts/00b-solution-discovery.md
+  MATCH   backlog/UPG-0008-config-discovery.md
+
+## 2026-07-01T18:47:40Z REVIEW — UPG-0008__CHG-20260701-006 — Stage selfdev-step-4
+Base: (no base pin)  Review: 513f20fda5e437c1be3a91794dc6f4099e98ae3e  Branch: selfdev/upg-0029-review-durability
+Diff-hash: a52d0c711b7e98b5d2baafc125f6f1a66648debd86b22b2ff43ac752e17b01e4
+Reviewer: codex default-model (session 019f1ee4-30d4-7100-8fc0-c286ddcbeaed)
+Effort: high   Wall time: 49154ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: B
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — the Step 4 packet supports the scoped prompt change and shows no current in-scope blocker
+Full assessment: reviews/codex/2026-07-01T184740Z-UPG-0008__CHG-20260701-006-stage-selfdev-step-4-513f20f.md (sha256:d5a4408147bf7a1f6842e4853bbe712acaea9ebfeb9eda097744e93a1bdead52)
+Reviewed packet: reviews/codex/packets/2026-07-01T184740Z-UPG-0008__CHG-20260701-006-stage-selfdev-step-4-513f20f.packet.txt (sha256:89a2c38668f0f94deafcceded964846fcde2a22424a33caf81021ec5f78033e4)
+Human decision: (append with: codeos-review.sh decision UPG-0008__CHG-20260701-006 selfdev-step-4 <DECISION> "<reason>")
+
+## 2026-07-01T18:50:55Z HUMAN DECISION — UPG-0008__CHG-20260701-006 — Stage selfdev-step-4
+Commit at decision: 513f20fda5e437c1be3a91794dc6f4099e98ae3e
+Decision: APPROVE_STAGE
+Reason/next: R1 NO OBJECTION evidence B. All 7 ACs verified. Marking COMPLETE.
+Verified against: reviews/codex/2026-07-01T184740Z-UPG-0008__CHG-20260701-006-stage-selfdev-step-4-513f20f.md
+Artifact integrity (informational audit, not a gate):
+  MATCH   changes/UPG-0008__CHG-20260701-006__config-discovery.md
+  MATCH   prompts/00b-solution-discovery.md
+  MATCH   backlog/UPG-0008-config-discovery.md

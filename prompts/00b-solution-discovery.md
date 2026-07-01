@@ -73,13 +73,39 @@ Label all outputs as CANDIDATE — not approved features.
 
 Label all as HYPOTHESIZED — not approved event schemas.
 
-### 5. Configuration Hypotheses
+### 5. Configuration Hypotheses and Candidate Requirements
+
+> Output from this section is HYPOTHESIZED / CANDIDATE only — non-authoritative until
+> routed through approved DBA stages or an ADR.
+
+Start with framing questions:
 
 - What configuration needs are likely to appear across multiple features?
 - Are there environment-specific or deployment-specific concerns worth surfacing early?
 - Which configuration items might block Stage 1 if left undiscovered?
 
-Label all as HYPOTHESIZED.
+For each candidate configuration item identified, record a structured entry:
+
+```
+Config name:
+Purpose:
+Feature(s) likely affected:
+Default:
+Required / optional:
+Secret / non-secret:
+Environment-specific:
+Runtime-changeable:
+Validation needed:
+Possible failure mode:
+Possible event impact:
+```
+
+**Routing note** — if a config item becomes real, route it through:
+- Stage 1–3 if it changes observable behavior (it is behavioral scope)
+- Stage 10 / ADR if it is structural or infrastructure-level
+- Readiness checklist if it requires documentation or example updates
+
+Do not carry config hypotheses into implementation without explicit routing.
 
 ### 6. Architectural Risks
 
