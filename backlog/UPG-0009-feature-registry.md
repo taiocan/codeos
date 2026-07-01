@@ -2,7 +2,7 @@
 feature_id: UPG-0009
 slug: feature-registry
 title: Feature Registry / Branch Binding
-status: PROPOSED
+status: COMPLETE
 priority: P2
 depends_on: []
 related_features: []
@@ -13,7 +13,7 @@ superseded_by: []
 # Upgrade: feature-registry — Feature Registry / Branch Binding
 
 **Priority**: P2
-**Status**: PROPOSED
+**Status**: COMPLETE
 **Type**: toolkit-upgrade
 **Related**: current-verified-state, workflow-profiles, branch-helper, approval-dashboard
 
@@ -81,6 +81,7 @@ and defer — on any disagreement with the filesystem/git/artifacts, never overr
 
 | Change ID | File | Purpose | State |
 |---|---|---|---|
+| CHG-20260701-007 | `changes/UPG-0009__CHG-20260701-007__feature-registry.md` | Update feature-registry.yaml template — fix index-not-truth framing, add branch-binding fields (branch, pr, last_commit, reconciliation_status, replay_status, blockers); no automation | IN_PROGRESS |
 
 ### Reviews
 

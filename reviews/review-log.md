@@ -2331,3 +2331,205 @@ Artifact integrity (informational audit, not a gate):
   MATCH   changes/UPG-0008__CHG-20260701-006__config-discovery.md
   MATCH   prompts/00b-solution-discovery.md
   MATCH   backlog/UPG-0008-config-discovery.md
+
+## 2026-07-01T19:00:15Z REVIEW — UPG-0009__CHG-20260701-007 — Stage selfdev-step-1
+Base: (no base pin)  Review: 87cbe5d11eee304e159da5db779c2eee751b76d2  Branch: selfdev/upg-0029-review-durability
+Diff-hash: df6b9b49b7de73b0cd584753f8734ca451aae73698a8ea5e4ae69c03bef752fb
+Reviewer: codex default-model (session 019f1f0c-5768-7e40-b6b2-f08a76d8bb12)
+Effort: high   Wall time: 87279ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — Step 1 intent is internally consistent and stays within the stated scope; no in-scope blocker is evidenced
+Full assessment: reviews/codex/2026-07-01T190015Z-UPG-0009__CHG-20260701-007-stage-selfdev-step-1-87cbe5d.md (sha256:5a36c4f6e324dd0d6acee8e42fa7d851677aa30c4f26c188c850c80bd7cf70ca)
+Reviewed packet: reviews/codex/packets/2026-07-01T190015Z-UPG-0009__CHG-20260701-007-stage-selfdev-step-1-87cbe5d.packet.txt (sha256:e3b1f63478c49b86524727e6bdb52b61381ee2a98c25a1cffbfe598387b9532a)
+Human decision: (append with: codeos-review.sh decision UPG-0009__CHG-20260701-007 selfdev-step-1 <DECISION> "<reason>")
+
+## 2026-07-01T19:01:11Z HUMAN DECISION — UPG-0009__CHG-20260701-007 — Stage selfdev-step-1
+Commit at decision: 87cbe5d11eee304e159da5db779c2eee751b76d2
+Decision: APPROVE_STAGE
+Reason/next: R1 NO OBJECTION evidence A. Intent clear, scope well-bounded. Proceeding to Step 2.
+Verified against: reviews/codex/2026-07-01T190015Z-UPG-0009__CHG-20260701-007-stage-selfdev-step-1-87cbe5d.md
+Artifact integrity (informational audit, not a gate):
+  MATCH   changes/UPG-0009__CHG-20260701-007__feature-registry.md
+  MATCH   backlog/UPG-0009-feature-registry.md
+
+## 2026-07-01T19:03:28Z REVIEW — UPG-0009__CHG-20260701-007 — Stage selfdev-step-2
+Base: (no base pin)  Review: 87cbe5d11eee304e159da5db779c2eee751b76d2  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 483fae53d466a563306b22fc39929649ba62b244b5dc43ec9105c79e2a1ee1fc
+Reviewer: codex default-model (session 019f1f0c-5768-7e40-b6b2-f08a76d8bb12)
+Effort: high   Wall time: 71567ms   Reconnects: 0
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: CHANGES ADVISED — several Step 2 acceptance checks are not verifiable against the artifact they are meant to govern
+Full assessment: reviews/codex/2026-07-01T190328Z-UPG-0009__CHG-20260701-007-stage-selfdev-step-2-87cbe5d.md (sha256:6132350f5fd1f6c553ae465e49ac4adfe163daa63ba976738dead8a958bd29bc)
+Reviewed packet: reviews/codex/packets/2026-07-01T190328Z-UPG-0009__CHG-20260701-007-stage-selfdev-step-2-87cbe5d.packet.txt (sha256:707035b21c3ddcdbc0acae17cd18845d1a052eda18040d16b488ec772b123fbb)
+Human decision: (append with: codeos-review.sh decision UPG-0009__CHG-20260701-007 selfdev-step-2 <DECISION> "<reason>")
+
+## 2026-07-01T19:04:25Z HUMAN DECISION — UPG-0009__CHG-20260701-007 — Stage selfdev-step-2
+Commit at decision: 87cbe5d11eee304e159da5db779c2eee751b76d2
+Decision: REQUEST_CHANGES
+Reason/next: F1: AC-1 verification used git status --short which only proves 'new' pre-commit. Fixed: replaced with test -f (file-presence check, stable after commit). F2: AC-3 one broad grep can pass while missing required statements. Fixed: three separate checks, one per required statement (index-not-truth, precedence, correction-not-override). F3: AC-7 verification didn't check templates/ despite claiming it. Fixed: added explicit checks for existing template files.
+Verified against: reviews/codex/2026-07-01T190328Z-UPG-0009__CHG-20260701-007-stage-selfdev-step-2-87cbe5d.md
+Artifact integrity (informational audit, not a gate):
+  CHANGED changes/UPG-0009__CHG-20260701-007__feature-registry.md (reviewed 769876db992d / now 529864ac1640)
+  MATCH   backlog/UPG-0009-feature-registry.md
+
+## 2026-07-01T19:05:41Z REVIEW — UPG-0009__CHG-20260701-007 — Stage selfdev-step-2
+Base: (no base pin)  Review: 87cbe5d11eee304e159da5db779c2eee751b76d2  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 483fae53d466a563306b22fc39929649ba62b244b5dc43ec9105c79e2a1ee1fc
+Reviewer: codex default-model (session 019f1f0c-5768-7e40-b6b2-f08a76d8bb12)
+Effort: high   Wall time: 75050ms   Reconnects: 0
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: CHANGES ADVISED — the remaining blockers are all acceptance-definition defects, not implementation defects
+Full assessment: reviews/codex/2026-07-01T190541Z-UPG-0009__CHG-20260701-007-stage-selfdev-step-2-87cbe5d.md (sha256:b90231843c526e3abac40f35966fc0bb624a95f93eb3ac22bc45d1b36ce0da06)
+Reviewed packet: reviews/codex/packets/2026-07-01T190541Z-UPG-0009__CHG-20260701-007-stage-selfdev-step-2-87cbe5d.packet.txt (sha256:12b134950db73cac7f6875ad490b760bd3e87c7940af344c07d763f6946ec5f7)
+Human decision: (append with: codeos-review.sh decision UPG-0009__CHG-20260701-007 selfdev-step-2 <DECISION> "<reason>")
+
+## 2026-07-01T19:07:59Z HUMAN DECISION — UPG-0009__CHG-20260701-007 — Stage selfdev-step-2
+Commit at decision: 87cbe5d11eee304e159da5db779c2eee751b76d2
+Decision: REQUEST_CHANGES
+Reason/next: F1: AC-3 greps could pass on keyword fragments without proving full statements. Fixed: three exact-phrase greps ('index, not a truth source', 'takes precedence', 'correct the registry'). F2: AC-4 said 'or equivalent' reopening resolved naming decision. Fixed: requires exactly 'features/registry.yaml'. F3: AC-7 named only two templates despite claiming 'other templates'. Fixed: uses grep -v on git status to prove no OTHER template files changed. Also: discovered template already exists from prior commit with wrong 'Single source of truth' framing; updated Step 1 'What changes' to say UPDATE (not NEW) and updated AC-1 to verify the wrong framing is removed.
+Verified against: reviews/codex/2026-07-01T190541Z-UPG-0009__CHG-20260701-007-stage-selfdev-step-2-87cbe5d.md
+Artifact integrity (informational audit, not a gate):
+  CHANGED changes/UPG-0009__CHG-20260701-007__feature-registry.md (reviewed 529864ac1640 / now c422c2586c97)
+  MATCH   backlog/UPG-0009-feature-registry.md
+
+## 2026-07-01T19:09:28Z REVIEW — UPG-0009__CHG-20260701-007 — Stage selfdev-step-2
+Base: (no base pin)  Review: 87cbe5d11eee304e159da5db779c2eee751b76d2  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 483fae53d466a563306b22fc39929649ba62b244b5dc43ec9105c79e2a1ee1fc
+Reviewer: codex default-model (session 019f1f0c-5768-7e40-b6b2-f08a76d8bb12)
+Effort: high   Wall time: 87834ms   Reconnects: 0
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: CHANGES ADVISED — Step 2 still has contradictory and non-probative acceptance claims about the template and scope boundary
+Full assessment: reviews/codex/2026-07-01T190928Z-UPG-0009__CHG-20260701-007-stage-selfdev-step-2-87cbe5d.md (sha256:e058439e4090f8f9921f589cd689ab23415e4048914dfb6b0d03ab4df4967baf)
+Reviewed packet: reviews/codex/packets/2026-07-01T190928Z-UPG-0009__CHG-20260701-007-stage-selfdev-step-2-87cbe5d.packet.txt (sha256:2e7f0212be58fb2a1994d3b1ff3ef06088d198006c5a74e979a6b5eab562160c)
+Human decision: (append with: codeos-review.sh decision UPG-0009__CHG-20260701-007 selfdev-step-2 <DECISION> "<reason>")
+
+## 2026-07-01T19:10:58Z HUMAN DECISION — UPG-0009__CHG-20260701-007 — Stage selfdev-step-2
+Commit at decision: 87cbe5d11eee304e159da5db779c2eee751b76d2
+Decision: REQUEST_CHANGES
+Reason/next: R3 BUDGET LIMIT — fixing inline, escalating to human. F1: change record line 98 still said 'Creating one new YAML template file'; backlog thread said 'New feature-registry.yaml'. Fixed both to 'Updating existing / Update'. F2: AC-7 verification used git-diff-HEAD and git-status which only show workspace state relative to HEAD — always passes in a clean workspace. Fixed: verification now uses 'git diff main...HEAD -- <paths>' at Step 4, which checks what this branch actually contributed. F3: AC-1 mixed historical context ('prior commit had incorrect framing') into acceptance criteria, making the AC depend on facts not in the packet. Fixed: AC-1 now states only post-implementation requirements (file exists, no 'single source of truth' phrase, index framing present).
+Verified against: reviews/codex/2026-07-01T190928Z-UPG-0009__CHG-20260701-007-stage-selfdev-step-2-87cbe5d.md
+Artifact integrity (informational audit, not a gate):
+  CHANGED changes/UPG-0009__CHG-20260701-007__feature-registry.md (reviewed c422c2586c97 / now 692cc9bc3348)
+  CHANGED backlog/UPG-0009-feature-registry.md (reviewed f5cba72cc1e3 / now 5b09f7f94420)
+
+## 2026-07-01T19:24:48Z REVIEW — UPG-0009__CHG-20260701-007 — Stage selfdev-step-3
+Base: (no base pin)  Review: 87cbe5d11eee304e159da5db779c2eee751b76d2  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 918c784e240b59f1aaf402b01448fc4559e1ca254dae648853f6a98090c2d2b2
+Reviewer: codex default-model (session 019f1f0c-5768-7e40-b6b2-f08a76d8bb12)
+Effort: high   Wall time: 108449ms   Reconnects: 0
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: CHANGES ADVISED — the template implementation matches scope, but the change record still misstates the active review step
+Full assessment: reviews/codex/2026-07-01T192448Z-UPG-0009__CHG-20260701-007-stage-selfdev-step-3-87cbe5d.md (sha256:aba04135954e5d2ad6a9b69f8dd784e47139c18fe77372cfcf7f7e5b35ad9e5b)
+Reviewed packet: reviews/codex/packets/2026-07-01T192448Z-UPG-0009__CHG-20260701-007-stage-selfdev-step-3-87cbe5d.packet.txt (sha256:84bd8b77bace939f57c8e88d9858cd2b4df56043f419b84627695b84138b1fc7)
+Human decision: (append with: codeos-review.sh decision UPG-0009__CHG-20260701-007 selfdev-step-3 <DECISION> "<reason>")
+
+## 2026-07-01T19:25:59Z HUMAN DECISION — UPG-0009__CHG-20260701-007 — Stage selfdev-step-3
+Commit at decision: 87cbe5d11eee304e159da5db779c2eee751b76d2
+Decision: REQUEST_CHANGES
+Reason/next: Single finding: change record and status dashboard still showed Step 2 metadata (review_series S2, current_step 2-Acceptance, dashboard row 2-Acceptance). Fixed: review_series → S3, current_step → 3-Implement in both frontmatter and TRACE HEADER yaml block; status dashboard row updated to 3-Implement / DRAFT (RVS__…__S3). Implementation content itself (template) was assessed as matching scope with no content findings.
+Verified against: reviews/codex/2026-07-01T192448Z-UPG-0009__CHG-20260701-007-stage-selfdev-step-3-87cbe5d.md
+Artifact integrity (informational audit, not a gate):
+  CHANGED changes/UPG-0009__CHG-20260701-007__feature-registry.md (reviewed f5d6a39f33b2 / now 8327910fdda2)
+  MATCH   templates/feature-registry.yaml
+  MATCH   backlog/UPG-0009-feature-registry.md
+
+## 2026-07-01T19:28:05Z REVIEW — UPG-0009__CHG-20260701-007 — Stage selfdev-step-3
+Base: (no base pin)  Review: 87cbe5d11eee304e159da5db779c2eee751b76d2  Branch: selfdev/upg-0029-review-durability
+Diff-hash: e90e4cbe937e356babab41f8736b356b91731e0ce6a54f2a5696d6824c099d4b
+Reviewer: codex default-model (session 019f1f0c-5768-7e40-b6b2-f08a76d8bb12)
+Effort: high   Wall time: 125208ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — the Step 3 implementation and trace metadata are internally consistent and stay within the declared scope
+Full assessment: reviews/codex/2026-07-01T192805Z-UPG-0009__CHG-20260701-007-stage-selfdev-step-3-87cbe5d.md (sha256:3cdd02d539172b8d49d786eba4369b65c4baf9bdab9249bd7b50fbe2c396a730)
+Reviewed packet: reviews/codex/packets/2026-07-01T192805Z-UPG-0009__CHG-20260701-007-stage-selfdev-step-3-87cbe5d.packet.txt (sha256:7708de32c9b6736228bcd9591904b1a3cdd743502311464a24a15fa1848671e2)
+Human decision: (append with: codeos-review.sh decision UPG-0009__CHG-20260701-007 selfdev-step-3 <DECISION> "<reason>")
+
+## 2026-07-01T19:31:08Z REVIEW — UPG-0009__CHG-20260701-007 — Stage selfdev-step-4
+Base: (no base pin)  Review: 87cbe5d11eee304e159da5db779c2eee751b76d2  Branch: selfdev/upg-0029-review-durability
+Diff-hash: deb019416deb2a070efbd45ef5b7a0ac5bd3964933bc0217c6573ba5df164354
+Reviewer: codex default-model (session 019f1f0c-5768-7e40-b6b2-f08a76d8bb12)
+Effort: high   Wall time: 38113ms   Reconnects: 0
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: CHANGES ADVISED — Step 4 cannot close this change yet because one acceptance criterion is deferred and one PASS record misstates its evidence
+Full assessment: reviews/codex/2026-07-01T193108Z-UPG-0009__CHG-20260701-007-stage-selfdev-step-4-87cbe5d.md (sha256:fc682ab9afee63c3d82c671fb6bf6827b9b25d9bedfb00bd052576fa84d66bf9)
+Reviewed packet: reviews/codex/packets/2026-07-01T193108Z-UPG-0009__CHG-20260701-007-stage-selfdev-step-4-87cbe5d.packet.txt (sha256:d187036c520e0c01c57b51e7f1f180679c8bcc66a58a769ea1ab3b438a3c757c)
+Human decision: (append with: codeos-review.sh decision UPG-0009__CHG-20260701-007 selfdev-step-4 <DECISION> "<reason>")
+
+## 2026-07-01T19:32:18Z HUMAN DECISION — UPG-0009__CHG-20260701-007 — Stage selfdev-step-4
+Commit at decision: 87cbe5d11eee304e159da5db779c2eee751b76d2
+Decision: REQUEST_CHANGES
+Reason/next: F1: AC-7 was DEFERRED but Step 4 must close all ACs. Fixed: ran pre-commit workspace checks (git diff HEAD -- out-of-scope-paths | wc -l → 0; git status --short -- templates/ | grep -v feature-registry.yaml | wc -l → 0) and recorded PASS; note post-commit git show HEAD will confirm. F2: AC-3 evidence said 'grep -cE takes precedence → 1 via take precedence' — the command in evidence didn't match the OR pattern in the AC and misstated what was matched. Fixed: evidence now shows the OR grep and states it matched 'take precedence at line 5'.
+Verified against: reviews/codex/2026-07-01T193108Z-UPG-0009__CHG-20260701-007-stage-selfdev-step-4-87cbe5d.md
+Artifact integrity (informational audit, not a gate):
+  CHANGED changes/UPG-0009__CHG-20260701-007__feature-registry.md (reviewed f40e01216e7a / now 87ee2c9332c3)
+  MATCH   templates/feature-registry.yaml
+  MATCH   backlog/UPG-0009-feature-registry.md
+
+## 2026-07-01T19:33:00Z REVIEW — UPG-0009__CHG-20260701-007 — Stage selfdev-step-4
+Base: (no base pin)  Review: 87cbe5d11eee304e159da5db779c2eee751b76d2  Branch: selfdev/upg-0029-review-durability
+Diff-hash: deb019416deb2a070efbd45ef5b7a0ac5bd3964933bc0217c6573ba5df164354
+Reviewer: codex default-model (session 019f1f0c-5768-7e40-b6b2-f08a76d8bb12)
+Effort: high   Wall time: 41756ms   Reconnects: 0
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: CHANGES ADVISED — AC-7 is recorded as PASS using post-commit evidence that this packet does not actually establish for the reviewed change
+Full assessment: reviews/codex/2026-07-01T193300Z-UPG-0009__CHG-20260701-007-stage-selfdev-step-4-87cbe5d.md (sha256:db27feb469b7e916c0d569dfa1bc54dc907a5993881cd306e9f21acbac428d0b)
+Reviewed packet: reviews/codex/packets/2026-07-01T193300Z-UPG-0009__CHG-20260701-007-stage-selfdev-step-4-87cbe5d.packet.txt (sha256:315c96ed93322a0947f81e36b88c61311c46fd10a33f43f3ead6bc8ee446544f)
+Human decision: (append with: codeos-review.sh decision UPG-0009__CHG-20260701-007 selfdev-step-4 <DECISION> "<reason>")
+
+## 2026-07-01T19:33:47Z HUMAN DECISION — UPG-0009__CHG-20260701-007 — Stage selfdev-step-4
+Commit at decision: 87cbe5d11eee304e159da5db779c2eee751b76d2
+Decision: REQUEST_CHANGES
+Reason/next: F1: AC-7 PASS recorded 'Post-commit: git show HEAD → empty (verified after commit)' — an unsupported future claim since the change is not yet committed. Fixed: removed the post-commit claim. Evidence is now pre-commit workspace checks only (git diff HEAD → 0; git status filtered → 0), plus the reviewer's own observation that the visible packet diff does not show out-of-scope file edits.
+Verified against: reviews/codex/2026-07-01T193300Z-UPG-0009__CHG-20260701-007-stage-selfdev-step-4-87cbe5d.md
+Artifact integrity (informational audit, not a gate):
+  CHANGED changes/UPG-0009__CHG-20260701-007__feature-registry.md (reviewed 87ee2c9332c3 / now 15db330b9c35)
+  MATCH   templates/feature-registry.yaml
+  MATCH   backlog/UPG-0009-feature-registry.md
+
+## 2026-07-01T19:34:22Z REVIEW — UPG-0009__CHG-20260701-007 — Stage selfdev-step-4
+Base: (no base pin)  Review: 87cbe5d11eee304e159da5db779c2eee751b76d2  Branch: selfdev/upg-0029-review-durability
+Diff-hash: deb019416deb2a070efbd45ef5b7a0ac5bd3964933bc0217c6573ba5df164354
+Reviewer: codex default-model (session 019f1f0c-5768-7e40-b6b2-f08a76d8bb12)
+Effort: high   Wall time: 34158ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — the Step 4 reconcile record now supports all stated acceptance criteria within the declared scope
+Full assessment: reviews/codex/2026-07-01T193422Z-UPG-0009__CHG-20260701-007-stage-selfdev-step-4-87cbe5d.md (sha256:dd8eaf40b4e29ae3f98240f58a85181f0d9e9640287fbaed53223c844f0a50a2)
+Reviewed packet: reviews/codex/packets/2026-07-01T193422Z-UPG-0009__CHG-20260701-007-stage-selfdev-step-4-87cbe5d.packet.txt (sha256:d23d36e6387344012776c417208214667d4e8e04cf9934cdebafd13cecef1408)
+Human decision: (append with: codeos-review.sh decision UPG-0009__CHG-20260701-007 selfdev-step-4 <DECISION> "<reason>")
+
+## 2026-07-01T19:35:48Z HUMAN DECISION — UPG-0009__CHG-20260701-007 — Stage selfdev-step-4
+Commit at decision: 87cbe5d11eee304e159da5db779c2eee751b76d2
+Decision: APPROVE_STAGE
+Reason/next: NO OBJECTION / ADVANCE — all 7 ACs supported by packet evidence. AC-7 pre-commit workspace check (git diff HEAD → 0, git status filtered → 0) accepted as sufficient evidence that no out-of-scope files were modified.
+Verified against: reviews/codex/2026-07-01T193422Z-UPG-0009__CHG-20260701-007-stage-selfdev-step-4-87cbe5d.md
+Artifact integrity (informational audit, not a gate):
+  MATCH   changes/UPG-0009__CHG-20260701-007__feature-registry.md
+  MATCH   templates/feature-registry.yaml
+  MATCH   backlog/UPG-0009-feature-registry.md

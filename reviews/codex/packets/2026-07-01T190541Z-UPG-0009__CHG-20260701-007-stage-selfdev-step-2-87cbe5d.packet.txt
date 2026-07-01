@@ -1,0 +1,473 @@
+Reviewer task:
+
+SCOPE CONTRACT
+  Assess this artifact against the STATED SCOPE of this stage/PR — the Expected Stage
+  Output below and what the artifacts actually claim — NOT against an ideal final system.
+  A capability the artifacts do not claim to provide is OUT-OF-SCOPE, not a defect.
+  The following are OUT-OF-SCOPE BACKLOG unless THIS artifact explicitly claims to provide
+  them: formal approval-binding enforcement; rollback correctness; COMMIT_BOUND/
+  WORKSPACE_BOUND enforcement; JSON Schema validation; CI validation; exact
+  decision-integrity; per-feature decision ledgers; autonomous approval; enabled hooks.
+
+YOUR TASK — answer these five questions using only the evidence in the packet:
+  1. Acceptance criteria: Does the artifact satisfy each of its stated acceptance criteria?
+     Cite evidence for each criterion (or note its absence).
+  2. Claim support: Are universal or strong claims (all, every, never, always, no X) in the
+     artifact supported by evidence in the packet? Any unverifiable strong claim is a candidate
+     finding only if it affects acceptance, scope, safety, decision integrity, or the artifact's
+     stated guarantees.
+  3. Scope drift: Is there any change beyond the stated scope boundary? (Files not in the
+     "What changes" list; behavior changes not in the intent; downstream doctrine modified
+     rather than read.)
+  4. In-scope blockers: Are there facts that, if left in, would make the artifact wrong,
+     unsafe, or internally contradictory?
+  5. Finding classification: Classify every finding you raise as exactly one of the five
+     TRIAGE RULE categories below.
+
+TRIAGE RULE — classify EVERY finding as exactly one of:
+  IN-SCOPE BLOCKER         breaks the stated goal; creates a FALSE CLAIM in this artifact;
+                           weakens the advisory/read-only/human-gated guarantees; prevents
+                           the work from running; or violates an explicit safety constraint.
+  IN-SCOPE NON-BLOCKER     improves it but is not required for this PR.
+  OUT-OF-SCOPE BACKLOG     valid, but belongs to a future feature / stronger guarantee.
+  REJECTED                 conflicts with the stated scope or Codeos philosophy.
+  SELF-REFERENCE /         review records that are stale because of the previous round's
+  REVIEW-BOOKKEEPING       own existence (causal loop); not a real artifact defect.
+  Base the PR decision ONLY on IN-SCOPE BLOCKER findings. An OUT-OF-SCOPE BACKLOG finding
+  must NOT cause DO NOT ADVANCE unless this artifact FALSELY CLAIMS to solve it.
+
+WHAT NOT TO DO
+  - Do not flag style or wording issues as blockers unless the wording creates a false claim,
+    contradiction, parser breakage, or wrong governance instruction.
+  - Do not re-review unchanged full context when the packet is in delta mode.
+  - Do not treat local-only review history as a blocker unless the artifact falsely
+    claims the review artifacts are committed/durable.
+
+INSTRUCTIONS
+  If this is a resumed session, ignore any earlier-session conclusions unless they are
+  re-established by THIS packet; assess only the evidence above, pinned to this commit.
+  Give a focused assessment of this artifact against the stated scope, acceptance criteria,
+  and evidence in this packet. Rank findings by severity. Suggest a better design only when
+  needed to explain a required fix for an IN-SCOPE BLOCKER.
+
+  Limit findings to the top 3 IN-SCOPE BLOCKERS. Additional non-blocking observations may be
+  summarized in one short paragraph only if useful.
+
+  For EACH finding emit:
+    Finding: / Severity: High|Medium|Low / Classification: <one of the TRIAGE RULE labels>
+    Evidence: <file/line> / Why: <short> / Required action: fix now|optional fix|backlog|reject
+    Scope reason: <why it does/does not belong to this PR's scope>
+  Then emit:
+    PR decision: ADVANCE | REQUEST CHANGES | DO NOT ADVANCE   (based ONLY on in-scope blockers)
+    Scope drift warning: yes|no — <is anything pulling this PR beyond its stated scope?>
+  Then on the LAST two lines emit exactly (map ADVANCE->NO OBJECTION,
+  REQUEST CHANGES->CHANGES ADVISED, DO NOT ADVANCE->DO NOT ADVANCE):
+    LOG SUMMARY: <NO OBJECTION | CHANGES ADVISED | DO NOT ADVANCE | UNCLASSIFIED> — <single most important point>
+      (use UNCLASSIFIED if you genuinely cannot classify the artifact safely)
+    EVIDENCE: <A|B|C|D|E>   (optional)
+
+PACKET MANIFEST
+  generated: 2026-07-01T19:04:26Z
+  task_prompt: /home/arc/projects/claude/Codeos/prompts/codeos-reviewer-task.md (4381 bytes)
+  review_content_bytes: 13287
+  estimated_review_tokens: ~3321
+  budget_status: OK
+  packet_mode: full
+  delta_base: none
+  items:
+    - path: status/self-development.md
+      mode: path_sha_only
+      bytes: 5870
+      sha256: 9e8277ab4cb52e2ab0e9c3ed679a064260ae0e1f4b64de74e0ef1b6942ae6ed9
+    - path: status/roadmap.md
+      mode: path_sha_only
+      bytes: 7142
+      sha256: ee164f6016ba2bf693b63da5297a5c13530031fa745d5990897ce8557b7d4047
+    - path: backlog/features.md
+      mode: path_sha_only
+      bytes: 8685
+      sha256: d979eb764956434c548694fc770952e8b382088c007c36a77b5cb5edfddf05f7
+    - path: changes/UPG-0009__CHG-20260701-007__feature-registry.md
+      mode: full_file
+      bytes: 8433
+      sha256: 529864ac1640c5a9797d620baad0360f977fc315c1849ce1b53bd8b1e4d6a2f9
+    - path: backlog/UPG-0009-feature-registry.md
+      mode: full_file
+      bytes: 2603
+      sha256: f5cba72cc1e30bc61516606488324771e3ca16db5270cd0b3202cca2da766b5a
+    - path: (diff)
+      mode: full_file
+      bytes: 2251
+
+REVIEW CONTEXT
+  Feature:                UPG-0009__CHG-20260701-007
+  Stage:                  selfdev-step-2
+  Branch:                 selfdev/upg-0029-review-durability
+  Base commit:            (no base pin)
+  Review commit:          87cbe5d11eee304e159da5db779c2eee751b76d2 (+ uncommitted workspace changes)
+  Current approved stage: n/a (non-numeric stage)
+  Evidence coverage:      FULL_COVERAGE
+  Workspace dirty:        yes (uncommitted changes at review time)
+
+DBA RULES RELEVANT TO THIS STAGE
+  - Human approval is required for every stage transition; you are advisory only.
+  - Memory is not truth — assess only what is provided, pinned to the review commit.
+  - Implementation must trace to approved artifacts; no behavior beyond intent+contract+schema.
+  - No events outside the approved event schema; no hidden behavior.
+
+STAGE-SPECIFIC CHECKS
+  - (no stage-specific checklist for stage selfdev-step-2)
+
+EXPECTED STAGE OUTPUT
+  (no expected-output template for stage selfdev-step-2)
+
+ARTIFACTS TO REVIEW
+  --- changes/UPG-0009__CHG-20260701-007__feature-registry.md (sha256: 529864ac1640c5a9797d620baad0360f977fc315c1849ce1b53bd8b1e4d6a2f9, visibility: shown) ---
+    ---
+    change_id: CHG-20260701-007
+    feature_id: UPG-0009
+    slug: feature-registry
+    triage_class: template
+    scope_axis: self-dev only
+    review_profile: PROFILE-3
+    review_series: RVS__UPG-0009__CHG-20260701-007__S2
+    review_state: DRAFT
+    status: IN_PROGRESS
+    loop_step: 2-Acceptance
+    ---
+    
+    # Change: UPG-0009 / CHG-20260701-007 — Feature Registry / Branch Binding
+    
+    ## TRACE HEADER
+    
+    ```yaml
+    feature_id: UPG-0009
+    primary_feature_id: UPG-0009
+    change_id: CHG-20260701-007
+    slug: feature-registry
+    state: IN_PROGRESS
+    current_step: 2-Acceptance
+    implements:
+      - UPG-0009
+    related_features:
+      - UPG-0013
+    review_series: RVS__UPG-0009__CHG-20260701-007__S2
+    review_profile: PROFILE-3
+    review_state: DRAFT
+    review_history: reviews/review-log.md
+    triage_class: template
+    scope_axis: self-dev only
+    corrects: ~
+    corrected_by: ~
+    follow_up_of: ~
+    fixes_findings: []
+    ```
+    
+    ---
+    
+    ## Step 1 — Change Intent
+    
+    ### Problem
+    
+    Branch, feature, stage, artifacts, PR, and review state can drift apart across the
+    lifetime of a feature. Practitioners currently carry this binding information informally —
+    in commit messages, branch names, or mental notes. There is no single human-maintained
+    index that records, for each feature ID: which branch, which current stage, which approved
+    artifacts, which PR, and what the blocking state is.
+    
+    Without a structured registry:
+    - New sessions must re-derive the current feature's stage from git history or file inspection.
+    - Suspended features lose their "last known state" record.
+    - The repair-before-next-feature gate (UPG-0012) has no canonical place to record blockers.
+    - The Stage 4 Activation Card (UPG-0013) references "active feature" with no machine-readable backing.
+    
+    The backlog brief also notes a naming ambiguity: `feature-registry.yaml` (backlog design
+    notes) vs `features/registry.yaml` (possible downstream convention). This change resolves
+    the ambiguity by separating toolkit template identity from downstream instance location.
+    
+    ### What changes
+    
+    | File | Change |
+    |---|---|
+    | `templates/feature-registry.yaml` | NEW — canonical Feature Registry template. Defines the required fields for a feature entry: feature ID, slug, status, branch, current stage, approved artifact paths, PR, last commit, reconciliation status, replay status, and blockers. Index-not-truth framing is explicit. Template ships with one illustrative blank entry. |
+    | `backlog/UPG-0009-feature-registry.md` | Feature Thread: add this change. |
+    | `status/self-development.md` | Activate row for this change. |
+    | `status/roadmap.md` | Wave 2 UPG-0009 row: update planned change and state to IN_PROGRESS. |
+    | `changes/UPG-0009__CHG-20260701-007__feature-registry.md` | This change record. |
+    
+    ### What stays the same (scope boundary)
+    
+    - **No automation.** Auto-update triggers, git hooks, branch-creation scripts, and CI
+      checks are deferred to a follow-on UPG. The registry is manually maintained in this
+      change.
+    - **No auto-validation.** Warning logic (registry disagrees with filesystem/git) is
+      deferred. The template carries a note that warnings must be generated if registry and
+      reality disagree, but the warning mechanism is out of scope.
+    - `dba-system.md` — NOT in scope. Template usable without doctrine entry; follow-on
+      `downstream-doctrine` change once the format is proven.
+    - `prompts/` — no prompt changes.
+    - `scripts/` — no changes.
+    - `templates/stage-4-activation-card.md` — not modified; the registry and activation
+      card are complementary but separate artifacts.
+    
+    ### Naming resolution
+    
+    | Question | Decision |
+    |---|---|
+    | Toolkit artifact | `templates/feature-registry.yaml` |
+    | Recommended downstream instance path | `features/registry.yaml` (adjacent to intent/contract/schema files) |
+    | Authority | Registry is an **index**, not truth. Filesystem, git, and approved artifacts take precedence in any disagreement. |
+    
+    ### Triage class: `template`
+    
+    Creating one new YAML template file. Class is `template`. 4-step loop with PROFILE-3
+    review cadence (downstream-facing).
+    
+    ### Scope axis: `self-dev only`
+    
+    No changes to `dba-system.md`. Toolkit template files only.
+    
+    ### Review profile: PROFILE-3
+    
+    Template class, downstream-facing. Codex review before each step gate; human approval at
+    all four gates; reviewer output is advisory and non-gatekeeping.
+    
+    ### Originating backlog item
+    
+    `backlog/UPG-0009-feature-registry.md` — Feature Registry / Branch Binding.
+    
+    ---
+    
+    ## Step 2 — Acceptance Criteria
+    
+    ### AC-1: Template file exists at the declared path
+    
+    `templates/feature-registry.yaml` is created as a new file in the toolkit.
+    
+    Verification: `test -f templates/feature-registry.yaml && echo exists` → "exists".
+    (Using file-presence check, not git workspace state, so the criterion holds whether the
+    file is committed or uncommitted.)
+    
+    ### AC-2: All required fields are present in each feature entry
+    
+    Each feature entry in the template must include all of the following fields:
+    
+    1. `feature_id` — stable feature identifier (e.g., `UPG-0042`)
+    2. `slug` — human-readable short name
+    3. `status` — current feature state (active / suspended / complete / blocked)
+    4. `branch` — git branch name for this feature
+    5. `current_stage` — current approved DBA stage (0–10 or null)
+    6. `intent` — path to approved intent artifact (or null)
+    7. `contract` — path to approved contract artifact (or null)
+    8. `event_schema` — path to approved event schema artifact (or null)
+    9. `pr` — pull request reference (URL or null)
+    10. `last_commit` — last known commit SHA (or null)
+    11. `reconciliation_status` — one of: pending / passed / failed / na
+    12. `replay_status` — one of: pending / passed / failed / na
+    13. `blockers` — list of blocking issues (empty list if none)
+    
+    Verification: all 13 field names appear in the template entry.
+    
+    ### AC-3: Index-not-truth framing is explicit
+    
+    The template must carry an explicit comment or header note stating:
+    - The registry is an **index**, not a truth source.
+    - Filesystem, git state, and approved DBA artifacts take precedence in any disagreement.
+    - If registry state disagrees with actual state, the registry must be corrected, not
+      used to override the actual state.
+    
+    Verification — all three statements must be present (one check per statement):
+    1. Index-not-truth: `grep -i "index\|not.* truth\|not a truth" templates/feature-registry.yaml` → hit
+    2. Precedence of approved artifacts: `grep -i "precedence\|takes precedence\|wins\|authoritative" templates/feature-registry.yaml` → hit
+    3. Correction-not-override: `grep -i "corrected\|correct the registry\|disagree\|mismatch" templates/feature-registry.yaml` → hit
+    
+    All three greps must return at least one hit.
+    
+    ### AC-4: Recommended downstream instance path is documented
+    
+    The template must document the recommended downstream path for the instantiated registry
+    (`features/registry.yaml` or equivalent) so practitioners know where to create their
+    project copy.
+    
+    Verification: `grep -i "features/registry\|recommended.*path\|downstream" templates/feature-registry.yaml`
+    returns at least one hit.
+    
+    ### AC-5: No automation fields or trigger logic
+    
+    The template must not include fields or comments that imply automatic update triggers,
+    git hooks, CI validation steps, or any mechanism other than manual human maintenance.
+    
+    Verification: `grep -i "trigger\|hook\|ci\|auto.*update\|webhook" templates/feature-registry.yaml`
+    returns 0 hits.
+    
+    ### AC-6: Blank/illustrative entry — no pre-filled production data
+    
+    The template contains exactly one illustrative blank entry (with placeholder values such
+    as `null`, `___`, or an example feature ID) so practitioners can copy it. It does not
+    contain pre-filled production feature records.
+    
+    Verification: template contains one example entry; all value fields are placeholders or
+    null, not actual feature IDs or real paths from a specific project.
+    
+    ### AC-7: Out-of-scope files unchanged
+    
+    `dba-system.md`, `CLAUDE.md`, all prompts, other templates, and `scripts/` are not
+    modified.
+    
+    Verification (tracked changes):
+    `git diff HEAD -- dba-system.md CLAUDE.md prompts/ scripts/ templates/readiness-checklist.md templates/stage-4-activation-card.md | wc -l` → 0
+    
+    Verification (untracked files in out-of-scope locations):
+    `git status --short -- dba-system.md CLAUDE.md prompts/ scripts/ templates/readiness-checklist.md templates/stage-4-activation-card.md | wc -l` → 0
+    
+    ---
+    
+    ## Step 3 — Implementation
+    
+    *(Not yet filled.)*
+    
+    ---
+    
+    ## Step 4 — Reconcile
+    
+    *(Not yet filled.)*
+
+  --- backlog/UPG-0009-feature-registry.md (sha256: f5cba72cc1e30bc61516606488324771e3ca16db5270cd0b3202cca2da766b5a, visibility: shown) ---
+    ---
+    feature_id: UPG-0009
+    slug: feature-registry
+    title: Feature Registry / Branch Binding
+    status: PROPOSED
+    priority: P2
+    depends_on: []
+    related_features: []
+    supersedes: []
+    superseded_by: []
+    ---
+    
+    # Upgrade: feature-registry — Feature Registry / Branch Binding
+    
+    **Priority**: P2
+    **Status**: PROPOSED
+    **Type**: toolkit-upgrade
+    **Related**: current-verified-state, workflow-profiles, branch-helper, approval-dashboard
+    
+    ## Problem
+    
+    Branch, feature, stage, artifacts, PR, and review state can drift apart.
+    
+    ## Upgrade
+    
+    Extend or introduce a feature registry that binds feature ID to branch, stage, PR, and status.
+    
+    ## Scope
+    
+    Cross-feature state index.
+    
+    ## Proposed artifact(s)
+    
+    `feature-registry.yaml` (note: CLAUDE.md already references `features/registry.yaml` as the
+    authoritative human-maintained index — reconcile naming during implementation).
+    
+    ## Design notes
+    
+    ```yaml
+    features:
+      listing-ingestion:
+        status: active
+        branch: feature/listing-ingestion
+        current_stage: 6
+        intent: intents/listing-ingestion.md
+        contract: contracts/listing-ingestion_contract.md
+        event_schema: events/listing-ingestion_schema.md
+        pr: null
+        last_commit: abc123
+        reconciliation_status: pending
+        replay_status: pending
+        blockers: []
+    ```
+    
+    When updated (automatically): Stage 0 session start; after stage approval; after branch
+    creation; after PR creation; after reconciliation/replay; after suspension/completion.
+    
+    ## Value
+    
+    Medium-high. Makes automation and reviewer-agent context much easier.
+    
+    ## Risk
+    
+    Registry becomes stale.
+    
+    ## Guardrail
+    
+    Generate warnings if registry disagrees with filesystem/git state.
+    
+    ## DBA-philosophy note
+    
+    Touches **artifact authority** boundary: the registry is an index, not truth. It must warn —
+    and defer — on any disagreement with the filesystem/git/artifacts, never override them.
+    
+    ## Feature Thread
+    
+    > Canonical thread rollup for this feature. Compact links/IDs only; full detail lives in the
+    > change records and review files. May be maintained manually.
+    
+    ### Changes
+    
+    | Change ID | File | Purpose | State |
+    |---|---|---|---|
+    | CHG-20260701-007 | `changes/UPG-0009__CHG-20260701-007__feature-registry.md` | New feature-registry.yaml template — human-maintained index binding feature ID to branch, stage, artifacts, PR, and blockers; no automation | IN_PROGRESS |
+    
+    ### Reviews
+    
+    | Review ID | Change ID | Step | Round | Verdict |
+    |---|---|---|---|---|
+    
+    ### Findings Tracked Inside This Feature
+    
+    | Finding ID | Review ID | Classification | Resolution |
+    |---|---|---|---|
+    
+    ### Follow-up Features
+    
+    | Feature ID | Reason | Source finding |
+    |---|---|---|
+
+DIFF TO REVIEW (base->review, secret/size filtered)
+diff --git a/backlog/UPG-0009-feature-registry.md b/backlog/UPG-0009-feature-registry.md
+index f3d25ff..fa598c9 100644
+--- a/backlog/UPG-0009-feature-registry.md
++++ b/backlog/UPG-0009-feature-registry.md
+@@ -81,6 +81,7 @@ and defer — on any disagreement with the filesystem/git/artifacts, never overr
+ 
+ | Change ID | File | Purpose | State |
+ |---|---|---|---|
++| CHG-20260701-007 | `changes/UPG-0009__CHG-20260701-007__feature-registry.md` | New feature-registry.yaml template — human-maintained index binding feature ID to branch, stage, artifacts, PR, and blockers; no automation | IN_PROGRESS |
+ 
+ ### Reviews
+ 
+diff --git a/status/roadmap.md b/status/roadmap.md
+index 924c6ca..2028c5e 100644
+--- a/status/roadmap.md
++++ b/status/roadmap.md
+@@ -51,7 +51,7 @@ cheap pilot-adjacent wins early.
+ |---|---|---|---|---|---|---|
+ | 2 | UPG-0007 | Expanded 00b Solution Discovery / Feature Topology | P0 | — | CHG-20260630-005 | COMPLETE |
+ | 2 | UPG-0008 | Configuration Discovery & Schema Track | P2 | UPG-0007 ✓ | CHG-20260701-006 | COMPLETE |
+-| 2 | UPG-0009 | Feature Registry / Branch Binding | P2 | — | — | PROPOSED |
++| 2 | UPG-0009 | Feature Registry / Branch Binding | P2 | — | CHG-20260701-007 | IN_PROGRESS |
+ 
+ ### Wave 3 — Evidence discipline & gates  *(P1)*
+ | Wave | Feature ID | Title | Priority | Depends on | Planned/active change | State |
+diff --git a/status/self-development.md b/status/self-development.md
+index 561c3c3..5c3d66a 100644
+--- a/status/self-development.md
++++ b/status/self-development.md
+@@ -41,6 +41,7 @@
+ | UPG-0012 | CHG-20260701-004 | prompt | self-dev only | 4-Reconcile | ACCEPTED (Steps 1–4 reviewed; Step 4 R1 NO OBJECTION; all 8 ACs verified) | COMPLETE | — |
+ | UPG-0013 | CHG-20260701-005 | template | self-dev only | 4-Reconcile | ACCEPTED (Steps 1–4 reviewed; Step 4 R1 NO OBJECTION; all 8 ACs verified) | COMPLETE | — |
+ | UPG-0008 | CHG-20260701-006 | prompt | self-dev only | 4-Reconcile | ACCEPTED (Steps 1–4 reviewed; Step 4 R1 NO OBJECTION; all 7 ACs verified) | COMPLETE | — |
++| UPG-0009 | CHG-20260701-007 | template | self-dev only | 2-Acceptance | DRAFT (RVS__…__S2) | IN_PROGRESS | — |
+ 
+ <!--
+ Identity   : Feature ID = UPG-#### (stable). Change ID = CHG-YYYYMMDD-NNN (one execution), or a

@@ -51,7 +51,7 @@ cheap pilot-adjacent wins early.
 |---|---|---|---|---|---|---|
 | 2 | UPG-0007 | Expanded 00b Solution Discovery / Feature Topology | P0 | — | CHG-20260630-005 | COMPLETE |
 | 2 | UPG-0008 | Configuration Discovery & Schema Track | P2 | UPG-0007 ✓ | CHG-20260701-006 | COMPLETE |
-| 2 | UPG-0009 | Feature Registry / Branch Binding | P2 | — | — | PROPOSED |
+| 2 | UPG-0009 | Feature Registry / Branch Binding | P2 | — | CHG-20260701-007 | COMPLETE |
 
 ### Wave 3 — Evidence discipline & gates  *(P1)*
 | Wave | Feature ID | Title | Priority | Depends on | Planned/active change | State |

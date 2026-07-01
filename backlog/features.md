@@ -39,7 +39,7 @@ The goal is to speed up Codeos development without weakening DBA advantages.
 | UPG-0006 | [UPG-0006-reviewer-quality-scale.md](UPG-0006-reviewer-quality-scale.md) | Reviewer Summary Quality Scale | P2 | PROPOSED |
 | UPG-0007 | [UPG-0007-solution-discovery-00b.md](UPG-0007-solution-discovery-00b.md) | Expanded 00b Solution Discovery / Feature Topology | P0 | PROPOSED |
 | UPG-0008 | [UPG-0008-config-discovery.md](UPG-0008-config-discovery.md) | Configuration Discovery & Schema Track | P2 | PROPOSED |
-| UPG-0009 | [UPG-0009-feature-registry.md](UPG-0009-feature-registry.md) | Feature Registry / Branch Binding | P2 | PROPOSED |
+| UPG-0009 | [UPG-0009-feature-registry.md](UPG-0009-feature-registry.md) | Feature Registry / Branch Binding | P2 | COMPLETE |
 | UPG-0010 | [UPG-0010-verify-only-mode.md](UPG-0010-verify-only-mode.md) | Verification-Only Mode | P1 | PROPOSED |
 | UPG-0011 | [UPG-0011-readiness-checklist.md](UPG-0011-readiness-checklist.md) | Lightweight PR / Pre-Release Readiness Checklist | P1 | PROPOSED |
 | UPG-0012 | [UPG-0012-repair-before-next-feature.md](UPG-0012-repair-before-next-feature.md) | Repair-Before-Next-Feature Workflow Gate | P1 | PROPOSED |
