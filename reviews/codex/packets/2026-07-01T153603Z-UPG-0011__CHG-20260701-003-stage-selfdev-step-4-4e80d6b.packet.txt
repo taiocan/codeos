@@ -1,0 +1,583 @@
+Reviewer task:
+
+SCOPE CONTRACT
+  Assess this artifact against the STATED SCOPE of this stage/PR — the Expected Stage
+  Output below and what the artifacts actually claim — NOT against an ideal final system.
+  A capability the artifacts do not claim to provide is OUT-OF-SCOPE, not a defect.
+  The following are OUT-OF-SCOPE BACKLOG unless THIS artifact explicitly claims to provide
+  them: formal approval-binding enforcement; rollback correctness; COMMIT_BOUND/
+  WORKSPACE_BOUND enforcement; JSON Schema validation; CI validation; exact
+  decision-integrity; per-feature decision ledgers; autonomous approval; enabled hooks.
+
+YOUR TASK — answer these five questions using only the evidence in the packet:
+  1. Acceptance criteria: Does the artifact satisfy each of its stated acceptance criteria?
+     Cite evidence for each criterion (or note its absence).
+  2. Claim support: Are universal or strong claims (all, every, never, always, no X) in the
+     artifact supported by evidence in the packet? Any unverifiable strong claim is a candidate
+     finding only if it affects acceptance, scope, safety, decision integrity, or the artifact's
+     stated guarantees.
+  3. Scope drift: Is there any change beyond the stated scope boundary? (Files not in the
+     "What changes" list; behavior changes not in the intent; downstream doctrine modified
+     rather than read.)
+  4. In-scope blockers: Are there facts that, if left in, would make the artifact wrong,
+     unsafe, or internally contradictory?
+  5. Finding classification: Classify every finding you raise as exactly one of the five
+     TRIAGE RULE categories below.
+
+TRIAGE RULE — classify EVERY finding as exactly one of:
+  IN-SCOPE BLOCKER         breaks the stated goal; creates a FALSE CLAIM in this artifact;
+                           weakens the advisory/read-only/human-gated guarantees; prevents
+                           the work from running; or violates an explicit safety constraint.
+  IN-SCOPE NON-BLOCKER     improves it but is not required for this PR.
+  OUT-OF-SCOPE BACKLOG     valid, but belongs to a future feature / stronger guarantee.
+  REJECTED                 conflicts with the stated scope or Codeos philosophy.
+  SELF-REFERENCE /         review records that are stale because of the previous round's
+  REVIEW-BOOKKEEPING       own existence (causal loop); not a real artifact defect.
+  Base the PR decision ONLY on IN-SCOPE BLOCKER findings. An OUT-OF-SCOPE BACKLOG finding
+  must NOT cause DO NOT ADVANCE unless this artifact FALSELY CLAIMS to solve it.
+
+WHAT NOT TO DO
+  - Do not flag style or wording issues as blockers unless the wording creates a false claim,
+    contradiction, parser breakage, or wrong governance instruction.
+  - Do not re-review unchanged full context when the packet is in delta mode.
+  - Do not treat local-only review history as a blocker unless the artifact falsely
+    claims the review artifacts are committed/durable.
+
+INSTRUCTIONS
+  If this is a resumed session, ignore any earlier-session conclusions unless they are
+  re-established by THIS packet; assess only the evidence above, pinned to this commit.
+  Give a focused assessment of this artifact against the stated scope, acceptance criteria,
+  and evidence in this packet. Rank findings by severity. Suggest a better design only when
+  needed to explain a required fix for an IN-SCOPE BLOCKER.
+
+  Limit findings to the top 3 IN-SCOPE BLOCKERS. Additional non-blocking observations may be
+  summarized in one short paragraph only if useful.
+
+  For EACH finding emit:
+    Finding: / Severity: High|Medium|Low / Classification: <one of the TRIAGE RULE labels>
+    Evidence: <file/line> / Why: <short> / Required action: fix now|optional fix|backlog|reject
+    Scope reason: <why it does/does not belong to this PR's scope>
+  Then emit:
+    PR decision: ADVANCE | REQUEST CHANGES | DO NOT ADVANCE   (based ONLY on in-scope blockers)
+    Scope drift warning: yes|no — <is anything pulling this PR beyond its stated scope?>
+  Then on the LAST two lines emit exactly (map ADVANCE->NO OBJECTION,
+  REQUEST CHANGES->CHANGES ADVISED, DO NOT ADVANCE->DO NOT ADVANCE):
+    LOG SUMMARY: <NO OBJECTION | CHANGES ADVISED | DO NOT ADVANCE | UNCLASSIFIED> — <single most important point>
+      (use UNCLASSIFIED if you genuinely cannot classify the artifact safely)
+    EVIDENCE: <A|B|C|D|E>   (optional)
+
+PACKET MANIFEST
+  generated: 2026-07-01T15:35:07Z
+  task_prompt: /home/arc/projects/claude/Codeos/prompts/codeos-reviewer-task.md (4381 bytes)
+  review_content_bytes: 16137
+  estimated_review_tokens: ~4034
+  budget_status: OK
+  packet_mode: full
+  delta_base: none
+  items:
+    - path: status/self-development.md
+      mode: path_sha_only
+      bytes: 5205
+      sha256: b09001e337a92ce18fc9b35d0b74492dc68f1af687ac0bb555ed0e1d6616f34e
+    - path: status/roadmap.md
+      mode: path_sha_only
+      bytes: 7086
+      sha256: f87a27cce4b79065bfe6c93dd949924863169b7e81299e212b8542c314c2129c
+    - path: backlog/features.md
+      mode: path_sha_only
+      bytes: 8685
+      sha256: d979eb764956434c548694fc770952e8b382088c007c36a77b5cb5edfddf05f7
+    - path: changes/UPG-0011__CHG-20260701-003__readiness-checklist.md
+      mode: full_file
+      bytes: 10375
+      sha256: bdbb6c3dcea3633fbe56a6b50fc6b0620f8f9e5fe15041feae1f7435c2ff9f75
+    - path: backlog/UPG-0011-readiness-checklist.md
+      mode: full_file
+      bytes: 2776
+      sha256: d0fa0829095cc6e51fff8342010f7a43ce755efe96c94ead3709808406300659
+    - path: templates/readiness-checklist.md
+      mode: full_file
+      bytes: 735
+      sha256: 7374f0eb4fa42c2ef22dae916d28595c443f3f173f86a1d8c207c7f5a36914c3
+    - path: (diff)
+      mode: full_file
+      bytes: 2251
+
+REVIEW CONTEXT
+  Feature:                UPG-0011__CHG-20260701-003
+  Stage:                  selfdev-step-4
+  Branch:                 selfdev/upg-0029-review-durability
+  Base commit:            (no base pin)
+  Review commit:          4e80d6be3ee6b410a183c5550a7d7533cad4fd8f (+ uncommitted workspace changes)
+  Current approved stage: n/a (non-numeric stage)
+  Evidence coverage:      FULL_COVERAGE
+  Workspace dirty:        yes (uncommitted changes at review time)
+
+DBA RULES RELEVANT TO THIS STAGE
+  - Human approval is required for every stage transition; you are advisory only.
+  - Memory is not truth — assess only what is provided, pinned to the review commit.
+  - Implementation must trace to approved artifacts; no behavior beyond intent+contract+schema.
+  - No events outside the approved event schema; no hidden behavior.
+
+STAGE-SPECIFIC CHECKS
+  - (no stage-specific checklist for stage selfdev-step-4)
+
+EXPECTED STAGE OUTPUT
+  (no expected-output template for stage selfdev-step-4)
+
+ARTIFACTS TO REVIEW
+  --- changes/UPG-0011__CHG-20260701-003__readiness-checklist.md (sha256: bdbb6c3dcea3633fbe56a6b50fc6b0620f8f9e5fe15041feae1f7435c2ff9f75, visibility: shown) ---
+    ---
+    change_id: CHG-20260701-003
+    feature_id: UPG-0011
+    slug: readiness-checklist
+    triage_class: template
+    scope_axis: self-dev only
+    review_profile: PROFILE-3
+    review_series: RVS__UPG-0011__CHG-20260701-003__S4
+    review_state: IN_REVIEW
+    status: IN_PROGRESS
+    loop_step: 4-Reconcile
+    ---
+    
+    # Change: UPG-0011 / CHG-20260701-003 — Lightweight PR / Pre-Release Readiness Checklist
+    
+    ## TRACE HEADER
+    
+    ```yaml
+    feature_id: UPG-0011
+    primary_feature_id: UPG-0011
+    change_id: CHG-20260701-003
+    slug: readiness-checklist
+    state: IN_PROGRESS
+    current_step: 4-Reconcile
+    implements:
+      - UPG-0011
+    related_features: []
+    review_series: RVS__UPG-0011__CHG-20260701-003__S4
+    review_profile: PROFILE-3
+    review_state: IN_REVIEW
+    review_history: reviews/review-log.md
+    triage_class: template
+    scope_axis: self-dev only
+    corrects: ~
+    corrected_by: ~
+    follow_up_of: ~
+    fixes_findings: []
+    ```
+    
+    ---
+    
+    ## Step 1 — Change Intent
+    
+    ### Problem
+    
+    DBA Stage 7 (reconciliation) verifies behavioral alignment between artifacts and runtime
+    behavior. What it does not answer is whether a change is operationally ready to merge or
+    release: are tests complete, CI green, no unrelated files staged, no raw secrets in logs,
+    rollback path known? These questions sit outside the DBA behavioral stages but practitioners
+    need to answer them before merging.
+    
+    Without a dedicated operational readiness artifact, teams either skip these checks
+    (introducing release risk) or improvise them differently each time (no shared standard).
+    Reconciliation is not the right place to add them — it would expand Stage 7 beyond its
+    behavioral scope and dilute its signal.
+    
+    ### What changes
+    
+    | File | Change |
+    |---|---|
+    | `templates/readiness-checklist.md` | NEW — lightweight PR / pre-release readiness checklist template covering behavioral readiness (Stage 7/8/9 completion) and operational readiness (tests, CI, secrets, docs, rollback). |
+    | `backlog/UPG-0011-readiness-checklist.md` | Feature Thread: add this change. |
+    | `status/self-development.md` | Activate row for this change. |
+    | `status/roadmap.md` | Wave 3 UPG-0011 row: update planned change and state to IN_PROGRESS. |
+    | `changes/UPG-0011__CHG-20260701-003__readiness-checklist.md` | This change record. |
+    
+    ### What stays the same (scope boundary)
+    
+    - `dba-system.md` — NOT in scope. The template is usable without a doctrine reference;
+      integration into the doctrine is a follow-on `downstream-doctrine` change once the
+      template is proven.
+    - Stage prompts `01–09` — NOT modified. The checklist is an operational artifact used
+      after Stage 8/9; no stage prompt needs to reference it in this change.
+    - `prompts/` — no prompt changes. The checklist is a template practitioners fill in, not
+      a session prompt.
+    - `scripts/` — no changes.
+    - `UPG-0024` (Pre-Release Evidence Package) — separate feature; not in scope here.
+    
+    ### Triage class: `template`
+    
+    Creating one new template file (`templates/readiness-checklist.md`). Class is `template`.
+    4-step loop with PROFILE-3 review cadence (downstream-facing).
+    
+    ### Scope axis: `self-dev only`
+    
+    No changes to `dba-system.md`. Toolkit template files only.
+    
+    ### Review profile: PROFILE-3
+    
+    Template class, downstream-facing. Codex review before each step gate; human approval at
+    all four gates; reviewer output is advisory and non-gatekeeping.
+    
+    ### Originating backlog item
+    
+    `backlog/UPG-0011-readiness-checklist.md` — Lightweight PR / Pre-Release Readiness Checklist.
+    
+    ---
+    
+    ## Step 2 — Acceptance Criteria
+    
+    ### AC-1: New template file exists and is well-formed
+    
+    `templates/readiness-checklist.md` is created. It contains all four sections:
+    header, behavioral readiness, operational readiness, and decision.
+    
+    Verification: file exists; all four sections present.
+    
+    ### AC-2: Header section contains the four identity fields
+    
+    The template header section contains exactly these four fields:
+    - Feature
+    - Branch
+    - Commit
+    - PR
+    
+    Verification: all four field labels present in the header section.
+    
+    ### AC-3: Behavioral readiness section covers Stage 7/8/9 completion without repeating Stage 7 content
+    
+    The behavioral readiness section checks:
+    - Stage 7 reconciliation complete (yes/no — completion status only)
+    - No unresolved GAP / MISMATCH / MISSING items
+    - Stage 8 replay complete
+    - Stage 9 refinement complete or not needed
+    
+    The section must not reproduce or duplicate Stage 7 reconciliation criteria — it checks
+    completion status, not re-runs behavioral alignment.
+    
+    Verification: all four behavioral checks present; no Stage 7 criteria re-stated in this section.
+    
+    ### AC-4: Operational readiness section covers all ten items from the backlog brief
+    
+    The operational readiness section contains all of the following:
+    1. Tests run
+    2. Tests skipped explained
+    3. CI status
+    4. No unrelated files
+    5. Runtime evidence sanitized
+    6. No raw secrets / PII in logs
+    7. Docs updated if needed
+    8. Stack / config manifest checked if dependency or config changed
+    9. Release notes do not overclaim
+    10. Rollback / revert path known
+    
+    Verification: all ten items present in the operational readiness section.
+    
+    ### AC-5: Decision field supports exactly three outcomes
+    
+    The decision section provides exactly three options:
+    - READY
+    - NOT READY
+    - READY WITH KNOWN LIMITATIONS
+    
+    Verification: all three decision options present; no other decision values introduced.
+    
+    ### AC-6: Remaining risks field is present
+    
+    The template includes a `Remaining risks:` field for the practitioner to record open
+    risks at decision time.
+    
+    Verification: `Remaining risks` field present after the decision section.
+    
+    ### AC-7: Template does not present itself as a DBA stage or override Stage 7
+    
+    The template must not be labeled as a stage, must not position itself as a replacement
+    for or extension of Stage 7 reconciliation, and must not introduce new behavioral
+    alignment criteria.
+    
+    Verification: no "Stage 10" or equivalent stage label in the template; no behavioral
+    alignment criteria beyond completion-status checks.
+    
+    ### AC-8: `dba-system.md` is unchanged
+    
+    The downstream doctrine is not modified in this change.
+    
+    Verification: the file is not listed in the `What changes` table and does not appear
+    in the Step 3 implementation diff.
+    
+    ### AC-9: Stage prompts, `prompts/`, and `scripts/` are unchanged
+    
+    No stage prompts (01–09), other prompt files, or script files are modified.
+    
+    Verification: none of these paths are listed in the `What changes` table and none
+    appear in the Step 3 implementation diff.
+    
+    ---
+    
+    ## Step 3 — Implementation
+    
+    ### `templates/readiness-checklist.md` (NEW)
+    
+    New template for operational PR / pre-release readiness. Key design decisions:
+    
+    - **Header** contains the four identity fields from AC-2: Feature, Branch, Commit, PR.
+    - **Behavioral Readiness section** carries an inline note — "Completion status only — do
+      not re-run Stage 7 criteria here" — to enforce the AC-3 / AC-7 guardrail against
+      duplicating reconciliation. Covers all four behavioral checks: Stage 7 complete,
+      no unresolved GAP/MISMATCH/MISSING, Stage 8 complete, Stage 9 complete or not needed.
+    - **Operational Readiness section** lists all ten items from AC-4 verbatim: tests run,
+      tests skipped explained, CI status, no unrelated files, runtime evidence sanitized,
+      no raw secrets/PII in logs, docs updated if needed, stack/config manifest checked,
+      release notes do not overclaim, rollback/revert path known.
+    - **Decision section** presents exactly three options (AC-5) as checkboxes: READY /
+      NOT READY / READY WITH KNOWN LIMITATIONS. Checkbox format makes the selected decision
+      visible without requiring free-text interpretation.
+    - **Remaining risks** field follows the decision (AC-6).
+    - The template is not labeled as a DBA stage, not named "Stage 10," and introduces no
+      behavioral alignment criteria — satisfying AC-7.
+    - `dba-system.md`, stage prompts, `prompts/`, and `scripts/` not touched (AC-8/9).
+    
+    ---
+    
+    ## Step 4 — Reconcile
+    
+    ### AC Verification
+    
+    Note on AC-8/9: all implementation changes are uncommitted. `git diff HEAD -- <path>` confirms
+    no tracked file under that path was modified. `git status --short -- <path>` confirms no
+    untracked file was created there either. Both checks together prove the path is absent from
+    the implementation diff.
+    
+    | AC | Verification | Result |
+    |---|---|---|
+    | AC-1 | `ls templates/readiness-checklist.md` → exists; header, behavioral, operational, and decision sections present | PASS |
+    | AC-2 | `grep -E "^(Feature\|Branch\|Commit\|PR):" templates/readiness-checklist.md` → 4 hits | PASS |
+    | AC-3 | Stage 7/8/9 completion checks present; inline note "Completion status only — do not re-run Stage 7 criteria here" guards against duplication | PASS |
+    | AC-4 | `grep -E "^- (Tests run\|Tests skipped…)" … \| wc -l` → 10 | PASS |
+    | AC-5 | `grep -E "READY\|NOT READY\|KNOWN LIMITATIONS"` → exactly 3 options as checkboxes | PASS |
+    | AC-6 | `grep "Remaining risks" templates/readiness-checklist.md` → hit | PASS |
+    | AC-7 | `grep -i "stage 10" templates/readiness-checklist.md` → no match; no behavioral alignment criteria introduced | PASS |
+    | AC-8 | `git diff HEAD -- dba-system.md \| wc -l` → 0 (no tracked changes); `git status --short -- dba-system.md` → empty (no untracked) | PASS |
+    | AC-9 | `git diff HEAD -- prompts/ scripts/ \| wc -l` → 0 (no tracked changes); `git status --short -- prompts/ scripts/` → 0 lines (no untracked files created) | PASS |
+    
+    ### Cross-reference sweep
+    
+    | Reference | Target | Status |
+    |---|---|---|
+    | Change record → backlog brief | `backlog/UPG-0011-readiness-checklist.md` | OK |
+    | Change record → new template | `templates/readiness-checklist.md` | exists |
+    | backlog brief Feature Thread | CHG-20260701-003 row present, state IN_PROGRESS | OK |
+    | `status/self-development.md` UPG-0011 row | IN_PROGRESS → will mark COMPLETE on acceptance | OK |
+    | `status/roadmap.md` Wave 3 UPG-0011 row | IN_PROGRESS → will mark COMPLETE on acceptance | OK |
+    
+    No stage-table↔prompt-file drift. No orphaned links. `dba-system.md` table intentionally
+    not updated (scope boundary declared in Step 1).
+    
+    ### Reviewer scope triage
+    
+    | Finding | Round | Triage | Disposition |
+    |---|---|---|---|
+    | AC-8/9 verification only used `git diff HEAD` — doesn't prove absence of untracked files in prompts/ scripts/ | Step 4 R1 | IN-SCOPE BLOCKER | Fixed: added `git status --short -- <path>` check alongside diff; note updated to explain what each command proves |
+
+  --- backlog/UPG-0011-readiness-checklist.md (sha256: d0fa0829095cc6e51fff8342010f7a43ce755efe96c94ead3709808406300659, visibility: shown) ---
+    ---
+    feature_id: UPG-0011
+    slug: readiness-checklist
+    title: Lightweight PR / Pre-Release Readiness Checklist
+    status: PROPOSED
+    priority: P1
+    depends_on: []
+    related_features: []
+    supersedes: []
+    superseded_by: []
+    ---
+    
+    # Upgrade: readiness-checklist — Lightweight PR / Pre-Release Readiness Checklist
+    
+    **Priority**: P1
+    **Status**: PROPOSED
+    **Type**: toolkit-upgrade
+    **Related**: release-evidence-package, stack-drift-detector, verify-only-mode
+    
+    ## Problem
+    
+    Codeos reconciliation verifies behavioral alignment. It does not fully answer whether a change
+    is ready to merge or release.
+    
+    ## Upgrade
+    
+    Add a lightweight readiness checklist after Stage 8/9.
+    
+    ## Scope
+    
+    After Stage 8 replay success or Stage 9 refinement success; before merge / release / final
+    acceptance.
+    
+    ## Proposed artifact(s)
+    
+    `templates/readiness-checklist.md`
+    
+    ## Design notes
+    
+    ```markdown
+    # Readiness Checklist
+    
+    Feature:
+    Branch:
+    Commit:
+    PR:
+    
+    Behavioral readiness:
+    - Stage 7 reconciliation complete:
+    - No unresolved GAP/MISMATCH/MISSING:
+    - Stage 8 replay complete:
+    - Stage 9 refinement complete or not needed:
+    
+    Operational readiness:
+    - Tests run:
+    - Tests skipped explained:
+    - CI status:
+    - No unrelated files:
+    - Runtime evidence sanitized:
+    - No raw secrets/PII in logs:
+    - Docs updated if needed:
+    - Stack/config manifest checked if dependency/config changed:
+    - Release notes do not overclaim:
+    - Rollback/revert path known:
+    
+    Decision:
+    - READY
+    - NOT READY
+    - READY WITH KNOWN LIMITATIONS
+    
+    Remaining risks:
+    ```
+    
+    Difference from Stage 10: this is not Stage 10. Stage 10 is architectural refinement for
+    non-behavioral structural work. Readiness checklist is an operational merge/release gate.
+    
+    ## Value
+    
+    Medium-high. Useful when moving from development evidence to merge/release decision.
+    
+    ## Risk
+    
+    Overlaps with reconciliation.
+    
+    ## Guardrail
+    
+    Keep it short and operational. Do not repeat Stage 7.
+    
+    ## DBA-philosophy note
+    
+    Adds an **operational gate** distinct from the behavioral stages — it must not duplicate or
+    override Stage 7 reconciliation. Decision authority stays with the human.
+    
+    ## Feature Thread
+    
+    > Canonical thread rollup for this feature. Compact links/IDs only; full detail lives in the
+    > change records and review files. May be maintained manually.
+    
+    ### Changes
+    
+    | Change ID | File | Purpose | State |
+    |---|---|---|---|
+    | CHG-20260701-003 | `changes/UPG-0011__CHG-20260701-003__readiness-checklist.md` | New readiness-checklist template — operational PR/release gate distinct from Stage 7 reconciliation | IN_PROGRESS |
+    
+    ### Reviews
+    
+    | Review ID | Change ID | Step | Round | Verdict |
+    |---|---|---|---|---|
+    
+    ### Findings Tracked Inside This Feature
+    
+    | Finding ID | Review ID | Classification | Resolution |
+    |---|---|---|---|
+    
+    ### Follow-up Features
+    
+    | Feature ID | Reason | Source finding |
+    |---|---|---|
+
+  --- templates/readiness-checklist.md (sha256: 7374f0eb4fa42c2ef22dae916d28595c443f3f173f86a1d8c207c7f5a36914c3, visibility: shown) ---
+    # Readiness Checklist
+    
+    Feature:
+    Branch:
+    Commit:
+    PR:
+    
+    ---
+    
+    ## Behavioral Readiness
+    
+    *(Completion status only — do not re-run Stage 7 criteria here.)*
+    
+    - Stage 7 reconciliation complete:
+    - No unresolved GAP / MISMATCH / MISSING items:
+    - Stage 8 replay complete:
+    - Stage 9 refinement complete or not needed:
+    
+    ---
+    
+    ## Operational Readiness
+    
+    - Tests run:
+    - Tests skipped explained:
+    - CI status:
+    - No unrelated files:
+    - Runtime evidence sanitized:
+    - No raw secrets / PII in logs:
+    - Docs updated if needed:
+    - Stack / config manifest checked if dependency or config changed:
+    - Release notes do not overclaim:
+    - Rollback / revert path known:
+    
+    ---
+    
+    ## Decision
+    
+    - [ ] READY
+    - [ ] NOT READY
+    - [ ] READY WITH KNOWN LIMITATIONS
+    
+    Remaining risks:
+
+DIFF TO REVIEW (base->review, secret/size filtered)
+diff --git a/backlog/UPG-0011-readiness-checklist.md b/backlog/UPG-0011-readiness-checklist.md
+index 8e8895c..8749521 100644
+--- a/backlog/UPG-0011-readiness-checklist.md
++++ b/backlog/UPG-0011-readiness-checklist.md
+@@ -100,6 +100,7 @@ override Stage 7 reconciliation. Decision authority stays with the human.
+ 
+ | Change ID | File | Purpose | State |
+ |---|---|---|---|
++| CHG-20260701-003 | `changes/UPG-0011__CHG-20260701-003__readiness-checklist.md` | New readiness-checklist template — operational PR/release gate distinct from Stage 7 reconciliation | IN_PROGRESS |
+ 
+ ### Reviews
+ 
+diff --git a/status/roadmap.md b/status/roadmap.md
+index f8d9c91..f11e2cc 100644
+--- a/status/roadmap.md
++++ b/status/roadmap.md
+@@ -57,7 +57,7 @@ cheap pilot-adjacent wins early.
+ | Wave | Feature ID | Title | Priority | Depends on | Planned/active change | State |
+ |---|---|---|---|---|---|---|
+ | 3 | UPG-0010 | Verification-Only Mode | P1 | — | CHG-20260701-002 | COMPLETE |
+-| 3 | UPG-0011 | Lightweight PR / Pre-Release Readiness Checklist | P1 | — | — | PROPOSED |
++| 3 | UPG-0011 | Lightweight PR / Pre-Release Readiness Checklist | P1 | — | CHG-20260701-003 | IN_PROGRESS |
+ | 3 | UPG-0012 | Repair-Before-Next-Feature Workflow Gate | P1 | — | — | PROPOSED |
+ | 3 | UPG-0013 | Stage 4 Activation Card | P1 | — | — | PROPOSED |
+ 
+diff --git a/status/self-development.md b/status/self-development.md
+index eb73362..fb20a7b 100644
+--- a/status/self-development.md
++++ b/status/self-development.md
+@@ -37,6 +37,7 @@
+ | UPG-0007 | CHG-20260630-005 | prompt | self-dev only | 4-Reconcile | ACCEPTED (Steps 1–4 reviewed; Step 4 R2 NO OBJECTION; all 7 ACs verified) | COMPLETE | — |
+ | UPG-0033 | CHG-20260701-001 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (all 8 ACs verified; F-A investigation-first exception accepted; F-B AJ-009 deferred) | COMPLETE | — |
+ | UPG-0010 | CHG-20260701-002 | prompt | self-dev only | 4-Reconcile | ACCEPTED (Steps 1–4 reviewed; Step 4 R1 NO OBJECTION; all 7 ACs verified) | COMPLETE | — |
++| UPG-0011 | CHG-20260701-003 | template | self-dev only | 4-Reconcile | IN_REVIEW (RVS__…__S4) | IN_PROGRESS | — |
+ 
+ <!--
+ Identity   : Feature ID = UPG-#### (stable). Change ID = CHG-YYYYMMDD-NNN (one execution), or a

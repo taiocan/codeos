@@ -1814,3 +1814,121 @@ Artifact integrity (informational audit, not a gate):
   MATCH   changes/UPG-0010__CHG-20260701-002__verify-only-mode.md
   MATCH   backlog/UPG-0010-verify-only-mode.md
   MATCH   prompts/verify-only.md
+
+## 2026-07-01T15:17:52Z REVIEW — UPG-0011__CHG-20260701-003 — Stage selfdev-step-1
+Base: (no base pin)  Review: 4e80d6be3ee6b410a183c5550a7d7533cad4fd8f  Branch: selfdev/upg-0029-review-durability
+Diff-hash: fc7d952381311c05d4c23d03371999641d12d1085dd1ccc43a49a209e317c66b
+Reviewer: codex default-model (session 019f1e3f-c6aa-7c50-9bfa-6064e7203b7c)
+Effort: high   Wall time: 149969ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: B
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — Step 1 intent, scope boundary, and bookkeeping updates are internally consistent.
+Full assessment: reviews/codex/2026-07-01T151752Z-UPG-0011__CHG-20260701-003-stage-selfdev-step-1-4e80d6b.md (sha256:b9976be3a1da8b1da2152cabe19c8ca0729239cf81077341e886c97d4d7c9531)
+Reviewed packet: reviews/codex/packets/2026-07-01T151752Z-UPG-0011__CHG-20260701-003-stage-selfdev-step-1-4e80d6b.packet.txt (sha256:a12521eff59b781d8c2b21dde07d0aba42e805f0f004f209900aa19b5fd7e1b3)
+Human decision: (append with: codeos-review.sh decision UPG-0011__CHG-20260701-003 selfdev-step-1 <DECISION> "<reason>")
+
+## 2026-07-01T15:20:05Z HUMAN DECISION — UPG-0011__CHG-20260701-003 — Stage selfdev-step-1
+Commit at decision: 4e80d6be3ee6b410a183c5550a7d7533cad4fd8f
+Decision: APPROVE_STAGE
+Reason/next: R1 NO OBJECTION evidence B. Scope well-bounded, dba-system.md deferral declared. Proceeding to Step 2.
+Verified against: reviews/codex/2026-07-01T151752Z-UPG-0011__CHG-20260701-003-stage-selfdev-step-1-4e80d6b.md
+Artifact integrity (informational audit, not a gate):
+  MATCH   changes/UPG-0011__CHG-20260701-003__readiness-checklist.md
+  MATCH   backlog/UPG-0011-readiness-checklist.md
+
+## 2026-07-01T15:21:54Z REVIEW — UPG-0011__CHG-20260701-003 — Stage selfdev-step-2
+Base: (no base pin)  Review: 4e80d6be3ee6b410a183c5550a7d7533cad4fd8f  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 888fdc4b9485e8b2f361885030b8b21685a220b97357e866b982c2e77fd58b2f
+Reviewer: codex default-model (session 019f1e3f-c6aa-7c50-9bfa-6064e7203b7c)
+Effort: high   Wall time: 61013ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: B
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — Step 2 acceptance criteria are explicit, traceable to the backlog brief, and stay within the declared scope.
+Full assessment: reviews/codex/2026-07-01T152154Z-UPG-0011__CHG-20260701-003-stage-selfdev-step-2-4e80d6b.md (sha256:670034eabe625bb15cd1724a1b7a2f528bdb57ef91dd973a5035a7851726bf2b)
+Reviewed packet: reviews/codex/packets/2026-07-01T152154Z-UPG-0011__CHG-20260701-003-stage-selfdev-step-2-4e80d6b.packet.txt (sha256:757f9d0e3541e4f26970ce9fa23cf793e1ced829d37144818e7358a706e12e90)
+Human decision: (append with: codeos-review.sh decision UPG-0011__CHG-20260701-003 selfdev-step-2 <DECISION> "<reason>")
+
+## 2026-07-01T15:28:45Z HUMAN DECISION — UPG-0011__CHG-20260701-003 — Stage selfdev-step-2
+Commit at decision: 4e80d6be3ee6b410a183c5550a7d7533cad4fd8f
+Decision: APPROVE_STAGE
+Reason/next: R1 NO OBJECTION evidence B. All 9 ACs accepted. Proceeding to Step 3.
+Verified against: reviews/codex/2026-07-01T152154Z-UPG-0011__CHG-20260701-003-stage-selfdev-step-2-4e80d6b.md
+Artifact integrity (informational audit, not a gate):
+  MATCH   changes/UPG-0011__CHG-20260701-003__readiness-checklist.md
+  MATCH   backlog/UPG-0011-readiness-checklist.md
+
+## 2026-07-01T15:30:21Z REVIEW — UPG-0011__CHG-20260701-003 — Stage selfdev-step-3
+Base: (no base pin)  Review: 4e80d6be3ee6b410a183c5550a7d7533cad4fd8f  Branch: selfdev/upg-0029-review-durability
+Diff-hash: a512b6a87105472d6abf1ef1b6479a22ef149056bf0fcdd35296afdc9f610293
+Reviewer: codex default-model (session 019f1e3f-c6aa-7c50-9bfa-6064e7203b7c)
+Effort: high   Wall time: 55072ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — the new readiness checklist template matches the stated acceptance criteria and stays within scope.
+Full assessment: reviews/codex/2026-07-01T153021Z-UPG-0011__CHG-20260701-003-stage-selfdev-step-3-4e80d6b.md (sha256:454a34532a83a0401e59976b151239464fc272c8a333615f62e8c68ed4b0f9bd)
+Reviewed packet: reviews/codex/packets/2026-07-01T153021Z-UPG-0011__CHG-20260701-003-stage-selfdev-step-3-4e80d6b.packet.txt (sha256:6bc5997de56d5ad9f32b2820f1e8b19a99a9a6ec244fcff85fa761ec8b6ae3ef)
+Human decision: (append with: codeos-review.sh decision UPG-0011__CHG-20260701-003 selfdev-step-3 <DECISION> "<reason>")
+
+## 2026-07-01T15:32:07Z HUMAN DECISION — UPG-0011__CHG-20260701-003 — Stage selfdev-step-3
+Commit at decision: 4e80d6be3ee6b410a183c5550a7d7533cad4fd8f
+Decision: APPROVE_STAGE
+Reason/next: R1 NO OBJECTION evidence A. All 9 ACs satisfied. Proceeding to Step 4.
+Verified against: reviews/codex/2026-07-01T153021Z-UPG-0011__CHG-20260701-003-stage-selfdev-step-3-4e80d6b.md
+Artifact integrity (informational audit, not a gate):
+  MATCH   changes/UPG-0011__CHG-20260701-003__readiness-checklist.md
+  MATCH   backlog/UPG-0011-readiness-checklist.md
+  MATCH   templates/readiness-checklist.md
+
+## 2026-07-01T15:34:05Z REVIEW — UPG-0011__CHG-20260701-003 — Stage selfdev-step-4
+Base: (no base pin)  Review: 4e80d6be3ee6b410a183c5550a7d7533cad4fd8f  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 08dd9cda004dbc714e679ac823486aaa928d712b74e8bec4905a34688423a013
+Reviewer: codex default-model (session 019f1e3f-c6aa-7c50-9bfa-6064e7203b7c)
+Effort: high   Wall time: 74244ms   Reconnects: 0
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: B
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: CHANGES ADVISED — AC-8/9 are marked PASS using a verification method that does not prove absence of untracked out-of-scope changes in a dirty workspace.
+Full assessment: reviews/codex/2026-07-01T153405Z-UPG-0011__CHG-20260701-003-stage-selfdev-step-4-4e80d6b.md (sha256:f714f75c9ca46b3b70ccbe49a954200f5f2b4d0c33e913b7d958c027c112af6b)
+Reviewed packet: reviews/codex/packets/2026-07-01T153405Z-UPG-0011__CHG-20260701-003-stage-selfdev-step-4-4e80d6b.packet.txt (sha256:98b7aafd3005dab247b1f2c780e0d569147c148693851c95dfbf9e78fcf7bef9)
+Human decision: (append with: codeos-review.sh decision UPG-0011__CHG-20260701-003 selfdev-step-4 <DECISION> "<reason>")
+
+## 2026-07-01T15:35:07Z HUMAN DECISION — UPG-0011__CHG-20260701-003 — Stage selfdev-step-4
+Commit at decision: 4e80d6be3ee6b410a183c5550a7d7533cad4fd8f
+Decision: REQUEST_CHANGES
+Reason/next: Finding legitimate: git diff HEAD does not detect untracked files. Fix: added git status --short -- <path> alongside diff check; updated note to explain what each command proves.
+Verified against: reviews/codex/2026-07-01T153405Z-UPG-0011__CHG-20260701-003-stage-selfdev-step-4-4e80d6b.md
+Artifact integrity (informational audit, not a gate):
+  CHANGED changes/UPG-0011__CHG-20260701-003__readiness-checklist.md (reviewed 4aefe12791b1 / now bdbb6c3dcea3)
+  MATCH   backlog/UPG-0011-readiness-checklist.md
+  MATCH   templates/readiness-checklist.md
+
+## 2026-07-01T15:36:03Z REVIEW — UPG-0011__CHG-20260701-003 — Stage selfdev-step-4
+Base: (no base pin)  Review: 4e80d6be3ee6b410a183c5550a7d7533cad4fd8f  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 08dd9cda004dbc714e679ac823486aaa928d712b74e8bec4905a34688423a013
+Reviewer: codex default-model (session 019f1e3f-c6aa-7c50-9bfa-6064e7203b7c)
+Effort: high   Wall time: 55848ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — the reconcile record now supports AC-8/9 and the template satisfies the stated acceptance criteria.
+Full assessment: reviews/codex/2026-07-01T153603Z-UPG-0011__CHG-20260701-003-stage-selfdev-step-4-4e80d6b.md (sha256:c4d368a68ae06cdbfa5f81d1253c972b51d53d9a0ecceafd5730352be8298757)
+Reviewed packet: reviews/codex/packets/2026-07-01T153603Z-UPG-0011__CHG-20260701-003-stage-selfdev-step-4-4e80d6b.packet.txt (sha256:f63e6cf279d5fec4d9d56aea883a346cabbccbd358507872f699a50b6a3293af)
+Human decision: (append with: codeos-review.sh decision UPG-0011__CHG-20260701-003 selfdev-step-4 <DECISION> "<reason>")
+
+## 2026-07-01T15:39:40Z HUMAN DECISION — UPG-0011__CHG-20260701-003 — Stage selfdev-step-4
+Commit at decision: 4e80d6be3ee6b410a183c5550a7d7533cad4fd8f
+Decision: APPROVE_STAGE
+Reason/next: R2 NO OBJECTION evidence A. All 9 ACs verified. All findings resolved. Marking COMPLETE.
+Verified against: reviews/codex/2026-07-01T153603Z-UPG-0011__CHG-20260701-003-stage-selfdev-step-4-4e80d6b.md
+Artifact integrity (informational audit, not a gate):
+  MATCH   changes/UPG-0011__CHG-20260701-003__readiness-checklist.md
+  MATCH   backlog/UPG-0011-readiness-checklist.md
+  MATCH   templates/readiness-checklist.md

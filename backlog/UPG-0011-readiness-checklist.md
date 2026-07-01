@@ -100,6 +100,7 @@ override Stage 7 reconciliation. Decision authority stays with the human.
 
 | Change ID | File | Purpose | State |
 |---|---|---|---|
+| CHG-20260701-003 | `changes/UPG-0011__CHG-20260701-003__readiness-checklist.md` | New readiness-checklist template — operational PR/release gate distinct from Stage 7 reconciliation | COMPLETE |
 
 ### Reviews
 
