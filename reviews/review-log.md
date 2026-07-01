@@ -2533,3 +2533,137 @@ Artifact integrity (informational audit, not a gate):
   MATCH   changes/UPG-0009__CHG-20260701-007__feature-registry.md
   MATCH   templates/feature-registry.yaml
   MATCH   backlog/UPG-0009-feature-registry.md
+
+## 2026-07-01T19:55:16Z REVIEW — UPG-0006__CHG-20260701-008 — Stage selfdev-step-1
+Base: (no base pin)  Review: 1c3e758505292e219a08a8b319a763c4575164d3  Branch: selfdev/upg-0029-review-durability
+Diff-hash: e78d8cf821d3b83c4f1a20375d8950863d880c7ce4a16baa1e37f5828effba99
+Reviewer: codex default-model (session 019f1f3d-6034-75b0-a0e6-d3901ac83b82)
+Effort: high   Wall time: 173430ms   Reconnects: 0
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: CHANGES ADVISED — the packet’s own source artifacts disagree on whether `EVIDENCE:` is optional or mandatory, and the claimed backlog/thread update is not present
+Full assessment: reviews/codex/2026-07-01T195516Z-UPG-0006__CHG-20260701-008-stage-selfdev-step-1-1c3e758.md (sha256:75f69a767149d4fd6f4ecc2645d9c4d8b75bc0f7261f69f27879a6b1f0cf1619)
+Reviewed packet: reviews/codex/packets/2026-07-01T195516Z-UPG-0006__CHG-20260701-008-stage-selfdev-step-1-1c3e758.packet.txt (sha256:3ece76d74917fa2087872e37928c60667dab3cdaca7e1623335ea7f8d4659d85)
+Human decision: (append with: codeos-review.sh decision UPG-0006__CHG-20260701-008 selfdev-step-1 <DECISION> "<reason>")
+
+## 2026-07-01T19:56:35Z HUMAN DECISION — UPG-0006__CHG-20260701-008 — Stage selfdev-step-1
+Commit at decision: 1c3e758505292e219a08a8b319a763c4575164d3
+Decision: REQUEST_CHANGES
+Reason/next: F1: backlog brief still said 'optional EVIDENCE line'. Fixed: updated backlog to reflect mandatory EVIDENCE, new A-E definitions, and the three-line output format (LOG SUMMARY + EVIDENCE + HIGHEST-IMPACT UNCERTAINTY). F2: Feature Thread table in backlog had no entry for CHG-20260701-008. Fixed: added row. F3: parser-compatibility claim ('does not break the existing parser') was asserted without evidence. Fixed: removed the compatibility assertion; now simply states the field is not machine-parsed in this change and parser scope is deferred.
+Verified against: reviews/codex/2026-07-01T195516Z-UPG-0006__CHG-20260701-008-stage-selfdev-step-1-1c3e758.md
+Artifact integrity (informational audit, not a gate):
+  CHANGED changes/UPG-0006__CHG-20260701-008__reviewer-quality-scale.md (reviewed 62232ebb034c / now ff0543a43d9a)
+  CHANGED backlog/UPG-0006-reviewer-quality-scale.md (reviewed 19103992ca24 / now dbe928c9e325)
+
+## 2026-07-01T19:58:25Z REVIEW — UPG-0006__CHG-20260701-008 — Stage selfdev-step-1
+Base: (no base pin)  Review: 1c3e758505292e219a08a8b319a763c4575164d3  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 5b37cc6d8656cb3b97d3c3409a9d3237acd190894f2d05d2797b13bd6acae0e2
+Reviewer: codex default-model (session 019f1f3d-6034-75b0-a0e6-d3901ac83b82)
+Effort: high   Wall time: 109027ms   Reconnects: 0
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: CHANGES ADVISED — the packet still shows the old two-line optional-`EVIDENCE` reviewer-task footer, contradicting the artifact’s claim that this change makes it mandatory and adds `HIGHEST-IMPACT UNCERTAINTY`
+Full assessment: reviews/codex/2026-07-01T195825Z-UPG-0006__CHG-20260701-008-stage-selfdev-step-1-1c3e758.md (sha256:737ec85860fef9102caf14c2909b574814ae563e039133285e3b691af12c24f7)
+Reviewed packet: reviews/codex/packets/2026-07-01T195825Z-UPG-0006__CHG-20260701-008-stage-selfdev-step-1-1c3e758.packet.txt (sha256:8f4c34b439c1383ba2920cb257e51c20925f59e46233bc5b73d341e161a605cd)
+Human decision: (append with: codeos-review.sh decision UPG-0006__CHG-20260701-008 selfdev-step-1 <DECISION> "<reason>")
+
+## 2026-07-01T19:59:35Z HUMAN DECISION — UPG-0006__CHG-20260701-008 — Stage selfdev-step-1
+Commit at decision: 1c3e758505292e219a08a8b319a763c4575164d3
+Decision: REQUEST_CHANGES
+Reason/next: F1: reviewer saw codeos-reviewer-task.md (its own task prompt) still showing EVIDENCE as optional, which contradicted the change record's claim that this change makes it mandatory. The contradiction exists because Step 1 documents intent; the prompt files are not yet changed (that is Step 3). Fixed: added 'Current state vs. proposed state' table to Step 1 that explicitly shows what the files currently say vs. what Step 3 will change them to, and notes that the contradiction is intentional and resolves at Step 3.
+Verified against: reviews/codex/2026-07-01T195825Z-UPG-0006__CHG-20260701-008-stage-selfdev-step-1-1c3e758.md
+Artifact integrity (informational audit, not a gate):
+  CHANGED changes/UPG-0006__CHG-20260701-008__reviewer-quality-scale.md (reviewed ff0543a43d9a / now eec12208dd41)
+  MATCH   backlog/UPG-0006-reviewer-quality-scale.md
+
+## 2026-07-01T20:01:20Z REVIEW — UPG-0006__CHG-20260701-008 — Stage selfdev-step-1
+Base: (no base pin)  Review: 1c3e758505292e219a08a8b319a763c4575164d3  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 5b37cc6d8656cb3b97d3c3409a9d3237acd190894f2d05d2797b13bd6acae0e2
+Reviewer: codex default-model (session 019f1f3d-6034-75b0-a0e6-d3901ac83b82)
+Effort: high   Wall time: 103687ms   Reconnects: 0
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: CHANGES ADVISED — the artifact’s own scope text understates and misstates what this Step 1 packet changes
+Full assessment: reviews/codex/2026-07-01T200120Z-UPG-0006__CHG-20260701-008-stage-selfdev-step-1-1c3e758.md (sha256:c6c4ac43b1349e0dcf158f360dc7a270fe6ee631ae66e548ccdf7f7df418e9cf)
+Reviewed packet: reviews/codex/packets/2026-07-01T200120Z-UPG-0006__CHG-20260701-008-stage-selfdev-step-1-1c3e758.packet.txt (sha256:e82178c2994a95acacf90806ff7094e21083b79216e2ba9a7e4c86224bebbd50)
+Human decision: (append with: codeos-review.sh decision UPG-0006__CHG-20260701-008 selfdev-step-1 <DECISION> "<reason>")
+
+## 2026-07-01T20:02:01Z HUMAN DECISION — UPG-0006__CHG-20260701-008 — Stage selfdev-step-1
+Commit at decision: 1c3e758505292e219a08a8b319a763c4575164d3
+Decision: REQUEST_CHANGES
+Reason/next: R3 BUDGET LIMIT — fixing inline, escalating to human. F1: backlog file row in 'What changes' table only said 'Feature Thread: add this change' but the packet showed the file was also updated with status change (PROPOSED→IN_PROGRESS) and revised design notes. Fixed: row now accurately describes all changes to the backlog brief. F2: 'Reviewer prompt files only' in scope-axis section was false since backlog, status, and roadmap files are also changing. Fixed: replaced with accurate list of all changed file categories.
+Verified against: reviews/codex/2026-07-01T200120Z-UPG-0006__CHG-20260701-008-stage-selfdev-step-1-1c3e758.md
+Artifact integrity (informational audit, not a gate):
+  CHANGED changes/UPG-0006__CHG-20260701-008__reviewer-quality-scale.md (reviewed eec12208dd41 / now c268da135ad6)
+  MATCH   backlog/UPG-0006-reviewer-quality-scale.md
+
+## 2026-07-01T20:07:09Z REVIEW — UPG-0006__CHG-20260701-008 — Stage selfdev-step-2
+Base: (no base pin)  Review: 1c3e758505292e219a08a8b319a763c4575164d3  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 569790aefd66c9d9d757af277f1581516784bd80bc6ed0b005e0046168741089
+Reviewer: codex default-model (session 019f1f3d-6034-75b0-a0e6-d3901ac83b82)
+Effort: high   Wall time: 122271ms   Reconnects: 0
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: CHANGES ADVISED — the Step 2 artifact still has internal trace/scope contradictions that make the acceptance contract unreliable
+Full assessment: reviews/codex/2026-07-01T200709Z-UPG-0006__CHG-20260701-008-stage-selfdev-step-2-1c3e758.md (sha256:10b82f5b9fe93eb6779a34513c323143ce4e4b42bd2aa13809c82bb32b183d03)
+Reviewed packet: reviews/codex/packets/2026-07-01T200709Z-UPG-0006__CHG-20260701-008-stage-selfdev-step-2-1c3e758.packet.txt (sha256:72c1a3b185723b159c497ec55ced19a342b2e4783d2a7ceeb47d7ced6855ca67)
+Human decision: (append with: codeos-review.sh decision UPG-0006__CHG-20260701-008 selfdev-step-2 <DECISION> "<reason>")
+
+## 2026-07-01T20:08:12Z HUMAN DECISION — UPG-0006__CHG-20260701-008 — Stage selfdev-step-2
+Commit at decision: 1c3e758505292e219a08a8b319a763c4575164d3
+Decision: REQUEST_CHANGES
+Reason/next: F1: TRACE HEADER yaml block still had S1 for review_series. Fixed: updated to S2 (frontmatter was updated but TRACE HEADER block was missed). F2: scope text said 'stage prompts 01-09' but AC-6 checked prompts/01- through prompts/10- (including 10-arch-refine). Fixed: scope text now consistently says prompts/01- through prompts/10-. F3: scope-axis summary listed backlog/features.md as a changed bookkeeping file but it is not in the What changes table and is not being modified. Fixed: scope-axis text now lists only the actual changed files and explicitly states backlog/features.md is not modified.
+Verified against: reviews/codex/2026-07-01T200709Z-UPG-0006__CHG-20260701-008-stage-selfdev-step-2-1c3e758.md
+Artifact integrity (informational audit, not a gate):
+  CHANGED changes/UPG-0006__CHG-20260701-008__reviewer-quality-scale.md (reviewed 5f22bb9719c0 / now 369243beb367)
+  MATCH   backlog/UPG-0006-reviewer-quality-scale.md
+
+## 2026-07-01T20:10:40Z REVIEW — UPG-0006__CHG-20260701-008 — Stage selfdev-step-2
+Base: (no base pin)  Review: 1c3e758505292e219a08a8b319a763c4575164d3  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 569790aefd66c9d9d757af277f1581516784bd80bc6ed0b005e0046168741089
+Reviewer: codex default-model (session 019f1f3d-6034-75b0-a0e6-d3901ac83b82)
+Effort: high   Wall time: 147538ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — the Step 2 artifact now has a consistent in-scope acceptance contract and does not overclaim implementation
+Full assessment: reviews/codex/2026-07-01T201040Z-UPG-0006__CHG-20260701-008-stage-selfdev-step-2-1c3e758.md (sha256:f6be6a207545e8c092444f3af78e48479ea196df2ce91e66445317d8d4b2ec59)
+Reviewed packet: reviews/codex/packets/2026-07-01T201040Z-UPG-0006__CHG-20260701-008-stage-selfdev-step-2-1c3e758.packet.txt (sha256:2bbde9e863c5f0b72e703938f1d69fe52bee37c225cf05487319daab172f601d)
+Human decision: (append with: codeos-review.sh decision UPG-0006__CHG-20260701-008 selfdev-step-2 <DECISION> "<reason>")
+
+## 2026-07-01T20:15:25Z REVIEW — UPG-0006__CHG-20260701-008 — Stage selfdev-step-3
+Base: (no base pin)  Review: 1c3e758505292e219a08a8b319a763c4575164d3  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 980db8b3f2944c46c963c40def68623826e536589369c9caa82c93d859381073
+Reviewer: codex default-model (session 019f1f3d-6034-75b0-a0e6-d3901ac83b82)
+Effort: high   Wall time: 80495ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — the Step 3 packet directly shows the required prompt updates and no in-scope contradiction or scope drift
+Full assessment: reviews/codex/2026-07-01T201525Z-UPG-0006__CHG-20260701-008-stage-selfdev-step-3-1c3e758.md (sha256:fbb743ece83fb449fc2f301e7138d845929f6e88ed792acc0d164194e127e12a)
+Reviewed packet: reviews/codex/packets/2026-07-01T201525Z-UPG-0006__CHG-20260701-008-stage-selfdev-step-3-1c3e758.packet.txt (sha256:30e0842700492d428d6643ce2ae70e111df8c121248e4ed50b68115f7a3eb1af)
+Human decision: (append with: codeos-review.sh decision UPG-0006__CHG-20260701-008 selfdev-step-3 <DECISION> "<reason>")
+
+## 2026-07-01T20:18:33Z REVIEW — UPG-0006__CHG-20260701-008 — Stage selfdev-step-4
+Base: (no base pin)  Review: 1c3e758505292e219a08a8b319a763c4575164d3  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 70b054cc8ec0923e84ced814d27108c7fc0e33d0495d06d586346c28c5661619
+Reviewer: codex default-model (session 019f1f3d-6034-75b0-a0e6-d3901ac83b82)
+Effort: high   Wall time: 60699ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — the Step 4 packet directly supports all stated acceptance criteria and shows no in-scope contradiction or scope drift
+Full assessment: reviews/codex/2026-07-01T201833Z-UPG-0006__CHG-20260701-008-stage-selfdev-step-4-1c3e758.md (sha256:651977421c0af833e8f4b75bbbf68d8dad45f92556f0b525afb5ced7b7db3eec)
+Reviewed packet: reviews/codex/packets/2026-07-01T201833Z-UPG-0006__CHG-20260701-008-stage-selfdev-step-4-1c3e758.packet.txt (sha256:44aef7e17a3ceab8a008591bb350d59b106e9dc8b02221132e83b3b343573659)
+Human decision: (append with: codeos-review.sh decision UPG-0006__CHG-20260701-008 selfdev-step-4 <DECISION> "<reason>")

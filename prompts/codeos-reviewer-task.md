@@ -60,8 +60,16 @@ INSTRUCTIONS
   Then emit:
     PR decision: ADVANCE | REQUEST CHANGES | DO NOT ADVANCE   (based ONLY on in-scope blockers)
     Scope drift warning: yes|no — <is anything pulling this PR beyond its stated scope?>
-  Then on the LAST two lines emit exactly (map ADVANCE->NO OBJECTION,
+  Then on the LAST three lines emit exactly (map ADVANCE->NO OBJECTION,
   REQUEST CHANGES->CHANGES ADVISED, DO NOT ADVANCE->DO NOT ADVANCE):
     LOG SUMMARY: <NO OBJECTION | CHANGES ADVISED | DO NOT ADVANCE | UNCLASSIFIED> — <single most important point>
       (use UNCLASSIFIED if you genuinely cannot classify the artifact safely)
-    EVIDENCE: <A|B|C|D|E>   (optional)
+    EVIDENCE: <A|B|C|D|E>
+    HIGHEST-IMPACT UNCERTAINTY: <one sentence — what single thing, if wrong, most affects this assessment>
+
+  Evidence grade — the grade describes what the assessment rests on, not reviewer confidence:
+    A — Directly verified in the artifact, diff, or output shown in the packet
+    B — Verified with multiple direct pieces of evidence, but coverage is not complete
+    C — Partially verified, partially inferred from structure or context
+    D — Mostly inferred from structure or indirect evidence
+    E — Hypothesis or very limited basis — little to no direct evidence

@@ -44,7 +44,7 @@ cheap pilot-adjacent wins early.
 |---|---|---|---|---|---|---|
 | 1 | UPG-0004 | Structured Stage 4–6 Reports | P0 | — | CHG-20260630-001 | COMPLETE |
 | 1 | UPG-0005 | Current Verified State Block | P0 | — | CHG-20260630-004 | COMPLETE |
-| 1 | UPG-0006 | Reviewer Summary Quality Scale | P2 | UPG-0003 ✓ | — | PROPOSED (partly piloted) |
+| 1 | UPG-0006 | Reviewer Summary Quality Scale | P2 | UPG-0003 ✓ | CHG-20260701-008 | COMPLETE |
 
 ### Wave 2 — Discovery & registry
 | Wave | Feature ID | Title | Priority | Depends on | Planned/active change | State |
@@ -97,8 +97,7 @@ cheap pilot-adjacent wins early.
 
 ## Immediate next pickups
 
-1. **UPG-0006 — Reviewer Summary Quality Scale** (Wave 1, P2, UPG-0003 ✓) — next open Wave 1 item after UPG-0005 completion.
-2. UPG-0007 — Expanded 00b Solution Discovery / Feature Topology (Wave 2, P0, no deps).
+Wave 1 complete. Wave 2 complete. Wave 3 complete. Next: Wave 4 — UPG-0032 Rust Reviewer Engine (PROPOSED, no active change yet).
 
 Each is taken as its own self-dev change (a fresh `CHG-*`) via the 4-step loop, with human
 approval at every gate.

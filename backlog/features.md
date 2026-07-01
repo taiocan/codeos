@@ -36,14 +36,14 @@ The goal is to speed up Codeos development without weakening DBA advantages.
 | UPG-0003 | [UPG-0003-reviewer-decision-brief.md](UPG-0003-reviewer-decision-brief.md) | Reviewer Agent for Stage-Gate Decision Briefs | P0 | PILOTED |
 | UPG-0004 | [UPG-0004-stage-4-6-reports.md](UPG-0004-stage-4-6-reports.md) | Structured Stage 4–6 Reports | P0 | PROPOSED |
 | UPG-0005 | [UPG-0005-current-verified-state.md](UPG-0005-current-verified-state.md) | Current Verified State Block | P0 | COMPLETE |
-| UPG-0006 | [UPG-0006-reviewer-quality-scale.md](UPG-0006-reviewer-quality-scale.md) | Reviewer Summary Quality Scale | P2 | PROPOSED |
-| UPG-0007 | [UPG-0007-solution-discovery-00b.md](UPG-0007-solution-discovery-00b.md) | Expanded 00b Solution Discovery / Feature Topology | P0 | PROPOSED |
-| UPG-0008 | [UPG-0008-config-discovery.md](UPG-0008-config-discovery.md) | Configuration Discovery & Schema Track | P2 | PROPOSED |
+| UPG-0006 | [UPG-0006-reviewer-quality-scale.md](UPG-0006-reviewer-quality-scale.md) | Reviewer Summary Quality Scale | P2 | COMPLETE |
+| UPG-0007 | [UPG-0007-solution-discovery-00b.md](UPG-0007-solution-discovery-00b.md) | Expanded 00b Solution Discovery / Feature Topology | P0 | COMPLETE |
+| UPG-0008 | [UPG-0008-config-discovery.md](UPG-0008-config-discovery.md) | Configuration Discovery & Schema Track | P2 | COMPLETE |
 | UPG-0009 | [UPG-0009-feature-registry.md](UPG-0009-feature-registry.md) | Feature Registry / Branch Binding | P2 | COMPLETE |
-| UPG-0010 | [UPG-0010-verify-only-mode.md](UPG-0010-verify-only-mode.md) | Verification-Only Mode | P1 | PROPOSED |
-| UPG-0011 | [UPG-0011-readiness-checklist.md](UPG-0011-readiness-checklist.md) | Lightweight PR / Pre-Release Readiness Checklist | P1 | PROPOSED |
-| UPG-0012 | [UPG-0012-repair-before-next-feature.md](UPG-0012-repair-before-next-feature.md) | Repair-Before-Next-Feature Workflow Gate | P1 | PROPOSED |
-| UPG-0013 | [UPG-0013-stage-4-activation-card.md](UPG-0013-stage-4-activation-card.md) | Stage 4 Activation Card | P1 | PROPOSED |
+| UPG-0010 | [UPG-0010-verify-only-mode.md](UPG-0010-verify-only-mode.md) | Verification-Only Mode | P1 | COMPLETE |
+| UPG-0011 | [UPG-0011-readiness-checklist.md](UPG-0011-readiness-checklist.md) | Lightweight PR / Pre-Release Readiness Checklist | P1 | COMPLETE |
+| UPG-0012 | [UPG-0012-repair-before-next-feature.md](UPG-0012-repair-before-next-feature.md) | Repair-Before-Next-Feature Workflow Gate | P1 | COMPLETE |
+| UPG-0013 | [UPG-0013-stage-4-activation-card.md](UPG-0013-stage-4-activation-card.md) | Stage 4 Activation Card | P1 | COMPLETE |
 | UPG-0014 | [UPG-0014-reviewer-full-diff.md](UPG-0014-reviewer-full-diff.md) | Reviewer Agent with Full Diff Access | P2 | PROPOSED |
 | UPG-0015 | [UPG-0015-reviewer-decision-integrity.md](UPG-0015-reviewer-decision-integrity.md) | Bind stage approval to reviewed provenance | P1 | PROPOSED |
 | UPG-0016 | [UPG-0016-workflow-profiles.md](UPG-0016-workflow-profiles.md) | Branch / PR / CI Workflow Profiles | P1 | PROPOSED |

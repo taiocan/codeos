@@ -2,7 +2,7 @@
 feature_id: UPG-0006
 slug: reviewer-quality-scale
 title: Reviewer Summary Quality Scale
-status: PROPOSED
+status: COMPLETE
 priority: P2
 depends_on: []
 related_features: []
@@ -13,7 +13,7 @@ superseded_by: []
 # Upgrade: reviewer-quality-scale — Reviewer Summary Quality Scale
 
 **Priority**: P2
-**Status**: PROPOSED
+**Status**: COMPLETE
 **Type**: toolkit-upgrade
 **Related**: reviewer-decision-brief, reviewer-full-diff
 
@@ -35,27 +35,26 @@ Evidence-quality scale embedded in reviewer output.
 
 ## Design notes
 
-Proposed scale:
+Approved scale (evidence basis, not confidence):
 
 ```text
-A — Direct evidence from artifact/diff/test/runtime log
-B — Strong inference from code and tests
-C — Plausible but not directly proven
-D — Speculative
-E — Unknown / not reviewed
+A — Directly verified in the artifact, diff, or output shown in the packet
+B — Verified with multiple direct pieces of evidence, but coverage is not complete
+C — Partially verified, partially inferred from structure or context
+D — Mostly inferred from structure or indirect evidence
+E — Hypothesis or very limited basis — little to no direct evidence
 ```
 
-Every recommendation should include:
+Mandatory output fields (last three lines of reviewer output):
 
-```markdown
-Recommendation:
-Evidence quality:
-Most important uncertainty:
-What human should inspect if time is limited:
+```
+LOG SUMMARY: <verdict> — <single most important point>
+EVIDENCE: <A|B|C|D|E>
+HIGHEST-IMPACT UNCERTAINTY: <one sentence — what single thing, if wrong, most affects this assessment>
 ```
 
-> In the automated pipeline this is the optional `EVIDENCE: <A–E>` line. It is only "implemented"
-> when the reviewer actually emits it; otherwise the log records `Evidence: not reported`.
+> `EVIDENCE:` is **mandatory** in CHG-20260701-008. `HIGHEST-IMPACT UNCERTAINTY:` is emitted
+> but not machine-parsed in this change (parser scope is deferred).
 
 ## Value
 
@@ -83,6 +82,7 @@ No rule touched. Improves reviewer honesty (separates conviction from evidence).
 
 | Change ID | File | Purpose | State |
 |---|---|---|---|
+| CHG-20260701-008 | `changes/UPG-0006__CHG-20260701-008__reviewer-quality-scale.md` | Make EVIDENCE mandatory, redefine A–E as evidence-basis semantics, add HIGHEST-IMPACT UNCERTAINTY field | COMPLETE |
 
 ### Reviews
 

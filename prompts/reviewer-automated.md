@@ -108,11 +108,12 @@ or false"** from **"a stronger future system would also need X."** Only the form
 
 ## Machine-parsed summary line (parser compatibility)
 
-After the triage section, the reviewer emits, on the **last two lines**, exactly:
+After the triage section, the reviewer emits, on the **last three lines**, exactly:
 
 ```
 LOG SUMMARY: <NO OBJECTION | CHANGES ADVISED | DO NOT ADVANCE | UNCLASSIFIED> — <single most important point>
-EVIDENCE: <A|B|C|D|E>     (optional)
+EVIDENCE: <A|B|C|D|E>
+HIGHEST-IMPACT UNCERTAINTY: <one sentence — what single thing, if wrong, most affects this assessment>
 ```
 
 The pipeline parses only this `LOG SUMMARY` line (no new parser/validator is added in v0). Map the
@@ -141,16 +142,20 @@ least as severe, when evidence coverage was partial or content was withheld (see
 rules in `docs/reviewer-artifact-schemas.md`). Both the raw Codex concern and the effective concern
 are logged; the human acts on the effective concern.
 
-## Evidence grade (optional — backlog #13)
+## Evidence grade
 
-- **A** — Direct evidence from artifact/diff/test/runtime log
-- **B** — Strong inference from code and tests
-- **C** — Plausible but not directly proven
-- **D** — Speculative
-- **E** — Unknown / not reviewed
+The grade describes **what the assessment rests on**, not how certain the reviewer feels.
+A reviewer working from a direct diff result gives A even if the result is unexpected.
+A reviewer inferring from file structure gives D even if the inference seems obvious.
 
-If the reviewer does not emit `EVIDENCE:`, the log records `Evidence: not reported`. Evidence
-grading is only considered "implemented" once the reviewer actually emits it.
+- **A** — Directly verified in the artifact, diff, or output shown in the packet
+- **B** — Verified with multiple direct pieces of evidence, but coverage is not complete
+- **C** — Partially verified, partially inferred from structure or context
+- **D** — Mostly inferred from structure or indirect evidence
+- **E** — Hypothesis or very limited basis — little to no direct evidence
+
+`EVIDENCE:` is required. `HIGHEST-IMPACT UNCERTAINTY:` names the single thing that, if
+wrong, would most affect the correctness of the assessment.
 
 ## Stage-specific checklists
 
