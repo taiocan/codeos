@@ -58,6 +58,26 @@ Report each directory as a one-line list of filenames.
 After completing 3a–3c, state:
 `CURRENT STATE VERIFIED — Branch: <branch>, Commit: <sha>, Tree: <clean|dirty>, Feature: <id|none>, Stage: <N|unknown>`
 
+**Repair-Before-Next-Feature check:** Before proceeding to Step 4, check whether the
+current feature (if any) has any of the following unresolved:
+
+- Unresolved Stage 7 GAP / MISMATCH / MISSING
+- Stage 8 replay failure
+- Required Stage 9 refinement not yet done
+- Stage 10 structural blocker
+- Failing CI
+- Unresolved reviewer BLOCK
+- Unresolved pre-release blocker
+
+If any of the above are unresolved and the intent is to start a **new behavioral feature**,
+surface this to the human before proceeding. Routing:
+- Behavioral issue (Stage 7/8/9) → Stage 9 targeted refinement, or rerun the affected stage.
+- Structural issue → Stage 10 architectural refinement.
+- Release / package issue → Readiness checklist / resolve the release blocker.
+
+**Human override:** The human may suspend the current feature and start another. If so, the
+suspended feature must be marked blocked / incomplete — its evidence chain is not abandoned.
+
 Then proceed to Step 4.
 
 ---

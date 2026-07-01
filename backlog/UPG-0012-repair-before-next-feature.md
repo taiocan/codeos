@@ -85,6 +85,7 @@ feature must stay marked blocked so the evidence chain is never silently abandon
 
 | Change ID | File | Purpose | State |
 |---|---|---|---|
+| CHG-20260701-004 | `changes/UPG-0012__CHG-20260701-004__repair-before-next-feature.md` | Add repair-before-next-feature rule to 00-session-start.md with 7 blocking conditions and human-override clause | COMPLETE |
 
 ### Reviews
 
