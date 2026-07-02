@@ -213,3 +213,29 @@ correct behavior.
 **Corollary:** When the reviewer begins repeating claims or finding style points, that is when
 to exercise the advisory override and advance. When it finds new structural correctness issues,
 fix them.
+
+---
+
+## AJ-011 — CRITICAL_OMISSION / EMPTY_PACKET are software-enforced stops, not human-non-overridable guarantees
+
+**Origin:** UPG-0015 / CHG-20260702-002 Step 1, F1 (2026-07-02).
+
+These two coverage states mean the reviewer was given incomplete or empty evidence. The
+instinct to call them "non-overridable hard stops" is architecturally wrong for Codeos,
+because DBA's Rule 1 is: explicit human correction at any gate overrides everything else.
+Making a software state non-overridable by the human contradicts the governance model.
+
+**The correct framing:**
+
+> CRITICAL_OMISSION and EMPTY_PACKET are mandatory stop conditions for **automated
+> progression**. Advancement requires an explicit human override with recorded rationale.
+> The override does not invalidate the finding; it records that the human intentionally
+> accepted the associated risk.
+
+This preserves both sides: automated tooling cannot silently proceed past incomplete
+evidence (software-enforced stop), and the human remains the final authority
+(human-overridable with mandatory rationale and audit trail).
+
+**Distinction to apply when writing gates:** "automated hard stop" ≠ "human-non-overridable."
+The former is a code behavior; the latter is a governance claim. Only the former is ever
+appropriate in a system that keeps "human approval is required at every gate."

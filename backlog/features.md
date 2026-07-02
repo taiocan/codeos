@@ -45,7 +45,7 @@ The goal is to speed up Codeos development without weakening DBA advantages.
 | UPG-0012 | [UPG-0012-repair-before-next-feature.md](UPG-0012-repair-before-next-feature.md) | Repair-Before-Next-Feature Workflow Gate | P1 | COMPLETE |
 | UPG-0013 | [UPG-0013-stage-4-activation-card.md](UPG-0013-stage-4-activation-card.md) | Stage 4 Activation Card | P1 | COMPLETE |
 | UPG-0014 | [UPG-0014-reviewer-full-diff.md](UPG-0014-reviewer-full-diff.md) | Reviewer Agent with Full Diff Access | P2 | PROPOSED |
-| UPG-0015 | [UPG-0015-reviewer-decision-integrity.md](UPG-0015-reviewer-decision-integrity.md) | Bind stage approval to reviewed provenance | P1 | PROPOSED |
+| UPG-0015 | [UPG-0015-reviewer-decision-integrity.md](UPG-0015-reviewer-decision-integrity.md) | Bind stage approval to reviewed provenance | P1 | COMPLETE |
 | UPG-0016 | [UPG-0016-workflow-profiles.md](UPG-0016-workflow-profiles.md) | Branch / PR / CI Workflow Profiles | P1 | PROPOSED |
 | UPG-0017 | [UPG-0017-stack-manifest.md](UPG-0017-stack-manifest.md) | Stack Manifest with Automatic Reconciliation | P2 | PROPOSED |
 | UPG-0018 | [UPG-0018-reviewer-engine-v1.md](UPG-0018-reviewer-engine-v1.md) | Typed reviewer engine to replace the Bash pilot | P2 | SUPERSEDED by UPG-0032 |

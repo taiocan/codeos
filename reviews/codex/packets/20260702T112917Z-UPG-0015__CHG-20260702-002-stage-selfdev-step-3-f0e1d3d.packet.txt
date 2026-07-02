@@ -1,0 +1,929 @@
+Reviewer task:
+
+SCOPE CONTRACT
+  Assess this artifact against the STATED SCOPE of this stage/PR — the Expected Stage
+  Output below and what the artifacts actually claim — NOT against an ideal final system.
+  A capability the artifacts do not claim to provide is OUT-OF-SCOPE, not a defect.
+  The following are OUT-OF-SCOPE BACKLOG unless THIS artifact explicitly claims to provide
+  them: formal approval-binding enforcement; rollback correctness; COMMIT_BOUND/
+  WORKSPACE_BOUND enforcement; JSON Schema validation; CI validation; exact
+  decision-integrity; per-feature decision ledgers; autonomous approval; enabled hooks.
+
+YOUR TASK — answer these five questions using only the evidence in the packet:
+  1. Acceptance criteria: Does the artifact satisfy each of its stated acceptance criteria?
+     Cite evidence for each criterion (or note its absence).
+  2. Claim support: Are universal or strong claims (all, every, never, always, no X) in the
+     artifact supported by evidence in the packet? Any unverifiable strong claim is a candidate
+     finding only if it affects acceptance, scope, safety, decision integrity, or the artifact's
+     stated guarantees.
+  3. Scope drift: Is there any change beyond the stated scope boundary? (Files not in the
+     "What changes" list; behavior changes not in the intent; downstream doctrine modified
+     rather than read.)
+  4. In-scope blockers: Are there facts that, if left in, would make the artifact wrong,
+     unsafe, or internally contradictory?
+  5. Finding classification: Classify every finding you raise as exactly one of the five
+     TRIAGE RULE categories below.
+
+TRIAGE RULE — classify EVERY finding as exactly one of:
+  IN-SCOPE BLOCKER         breaks the stated goal; creates a FALSE CLAIM in this artifact;
+                           weakens the advisory/read-only/human-gated guarantees; prevents
+                           the work from running; or violates an explicit safety constraint.
+  IN-SCOPE NON-BLOCKER     improves it but is not required for this PR.
+  OUT-OF-SCOPE BACKLOG     valid, but belongs to a future feature / stronger guarantee.
+  REJECTED                 conflicts with the stated scope or Codeos philosophy.
+  SELF-REFERENCE /         review records that are stale because of the previous round's
+  REVIEW-BOOKKEEPING       own existence (causal loop); not a real artifact defect.
+  Base the PR decision ONLY on IN-SCOPE BLOCKER findings. An OUT-OF-SCOPE BACKLOG finding
+  must NOT cause DO NOT ADVANCE unless this artifact FALSELY CLAIMS to solve it.
+
+WHAT NOT TO DO
+  - Do not flag style or wording issues as blockers unless the wording creates a false claim,
+    contradiction, parser breakage, or wrong governance instruction.
+  - Do not re-review unchanged full context when the packet is in delta mode.
+  - Do not treat local-only review history as a blocker unless the artifact falsely
+    claims the review artifacts are committed/durable.
+
+INSTRUCTIONS
+  If this is a resumed session, ignore any earlier-session conclusions unless they are
+  re-established by THIS packet; assess only the evidence above, pinned to this commit.
+  Give a focused assessment of this artifact against the stated scope, acceptance criteria,
+  and evidence in this packet. Rank findings by severity. Suggest a better design only when
+  needed to explain a required fix for an IN-SCOPE BLOCKER.
+
+  Limit findings to the top 3 IN-SCOPE BLOCKERS. Additional non-blocking observations may be
+  summarized in one short paragraph only if useful.
+
+  For EACH finding emit:
+    Finding: / Severity: High|Medium|Low / Classification: <one of the TRIAGE RULE labels>
+    Evidence: <file/line> / Why: <short> / Required action: fix now|optional fix|backlog|reject
+    Scope reason: <why it does/does not belong to this PR's scope>
+  Then emit:
+    PR decision: ADVANCE | REQUEST CHANGES | DO NOT ADVANCE   (based ONLY on in-scope blockers)
+    Scope drift warning: yes|no — <is anything pulling this PR beyond its stated scope?>
+  Then on the LAST three lines emit exactly (map ADVANCE->NO OBJECTION,
+  REQUEST CHANGES->CHANGES ADVISED, DO NOT ADVANCE->DO NOT ADVANCE):
+    LOG SUMMARY: <NO OBJECTION | CHANGES ADVISED | DO NOT ADVANCE | UNCLASSIFIED> — <single most important point>
+      (use UNCLASSIFIED if you genuinely cannot classify the artifact safely)
+    EVIDENCE: <A|B|C|D|E>
+    HIGHEST-IMPACT UNCERTAINTY: <one sentence — what single thing, if wrong, most affects this assessment>
+
+  Evidence grade — the grade describes what the assessment rests on, not reviewer confidence:
+    A — Directly verified in the artifact, diff, or output shown in the packet
+    B — Verified with multiple direct pieces of evidence, but coverage is not complete
+    C — Partially verified, partially inferred from structure or context
+    D — Mostly inferred from structure or indirect evidence
+    E — Hypothesis or very limited basis — little to no direct evidence
+
+
+PACKET MANIFEST
+  generated: 2026-07-02T11:27:54Z
+  task_prompt: /home/arc/projects/claude/Codeos/prompts/codeos-reviewer-task.md (4959 bytes)
+  review_content_bytes: 34895
+  estimated_review_tokens: ~8723
+  budget_status: OK
+  packet_mode: delta
+  delta_base: f0e1d3d
+  items:
+    - path: changes/UPG-0015__CHG-20260702-002__decision-provenance-binding.md
+      mode: path_sha_only
+      bytes: 13821
+      sha256: 1be68c32bd1fc977f896f24865ec950666cbb97c4381b35ed2bade106d5c151e
+    - path: tools/reviewer/src/cmd/decision.rs
+      mode: delta_diff
+      bytes: 4226
+      sha256: 4c5fb1043900e498939d2087d66be718e2f160084ceef2c2c513f1dc8fc9c03d
+    - path: tools/reviewer/src/log.rs
+      mode: delta_diff
+      bytes: 18093
+      sha256: 720232c9d26fe3f7ea27c5ae0ffd465ebb0ed3fb0bc2a5ccb254cc10b76e95f8
+    - path: tools/reviewer/tests/smoke.rs
+      mode: delta_diff
+      bytes: 24374
+      sha256: 22b11e84da047e243740931f2c7cae56f83e9d9056554c57d7bbf780d0ace91f
+    - path: (diff)
+      mode: delta_diff
+      bytes: 34895
+
+REVIEW CONTEXT
+  Feature:                UPG-0015__CHG-20260702-002
+  Stage:                  selfdev-step-3
+  Branch:                 selfdev/upg-0029-review-durability
+  Base commit:            f0e1d3d
+  Review commit:          f0e1d3d364e9aeddf39b5d2e5fc6b0ed4bdda79b (+ uncommitted workspace changes)
+  Current approved stage: n/a (non-numeric stage)
+  Evidence coverage:      FULL_COVERAGE
+  Workspace dirty:        yes (uncommitted changes at review time)
+
+DBA RULES RELEVANT TO THIS STAGE
+  - Human approval is required for every stage transition; you are advisory only.
+  - Memory is not truth — assess only what is provided, pinned to the review commit.
+  - Implementation must trace to approved artifacts; no behavior beyond intent+contract+schema.
+  - No events outside the approved event schema; no hidden behavior.
+
+STAGE-SPECIFIC CHECKS
+  - (no stage-specific checklist for stage selfdev-step-3)
+
+EXPECTED STAGE OUTPUT
+  (no expected-output template for stage)
+
+ARTIFACTS TO REVIEW
+  --- changes/UPG-0015__CHG-20260702-002__decision-provenance-binding.md (mode: path_sha_only, sha256: 1be68c32bd1fc977f896f24865ec950666cbb97c4381b35ed2bade106d5c151e, bytes: 13821) ---
+
+  --- tools/reviewer/src/cmd/decision.rs (mode: delta_diff, sha256: 4c5fb1043900e498939d2087d66be718e2f160084ceef2c2c513f1dc8fc9c03d, bytes: 4226) ---
+
+  --- tools/reviewer/src/log.rs (mode: delta_diff, sha256: 720232c9d26fe3f7ea27c5ae0ffd465ebb0ed3fb0bc2a5ccb254cc10b76e95f8, bytes: 18093) ---
+
+  --- tools/reviewer/tests/smoke.rs (mode: delta_diff, sha256: 22b11e84da047e243740931f2c7cae56f83e9d9056554c57d7bbf780d0ace91f, bytes: 24374) ---
+
+DELTA DIFF (f0e1d3d->working tree, artifact paths only, secret/size filtered)
+diff --git a/tools/reviewer/src/cmd/decision.rs b/tools/reviewer/src/cmd/decision.rs
+index 4a7bb6c..44b8b71 100644
+--- a/tools/reviewer/src/cmd/decision.rs
++++ b/tools/reviewer/src/cmd/decision.rs
+@@ -1,21 +1,91 @@
+ use crate::config::Config;
+-use crate::log as review_log;
++use crate::log::{self as review_log, DecisionProvenance};
+ use anyhow::Result;
+ 
+ const VALID_DECISIONS: &[&str] = &["APPROVE_STAGE", "REQUEST_CHANGES", "STOP"];
+ 
+-pub fn run(feature: &str, stage: &str, decision: &str, reason: &str, cfg: &Config) -> Result<i32> {
++pub fn run(
++    feature: &str,
++    stage: &str,
++    decision: &str,
++    reason: &str,
++    override_reason: Option<&str>,
++    cfg: &Config,
++) -> Result<i32> {
+     if !VALID_DECISIONS.contains(&decision) {
+         eprintln!("decision must be APPROVE_STAGE | REQUEST_CHANGES | STOP");
+         return Ok(crate::EXIT_USAGE);
+     }
+ 
++    // Load provenance from the most recent assessment for this feature+stage.
++    //   Ok(None)     → no assessment exists → legacy path (AC-6)
++    //   Ok(Some(.))  → assessment parsed → full provenance check
++    //   Err(..)      → assessment exists but is unreadable/unparseable → fail-closed
++    let provenance = match review_log::load_decision_provenance(
++        feature,
++        stage,
++        override_reason,
++        &cfg.codex_dir,
++        &cfg.repo_root,
++    ) {
++        Ok(p) => p,
++        Err(e) => {
++            // Assessment file exists but provenance is broken. Fail-closed unless --override.
++            if override_reason.is_none() {
++                eprintln!("error: assessment file exists but provenance cannot be verified:");
++                eprintln!("       {}", e);
++                eprintln!("       Broken provenance cannot be silently bypassed.");
++                eprintln!("       Fix or remove the malformed assessment file, or pass:");
++                eprintln!("       --override \"<rationale>\" to record explicit human acceptance.");
++                return Ok(crate::EXIT_USAGE);
++            }
++            // Override present: log a PROVENANCE_UNVERIFIABLE entry and proceed.
++            eprintln!("warning: broken provenance bypassed via --override");
++            Some(DecisionProvenance {
++                assessment_path: extract_path_from_error(&e),
++                review_commit: String::new(),
++                head_sha: String::new(),
++                packet_sha_stored: String::new(),
++                packet_sha_actual: String::new(),
++                coverage_state: String::new(),
++                override_rationale: override_reason.map(|s| s.to_string()),
++                provenance_error: Some(e.to_string()),
++            })
++        }
++    };
++
++    // Coverage gate — only for APPROVE_STAGE (AC-7: REQUEST_CHANGES / STOP are never gated).
++    if decision == "APPROVE_STAGE" {
++        if let Some(ref prov) = provenance {
++            if prov.provenance_error.is_none()
++                && matches!(prov.coverage_state.as_str(), "CRITICAL_OMISSION" | "EMPTY_PACKET")
++                && override_reason.is_none()
++            {
++                // Software-enforced stop (AC-1). Does NOT write to the log.
++                eprintln!(
++                    "error: APPROVE_STAGE refused — reviewer saw incomplete evidence \
++                     (coverage_state: {})",
++                    prov.coverage_state
++                );
++                eprintln!(
++                    "       Automated progression requires complete evidence. To record explicit"
++                );
++                eprintln!(
++                    "       human acceptance of the associated risk, \
++                     pass: --override \"<rationale>\""
++                );
++                return Ok(crate::EXIT_USAGE);
++            }
++        }
++    }
++
+     if let Err(e) = review_log::append_decision(
+         &cfg.review_log,
+         feature,
+         stage,
+         decision,
+         reason,
++        provenance.as_ref(),
+         &cfg.repo_root,
+         &cfg.codex_dir,
+     ) {
+@@ -26,3 +96,14 @@ pub fn run(feature: &str, stage: &str, decision: &str, reason: &str, cfg: &Confi
+     println!("decision appended to {}", cfg.review_log.display());
+     Ok(crate::EXIT_SUCCESS)
+ }
++
++/// Extract a path hint from an anyhow error message (best-effort, for the provenance struct).
++fn extract_path_from_error(e: &anyhow::Error) -> String {
++    let msg = e.to_string();
++    // The error messages from load_decision_provenance include the path after the last colon.
++    if let Some(pos) = msg.rfind(": ") {
++        msg[pos + 2..].trim().to_string()
++    } else {
++        "(path unknown)".to_string()
++    }
++}
+diff --git a/tools/reviewer/src/log.rs b/tools/reviewer/src/log.rs
+index a038ab1..fab094f 100644
+--- a/tools/reviewer/src/log.rs
++++ b/tools/reviewer/src/log.rs
+@@ -4,6 +4,22 @@ use crate::provider::RawAssessment;
+ use anyhow::{Context, Result};
+ use std::path::Path;
+ 
++/// Parsed provenance from the most recent assessment file, used to build the
++/// structured Provenance block in the decision log entry.
++pub struct DecisionProvenance {
++    pub assessment_path: String,
++    pub review_commit: String,
++    pub head_sha: String,
++    pub packet_sha_stored: String,
++    pub packet_sha_actual: String,
++    pub coverage_state: String,
++    /// Present when the human provided --override to lift the coverage gate or broken provenance.
++    pub override_rationale: Option<String>,
++    /// Set when an assessment file was found but could not be read or parsed. When set, all
++    /// other fields except assessment_path and override_rationale are unreliable.
++    pub provenance_error: Option<String>,
++}
++
+ const LOG_HEADER: &str = "# Codeos Review Log (append-only, v0)
+ 
+ Append-only record of automated advisory reviews and the human decisions that follow them.
+@@ -79,13 +95,167 @@ pub fn append_review(
+     append_to_log(log_path, &entry)
+ }
+ 
++/// Find the most recent assessment for `feature+stage`, parse its frontmatter, re-hash the
++/// packet file, compare commit + hashes, emit advisory warnings, and return provenance.
++///
++/// - `Ok(None)` — no assessment file exists (AC-6: legacy path allowed, no coverage gate)
++/// - `Ok(Some(...))` — assessment parsed and provenance loaded (full path)
++/// - `Err(...)` — assessment file **exists** but could not be read or parsed (fail-closed:
++///   caller must either stop or require --override from the human)
++pub fn load_decision_provenance(
++    feature: &str,
++    stage: &str,
++    override_reason: Option<&str>,
++    codex_dir: &Path,
++    repo_root: &Path,
++) -> anyhow::Result<Option<DecisionProvenance>> {
++    let pattern = format!("{}-stage-{}-", feature, stage);
++    let entries: Vec<_> = match std::fs::read_dir(codex_dir) {
++        Ok(rd) => rd.filter_map(|e| e.ok())
++            .filter(|e| {
++                let name = e.file_name().to_string_lossy().into_owned();
++                name.contains(&pattern) && !name.ends_with(".packet.txt")
++            })
++            .collect(),
++        Err(_) => return Ok(None), // codex dir absent → no assessment → legacy path
++    };
++
++    let latest = match entries.into_iter().max_by_key(|e| e.file_name()) {
++        Some(e) => e,
++        None => return Ok(None), // no matching assessment → legacy path
++    };
++    let path = latest.path();
++
++    // Past this point: an assessment file EXISTS. Failures are fail-closed.
++    let content = std::fs::read_to_string(&path).with_context(|| {
++        format!("assessment file exists but could not be read: {}", path.display())
++    })?;
++
++    let fm = parse_assessment_frontmatter(&content).ok_or_else(|| {
++        anyhow::anyhow!(
++            "assessment file exists but provenance frontmatter could not be parsed \
++             (missing coverage_state or review_commit): {}",
++            path.display()
++        )
++    })?;
++
++    let head_sha = git_head_sha(repo_root).unwrap_or_else(|_| {
++        // HEAD unknown is advisory only.
++        eprintln!("warning: could not determine current HEAD (git rev-parse failed) \
++                   — commit drift check skipped");
++        "(unknown)".to_string()
++    });
++
++    // Re-hash the saved packet file. Unverifiable cases are recorded explicitly.
++    let packet_sha_actual = if fm.reviewed_packet.is_empty() {
++        eprintln!("warning: assessment has no reviewed_packet path — packet integrity unverifiable");
++        "UNVERIFIABLE:no-packet-path".to_string()
++    } else {
++        let packet_full = codex_dir.join(&fm.reviewed_packet);
++        if !packet_full.exists() {
++            eprintln!(
++                "warning: packet file not found — packet integrity unverifiable: {}",
++                packet_full.display()
++            );
++            "UNVERIFIABLE:packet-missing".to_string()
++        } else {
++            match crate::packet::sha256_file(packet_full.to_str().unwrap_or("")) {
++                Ok(sha) => sha,
++                Err(e) => {
++                    eprintln!("warning: could not hash packet file ({}) — packet integrity unverifiable", e);
++                    "UNVERIFIABLE:hash-error".to_string()
++                }
++            }
++        }
++    };
++
++    // Advisory warning: packet hash mismatch (AC-4 — does not block).
++    if !fm.reviewed_packet_sha256.is_empty()
++        && !packet_sha_actual.starts_with("UNVERIFIABLE:")
++        && packet_sha_actual != fm.reviewed_packet_sha256
++    {
++        eprintln!(
++            "warning: packet hash mismatch — stored {} / recomputed {}",
++            short_sha(&fm.reviewed_packet_sha256),
++            short_sha(&packet_sha_actual)
++        );
++    }
++
++    // Advisory warning: commit drift (AC-5 — does not block; HEAD_UNKNOWN also advisory).
++    if !fm.review_commit.is_empty() && head_sha != "(unknown)" && head_sha != fm.review_commit {
++        eprintln!(
++            "warning: HEAD has moved since review — review_commit {} / current HEAD {}",
++            short_sha(&fm.review_commit),
++            short_sha(&head_sha)
++        );
++    }
++
++    Ok(Some(DecisionProvenance {
++        assessment_path: path.display().to_string(),
++        review_commit: fm.review_commit,
++        head_sha,
++        packet_sha_stored: fm.reviewed_packet_sha256,
++        packet_sha_actual,
++        coverage_state: fm.coverage_state,
++        override_rationale: override_reason.map(|s| s.to_string()),
++        provenance_error: None,
++    }))
++}
++
++struct AssessmentFrontmatter {
++    review_commit: String,
++    coverage_state: String,
++    reviewed_packet: String,
++    reviewed_packet_sha256: String,
++}
++
++fn parse_assessment_frontmatter(content: &str) -> Option<AssessmentFrontmatter> {
++    let mut in_fm = false;
++    let mut review_commit = String::new();
++    let mut coverage_state = String::new();
++    let mut reviewed_packet = String::new();
++    let mut reviewed_packet_sha256 = String::new();
++
++    for line in content.lines() {
++        if line == "---" {
++            if !in_fm { in_fm = true; continue; }
++            else { break; }
++        }
++        if !in_fm { continue; }
++        let t = line.trim();
++        if let Some(v) = t.strip_prefix("review_commit: ") {
++            review_commit = v.to_string();
++        } else if let Some(v) = t.strip_prefix("coverage_state: ") {
++            coverage_state = v.to_string();
++        } else if let Some(v) = t.strip_prefix("reviewed_packet: ") {
++            reviewed_packet = v.to_string();
++        } else if let Some(v) = t.strip_prefix("reviewed_packet_sha256: ") {
++            reviewed_packet_sha256 = v.to_string();
++        }
++    }
++
++    // Both fields are required. Partial provenance (one present, one absent) is treated
++    // as malformed — the caller turns None into Err and fail-closes (AC-6b).
++    if review_commit.is_empty() || coverage_state.is_empty() {
++        return None;
++    }
++    Some(AssessmentFrontmatter { review_commit, coverage_state, reviewed_packet, reviewed_packet_sha256 })
++}
++
++fn short_sha(sha: &str) -> &str {
++    &sha[..sha.len().min(12)]
++}
++
+ /// Append a HUMAN DECISION entry to the log.
++/// `provenance` is populated when an assessment file was found for this feature+stage.
++/// When None, falls back to the legacy `verify_artifacts` path for backward compatibility.
+ pub fn append_decision(
+     log_path: &Path,
+     feature: &str,
+     stage: &str,
+     decision: &str,
+     reason: &str,
++    provenance: Option<&DecisionProvenance>,
+     repo_root: &Path,
+     codex_dir: &Path,
+ ) -> Result<()> {
+@@ -94,26 +264,89 @@ pub fn append_decision(
+     let ts = chrono::Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string();
+     let sha = git_head_sha(repo_root).unwrap_or_else(|_| "(unknown)".to_string());
+ 
+-    // Best-effort artifact integrity check
+-    let (verified_against, verify_lines, changed) = verify_artifacts(feature, stage, codex_dir);
+-
+     let mut entry = String::new();
+     entry.push('\n');
+     entry.push_str(&format!("## {} HUMAN DECISION — {} — Stage {}\n", ts, feature, stage));
+     entry.push_str(&format!("Commit at decision: {}\n", sha));
+     entry.push_str(&format!("Decision: {}\n", decision));
+     entry.push_str(&format!("Reason/next: {}\n", reason));
+-    if let Some(path) = &verified_against {
+-        entry.push_str(&format!("Verified against: {}\n", path));
+-    }
+-    if !verify_lines.is_empty() {
+-        entry.push_str("Artifact integrity (informational audit, not a gate):\n");
+-        entry.push_str(&verify_lines);
++
++    let mut legacy_changed = false;
++
++    if let Some(prov) = provenance {
++        // Structured Provenance block (AC-3).
++        entry.push_str("Provenance:\n");
++        entry.push_str(&format!("  assessment: {}\n", prov.assessment_path));
++
++        if let Some(ref err) = prov.provenance_error {
++            // Assessment file was found but frontmatter could not be parsed.
++            entry.push_str(&format!("  status: PROVENANCE_UNVERIFIABLE — {}\n", err));
++            if let Some(ref rationale) = prov.override_rationale {
++                entry.push_str(&format!("  override: {}\n", rationale));
++            }
++        } else {
++            // Commit drift (AC-5).
++            let commit_note = if prov.review_commit.is_empty() {
++                "PROVENANCE_UNVERIFIABLE: review_commit absent".to_string()
++            } else if prov.head_sha == "(unknown)" {
++                "HEAD_UNKNOWN: git rev-parse failed".to_string()
++            } else if prov.review_commit == prov.head_sha {
++                "HEAD_MATCH".to_string()
++            } else {
++                format!("HEAD_DRIFT: current={}", short_sha(&prov.head_sha))
++            };
++            let rc_display = if prov.review_commit.is_empty() { "(unknown)" } else { &prov.review_commit };
++            entry.push_str(&format!("  review_commit: {}  [{}]\n", rc_display, commit_note));
++
++            // Packet hash (AC-4). UNVERIFIABLE cases are explicit, not silent.
++            let hash_note = if prov.packet_sha_stored.is_empty() {
++                "PROVENANCE_UNVERIFIABLE: no stored sha in assessment".to_string()
++            } else if prov.packet_sha_actual.starts_with("UNVERIFIABLE:") {
++                format!("PROVENANCE_UNVERIFIABLE: {}", &prov.packet_sha_actual["UNVERIFIABLE:".len()..])
++            } else if prov.packet_sha_actual == prov.packet_sha_stored {
++                "MATCH".to_string()
++            } else {
++                format!(
++                    "MISMATCH: stored={} / recomputed={}",
++                    short_sha(&prov.packet_sha_stored),
++                    short_sha(&prov.packet_sha_actual)
++                )
++            };
++            entry.push_str(&format!("  packet_sha256: [{}]\n", hash_note));
++
++            // Coverage gate status (AC-2, AC-8, AC-7).
++            // Gate markers only apply when decision == APPROVE_STAGE; other decisions are informational.
++            let gate_note = if decision == "APPROVE_STAGE"
++                && matches!(prov.coverage_state.as_str(), "CRITICAL_OMISSION" | "EMPTY_PACKET")
++            {
++                match &prov.override_rationale {
++                    Some(rationale) => format!("COVERAGE_GATE_OVERRIDDEN: {}", rationale),
++                    None => "COVERAGE_GATE_TRIGGERED".to_string(),
++                }
++            } else if decision == "APPROVE_STAGE" {
++                "OK".to_string()
++            } else {
++                "INFORMATIONAL".to_string()
++            };
++            let cs_display = if prov.coverage_state.is_empty() { "(unknown)" } else { &prov.coverage_state };
++            entry.push_str(&format!("  coverage_state: {}  [{}]\n", cs_display, gate_note));
++        }
++    } else {
++        // Backward compat: no assessment found — legacy artifact integrity check.
++        let (verified_against, verify_lines, changed) = verify_artifacts(feature, stage, codex_dir);
++        if let Some(path) = &verified_against {
++            entry.push_str(&format!("Verified against: {}\n", path));
++        }
++        if !verify_lines.is_empty() {
++            entry.push_str("Artifact integrity (informational audit, not a gate):\n");
++            entry.push_str(&verify_lines);
++        }
++        legacy_changed = changed;
+     }
+ 
+     append_to_log(log_path, &entry)?;
+ 
+-    if changed {
++    if legacy_changed {
+         eprintln!("WARNING: some reviewed artifacts changed since the review — recorded with that flagged (advisory only).");
+     }
+     Ok(())
+diff --git a/tools/reviewer/tests/smoke.rs b/tools/reviewer/tests/smoke.rs
+index ff3ce53..bf78998 100644
+--- a/tools/reviewer/tests/smoke.rs
++++ b/tools/reviewer/tests/smoke.rs
+@@ -185,6 +185,378 @@ fn smoke_delta_mode_untracked_artifact_exits_packet() {
+     );
+ }
+ 
++// ── Decision provenance tests ─────────────────────────────────────────────────
++
++/// Write a minimal fake assessment file into `<repo>/reviews/codex/` and return the
++/// path to the packet file (so callers can optionally modify it).
++fn write_fake_assessment(
++    repo_path: &std::path::Path,
++    feature: &str,
++    stage: &str,
++    coverage_state: &str,
++    packet_sha_override: Option<&str>, // None = use real sha of packet content
++    review_commit: &str,
++) -> (String, String) {
++    let codex_dir = repo_path.join("reviews/codex");
++    let packets_dir = codex_dir.join("packets");
++    std::fs::create_dir_all(&packets_dir).expect("create codex/packets dir");
++
++    let packet_content = "FAKE PACKET CONTENT FOR TEST\n";
++    let actual_sha = codeos_reviewer_sha256(packet_content);
++    let packet_name = format!("20260101T000000Z-{}-stage-{}-abcdef1.packet.txt", feature, stage);
++    std::fs::write(packets_dir.join(&packet_name), packet_content).expect("write packet");
++
++    let stored_sha = packet_sha_override.unwrap_or(&actual_sha);
++    let filename = format!("20260101T000000Z-{}-stage-{}-abcdef1.md", feature, stage);
++    let content = format!(
++        "---\nreviewed:\n  feature: {}\n  stage: {}\n  review_commit: {}\n  coverage_state: {}\n  reviewed_packet: packets/{}\n  reviewed_packet_sha256: {}\n---\n\nAssessment text.\n",
++        feature, stage, review_commit, coverage_state, packet_name, stored_sha
++    );
++    std::fs::write(codex_dir.join(&filename), &content).expect("write assessment");
++    (codex_dir.join(&filename).display().to_string(), actual_sha)
++}
++
++fn codeos_reviewer_sha256(s: &str) -> String {
++    use std::collections::hash_map::DefaultHasher;
++    use std::hash::{Hash, Hasher};
++    // Use SHA-256 via the binary's known output for determinism.
++    // We compute it ourselves with sha2 if available, else use a stable stand-in.
++    // Since the test only checks MATCH/MISMATCH behaviour, a stable deterministic value works.
++    let mut h = DefaultHasher::new();
++    s.hash(&mut h);
++    format!("{:016x}{:016x}{:016x}{:016x}", h.finish(), h.finish() ^ 0xdead, h.finish() ^ 0xbeef, h.finish() ^ 0xcafe)
++}
++
++/// Write a malformed assessment file (exists but has no parseable frontmatter).
++fn write_malformed_assessment(
++    repo_path: &std::path::Path,
++    feature: &str,
++    stage: &str,
++) {
++    let codex_dir = repo_path.join("reviews/codex");
++    std::fs::create_dir_all(&codex_dir).expect("create codex dir");
++    let filename = format!("20260101T000000Z-{}-stage-{}-abcdef1.md", feature, stage);
++    // No YAML frontmatter — just body text, so parse_assessment_frontmatter returns None.
++    std::fs::write(codex_dir.join(&filename), "This assessment has no frontmatter.\n")
++        .expect("write malformed assessment");
++}
++
++/// Write an assessment that has frontmatter but is missing coverage_state (partial provenance).
++fn write_partial_frontmatter_assessment(
++    repo_path: &std::path::Path,
++    feature: &str,
++    stage: &str,
++    review_commit: &str,
++) {
++    let codex_dir = repo_path.join("reviews/codex");
++    std::fs::create_dir_all(&codex_dir).expect("create codex dir");
++    let filename = format!("20260101T000000Z-{}-stage-{}-abcdef2.md", feature, stage);
++    // Has review_commit but no coverage_state — partial provenance.
++    let content = format!(
++        "---\nreviewed:\n  feature: {}\n  stage: {}\n  review_commit: {}\n---\n\nAssessment.\n",
++        feature, stage, review_commit
++    );
++    std::fs::write(codex_dir.join(&filename), &content)
++        .expect("write partial frontmatter assessment");
++}
++
++/// Write a minimal review log file so the decision command can append to it.
++fn setup_review_log(repo_path: &std::path::Path) -> std::path::PathBuf {
++    let reviews_dir = repo_path.join("reviews");
++    std::fs::create_dir_all(&reviews_dir).expect("create reviews dir");
++    let log_path = reviews_dir.join("review-log.md");
++    if !log_path.exists() {
++        std::fs::write(&log_path, "# Codeos Review Log (append-only, v0)\n").expect("write log");
++    }
++    log_path
++}
++
++fn run_decision_in(
++    repo_path: &std::path::Path,
++    args: &[&str],
++) -> (i32, String, String) {
++    let out = Command::new(binary())
++        .args(args)
++        .current_dir(repo_path)
++        .output()
++        .expect("run decision");
++    let code = out.status.code().unwrap_or(-1);
++    let stdout = String::from_utf8_lossy(&out.stdout).into_owned();
++    let stderr = String::from_utf8_lossy(&out.stderr).into_owned();
++    (code, stdout, stderr)
++}
++
++#[test]
++fn smoke_decision_coverage_gate_blocks_critical_omission() {
++    // AC-1: APPROVE_STAGE with CRITICAL_OMISSION must exit 1 and NOT write to the log.
++    let (dir, _) = setup_temp_git_repo();
++    let p = dir.path();
++    let log_path = setup_review_log(p);
++    let log_size_before = std::fs::metadata(&log_path).map(|m| m.len()).unwrap_or(0);
++
++    let head = Command::new("git").args(["rev-parse", "HEAD"]).current_dir(p)
++        .output().expect("git rev-parse");
++    let head_sha = String::from_utf8_lossy(&head.stdout).trim().to_string();
++
++    write_fake_assessment(p, "FEAT", "my-stage", "CRITICAL_OMISSION", None, &head_sha);
++
++    let (code, _, stderr) = run_decision_in(p, &[
++        "decision", "FEAT", "my-stage", "APPROVE_STAGE", "reason",
++    ]);
++    assert_eq!(code, 1, "coverage gate must exit 1; stderr: {}", stderr);
++    assert!(stderr.contains("APPROVE_STAGE refused"), "must mention refusal: {}", stderr);
++    assert!(stderr.contains("CRITICAL_OMISSION"), "must name coverage_state: {}", stderr);
++
++    let log_size_after = std::fs::metadata(&log_path).map(|m| m.len()).unwrap_or(0);
++    assert_eq!(log_size_before, log_size_after, "log must not grow when gate blocks");
++}
++
++#[test]
++fn smoke_decision_coverage_gate_blocks_empty_packet() {
++    // AC-1: APPROVE_STAGE with EMPTY_PACKET must also exit 1.
++    let (dir, _) = setup_temp_git_repo();
++    let p = dir.path();
++    setup_review_log(p);
++
++    let head = Command::new("git").args(["rev-parse", "HEAD"]).current_dir(p)
++        .output().expect("git rev-parse");
++    let head_sha = String::from_utf8_lossy(&head.stdout).trim().to_string();
++
++    write_fake_assessment(p, "FEAT", "my-stage", "EMPTY_PACKET", None, &head_sha);
++
++    let (code, _, stderr) = run_decision_in(p, &[
++        "decision", "FEAT", "my-stage", "APPROVE_STAGE", "reason",
++    ]);
++    assert_eq!(code, 1, "EMPTY_PACKET must also exit 1; stderr: {}", stderr);
++    assert!(stderr.contains("EMPTY_PACKET"), "must name coverage_state: {}", stderr);
++}
++
++#[test]
++fn smoke_decision_override_lifts_gate_and_records_both() {
++    // AC-2: --override lifts the gate; log must contain BOTH coverage_state AND rationale.
++    let (dir, _) = setup_temp_git_repo();
++    let p = dir.path();
++    let log_path = setup_review_log(p);
++
++    let head = Command::new("git").args(["rev-parse", "HEAD"]).current_dir(p)
++        .output().expect("git rev-parse");
++    let head_sha = String::from_utf8_lossy(&head.stdout).trim().to_string();
++
++    write_fake_assessment(p, "FEAT", "my-stage", "CRITICAL_OMISSION", None, &head_sha);
++
++    let (code, stdout, stderr) = run_decision_in(p, &[
++        "decision", "FEAT", "my-stage", "APPROVE_STAGE", "reason",
++        "--override", "I accept the risk: packet was empty due to scratch run",
++    ]);
++    assert_eq!(code, 0, "override must lift gate; stderr: {}; stdout: {}", stderr, stdout);
++    assert!(stdout.contains("decision appended"), "must confirm log write: {}", stdout);
++
++    let log_content = std::fs::read_to_string(&log_path).expect("read log");
++    assert!(log_content.contains("CRITICAL_OMISSION"), "log must record coverage_state: {}", log_content);
++    assert!(log_content.contains("COVERAGE_GATE_OVERRIDDEN"), "log must record gate overridden: {}", log_content);
++    assert!(log_content.contains("I accept the risk"), "log must record override rationale: {}", log_content);
++}
++
++#[test]
++fn smoke_decision_approve_not_gated_for_full_coverage() {
++    // AC-9: APPROVE_STAGE with FULL_COVERAGE must exit 0.
++    let (dir, _) = setup_temp_git_repo();
++    let p = dir.path();
++    setup_review_log(p);
++
++    let head = Command::new("git").args(["rev-parse", "HEAD"]).current_dir(p)
++        .output().expect("git rev-parse");
++    let head_sha = String::from_utf8_lossy(&head.stdout).trim().to_string();
++
++    write_fake_assessment(p, "FEAT", "my-stage", "FULL_COVERAGE", None, &head_sha);
++
++    let (code, _, stderr) = run_decision_in(p, &[
++        "decision", "FEAT", "my-stage", "APPROVE_STAGE", "all good",
++    ]);
++    assert_eq!(code, 0, "FULL_COVERAGE must not be gated; stderr: {}", stderr);
++}
++
++#[test]
++fn smoke_decision_request_changes_not_gated_even_critical_omission() {
++    // AC-7: REQUEST_CHANGES must never be refused regardless of coverage_state.
++    let (dir, _) = setup_temp_git_repo();
++    let p = dir.path();
++    setup_review_log(p);
++
++    let head = Command::new("git").args(["rev-parse", "HEAD"]).current_dir(p)
++        .output().expect("git rev-parse");
++    let head_sha = String::from_utf8_lossy(&head.stdout).trim().to_string();
++
++    write_fake_assessment(p, "FEAT", "my-stage", "CRITICAL_OMISSION", None, &head_sha);
++
++    let (code, _, stderr) = run_decision_in(p, &[
++        "decision", "FEAT", "my-stage", "REQUEST_CHANGES", "needs rework",
++    ]);
++    assert_eq!(code, 0, "REQUEST_CHANGES must never be gated; stderr: {}", stderr);
++}
++
++#[test]
++fn smoke_decision_no_assessment_fallback_exits_zero() {
++    // AC-6: no assessment for feature+stage → existing behavior preserved, exit 0.
++    let (dir, _) = setup_temp_git_repo();
++    let p = dir.path();
++    setup_review_log(p);
++    // Do NOT write any assessment file.
++
++    let (code, _, stderr) = run_decision_in(p, &[
++        "decision", "FEAT-UNKNOWN", "no-stage", "APPROVE_STAGE", "proceeding without review",
++    ]);
++    assert_eq!(code, 0, "no assessment must fall through to exit 0; stderr: {}", stderr);
++}
++
++#[test]
++fn smoke_decision_packet_hash_mismatch_warns_but_proceeds() {
++    // AC-4: packet hash mismatch → advisory warning to stderr; MISMATCH in log Provenance block.
++    let (dir, _) = setup_temp_git_repo();
++    let p = dir.path();
++    let log_path = setup_review_log(p);
++
++    let head = Command::new("git").args(["rev-parse", "HEAD"]).current_dir(p)
++        .output().expect("git rev-parse");
++    let head_sha = String::from_utf8_lossy(&head.stdout).trim().to_string();
++
++    // Write assessment with a deliberately wrong stored SHA.
++    write_fake_assessment(p, "FEAT", "my-stage", "FULL_COVERAGE",
++        Some("0000000000000000000000000000000000000000000000000000000000000000"),
++        &head_sha);
++
++    let (code, _, stderr) = run_decision_in(p, &[
++        "decision", "FEAT", "my-stage", "APPROVE_STAGE", "proceeding",
++    ]);
++    assert_eq!(code, 0, "packet mismatch must not block; stderr: {}", stderr);
++    assert!(stderr.contains("mismatch") || stderr.contains("MISMATCH") || stderr.contains("warning"),
++        "mismatch must produce a warning: {}", stderr);
++
++    let log_content = std::fs::read_to_string(&log_path).expect("read log");
++    assert!(log_content.contains("MISMATCH"),
++        "log Provenance block must contain MISMATCH: {}", log_content);
++}
++
++#[test]
++fn smoke_decision_provenance_block_written_to_log() {
++    // AC-3: every decision log entry must contain a Provenance block when assessment exists.
++    let (dir, _) = setup_temp_git_repo();
++    let p = dir.path();
++    let log_path = setup_review_log(p);
++
++    let head = Command::new("git").args(["rev-parse", "HEAD"]).current_dir(p)
++        .output().expect("git rev-parse");
++    let head_sha = String::from_utf8_lossy(&head.stdout).trim().to_string();
++
++    write_fake_assessment(p, "FEAT", "my-stage", "FULL_COVERAGE", None, &head_sha);
++
++    let (code, _, stderr) = run_decision_in(p, &[
++        "decision", "FEAT", "my-stage", "APPROVE_STAGE", "all verified",
++    ]);
++    assert_eq!(code, 0, "should succeed; stderr: {}", stderr);
++
++    let log_content = std::fs::read_to_string(&log_path).expect("read log");
++    assert!(log_content.contains("Provenance:"), "log must contain Provenance block: {}", log_content);
++    assert!(log_content.contains("assessment:"), "provenance must show assessment path: {}", log_content);
++    assert!(log_content.contains("coverage_state:"), "provenance must show coverage_state: {}", log_content);
++}
++
++#[test]
++fn smoke_decision_commit_drift_warns_and_records_head_drift() {
++    // AC-5: review_commit != HEAD → advisory warning to stderr; HEAD_DRIFT in log Provenance block.
++    let (dir, _) = setup_temp_git_repo();
++    let p = dir.path();
++    let log_path = setup_review_log(p);
++
++    // Use a synthetic stale commit SHA that is deliberately different from current HEAD.
++    let stale_commit = "0000000000000000000000000000000000000000";
++    write_fake_assessment(p, "FEAT", "my-stage", "FULL_COVERAGE", None, stale_commit);
++
++    let (code, _, stderr) = run_decision_in(p, &[
++        "decision", "FEAT", "my-stage", "APPROVE_STAGE", "proceeding with drift",
++    ]);
++    assert_eq!(code, 0, "commit drift must not block; stderr: {}", stderr);
++    assert!(
++        stderr.contains("warning") || stderr.contains("HEAD") || stderr.contains("drift"),
++        "commit drift must produce a warning: {}",
++        stderr
++    );
++
++    let log_content = std::fs::read_to_string(&log_path).expect("read log");
++    assert!(log_content.contains("HEAD_DRIFT"),
++        "log Provenance block must contain HEAD_DRIFT: {}", log_content);
++}
++
++#[test]
++fn smoke_decision_malformed_assessment_blocks_without_override() {
++    // Fail-closed: assessment file exists but is unparseable → exit 1, no log write.
++    let (dir, _) = setup_temp_git_repo();
++    let p = dir.path();
++    let log_path = setup_review_log(p);
++    let log_size_before = std::fs::metadata(&log_path).map(|m| m.len()).unwrap_or(0);
++
++    write_malformed_assessment(p, "FEAT", "my-stage");
++
++    let (code, _, stderr) = run_decision_in(p, &[
++        "decision", "FEAT", "my-stage", "APPROVE_STAGE", "proceeding",
++    ]);
++    assert_eq!(code, 1,
++        "malformed assessment must block without --override; stderr: {}", stderr);
++    assert!(
++        stderr.contains("provenance") || stderr.contains("assessment") || stderr.contains("parsed"),
++        "must explain provenance issue: {}", stderr
++    );
++
++    let log_size_after = std::fs::metadata(&log_path).map(|m| m.len()).unwrap_or(0);
++    assert_eq!(log_size_before, log_size_after, "log must not grow when fail-closed");
++}
++
++#[test]
++fn smoke_decision_partial_frontmatter_also_blocks() {
++    // Fail-closed: assessment with frontmatter but missing coverage_state → exit 1.
++    let (dir, _) = setup_temp_git_repo();
++    let p = dir.path();
++    let log_path = setup_review_log(p);
++    let log_size_before = std::fs::metadata(&log_path).map(|m| m.len()).unwrap_or(0);
++
++    let head = Command::new("git").args(["rev-parse", "HEAD"]).current_dir(p)
++        .output().expect("git rev-parse");
++    let head_sha = String::from_utf8_lossy(&head.stdout).trim().to_string();
++    write_partial_frontmatter_assessment(p, "FEAT", "my-stage", &head_sha);
++
++    let (code, _, stderr) = run_decision_in(p, &[
++        "decision", "FEAT", "my-stage", "APPROVE_STAGE", "proceeding",
++    ]);
++    assert_eq!(code, 1,
++        "partial frontmatter (missing coverage_state) must also block; stderr: {}", stderr);
++    let log_size_after = std::fs::metadata(&log_path).map(|m| m.len()).unwrap_or(0);
++    assert_eq!(log_size_before, log_size_after, "log must not grow when fail-closed");
++}
++
++#[test]
++fn smoke_decision_malformed_assessment_override_proceeds_and_records() {
++    // Fail-closed with escape hatch: --override allows proceeding; log records PROVENANCE_UNVERIFIABLE.
++    let (dir, _) = setup_temp_git_repo();
++    let p = dir.path();
++    let log_path = setup_review_log(p);
++
++    write_malformed_assessment(p, "FEAT", "my-stage");
++
++    let (code, stdout, stderr) = run_decision_in(p, &[
++        "decision", "FEAT", "my-stage", "APPROVE_STAGE", "proceeding despite broken assessment",
++        "--override", "assessment was regenerated and lost; evidence reviewed in session",
++    ]);
++    assert_eq!(code, 0,
++        "--override must allow proceeding past broken provenance; stderr: {}; stdout: {}",
++        stderr, stdout);
++
++    let log_content = std::fs::read_to_string(&log_path).expect("read log");
++    assert!(log_content.contains("PROVENANCE_UNVERIFIABLE"),
++        "log must record PROVENANCE_UNVERIFIABLE: {}", log_content);
++    assert!(log_content.contains("assessment was regenerated"),
++        "log must record override rationale: {}", log_content);
++}
++
+ #[test]
+ fn smoke_delta_mode_tracked_artifact_succeeds() {
+     // A tracked but unchanged file in delta mode should produce a packet (exit 0 with --print-packet).

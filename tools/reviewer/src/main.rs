@@ -45,6 +45,9 @@ enum Commands {
         stage: String,
         verdict: String,
         reason: String,
+        /// Override the coverage gate for CRITICAL_OMISSION / EMPTY_PACKET; requires a rationale
+        #[arg(long = "override", value_name = "RATIONALE")]
+        override_reason: Option<String>,
     },
     /// Show config resolution and diagnostic info
     Diagnose {
@@ -120,8 +123,8 @@ fn run() -> i32 {
             }
         }
 
-        Commands::Decision { feature, stage, verdict, reason } => {
-            match cmd::decision::run(&feature, &stage, &verdict, &reason, &cfg) {
+        Commands::Decision { feature, stage, verdict, reason, override_reason } => {
+            match cmd::decision::run(&feature, &stage, &verdict, &reason, override_reason.as_deref(), &cfg) {
                 Ok(code) => code,
                 Err(e) => {
                     eprintln!("error: {}", e);

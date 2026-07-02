@@ -1,0 +1,201 @@
+Reviewer task:
+
+SCOPE CONTRACT
+  Assess this artifact against the STATED SCOPE of this stage/PR — the Expected Stage
+  Output below and what the artifacts actually claim — NOT against an ideal final system.
+  A capability the artifacts do not claim to provide is OUT-OF-SCOPE, not a defect.
+  The following are OUT-OF-SCOPE BACKLOG unless THIS artifact explicitly claims to provide
+  them: formal approval-binding enforcement; rollback correctness; COMMIT_BOUND/
+  WORKSPACE_BOUND enforcement; JSON Schema validation; CI validation; exact
+  decision-integrity; per-feature decision ledgers; autonomous approval; enabled hooks.
+
+YOUR TASK — answer these five questions using only the evidence in the packet:
+  1. Acceptance criteria: Does the artifact satisfy each of its stated acceptance criteria?
+     Cite evidence for each criterion (or note its absence).
+  2. Claim support: Are universal or strong claims (all, every, never, always, no X) in the
+     artifact supported by evidence in the packet? Any unverifiable strong claim is a candidate
+     finding only if it affects acceptance, scope, safety, decision integrity, or the artifact's
+     stated guarantees.
+  3. Scope drift: Is there any change beyond the stated scope boundary? (Files not in the
+     "What changes" list; behavior changes not in the intent; downstream doctrine modified
+     rather than read.)
+  4. In-scope blockers: Are there facts that, if left in, would make the artifact wrong,
+     unsafe, or internally contradictory?
+  5. Finding classification: Classify every finding you raise as exactly one of the five
+     TRIAGE RULE categories below.
+
+TRIAGE RULE — classify EVERY finding as exactly one of:
+  IN-SCOPE BLOCKER         breaks the stated goal; creates a FALSE CLAIM in this artifact;
+                           weakens the advisory/read-only/human-gated guarantees; prevents
+                           the work from running; or violates an explicit safety constraint.
+  IN-SCOPE NON-BLOCKER     improves it but is not required for this PR.
+  OUT-OF-SCOPE BACKLOG     valid, but belongs to a future feature / stronger guarantee.
+  REJECTED                 conflicts with the stated scope or Codeos philosophy.
+  SELF-REFERENCE /         review records that are stale because of the previous round's
+  REVIEW-BOOKKEEPING       own existence (causal loop); not a real artifact defect.
+  Base the PR decision ONLY on IN-SCOPE BLOCKER findings. An OUT-OF-SCOPE BACKLOG finding
+  must NOT cause DO NOT ADVANCE unless this artifact FALSELY CLAIMS to solve it.
+
+WHAT NOT TO DO
+  - Do not flag style or wording issues as blockers unless the wording creates a false claim,
+    contradiction, parser breakage, or wrong governance instruction.
+  - Do not re-review unchanged full context when the packet is in delta mode.
+  - Do not treat local-only review history as a blocker unless the artifact falsely
+    claims the review artifacts are committed/durable.
+
+INSTRUCTIONS
+  If this is a resumed session, ignore any earlier-session conclusions unless they are
+  re-established by THIS packet; assess only the evidence above, pinned to this commit.
+  Give a focused assessment of this artifact against the stated scope, acceptance criteria,
+  and evidence in this packet. Rank findings by severity. Suggest a better design only when
+  needed to explain a required fix for an IN-SCOPE BLOCKER.
+
+  Limit findings to the top 3 IN-SCOPE BLOCKERS. Additional non-blocking observations may be
+  summarized in one short paragraph only if useful.
+
+  For EACH finding emit:
+    Finding: / Severity: High|Medium|Low / Classification: <one of the TRIAGE RULE labels>
+    Evidence: <file/line> / Why: <short> / Required action: fix now|optional fix|backlog|reject
+    Scope reason: <why it does/does not belong to this PR's scope>
+  Then emit:
+    PR decision: ADVANCE | REQUEST CHANGES | DO NOT ADVANCE   (based ONLY on in-scope blockers)
+    Scope drift warning: yes|no — <is anything pulling this PR beyond its stated scope?>
+  Then on the LAST three lines emit exactly (map ADVANCE->NO OBJECTION,
+  REQUEST CHANGES->CHANGES ADVISED, DO NOT ADVANCE->DO NOT ADVANCE):
+    LOG SUMMARY: <NO OBJECTION | CHANGES ADVISED | DO NOT ADVANCE | UNCLASSIFIED> — <single most important point>
+      (use UNCLASSIFIED if you genuinely cannot classify the artifact safely)
+    EVIDENCE: <A|B|C|D|E>
+    HIGHEST-IMPACT UNCERTAINTY: <one sentence — what single thing, if wrong, most affects this assessment>
+
+  Evidence grade — the grade describes what the assessment rests on, not reviewer confidence:
+    A — Directly verified in the artifact, diff, or output shown in the packet
+    B — Verified with multiple direct pieces of evidence, but coverage is not complete
+    C — Partially verified, partially inferred from structure or context
+    D — Mostly inferred from structure or indirect evidence
+    E — Hypothesis or very limited basis — little to no direct evidence
+
+
+PACKET MANIFEST
+  generated: 2026-07-02T10:36:34Z
+  task_prompt: /home/arc/projects/claude/Codeos/prompts/codeos-reviewer-task.md (4959 bytes)
+  review_content_bytes: 4992
+  estimated_review_tokens: ~1248
+  budget_status: OK
+  packet_mode: delta
+  delta_base: f0e1d3d
+  items:
+    - path: changes/UPG-0015__CHG-20260702-002__decision-provenance-binding.md
+      mode: path_sha_only
+      bytes: 10608
+      sha256: 936615f675cb4690555d56e8c1bcdb949443efe761bece146dd9f200788ba528
+    - path: backlog/UPG-0015-reviewer-decision-integrity.md
+      mode: delta_diff
+      bytes: 7047
+      sha256: c06bddd8cd69aa14785b2e25672cb843030369c920f1b38ddc2329deda2f8669
+    - path: (diff)
+      mode: delta_diff
+      bytes: 4992
+
+REVIEW CONTEXT
+  Feature:                UPG-0015__CHG-20260702-002
+  Stage:                  selfdev-step-2
+  Branch:                 selfdev/upg-0029-review-durability
+  Base commit:            f0e1d3d
+  Review commit:          f0e1d3d364e9aeddf39b5d2e5fc6b0ed4bdda79b (+ uncommitted workspace changes)
+  Current approved stage: n/a (non-numeric stage)
+  Evidence coverage:      FULL_COVERAGE
+  Workspace dirty:        yes (uncommitted changes at review time)
+
+DBA RULES RELEVANT TO THIS STAGE
+  - Human approval is required for every stage transition; you are advisory only.
+  - Memory is not truth — assess only what is provided, pinned to the review commit.
+  - Implementation must trace to approved artifacts; no behavior beyond intent+contract+schema.
+  - No events outside the approved event schema; no hidden behavior.
+
+STAGE-SPECIFIC CHECKS
+  - (no stage-specific checklist for stage selfdev-step-2)
+
+EXPECTED STAGE OUTPUT
+  (no expected-output template for stage)
+
+ARTIFACTS TO REVIEW
+  --- changes/UPG-0015__CHG-20260702-002__decision-provenance-binding.md (mode: path_sha_only, sha256: 936615f675cb4690555d56e8c1bcdb949443efe761bece146dd9f200788ba528, bytes: 10608) ---
+
+  --- backlog/UPG-0015-reviewer-decision-integrity.md (mode: delta_diff, sha256: c06bddd8cd69aa14785b2e25672cb843030369c920f1b38ddc2329deda2f8669, bytes: 7047) ---
+
+DELTA DIFF (f0e1d3d->working tree, artifact paths only, secret/size filtered)
+diff --git a/backlog/UPG-0015-reviewer-decision-integrity.md b/backlog/UPG-0015-reviewer-decision-integrity.md
+index c909303..cbad17a 100644
+--- a/backlog/UPG-0015-reviewer-decision-integrity.md
++++ b/backlog/UPG-0015-reviewer-decision-integrity.md
+@@ -39,11 +39,15 @@ Bind `APPROVE_STAGE` to **reproducing the stored review provenance**, with durab
+ 1. **Full provenance recheck at decision time.** Re-verify not just the named artifacts but the
+    recorded `review_commit`, `diff_hash` of the reviewed pathspec, `reviewed_packet_sha256`, and
+    `workspace_dirty`. Any mismatch refuses approval unless an explicit, named override is recorded.
++   *(CHG-20260702-002 increment: provenance fields are re-verified and reported in the Provenance
++   block; only `coverage_state: CRITICAL_OMISSION / EMPTY_PACKET` triggers a gate. Packet-hash
++   mismatch and commit-drift are advisory warnings in this increment. The "any mismatch refuses"
++   guarantee is the full-vision target for a later increment.)*
+ 2. **Binding modes** (the removed "provenance_integrity" axis): `COMMIT_BOUND` (HEAD == review
+    commit, clean tree, artifacts hash-match) vs `WORKSPACE_BOUND` (uncommitted reviewed content,
+    re-verified via artifact SHA + diff hash + packet SHA + workspace_dirty). `CRITICAL_OMISSION` /
+-   `EMPTY_PACKET` / unverifiable states are **hard stops** that cannot be overridden — approval must
+-   trace to evidence the reviewer actually saw.
++   `EMPTY_PACKET` / unverifiable states are **software-enforced stops** (automated progression
++   blocked); human-overridable with mandatory rationale. See AJ-011 and Guardrail below.
+ 3. **Durable workspace snapshots** so a workspace-bound approval is reproducible from a git object
+    (stash/tree/commit hash) rather than by re-hashing the live tree.
+ 4. **Rollback semantics**: a recorded approval names the exact "last sound OK point" to return to.
+@@ -51,6 +55,8 @@ Bind `APPROVE_STAGE` to **reproducing the stored review provenance**, with durab
+    bind to a proven durable snapshot.
+ 6. **Re-hash the saved packet + assessment on every approval path**, not only workspace-bound ones,
+    so approval cannot point at mutated evidence.
++   *(CHG-20260702-002 increment: packet re-hash performed on APPROVE_STAGE path; REQUEST_CHANGES /
++   STOP write a Provenance block informational only. Full-path enforcement is the future-vision target.)*
+ 7. **Override/waiver vocabulary**: explicit `[STALE OVERRIDE]` / `[WORKSPACE OVERRIDE]` (provenance
+    mismatch) and `[SECURITY WAIVER]` / `[COVERAGE WAIVER]` (coverage degradation), each requiring a
+    human reason. Reserve and explicitly **forbid** any "unreviewed override" path.
+@@ -63,9 +69,13 @@ Bind `APPROVE_STAGE` to **reproducing the stored review provenance**, with durab
+ 
+ ## Scope
+ 
+-`scripts/codeos-review.sh` (`decision`, and the provenance fields in `review`) +
++Full vision: `scripts/codeos-review.sh` (`decision`, and the provenance fields in `review`) +
+ `docs/reviewer-pipeline.md` + `docs/reviewer-artifact-schemas.md`. Behavioral change to the decision
+-guard; **no hooks**. Realistically this lands in the typed engine — see `reviewer-engine-v1.md`.
++guard; **no hooks**.
++
++*(CHG-20260702-002 increment: implemented in the typed Rust engine —
++`tools/reviewer/src/cmd/decision.rs`, `log.rs`, `main.rs`, `tests/smoke.rs`. The Bash script path
++remains valid for any future Bash-only deployments; this increment targets the Rust engine.)*
+ 
+ ## Value
+ 
+@@ -81,9 +91,16 @@ internal-contradiction churn — prefer the typed engine.
+ 
+ ## Guardrail
+ 
+-Overrides always available with a recorded human reason; refusals must name exactly which
+-provenance field diverged. Human authority preserved. Hard stops (reviewer never saw the evidence)
+-are the only non-overridable case.
++`CRITICAL_OMISSION` and `EMPTY_PACKET` are **mandatory stop conditions for automated
++progression**. Advancement requires an explicit human override with recorded rationale.
++The override does not invalidate the finding; it records that the human intentionally
++accepted the associated risk. Refusals must name exactly which provenance field or
++coverage state triggered the stop.
++
++**Distinction:** "automated hard stop" ≠ "human-non-overridable." The CLI enforces the
++stop; the human remains the final authority (consistent with Rule 1: explicit human
++correction overrides everything). No state is absolutely non-overridable when a human
++is present — but no state can be silently bypassed by automation alone. See AJ-011.
+ 
+ ## DBA-philosophy note
+ 
+@@ -100,6 +117,7 @@ reviewed state. Deferred from the v0 advisory pilot, which intentionally stays n
+ 
+ | Change ID | File | Purpose | State |
+ |---|---|---|---|
++| CHG-20260702-002 | `changes/UPG-0015__CHG-20260702-002__decision-provenance-binding.md` | Provenance binding at decision time: packet integrity recheck, commit-drift warning, coverage gate (software stop / human-overridable) | IN_PROGRESS |
+ 
+ ### Reviews
+ 

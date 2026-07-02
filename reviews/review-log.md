@@ -3189,3 +3189,191 @@ Artifact integrity (informational audit, not a gate):
 Commit at decision: a66bda9c42a2df025972593c901c989fc9a59371
 Decision: APPROVE_STAGE
 Reason/next: test reason
+
+## 2026-07-02T10:10:30Z REVIEW — UPG-0015__CHG-20260702-002 — Stage selfdev-step-1
+Base: (no base pin)  Review: f0e1d3d364e9aeddf39b5d2e5fc6b0ed4bdda79b  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 05cd4df3d455c6775f5a46488d305c8d7a5e6afd6d2710e0ae13c182aea0511b
+Reviewer: codex default-model (session 019f224c-6299-76d2-b535-637a7c1e937b)
+Effort: high   Wall time: 176535ms   Reconnects: 0
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: CHANGES ADVISED — The packet does not yet present one coherent contract for UPG-0015, and its claimed Feature Thread update is missing
+Full assessment: /home/arc/projects/claude/Codeos/reviews/codex/2026-07-02T101030Z-UPG-0015__CHG-20260702-002-stage-selfdev-step-1-f0e1d3d.md (sha256:cf569c627273eaf65224a171f4a3963b3fd95e0fb58202cc2d71af80c74b307b)
+Reviewed packet: /home/arc/projects/claude/Codeos/reviews/codex/packets/20260702T101030Z-UPG-0015__CHG-20260702-002-stage-selfdev-step-1-f0e1d3d.packet.txt (sha256:6add13db20ed0d4a7d6c2972f955aeb3b520b6e5b985a8060ad687b637d83e6f)
+Human decision: (append with: codeos-reviewer decision UPG-0015__CHG-20260702-002 selfdev-step-1 <DECISION> "<reason>")
+
+## 2026-07-02T10:19:01Z HUMAN DECISION — UPG-0015__CHG-20260702-002 — Stage selfdev-step-1
+Commit at decision: f0e1d3d364e9aeddf39b5d2e5fc6b0ed4bdda79b
+Decision: REQUEST_CHANGES
+Reason/next: F1: software-enforced hard stop, human-overridable with mandatory rationale — non-overridable language rejected as inconsistent with DBA human-authority model; backlog brief + change record both updated. F2: add CHG-20260702-002 row to Feature Thread.
+Verified against: /home/arc/projects/claude/Codeos/reviews/codex/2026-07-02T101030Z-UPG-0015__CHG-20260702-002-stage-selfdev-step-1-f0e1d3d.md
+Artifact integrity (informational audit, not a gate):
+  MATCH   changes/UPG-0015__CHG-20260702-002__decision-provenance-binding.md
+  MATCH   backlog/UPG-0015-reviewer-decision-integrity.md
+  MATCH   changes/UPG-0015__CHG-20260702-002__decision-provenance-binding.md
+  MATCH   backlog/UPG-0015-reviewer-decision-integrity.md
+
+## 2026-07-02T10:31:16Z REVIEW — UPG-0015__CHG-20260702-002 — Stage selfdev-step-2
+Base: (no base pin)  Review: f0e1d3d364e9aeddf39b5d2e5fc6b0ed4bdda79b  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 8c3dd97e95eaaa9bfb5c7e071187143c5154127346632719d66603e180fbceda
+Reviewer: codex default-model (session 019f224c-6299-76d2-b535-637a7c1e937b)
+Effort: high   Wall time: 132773ms   Reconnects: 0
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: CHANGES ADVISED — The packet still does not present one coherent approved contract for UPG-0015 across the change record and backlog brief
+Full assessment: /home/arc/projects/claude/Codeos/reviews/codex/2026-07-02T103116Z-UPG-0015__CHG-20260702-002-stage-selfdev-step-2-f0e1d3d.md (sha256:7ef099f59336dde2342dd44a192d3b52ffb7d26913697034dbc21cc99238066a)
+Reviewed packet: /home/arc/projects/claude/Codeos/reviews/codex/packets/20260702T103116Z-UPG-0015__CHG-20260702-002-stage-selfdev-step-2-f0e1d3d.packet.txt (sha256:77ba815f78702a41431cb03e3f4e6728bdf7d78b3da7eb350fbc8f12c0958c82)
+Human decision: (append with: codeos-reviewer decision UPG-0015__CHG-20260702-002 selfdev-step-2 <DECISION> "<reason>")
+
+## 2026-07-02T10:37:18Z REVIEW — UPG-0015__CHG-20260702-002 — Stage selfdev-step-2
+Base: f0e1d3d  Review: f0e1d3d364e9aeddf39b5d2e5fc6b0ed4bdda79b  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 2bcac778558c7d8f6f47091ad2b4823159a2d72bc301941a4dc681ce4bb4135e
+Reviewer: codex default-model (session 019f224c-6299-76d2-b535-637a7c1e937b)
+Effort: high   Wall time: 45768ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: C
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — The delta resolves the previously visible contract mismatch by distinguishing full-feature vision from the current increment
+Full assessment: /home/arc/projects/claude/Codeos/reviews/codex/2026-07-02T103718Z-UPG-0015__CHG-20260702-002-stage-selfdev-step-2-f0e1d3d.md (sha256:ee1b3350da7308782af035572e26bcdb14e5410e51458aba67f54751045b4114)
+Reviewed packet: /home/arc/projects/claude/Codeos/reviews/codex/packets/20260702T103718Z-UPG-0015__CHG-20260702-002-stage-selfdev-step-2-f0e1d3d.packet.txt (sha256:4e6f0dd68472f2116fdf392d1ca13aa277d0c773028135d66bd058e82cec7149)
+Human decision: (append with: codeos-reviewer decision UPG-0015__CHG-20260702-002 selfdev-step-2 <DECISION> "<reason>")
+
+## 2026-07-02T10:37:46Z HUMAN DECISION — UPG-0015__CHG-20260702-002 — Stage selfdev-step-2
+Commit at decision: f0e1d3d364e9aeddf39b5d2e5fc6b0ed4bdda79b
+Decision: REQUEST_CHANGES
+Reason/next: R1 F1: feature brief items 1/6/Scope annotated with CHG-20260702-002 increment notes (partial provenance recheck advisory; coverage gate only; Rust engine scope); F2: TRACE HEADER review_series S1→S2. R2 delta: NO OBJECTION.
+Verified against: /home/arc/projects/claude/Codeos/reviews/codex/2026-07-02T103718Z-UPG-0015__CHG-20260702-002-stage-selfdev-step-2-f0e1d3d.md
+Artifact integrity (informational audit, not a gate):
+  MATCH   changes/UPG-0015__CHG-20260702-002__decision-provenance-binding.md
+  MATCH   backlog/UPG-0015-reviewer-decision-integrity.md
+  MATCH   changes/UPG-0015__CHG-20260702-002__decision-provenance-binding.md
+  MATCH   backlog/UPG-0015-reviewer-decision-integrity.md
+
+## 2026-07-02T10:51:12Z REVIEW — UPG-0015__CHG-20260702-002 — Stage selfdev-step-3
+Base: (no base pin)  Review: f0e1d3d364e9aeddf39b5d2e5fc6b0ed4bdda79b  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 4ee61337076a917598aec7e3fbe4ad5a32f8ec96d7180b1371630eb0d5afeb79
+Reviewer: codex default-model (session 019f224c-6299-76d2-b535-637a7c1e937b)
+Effort: high   Wall time: 145696ms   Reconnects: 0
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: CHANGES ADVISED — Non-APPROVE decisions can still be recorded as if a coverage gate fired, and the stated minimum test coverage is not actually present
+Full assessment: /home/arc/projects/claude/Codeos/reviews/codex/2026-07-02T105112Z-UPG-0015__CHG-20260702-002-stage-selfdev-step-3-f0e1d3d.md (sha256:e316bcf126eb0ddd8a63d81c49825bd50bfb207866d7b41bee3c1184146a26c3)
+Reviewed packet: /home/arc/projects/claude/Codeos/reviews/codex/packets/20260702T105112Z-UPG-0015__CHG-20260702-002-stage-selfdev-step-3-f0e1d3d.packet.txt (sha256:6701267cab539231a8291d317695d1a117cc8a7c1214dce7cfadedd469ec52f4)
+Human decision: (append with: codeos-reviewer decision UPG-0015__CHG-20260702-002 selfdev-step-3 <DECISION> "<reason>")
+
+## 2026-07-02T10:54:24Z REVIEW — UPG-0015__CHG-20260702-002 — Stage selfdev-step-3
+Base: f0e1d3d  Review: f0e1d3d364e9aeddf39b5d2e5fc6b0ed4bdda79b  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 45f174ced376a73cc348121bc8ca6d877879fbe68b385fb3532de51a9e4cd087
+Reviewer: codex default-model (session 019f224c-6299-76d2-b535-637a7c1e937b)
+Effort: high   Wall time: 68055ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: C
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — The delta fixes the previously visible provenance/logging and test-coverage mismatches without expanding scope
+Full assessment: /home/arc/projects/claude/Codeos/reviews/codex/2026-07-02T105424Z-UPG-0015__CHG-20260702-002-stage-selfdev-step-3-f0e1d3d.md (sha256:bb0aaaccd7a70a764adca401dd88c8d986efc2f08c6c100355e8489b69aa8b04)
+Reviewed packet: /home/arc/projects/claude/Codeos/reviews/codex/packets/20260702T105424Z-UPG-0015__CHG-20260702-002-stage-selfdev-step-3-f0e1d3d.packet.txt (sha256:6e7b2cd148c8fa3011167b5e8ed245f654f4407cea0eac73d529f0454b8a07af)
+Human decision: (append with: codeos-reviewer decision UPG-0015__CHG-20260702-002 selfdev-step-3 <DECISION> "<reason>")
+
+## 2026-07-02T10:54:33Z HUMAN DECISION — UPG-0015__CHG-20260702-002 — Stage selfdev-step-3
+Commit at decision: f0e1d3d364e9aeddf39b5d2e5fc6b0ed4bdda79b
+Decision: REQUEST_CHANGES
+Reason/next: R1 F1: gate_note in append_decision conditioned on decision==APPROVE_STAGE; REQUEST_CHANGES/STOP now log INFORMATIONAL; AC-3 spec updated to clarify. F2: AC-4/AC-5 tests strengthened to assert MISMATCH/HEAD_DRIFT in log content. F3: TRACE HEADER updated S2→S3. R2 delta: NO OBJECTION.
+Provenance:
+  assessment: /home/arc/projects/claude/Codeos/reviews/codex/2026-07-02T105424Z-UPG-0015__CHG-20260702-002-stage-selfdev-step-3-f0e1d3d.md
+  review_commit: f0e1d3d364e9aeddf39b5d2e5fc6b0ed4bdda79b  [HEAD_MATCH]
+  packet_sha256: [MATCH]
+  coverage_state: FULL_COVERAGE  [INFORMATIONAL]
+
+## 2026-07-02T11:26:22Z REVIEW — UPG-0015__CHG-20260702-002 — Stage selfdev-step-3
+Base: f0e1d3d  Review: f0e1d3d364e9aeddf39b5d2e5fc6b0ed4bdda79b  Branch: selfdev/upg-0029-review-durability
+Diff-hash: b24322e42fae4b31ffad588dc59af68a3fa88a0ad2dd4b4da2ffd94903051331
+Reviewer: codex default-model (session 019f224c-6299-76d2-b535-637a7c1e937b)
+Effort: high   Wall time: 86697ms   Reconnects: 0
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: B
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: CHANGES ADVISED — The new fail-closed provenance path still silently accepts assessments missing only one required provenance field
+Full assessment: /home/arc/projects/claude/Codeos/reviews/codex/2026-07-02T112622Z-UPG-0015__CHG-20260702-002-stage-selfdev-step-3-f0e1d3d.md (sha256:1906e153fd5e8e0045240fe4c285f28dfa08b3d1b0761ab2aa65747b61fb62f8)
+Reviewed packet: /home/arc/projects/claude/Codeos/reviews/codex/packets/20260702T112622Z-UPG-0015__CHG-20260702-002-stage-selfdev-step-3-f0e1d3d.packet.txt (sha256:2915e82d09e15b60bb6a20f582b3dc0ae1b8c9ea0564d02e42a51f6fd8ef751f)
+Human decision: (append with: codeos-reviewer decision UPG-0015__CHG-20260702-002 selfdev-step-3 <DECISION> "<reason>")
+
+## 2026-07-02T11:29:17Z REVIEW — UPG-0015__CHG-20260702-002 — Stage selfdev-step-3
+Base: f0e1d3d  Review: f0e1d3d364e9aeddf39b5d2e5fc6b0ed4bdda79b  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 17bf4c66c6b0531dbd012034a5e74f3324c841e741e699a959223abc6539bbb4
+Reviewer: codex default-model (session 019f224c-6299-76d2-b535-637a7c1e937b)
+Effort: high   Wall time: 85527ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: C
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — The visible delta closes the partial-frontmatter fail-closed hole and adds a direct test for it
+Full assessment: /home/arc/projects/claude/Codeos/reviews/codex/2026-07-02T112917Z-UPG-0015__CHG-20260702-002-stage-selfdev-step-3-f0e1d3d.md (sha256:9329d338edd03341a4d9aa055b4d416e46a0d7ace466da7bf64d6061210e551c)
+Reviewed packet: /home/arc/projects/claude/Codeos/reviews/codex/packets/20260702T112917Z-UPG-0015__CHG-20260702-002-stage-selfdev-step-3-f0e1d3d.packet.txt (sha256:e45bb7b9ba9eb485b75b834c05e1f78099f96af8ab34aee53c327343a8a0c680)
+Human decision: (append with: codeos-reviewer decision UPG-0015__CHG-20260702-002 selfdev-step-3 <DECISION> "<reason>")
+
+## 2026-07-02T11:29:31Z HUMAN DECISION — UPG-0015__CHG-20260702-002 — Stage selfdev-step-3
+Commit at decision: f0e1d3d364e9aeddf39b5d2e5fc6b0ed4bdda79b
+Decision: REQUEST_CHANGES
+Reason/next: R1+R2 fail-closed additions: load_decision_provenance now returns Result<Option>; Err when assessment exists but unreadable/unparseable (fail-closed with --override escape); parse_assessment_frontmatter fixed from && to || (partial provenance also blocked); PROVENANCE_UNVERIFIABLE replaces silent not-verified for packet issues; HEAD unknown emits warning; 3 new tests (malformed blocks, partial frontmatter blocks, override with PROVENANCE_UNVERIFIABLE recorded); AC-6b/6c added to change record. R3 delta: NO OBJECTION.
+Provenance:
+  assessment: /home/arc/projects/claude/Codeos/reviews/codex/2026-07-02T112917Z-UPG-0015__CHG-20260702-002-stage-selfdev-step-3-f0e1d3d.md
+  review_commit: f0e1d3d364e9aeddf39b5d2e5fc6b0ed4bdda79b  [HEAD_MATCH]
+  packet_sha256: [MATCH]
+  coverage_state: FULL_COVERAGE  [INFORMATIONAL]
+
+## 2026-07-02T11:36:57Z REVIEW — UPG-0015__CHG-20260702-002 — Stage selfdev-step-4
+Base: (no base pin)  Review: f0e1d3d364e9aeddf39b5d2e5fc6b0ed4bdda79b  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 64d512a3ccd1d1c2f505e802afb85be773b1da350f948549dcfe72a3c692180e
+Reviewer: codex default-model (session 019f224c-6299-76d2-b535-637a7c1e937b)
+Effort: high   Wall time: 175602ms   Reconnects: 0
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: CHANGES ADVISED — The reconcile packet over-claims AC-6c coverage, misstates its scope cleanliness, and provides contradictory AC-11 test evidence
+Full assessment: /home/arc/projects/claude/Codeos/reviews/codex/2026-07-02T113657Z-UPG-0015__CHG-20260702-002-stage-selfdev-step-4-f0e1d3d.md (sha256:9149effa0e50f6aa41bb913dec8eb313978f20d24df609da764060c6aefd79a5)
+Reviewed packet: /home/arc/projects/claude/Codeos/reviews/codex/packets/20260702T113657Z-UPG-0015__CHG-20260702-002-stage-selfdev-step-4-f0e1d3d.packet.txt (sha256:3254a26ced8332ba9836cc0287bb98debfab2f1531c5704413b7385d916be73a)
+Human decision: (append with: codeos-reviewer decision UPG-0015__CHG-20260702-002 selfdev-step-4 <DECISION> "<reason>")
+
+## 2026-07-02T11:40:49Z REVIEW — UPG-0015__CHG-20260702-002 — Stage selfdev-step-4
+Base: f0e1d3d  Review: f0e1d3d364e9aeddf39b5d2e5fc6b0ed4bdda79b  Branch: selfdev/upg-0029-review-durability
+Diff-hash: dc707129563cec8cfae47d782a73adf9fccf7269b096893deddfe9d4b3042284
+Reviewer: codex default-model (session 019f224c-6299-76d2-b535-637a7c1e937b)
+Effort: high   Wall time: 35283ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: C
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — The visible delta adds the missing no-stored-sha warning path and a direct test for it
+Full assessment: /home/arc/projects/claude/Codeos/reviews/codex/2026-07-02T114049Z-UPG-0015__CHG-20260702-002-stage-selfdev-step-4-f0e1d3d.md (sha256:33e2bca5b357b5c43f8c774ec71b08fd9d06952bf08fb90adb6ebb31a2c77756)
+Reviewed packet: /home/arc/projects/claude/Codeos/reviews/codex/packets/20260702T114049Z-UPG-0015__CHG-20260702-002-stage-selfdev-step-4-f0e1d3d.packet.txt (sha256:1acd83f701dd54dc9ff15cfa577ccfcd02325c7f04c18cdb1c9b364ce0c3574f)
+Human decision: (append with: codeos-reviewer decision UPG-0015__CHG-20260702-002 selfdev-step-4 <DECISION> "<reason>")
+
+## 2026-07-02T11:40:57Z HUMAN DECISION — UPG-0015__CHG-20260702-002 — Stage selfdev-step-4
+Commit at decision: f0e1d3d364e9aeddf39b5d2e5fc6b0ed4bdda79b
+Decision: REQUEST_CHANGES
+Reason/next: R1 blockers: AC-6c missing stderr warning for no-stored-sha case; backlog/features.md not declared in What-changes table; Step-3 test block showed stale count (20 smoke) inconsistent with reconcile total. All fixed.
+Provenance:
+  assessment: /home/arc/projects/claude/Codeos/reviews/codex/2026-07-02T114049Z-UPG-0015__CHG-20260702-002-stage-selfdev-step-4-f0e1d3d.md
+  review_commit: f0e1d3d364e9aeddf39b5d2e5fc6b0ed4bdda79b  [HEAD_MATCH]
+  packet_sha256: [MATCH]
+  coverage_state: FULL_COVERAGE  [INFORMATIONAL]
+
+## 2026-07-02T11:41:12Z HUMAN DECISION — UPG-0015__CHG-20260702-002 — Stage selfdev-step-4
+Commit at decision: f0e1d3d364e9aeddf39b5d2e5fc6b0ed4bdda79b
+Decision: APPROVE_STAGE
+Reason/next: R2 delta: NO OBJECTION. All ACs verified. 48 tests pass (22 unit + 26 smoke). AC-6c fully covered: packet-missing, no-stored-sha, hash-error, no-packet-path all warn to stderr and log PROVENANCE_UNVERIFIABLE. Fail-closed on malformed/partial frontmatter. Coverage gate software-enforced, human-overridable via --override.
+Provenance:
+  assessment: /home/arc/projects/claude/Codeos/reviews/codex/2026-07-02T114049Z-UPG-0015__CHG-20260702-002-stage-selfdev-step-4-f0e1d3d.md
+  review_commit: f0e1d3d364e9aeddf39b5d2e5fc6b0ed4bdda79b  [HEAD_MATCH]
+  packet_sha256: [MATCH]
+  coverage_state: FULL_COVERAGE  [OK]
