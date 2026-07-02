@@ -99,7 +99,7 @@ cheap pilot-adjacent wins early.
 
 ## Immediate next pickups
 
-Wave 1 complete. Wave 2 complete. Wave 3 complete. Wave 4 active — UPG-0032 Rust Reviewer Engine (CHG-20260702-001, COMPLETE 2026-07-02). Next: UPG-0015 (Bind stage approval to reviewed provenance) or UPG-0014 (Reviewer Agent with Full Diff Access), both depend on UPG-0032 ✓.
+Wave 1 complete. Wave 2 complete. Wave 3 complete. Wave 4 active — UPG-0032 COMPLETE 2026-07-02 (delta-mode fix committed 065cf13). Next pickups in Wave 4: **UPG-0015** (Bind stage approval to reviewed provenance, P1) or **UPG-0014** (Reviewer Agent with Full Diff Access, P2), both depend on UPG-0032 ✓. UPG-0015 is higher priority.
 
 Each is taken as its own self-dev change (a fresh `CHG-*`) via the 4-step loop, with human
 approval at every gate.
