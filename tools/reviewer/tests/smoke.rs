@@ -684,3 +684,299 @@ fn smoke_delta_mode_tracked_artifact_succeeds() {
         code, stderr
     );
 }
+
+// ---- Full Context Diff tests (AC-1, AC-2, AC-3, AC-4) ----
+
+/// Create a .codeos symlink in the temp repo pointing to the real Codeos toolkit root.
+/// This lets the binary find prompts/codeos-reviewer-task.md from a temp repo.
+fn setup_codeos_symlink(repo_path: &std::path::Path) {
+    let target = repo_root();
+    std::os::unix::fs::symlink(&target, repo_path.join(".codeos"))
+        .expect("create .codeos symlink");
+}
+
+/// Helper: add a new commit with an extra file to the temp repo.
+fn add_extra_commit(repo_path: &std::path::Path, filename: &str, content: &str) -> String {
+    std::fs::write(repo_path.join(filename), content).expect("write extra file");
+    Command::new("git").args(["add", filename]).current_dir(repo_path).output().expect("git add");
+    Command::new("git").args(["commit", "-m", "extra"]).current_dir(repo_path).output().expect("git commit");
+    let out = Command::new("git").args(["rev-parse", "HEAD"]).current_dir(repo_path)
+        .output().expect("git rev-parse");
+    String::from_utf8_lossy(&out.stdout).trim().to_string()
+}
+
+#[test]
+fn smoke_full_context_diff_present_in_delta_plus_base() {
+    // AC-1: Full Context Diff section appears when --mode delta AND --base are both active.
+    let (dir, base_sha) = setup_temp_git_repo();
+    let p = dir.path();
+    setup_codeos_symlink(p);
+    // Modify the named artifact AND add a second file, so the packet is non-empty AND the
+    // full context diff contains changes beyond the named artifact.
+    std::fs::write(p.join("tracked.md"), "# tracked\nmodified\n").expect("modify tracked");
+    add_extra_commit(p, "extra.md", "# extra\n");
+
+    let out = Command::new(binary())
+        .args([
+            "review", "FEAT", "full-diff-test",
+            "--mode", "delta",
+            "--base", &base_sha,
+            "--print-packet", "--skip-prechecks",
+            "tracked.md",
+        ])
+        .current_dir(p)
+        .output()
+        .expect("run binary");
+
+    let code = out.status.code().unwrap_or(-1);
+    let stdout = String::from_utf8_lossy(&out.stdout).into_owned();
+    let stderr = String::from_utf8_lossy(&out.stderr).into_owned();
+    assert_eq!(code, 0, "delta+base should exit 0; stderr: {}", stderr);
+    assert!(
+        stdout.contains("Full Context Diff (informational"),
+        "packet must contain Full Context Diff section; got: {}", &stdout[..stdout.len().min(500)]
+    );
+}
+
+#[test]
+fn smoke_full_context_diff_absent_in_full_mode() {
+    // AC-1/AC-2: No Full Context Diff section when --mode full is used (no --base).
+    let (dir, _) = setup_temp_git_repo();
+    let p = dir.path();
+    setup_codeos_symlink(p);
+    add_extra_commit(p, "extra.md", "# extra\n");
+
+    let out = Command::new(binary())
+        .args([
+            "review", "FEAT", "full-diff-test",
+            "--mode", "full",  // full mode, no --base
+            "--print-packet", "--skip-prechecks",
+            "tracked.md",
+        ])
+        .current_dir(p)
+        .output()
+        .expect("run binary");
+
+    let code = out.status.code().unwrap_or(-1);
+    let stdout = String::from_utf8_lossy(&out.stdout).into_owned();
+    let stderr = String::from_utf8_lossy(&out.stderr).into_owned();
+    assert_eq!(code, 0, "full mode should exit 0; stderr: {}", stderr);
+    assert!(
+        !stdout.contains("Full Context Diff (informational"),
+        "packet must NOT contain Full Context Diff in full mode"
+    );
+}
+
+#[test]
+fn smoke_full_context_diff_absent_in_delta_without_base() {
+    // AC-1: No Full Context Diff section when --mode delta is used WITHOUT --base.
+    // Guard is `delta_mode && delta_base.is_some()` — delta without base → absent.
+    let (dir, _) = setup_temp_git_repo();
+    let p = dir.path();
+    setup_codeos_symlink(p);
+    // Modify tracked.md so delta mode finds a change (avoids EMPTY_PACKET).
+    std::fs::write(p.join("tracked.md"), "# tracked\nmodified\n").expect("modify tracked");
+    add_extra_commit(p, "extra.md", "# extra\n");
+
+    let out = Command::new(binary())
+        .args([
+            "review", "FEAT", "delta-no-base-test",
+            "--mode", "delta",  // delta mode, but NO --base
+            "--print-packet", "--skip-prechecks",
+            "tracked.md",
+        ])
+        .current_dir(p)
+        .output()
+        .expect("run binary");
+
+    let stdout = String::from_utf8_lossy(&out.stdout).into_owned();
+    let stderr = String::from_utf8_lossy(&out.stderr).into_owned();
+    // Delta without --base diffs against HEAD; tracked.md has no uncommitted changes after
+    // add_extra_commit, so may be EMPTY_PACKET (exit 4). Either way, no Full Context Diff.
+    assert!(
+        !stdout.contains("Full Context Diff (informational"),
+        "delta-without-base must NOT contain Full Context Diff; stderr: {}", stderr
+    );
+}
+
+#[test]
+fn smoke_full_context_diff_named_artifact_section_unchanged() {
+    // AC-3: Named artifact section is present and unmodified alongside the Full Context Diff.
+    let (dir, base_sha) = setup_temp_git_repo();
+    let p = dir.path();
+    setup_codeos_symlink(p);
+    // Modify the named artifact so the delta packet is non-empty (exit 0).
+    std::fs::write(p.join("tracked.md"), "# tracked\nmodified\n").expect("modify tracked");
+    add_extra_commit(p, "extra.md", "# extra\n");
+
+    // Get packet WITH delta+base (includes Full Context Diff).
+    let out_delta = Command::new(binary())
+        .args([
+            "review", "FEAT", "ac3-test",
+            "--mode", "delta",
+            "--base", &base_sha,
+            "--print-packet", "--skip-prechecks",
+            "tracked.md",
+        ])
+        .current_dir(p)
+        .output()
+        .expect("run binary");
+    let stdout_delta = String::from_utf8_lossy(&out_delta.stdout).into_owned();
+
+    // Get packet WITHOUT delta (no Full Context Diff).
+    let out_full = Command::new(binary())
+        .args([
+            "review", "FEAT", "ac3-test",
+            "--mode", "full",
+            "--print-packet", "--skip-prechecks",
+            "tracked.md",
+        ])
+        .current_dir(p)
+        .output()
+        .expect("run binary");
+    let stdout_full = String::from_utf8_lossy(&out_full.stdout).into_owned();
+
+    // Both must contain the ARTIFACTS TO REVIEW section.
+    assert!(stdout_delta.contains("ARTIFACTS TO REVIEW"), "delta packet missing artifacts section");
+    assert!(stdout_full.contains("ARTIFACTS TO REVIEW"), "full packet missing artifacts section");
+
+    // The delta packet must also have the Full Context Diff — it must appear AFTER the
+    // artifact+diff section, proving Full Context Diff is additive (not replacing).
+    let artifacts_pos = stdout_delta.find("ARTIFACTS TO REVIEW")
+        .expect("delta packet must have ARTIFACTS TO REVIEW");
+    let full_diff_pos = stdout_delta.find("Full Context Diff (informational")
+        .expect("delta packet must have Full Context Diff section");
+    assert!(
+        artifacts_pos < full_diff_pos,
+        "ARTIFACTS TO REVIEW must appear before Full Context Diff — named artifacts must not be replaced"
+    );
+
+    // Verify the named-artifact diff content is present, appears before Full Context Diff,
+    // and matches the raw git diff output — proving Full Context Diff is purely additive.
+    // tracked.md was modified from "# tracked\n" to "# tracked\nmodified\n".
+    let expected_diff = Command::new("git")
+        .args(["diff", &base_sha, "--", "tracked.md"])
+        .current_dir(p)
+        .output()
+        .expect("git diff tracked.md");
+    let expected_diff_str = String::from_utf8_lossy(&expected_diff.stdout).to_string();
+    let expected_trimmed = expected_diff_str.trim();
+
+    // The packet's DELTA DIFF section (from "ARTIFACTS TO REVIEW" to "Full Context Diff")
+    // must contain the raw diff of tracked.md unchanged.
+    let named_diff_section = &stdout_delta[artifacts_pos..full_diff_pos];
+    assert!(
+        named_diff_section.contains(expected_trimmed),
+        "named-artifact diff section must contain the exact git diff of tracked.md; expected: {:?}; section excerpt: {}",
+        &expected_trimmed[..expected_trimmed.len().min(200)],
+        &named_diff_section[..named_diff_section.len().min(400)]
+    );
+}
+
+#[test]
+fn smoke_full_context_diff_clipping_marker() {
+    // AC-4: When the diff exceeds budget, CLIPPED marker appears.
+    let (dir, base_sha) = setup_temp_git_repo();
+    let p = dir.path();
+    setup_codeos_symlink(p);
+    // Modify the named artifact and add a large file, so there is a non-empty full diff.
+    std::fs::write(p.join("tracked.md"), "# tracked\nmodified\n").expect("modify tracked");
+    let large_content = "x".repeat(200);
+    add_extra_commit(p, "large.md", &large_content);
+
+    // Run with a tiny budget (0) to guarantee the full diff is clipped.
+    // CODEOS_PACKET_BUDGET_BYTES=0 means remaining=0, so clip marker is always emitted
+    // when the full diff is non-empty.
+    let out = Command::new(binary())
+        .args([
+            "review", "FEAT", "clip-test",
+            "--mode", "delta",
+            "--base", &base_sha,
+            "--print-packet", "--skip-prechecks",
+            "tracked.md",
+        ])
+        .current_dir(p)
+        .env("CODEOS_PACKET_BUDGET_BYTES", "0")  // zero budget → always clips
+        .output()
+        .expect("run binary");
+
+    let stdout = String::from_utf8_lossy(&out.stdout).into_owned();
+    let stderr = String::from_utf8_lossy(&out.stderr).into_owned();
+    // The Full Context Diff section must have the CLIPPED marker (not just the header).
+    assert!(
+        stdout.contains("Full Context Diff (informational"),
+        "packet must have Full Context Diff section; stderr: {}", stderr
+    );
+    assert!(
+        stdout.contains("CLIPPED"),
+        "packet must have CLIPPED marker when budget is zero; stdout: {}", &stdout[..stdout.len().min(800)]
+    );
+}
+
+#[test]
+fn smoke_full_context_diff_absent_in_full_mode_with_base() {
+    // AC-1/AC-2: No Full Context Diff section when --mode full is used WITH --base.
+    // Guard is `delta_mode && delta_base.is_some()` — full mode (delta_mode=false) → absent
+    // even when --base is provided.
+    let (dir, base_sha) = setup_temp_git_repo();
+    let p = dir.path();
+    setup_codeos_symlink(p);
+    add_extra_commit(p, "extra.md", "# extra\n");
+
+    let out = Command::new(binary())
+        .args([
+            "review", "FEAT", "full-base-test",
+            "--mode", "full",
+            "--base", &base_sha,  // base provided, but mode is full (not delta)
+            "--print-packet", "--skip-prechecks",
+            "tracked.md",
+        ])
+        .current_dir(p)
+        .output()
+        .expect("run binary");
+
+    let stdout = String::from_utf8_lossy(&out.stdout).into_owned();
+    let stderr = String::from_utf8_lossy(&out.stderr).into_owned();
+    assert_eq!(out.status.code().unwrap_or(-1), 0, "full mode with base should exit 0; stderr: {}", stderr);
+    assert!(
+        !stdout.contains("Full Context Diff (informational"),
+        "full mode with --base must NOT contain Full Context Diff section"
+    );
+}
+
+#[test]
+fn smoke_full_context_diff_no_clip_within_budget() {
+    // AC-4: When the full diff fits within the remaining content budget, no CLIPPED marker.
+    let (dir, base_sha) = setup_temp_git_repo();
+    let p = dir.path();
+    setup_codeos_symlink(p);
+    // Small named-artifact change + tiny extra file → diff fits in default budget (50 000).
+    std::fs::write(p.join("tracked.md"), "# tracked\nmodified\n").expect("modify tracked");
+    add_extra_commit(p, "extra.md", "# extra\n");
+
+    // Default budget (50 000); in delta mode, review_content_bytes = named-artifact diff bytes
+    // only (~100 bytes), so remaining ≈ 49 900 bytes — far larger than the tiny full diff.
+    let out = Command::new(binary())
+        .args([
+            "review", "FEAT", "no-clip-test",
+            "--mode", "delta",
+            "--base", &base_sha,
+            "--print-packet", "--skip-prechecks",
+            "tracked.md",
+        ])
+        .current_dir(p)
+        .output()
+        .expect("run binary");
+
+    let stdout = String::from_utf8_lossy(&out.stdout).into_owned();
+    let stderr = String::from_utf8_lossy(&out.stderr).into_owned();
+    assert_eq!(out.status.code().unwrap_or(-1), 0, "delta+base with small diff should exit 0; stderr: {}", stderr);
+    assert!(
+        stdout.contains("Full Context Diff (informational"),
+        "packet must have Full Context Diff section"
+    );
+    assert!(
+        !stdout.contains("CLIPPED"),
+        "packet must NOT have CLIPPED marker when diff fits within budget"
+    );
+}

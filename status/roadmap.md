@@ -65,7 +65,7 @@ cheap pilot-adjacent wins early.
 | Wave | Feature ID | Title | Priority | Depends on | Planned/active change | State |
 |---|---|---|---|---|---|---|
 | 4 | UPG-0032 | Rust Reviewer Engine with Multi-Provider Support | P2 | UPG-0027 ✓ | CHG-20260702-001 ✓ | COMPLETE |
-| 4 | UPG-0014 | Reviewer Agent with Full Diff Access | P2 | UPG-0032 | — | PROPOSED |
+| 4 | UPG-0014 | Reviewer Agent with Full Diff Access | P2 | UPG-0032 | CHG-20260702-004 | COMPLETE |
 | 4 | UPG-0015 | Bind stage approval to reviewed provenance | P1 | UPG-0032 ✓ | CHG-20260702-002 | COMPLETE |
 | 4 | UPG-0016 | Branch / PR / CI Workflow Profiles | P1 | — | CHG-20260702-003 | COMPLETE |
 | 4 | UPG-0017 | Stack Manifest with Automatic Reconciliation | P2 | — | — | PROPOSED |
@@ -99,7 +99,7 @@ cheap pilot-adjacent wins early.
 
 ## Immediate next pickups
 
-Wave 1 complete. Wave 2 complete. Wave 3 complete. Wave 4 active — UPG-0032 COMPLETE 2026-07-02. UPG-0015 COMPLETE 2026-07-02. UPG-0016 COMPLETE 2026-07-02 (CHG-20260702-003; docs/workflow-profiles.md). Next pickup in Wave 4: **UPG-0014** (Reviewer Agent with Full Diff Access, P2).
+Wave 1 complete. Wave 2 complete. Wave 3 complete. Wave 4 active — UPG-0032 COMPLETE 2026-07-02. UPG-0015 COMPLETE 2026-07-02. UPG-0016 COMPLETE 2026-07-02. UPG-0014 COMPLETE 2026-07-02 (CHG-20260702-004; Full Context Diff in delta+base packets). Wave 4 COMPLETE.
 
 Each is taken as its own self-dev change (a fresh `CHG-*`) via the 4-step loop, with human
 approval at every gate.

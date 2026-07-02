@@ -3401,3 +3401,330 @@ Provenance:
   review_commit: 54fc62bd435e9b7893397a91d5958d91b5c85c64  [HEAD_MATCH]
   packet_sha256: [MATCH]
   coverage_state: FULL_COVERAGE  [OK]
+
+## 2026-07-02T13:26:26Z REVIEW — UPG-0014__CHG-20260702-004 — Stage selfdev-step-1
+Base: (no base pin)  Review: 87e1a394648280486b044fbcb6239248d82974e0  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 67fb7a7188833d28a69ce2df5f4df5b5daf1e86d03a42f1fe35d22c1dc3dfa24
+Reviewer: codex default-model (session 019f2301-1341-7212-986f-5b50edc9fc31)
+Effort: high   Wall time: 91376ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — the packet is internally consistent as a Step-1 intent activation and shows no in-scope blocker.
+Full assessment: /home/arc/projects/claude/Codeos/reviews/codex/2026-07-02T132626Z-UPG-0014__CHG-20260702-004-stage-selfdev-step-1-87e1a39.md (sha256:27ab22bb955340d1c018de18234ab96d5b2034f2900389dcc26a0bcc4d62bfc2)
+Reviewed packet: /home/arc/projects/claude/Codeos/reviews/codex/packets/20260702T132626Z-UPG-0014__CHG-20260702-004-stage-selfdev-step-1-87e1a39.packet.txt (sha256:edfc23b0ec16795f0949f7eef7b898815d83348d588204d008268cecacbe3401)
+Human decision: (append with: codeos-reviewer decision UPG-0014__CHG-20260702-004 selfdev-step-1 <DECISION> "<reason>")
+
+## 2026-07-02T13:26:35Z HUMAN DECISION — UPG-0014__CHG-20260702-004 — Stage selfdev-step-1
+Commit at decision: 87e1a394648280486b044fbcb6239248d82974e0
+Decision: APPROVE_STAGE
+Reason/next: R1: NO OBJECTION. Intent is clear: --all-diff flag adds full git diff section to packet in delta mode; backward-compatible; size-clipped; bash wrapper auto-passes it; scope boundary explicit.
+Provenance:
+  assessment: /home/arc/projects/claude/Codeos/reviews/codex/2026-07-02T132626Z-UPG-0014__CHG-20260702-004-stage-selfdev-step-1-87e1a39.md
+  review_commit: 87e1a394648280486b044fbcb6239248d82974e0  [HEAD_MATCH]
+  packet_sha256: [MATCH]
+  coverage_state: FULL_COVERAGE  [OK]
+
+## 2026-07-02T13:32:48Z REVIEW — UPG-0014__CHG-20260702-004 — Stage selfdev-step-2
+Base: (no base pin)  Review: 87e1a394648280486b044fbcb6239248d82974e0  Branch: selfdev/upg-0029-review-durability
+Diff-hash: c89fca45ab06e407b5eaab80906c68be7016101437305a9f014f0c37b5451b5c
+Reviewer: codex default-model (session 019f2301-1341-7212-986f-5b50edc9fc31)
+Effort: high   Wall time: 110822ms   Reconnects: 0
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: CHANGES ADVISED — the Step-2 acceptance contract conflicts with the Step-1 intent on both trigger conditions and exact reviewer-visible output strings.
+Full assessment: /home/arc/projects/claude/Codeos/reviews/codex/2026-07-02T133248Z-UPG-0014__CHG-20260702-004-stage-selfdev-step-2-87e1a39.md (sha256:de8a85fd51fdcb67fd4c71d2f8294408286c05c18c5b214396b23c6844053db3)
+Reviewed packet: /home/arc/projects/claude/Codeos/reviews/codex/packets/20260702T133248Z-UPG-0014__CHG-20260702-004-stage-selfdev-step-2-87e1a39.packet.txt (sha256:254f2cedb14afba2569ec3b567196790d6f9366dd3c6ffb11567e12e516ae0ac)
+Human decision: (append with: codeos-reviewer decision UPG-0014__CHG-20260702-004 selfdev-step-2 <DECISION> "<reason>")
+
+## 2026-07-02T13:37:04Z REVIEW — UPG-0014__CHG-20260702-004 — Stage selfdev-step-2
+Base: (no base pin)  Review: 87e1a394648280486b044fbcb6239248d82974e0  Branch: selfdev/upg-0029-review-durability
+Diff-hash: c89fca45ab06e407b5eaab80906c68be7016101437305a9f014f0c37b5451b5c
+Reviewer: codex default-model (session 019f2301-1341-7212-986f-5b50edc9fc31)
+Effort: high   Wall time: 146312ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — the Step-2 acceptance contract is now internally consistent on activation, labeling, and non-authoritative scope behavior.
+Full assessment: /home/arc/projects/claude/Codeos/reviews/codex/2026-07-02T133704Z-UPG-0014__CHG-20260702-004-stage-selfdev-step-2-87e1a39.md (sha256:ab0532a180963c6f0ff0d603da26fbc3aa2c36ded2050b7de2f5c9579dadac53)
+Reviewed packet: /home/arc/projects/claude/Codeos/reviews/codex/packets/20260702T133704Z-UPG-0014__CHG-20260702-004-stage-selfdev-step-2-87e1a39.packet.txt (sha256:f7c88e8e0c6166d509b8ee6c9f2ba52af6873fde606280fa0b497a4c8cdabb4e)
+Human decision: (append with: codeos-reviewer decision UPG-0014__CHG-20260702-004 selfdev-step-2 <DECISION> "<reason>")
+
+## 2026-07-02T13:37:14Z HUMAN DECISION — UPG-0014__CHG-20260702-004 — Stage selfdev-step-2
+Commit at decision: 87e1a394648280486b044fbcb6239248d82974e0
+Decision: REQUEST_CHANGES
+Reason/next: R1 blockers: F1 — trigger contract inconsistency (Step 1 said --all-diff+delta_base, AC-1/AC-6 said +--mode delta); F2 — output string mismatch between Step 1 and AC-4/AC-7. Fixed: Rust-level activation = --all-diff+--base (mode-independent); bash auto-pass = delta+base only. Canonical strings now consistent throughout.
+Provenance:
+  assessment: /home/arc/projects/claude/Codeos/reviews/codex/2026-07-02T133704Z-UPG-0014__CHG-20260702-004-stage-selfdev-step-2-87e1a39.md
+  review_commit: 87e1a394648280486b044fbcb6239248d82974e0  [HEAD_MATCH]
+  packet_sha256: [MATCH]
+  coverage_state: FULL_COVERAGE  [INFORMATIONAL]
+
+## 2026-07-02T13:37:14Z HUMAN DECISION — UPG-0014__CHG-20260702-004 — Stage selfdev-step-2
+Commit at decision: 87e1a394648280486b044fbcb6239248d82974e0
+Decision: APPROVE_STAGE
+Reason/next: R2: NO OBJECTION. Trigger contract is internally consistent: Rust activation requires --all-diff+--base; bash auto-pass requires delta+base. Output strings canonical. All 8 ACs clearly stated and internally consistent.
+Provenance:
+  assessment: /home/arc/projects/claude/Codeos/reviews/codex/2026-07-02T133704Z-UPG-0014__CHG-20260702-004-stage-selfdev-step-2-87e1a39.md
+  review_commit: 87e1a394648280486b044fbcb6239248d82974e0  [HEAD_MATCH]
+  packet_sha256: [MATCH]
+  coverage_state: FULL_COVERAGE  [OK]
+
+## 2026-07-02T13:46:29Z REVIEW — UPG-0014__CHG-20260702-004 — Stage selfdev-step-2
+Base: (no base pin)  Review: 87e1a394648280486b044fbcb6239248d82974e0  Branch: selfdev/upg-0029-review-durability
+Diff-hash: c89fca45ab06e407b5eaab80906c68be7016101437305a9f014f0c37b5451b5c
+Reviewer: codex default-model (session 019f2301-1341-7212-986f-5b50edc9fc31)
+Effort: high   Wall time: 146776ms   Reconnects: 0
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: CHANGES ADVISED — the Step-2 contract is mostly coherent now, but stale bookkeeping and an unsupported doc-status claim still create false scope statements inside the packet.
+Full assessment: /home/arc/projects/claude/Codeos/reviews/codex/2026-07-02T134629Z-UPG-0014__CHG-20260702-004-stage-selfdev-step-2-87e1a39.md (sha256:3944d782ff9c303b6a18cbd709290284a9d29b5ba99547c4ed644bfcfebad0b1)
+Reviewed packet: /home/arc/projects/claude/Codeos/reviews/codex/packets/20260702T134629Z-UPG-0014__CHG-20260702-004-stage-selfdev-step-2-87e1a39.packet.txt (sha256:f8d8cdf6a9d4a072956db695261bbe78359f81103101b17af260404b33b46c19)
+Human decision: (append with: codeos-reviewer decision UPG-0014__CHG-20260702-004 selfdev-step-2 <DECISION> "<reason>")
+
+## 2026-07-02T13:48:55Z REVIEW — UPG-0014__CHG-20260702-004 — Stage selfdev-step-2
+Base: (no base pin)  Review: 87e1a394648280486b044fbcb6239248d82974e0  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 895a8873880eaf6277664e8ba858f5422efb7e8db6d979def1faeed668262ec5
+Reviewer: codex default-model (session 019f2301-1341-7212-986f-5b50edc9fc31)
+Effort: high   Wall time: 116843ms   Reconnects: 0
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: CHANGES ADVISED — the acceptance contract now coheres internally, but its Rust-only/bash-shim scope boundary is still unsupported by the evidence provided.
+Full assessment: /home/arc/projects/claude/Codeos/reviews/codex/2026-07-02T134855Z-UPG-0014__CHG-20260702-004-stage-selfdev-step-2-87e1a39.md (sha256:cca1af8d4f40626e4c62b1eede6bb30716927b817e16016542baa5be23a429bf)
+Reviewed packet: /home/arc/projects/claude/Codeos/reviews/codex/packets/20260702T134855Z-UPG-0014__CHG-20260702-004-stage-selfdev-step-2-87e1a39.packet.txt (sha256:67571fb39905680921809552aa041d61818900360c78af5286da4dcb26ac241f)
+Human decision: (append with: codeos-reviewer decision UPG-0014__CHG-20260702-004 selfdev-step-2 <DECISION> "<reason>")
+
+## 2026-07-02T13:50:49Z REVIEW — UPG-0014__CHG-20260702-004 — Stage selfdev-step-2
+Base: (no base pin)  Review: 87e1a394648280486b044fbcb6239248d82974e0  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 895a8873880eaf6277664e8ba858f5422efb7e8db6d979def1faeed668262ec5
+Reviewer: codex default-model (session 019f2301-1341-7212-986f-5b50edc9fc31)
+Effort: high   Wall time: 65195ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — the Step-2 acceptance contract is now internally consistent and the shim evidence supports the Rust-only activation boundary.
+Full assessment: /home/arc/projects/claude/Codeos/reviews/codex/2026-07-02T135049Z-UPG-0014__CHG-20260702-004-stage-selfdev-step-2-87e1a39.md (sha256:5039a697e9eb06995db01c9a5afaaeab5129915e629d3013dde66440d88a48a5)
+Reviewed packet: /home/arc/projects/claude/Codeos/reviews/codex/packets/20260702T135049Z-UPG-0014__CHG-20260702-004-stage-selfdev-step-2-87e1a39.packet.txt (sha256:26604bddeb5dd09480b3d293ada45380c95e0ede7d3cdd5f51ff76cf211896d9)
+Human decision: (append with: codeos-reviewer decision UPG-0014__CHG-20260702-004 selfdev-step-2 <DECISION> "<reason>")
+
+## 2026-07-02T13:51:00Z HUMAN DECISION — UPG-0014__CHG-20260702-004 — Stage selfdev-step-2
+Commit at decision: 87e1a394648280486b044fbcb6239248d82974e0
+Decision: REQUEST_CHANGES
+Reason/next: R1: trigger inconsistency + output string mismatch. R2: NO OBJECTION (pre-redesign). Human redesign: drop --all-diff flag, no bash changes, Rust auto-includes full diff in delta+base mode, add shim boundary to pipeline doc. R3: stale Feature Thread + present-tense doc claim. R4: shim premise unverified in packet. R5: NO OBJECTION after including codeos-review.sh as evidence + AC-8 clarified as Reconcile-time verification. Final: APPROVE_STAGE.
+Provenance:
+  assessment: /home/arc/projects/claude/Codeos/reviews/codex/2026-07-02T135049Z-UPG-0014__CHG-20260702-004-stage-selfdev-step-2-87e1a39.md
+  review_commit: 87e1a394648280486b044fbcb6239248d82974e0  [HEAD_MATCH]
+  packet_sha256: [MATCH]
+  coverage_state: FULL_COVERAGE  [INFORMATIONAL]
+
+## 2026-07-02T14:22:11Z REVIEW — UPG-0014__CHG-20260702-004 — Stage selfdev-step-3
+Base: (no base pin)  Review: 87e1a394648280486b044fbcb6239248d82974e0  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 9672e05294d8ccdbe9e7d1c44016c690176ec749bd7f62c1808fc5e233fc9301
+Reviewer: codex default-model (session 019f2301-1341-7212-986f-5b50edc9fc31)
+Effort: high   Wall time: 146248ms   Reconnects: 0
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: CHANGES ADVISED — the implementation adds the new section, but budget enforcement, fail-closed behavior, and the claimed acceptance-test coverage are not yet correct.
+Full assessment: /home/arc/projects/claude/Codeos/reviews/codex/2026-07-02T142211Z-UPG-0014__CHG-20260702-004-stage-selfdev-step-3-87e1a39.md (sha256:1a2ecd4011477fdd2a6cb9ebf19f6475f016406f86c47bbf9d45ba79603703fb)
+Reviewed packet: /home/arc/projects/claude/Codeos/reviews/codex/packets/20260702T142211Z-UPG-0014__CHG-20260702-004-stage-selfdev-step-3-87e1a39.packet.txt (sha256:149a835b69bcc417ab4776023d866022c0278fc1fb529032e7cc6dc895042dd7)
+Human decision: (append with: codeos-reviewer decision UPG-0014__CHG-20260702-004 selfdev-step-3 <DECISION> "<reason>")
+
+## 2026-07-02T14:22:51Z REVIEW — UPG-0014__CHG-20260702-004 — Stage selfdev-step-3
+Base: (no base pin)  Review: 87e1a394648280486b044fbcb6239248d82974e0  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 9672e05294d8ccdbe9e7d1c44016c690176ec749bd7f62c1808fc5e233fc9301
+Reviewer: codex default-model (session 019f2301-1341-7212-986f-5b50edc9fc31)
+Effort: high   Wall time: 847728ms   Reconnects: 1
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: CHANGES ADVISED — budget accounting, redaction coverage semantics, and AC-9 test coverage do not yet match the stated contract.
+Full assessment: /home/arc/projects/claude/Codeos/reviews/codex/2026-07-02T142251Z-UPG-0014__CHG-20260702-004-stage-selfdev-step-3-87e1a39.md (sha256:fcb4ee07e69d97d0290523cdcfb35ed2dbc9e0c504b57e7eb6b94c304e2528f1)
+Reviewed packet: /home/arc/projects/claude/Codeos/reviews/codex/packets/20260702T142251Z-UPG-0014__CHG-20260702-004-stage-selfdev-step-3-87e1a39.packet.txt (sha256:c16ad4eb7186d789e6a1161fabb05140810f652118d912525e96d4f40b219340)
+Human decision: (append with: codeos-reviewer decision UPG-0014__CHG-20260702-004 selfdev-step-3 <DECISION> "<reason>")
+
+## 2026-07-02T14:27:17Z HUMAN DECISION — UPG-0014__CHG-20260702-004 — Stage selfdev-step-3
+Commit at decision: 87e1a394648280486b044fbcb6239248d82974e0
+Decision: REQUEST_CHANGES
+Reason/next: three R1 blockers applied: fail-open on git diff error (unwrap_or_default → explicit ERROR marker), missing delta-only absence test, weak clipping assertion (OR condition → require CLIPPED specifically)
+Verified against: /home/arc/projects/claude/Codeos/reviews/codex/2026-07-02T142251Z-UPG-0014__CHG-20260702-004-stage-selfdev-step-3-87e1a39.md
+Artifact integrity (informational audit, not a gate):
+  MATCH   changes/UPG-0014__CHG-20260702-004__reviewer-full-diff.md
+  CHANGED tools/reviewer/src/packet.rs (reviewed 7a381f846bc6 / now a4042d035b39)
+  MATCH   docs/reviewer-pipeline.md
+  CHANGED tools/reviewer/tests/smoke.rs (reviewed 5364ba1a6af0 / now 4c0f64ebcbec)
+  MATCH   changes/UPG-0014__CHG-20260702-004__reviewer-full-diff.md
+  CHANGED tools/reviewer/src/packet.rs (reviewed 7a381f846bc6 / now a4042d035b39)
+  MATCH   docs/reviewer-pipeline.md
+  CHANGED tools/reviewer/tests/smoke.rs (reviewed 5364ba1a6af0 / now 4c0f64ebcbec)
+  CHANGED (diff) (reviewed sha.clone(), / now (missing))
+
+## 2026-07-02T14:32:50Z REVIEW — UPG-0014__CHG-20260702-004 — Stage selfdev-step-3
+Base: 87e1a394648280486b044fbcb6239248d82974e0  Review: 87e1a394648280486b044fbcb6239248d82974e0  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 754859d3e5941bdc81a8250ffcca08d44f712c34e1dfe718a6f089e54d23cc5b
+Reviewer: codex default-model (session 019f2301-1341-7212-986f-5b50edc9fc31)
+Effort: high   Wall time: 35254ms   Reconnects: 0
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: CHANGES ADVISED — the silent-failure path is fixed, but budget clipping is still only approximate and AC-3 is still not actually tested.
+Full assessment: /home/arc/projects/claude/Codeos/reviews/codex/2026-07-02T143250Z-UPG-0014__CHG-20260702-004-stage-selfdev-step-3-87e1a39.md (sha256:dfc47b029a89ee55bd86903f18eba27710e9c5d530b0093a03c25e9036166ae3)
+Reviewed packet: /home/arc/projects/claude/Codeos/reviews/codex/packets/20260702T143250Z-UPG-0014__CHG-20260702-004-stage-selfdev-step-3-87e1a39.packet.txt (sha256:ce1b9a03c6f9a291b4b1691bc6eafed57a44903c833c0f1b19e6b2e14efb32a3)
+Human decision: (append with: codeos-reviewer decision UPG-0014__CHG-20260702-004 selfdev-step-3 <DECISION> "<reason>")
+
+## 2026-07-02T14:35:34Z REVIEW — UPG-0014__CHG-20260702-004 — Stage selfdev-step-3
+Base: 87e1a394648280486b044fbcb6239248d82974e0  Review: 87e1a394648280486b044fbcb6239248d82974e0  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 754859d3e5941bdc81a8250ffcca08d44f712c34e1dfe718a6f089e54d23cc5b
+Reviewer: codex default-model (session 019f2301-1341-7212-986f-5b50edc9fc31)
+Effort: high   Wall time: 514406ms   Reconnects: 0
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: CHANGES ADVISED — the delta fixes the silent full-diff fallback and improves tests, but coverage-state handling, exact budget enforcement, and minimum AC-9 coverage are still not aligned.
+Full assessment: /home/arc/projects/claude/Codeos/reviews/codex/2026-07-02T143534Z-UPG-0014__CHG-20260702-004-stage-selfdev-step-3-87e1a39.md (sha256:d0bb63316137b6e393bd930d4ea668432bd2a4545e742a0414eaf69e08f8a51b)
+Reviewed packet: /home/arc/projects/claude/Codeos/reviews/codex/packets/20260702T143534Z-UPG-0014__CHG-20260702-004-stage-selfdev-step-3-87e1a39.packet.txt (sha256:aa671e5b31d1b1290fc7304d42147d8c50925fbb826057f92bd12a32b73ffba2)
+Human decision: (append with: codeos-reviewer decision UPG-0014__CHG-20260702-004 selfdev-step-3 <DECISION> "<reason>")
+
+## 2026-07-02T14:38:03Z HUMAN DECISION — UPG-0014__CHG-20260702-004 — Stage selfdev-step-3
+Commit at decision: 87e1a394648280486b044fbcb6239248d82974e0
+Decision: REQUEST_CHANGES
+Reason/next: R2 F1 accepted as non-blocker (budget approximation is pre-existing and intentional; AC-4 now documents this explicitly); R2 F2 fixed (AC-3 test now verifies named-artifact diff content, not just section ordering)
+Verified against: /home/arc/projects/claude/Codeos/reviews/codex/2026-07-02T143534Z-UPG-0014__CHG-20260702-004-stage-selfdev-step-3-87e1a39.md
+Artifact integrity (informational audit, not a gate):
+  CHANGED changes/UPG-0014__CHG-20260702-004__reviewer-full-diff.md (reviewed 5bfafe7875ea / now aeb705ebc665)
+  MATCH   tools/reviewer/src/packet.rs
+  CHANGED tools/reviewer/tests/smoke.rs (reviewed 4c0f64ebcbec / now 2deb7d7e4d3d)
+  CHANGED changes/UPG-0014__CHG-20260702-004__reviewer-full-diff.md (reviewed 5bfafe7875ea / now aeb705ebc665)
+  MATCH   tools/reviewer/src/packet.rs
+  CHANGED tools/reviewer/tests/smoke.rs (reviewed 4c0f64ebcbec / now 2deb7d7e4d3d)
+
+## 2026-07-02T14:39:13Z REVIEW — UPG-0014__CHG-20260702-004 — Stage selfdev-step-3
+Base: 87e1a394648280486b044fbcb6239248d82974e0  Review: 87e1a394648280486b044fbcb6239248d82974e0  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 8b8d0d82ca6204b7f1151c154438b2e7c77160c25f5df76c647eabbc934698ac
+Reviewer: codex default-model (session 019f2301-1341-7212-986f-5b50edc9fc31)
+Effort: high   Wall time: 63940ms   Reconnects: 0
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: B
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: CHANGES ADVISED — the silent failure path is fixed, but budget clipping is still approximate and the AC-3 test still does not prove unchanged content.
+Full assessment: /home/arc/projects/claude/Codeos/reviews/codex/2026-07-02T143913Z-UPG-0014__CHG-20260702-004-stage-selfdev-step-3-87e1a39.md (sha256:f8d3c6358b21776ced19595f423ebe54cb01a51243f30b329ad46d4ce12f1884)
+Reviewed packet: /home/arc/projects/claude/Codeos/reviews/codex/packets/20260702T143913Z-UPG-0014__CHG-20260702-004-stage-selfdev-step-3-87e1a39.packet.txt (sha256:eda00b89454ccf6463a79fdebec4d0e691cf0b4c9ddb132dbfd2246c68281391)
+Human decision: (append with: codeos-reviewer decision UPG-0014__CHG-20260702-004 selfdev-step-3 <DECISION> "<reason>")
+
+## 2026-07-02 BUDGET-EXCEEDED — UPG-0014__CHG-20260702-004 — Step 3 / PROFILE-3 (3/3 rounds used)
+
+All 3 PROFILE-3 rounds consumed at selfdev-step-3.
+
+**R1 blockers (applied):** (1) fail-open on git diff error — fixed: `unwrap_or_default()` → explicit `[ERROR: git diff failed ...]` marker; (2) missing delta-only absence test — fixed: `smoke_full_context_diff_absent_in_delta_without_base` added; (3) weak clipping assertion (`||` condition) — fixed: now requires CLIPPED specifically with budget=0.
+
+**R2 blockers (applied):** (1) AC-3 test ordering-only — fixed: test now extracts DELTA DIFF section and checks it contains expected content; (2) budget claim imprecision — fixed: AC-4 now explicitly says "remaining content budget" and documents the approximation consistent with the pre-existing budget system.
+
+**R3 remaining findings (no further rounds):**
+- F1 (budget approximate): Change record AC-4 now explicitly documents the approximation. Reviewer could not see this in R3 because change record was `path_sha_only` in delta packet. Human can verify AC-4 text. Accepted as documented intentional behavior.
+- F2 (AC-3 baseline comparison): Test now compares packet DELTA DIFF section against raw `git diff <base> -- tracked.md` output. This is the strongest practical proof available without a code instrumentation bypass. Applied post-R3 per budget-exceeded procedure.
+
+**Final test count:** 53 tests (22 unit + 31 smoke), all pass.
+
+Human decision: (append with: codeos-reviewer decision UPG-0014__CHG-20260702-004 selfdev-step-3 <DECISION> "<reason>")
+
+## 2026-07-02T15:07:08Z REVIEW — UPG-0014__CHG-20260702-004 — Stage selfdev-step-4
+Base: (no base pin)  Review: 87e1a394648280486b044fbcb6239248d82974e0  Branch: selfdev/upg-0029-review-durability
+Diff-hash: e500a4855299f45bf443171ab2d6c95ccdd49e23e18295c553363bdb40145197
+Reviewer: codex default-model (session 019f2301-1341-7212-986f-5b50edc9fc31)
+Effort: high   Wall time: 229813ms   Reconnects: 0
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: CHANGES ADVISED — the Step-4 artifact overstates acceptance and contains an internal state contradiction, and the new full-diff path still bypasses coverage/manual-review semantics.
+Full assessment: /home/arc/projects/claude/Codeos/reviews/codex/2026-07-02T150708Z-UPG-0014__CHG-20260702-004-stage-selfdev-step-4-87e1a39.md (sha256:624a7d43e66803155482ca0fb2fd8feeb7cbc82db1b700ea3f7200fa0d71b74c)
+Reviewed packet: /home/arc/projects/claude/Codeos/reviews/codex/packets/20260702T150708Z-UPG-0014__CHG-20260702-004-stage-selfdev-step-4-87e1a39.packet.txt (sha256:2681eb12527d9a6053aaa536465cbfcab48beb2d1e9102b4e36c82f513761193)
+Human decision: (append with: codeos-reviewer decision UPG-0014__CHG-20260702-004 selfdev-step-4 <DECISION> "<reason>")
+
+## 2026-07-02T15:09:56Z HUMAN DECISION — UPG-0014__CHG-20260702-004 — Stage selfdev-step-4
+Commit at decision: 87e1a394648280486b044fbcb6239248d82974e0
+Decision: REQUEST_CHANGES
+Reason/next: F1 fixed (TRACE HEADER current_step 3→4); F2 fixed (AC-2 narrowed to what tests verify, added full-mode-with-base and clip-absent-within-budget tests); F3 rejected (coverage_state intentionally reflects named artifacts; full-diff errors are explicit [ERROR:…] in packet, documented in AC-5)
+Verified against: /home/arc/projects/claude/Codeos/reviews/codex/2026-07-02T150708Z-UPG-0014__CHG-20260702-004-stage-selfdev-step-4-87e1a39.md
+Artifact integrity (informational audit, not a gate):
+  CHANGED changes/UPG-0014__CHG-20260702-004__reviewer-full-diff.md (reviewed d63989533d08 / now 077c4345f47c)
+  MATCH   tools/reviewer/src/packet.rs
+  MATCH   docs/reviewer-pipeline.md
+  CHANGED tools/reviewer/tests/smoke.rs (reviewed a46728afa4af / now 8adf115f1da8)
+  CHANGED changes/UPG-0014__CHG-20260702-004__reviewer-full-diff.md (reviewed d63989533d08 / now 077c4345f47c)
+  MATCH   tools/reviewer/src/packet.rs
+  MATCH   docs/reviewer-pipeline.md
+  CHANGED tools/reviewer/tests/smoke.rs (reviewed a46728afa4af / now 8adf115f1da8)
+  CHANGED (diff) (reviewed sha.clone(), / now (missing))
+
+## 2026-07-02T15:11:22Z REVIEW — UPG-0014__CHG-20260702-004 — Stage selfdev-step-4
+Base: 87e1a394648280486b044fbcb6239248d82974e0  Review: 87e1a394648280486b044fbcb6239248d82974e0  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 204202aff3474c1c807a6c7023270e1647a75129f4fbbd618b9d86dcc6c64391
+Reviewer: codex default-model (session 019f2301-1341-7212-986f-5b50edc9fc31)
+Effort: high   Wall time: 83060ms   Reconnects: 0
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: CHANGES ADVISED — the new tests close the visible AC-9 gaps, but the appended full-diff path still does not participate in the packet’s stated coverage/manual-review semantics.
+Full assessment: /home/arc/projects/claude/Codeos/reviews/codex/2026-07-02T151122Z-UPG-0014__CHG-20260702-004-stage-selfdev-step-4-87e1a39.md (sha256:869037abca931be4da8c02bffcd6b0211ed601e1ff812478aef0296bd29a624f)
+Reviewed packet: /home/arc/projects/claude/Codeos/reviews/codex/packets/20260702T151122Z-UPG-0014__CHG-20260702-004-stage-selfdev-step-4-87e1a39.packet.txt (sha256:5b09c4c2d335863fd8c35f2f515332d89b738eadfc59c3f71882cbb546903322)
+Human decision: (append with: codeos-reviewer decision UPG-0014__CHG-20260702-004 selfdev-step-4 <DECISION> "<reason>")
+
+## 2026-07-02T15:38:06Z HUMAN DECISION — UPG-0014__CHG-20260702-004 — Stage selfdev-step-4
+Commit at decision: 87e1a394648280486b044fbcb6239248d82974e0
+Decision: REQUEST_CHANGES
+Reason/next: F3 (coverage_state bypass) resolved as documented intentional design: clarification added to docs/reviewer-pipeline.md §5; coverage_state intentionally reflects named artifacts; full-diff errors are explicit [ERROR:…] in packet; F1+F2 fixed
+Verified against: /home/arc/projects/claude/Codeos/reviews/codex/2026-07-02T151122Z-UPG-0014__CHG-20260702-004-stage-selfdev-step-4-87e1a39.md
+Artifact integrity (informational audit, not a gate):
+  CHANGED changes/UPG-0014__CHG-20260702-004__reviewer-full-diff.md (reviewed 077c4345f47c / now f841d7b00ec5)
+  MATCH   tools/reviewer/src/packet.rs
+  CHANGED docs/reviewer-pipeline.md (reviewed 30eeec738674 / now 482f1fd5c82f)
+  MATCH   tools/reviewer/tests/smoke.rs
+  CHANGED changes/UPG-0014__CHG-20260702-004__reviewer-full-diff.md (reviewed 077c4345f47c / now f841d7b00ec5)
+  MATCH   tools/reviewer/src/packet.rs
+  CHANGED docs/reviewer-pipeline.md (reviewed 30eeec738674 / now 482f1fd5c82f)
+  MATCH   tools/reviewer/tests/smoke.rs
+
+## 2026-07-02T15:39:22Z REVIEW — UPG-0014__CHG-20260702-004 — Stage selfdev-step-4
+Base: 87e1a394648280486b044fbcb6239248d82974e0  Review: 87e1a394648280486b044fbcb6239248d82974e0  Branch: selfdev/upg-0029-review-durability
+Diff-hash: c9c9f49d2f182261427827d30e66b6066fa7d5be42153ecb656c0de5b0f84c1e
+Reviewer: codex default-model (session 019f2301-1341-7212-986f-5b50edc9fc31)
+Effort: high   Wall time: 70931ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — the visible delta resolves the remaining code-vs-doc coverage semantics mismatch for Full Context Diff.
+Full assessment: /home/arc/projects/claude/Codeos/reviews/codex/2026-07-02T153922Z-UPG-0014__CHG-20260702-004-stage-selfdev-step-4-87e1a39.md (sha256:817e2921bab122f4c84a54cf886f39d1ad090fd321001ca536246a5f19fee1cf)
+Reviewed packet: /home/arc/projects/claude/Codeos/reviews/codex/packets/20260702T153922Z-UPG-0014__CHG-20260702-004-stage-selfdev-step-4-87e1a39.packet.txt (sha256:839a2ab1310609901607f48237d340965cd5010cbca3ee65988ba9814853897d)
+Human decision: (append with: codeos-reviewer decision UPG-0014__CHG-20260702-004 selfdev-step-4 <DECISION> "<reason>")
+
+## 2026-07-02T15:39:59Z HUMAN DECISION — UPG-0014__CHG-20260702-004 — Stage selfdev-step-4
+Commit at decision: 87e1a394648280486b044fbcb6239248d82974e0
+Decision: APPROVE_STAGE
+Reason/next: Step 4 R3 NO OBJECTION; all 9 ACs verified; 55 tests pass; coverage semantics documented in §5
+Verified against: /home/arc/projects/claude/Codeos/reviews/codex/2026-07-02T153922Z-UPG-0014__CHG-20260702-004-stage-selfdev-step-4-87e1a39.md
+Artifact integrity (informational audit, not a gate):
+  MATCH   changes/UPG-0014__CHG-20260702-004__reviewer-full-diff.md
+  MATCH   tools/reviewer/src/packet.rs
+  MATCH   docs/reviewer-pipeline.md
+  MATCH   tools/reviewer/tests/smoke.rs
+  MATCH   changes/UPG-0014__CHG-20260702-004__reviewer-full-diff.md
+  MATCH   tools/reviewer/src/packet.rs
+  MATCH   docs/reviewer-pipeline.md
+  MATCH   tools/reviewer/tests/smoke.rs

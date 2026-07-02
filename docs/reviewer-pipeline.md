@@ -231,6 +231,14 @@ is about *how complete the evidence was*, not approval eligibility. When anythin
 excluded/redacted, or on a critical/empty state, the log flags **MANUAL SECURITY REVIEW
 REQUIRED**. `workspace_dirty` is recorded as descriptive audit context only.
 
+**Full Context Diff (supplementary context only):** The Full Context Diff section
+(appended in `--mode delta --base` runs) is supplementary and informational, not primary
+evidence. Its redactions increment `redaction_count` in the assessment header, but they do
+**not** change `coverage_state` and do not trigger the manual-security-review flag — because
+`coverage_state` reflects named-artifact evidence completeness, not the supplementary diff.
+A git error in the full-diff fetch is marked explicitly as `[ERROR: git diff failed — …]`
+in the packet, so it is never silent.
+
 ## 6. Concern-level semantics + human responsibility
 
 - **NO OBJECTION** — no material reason to stop found; *this is not approval*.
@@ -283,7 +291,25 @@ sessions feature-scoped · reviewed state pinned (base+review SHA, artifact hash
 output → UNCLASSIFIED/high-attention · secret/large-diff filtering present · no hooks active ·
 no core rules changed.
 
-## 10. Usage
+## 10. Architecture: `codeos-review.sh` is a static locator shim
+
+```bash
+# scripts/codeos-review.sh — the entire file
+exec "${BINARY}" "$@"
+```
+
+`codeos-review.sh` is a **15-line static locator shim**. It finds the compiled Rust binary
+(`tools/reviewer/target/release/codeos-reviewer`) and passes all arguments through verbatim
+(`"$@"`). It contains no argument preprocessing, no conditional logic, and no reviewer
+capability.
+
+**Consequence for upgrades:** any reviewer capability change — new packet sections, new
+subcommand behavior, new flags, new decision-log fields — lives in the **Rust engine**
+(`tools/reviewer/src/`). Changing only the bash script cannot add or modify reviewer
+behavior. The bash script only needs to change if the binary location or build instructions
+change.
+
+## 11. Usage
 
 ```bash
 # record the base commit for a stage (so review diffs base->review, not just HEAD)

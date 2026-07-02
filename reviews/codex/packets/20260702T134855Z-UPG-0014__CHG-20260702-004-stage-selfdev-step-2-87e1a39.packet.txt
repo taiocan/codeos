@@ -1,0 +1,461 @@
+Reviewer task:
+
+SCOPE CONTRACT
+  Assess this artifact against the STATED SCOPE of this stage/PR — the Expected Stage
+  Output below and what the artifacts actually claim — NOT against an ideal final system.
+  A capability the artifacts do not claim to provide is OUT-OF-SCOPE, not a defect.
+  The following are OUT-OF-SCOPE BACKLOG unless THIS artifact explicitly claims to provide
+  them: formal approval-binding enforcement; rollback correctness; COMMIT_BOUND/
+  WORKSPACE_BOUND enforcement; JSON Schema validation; CI validation; exact
+  decision-integrity; per-feature decision ledgers; autonomous approval; enabled hooks.
+
+YOUR TASK — answer these five questions using only the evidence in the packet:
+  1. Acceptance criteria: Does the artifact satisfy each of its stated acceptance criteria?
+     Cite evidence for each criterion (or note its absence).
+  2. Claim support: Are universal or strong claims (all, every, never, always, no X) in the
+     artifact supported by evidence in the packet? Any unverifiable strong claim is a candidate
+     finding only if it affects acceptance, scope, safety, decision integrity, or the artifact's
+     stated guarantees.
+  3. Scope drift: Is there any change beyond the stated scope boundary? (Files not in the
+     "What changes" list; behavior changes not in the intent; downstream doctrine modified
+     rather than read.)
+  4. In-scope blockers: Are there facts that, if left in, would make the artifact wrong,
+     unsafe, or internally contradictory?
+  5. Finding classification: Classify every finding you raise as exactly one of the five
+     TRIAGE RULE categories below.
+
+TRIAGE RULE — classify EVERY finding as exactly one of:
+  IN-SCOPE BLOCKER         breaks the stated goal; creates a FALSE CLAIM in this artifact;
+                           weakens the advisory/read-only/human-gated guarantees; prevents
+                           the work from running; or violates an explicit safety constraint.
+  IN-SCOPE NON-BLOCKER     improves it but is not required for this PR.
+  OUT-OF-SCOPE BACKLOG     valid, but belongs to a future feature / stronger guarantee.
+  REJECTED                 conflicts with the stated scope or Codeos philosophy.
+  SELF-REFERENCE /         review records that are stale because of the previous round's
+  REVIEW-BOOKKEEPING       own existence (causal loop); not a real artifact defect.
+  Base the PR decision ONLY on IN-SCOPE BLOCKER findings. An OUT-OF-SCOPE BACKLOG finding
+  must NOT cause DO NOT ADVANCE unless this artifact FALSELY CLAIMS to solve it.
+
+WHAT NOT TO DO
+  - Do not flag style or wording issues as blockers unless the wording creates a false claim,
+    contradiction, parser breakage, or wrong governance instruction.
+  - Do not re-review unchanged full context when the packet is in delta mode.
+  - Do not treat local-only review history as a blocker unless the artifact falsely
+    claims the review artifacts are committed/durable.
+
+INSTRUCTIONS
+  If this is a resumed session, ignore any earlier-session conclusions unless they are
+  re-established by THIS packet; assess only the evidence above, pinned to this commit.
+  Give a focused assessment of this artifact against the stated scope, acceptance criteria,
+  and evidence in this packet. Rank findings by severity. Suggest a better design only when
+  needed to explain a required fix for an IN-SCOPE BLOCKER.
+
+  Limit findings to the top 3 IN-SCOPE BLOCKERS. Additional non-blocking observations may be
+  summarized in one short paragraph only if useful.
+
+  For EACH finding emit:
+    Finding: / Severity: High|Medium|Low / Classification: <one of the TRIAGE RULE labels>
+    Evidence: <file/line> / Why: <short> / Required action: fix now|optional fix|backlog|reject
+    Scope reason: <why it does/does not belong to this PR's scope>
+  Then emit:
+    PR decision: ADVANCE | REQUEST CHANGES | DO NOT ADVANCE   (based ONLY on in-scope blockers)
+    Scope drift warning: yes|no — <is anything pulling this PR beyond its stated scope?>
+  Then on the LAST three lines emit exactly (map ADVANCE->NO OBJECTION,
+  REQUEST CHANGES->CHANGES ADVISED, DO NOT ADVANCE->DO NOT ADVANCE):
+    LOG SUMMARY: <NO OBJECTION | CHANGES ADVISED | DO NOT ADVANCE | UNCLASSIFIED> — <single most important point>
+      (use UNCLASSIFIED if you genuinely cannot classify the artifact safely)
+    EVIDENCE: <A|B|C|D|E>
+    HIGHEST-IMPACT UNCERTAINTY: <one sentence — what single thing, if wrong, most affects this assessment>
+
+  Evidence grade — the grade describes what the assessment rests on, not reviewer confidence:
+    A — Directly verified in the artifact, diff, or output shown in the packet
+    B — Verified with multiple direct pieces of evidence, but coverage is not complete
+    C — Partially verified, partially inferred from structure or context
+    D — Mostly inferred from structure or indirect evidence
+    E — Hypothesis or very limited basis — little to no direct evidence
+
+
+PACKET MANIFEST
+  generated: 2026-07-02T13:47:04Z
+  task_prompt: /home/arc/projects/claude/Codeos/prompts/codeos-reviewer-task.md (4959 bytes)
+  review_content_bytes: 13028
+  estimated_review_tokens: ~3257
+  budget_status: OK
+  packet_mode: full
+  delta_base: none
+  items:
+    - path: changes/UPG-0014__CHG-20260702-004__reviewer-full-diff.md
+      mode: full_file
+      bytes: 7781
+      sha256: 5c318874101fba2068a3bfffaf4dc9923b9a56d068e24ff5ff3c89d6897f93c6
+    - path: backlog/UPG-0014-reviewer-full-diff.md
+      mode: full_file
+      bytes: 2688
+      sha256: 8ca94085f1d4e01153a0869b709ea6ec9762acf5dc4709162258087ba88bbe42
+    - path: (diff)
+      mode: full_file
+      bytes: 2559
+
+REVIEW CONTEXT
+  Feature:                UPG-0014__CHG-20260702-004
+  Stage:                  selfdev-step-2
+  Branch:                 selfdev/upg-0029-review-durability
+  Base commit:            (no base pin)
+  Review commit:          87e1a394648280486b044fbcb6239248d82974e0 (+ uncommitted workspace changes)
+  Current approved stage: n/a (non-numeric stage)
+  Evidence coverage:      FULL_COVERAGE
+  Workspace dirty:        yes (uncommitted changes at review time)
+
+DBA RULES RELEVANT TO THIS STAGE
+  - Human approval is required for every stage transition; you are advisory only.
+  - Memory is not truth — assess only what is provided, pinned to the review commit.
+  - Implementation must trace to approved artifacts; no behavior beyond intent+contract+schema.
+  - No events outside the approved event schema; no hidden behavior.
+
+STAGE-SPECIFIC CHECKS
+  - (no stage-specific checklist for stage selfdev-step-2)
+
+EXPECTED STAGE OUTPUT
+  (no expected-output template for stage)
+
+ARTIFACTS TO REVIEW
+  --- changes/UPG-0014__CHG-20260702-004__reviewer-full-diff.md (sha256: 5c318874101fba2068a3bfffaf4dc9923b9a56d068e24ff5ff3c89d6897f93c6, visibility: shown) ---
+    ---
+    change_id: CHG-20260702-004
+    feature_id: UPG-0014
+    slug: reviewer-full-diff
+    triage_class: script-tooling
+    scope_axis: self-dev only
+    review_profile: PROFILE-3
+    review_series: RVS__UPG-0014__CHG-20260702-004__S2
+    review_state: DRAFT
+    status: IN_PROGRESS
+    loop_step: 2-Acceptance
+    ---
+    
+    # Change: UPG-0014 / CHG-20260702-004 — Reviewer Full Diff Access
+    
+    ## TRACE HEADER
+    
+    ```yaml
+    feature_id: UPG-0014
+    primary_feature_id: UPG-0014
+    change_id: CHG-20260702-004
+    slug: reviewer-full-diff
+    state: IN_PROGRESS
+    current_step: 2-Acceptance
+    implements:
+      - UPG-0014
+    related_features:
+      - UPG-0032
+      - UPG-0016
+    review_series: RVS__UPG-0014__CHG-20260702-004__S2
+    review_profile: PROFILE-3
+    review_state: DRAFT
+    review_history: reviews/review-log.md
+    fixes_findings: []
+    follow_up_of: null
+    ```
+    
+    ---
+    
+    ## Step 1 — Change Intent
+    
+    ### Problem
+    
+    In delta-review mode (`--mode delta --base <sha>`), the packet diffs only the explicitly
+    named artifact files. Files changed outside the declared list are invisible to the reviewer.
+    This means the reviewer cannot detect scope drift — it cannot flag that `backlog/features.md`
+    changed but was not in the declared artifact list (as happened in UPG-0015 Step-4 R1).
+    
+    The diff-review checklist in `docs/workflow-profiles.md` ("Unrelated files?", "Approved
+    artifacts modified after approval?") is unanswerable from the evidence alone.
+    
+    Additionally, the architecture of the reviewer pipeline was misunderstood in earlier
+    iterations of this change: `scripts/codeos-review.sh` is a **15-line static locator shim**
+    (`exec "${BINARY}" "$@"`), not a behavior layer. All reviewer capability lives in the Rust
+    engine. This boundary will be documented in `docs/reviewer-pipeline.md` as part of this change.
+    
+    ### What changes
+    
+    | File | Change |
+    |---|---|
+    | `tools/reviewer/src/packet.rs` | When `delta_mode=true` AND `delta_base=Some(_)`: append `Full Context Diff (informational — all changed files since <base>):` section after named artifacts, size-clipped to remaining budget |
+    | `tools/reviewer/src/cmd/review.rs` | Pass auto-full-diff condition into `PacketOpts` based on delta+base state |
+    | `tools/reviewer/tests/smoke.rs` | New tests: full diff section present in delta+base; absent in non-delta or no-base; named artifact section unchanged; clip marker present when over budget |
+    | `docs/reviewer-pipeline.md` | Add architecture note: `codeos-review.sh` is a static locator shim; all reviewer capability changes are Rust engine changes |
+    | `backlog/UPG-0014-reviewer-full-diff.md` | Feature Thread updated |
+    | `status/self-development.md` | Row activated |
+    | `status/roadmap.md` | UPG-0014 → IN_PROGRESS |
+    
+    ### Scope boundary — what stays the same
+    
+    - `scripts/codeos-review.sh` — not touched; it is a static shim with no behavior to update
+    - `tools/reviewer/src/main.rs` — not touched; no new CLI flags added
+    - Named artifact evidence — backward-compatible; full context diff is additive
+    - Reviewer advisory status — unchanged
+    - Secret filtering and size budget — full context diff obeys `CODEOS_PACKET_BUDGET_BYTES`
+    - `dba-system.md` — not touched
+    - Decision/log/provenance code — not touched
+    - The five reviewer "mode" names — not formalized in this increment
+    
+    ### Behavior
+    
+    When `--mode delta` AND `--base <sha>` are BOTH active in `codeos-reviewer review`:
+    
+    1. Named-artifact delta content is built as today (unchanged).
+    2. After the named-artifact section, compute remaining packet budget.
+    3. Run `git diff <base>` with no path filter (all changed files, not just named artifacts).
+    4. If within remaining budget: append section:
+       ```
+       Full Context Diff (informational — all changed files since <base>):
+       <diff output>
+       ```
+    5. If over remaining budget: clip and append:
+       ```
+       Full Context Diff (informational — all changed files since <base>):
+       <diff output clipped>
+       [CLIPPED: full diff exceeded packet budget — showing first N of M bytes]
+       ```
+    
+    When `--mode delta` is used without `--base`, or `--mode full` is used: no Full Context
+    Diff section. Packet is byte-for-byte identical to pre-change behavior.
+    
+    The "informational" label signals to the reviewer that this section is supplementary
+    context, not the authoritative scope declaration. The declared artifact list remains the
+    canonical scope.
+    
+    ### Triage
+    
+    - Class: `script-tooling`
+    - Scope axis: `self-dev only`
+    - Review profile: `PROFILE-3` (1 Codex review per step, max 3 rounds)
+    - Originating backlog id: `UPG-0014`
+    
+    ---
+    
+    ## Step 2 — Acceptance Criteria
+    
+    ### AC-1 — Full Context Diff section present when delta+base, absent otherwise
+    
+    The `Full Context Diff (informational — all changed files since <base>):` section appears in
+    the packet if and only if BOTH `--mode delta` AND `--base <sha>` are active. Specifically:
+    
+    - `--mode delta --base <sha>` → section present
+    - `--mode delta` without `--base` → section absent
+    - `--mode full --base <sha>` (or no `--mode`) → section absent
+    - No `--base` in any mode → section absent
+    
+    No new CLI flag. Behavior is automatic.
+    
+    ### AC-2 — Without delta+base, packet is structurally unchanged
+    
+    Running `codeos-reviewer review` in any mode other than `--mode delta --base <sha>` produces
+    a packet with no Full Context Diff section and no change to any existing field or section.
+    The content of all existing sections is byte-for-byte identical to pre-change behavior.
+    
+    ### AC-3 — Full diff is additive; named-artifact section is not replaced or modified
+    
+    The named-artifact delta content (per-artifact diffs in delta mode) is present and unmodified
+    when the Full Context Diff section is also appended. Full context diff appears after the
+    named-artifact section, not in place of it.
+    
+    ### AC-4 — Budget clipping is explicit
+    
+    When the full context diff exceeds the remaining packet budget:
+    - The section is clipped at the budget limit
+    - A marker is appended: `[CLIPPED: full diff exceeded packet budget — showing first N of M bytes]`
+    - No truncation is silent
+    
+    When the full context diff fits within budget, no such marker appears.
+    
+    ### AC-5 — Secret redaction applies to the full context diff
+    
+    The full context diff passes through the same redaction pipeline as named artifacts. Any
+    redacted span increments the packet's `redaction_count` and is replaced with `[REDACTED]`.
+    Verified by grep of the redaction call site confirming the full diff bytes pass through it.
+    
+    ### AC-6 — Auto-enable condition is delta_mode=true AND delta_base=Some(_) in Rust
+    
+    In `cmd/review.rs` (or `PacketOpts`), the condition for appending the Full Context Diff is
+    `delta_mode == true && delta_base.is_some()`. Neither condition alone is sufficient. This is
+    a Rust-internal behavioral rule, not a bash-level decision (the bash script is a static
+    passthrough and requires no change).
+    
+    ### AC-7 — Section label distinguishes informational from declared scope
+    
+    The section header is exactly:
+    `Full Context Diff (informational — all changed files since <base>):`
+    where `<base>` is the actual base SHA or ref. The word "informational" must be present so
+    the reviewer knows this is supplementary context, not the canonical scope declaration.
+    
+    ### AC-8 — Pipeline doc records the shim boundary
+    
+    `docs/reviewer-pipeline.md` contains a note that `codeos-review.sh` is a static locator
+    shim (`exec "${BINARY}" "$@"`); all reviewer capability changes are Rust engine changes.
+    This prevents future scope misdeclarations.
+    
+    ### AC-9 — Tests pass
+    
+    `cargo test` passes with tests covering at minimum:
+    - AC-1: full diff section present in delta+base; absent in delta-only; absent in full mode with base
+    - AC-2: named artifact content identical with and without full diff section
+    - AC-3: named artifacts section unmodified when full diff also present
+    - AC-4: clip marker present when diff exceeds budget; absent when within budget
+
+  --- backlog/UPG-0014-reviewer-full-diff.md (sha256: 8ca94085f1d4e01153a0869b709ea6ec9762acf5dc4709162258087ba88bbe42, visibility: shown) ---
+    ---
+    feature_id: UPG-0014
+    slug: reviewer-full-diff
+    title: Reviewer Agent with Full Diff Access
+    status: PROPOSED
+    priority: P2
+    depends_on: []
+    related_features: []
+    supersedes: []
+    superseded_by: []
+    ---
+    
+    # Upgrade: reviewer-full-diff — Reviewer Agent with Full Diff Access
+    
+    **Priority**: P2
+    **Status**: PROPOSED
+    **Type**: toolkit-upgrade
+    **Related**: reviewer-decision-brief, reviewer-quality-scale, workflow-profiles
+    
+    ## Problem
+    
+    Reviewer summaries are much better if the reviewer sees the actual diff, not only stage
+    artifacts.
+    
+    ## Upgrade
+    
+    Allow reviewer agent to inspect: approved artifacts; generated stage artifact; full git diff;
+    Stage 4–6 reports; tests; runtime evidence; CI output.
+    
+    ## Scope
+    
+    Reviewer agent capability.
+    
+    ## Proposed artifact(s)
+    
+    Reviewer modes: `Artifact Review`, `Diff Review`, `Test Review`, `Runtime Evidence Review`,
+    `Pre-Release Review`.
+    
+    ## Design notes
+    
+    Diff review checklist:
+    
+    ```markdown
+    # Diff Review
+    
+    Changed files:
+    Unrelated files:
+    Approved artifacts modified:
+    Implementation-only files:
+    Test-only files:
+    Runtime fixture files:
+    Docs/config files:
+    
+    DBA traceability:
+    - every implementation change traces to contract/schema:
+    - every event traces to schema:
+    - every test traces to contract/failure path:
+    - no hidden behavior:
+    
+    Risk:
+    - security:
+    - privacy:
+    - architecture:
+    - dependency:
+    - config:
+    - release:
+    
+    Recommendation:
+    ```
+    
+    > The automated pipeline (`docs/reviewer-pipeline.md`) feeds the diff into the reviewer's
+    > evidence packet **after secret/size filtering** (see `verify-only-mode` and the pipeline's
+    > B4 safety layer).
+    
+    ## Value
+    
+    Very high. This should be one of the first upgrades.
+    
+    ## Risk
+    
+    Reviewer becomes too verbose.
+    
+    ## Guardrail
+    
+    Reviewer must output short decision brief first, details second.
+    
+    ## DBA-philosophy note
+    
+    Extends the **advisory** reviewer (read-only). Diff access strengthens traceability checks but
+    must respect secret filtering and stay non-gatekeeping.
+    
+    ## Feature Thread
+    
+    > Canonical thread rollup for this feature. Compact links/IDs only; full detail lives in the
+    > change records and review files. May be maintained manually.
+    
+    ### Changes
+    
+    | Change ID | File | Purpose | State |
+    |---|---|---|---|
+    | CHG-20260702-004 | `changes/UPG-0014__CHG-20260702-004__reviewer-full-diff.md` | Auto-include Full Context Diff in packet when `--mode delta --base` active (no new flag; Rust-only; bash shim boundary documented) | IN_PROGRESS |
+    
+    ### Reviews
+    
+    | Review ID | Change ID | Step | Round | Verdict |
+    |---|---|---|---|---|
+    
+    ### Findings Tracked Inside This Feature
+    
+    | Finding ID | Review ID | Classification | Resolution |
+    |---|---|---|---|
+    
+    ### Follow-up Features
+    
+    | Feature ID | Reason | Source finding |
+    |---|---|---|
+
+DIFF TO REVIEW (base->review, secret/size filtered)
+diff --git a/backlog/UPG-0014-reviewer-full-diff.md b/backlog/UPG-0014-reviewer-full-diff.md
+index 8135a08..09a10a5 100644
+--- a/backlog/UPG-0014-reviewer-full-diff.md
++++ b/backlog/UPG-0014-reviewer-full-diff.md
+@@ -98,6 +98,7 @@ must respect secret filtering and stay non-gatekeeping.
+ 
+ | Change ID | File | Purpose | State |
+ |---|---|---|---|
++| CHG-20260702-004 | `changes/UPG-0014__CHG-20260702-004__reviewer-full-diff.md` | Auto-include Full Context Diff in packet when `--mode delta --base` active (no new flag; Rust-only; bash shim boundary documented) | IN_PROGRESS |
+ 
+ ### Reviews
+ 
+diff --git a/status/roadmap.md b/status/roadmap.md
+index 9a02ee5..3edf5d7 100644
+--- a/status/roadmap.md
++++ b/status/roadmap.md
+@@ -65,7 +65,7 @@ cheap pilot-adjacent wins early.
+ | Wave | Feature ID | Title | Priority | Depends on | Planned/active change | State |
+ |---|---|---|---|---|---|---|
+ | 4 | UPG-0032 | Rust Reviewer Engine with Multi-Provider Support | P2 | UPG-0027 ✓ | CHG-20260702-001 ✓ | COMPLETE |
+-| 4 | UPG-0014 | Reviewer Agent with Full Diff Access | P2 | UPG-0032 | — | PROPOSED |
++| 4 | UPG-0014 | Reviewer Agent with Full Diff Access | P2 | UPG-0032 | CHG-20260702-004 | IN_PROGRESS |
+ | 4 | UPG-0015 | Bind stage approval to reviewed provenance | P1 | UPG-0032 ✓ | CHG-20260702-002 | COMPLETE |
+ | 4 | UPG-0016 | Branch / PR / CI Workflow Profiles | P1 | — | CHG-20260702-003 | COMPLETE |
+ | 4 | UPG-0017 | Stack Manifest with Automatic Reconciliation | P2 | — | — | PROPOSED |
+diff --git a/status/self-development.md b/status/self-development.md
+index 3b7f9e7..1e8b64e 100644
+--- a/status/self-development.md
++++ b/status/self-development.md
+@@ -46,6 +46,7 @@
+ | UPG-0032 | CHG-20260702-001 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (Step 3: 6 rounds, all blockers applied; Step 4 R1 NO OBJECTION; all 11 ACs verified; 33 tests; post-reconcile delta-mode fix applied) | COMPLETE | UPG-0034, UPG-0035 |
+ | UPG-0015 | CHG-20260702-002 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (Steps 1–4 reviewed; Step 4 R2 NO OBJECTION; all 13 ACs verified; 48 tests; coverage gate + provenance binding in Rust engine) | COMPLETE | — |
+ | UPG-0016 | CHG-20260702-003 | documentation | self-dev only | 4-Reconcile | ACCEPTED (Step 4 R1 NO OBJECTION; all 7 ACs verified) | COMPLETE | — |
++| UPG-0014 | CHG-20260702-004 | script-tooling | self-dev only | 2-Acceptance | DRAFT | IN_PROGRESS | — |
+ 
+ <!--
+ Identity   : Feature ID = UPG-#### (stable). Change ID = CHG-YYYYMMDD-NNN (one execution), or a

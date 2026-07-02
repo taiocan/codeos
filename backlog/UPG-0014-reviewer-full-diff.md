@@ -2,7 +2,7 @@
 feature_id: UPG-0014
 slug: reviewer-full-diff
 title: Reviewer Agent with Full Diff Access
-status: PROPOSED
+status: COMPLETE
 priority: P2
 depends_on: []
 related_features: []
@@ -98,6 +98,7 @@ must respect secret filtering and stay non-gatekeeping.
 
 | Change ID | File | Purpose | State |
 |---|---|---|---|
+| CHG-20260702-004 | `changes/UPG-0014__CHG-20260702-004__reviewer-full-diff.md` | Auto-include Full Context Diff in packet when `--mode delta --base` active (no new flag; Rust-only; bash shim boundary documented) | COMPLETE |
 
 ### Reviews
 

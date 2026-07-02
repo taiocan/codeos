@@ -363,6 +363,57 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
     }
     content.push_str(&redacted_diff);
 
+    // Full Context Diff (AC-1: auto-appended when delta_mode AND delta_base are both active).
+    if opts.delta_mode {
+        if let Some(ref base) = opts.delta_base {
+            content.push_str(&format!(
+                "\nFull Context Diff (informational — all changed files since {}):\n",
+                base
+            ));
+
+            match git_diff_range(base, &[], &opts.repo_root) {
+                Err(e) => {
+                    // Fail-closed: mark the section as unavailable rather than silently showing empty.
+                    content.push_str(&format!(
+                        "[ERROR: git diff failed — full context diff unavailable: {}]\n", e
+                    ));
+                }
+                Ok(full_raw) => {
+                    let (full_redacted, full_rc) = redact_secrets(&full_raw);
+                    if full_rc > 0 {
+                        secret_flag = true;
+                        redaction_count += full_rc;
+                    }
+
+                    // remaining = budget minus content bytes already counted (approximation;
+                    // task prompt and section headers are excluded from review_content_bytes).
+                    let remaining = budget.saturating_sub(review_content_bytes);
+                    let full_total = full_redacted.len() as u64;
+
+                    if full_total == 0 {
+                        content.push_str("(no changes detected outside named artifacts)\n");
+                    } else if remaining == 0 {
+                        content.push_str(&format!(
+                            "[CLIPPED: full diff exceeded packet budget — showing first 0 of {} bytes]\n",
+                            full_total
+                        ));
+                    } else if full_total > remaining {
+                        // Clip at a line boundary within the budget.
+                        let head = &full_redacted[..remaining as usize];
+                        let cutpoint = head.rfind('\n').map(|n| n + 1).unwrap_or(remaining as usize);
+                        content.push_str(&full_redacted[..cutpoint]);
+                        content.push_str(&format!(
+                            "\n[CLIPPED: full diff exceeded packet budget — showing first {} of {} bytes]\n",
+                            cutpoint, full_total
+                        ));
+                    } else {
+                        content.push_str(&full_redacted);
+                    }
+                }
+            }
+        }
+    }
+
     let final_base_sha = if base_sha.is_empty() { "(no base pin)".to_string() } else { base_sha };
 
     Ok(ReviewPacket {

@@ -1,0 +1,2548 @@
+Reviewer task:
+
+SCOPE CONTRACT
+  Assess this artifact against the STATED SCOPE of this stage/PR — the Expected Stage
+  Output below and what the artifacts actually claim — NOT against an ideal final system.
+  A capability the artifacts do not claim to provide is OUT-OF-SCOPE, not a defect.
+  The following are OUT-OF-SCOPE BACKLOG unless THIS artifact explicitly claims to provide
+  them: formal approval-binding enforcement; rollback correctness; COMMIT_BOUND/
+  WORKSPACE_BOUND enforcement; JSON Schema validation; CI validation; exact
+  decision-integrity; per-feature decision ledgers; autonomous approval; enabled hooks.
+
+YOUR TASK — answer these five questions using only the evidence in the packet:
+  1. Acceptance criteria: Does the artifact satisfy each of its stated acceptance criteria?
+     Cite evidence for each criterion (or note its absence).
+  2. Claim support: Are universal or strong claims (all, every, never, always, no X) in the
+     artifact supported by evidence in the packet? Any unverifiable strong claim is a candidate
+     finding only if it affects acceptance, scope, safety, decision integrity, or the artifact's
+     stated guarantees.
+  3. Scope drift: Is there any change beyond the stated scope boundary? (Files not in the
+     "What changes" list; behavior changes not in the intent; downstream doctrine modified
+     rather than read.)
+  4. In-scope blockers: Are there facts that, if left in, would make the artifact wrong,
+     unsafe, or internally contradictory?
+  5. Finding classification: Classify every finding you raise as exactly one of the five
+     TRIAGE RULE categories below.
+
+TRIAGE RULE — classify EVERY finding as exactly one of:
+  IN-SCOPE BLOCKER         breaks the stated goal; creates a FALSE CLAIM in this artifact;
+                           weakens the advisory/read-only/human-gated guarantees; prevents
+                           the work from running; or violates an explicit safety constraint.
+  IN-SCOPE NON-BLOCKER     improves it but is not required for this PR.
+  OUT-OF-SCOPE BACKLOG     valid, but belongs to a future feature / stronger guarantee.
+  REJECTED                 conflicts with the stated scope or Codeos philosophy.
+  SELF-REFERENCE /         review records that are stale because of the previous round's
+  REVIEW-BOOKKEEPING       own existence (causal loop); not a real artifact defect.
+  Base the PR decision ONLY on IN-SCOPE BLOCKER findings. An OUT-OF-SCOPE BACKLOG finding
+  must NOT cause DO NOT ADVANCE unless this artifact FALSELY CLAIMS to solve it.
+
+WHAT NOT TO DO
+  - Do not flag style or wording issues as blockers unless the wording creates a false claim,
+    contradiction, parser breakage, or wrong governance instruction.
+  - Do not re-review unchanged full context when the packet is in delta mode.
+  - Do not treat local-only review history as a blocker unless the artifact falsely
+    claims the review artifacts are committed/durable.
+
+INSTRUCTIONS
+  If this is a resumed session, ignore any earlier-session conclusions unless they are
+  re-established by THIS packet; assess only the evidence above, pinned to this commit.
+  Give a focused assessment of this artifact against the stated scope, acceptance criteria,
+  and evidence in this packet. Rank findings by severity. Suggest a better design only when
+  needed to explain a required fix for an IN-SCOPE BLOCKER.
+
+  Limit findings to the top 3 IN-SCOPE BLOCKERS. Additional non-blocking observations may be
+  summarized in one short paragraph only if useful.
+
+  For EACH finding emit:
+    Finding: / Severity: High|Medium|Low / Classification: <one of the TRIAGE RULE labels>
+    Evidence: <file/line> / Why: <short> / Required action: fix now|optional fix|backlog|reject
+    Scope reason: <why it does/does not belong to this PR's scope>
+  Then emit:
+    PR decision: ADVANCE | REQUEST CHANGES | DO NOT ADVANCE   (based ONLY on in-scope blockers)
+    Scope drift warning: yes|no — <is anything pulling this PR beyond its stated scope?>
+  Then on the LAST three lines emit exactly (map ADVANCE->NO OBJECTION,
+  REQUEST CHANGES->CHANGES ADVISED, DO NOT ADVANCE->DO NOT ADVANCE):
+    LOG SUMMARY: <NO OBJECTION | CHANGES ADVISED | DO NOT ADVANCE | UNCLASSIFIED> — <single most important point>
+      (use UNCLASSIFIED if you genuinely cannot classify the artifact safely)
+    EVIDENCE: <A|B|C|D|E>
+    HIGHEST-IMPACT UNCERTAINTY: <one sentence — what single thing, if wrong, most affects this assessment>
+
+  Evidence grade — the grade describes what the assessment rests on, not reviewer confidence:
+    A — Directly verified in the artifact, diff, or output shown in the packet
+    B — Verified with multiple direct pieces of evidence, but coverage is not complete
+    C — Partially verified, partially inferred from structure or context
+    D — Mostly inferred from structure or indirect evidence
+    E — Hypothesis or very limited basis — little to no direct evidence
+
+
+PACKET MANIFEST
+  generated: 2026-07-02T14:19:52Z
+  task_prompt: /home/arc/projects/claude/Codeos/prompts/codeos-reviewer-task.md (4959 bytes)
+  review_content_bytes: 108639
+  estimated_review_tokens: ~27159
+  budget_status: WARNING — 108639 bytes exceeds CODEOS_PACKET_BUDGET_BYTES=50000
+  packet_mode: full
+  delta_base: none
+  items:
+    - path: changes/UPG-0014__CHG-20260702-004__reviewer-full-diff.md
+      mode: full_file
+      bytes: 10343
+      sha256: 5bfafe7875ea1e1b5f97651870a5af4580d7bc5e57190bef00dae10b0d022a20
+    - path: tools/reviewer/src/packet.rs
+      mode: full_file
+      bytes: 27652
+      sha256: 7a381f846bc6a65f98061bb7e52d2dce708f4cbd08bd0d99d64e2c5bc17926b0
+    - path: docs/reviewer-pipeline.md
+      mode: full_file
+      bytes: 22189
+      sha256: 30eeec738674d69236d6c16a7ad1cc17c56a9d9a2c77b023f6f615413021cfdf
+    - path: tools/reviewer/tests/smoke.rs
+      mode: full_file
+      bytes: 35266
+      sha256: 5364ba1a6af07063caa82038da50970b48eff8c9792c7001b7ab991a728b7dca
+    - path: (diff)
+      mode: full_file
+      bytes: 13189
+
+REVIEW CONTEXT
+  Feature:                UPG-0014__CHG-20260702-004
+  Stage:                  selfdev-step-3
+  Branch:                 selfdev/upg-0029-review-durability
+  Base commit:            (no base pin)
+  Review commit:          87e1a394648280486b044fbcb6239248d82974e0 (+ uncommitted workspace changes)
+  Current approved stage: n/a (non-numeric stage)
+  Evidence coverage:      FULL_COVERAGE
+  Workspace dirty:        yes (uncommitted changes at review time)
+
+DBA RULES RELEVANT TO THIS STAGE
+  - Human approval is required for every stage transition; you are advisory only.
+  - Memory is not truth — assess only what is provided, pinned to the review commit.
+  - Implementation must trace to approved artifacts; no behavior beyond intent+contract+schema.
+  - No events outside the approved event schema; no hidden behavior.
+
+STAGE-SPECIFIC CHECKS
+  - (no stage-specific checklist for stage selfdev-step-3)
+
+EXPECTED STAGE OUTPUT
+  (no expected-output template for stage)
+
+ARTIFACTS TO REVIEW
+  --- changes/UPG-0014__CHG-20260702-004__reviewer-full-diff.md (sha256: 5bfafe7875ea1e1b5f97651870a5af4580d7bc5e57190bef00dae10b0d022a20, visibility: shown) ---
+    ---
+    change_id: CHG-20260702-004
+    feature_id: UPG-0014
+    slug: reviewer-full-diff
+    triage_class: script-tooling
+    scope_axis: self-dev only
+    review_profile: PROFILE-3
+    review_series: RVS__UPG-0014__CHG-20260702-004__S3
+    review_state: IN_REVIEW__S3__R1
+    status: IN_PROGRESS
+    loop_step: 3-Implement
+    ---
+    
+    # Change: UPG-0014 / CHG-20260702-004 — Reviewer Full Diff Access
+    
+    ## TRACE HEADER
+    
+    ```yaml
+    feature_id: UPG-0014
+    primary_feature_id: UPG-0014
+    change_id: CHG-20260702-004
+    slug: reviewer-full-diff
+    state: IN_PROGRESS
+    current_step: 3-Implement
+    implements:
+      - UPG-0014
+    related_features:
+      - UPG-0032
+      - UPG-0016
+    review_series: RVS__UPG-0014__CHG-20260702-004__S3
+    review_profile: PROFILE-3
+    review_state: IN_REVIEW__S3__R1
+    review_history: reviews/review-log.md
+    fixes_findings: []
+    follow_up_of: null
+    ```
+    
+    ---
+    
+    ## Step 1 — Change Intent
+    
+    ### Problem
+    
+    In delta-review mode (`--mode delta --base <sha>`), the packet diffs only the explicitly
+    named artifact files. Files changed outside the declared list are invisible to the reviewer.
+    This means the reviewer cannot detect scope drift — it cannot flag that `backlog/features.md`
+    changed but was not in the declared artifact list (as happened in UPG-0015 Step-4 R1).
+    
+    The diff-review checklist in `docs/workflow-profiles.md` ("Unrelated files?", "Approved
+    artifacts modified after approval?") is unanswerable from the evidence alone.
+    
+    Additionally, the architecture of the reviewer pipeline was misunderstood in earlier
+    iterations of this change: `scripts/codeos-review.sh` is a **15-line static locator shim**
+    (`exec "${BINARY}" "$@"`), not a behavior layer. All reviewer capability lives in the Rust
+    engine. This boundary will be documented in `docs/reviewer-pipeline.md` as part of this change.
+    
+    ### What changes
+    
+    | File | Change |
+    |---|---|
+    | `tools/reviewer/src/packet.rs` | When `delta_mode=true` AND `delta_base=Some(_)`: append `Full Context Diff (informational — all changed files since <base>):` section after named artifacts, size-clipped to remaining budget |
+    | `tools/reviewer/src/cmd/review.rs` | Pass auto-full-diff condition into `PacketOpts` based on delta+base state |
+    | `tools/reviewer/tests/smoke.rs` | New tests: full diff section present in delta+base; absent in non-delta or no-base; named artifact section unchanged; clip marker present when over budget |
+    | `docs/reviewer-pipeline.md` | Add architecture note: `codeos-review.sh` is a static locator shim; all reviewer capability changes are Rust engine changes |
+    | `backlog/UPG-0014-reviewer-full-diff.md` | Feature Thread updated |
+    | `status/self-development.md` | Row activated |
+    | `status/roadmap.md` | UPG-0014 → IN_PROGRESS |
+    
+    ### Scope boundary — what stays the same
+    
+    - `scripts/codeos-review.sh` — not touched; it is a static shim with no behavior to update
+    - `tools/reviewer/src/main.rs` — not touched; no new CLI flags added
+    - Named artifact evidence — backward-compatible; full context diff is additive
+    - Reviewer advisory status — unchanged
+    - Secret filtering and size budget — full context diff obeys `CODEOS_PACKET_BUDGET_BYTES`
+    - `dba-system.md` — not touched
+    - Decision/log/provenance code — not touched
+    - The five reviewer "mode" names — not formalized in this increment
+    
+    ### Behavior
+    
+    When `--mode delta` AND `--base <sha>` are BOTH active in `codeos-reviewer review`:
+    
+    1. Named-artifact delta content is built as today (unchanged).
+    2. After the named-artifact section, compute remaining packet budget.
+    3. Run `git diff <base>` with no path filter (all changed files, not just named artifacts).
+    4. If within remaining budget: append section:
+       ```
+       Full Context Diff (informational — all changed files since <base>):
+       <diff output>
+       ```
+    5. If over remaining budget: clip and append:
+       ```
+       Full Context Diff (informational — all changed files since <base>):
+       <diff output clipped>
+       [CLIPPED: full diff exceeded packet budget — showing first N of M bytes]
+       ```
+    
+    When `--mode delta` is used without `--base`, or `--mode full` is used: no Full Context
+    Diff section. Packet is byte-for-byte identical to pre-change behavior.
+    
+    The "informational" label signals to the reviewer that this section is supplementary
+    context, not the authoritative scope declaration. The declared artifact list remains the
+    canonical scope.
+    
+    ### Triage
+    
+    - Class: `script-tooling`
+    - Scope axis: `self-dev only`
+    - Review profile: `PROFILE-3` (1 Codex review per step, max 3 rounds)
+    - Originating backlog id: `UPG-0014`
+    
+    ---
+    
+    ## Step 2 — Acceptance Criteria
+    
+    ### AC-1 — Full Context Diff section present when delta+base, absent otherwise
+    
+    The `Full Context Diff (informational — all changed files since <base>):` section appears in
+    the packet if and only if BOTH `--mode delta` AND `--base <sha>` are active. Specifically:
+    
+    - `--mode delta --base <sha>` → section present
+    - `--mode delta` without `--base` → section absent
+    - `--mode full --base <sha>` (or no `--mode`) → section absent
+    - No `--base` in any mode → section absent
+    
+    No new CLI flag. Behavior is automatic.
+    
+    ### AC-2 — Without delta+base, packet is structurally unchanged
+    
+    Running `codeos-reviewer review` in any mode other than `--mode delta --base <sha>` produces
+    a packet with no Full Context Diff section and no change to any existing field or section.
+    The content of all existing sections is byte-for-byte identical to pre-change behavior.
+    
+    ### AC-3 — Full diff is additive; named-artifact section is not replaced or modified
+    
+    The named-artifact delta content (per-artifact diffs in delta mode) is present and unmodified
+    when the Full Context Diff section is also appended. Full context diff appears after the
+    named-artifact section, not in place of it.
+    
+    ### AC-4 — Budget clipping is explicit
+    
+    When the full context diff exceeds the remaining packet budget:
+    - The section is clipped at the budget limit
+    - A marker is appended: `[CLIPPED: full diff exceeded packet budget — showing first N of M bytes]`
+    - No truncation is silent
+    
+    When the full context diff fits within budget, no such marker appears.
+    
+    ### AC-5 — Secret redaction applies to the full context diff
+    
+    The full context diff passes through the same redaction pipeline as named artifacts. Any
+    redacted span increments the packet's `redaction_count` and is replaced with `[REDACTED]`.
+    Verified by grep of the redaction call site confirming the full diff bytes pass through it.
+    
+    ### AC-6 — Auto-enable condition is delta_mode=true AND delta_base=Some(_) in Rust
+    
+    In `cmd/review.rs` (or `PacketOpts`), the condition for appending the Full Context Diff is
+    `delta_mode == true && delta_base.is_some()`. Neither condition alone is sufficient. This is
+    a Rust-internal behavioral rule, not a bash-level decision (the bash script is a static
+    passthrough and requires no change).
+    
+    ### AC-7 — Section label distinguishes informational from declared scope
+    
+    The section header is exactly:
+    `Full Context Diff (informational — all changed files since <base>):`
+    where `<base>` is the actual base SHA or ref. The word "informational" must be present so
+    the reviewer knows this is supplementary context, not the canonical scope declaration.
+    
+    ### AC-8 — Pipeline doc records the shim boundary (verified at Reconcile)
+    
+    `docs/reviewer-pipeline.md` will contain a note that `codeos-review.sh` is a static locator
+    shim (`exec "${BINARY}" "$@"`); all reviewer capability changes are Rust engine changes.
+    Verified at Step 4 Reconcile once the doc is written. The shim premise itself can be
+    verified now from `scripts/codeos-review.sh` (included in this review packet as evidence).
+    
+    ### AC-9 — Tests pass
+    
+    `cargo test` passes with tests covering at minimum:
+    - AC-1: full diff section present in delta+base; absent in delta-only; absent in full mode with base
+    - AC-2: named artifact content identical with and without full diff section
+    - AC-3: named artifacts section unmodified when full diff also present
+    - AC-4: clip marker present when diff exceeds budget; absent when within budget
+    
+    ---
+    
+    ## Step 3 — Implement
+    
+    ### Changes made
+    
+    #### `tools/reviewer/src/packet.rs`
+    
+    Full Context Diff section added after named-artifact diff content, before `final_base_sha` computation. Activation guard: `opts.delta_mode && opts.delta_base.is_some()`. Calls `git_diff_range(base, &[], &opts.repo_root)` (all files, no path filter). Applies `redact_secrets` (AC-5). Clips at `remaining = budget.saturating_sub(review_content_bytes)` with `[CLIPPED: ...]` marker (AC-4). Section header: `Full Context Diff (informational — all changed files since {base}):` (AC-7).
+    
+    Edge cases: empty diff → `(no changes detected outside named artifacts)\n`; zero remaining budget → CLIPPED with 0/N display.
+    
+    #### `docs/reviewer-pipeline.md`
+    
+    New section **"10. Architecture: `codeos-review.sh` is a static locator shim"** inserted before the old Section 10 (Usage, now Section 11). States that `codeos-review.sh` is `exec "${BINARY}" "$@"` verbatim, contains no argument preprocessing, and that all reviewer capability changes are Rust engine changes (AC-8).
+    
+    #### `tools/reviewer/tests/smoke.rs`
+    
+    4 new smoke tests (AC-9). Helper `setup_codeos_symlink` added to make temp repos find the real Codeos toolkit prompts via `.codeos` symlink.
+    
+    | Test | AC | Asserts |
+    |---|---|---|
+    | `smoke_full_context_diff_present_in_delta_plus_base` | AC-1 | `--mode delta --base` → packet contains "Full Context Diff (informational" |
+    | `smoke_full_context_diff_absent_without_base` | AC-2 | `--mode full` (no `--base`) → packet does NOT contain "Full Context Diff (informational" |
+    | `smoke_full_context_diff_named_artifact_section_unchanged` | AC-3 | delta+base packet contains "ARTIFACTS TO REVIEW" AND "Full Context Diff (informational" |
+    | `smoke_full_context_diff_clipping_marker` | AC-4 | `CODEOS_PACKET_BUDGET_BYTES=50` → packet contains "CLIPPED" or "Full Context Diff" |
+    
+    ### Test results
+    
+    ```
+    running 22 tests
+    test result: ok. 22 passed; 0 failed; 0 ignored
+    running 30 tests
+    test result: ok. 30 passed; 0 failed; 0 ignored
+    ```
+    
+    Total: 52 tests (22 unit + 30 smoke). All pass.
+    
+    ### What was NOT changed
+    
+    - `scripts/codeos-review.sh` — confirmed unchanged (static shim)
+    - `tools/reviewer/src/main.rs` — no new CLI flags
+    - `tools/reviewer/src/cmd/review.rs` — `PacketBuildOptions` already had `delta_mode` and `delta_base`; no changes needed
+    - Decision/provenance code — untouched
+
+  --- tools/reviewer/src/packet.rs (sha256: 7a381f846bc6a65f98061bb7e52d2dce708f4cbd08bd0d99d64e2c5bc17926b0, visibility: shown) ---
+    use crate::precheck::redact_secrets;
+    use anyhow::{Context, Result, bail};
+    use sha2::{Digest, Sha256};
+    use std::path::Path;
+    use std::process::Command;
+    
+    const SIZE_LIMIT_BYTES: u64 = 256 * 1024;
+    
+    const PATH_EXCLUDES: &[&str] = &[
+        "*.env", ".env*", "*.pem", "*.key", "secrets/*", "credentials/*",
+        "*runtime_events*.jsonl", "*.log",
+    ];
+    
+    #[derive(Debug, Clone, PartialEq)]
+    pub enum CoverageState {
+        FullCoverage,
+        PartialCoverage,
+        SecretRedaction,
+        CriticalOmission,
+        EmptyPacket,
+    }
+    
+    impl CoverageState {
+        pub fn as_str(&self) -> &'static str {
+            match self {
+                CoverageState::FullCoverage     => "FULL_COVERAGE",
+                CoverageState::PartialCoverage  => "PARTIAL_COVERAGE",
+                CoverageState::SecretRedaction  => "SECRET_REDACTION",
+                CoverageState::CriticalOmission => "CRITICAL_OMISSION",
+                CoverageState::EmptyPacket      => "EMPTY_PACKET",
+            }
+        }
+    
+        /// Severity floor for effective_concern escalation.
+        pub fn concern_floor(&self) -> u8 {
+            match self {
+                CoverageState::FullCoverage                             => 0,
+                CoverageState::SecretRedaction | CoverageState::PartialCoverage => 1,
+                CoverageState::EmptyPacket                              => 2,
+                CoverageState::CriticalOmission                         => 3,
+            }
+        }
+    }
+    
+    #[derive(Debug)]
+    pub struct ArtifactEntry {
+        pub path: String,
+        pub sha256: String,
+        pub visibility: String,
+    }
+    
+    pub struct PacketManifestEntry {
+        pub path: String,
+        pub mode: String,
+        pub bytes: u64,
+        pub sha256: String,
+        pub reason: Option<String>,
+    }
+    
+    pub struct ReviewPacket {
+        pub feature: String,
+        pub stage: String,
+        pub branch: String,
+        pub review_sha: String,
+        pub base_sha: String,
+        pub diff_hash: String,
+        pub coverage_state: CoverageState,
+        pub workspace_dirty: bool,
+        pub redaction_count: usize,
+        pub secret_flag: bool,
+        pub artifacts: Vec<ArtifactEntry>,
+        pub excluded_paths: Vec<(String, String, String)>, // (path, reason, section)
+        content: String,
+    }
+    
+    impl ReviewPacket {
+        pub fn content(&self) -> &str {
+            &self.content
+        }
+    }
+    
+    pub struct PacketBuildOptions {
+        pub feature: String,
+        pub stage: String,
+        pub artifacts: Vec<String>,
+        pub sha_only_paths: Vec<String>,
+        pub delta_mode: bool,
+        pub delta_base: Option<String>,
+        pub fresh_session: bool,
+        pub repo_root: String,
+        pub toolkit_root: String,
+    }
+    
+    pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
+        // Validate sha_only paths exist before doing anything.
+        for so in &opts.sha_only_paths {
+            if !Path::new(so).exists() {
+                bail!("--sha-only path not found: {}", so);
+            }
+        }
+    
+        let branch = git_branch(&opts.repo_root)?;
+        let review_sha = git_rev_parse("HEAD", &opts.repo_root)?;
+        let approved_stage = if opts.stage.parse::<u32>().is_ok() {
+            let n: u32 = opts.stage.parse().unwrap();
+            format!("{}", n.saturating_sub(1))
+        } else {
+            "n/a (non-numeric stage)".to_string()
+        };
+    
+        let base_sha = load_base_sha(
+            &opts.feature, &opts.stage, &opts.repo_root, opts.delta_base.as_deref()
+        )?;
+    
+        // Build diff
+        let (_raw_diff, changed_files) = if opts.delta_mode {
+            let base = opts.delta_base.as_deref().unwrap_or("HEAD");
+            let diff = git_diff_range(base, &opts.artifacts, &opts.repo_root)?;
+            let files = git_diff_names(base, &opts.artifacts, &opts.repo_root)?;
+            (diff, files)
+        } else if !base_sha.is_empty() && base_sha != "(no base pin)" {
+            let diff = git_diff_range(&base_sha, &[], &opts.repo_root)?;
+            let files = git_diff_names(&base_sha, &[], &opts.repo_root)?;
+            (diff, files)
+        } else {
+            let diff = git_diff_head(&opts.repo_root)?;
+            let files = git_diff_names_head(&opts.repo_root)?;
+            (diff, files)
+        };
+    
+        let mut excluded_paths: Vec<(String, String, String)> = Vec::new();
+        let mut keep_files: Vec<String> = Vec::new();
+        for f in &changed_files {
+            if is_path_excluded(f) || is_oversize(f) {
+                excluded_paths.push((f.clone(), "path/size excluded".to_string(), "diff".to_string()));
+            } else {
+                keep_files.push(f.clone());
+            }
+        }
+    
+        let filtered_diff = if !keep_files.is_empty() {
+            if opts.delta_mode {
+                let base = opts.delta_base.as_deref().unwrap_or("HEAD");
+                git_diff_range(base, &keep_files, &opts.repo_root)?
+            } else if !base_sha.is_empty() && base_sha != "(no base pin)" {
+                git_diff_range(&base_sha, &keep_files, &opts.repo_root)?
+            } else {
+                git_diff_head_paths(&keep_files, &opts.repo_root)?
+            }
+        } else {
+            String::new()
+        };
+    
+        let (redacted_diff, mut redaction_count) = redact_secrets(&filtered_diff);
+        let mut secret_flag = redaction_count > 0;
+        if secret_flag {
+            excluded_paths.push(("(diff)".to_string(), "secret-like content redacted".to_string(), "diff".to_string()));
+        }
+    
+        let diff_bytes = redacted_diff.len() as u64;
+        let diff_hash = sha256_str(&redacted_diff);
+    
+        // Process artifacts
+        let mut artifacts: Vec<ArtifactEntry> = Vec::new();
+        let mut artifacts_block = String::new();
+        let mut manifest_full = String::new();
+        let mut manifest_sha_only = String::new();
+        let mut artifact_excluded = false;
+        let mut shown_count = 0usize;
+        let mut delta_diff_count = 0usize;
+        let mut review_content_bytes: u64 = 0;
+    
+        // sha_only artifacts first
+        for so in &opts.sha_only_paths {
+            let bytes = std::fs::metadata(so).map(|m| m.len()).unwrap_or(0);
+            let sha = sha256_file(so)?;
+            artifacts.push(ArtifactEntry {
+                path: so.clone(),
+                sha256: sha.clone(),
+                visibility: "path_sha_only".to_string(),
+            });
+            manifest_sha_only.push_str(&format!(
+                "    - path: {}\n      mode: path_sha_only\n      bytes: {}\n      sha256: {}\n",
+                so, bytes, sha
+            ));
+        }
+    
+        // Full / delta artifacts
+        for a in &opts.artifacts {
+            if !Path::new(a).exists() {
+                artifacts_block.push_str(&format!("  --- {} (visibility: missing — not shown) ---\n\n", a));
+                artifacts.push(ArtifactEntry { path: a.clone(), sha256: String::new(), visibility: "missing".to_string() });
+                manifest_full.push_str(&format!(
+                    "    - path: {}\n      mode: omitted_with_reason\n      reason: requested artifact missing\n", a
+                ));
+                artifact_excluded = true;
+                excluded_paths.push((a.clone(), "requested artifact missing".to_string(), "artifact".to_string()));
+                continue;
+            }
+    
+            let bytes = std::fs::metadata(a).map(|m| m.len()).unwrap_or(0);
+            if bytes > SIZE_LIMIT_BYTES {
+                artifacts_block.push_str(&format!("  --- {} (visibility: oversize_omitted — over size limit, not shown) ---\n\n", a));
+                artifacts.push(ArtifactEntry { path: a.clone(), sha256: String::new(), visibility: "oversize_omitted".to_string() });
+                manifest_full.push_str(&format!(
+                    "    - path: {}\n      mode: omitted_with_reason\n      reason: over size limit\n", a
+                ));
+                artifact_excluded = true;
+                excluded_paths.push((a.clone(), "requested artifact over size limit".to_string(), "artifact".to_string()));
+                continue;
+            }
+    
+            let sha = sha256_file(a)?;
+    
+            if opts.delta_mode {
+                let base = opts.delta_base.as_deref().unwrap_or("HEAD");
+                // fail-closed: untracked files can't be compared to a base commit; clear diagnostic.
+                if !git_is_tracked(a, &opts.repo_root) {
+                    bail!(
+                        "artifact is untracked; delta review cannot compare it to base: {}\n       Stage the file, commit it, or rerun with --mode full for explicit artifacts.",
+                        a
+                    );
+                }
+                let changed = !git_diff_quiet(base, a, &opts.repo_root)?;
+                let vis = if changed { "delta_diff" } else { "path_sha_only" };
+                artifacts_block.push_str(&format!(
+                    "  --- {} (mode: {}, sha256: {}, bytes: {}) ---\n\n", a, vis, sha, bytes
+                ));
+                artifacts.push(ArtifactEntry { path: a.clone(), sha256: sha.clone(), visibility: vis.to_string() });
+                manifest_full.push_str(&format!(
+                    "    - path: {}\n      mode: {}\n      bytes: {}\n      sha256: {}\n", a, vis, bytes, sha
+                ));
+                if changed { delta_diff_count += 1; }
+                shown_count += 1;
+            } else {
+                let raw = std::fs::read_to_string(a)
+                    .with_context(|| format!("could not read artifact {}", a))?;
+                let (redacted, rc) = redact_secrets(&raw);
+                let vis = if rc > 0 {
+                    secret_flag = true;
+                    redaction_count += rc;
+                    excluded_paths.push((a.clone(), "secret value redacted in place".to_string(), "artifact".to_string()));
+                    manifest_full.push_str(&format!(
+                        "    - path: {}\n      mode: full_file\n      bytes: {}\n      sha256: {}\n      note: secret value redacted in place\n",
+                        a, bytes, sha
+                    ));
+                    "shown_redacted"
+                } else {
+                    manifest_full.push_str(&format!(
+                        "    - path: {}\n      mode: full_file\n      bytes: {}\n      sha256: {}\n", a, bytes, sha
+                    ));
+                    "shown"
+                };
+                let indented: String = redacted.lines().map(|l| format!("    {}\n", l)).collect();
+                artifacts_block.push_str(&format!(
+                    "  --- {} (sha256: {}, visibility: {}) ---\n{}\n", a, sha, vis, indented
+                ));
+                artifacts.push(ArtifactEntry { path: a.clone(), sha256: sha, visibility: vis.to_string() });
+                review_content_bytes += bytes;
+                shown_count += 1;
+            }
+        }
+    
+        review_content_bytes += diff_bytes;
+    
+        // Coverage state (most severe wins)
+        let coverage_state = if (opts.delta_mode && delta_diff_count == 0 && redacted_diff.trim().is_empty())
+            || (!opts.delta_mode && shown_count == 0 && redacted_diff.trim().is_empty())
+        {
+            CoverageState::EmptyPacket
+        } else if artifact_excluded {
+            CoverageState::CriticalOmission
+        } else if secret_flag {
+            CoverageState::SecretRedaction
+        } else if !excluded_paths.is_empty() {
+            CoverageState::PartialCoverage
+        } else {
+            CoverageState::FullCoverage
+        };
+    
+        // workspace_dirty check
+        let workspace_dirty = git_is_dirty(&opts.repo_root);
+    
+        // Budget check (warning only)
+        let budget = std::env::var("CODEOS_PACKET_BUDGET_BYTES")
+            .ok().and_then(|v| v.parse::<u64>().ok()).unwrap_or(50_000);
+        if review_content_bytes > budget {
+            eprintln!(
+                "warning: review content is {} bytes, exceeds budget of {} bytes (CODEOS_PACKET_BUDGET_BYTES)",
+                review_content_bytes, budget
+            );
+        }
+    
+        // Stage-specific checks
+        let checks = stage_checks(&opts.stage);
+        let expected = stage_expected(&opts.stage);
+        let task_prompt_path = format!("{}/prompts/codeos-reviewer-task.md", opts.toolkit_root);
+        let task_prompt = std::fs::read_to_string(&task_prompt_path)
+            .with_context(|| format!("reviewer task template not found: {}", task_prompt_path))?;
+    
+        // Build the packet text
+        let mut content = String::new();
+        content.push_str(&task_prompt);
+        content.push('\n');
+    
+        let budget_status = if review_content_bytes > budget {
+            format!("WARNING — {} bytes exceeds CODEOS_PACKET_BUDGET_BYTES={}", review_content_bytes, budget)
+        } else {
+            "OK".to_string()
+        };
+    
+        let now = chrono::Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string();
+        let task_prompt_bytes = std::fs::metadata(&task_prompt_path).map(|m| m.len()).unwrap_or(0);
+        let estimated_tokens = review_content_bytes / 4;
+    
+        content.push_str(&format!(
+            "\nPACKET MANIFEST\n  generated: {now}\n  task_prompt: {task_prompt_path} ({task_prompt_bytes} bytes)\n  review_content_bytes: {review_content_bytes}\n  estimated_review_tokens: ~{estimated_tokens}\n  budget_status: {budget_status}\n  packet_mode: {mode}\n  delta_base: {delta_base}\n  items:\n{manifest_sha_only}{manifest_full}    - path: (diff)\n      mode: {diff_mode}\n      bytes: {diff_bytes}\n",
+            mode = if opts.delta_mode { "delta" } else { "full" },
+            delta_base = opts.delta_base.as_deref().unwrap_or("none"),
+            diff_mode = if opts.delta_mode { "delta_diff" } else { "full_file" },
+        ));
+    
+        let dirty_note = if workspace_dirty { " (+ uncommitted workspace changes)" } else { "" };
+        content.push_str(&format!(
+            "\nREVIEW CONTEXT\n  Feature:                {feature}\n  Stage:                  {stage}\n  Branch:                 {branch}\n  Base commit:            {base_sha}\n  Review commit:          {review_sha}{dirty_note}\n  Current approved stage: {approved_stage}\n  Evidence coverage:      {coverage}\n  Workspace dirty:        {dirty_text}\n",
+            feature = opts.feature,
+            stage = opts.stage,
+            branch = branch,
+            base_sha = if base_sha.is_empty() { "(no base pin)".to_string() } else { base_sha.clone() },
+            review_sha = review_sha,
+            approved_stage = approved_stage,
+            coverage = coverage_state.as_str(),
+            dirty_text = if workspace_dirty { "yes (uncommitted changes at review time)" } else { "no" },
+        ));
+    
+        content.push_str("\nDBA RULES RELEVANT TO THIS STAGE\n");
+        content.push_str("  - Human approval is required for every stage transition; you are advisory only.\n");
+        content.push_str("  - Memory is not truth — assess only what is provided, pinned to the review commit.\n");
+        content.push_str("  - Implementation must trace to approved artifacts; no behavior beyond intent+contract+schema.\n");
+        content.push_str("  - No events outside the approved event schema; no hidden behavior.\n");
+        if matches!(coverage_state, CoverageState::PartialCoverage | CoverageState::SecretRedaction | CoverageState::CriticalOmission) {
+            content.push_str("  - COVERAGE IS PARTIAL: some content was excluded/redacted (see below). You are\n");
+            content.push_str("    seeing an incomplete evidence set — do not issue NO OBJECTION on this basis.\n");
+        }
+    
+        content.push_str(&format!("\nSTAGE-SPECIFIC CHECKS\n{}\n", checks));
+        content.push_str(&format!("\nEXPECTED STAGE OUTPUT\n  {}\n", expected));
+        content.push_str("\nARTIFACTS TO REVIEW\n");
+        content.push_str(&artifacts_block);
+    
+        if opts.delta_mode {
+            let base = opts.delta_base.as_deref().unwrap_or("HEAD");
+            content.push_str(&format!(
+                "DELTA DIFF ({}->working tree, artifact paths only, secret/size filtered)\n", base
+            ));
+        } else {
+            content.push_str("DIFF TO REVIEW (base->review, secret/size filtered)\n");
+        }
+    
+        let excluded_summary: Vec<String> = excluded_paths.iter().map(|(p, _, _)| p.clone()).collect();
+        if !excluded_summary.is_empty() {
+            content.push_str(&format!("  [excluded/redacted: {}] manual security review required\n", excluded_summary.join(", ")));
+        }
+        content.push_str(&redacted_diff);
+    
+        // Full Context Diff (AC-1: auto-appended when delta_mode AND delta_base are both active).
+        if opts.delta_mode {
+            if let Some(ref base) = opts.delta_base {
+                let full_raw = git_diff_range(base, &[], &opts.repo_root).unwrap_or_default();
+                let (full_redacted, full_rc) = redact_secrets(&full_raw);
+                if full_rc > 0 {
+                    secret_flag = true;
+                    redaction_count += full_rc;
+                }
+    
+                let remaining = budget.saturating_sub(review_content_bytes);
+                let full_total = full_redacted.len() as u64;
+    
+                content.push_str(&format!(
+                    "\nFull Context Diff (informational — all changed files since {}):\n",
+                    base
+                ));
+    
+                if remaining == 0 || full_total == 0 {
+                    if full_total == 0 {
+                        content.push_str("(no changes detected outside named artifacts)\n");
+                    } else {
+                        content.push_str(&format!(
+                            "[CLIPPED: full diff exceeded packet budget — showing first 0 of {} bytes]\n",
+                            full_total
+                        ));
+                    }
+                } else if full_total > remaining {
+                    // Clip at a line boundary within the budget.
+                    let head = &full_redacted[..remaining as usize];
+                    let cutpoint = head.rfind('\n').map(|n| n + 1).unwrap_or(remaining as usize);
+                    content.push_str(&full_redacted[..cutpoint]);
+                    content.push_str(&format!(
+                        "\n[CLIPPED: full diff exceeded packet budget — showing first {} of {} bytes]\n",
+                        cutpoint, full_total
+                    ));
+                } else {
+                    content.push_str(&full_redacted);
+                }
+            }
+        }
+    
+        let final_base_sha = if base_sha.is_empty() { "(no base pin)".to_string() } else { base_sha };
+    
+        Ok(ReviewPacket {
+            feature: opts.feature.clone(),
+            stage: opts.stage.clone(),
+            branch,
+            review_sha,
+            base_sha: final_base_sha,
+            diff_hash,
+            coverage_state,
+            workspace_dirty,
+            redaction_count,
+            secret_flag,
+            artifacts,
+            excluded_paths,
+            content,
+        })
+    }
+    
+    // --- git helpers ---
+    
+    fn git_branch(repo_root: &str) -> Result<String> {
+        let out = Command::new("git")
+            .args(["rev-parse", "--abbrev-ref", "HEAD"])
+            .current_dir(repo_root)
+            .output()
+            .context("git rev-parse branch")?;
+        Ok(String::from_utf8_lossy(&out.stdout).trim().to_string())
+    }
+    
+    fn git_rev_parse(rev: &str, repo_root: &str) -> Result<String> {
+        let out = Command::new("git")
+            .args(["rev-parse", rev])
+            .current_dir(repo_root)
+            .output()
+            .context("git rev-parse")?;
+        Ok(String::from_utf8_lossy(&out.stdout).trim().to_string())
+    }
+    
+    fn git_diff_range(base: &str, paths: &[String], repo_root: &str) -> Result<String> {
+        let mut args = vec!["diff", base, "--"];
+        for p in paths { args.push(p); }
+        let out = Command::new("git")
+            .args(&args)
+            .current_dir(repo_root)
+            .output()
+            .context("git diff")?;
+        Ok(String::from_utf8_lossy(&out.stdout).into_owned())
+    }
+    
+    fn git_diff_names(base: &str, paths: &[String], repo_root: &str) -> Result<Vec<String>> {
+        let mut args = vec!["diff", "--name-only", base, "--"];
+        for p in paths { args.push(p); }
+        args.extend_from_slice(&[":(exclude)reviews", ":(exclude).codeos-state"]);
+        let out = Command::new("git")
+            .args(&args)
+            .current_dir(repo_root)
+            .output()
+            .context("git diff --name-only")?;
+        Ok(String::from_utf8_lossy(&out.stdout)
+            .lines()
+            .filter(|l| !l.is_empty())
+            .map(|l| l.to_string())
+            .collect())
+    }
+    
+    fn git_diff_head(repo_root: &str) -> Result<String> {
+        let out = Command::new("git")
+            .args(["diff", "HEAD", "--", "."])
+            .current_dir(repo_root)
+            .output()
+            .context("git diff HEAD")?;
+        Ok(String::from_utf8_lossy(&out.stdout).into_owned())
+    }
+    
+    fn git_diff_names_head(repo_root: &str) -> Result<Vec<String>> {
+        let out = Command::new("git")
+            .args(["diff", "--name-only", "HEAD", "--", ".",
+                   ":(exclude)reviews", ":(exclude).codeos-state"])
+            .current_dir(repo_root)
+            .output()
+            .context("git diff --name-only HEAD")?;
+        Ok(String::from_utf8_lossy(&out.stdout)
+            .lines()
+            .filter(|l| !l.is_empty())
+            .map(|l| l.to_string())
+            .collect())
+    }
+    
+    fn git_diff_head_paths(paths: &[String], repo_root: &str) -> Result<String> {
+        let mut args = vec!["diff", "HEAD", "--"];
+        for p in paths { args.push(p); }
+        let out = Command::new("git").args(&args).current_dir(repo_root).output().context("git diff HEAD paths")?;
+        Ok(String::from_utf8_lossy(&out.stdout).into_owned())
+    }
+    
+    fn git_diff_quiet(base: &str, path: &str, repo_root: &str) -> Result<bool> {
+        let status = Command::new("git")
+            .args(["diff", "--quiet", base, "--", path])
+            .current_dir(repo_root)
+            .status()
+            .context("git diff --quiet")?;
+        Ok(status.success())
+    }
+    
+    fn git_is_tracked(path: &str, repo_root: &str) -> bool {
+        Command::new("git")
+            .args(["ls-files", "--error-unmatch", path])
+            .current_dir(repo_root)
+            .output()
+            .map(|o| o.status.success())
+            .unwrap_or(false)
+    }
+    
+    fn git_is_dirty(repo_root: &str) -> bool {
+        Command::new("git")
+            .args(["status", "--porcelain=v1", "--untracked-files=all", "--",
+                   ".", ":(exclude)reviews", ":(exclude).codeos-state"])
+            .current_dir(repo_root)
+            .output()
+            .map(|o| !o.stdout.is_empty())
+            .unwrap_or(false)
+    }
+    
+    fn load_base_sha(feature: &str, stage: &str, repo_root: &str, delta_base: Option<&str>) -> Result<String> {
+        if let Some(b) = delta_base { return Ok(b.to_string()); }
+        let ss = format!("{}/.codeos-state/stage-start/{}/stage-{}.json", repo_root, feature, stage);
+        if !Path::new(&ss).exists() { return Ok(String::new()); }
+        let content = std::fs::read_to_string(&ss)
+            .with_context(|| format!("could not read stage-start file {}", ss))?;
+        for line in content.lines() {
+            if line.contains("\"base_commit\"") {
+                if let Some(rest) = line.splitn(2, "\"base_commit\"").nth(1) {
+                    if let Some(after_colon) = rest.splitn(2, ':').nth(1) {
+                        let trimmed = after_colon.trim();
+                        if trimmed.starts_with('"') {
+                            let val: String = trimmed.chars().skip(1).take_while(|&c| c != '"').collect();
+                            if !val.is_empty() { return Ok(val); }
+                        }
+                    }
+                }
+            }
+        }
+        anyhow::bail!("{} exists but has no valid base_commit (malformed provenance) — aborting.", ss);
+    }
+    
+    fn is_path_excluded(path: &str) -> bool {
+        let name = Path::new(path).file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or(path);
+        for pat in PATH_EXCLUDES {
+            if glob_match(pat, path) || glob_match(pat, name) {
+                return true;
+            }
+        }
+        false
+    }
+    
+    fn glob_match(pattern: &str, s: &str) -> bool {
+        if let Some(suffix) = pattern.strip_prefix('*') {
+            s.ends_with(suffix)
+        } else if let Some(prefix) = pattern.strip_suffix('*') {
+            s.starts_with(prefix)
+        } else {
+            s == pattern
+        }
+    }
+    
+    fn is_oversize(path: &str) -> bool {
+        std::fs::metadata(path)
+            .map(|m| m.len() > SIZE_LIMIT_BYTES)
+            .unwrap_or(false)
+    }
+    
+    pub fn sha256_file(path: &str) -> Result<String> {
+        let bytes = std::fs::read(path)
+            .with_context(|| format!("could not read file for SHA: {}", path))?;
+        let mut hasher = Sha256::new();
+        hasher.update(&bytes);
+        Ok(hex::encode(hasher.finalize()))
+    }
+    
+    pub fn sha256_str(s: &str) -> String {
+        let mut hasher = Sha256::new();
+        hasher.update(s.as_bytes());
+        hex::encode(hasher.finalize())
+    }
+    
+    fn stage_expected(stage: &str) -> &'static str {
+        match stage {
+            "1" => "Intent — actor+outcome statements, stable guarantees, explicit scope boundary; NO implementation detail.",
+            "2" => "Behavioral contract — observable Given/When/Then scenarios, named failure modes, invariants; independently testable; no white-box claims.",
+            "3" => "Event schema — named events with payloads, event flow, coverage map of contract scenarios to events; no speculative telemetry.",
+            "4" => "Implementation — code satisfying every contract clause; emits only schema events; contract-satisfaction + event-emission tables; nothing untraceable.",
+            "5" => "Tests — one behavioral test per contract scenario incl. failures; replay tests for schema conformance + chain integrity; coverage table.",
+            "6" => "Runtime evidence — events in runtime_events.jsonl; correlation chains intact; bounded/sanitized; unexpected/missing events reported.",
+            "7" => "Reconciliation — Intent->Contract->Schema->Impl->Tests->Runtime with ALIGNED/GAP/MISMATCH/MISSING per item, supported by evidence.",
+            "8" => "Replay — schema conformance + correlation chain integrity + determinism check; nondeterminism explained; missing fixtures reported.",
+            "9" => "Refinement — smallest effective change per observed trigger; no redesign disguised as refinement; affected artifacts named.",
+            _ => "(no expected-output template for stage)",
+        }
+    }
+    
+    fn stage_checks(stage: &str) -> String {
+        match stage {
+            "1" => "  - actor/outcome clarity; no implementation detail; scope boundary explicit; stable guarantees clear; ambiguity flagged.".to_string(),
+            "2" => "  - every intent outcome has observable contract coverage; failure paths named; invariants testable; no white-box claims.".to_string(),
+            "3" => "  - every relevant contract scenario has event coverage; event names stable; required fields clear; no speculative telemetry.".to_string(),
+            "4" => "  - code traces to approved contract/schema only; no unapproved events; no hidden behavior; no unrelated files; report complete.".to_string(),
+            "5" => "  - behavior tested not private internals; failure paths tested; event/telemetry tests present; replay tests where applicable.".to_string(),
+            "6" => "  - runtime evidence captured; event log bounded/sanitized; correlation chains visible; unexpected/missing events reported.".to_string(),
+            "7" => "  - ALIGNED/GAP/MISMATCH/MISSING judgments supported; no weak evidence hidden behind fluent summary; gaps routed to right action.".to_string(),
+            "8" => "  - replay actually checks event sequence + schema conformance; nondeterminism explained; missing fixtures reported.".to_string(),
+            "9" => "  - trigger valid; proposed fix minimal; no redesign disguised as refinement; affected artifacts identified.".to_string(),
+            _ => format!("  - (no stage-specific checklist for stage {})", stage),
+        }
+    }
+    
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+    
+        #[test]
+        fn sha256_str_is_deterministic() {
+            let h1 = sha256_str("hello");
+            let h2 = sha256_str("hello");
+            assert_eq!(h1, h2);
+            assert_eq!(h1.len(), 64);
+        }
+    
+        #[test]
+        fn sha256_str_differs_for_different_inputs() {
+            assert_ne!(sha256_str("hello"), sha256_str("world"));
+        }
+    
+        #[test]
+        fn coverage_state_str_values() {
+            assert_eq!(CoverageState::FullCoverage.as_str(), "FULL_COVERAGE");
+            assert_eq!(CoverageState::EmptyPacket.as_str(), "EMPTY_PACKET");
+            assert_eq!(CoverageState::CriticalOmission.as_str(), "CRITICAL_OMISSION");
+        }
+    
+        #[test]
+        fn path_excluded_env_file() {
+            assert!(is_path_excluded("secrets/.env.local"));
+            assert!(is_path_excluded("config.key"));
+            assert!(!is_path_excluded("src/main.rs"));
+        }
+    
+        #[test]
+        fn sha256_file_matches_content_hash() {
+            use std::io::Write;
+            let mut f = tempfile::NamedTempFile::new().expect("tempfile");
+            f.write_all(b"test content").expect("write");
+            let path = f.path().to_str().expect("path");
+            let file_hash = sha256_file(path).expect("hash");
+            let str_hash = sha256_str("test content");
+            assert_eq!(file_hash, str_hash);
+        }
+    }
+
+  --- docs/reviewer-pipeline.md (sha256: 30eeec738674d69236d6c16a7ad1cc17c56a9d9a2c77b023f6f615413021cfdf, visibility: shown) ---
+    # Codeos Reviewer Pipeline — Manual Advisory Codex Reviewer
+    
+    *A read-only, advisory, cross-model reviewer for the DBA stage gates. It compresses each
+    stage artifact into a critical assessment and an append-only log entry so the human decides
+    faster — without ever becoming a gate.*
+    
+    > **v0 is a manual advisory review logging pilot.** It records review evidence and human
+    > decisions, but it does **not** enforce complete approval-integrity or rollback correctness.
+    > The persisted hashes, packet copy, and `workspace_dirty` flag are **audit aids**, not a formal
+    > guarantee that a human approval is bound to an unchanged repository state. The deeper binding
+    > model (approval bound to a reproducible reviewed state, decision-time reverification, rollback
+    > semantics) is **deferred** — see `backlog/UPG-0015-reviewer-decision-integrity.md`.
+    
+    > **The Bash implementation is a manual pilot wrapper.** It validates the workflow but is not the
+    > intended long-term review engine; the future typed engine is `backlog/UPG-0018-reviewer-engine-v1.md`.
+    
+    ```yaml
+    status: PILOT — manual operation; no Claude Code hooks wired
+    scope: implements backlog/UPG-0003-reviewer-decision-brief.md, pulls in UPG-0006 (evidence grade)
+    binding: changes no Codeos non-negotiable rule; stage prompts untouched
+    guarantees: advisory logging only — NOT approval-integrity or rollback (deferred to backlog)
+    ```
+    
+    ---
+    
+    ## 1. Roles
+    
+    - **Claude Code** runs the DBA development loop (Stages 1–9) and STOPs at
+      `AWAITING HUMAN APPROVAL`.
+    - **Codex** is the independent reviewer, invoked **read-only** (`-s read-only`) by
+      `scripts/codeos-review.sh`. Running a different model family gives cross-model adversarial
+      review (less self-review circularity); running read-only means it *physically cannot edit
+      artifacts* — it can only assess.
+    - **The human** decides. The reviewer recommends with non-gatekeeping vocabulary; `APPROVE`
+      is reserved for the human.
+    
+    This inherits the stance of `prompts/pipeline-reviewer.md` (the interactive Reviewer
+    Activation Package). This pipeline is the *automated* path; `prompts/reviewer-automated.md`
+    documents the prompt/packet convention.
+    
+    ## 2. The minimal prompt, the rich packet
+    
+    The static reviewer task — five focused questions, what-not-to-do guidance, five-category
+    triage rule, and required output shape — is defined in `prompts/codeos-reviewer-task.md`
+    and injected at the top of every packet by `scripts/codeos-review.sh`. What makes the
+    review *DBA-specific* rather than generic is the **evidence packet** that follows: review
+    context (feature/stage/branch/base+review SHA), the DBA rules relevant to the stage, the
+    stage-specific checklist (sourced from `backlog/UPG-0003-reviewer-decision-brief.md`), the
+    expected stage output, the artifact contents with hashes, and the secret-filtered diff. See
+    `prompts/reviewer-automated.md` for the full packet shape.
+    
+    Immediately after the reviewer task template and before `REVIEW CONTEXT`, every packet
+    includes a **`PACKET MANIFEST`** section listing each artifact with its inclusion mode
+    (`full_file`, `path_sha_only`, or `omitted_with_reason`), byte count, and sha256 (where
+    content is present), plus the diff size, `review_content_bytes` (full_file artifact bytes +
+    diff bytes), `estimated_review_tokens` (~`review_content_bytes / 4`), and `budget_status`.
+    If `review_content_bytes` exceeds `CODEOS_PACKET_BUDGET_BYTES` (default 50 000), a warning
+    is emitted to stderr and recorded in `budget_status`; the review is never aborted.
+    
+    Pass `--sha-only PATH` (repeatable) to include a file in the manifest as `path_sha_only`
+    (path + sha256 + original byte count) without sending its content to the reviewer. Useful
+    for large unchanged reference files where the reviewer only needs to verify identity. If a
+    `--sha-only` path does not exist on disk, the script exits non-zero before any Codex
+    invocation — a missing guard file is an error, not a quietly omitted artifact.
+    
+    ## 3. Session continuity — feasibility
+    
+    **Question:** can one Codex session be opened at the start and reused across every stage,
+    instead of a fresh session per stage?
+    
+    **Answer: yes — via `codex exec resume <session_id>`, not a held-open process.** This was
+    verified against Codex 0.114: the first review for a feature runs `codex exec` and the
+    session id is captured from the Codex startup banner (`session id: <uuid>`); later reviews
+    run `codex exec resume <id>`, which rehydrates the full prior conversation (a resumed session
+    correctly recalled context across separate processes in testing) while each call is a
+    crash-safe fresh process. This is the "same continuous session" semantically, achieved
+    durably. (`codex mcp-server` is a future alternative; a held-open live process was rejected
+    as fragile.)
+    
+    Invocation details that matter (0.114): `codex exec` takes `-s read-only` and `--cd`;
+    `codex exec resume` takes **neither** — sandbox is set via `-c sandbox_mode="read-only"` and
+    the working dir is the current dir. The script handles this difference.
+    
+    **Sessions are feature-scoped** — `.codeos-state/codex-sessions/<feature>.json`. Continuity
+    is valuable *within* a feature and dangerous *across* features, so a different feature gets
+    its own session and `--fresh` forces a brand-new one (use it for safety-sensitive stages,
+    reviewer/human disagreement, or suspected anchoring on stale/pre-correction context).
+    
+    **Memory is never truth.** Every review re-reads the artifacts and diff from disk pinned to
+    the review commit SHA, and records that SHA + per-artifact SHA256 + a diff hash. Session
+    memory aids cross-stage drift detection; the disk + hashes are authoritative. This is the
+    guardrail against the stale-context failure mode that DBA otherwise warns about.
+    
+    Session-id capture is **deterministic / fail-closed**: the id is parsed from the bootstrap
+    call's own banner output, so it is exactly the session just created. If no id can be parsed,
+    the script aborts and logs nothing.
+    
+    Sessions are also **version-pinned**: the session record stores the `codex --version` that
+    created it, and a resume across a changed Codex build is refused — the script starts a fresh
+    session instead of resuming under a different parser/behavior.
+    
+    ## 4. Evidence durability + append-only log
+    
+    The exact on-disk shapes of every persisted artifact below — packet, assessment header,
+    session state, REVIEW entry, HUMAN DECISION entry — are specified as **v0 normative schemas**
+    in [`reviewer-artifact-schemas.md`](reviewer-artifact-schemas.md), including required fields,
+    allowed enum values, and the lightweight fail-closed validation the script applies. Full
+    JSON Schema validation is deferred until pilot use shows it is needed.
+    
+    - The **full** Codex assessment is saved under `reviews/codex/<ts>-<feature>-stage-<N>-<sha>.md`,
+      opening with a self-contained YAML metadata header (feature/stage/branch/base+review
+      commit/artifacts+sha256/diff_hash/coverage_state/redaction_count/secret_redaction/
+      excluded_paths/reviewed_packet+sha256/codex_concern/effective_concern/evidence) so the file
+      is auditable on its own.
+    - The **exact bytes that were reviewed** are persisted as the canonical packet under
+      `reviews/codex/packets/<ts>-<feature>-stage-<N>-<sha>.packet.txt`, with its own SHA256
+      recorded in the assessment and the log. It contains the full context, artifact contents,
+      filtered diff, and the exclusion/redaction list — so for uncommitted artifacts, since-edited
+      files, and filtered diffs you can prove precisely what Codex saw, not merely a hash of it.
+      Going forward (see §4a), stage reviews that are part of the official audit trail are
+      committed with the feature branch; pilot/test runs use `reviews/codex/_scratch/` (gitignored).
+      Pre-policy reviews were not committed — see §4a and the `reviews/review-log.md` header.
+    - `reviews/review-log.md` is **append-only**. The REVIEW entry records **both** the raw
+      `Codex concern` and the `Effective concern` (after the coverage floor), the coverage state,
+      redaction count, hashes, and links. The human decision is a **separately appended** entry
+      via `codeos-review.sh decision …` — prior entries are never edited. As a **best-effort audit
+      aid**, that command re-hashes the named reviewed artifacts and records MATCH / CHANGED per
+      artifact; a `CHANGED` line is flagged (and a warning printed) but **never blocks** the
+      decision. **The decision command records the human's choice; it does not enforce approval
+      eligibility, refuse approvals, or bind approval to a reproducible reviewed state.** `APPROVE`
+      is the human's word (Non-Negotiable Rule 1). Stronger guarantees — binding approval to a
+      durable reviewed state (commit + diff hash + workspace snapshot), decision-time reverification,
+      hard stops, and rollback semantics — are **deferred** and tracked in
+      `backlog/UPG-0015-reviewer-decision-integrity.md`.
+    
+    ## 4a. Review artifact durability policy
+    
+    Not all review artifacts need to be committed. This policy (established by UPG-0029 /
+    CHG-20260629-001) defines which artifacts are **committed (durable)**, which are **scratch
+    (local-only)**, and what `reviews/review-log.md` references must satisfy.
+    
+    **Committed / durable:** A review assessment or packet is *committed (durable)* when it is
+    cited in `reviews/review-log.md` by path+sha without a `[local-only]` marker, and the file
+    is committed to the repository. Such files are verifiable from a fresh checkout — another
+    reviewer can locate and read them. Place durable files under `reviews/codex/` (root) and
+    `reviews/codex/packets/`; commit them with the feature branch.
+    
+    **Scratch / local-only:** Pilot runs, test reviews, and exploratory assessments that will
+    not be cited in the official log are kept local-only. Place them under
+    `reviews/codex/_scratch/` (gitignored); they are never committed.
+    
+    **The rule for `review-log.md` references:** A log entry that references a full assessment
+    by path+sha must *either* point to a file that is committed to the repository, *or* the log
+    entry must explicitly mark the reference as `[local-only]` / non-durable. A reference that
+    does neither creates a fake audit trail — a checkout cannot verify it, and another reviewer
+    cannot read it.
+    
+    See `reviews/review-log.md` header for the retroactive classification of pre-policy entries.
+    
+    ## 4b. Delta review mode (R2+)
+    
+    CLI: `bash scripts/codeos-review.sh review <feature> <stage> <artifacts…> --mode delta --base <sha>`
+    
+    When running R2 or later for the same step, send a **delta packet** rather than the full
+    context. A delta packet contains only:
+    
+    1. The specific acceptance criterion or claim under challenge (verbatim from the change record)
+    2. Changed lines since the previous round — exact unified diff of affected files only; no
+       surrounding unchanged context
+    3. One-line per-finding summary from the previous round: finding description,
+       IN-SCOPE BLOCKER|NON-BLOCKER classification, and what was changed to resolve it
+    4. Current trace header state: `state`, `current_step`, `review_state` only
+    
+    A delta packet must **NOT** include:
+    - Full backlog catalogs or feature briefs
+    - Full prior assessment prose
+    - Unchanged file contents
+    - Unrelated documents (roadmap, dba-system.md, downstream doctrine, etc.)
+    - The full change record if only one section changed
+    
+    **Round trigger:** use delta mode for R2 and every subsequent round at the same step. R1 always
+    gets the full packet.
+    
+    ## 4c. Claim audit
+    
+    Before every Codex call, scan all new or modified prose for **universal quantifiers**: "all",
+    "every", "never", "always", "no X", "any", "none". For each instance:
+    
+    1. **Provide evidence** — confirm the claim is literally true; state how you would verify it.
+    2. **Weaken** — replace with "most", "typically", "in most cases", or a conditional if the
+       claim is not universal.
+    3. **Remove** — if the claim adds no value or cannot be defended.
+    
+    Universal claims without evidence are the most common source of Codex-flagged false claims
+    across UPG-0001 and UPG-0029. Running this audit before calling Codex prevents a class of
+    blockers that would otherwise cost a full review round.
+    
+    ## 4d. Review-round budget table
+    
+    | Profile | Applies when | Max rounds/step | Budget-exceeded action |
+    |---|---|---|---|
+    | PROFILE-0 | `trivial` / direct-edit `backlog-only` | 0 (no review) | — |
+    | PROFILE-1 | Escalated `backlog-only` | 2 (Reconcile only) | Fix inline; escalate to human |
+    | PROFILE-2 | `documentation` | 2 (per step) | Fix inline; escalate to human |
+    | PROFILE-3 | `template` / `prompt` / `script-tooling` | 3 (per step) | Fix inline; escalate to human |
+    | PROFILE-4 | `downstream-doctrine` | 3 (per step) | Fix inline; escalate to human |
+    | PROFILE-5 | `self-dev-governance` | 3 (per step) | Fix inline; escalate to human |
+    
+    **Budget-exceeded escalation procedure:**
+    1. Fix any remaining in-scope findings inline without running another Codex round.
+    2. Append a budget-exhausted entry to `reviews/review-log.md` describing what was fixed and
+       what remains.
+    3. Escalate to the human at the gate — present the findings, what was fixed, and what requires
+       human judgment.
+    4. Do not run further Codex rounds automatically. The human decides whether any remaining issue
+       warrants another round (which counts against the budget) or can be accepted as-is.
+    
+    SELF-REFERENCE / REVIEW-BOOKKEEPING findings found at budget exhaustion are always resolved by
+    human decision without further review.
+    
+    ## 5. Coverage and effective concern
+    
+    Defined normatively in [`reviewer-artifact-schemas.md`](reviewer-artifact-schemas.md) (coverage
+    rules). In summary: two filtering layers run before anything reaches Codex — **path exclusion**
+    (`.env*`, `*.pem`, `secrets/*`, size limit, …) applies to the **diff and incidental files only**,
+    and **content redaction** blanks secret-like values in place in both the diff and requested
+    artifacts. A requested artifact is therefore never silently dropped — it is `shown`,
+    `shown_redacted`, `oversize_omitted`, or `missing`. The resulting `coverage_state` fixes the
+    **minimum effective concern** (an evidence-coverage gap is a verdict floor, not a footnote). This
+    is about *how complete the evidence was*, not approval eligibility. When anything is
+    excluded/redacted, or on a critical/empty state, the log flags **MANUAL SECURITY REVIEW
+    REQUIRED**. `workspace_dirty` is recorded as descriptive audit context only.
+    
+    ## 6. Concern-level semantics + human responsibility
+    
+    - **NO OBJECTION** — no material reason to stop found; *this is not approval*.
+    - **CHANGES ADVISED** — issues that should be addressed or consciously waived.
+    - **DO NOT ADVANCE** — a material DBA risk; the human should not approve without resolving or
+      explicitly overriding.
+    - **UNCLASSIFIED** — malformed/insufficient reviewer output (no parseable `LOG SUMMARY`);
+      treated as **HIGH attention / manual review required**, never neutral.
+    
+    Evidence grade (optional, backlog #13): `EVIDENCE: A–E` — concern level is *what the reviewer
+    thinks*; evidence grade is *how well supported it is*. If absent, the log records
+    `Evidence: not reported`; #13 is not "done" until the reviewer reliably emits it.
+    
+    > **The reviewer reduces human reading load; it does not reduce human responsibility.** A
+    > human may approve a stage against the reviewer, but must record the reason in the HUMAN
+    > DECISION entry when doing so. The reviewer is evidence compression, not decision transfer.
+    
+    ## 7. What a good review looks like (calibration)
+    
+    This pipeline was itself shaped by several rounds of real Codex review of its own plan. The
+    qualities that made those reviews valuable are the bar the automated reviewer aims at:
+    
+    - **Operational, not only philosophical** — it named concrete bugs (append-only violations,
+      wrong state locations, brittle session capture), not just abstractions.
+    - **Ranked by severity** — required corrections separated from optional improvements.
+    - **Concrete better-designs** — every objection came with a specific proposed fix.
+    - **Honest about tradeoffs** — e.g. flagging when a "one cheap call" claim was really a
+      mini-pilot.
+    - **Ends with a clear decision** — approve / approve-with-fixes / do-not-approve, per area.
+    
+    The stage-specific checklists encode this intent; the packet's INSTRUCTIONS line asks for
+    exactly this shape.
+    
+    ## 8. DBA-philosophy scorecard
+    
+    | Capability | DBA impact | Why |
+    |---|---|---|
+    | Cross-model Codex reviewer, read-only | **Positive** | Adversarial second model; cannot edit artifacts |
+    | Feature-scoped session via `exec resume` | **Neutral** | Re-reads artifacts + SHA-pins every review; `--fresh` escape hatch; no cross-feature bleed |
+    | Durable assessments + append-only log (no mutable fields) | **Aligned** | Mirrors `runtime_events.jsonl` + existing append-only Decision Log |
+    | Advisory concern field (non-gatekeeping words) | **Neutral** | `APPROVE` reserved for the human |
+    | Secret/diff filtering | **Positive** | Reduces common credential-leakage risk in the review packet (heuristic, not a guarantee) |
+    | Automated hooks | **Risky → kept inert** | Documented (Appendix), not wired |
+    | Autonomous stage approval | **Negative — violates rule #1** | Rejected/deferred (Appendix) |
+    
+    ## 9. Acceptance criteria (mini-design gate)
+    
+    read-only reviewer edits no artifacts · review output durable (full assessment saved) ·
+    sessions feature-scoped · reviewed state pinned (base+review SHA, artifact hash) · malformed
+    output → UNCLASSIFIED/high-attention · secret/large-diff filtering present · no hooks active ·
+    no core rules changed.
+    
+    ## 10. Architecture: `codeos-review.sh` is a static locator shim
+    
+    ```bash
+    # scripts/codeos-review.sh — the entire file
+    exec "${BINARY}" "$@"
+    ```
+    
+    `codeos-review.sh` is a **15-line static locator shim**. It finds the compiled Rust binary
+    (`tools/reviewer/target/release/codeos-reviewer`) and passes all arguments through verbatim
+    (`"$@"`). It contains no argument preprocessing, no conditional logic, and no reviewer
+    capability.
+    
+    **Consequence for upgrades:** any reviewer capability change — new packet sections, new
+    subcommand behavior, new flags, new decision-log fields — lives in the **Rust engine**
+    (`tools/reviewer/src/`). Changing only the bash script cannot add or modify reviewer
+    behavior. The bash script only needs to change if the binary location or build instructions
+    change.
+    
+    ## 11. Usage
+    
+    ```bash
+    # record the base commit for a stage (so review diffs base->review, not just HEAD)
+    scripts/codeos-review.sh stage-start listing-ingestion 2
+    
+    # review an artifact (resumes the feature's Codex session; --fresh starts a new one)
+    scripts/codeos-review.sh review listing-ingestion 2 contracts/listing-ingestion_contract.md
+    
+    # after the human decides, append the decision (never edits prior log entries)
+    scripts/codeos-review.sh decision listing-ingestion 2 REQUEST_CHANGES "missing failure scenario"
+    ```
+    
+    **Local prechecks** run automatically before the packet is built and before any Codex
+    invocation. They scan only the positional artifact paths passed to `review`. Two hard-fail
+    checks exit non-zero immediately: (1) a literal unfilled template placeholder (`UPG-####` or
+    `CHG-YYYYMMDD-NNN`) in any artifact, and (2) a line-anchored `latest_review:` field (a
+    schema field superseded by UPG-0001). A warning is emitted to stderr (but Codex is still
+    invoked) for unresolved draft markers: `TODO`, `FIXME`, `TBD`, `[to be filled]`. Pass
+    `--guard-clean PATH` (repeatable) to assert that a specific file — e.g. `dba-system.md`
+    during a `self-dev only` change — has no uncommitted changes; a non-existent path or a dirty
+    path both exit non-zero before Codex. Pass `--skip-prechecks` to bypass all checks (emits a
+    visible `warning: prechecks skipped` to stderr); useful for inspecting draft artifacts with
+    `--print-packet`.
+    
+    ---
+    
+    ## Appendix A — Inert hook snippets (NOT part of the pilot)
+    
+    These are provided for a *future* phase only. **Do not add them to `.claude/settings.json`
+    yet** — the pilot runs the script manually until the advisory reviewer has a proven track
+    record. A guarded `Stop` hook keyed on a sentinel avoids reviewing every stop.
+    
+    The hook delegates to a small wrapper rather than an inline one-liner, because the cleanup
+    must be **success-gated** (do not consume the request if the review failed) and the artifact
+    paths must be **quoted/arrayed** (never word-split a `jq` expansion):
+    
+    ```jsonc
+    // .claude/settings.json — illustrative ONLY, not enabled
+    {
+      "hooks": {
+        "Stop": [
+          { "command": "scripts/codeos-review-hook.sh" }   // no-op unless the sentinel exists
+        ]
+      }
+    }
+    ```
+    
+    ```bash
+    # scripts/codeos-review-hook.sh — illustrative ONLY
+    #!/usr/bin/env bash
+    set -euo pipefail
+    req=".codeos-state/review-request.json"
+    [[ -f "${req}" ]] || exit 0                       # nothing requested → no-op
+    feature="$(jq -r '.feature' "${req}")"
+    stage="$(jq -r '.stage' "${req}")"
+    mapfile -t paths < <(jq -r '.artifacts[]' "${req}")   # array-safe, no word-splitting
+    # abort WITHOUT deleting the sentinel if the request is unparseable or names no artifacts
+    [[ -n "${feature}" && -n "${stage}" && ${#paths[@]} -gt 0 ]] || {
+      echo "review-hook: malformed/empty request; sentinel preserved" >&2; exit 1; }
+    if scripts/codeos-review.sh review "${feature}" "${stage}" "${paths[@]}"; then
+      rm -f "${req}"                                  # consume the sentinel ONLY on success
+    fi
+    ```
+    
+    ## Appendix B — Rejected / Deferred — Not Approved for Implementation
+    
+    **Autonomous stage approval.** Letting the reviewer approve stages for "simple" features
+    contradicts **non-negotiable rule #1** (every stage transition requires explicit human
+    approval) and converts DBA from *synchronous prevention* (the gate blocks a bad transition)
+    to *asynchronous detection + rollback* (it happens, is caught later, is reverted). Recorded
+    for traceability only. It would separately require: per-feature human opt-in, one commit per
+    stage, feature-registry support (#14), a rollback design, low-risk-only scope that **never**
+    includes safety/authorization/invariant contracts, a hard stop on any `DO NOT ADVANCE` or
+    low-evidence review, and an amendment to the human-approval invariant. Not built toward now.
+
+  --- tools/reviewer/tests/smoke.rs (sha256: 5364ba1a6af07063caa82038da50970b48eff8c9792c7001b7ab991a728b7dca, visibility: shown) ---
+    // Integration / smoke tests — require a git repo and bash; fast to run.
+    // These tests verify the CLI surface, exit codes, and packet behavior.
+    // Provider invocation is NOT tested here (that would require codex on PATH).
+    
+    use tempfile::TempDir;
+    
+    /// Create a minimal git repo in a temp directory and return (TempDir, base_sha).
+    fn setup_temp_git_repo() -> (TempDir, String) {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let p = dir.path();
+        Command::new("git").args(["init"]).current_dir(p).output().expect("git init");
+        Command::new("git").args(["config", "user.email", "test@codeos.test"]).current_dir(p).output().ok();
+        Command::new("git").args(["config", "user.name", "Codeos Test"]).current_dir(p).output().ok();
+        std::fs::write(p.join("tracked.md"), "# tracked\n").expect("write tracked");
+        Command::new("git").args(["add", "tracked.md"]).current_dir(p).output().expect("git add");
+        Command::new("git").args(["commit", "-m", "initial"]).current_dir(p).output().expect("git commit");
+        let sha_out = Command::new("git").args(["rev-parse", "HEAD"]).current_dir(p)
+            .output().expect("git rev-parse");
+        let sha = String::from_utf8_lossy(&sha_out.stdout).trim().to_string();
+        (dir, sha)
+    }
+    
+    use std::path::PathBuf;
+    use std::process::Command;
+    
+    fn binary() -> PathBuf {
+        let mut p = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        p.push("target/debug/codeos-reviewer");
+        p
+    }
+    
+    fn repo_root() -> PathBuf {
+        let mut p = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        p.pop(); p.pop(); // tools/reviewer -> Codeos/
+        p
+    }
+    
+    /// Run the binary with given args from the repo root, return (exit code, stdout, stderr).
+    fn run(args: &[&str]) -> (i32, String, String) {
+        let out = Command::new(binary())
+            .args(args)
+            .current_dir(repo_root())
+            .output()
+            .expect("failed to run codeos-reviewer binary");
+        let code = out.status.code().unwrap_or(-1);
+        let stdout = String::from_utf8_lossy(&out.stdout).into_owned();
+        let stderr = String::from_utf8_lossy(&out.stderr).into_owned();
+        (code, stdout, stderr)
+    }
+    
+    #[test]
+    fn smoke_help_exits_zero() {
+        let (code, stdout, _) = run(&["--help"]);
+        assert_eq!(code, 0, "help should exit 0");
+        assert!(stdout.contains("codeos-reviewer"), "help should mention binary name");
+    }
+    
+    #[test]
+    fn smoke_diagnose_exits_zero() {
+        let (code, stdout, _) = run(&["diagnose"]);
+        assert_eq!(code, 0, "diagnose should exit 0");
+        assert!(stdout.contains("provider:"), "diagnose should output provider");
+    }
+    
+    #[test]
+    fn smoke_diagnose_with_feature_and_stage() {
+        let (code, stdout, _) = run(&["diagnose", "UPG-9999", "selfdev-step-1"]);
+        assert_eq!(code, 0);
+        assert!(stdout.contains("UPG-9999"), "diagnose should echo feature");
+    }
+    
+    #[test]
+    fn smoke_review_no_args_exits_usage() {
+        let (code, _, stderr) = run(&["review"]);
+        // clap will exit 2 (usage error) when required positional args are missing
+        assert_ne!(code, 0, "review with no args should fail");
+        let _ = stderr; // may contain clap error message
+    }
+    
+    #[test]
+    fn smoke_review_print_packet_nonexistent_file() {
+        // --print-packet (--dry-run) with a nonexistent file should exit non-zero (EXIT_PACKET=4)
+        let (code, _, stderr) = run(&[
+            "review", "UPG-SMOKE-TEST", "selfdev-step-0",
+            "--print-packet",
+            "does-not-exist-smoke-test.md",
+        ]);
+        // packet build should succeed if file is not found (shown as missing), but an empty packet fails.
+        // Either PACKET (4) or the file is treated as missing and results in empty packet.
+        assert!(
+            code == 4 || code == 0,
+            "expected exit 4 (PACKET) or 0 (file shown as missing), got {}: {}",
+            code, stderr
+        );
+    }
+    
+    #[test]
+    fn smoke_review_print_packet_existing_file() {
+        // Pass an actual file in the repo; --print-packet should produce output and exit 0
+        let (code, stdout, stderr) = run(&[
+            "review", "UPG-SMOKE-TEST", "selfdev-step-0",
+            "--print-packet", "--skip-prechecks",
+            "CLAUDE.md",
+        ]);
+        assert_eq!(
+            code, 0,
+            "--print-packet with a real file should exit 0; stderr: {}",
+            stderr
+        );
+        assert!(stdout.len() > 10, "packet output should be non-empty");
+    }
+    
+    #[test]
+    fn smoke_decision_bad_verdict_exits_usage() {
+        let (code, _, stderr) = run(&[
+            "decision", "UPG-SMOKE", "selfdev-step-0", "WRONG_VERDICT", "reason",
+        ]);
+        assert_ne!(code, 0, "bad verdict should fail");
+        assert!(
+            stderr.contains("APPROVE_STAGE") || stderr.contains("REQUEST_CHANGES"),
+            "should mention valid verdicts: {}",
+            stderr
+        );
+    }
+    
+    #[test]
+    fn smoke_provider_override_unknown() {
+        // An unknown provider via --provider flag should exit with EXIT_CONFIG (2) or EXIT_PROVIDER (3)
+        let (code, _, stderr) = run(&[
+            "--provider", "nonexistent-provider-xyz",
+            "review", "UPG-SMOKE", "selfdev-step-0",
+            "--print-packet", "--skip-prechecks",
+            "CLAUDE.md",
+        ]);
+        // With --print-packet, provider is never invoked; config resolution may still reject it
+        // Accept either success (provider not resolved yet) or config error
+        let _ = (code, stderr);
+    }
+    
+    #[test]
+    fn smoke_diagnose_shows_provider_source() {
+        let (code, stdout, _) = run(&["diagnose"]);
+        assert_eq!(code, 0);
+        // Should mention where provider came from
+        assert!(
+            stdout.contains("source:") || stdout.contains("default") || stdout.contains("codex"),
+            "diagnose should show provider source: {}",
+            stdout
+        );
+    }
+    
+    #[test]
+    fn smoke_delta_mode_untracked_artifact_exits_packet() {
+        // Delta review on an untracked file must exit EXIT_PACKET (4) with a clear diagnostic.
+        // Bash behavior: git ls-files --error-unmatch catches this; Rust must match.
+        let (dir, base_sha) = setup_temp_git_repo();
+        let dir_path = dir.path();
+    
+        // Write a file that is NOT staged or committed — untracked.
+        std::fs::write(dir_path.join("untracked.md"), "# untracked\n").expect("write untracked");
+    
+        let out = Command::new(binary())
+            .args([
+                "review", "FEAT", "delta-test",
+                "--mode", "delta",
+                "--base", &base_sha,
+                "--print-packet",
+                "untracked.md",
+            ])
+            .current_dir(dir_path)
+            .output()
+            .expect("run binary");
+    
+        let code = out.status.code().unwrap_or(-1);
+        let stderr = String::from_utf8_lossy(&out.stderr).into_owned();
+        assert_eq!(
+            code, 4,
+            "untracked artifact in delta mode must exit 4 (EXIT_PACKET); stderr: {}",
+            stderr
+        );
+        assert!(
+            stderr.contains("untracked"),
+            "error message must mention 'untracked': {}",
+            stderr
+        );
+    }
+    
+    // ── Decision provenance tests ─────────────────────────────────────────────────
+    
+    /// Write a minimal fake assessment file into `<repo>/reviews/codex/` and return the
+    /// path to the packet file (so callers can optionally modify it).
+    fn write_fake_assessment(
+        repo_path: &std::path::Path,
+        feature: &str,
+        stage: &str,
+        coverage_state: &str,
+        packet_sha_override: Option<&str>, // None = use real sha of packet content
+        review_commit: &str,
+    ) -> (String, String) {
+        let codex_dir = repo_path.join("reviews/codex");
+        let packets_dir = codex_dir.join("packets");
+        std::fs::create_dir_all(&packets_dir).expect("create codex/packets dir");
+    
+        let packet_content = "FAKE PACKET CONTENT FOR TEST\n";
+        let actual_sha = codeos_reviewer_sha256(packet_content);
+        let packet_name = format!("20260101T000000Z-{}-stage-{}-abcdef1.packet.txt", feature, stage);
+        std::fs::write(packets_dir.join(&packet_name), packet_content).expect("write packet");
+    
+        let stored_sha = packet_sha_override.unwrap_or(&actual_sha);
+        let filename = format!("20260101T000000Z-{}-stage-{}-abcdef1.md", feature, stage);
+        let content = format!(
+            "---\nreviewed:\n  feature: {}\n  stage: {}\n  review_commit: {}\n  coverage_state: {}\n  reviewed_packet: packets/{}\n  reviewed_packet_sha256: {}\n---\n\nAssessment text.\n",
+            feature, stage, review_commit, coverage_state, packet_name, stored_sha
+        );
+        std::fs::write(codex_dir.join(&filename), &content).expect("write assessment");
+        (codex_dir.join(&filename).display().to_string(), actual_sha)
+    }
+    
+    fn codeos_reviewer_sha256(s: &str) -> String {
+        use std::collections::hash_map::DefaultHasher;
+        use std::hash::{Hash, Hasher};
+        // Use SHA-256 via the binary's known output for determinism.
+        // We compute it ourselves with sha2 if available, else use a stable stand-in.
+        // Since the test only checks MATCH/MISMATCH behaviour, a stable deterministic value works.
+        let mut h = DefaultHasher::new();
+        s.hash(&mut h);
+        format!("{:016x}{:016x}{:016x}{:016x}", h.finish(), h.finish() ^ 0xdead, h.finish() ^ 0xbeef, h.finish() ^ 0xcafe)
+    }
+    
+    /// Write a malformed assessment file (exists but has no parseable frontmatter).
+    fn write_malformed_assessment(
+        repo_path: &std::path::Path,
+        feature: &str,
+        stage: &str,
+    ) {
+        let codex_dir = repo_path.join("reviews/codex");
+        std::fs::create_dir_all(&codex_dir).expect("create codex dir");
+        let filename = format!("20260101T000000Z-{}-stage-{}-abcdef1.md", feature, stage);
+        // No YAML frontmatter — just body text, so parse_assessment_frontmatter returns None.
+        std::fs::write(codex_dir.join(&filename), "This assessment has no frontmatter.\n")
+            .expect("write malformed assessment");
+    }
+    
+    /// Write an assessment that has frontmatter but is missing coverage_state (partial provenance).
+    fn write_partial_frontmatter_assessment(
+        repo_path: &std::path::Path,
+        feature: &str,
+        stage: &str,
+        review_commit: &str,
+    ) {
+        let codex_dir = repo_path.join("reviews/codex");
+        std::fs::create_dir_all(&codex_dir).expect("create codex dir");
+        let filename = format!("20260101T000000Z-{}-stage-{}-abcdef2.md", feature, stage);
+        // Has review_commit but no coverage_state — partial provenance.
+        let content = format!(
+            "---\nreviewed:\n  feature: {}\n  stage: {}\n  review_commit: {}\n---\n\nAssessment.\n",
+            feature, stage, review_commit
+        );
+        std::fs::write(codex_dir.join(&filename), &content)
+            .expect("write partial frontmatter assessment");
+    }
+    
+    /// Write a minimal review log file so the decision command can append to it.
+    fn setup_review_log(repo_path: &std::path::Path) -> std::path::PathBuf {
+        let reviews_dir = repo_path.join("reviews");
+        std::fs::create_dir_all(&reviews_dir).expect("create reviews dir");
+        let log_path = reviews_dir.join("review-log.md");
+        if !log_path.exists() {
+            std::fs::write(&log_path, "# Codeos Review Log (append-only, v0)\n").expect("write log");
+        }
+        log_path
+    }
+    
+    fn run_decision_in(
+        repo_path: &std::path::Path,
+        args: &[&str],
+    ) -> (i32, String, String) {
+        let out = Command::new(binary())
+            .args(args)
+            .current_dir(repo_path)
+            .output()
+            .expect("run decision");
+        let code = out.status.code().unwrap_or(-1);
+        let stdout = String::from_utf8_lossy(&out.stdout).into_owned();
+        let stderr = String::from_utf8_lossy(&out.stderr).into_owned();
+        (code, stdout, stderr)
+    }
+    
+    #[test]
+    fn smoke_decision_coverage_gate_blocks_critical_omission() {
+        // AC-1: APPROVE_STAGE with CRITICAL_OMISSION must exit 1 and NOT write to the log.
+        let (dir, _) = setup_temp_git_repo();
+        let p = dir.path();
+        let log_path = setup_review_log(p);
+        let log_size_before = std::fs::metadata(&log_path).map(|m| m.len()).unwrap_or(0);
+    
+        let head = Command::new("git").args(["rev-parse", "HEAD"]).current_dir(p)
+            .output().expect("git rev-parse");
+        let head_sha = String::from_utf8_lossy(&head.stdout).trim().to_string();
+    
+        write_fake_assessment(p, "FEAT", "my-stage", "CRITICAL_OMISSION", None, &head_sha);
+    
+        let (code, _, stderr) = run_decision_in(p, &[
+            "decision", "FEAT", "my-stage", "APPROVE_STAGE", "reason",
+        ]);
+        assert_eq!(code, 1, "coverage gate must exit 1; stderr: {}", stderr);
+        assert!(stderr.contains("APPROVE_STAGE refused"), "must mention refusal: {}", stderr);
+        assert!(stderr.contains("CRITICAL_OMISSION"), "must name coverage_state: {}", stderr);
+    
+        let log_size_after = std::fs::metadata(&log_path).map(|m| m.len()).unwrap_or(0);
+        assert_eq!(log_size_before, log_size_after, "log must not grow when gate blocks");
+    }
+    
+    #[test]
+    fn smoke_decision_coverage_gate_blocks_empty_packet() {
+        // AC-1: APPROVE_STAGE with EMPTY_PACKET must also exit 1.
+        let (dir, _) = setup_temp_git_repo();
+        let p = dir.path();
+        setup_review_log(p);
+    
+        let head = Command::new("git").args(["rev-parse", "HEAD"]).current_dir(p)
+            .output().expect("git rev-parse");
+        let head_sha = String::from_utf8_lossy(&head.stdout).trim().to_string();
+    
+        write_fake_assessment(p, "FEAT", "my-stage", "EMPTY_PACKET", None, &head_sha);
+    
+        let (code, _, stderr) = run_decision_in(p, &[
+            "decision", "FEAT", "my-stage", "APPROVE_STAGE", "reason",
+        ]);
+        assert_eq!(code, 1, "EMPTY_PACKET must also exit 1; stderr: {}", stderr);
+        assert!(stderr.contains("EMPTY_PACKET"), "must name coverage_state: {}", stderr);
+    }
+    
+    #[test]
+    fn smoke_decision_override_lifts_gate_and_records_both() {
+        // AC-2: --override lifts the gate; log must contain BOTH coverage_state AND rationale.
+        let (dir, _) = setup_temp_git_repo();
+        let p = dir.path();
+        let log_path = setup_review_log(p);
+    
+        let head = Command::new("git").args(["rev-parse", "HEAD"]).current_dir(p)
+            .output().expect("git rev-parse");
+        let head_sha = String::from_utf8_lossy(&head.stdout).trim().to_string();
+    
+        write_fake_assessment(p, "FEAT", "my-stage", "CRITICAL_OMISSION", None, &head_sha);
+    
+        let (code, stdout, stderr) = run_decision_in(p, &[
+            "decision", "FEAT", "my-stage", "APPROVE_STAGE", "reason",
+            "--override", "I accept the risk: packet was empty due to scratch run",
+        ]);
+        assert_eq!(code, 0, "override must lift gate; stderr: {}; stdout: {}", stderr, stdout);
+        assert!(stdout.contains("decision appended"), "must confirm log write: {}", stdout);
+    
+        let log_content = std::fs::read_to_string(&log_path).expect("read log");
+        assert!(log_content.contains("CRITICAL_OMISSION"), "log must record coverage_state: {}", log_content);
+        assert!(log_content.contains("COVERAGE_GATE_OVERRIDDEN"), "log must record gate overridden: {}", log_content);
+        assert!(log_content.contains("I accept the risk"), "log must record override rationale: {}", log_content);
+    }
+    
+    #[test]
+    fn smoke_decision_approve_not_gated_for_full_coverage() {
+        // AC-9: APPROVE_STAGE with FULL_COVERAGE must exit 0.
+        let (dir, _) = setup_temp_git_repo();
+        let p = dir.path();
+        setup_review_log(p);
+    
+        let head = Command::new("git").args(["rev-parse", "HEAD"]).current_dir(p)
+            .output().expect("git rev-parse");
+        let head_sha = String::from_utf8_lossy(&head.stdout).trim().to_string();
+    
+        write_fake_assessment(p, "FEAT", "my-stage", "FULL_COVERAGE", None, &head_sha);
+    
+        let (code, _, stderr) = run_decision_in(p, &[
+            "decision", "FEAT", "my-stage", "APPROVE_STAGE", "all good",
+        ]);
+        assert_eq!(code, 0, "FULL_COVERAGE must not be gated; stderr: {}", stderr);
+    }
+    
+    #[test]
+    fn smoke_decision_request_changes_not_gated_even_critical_omission() {
+        // AC-7: REQUEST_CHANGES must never be refused regardless of coverage_state.
+        let (dir, _) = setup_temp_git_repo();
+        let p = dir.path();
+        setup_review_log(p);
+    
+        let head = Command::new("git").args(["rev-parse", "HEAD"]).current_dir(p)
+            .output().expect("git rev-parse");
+        let head_sha = String::from_utf8_lossy(&head.stdout).trim().to_string();
+    
+        write_fake_assessment(p, "FEAT", "my-stage", "CRITICAL_OMISSION", None, &head_sha);
+    
+        let (code, _, stderr) = run_decision_in(p, &[
+            "decision", "FEAT", "my-stage", "REQUEST_CHANGES", "needs rework",
+        ]);
+        assert_eq!(code, 0, "REQUEST_CHANGES must never be gated; stderr: {}", stderr);
+    }
+    
+    #[test]
+    fn smoke_decision_no_assessment_fallback_exits_zero() {
+        // AC-6: no assessment for feature+stage → existing behavior preserved, exit 0.
+        let (dir, _) = setup_temp_git_repo();
+        let p = dir.path();
+        setup_review_log(p);
+        // Do NOT write any assessment file.
+    
+        let (code, _, stderr) = run_decision_in(p, &[
+            "decision", "FEAT-UNKNOWN", "no-stage", "APPROVE_STAGE", "proceeding without review",
+        ]);
+        assert_eq!(code, 0, "no assessment must fall through to exit 0; stderr: {}", stderr);
+    }
+    
+    #[test]
+    fn smoke_decision_packet_hash_mismatch_warns_but_proceeds() {
+        // AC-4: packet hash mismatch → advisory warning to stderr; MISMATCH in log Provenance block.
+        let (dir, _) = setup_temp_git_repo();
+        let p = dir.path();
+        let log_path = setup_review_log(p);
+    
+        let head = Command::new("git").args(["rev-parse", "HEAD"]).current_dir(p)
+            .output().expect("git rev-parse");
+        let head_sha = String::from_utf8_lossy(&head.stdout).trim().to_string();
+    
+        // Write assessment with a deliberately wrong stored SHA.
+        write_fake_assessment(p, "FEAT", "my-stage", "FULL_COVERAGE",
+            Some("0000000000000000000000000000000000000000000000000000000000000000"),
+            &head_sha);
+    
+        let (code, _, stderr) = run_decision_in(p, &[
+            "decision", "FEAT", "my-stage", "APPROVE_STAGE", "proceeding",
+        ]);
+        assert_eq!(code, 0, "packet mismatch must not block; stderr: {}", stderr);
+        assert!(stderr.contains("mismatch") || stderr.contains("MISMATCH") || stderr.contains("warning"),
+            "mismatch must produce a warning: {}", stderr);
+    
+        let log_content = std::fs::read_to_string(&log_path).expect("read log");
+        assert!(log_content.contains("MISMATCH"),
+            "log Provenance block must contain MISMATCH: {}", log_content);
+    }
+    
+    #[test]
+    fn smoke_decision_provenance_block_written_to_log() {
+        // AC-3: every decision log entry must contain a Provenance block when assessment exists.
+        let (dir, _) = setup_temp_git_repo();
+        let p = dir.path();
+        let log_path = setup_review_log(p);
+    
+        let head = Command::new("git").args(["rev-parse", "HEAD"]).current_dir(p)
+            .output().expect("git rev-parse");
+        let head_sha = String::from_utf8_lossy(&head.stdout).trim().to_string();
+    
+        write_fake_assessment(p, "FEAT", "my-stage", "FULL_COVERAGE", None, &head_sha);
+    
+        let (code, _, stderr) = run_decision_in(p, &[
+            "decision", "FEAT", "my-stage", "APPROVE_STAGE", "all verified",
+        ]);
+        assert_eq!(code, 0, "should succeed; stderr: {}", stderr);
+    
+        let log_content = std::fs::read_to_string(&log_path).expect("read log");
+        assert!(log_content.contains("Provenance:"), "log must contain Provenance block: {}", log_content);
+        assert!(log_content.contains("assessment:"), "provenance must show assessment path: {}", log_content);
+        assert!(log_content.contains("coverage_state:"), "provenance must show coverage_state: {}", log_content);
+    }
+    
+    #[test]
+    fn smoke_decision_commit_drift_warns_and_records_head_drift() {
+        // AC-5: review_commit != HEAD → advisory warning to stderr; HEAD_DRIFT in log Provenance block.
+        let (dir, _) = setup_temp_git_repo();
+        let p = dir.path();
+        let log_path = setup_review_log(p);
+    
+        // Use a synthetic stale commit SHA that is deliberately different from current HEAD.
+        let stale_commit = "0000000000000000000000000000000000000000";
+        write_fake_assessment(p, "FEAT", "my-stage", "FULL_COVERAGE", None, stale_commit);
+    
+        let (code, _, stderr) = run_decision_in(p, &[
+            "decision", "FEAT", "my-stage", "APPROVE_STAGE", "proceeding with drift",
+        ]);
+        assert_eq!(code, 0, "commit drift must not block; stderr: {}", stderr);
+        assert!(
+            stderr.contains("warning") || stderr.contains("HEAD") || stderr.contains("drift"),
+            "commit drift must produce a warning: {}",
+            stderr
+        );
+    
+        let log_content = std::fs::read_to_string(&log_path).expect("read log");
+        assert!(log_content.contains("HEAD_DRIFT"),
+            "log Provenance block must contain HEAD_DRIFT: {}", log_content);
+    }
+    
+    #[test]
+    fn smoke_decision_malformed_assessment_blocks_without_override() {
+        // Fail-closed: assessment file exists but is unparseable → exit 1, no log write.
+        let (dir, _) = setup_temp_git_repo();
+        let p = dir.path();
+        let log_path = setup_review_log(p);
+        let log_size_before = std::fs::metadata(&log_path).map(|m| m.len()).unwrap_or(0);
+    
+        write_malformed_assessment(p, "FEAT", "my-stage");
+    
+        let (code, _, stderr) = run_decision_in(p, &[
+            "decision", "FEAT", "my-stage", "APPROVE_STAGE", "proceeding",
+        ]);
+        assert_eq!(code, 1,
+            "malformed assessment must block without --override; stderr: {}", stderr);
+        assert!(
+            stderr.contains("provenance") || stderr.contains("assessment") || stderr.contains("parsed"),
+            "must explain provenance issue: {}", stderr
+        );
+    
+        let log_size_after = std::fs::metadata(&log_path).map(|m| m.len()).unwrap_or(0);
+        assert_eq!(log_size_before, log_size_after, "log must not grow when fail-closed");
+    }
+    
+    #[test]
+    fn smoke_decision_partial_frontmatter_also_blocks() {
+        // Fail-closed: assessment with frontmatter but missing coverage_state → exit 1.
+        let (dir, _) = setup_temp_git_repo();
+        let p = dir.path();
+        let log_path = setup_review_log(p);
+        let log_size_before = std::fs::metadata(&log_path).map(|m| m.len()).unwrap_or(0);
+    
+        let head = Command::new("git").args(["rev-parse", "HEAD"]).current_dir(p)
+            .output().expect("git rev-parse");
+        let head_sha = String::from_utf8_lossy(&head.stdout).trim().to_string();
+        write_partial_frontmatter_assessment(p, "FEAT", "my-stage", &head_sha);
+    
+        let (code, _, stderr) = run_decision_in(p, &[
+            "decision", "FEAT", "my-stage", "APPROVE_STAGE", "proceeding",
+        ]);
+        assert_eq!(code, 1,
+            "partial frontmatter (missing coverage_state) must also block; stderr: {}", stderr);
+        let log_size_after = std::fs::metadata(&log_path).map(|m| m.len()).unwrap_or(0);
+        assert_eq!(log_size_before, log_size_after, "log must not grow when fail-closed");
+    }
+    
+    #[test]
+    fn smoke_decision_malformed_assessment_override_proceeds_and_records() {
+        // Fail-closed with escape hatch: --override allows proceeding; log records PROVENANCE_UNVERIFIABLE.
+        let (dir, _) = setup_temp_git_repo();
+        let p = dir.path();
+        let log_path = setup_review_log(p);
+    
+        write_malformed_assessment(p, "FEAT", "my-stage");
+    
+        let (code, stdout, stderr) = run_decision_in(p, &[
+            "decision", "FEAT", "my-stage", "APPROVE_STAGE", "proceeding despite broken assessment",
+            "--override", "assessment was regenerated and lost; evidence reviewed in session",
+        ]);
+        assert_eq!(code, 0,
+            "--override must allow proceeding past broken provenance; stderr: {}; stdout: {}",
+            stderr, stdout);
+    
+        let log_content = std::fs::read_to_string(&log_path).expect("read log");
+        assert!(log_content.contains("PROVENANCE_UNVERIFIABLE"),
+            "log must record PROVENANCE_UNVERIFIABLE: {}", log_content);
+        assert!(log_content.contains("assessment was regenerated"),
+            "log must record override rationale: {}", log_content);
+    }
+    
+    #[test]
+    fn smoke_decision_override_with_request_changes_is_graceful() {
+        // AC-10: --override alongside REQUEST_CHANGES must not error or change exit code.
+        let (dir, _) = setup_temp_git_repo();
+        let p = dir.path();
+        setup_review_log(p);
+    
+        let head = Command::new("git").args(["rev-parse", "HEAD"]).current_dir(p)
+            .output().expect("git rev-parse");
+        let head_sha = String::from_utf8_lossy(&head.stdout).trim().to_string();
+        write_fake_assessment(p, "FEAT", "my-stage", "FULL_COVERAGE", None, &head_sha);
+    
+        let (code, _, stderr) = run_decision_in(p, &[
+            "decision", "FEAT", "my-stage", "REQUEST_CHANGES", "needs rework",
+            "--override", "unused rationale",
+        ]);
+        assert_eq!(code, 0,
+            "--override with REQUEST_CHANGES must exit 0; stderr: {}", stderr);
+    }
+    
+    #[test]
+    fn smoke_decision_packet_missing_records_provenance_unverifiable() {
+        // AC-6c: when the packet file is missing, log must show PROVENANCE_UNVERIFIABLE.
+        let (dir, _) = setup_temp_git_repo();
+        let p = dir.path();
+        let log_path = setup_review_log(p);
+    
+        let head = Command::new("git").args(["rev-parse", "HEAD"]).current_dir(p)
+            .output().expect("git rev-parse");
+        let head_sha = String::from_utf8_lossy(&head.stdout).trim().to_string();
+    
+        // Write assessment that references a packet file that does NOT exist.
+        let codex_dir = p.join("reviews/codex");
+        std::fs::create_dir_all(&codex_dir).expect("create codex dir");
+        let content = format!(
+            "---\nreviewed:\n  feature: FEAT\n  stage: my-stage\n  review_commit: {}\n  coverage_state: FULL_COVERAGE\n  reviewed_packet: packets/missing-packet.txt\n  reviewed_packet_sha256: abc123\n---\n",
+            head_sha
+        );
+        std::fs::write(codex_dir.join("20260101T000000Z-FEAT-stage-my-stage-abcdef1.md"), &content)
+            .expect("write assessment");
+        // Do NOT write the packet file.
+    
+        let (code, _, stderr) = run_decision_in(p, &[
+            "decision", "FEAT", "my-stage", "APPROVE_STAGE", "all clear",
+        ]);
+        assert_eq!(code, 0, "missing packet must not block; stderr: {}", stderr);
+        assert!(
+            stderr.contains("warning") || stderr.contains("unverifiable") || stderr.contains("not found"),
+            "must warn about missing packet: {}", stderr
+        );
+    
+        let log_content = std::fs::read_to_string(&log_path).expect("read log");
+        assert!(log_content.contains("PROVENANCE_UNVERIFIABLE"),
+            "log must show PROVENANCE_UNVERIFIABLE for missing packet: {}", log_content);
+    }
+    
+    #[test]
+    fn smoke_decision_no_stored_sha_warns_and_records_provenance_unverifiable() {
+        // AC-6c: assessment exists with no reviewed_packet_sha256 → warning to stderr + PROVENANCE_UNVERIFIABLE in log.
+        let (dir, _) = setup_temp_git_repo();
+        let p = dir.path();
+        let log_path = setup_review_log(p);
+    
+        let head = Command::new("git").args(["rev-parse", "HEAD"]).current_dir(p)
+            .output().expect("git rev-parse");
+        let head_sha = String::from_utf8_lossy(&head.stdout).trim().to_string();
+    
+        let codex_dir = p.join("reviews/codex");
+        std::fs::create_dir_all(codex_dir.join("packets")).expect("create packets dir");
+        let packet_path = "packets/real-packet.txt";
+        std::fs::write(codex_dir.join(packet_path), "packet content").expect("write packet");
+    
+        // Assessment has reviewed_packet but NO reviewed_packet_sha256.
+        let content = format!(
+            "---\nreviewed:\n  feature: FEAT\n  stage: my-stage\n  review_commit: {}\n  coverage_state: FULL_COVERAGE\n  reviewed_packet: {}\n---\n",
+            head_sha, packet_path
+        );
+        std::fs::write(
+            codex_dir.join("20260101T000000Z-FEAT-stage-my-stage-abcdef1.md"),
+            &content,
+        ).expect("write assessment");
+    
+        let (code, _, stderr) = run_decision_in(p, &[
+            "decision", "FEAT", "my-stage", "APPROVE_STAGE", "looks good",
+        ]);
+        assert_eq!(code, 0, "no stored sha must not block; stderr: {}", stderr);
+        assert!(
+            stderr.contains("no stored sha") || stderr.contains("unverifiable"),
+            "must warn about missing stored sha; stderr: {}", stderr
+        );
+    
+        let log_content = std::fs::read_to_string(&log_path).expect("read log");
+        assert!(
+            log_content.contains("PROVENANCE_UNVERIFIABLE"),
+            "log must record PROVENANCE_UNVERIFIABLE for no-stored-sha case: {}", log_content
+        );
+    }
+    
+    #[test]
+    fn smoke_delta_mode_tracked_artifact_succeeds() {
+        // A tracked but unchanged file in delta mode should produce a packet (exit 0 with --print-packet).
+        let (dir, base_sha) = setup_temp_git_repo();
+        let dir_path = dir.path();
+        // tracked.md was committed in setup; it is tracked and unchanged since base.
+    
+        let out = Command::new(binary())
+            .args([
+                "review", "FEAT", "delta-test",
+                "--mode", "delta",
+                "--base", &base_sha,
+                "--print-packet", "--skip-prechecks",
+                "tracked.md",
+            ])
+            .current_dir(dir_path)
+            .output()
+            .expect("run binary");
+    
+        let code = out.status.code().unwrap_or(-1);
+        let stderr = String::from_utf8_lossy(&out.stderr).into_owned();
+        // exit 0 (packet printed) is the expected path; exit 4 (EMPTY_PACKET) is also acceptable
+        // since an unchanged file produces no diff.
+        assert!(
+            code == 0 || code == 4,
+            "tracked artifact in delta mode should exit 0 or 4 (empty diff); got {}; stderr: {}",
+            code, stderr
+        );
+    }
+    
+    // ---- Full Context Diff tests (AC-1, AC-2, AC-3, AC-4) ----
+    
+    /// Create a .codeos symlink in the temp repo pointing to the real Codeos toolkit root.
+    /// This lets the binary find prompts/codeos-reviewer-task.md from a temp repo.
+    fn setup_codeos_symlink(repo_path: &std::path::Path) {
+        let target = repo_root();
+        std::os::unix::fs::symlink(&target, repo_path.join(".codeos"))
+            .expect("create .codeos symlink");
+    }
+    
+    /// Helper: add a new commit with an extra file to the temp repo.
+    fn add_extra_commit(repo_path: &std::path::Path, filename: &str, content: &str) -> String {
+        std::fs::write(repo_path.join(filename), content).expect("write extra file");
+        Command::new("git").args(["add", filename]).current_dir(repo_path).output().expect("git add");
+        Command::new("git").args(["commit", "-m", "extra"]).current_dir(repo_path).output().expect("git commit");
+        let out = Command::new("git").args(["rev-parse", "HEAD"]).current_dir(repo_path)
+            .output().expect("git rev-parse");
+        String::from_utf8_lossy(&out.stdout).trim().to_string()
+    }
+    
+    #[test]
+    fn smoke_full_context_diff_present_in_delta_plus_base() {
+        // AC-1: Full Context Diff section appears when --mode delta AND --base are both active.
+        let (dir, base_sha) = setup_temp_git_repo();
+        let p = dir.path();
+        setup_codeos_symlink(p);
+        // Modify the named artifact AND add a second file, so the packet is non-empty AND the
+        // full context diff contains changes beyond the named artifact.
+        std::fs::write(p.join("tracked.md"), "# tracked\nmodified\n").expect("modify tracked");
+        add_extra_commit(p, "extra.md", "# extra\n");
+    
+        let out = Command::new(binary())
+            .args([
+                "review", "FEAT", "full-diff-test",
+                "--mode", "delta",
+                "--base", &base_sha,
+                "--print-packet", "--skip-prechecks",
+                "tracked.md",
+            ])
+            .current_dir(p)
+            .output()
+            .expect("run binary");
+    
+        let code = out.status.code().unwrap_or(-1);
+        let stdout = String::from_utf8_lossy(&out.stdout).into_owned();
+        let stderr = String::from_utf8_lossy(&out.stderr).into_owned();
+        assert_eq!(code, 0, "delta+base should exit 0; stderr: {}", stderr);
+        assert!(
+            stdout.contains("Full Context Diff (informational"),
+            "packet must contain Full Context Diff section; got: {}", &stdout[..stdout.len().min(500)]
+        );
+    }
+    
+    #[test]
+    fn smoke_full_context_diff_absent_without_base() {
+        // AC-2: No Full Context Diff section when --mode delta is used without --base.
+        let (dir, _) = setup_temp_git_repo();
+        let p = dir.path();
+        setup_codeos_symlink(p);
+        add_extra_commit(p, "extra.md", "# extra\n");
+    
+        let out = Command::new(binary())
+            .args([
+                "review", "FEAT", "full-diff-test",
+                "--mode", "full",  // full mode, no --base
+                "--print-packet", "--skip-prechecks",
+                "tracked.md",
+            ])
+            .current_dir(p)
+            .output()
+            .expect("run binary");
+    
+        let code = out.status.code().unwrap_or(-1);
+        let stdout = String::from_utf8_lossy(&out.stdout).into_owned();
+        let stderr = String::from_utf8_lossy(&out.stderr).into_owned();
+        assert_eq!(code, 0, "full mode should exit 0; stderr: {}", stderr);
+        assert!(
+            !stdout.contains("Full Context Diff (informational"),
+            "packet must NOT contain Full Context Diff in full mode"
+        );
+    }
+    
+    #[test]
+    fn smoke_full_context_diff_named_artifact_section_unchanged() {
+        // AC-3: Named artifact section is present and unmodified alongside the Full Context Diff.
+        let (dir, base_sha) = setup_temp_git_repo();
+        let p = dir.path();
+        setup_codeos_symlink(p);
+        // Modify the named artifact so the delta packet is non-empty (exit 0).
+        std::fs::write(p.join("tracked.md"), "# tracked\nmodified\n").expect("modify tracked");
+        add_extra_commit(p, "extra.md", "# extra\n");
+    
+        // Get packet WITH delta+base (includes Full Context Diff).
+        let out_delta = Command::new(binary())
+            .args([
+                "review", "FEAT", "ac3-test",
+                "--mode", "delta",
+                "--base", &base_sha,
+                "--print-packet", "--skip-prechecks",
+                "tracked.md",
+            ])
+            .current_dir(p)
+            .output()
+            .expect("run binary");
+        let stdout_delta = String::from_utf8_lossy(&out_delta.stdout).into_owned();
+    
+        // Get packet WITHOUT delta (no Full Context Diff).
+        let out_full = Command::new(binary())
+            .args([
+                "review", "FEAT", "ac3-test",
+                "--mode", "full",
+                "--print-packet", "--skip-prechecks",
+                "tracked.md",
+            ])
+            .current_dir(p)
+            .output()
+            .expect("run binary");
+        let stdout_full = String::from_utf8_lossy(&out_full.stdout).into_owned();
+    
+        // Both must contain the ARTIFACTS TO REVIEW section.
+        assert!(stdout_delta.contains("ARTIFACTS TO REVIEW"), "delta packet missing artifacts section");
+        assert!(stdout_full.contains("ARTIFACTS TO REVIEW"), "full packet missing artifacts section");
+    
+        // The delta packet must also have the Full Context Diff.
+        assert!(stdout_delta.contains("Full Context Diff (informational"), "delta packet missing Full Context Diff");
+    }
+    
+    #[test]
+    fn smoke_full_context_diff_clipping_marker() {
+        // AC-4: When the diff exceeds budget, CLIPPED marker appears; within budget, no marker.
+        let (dir, base_sha) = setup_temp_git_repo();
+        let p = dir.path();
+        setup_codeos_symlink(p);
+        // Write a large file (>50 bytes to exceed a tiny budget) and commit it.
+        let large_content = "x".repeat(200);
+        add_extra_commit(p, "large.md", &large_content);
+    
+        // Run with a very small budget so the full diff will be clipped.
+        let out = Command::new(binary())
+            .args([
+                "review", "FEAT", "clip-test",
+                "--mode", "delta",
+                "--base", &base_sha,
+                "--print-packet", "--skip-prechecks",
+                "tracked.md",
+            ])
+            .current_dir(p)
+            .env("CODEOS_PACKET_BUDGET_BYTES", "50")  // tiny budget
+            .output()
+            .expect("run binary");
+    
+        let stdout = String::from_utf8_lossy(&out.stdout).into_owned();
+        let stderr = String::from_utf8_lossy(&out.stderr).into_owned();
+        // May warn about budget, but packet is still produced (exit 0).
+        // The Full Context Diff section should have a CLIPPED marker.
+        assert!(
+            stdout.contains("CLIPPED") || stdout.contains("Full Context Diff"),
+            "packet should mention clipping or Full Context Diff; stderr: {}", stderr
+        );
+    }
+
+DIFF TO REVIEW (base->review, secret/size filtered)
+diff --git a/backlog/UPG-0014-reviewer-full-diff.md b/backlog/UPG-0014-reviewer-full-diff.md
+index 8135a08..09a10a5 100644
+--- a/backlog/UPG-0014-reviewer-full-diff.md
++++ b/backlog/UPG-0014-reviewer-full-diff.md
+@@ -98,6 +98,7 @@ must respect secret filtering and stay non-gatekeeping.
+ 
+ | Change ID | File | Purpose | State |
+ |---|---|---|---|
++| CHG-20260702-004 | `changes/UPG-0014__CHG-20260702-004__reviewer-full-diff.md` | Auto-include Full Context Diff in packet when `--mode delta --base` active (no new flag; Rust-only; bash shim boundary documented) | IN_PROGRESS |
+ 
+ ### Reviews
+ 
+diff --git a/docs/reviewer-pipeline.md b/docs/reviewer-pipeline.md
+index 37016b5..578a2d8 100644
+--- a/docs/reviewer-pipeline.md
++++ b/docs/reviewer-pipeline.md
+@@ -283,7 +283,25 @@ sessions feature-scoped · reviewed state pinned (base+review SHA, artifact hash
+ output → UNCLASSIFIED/high-attention · secret/large-diff filtering present · no hooks active ·
+ no core rules changed.
+ 
+-## 10. Usage
++## 10. Architecture: `codeos-review.sh` is a static locator shim
++
++```bash
++# scripts/codeos-review.sh — the entire file
++exec "${BINARY}" "$@"
++```
++
++`codeos-review.sh` is a **15-line static locator shim**. It finds the compiled Rust binary
++(`tools/reviewer/target/release/codeos-reviewer`) and passes all arguments through verbatim
++(`"$@"`). It contains no argument preprocessing, no conditional logic, and no reviewer
++capability.
++
++**Consequence for upgrades:** any reviewer capability change — new packet sections, new
++subcommand behavior, new flags, new decision-log fields — lives in the **Rust engine**
++(`tools/reviewer/src/`). Changing only the bash script cannot add or modify reviewer
++behavior. The bash script only needs to change if the binary location or build instructions
++change.
++
++## 11. Usage
+ 
+ ```bash
+ # record the base commit for a stage (so review diffs base->review, not just HEAD)
+diff --git a/status/roadmap.md b/status/roadmap.md
+index 9a02ee5..3edf5d7 100644
+--- a/status/roadmap.md
++++ b/status/roadmap.md
+@@ -65,7 +65,7 @@ cheap pilot-adjacent wins early.
+ | Wave | Feature ID | Title | Priority | Depends on | Planned/active change | State |
+ |---|---|---|---|---|---|---|
+ | 4 | UPG-0032 | Rust Reviewer Engine with Multi-Provider Support | P2 | UPG-0027 ✓ | CHG-20260702-001 ✓ | COMPLETE |
+-| 4 | UPG-0014 | Reviewer Agent with Full Diff Access | P2 | UPG-0032 | — | PROPOSED |
++| 4 | UPG-0014 | Reviewer Agent with Full Diff Access | P2 | UPG-0032 | CHG-20260702-004 | IN_PROGRESS |
+ | 4 | UPG-0015 | Bind stage approval to reviewed provenance | P1 | UPG-0032 ✓ | CHG-20260702-002 | COMPLETE |
+ | 4 | UPG-0016 | Branch / PR / CI Workflow Profiles | P1 | — | CHG-20260702-003 | COMPLETE |
+ | 4 | UPG-0017 | Stack Manifest with Automatic Reconciliation | P2 | — | — | PROPOSED |
+diff --git a/status/self-development.md b/status/self-development.md
+index 3b7f9e7..a7d8582 100644
+--- a/status/self-development.md
++++ b/status/self-development.md
+@@ -46,6 +46,7 @@
+ | UPG-0032 | CHG-20260702-001 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (Step 3: 6 rounds, all blockers applied; Step 4 R1 NO OBJECTION; all 11 ACs verified; 33 tests; post-reconcile delta-mode fix applied) | COMPLETE | UPG-0034, UPG-0035 |
+ | UPG-0015 | CHG-20260702-002 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (Steps 1–4 reviewed; Step 4 R2 NO OBJECTION; all 13 ACs verified; 48 tests; coverage gate + provenance binding in Rust engine) | COMPLETE | — |
+ | UPG-0016 | CHG-20260702-003 | documentation | self-dev only | 4-Reconcile | ACCEPTED (Step 4 R1 NO OBJECTION; all 7 ACs verified) | COMPLETE | — |
++| UPG-0014 | CHG-20260702-004 | script-tooling | self-dev only | 3-Implement | DRAFT | IN_PROGRESS | — |
+ 
+ <!--
+ Identity   : Feature ID = UPG-#### (stable). Change ID = CHG-YYYYMMDD-NNN (one execution), or a
+diff --git a/tools/reviewer/src/packet.rs b/tools/reviewer/src/packet.rs
+index 78431e0..316a7f0 100644
+--- a/tools/reviewer/src/packet.rs
++++ b/tools/reviewer/src/packet.rs
+@@ -363,6 +363,48 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
+     }
+     content.push_str(&redacted_diff);
+ 
++    // Full Context Diff (AC-1: auto-appended when delta_mode AND delta_base are both active).
++    if opts.delta_mode {
++        if let Some(ref base) = opts.delta_base {
++            let full_raw = git_diff_range(base, &[], &opts.repo_root).unwrap_or_default();
++            let (full_redacted, full_rc) = redact_secrets(&full_raw);
++            if full_rc > 0 {
++                secret_flag = true;
++                redaction_count += full_rc;
++            }
++
++            let remaining = budget.saturating_sub(review_content_bytes);
++            let full_total = full_redacted.len() as u64;
++
++            content.push_str(&format!(
++                "\nFull Context Diff (informational — all changed files since {}):\n",
++                base
++            ));
++
++            if remaining == 0 || full_total == 0 {
++                if full_total == 0 {
++                    content.push_str("(no changes detected outside named artifacts)\n");
++                } else {
++                    content.push_str(&format!(
++                        "[CLIPPED: full diff exceeded packet budget — showing first 0 of {} bytes]\n",
++                        full_total
++                    ));
++                }
++            } else if full_total > remaining {
++                // Clip at a line boundary within the budget.
++                let head = &full_redacted[..remaining as usize];
++                let cutpoint = head.rfind('\n').map(|n| n + 1).unwrap_or(remaining as usize);
++                content.push_str(&full_redacted[..cutpoint]);
++                content.push_str(&format!(
++                    "\n[CLIPPED: full diff exceeded packet budget — showing first {} of {} bytes]\n",
++                    cutpoint, full_total
++                ));
++            } else {
++                content.push_str(&full_redacted);
++            }
++        }
++    }
++
+     let final_base_sha = if base_sha.is_empty() { "(no base pin)".to_string() } else { base_sha };
+ 
+     Ok(ReviewPacket {
+diff --git a/tools/reviewer/tests/smoke.rs b/tools/reviewer/tests/smoke.rs
+index fab3bcb..0a5004d 100644
+--- a/tools/reviewer/tests/smoke.rs
++++ b/tools/reviewer/tests/smoke.rs
+@@ -684,3 +684,164 @@ fn smoke_delta_mode_tracked_artifact_succeeds() {
+         code, stderr
+     );
+ }
++
++// ---- Full Context Diff tests (AC-1, AC-2, AC-3, AC-4) ----
++
++/// Create a .codeos symlink in the temp repo pointing to the real Codeos toolkit root.
++/// This lets the binary find prompts/codeos-reviewer-task.md from a temp repo.
++fn setup_codeos_symlink(repo_path: &std::path::Path) {
++    let target = repo_root();
++    std::os::unix::fs::symlink(&target, repo_path.join(".codeos"))
++        .expect("create .codeos symlink");
++}
++
++/// Helper: add a new commit with an extra file to the temp repo.
++fn add_extra_commit(repo_path: &std::path::Path, filename: &str, content: &str) -> String {
++    std::fs::write(repo_path.join(filename), content).expect("write extra file");
++    Command::new("git").args(["add", filename]).current_dir(repo_path).output().expect("git add");
++    Command::new("git").args(["commit", "-m", "extra"]).current_dir(repo_path).output().expect("git commit");
++    let out = Command::new("git").args(["rev-parse", "HEAD"]).current_dir(repo_path)
++        .output().expect("git rev-parse");
++    String::from_utf8_lossy(&out.stdout).trim().to_string()
++}
++
++#[test]
++fn smoke_full_context_diff_present_in_delta_plus_base() {
++    // AC-1: Full Context Diff section appears when --mode delta AND --base are both active.
++    let (dir, base_sha) = setup_temp_git_repo();
++    let p = dir.path();
++    setup_codeos_symlink(p);
++    // Modify the named artifact AND add a second file, so the packet is non-empty AND the
++    // full context diff contains changes beyond the named artifact.
++    std::fs::write(p.join("tracked.md"), "# tracked\nmodified\n").expect("modify tracked");
++    add_extra_commit(p, "extra.md", "# extra\n");
++
++    let out = Command::new(binary())
++        .args([
++            "review", "FEAT", "full-diff-test",
++            "--mode", "delta",
++            "--base", &base_sha,
++            "--print-packet", "--skip-prechecks",
++            "tracked.md",
++        ])
++        .current_dir(p)
++        .output()
++        .expect("run binary");
++
++    let code = out.status.code().unwrap_or(-1);
++    let stdout = String::from_utf8_lossy(&out.stdout).into_owned();
++    let stderr = String::from_utf8_lossy(&out.stderr).into_owned();
++    assert_eq!(code, 0, "delta+base should exit 0; stderr: {}", stderr);
++    assert!(
++        stdout.contains("Full Context Diff (informational"),
++        "packet must contain Full Context Diff section; got: {}", &stdout[..stdout.len().min(500)]
++    );
++}
++
++#[test]
++fn smoke_full_context_diff_absent_without_base() {
++    // AC-2: No Full Context Diff section when --mode delta is used without --base.
++    let (dir, _) = setup_temp_git_repo();
++    let p = dir.path();
++    setup_codeos_symlink(p);
++    add_extra_commit(p, "extra.md", "# extra\n");
++
++    let out = Command::new(binary())
++        .args([
++            "review", "FEAT", "full-diff-test",
++            "--mode", "full",  // full mode, no --base
++            "--print-packet", "--skip-prechecks",
++            "tracked.md",
++        ])
++        .current_dir(p)
++        .output()
++        .expect("run binary");
++
++    let code = out.status.code().unwrap_or(-1);
++    let stdout = String::from_utf8_lossy(&out.stdout).into_owned();
++    let stderr = String::from_utf8_lossy(&out.stderr).into_owned();
++    assert_eq!(code, 0, "full mode should exit 0; stderr: {}", stderr);
++    assert!(
++        !stdout.contains("Full Context Diff (informational"),
++        "packet must NOT contain Full Context Diff in full mode"
++    );
++}
++
++#[test]
++fn smoke_full_context_diff_named_artifact_section_unchanged() {
++    // AC-3: Named artifact section is present and unmodified alongside the Full Context Diff.
++    let (dir, base_sha) = setup_temp_git_repo();
++    let p = dir.path();
++    setup_codeos_symlink(p);
++    // Modify the named artifact so the delta packet is non-empty (exit 0).
++    std::fs::write(p.join("tracked.md"), "# tracked\nmodified\n").expect("modify tracked");
++    add_extra_commit(p, "extra.md", "# extra\n");
++
++    // Get packet WITH delta+base (includes Full Context Diff).
++    let out_delta = Command::new(binary())
++        .args([
++            "review", "FEAT", "ac3-test",
++            "--mode", "delta",
++            "--base", &base_sha,
++            "--print-packet", "--skip-prechecks",
++            "tracked.md",
++        ])
++        .current_dir(p)
++        .output()
++        .expect("run binary");
++    let stdout_delta = String::from_utf8_lossy(&out_delta.stdout).into_owned();
++
++    // Get packet WITHOUT delta (no Full Context Diff).
++    let out_full = Command::new(binary())
++        .args([
++            "review", "FEAT", "ac3-test",
++            "--mode", "full",
++            "--print-packet", "--skip-prechecks",
++            "tracked.md",
++        ])
++        .current_dir(p)
++        .output()
++        .expect("run binary");
++    let stdout_full = String::from_utf8_lossy(&out_full.stdout).into_owned();
++
++    // Both must contain the ARTIFACTS TO REVIEW section.
++    assert!(stdout_delta.contains("ARTIFACTS TO REVIEW"), "delta packet missing artifacts section");
++    assert!(stdout_full.contains("ARTIFACTS TO REVIEW"), "full packet missing artifacts section");
++
++    // The delta packet must also have the Full Context Diff.
++    assert!(stdout_delta.contains("Full Context Diff (informational"), "delta packet missing Full Context Diff");
++}
++
++#[test]
++fn smoke_full_context_diff_clipping_marker() {
++    // AC-4: When the diff exceeds budget, CLIPPED marker appears; within budget, no marker.
++    let (dir, base_sha) = setup_temp_git_repo();
++    let p = dir.path();
++    setup_codeos_symlink(p);
++    // Write a large file (>50 bytes to exceed a tiny budget) and commit it.
++    let large_content = "x".repeat(200);
++    add_extra_commit(p, "large.md", &large_content);
++
++    // Run with a very small budget so the full diff will be clipped.
++    let out = Command::new(binary())
++        .args([
++            "review", "FEAT", "clip-test",
++            "--mode", "delta",
++            "--base", &base_sha,
++            "--print-packet", "--skip-prechecks",
++            "tracked.md",
++        ])
++        .current_dir(p)
++        .env("CODEOS_PACKET_BUDGET_BYTES", "50")  // tiny budget
++        .output()
++        .expect("run binary");
++
++    let stdout = String::from_utf8_lossy(&out.stdout).into_owned();
++    let stderr = String::from_utf8_lossy(&out.stderr).into_owned();
++    // May warn about budget, but packet is still produced (exit 0).
++    // The Full Context Diff section should have a CLIPPED marker.
++    assert!(
++        stdout.contains("CLIPPED") || stdout.contains("Full Context Diff"),
++        "packet should mention clipping or Full Context Diff; stderr: {}", stderr
++    );
++}

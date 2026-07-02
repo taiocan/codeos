@@ -239,3 +239,27 @@ evidence (software-enforced stop), and the human remains the final authority
 **Distinction to apply when writing gates:** "automated hard stop" ≠ "human-non-overridable."
 The former is a code behavior; the latter is a governance claim. Only the former is ever
 appropriate in a system that keeps "human approval is required at every gate."
+
+## AJ-012 — Supplementary evidence sections must declare their coverage semantics explicitly
+
+*Origin: UPG-0014 / CHG-20260702-004 (reviewer-full-diff), Step 4 R1–R3.*
+
+When a new section is added to the review packet as **supplementary/informational context** (not
+primary evidence), its redaction and error behavior must be explicitly declared as outside the
+existing `coverage_state` semantics — or reviewers (human and automated) will interpret the
+system's stated coverage floor as applying to it.
+
+The specific failure mode: `coverage_state` is computed from named-artifact evidence before the
+supplementary full-diff section is appended. If the full diff has secrets redacted or a git
+error, `coverage_state` still says `FULL_COVERAGE`. This is correct — the full diff is
+supplementary context, not a named artifact — but without explicit documentation, this looks
+like a safety gap.
+
+**Rule:** Any packet section that is supplementary (informational, additive, not part of the
+named-artifact evidence set) must:
+1. Be labeled "informational" in its section header.
+2. Have its coverage semantics explicitly stated in `docs/reviewer-pipeline.md` §5.
+3. State what happens on error (silent? explicit marker? coverage escalation?).
+
+Failing to state this will cost 2–3 review rounds as the reviewer correctly flags the apparent
+gap, and the resolution ("it's intentional, supplementary-only") must be documented anyway.
