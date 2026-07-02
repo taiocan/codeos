@@ -1042,3 +1042,64 @@ fn smoke_sha_only_existing_path_no_spurious_exit1() {
         "existing path must not trigger missing-path error; stderr: {}", stderr
     );
 }
+
+// --- UPG-0034: read-only invariant check ---
+
+#[test]
+fn smoke_readonly_invariant_no_warning_on_print_packet() {
+    // AC-5: --print-packet never invokes the provider, so no pre/post snapshot is taken
+    // and no WARNING can appear on stderr regardless of working-tree state.
+    let (dir, _) = setup_temp_git_repo();
+    let p = dir.path();
+    setup_codeos_symlink(p);
+
+    // Make the working tree dirty so that IF a snapshot were taken and compared it would differ.
+    std::fs::write(p.join("dirty.md"), "# dirty\n").expect("write dirty file");
+
+    let out = Command::new(binary())
+        .args([
+            "review", "FEAT", "readonly-test",
+            "--print-packet", "--skip-prechecks",
+            "tracked.md",
+        ])
+        .current_dir(p)
+        .output()
+        .expect("run binary");
+
+    let stderr = String::from_utf8_lossy(&out.stderr);
+    assert!(
+        !stderr.contains("WARNING: working tree changed"),
+        "--print-packet must not emit read-only warning; stderr: {}", stderr
+    );
+}
+
+#[test]
+fn smoke_readonly_invariant_git_status_porcelain_detects_mutation() {
+    // Verify the underlying git mechanism: porcelain output differs when a file is added.
+    // This is the comparison logic the invariant check relies on (AC-1/AC-2/AC-3).
+    let (dir, _) = setup_temp_git_repo();
+    let p = dir.path();
+
+    let clean = Command::new("git")
+        .args(["status", "--porcelain"])
+        .current_dir(p)
+        .output()
+        .expect("git status clean");
+    assert!(clean.stdout.is_empty(), "clean repo must have empty porcelain output");
+
+    std::fs::write(p.join("mutated.md"), "# mutated\n").expect("write file");
+
+    let dirty = Command::new("git")
+        .args(["status", "--porcelain"])
+        .current_dir(p)
+        .output()
+        .expect("git status dirty");
+    assert!(
+        dirty.stdout != clean.stdout,
+        "porcelain output must differ after mutation (pre != post)"
+    );
+    assert!(
+        !dirty.stdout.is_empty(),
+        "dirty repo must have non-empty porcelain output"
+    );
+}

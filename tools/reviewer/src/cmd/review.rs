@@ -180,7 +180,34 @@ pub fn run(args: ReviewArgs, cfg: &Config, provider_name: &str) -> Result<i32> {
         sessions_dir: cfg.sessions_dir.to_string_lossy().into_owned(),
     };
 
-    let raw = match prov.invoke(&review_packet, &prov_cfg) {
+    // Read-only invariant: snapshot working tree before invoke (AC-1); compare after.
+    // Non-zero git exit (e.g. not a git repo) yields None — check silently skipped (AC-4).
+    let pre_invoke_status = std::process::Command::new("git")
+        .args(["status", "--porcelain"])
+        .current_dir(&cfg.repo_root)
+        .output()
+        .ok()
+        .filter(|o| o.status.success())
+        .map(|o| o.stdout);
+
+    let invoke_result = prov.invoke(&review_packet, &prov_cfg);
+
+    // Post-invoke check runs regardless of invoke success or failure (AC-2/AC-3/AC-4).
+    if let Some(pre) = pre_invoke_status {
+        let post_status = std::process::Command::new("git")
+            .args(["status", "--porcelain"])
+            .current_dir(&cfg.repo_root)
+            .output()
+            .ok()
+            .filter(|o| o.status.success());
+        if let Some(post) = post_status {
+            if post.stdout != pre {
+                eprintln!("WARNING: working tree changed during review — reviewer should be read-only");
+            }
+        }
+    }
+
+    let raw = match invoke_result {
         Ok(r) => r,
         Err(e) => {
             eprintln!("error: provider invocation failed: {}", e);

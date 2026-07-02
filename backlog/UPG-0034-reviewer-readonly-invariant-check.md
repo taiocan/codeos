@@ -2,7 +2,7 @@
 feature_id: UPG-0034
 title: "Rust Reviewer: Read-Only Invariant Check (pre/post git status warning)"
 priority: P3
-status: PROPOSED
+status: COMPLETE
 depends_on: UPG-0032
 origin_change: CHG-20260702-001
 ---
@@ -38,4 +38,4 @@ Useful as a safety net; low urgency.
 
 | Change ID | State | Notes |
 |---|---|---|
-| — | PROPOSED | Origin: parity gap found during UPG-0032 / CHG-20260702-001 reconcile |
+| CHG-20260702-006 | COMPLETE | `changes/UPG-0034__CHG-20260702-006__reviewer-readonly-invariant-check.md` |

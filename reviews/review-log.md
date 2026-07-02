@@ -3810,3 +3810,125 @@ pinned execution output in packet. AC-1 through AC-5 directly verified by review
 **Human decision:** REJECTED as blocker (same ruling as Step 3 R1). Test execution output is
 structurally absent from all review packets; this is a packet system limitation, not a defect
 in UPG-0035. All other ACs verified. **Step 4 APPROVED. APPROVE_STAGE.**
+
+## 2026-07-02T18:59:22Z REVIEW — UPG-0034__CHG-20260702-006 — Stage selfdev-step-3
+Base: (no base pin)  Review: d4cd5b0569aa71a636d0682362c39c980151be64  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 1bb6ef53ef33e74a761e778758e7b60802bd3702860bd2bb04708de83ee35d4a
+Reviewer: codex default-model (session 019f2430-d114-7a23-bf68-bb68a1322aa1)
+Effort: high   Wall time: 166920ms   Reconnects: 0
+Codex concern: DO NOT ADVANCE
+Effective concern: DO NOT ADVANCE
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: DO NOT ADVANCE — the implementation misses the provider-error path and does not honor the stated silent-skip contract for `git status` failures
+Full assessment: /home/arc/projects/claude/Codeos/reviews/codex/2026-07-02T185922Z-UPG-0034__CHG-20260702-006-stage-selfdev-step-3-d4cd5b0.md (sha256:ae1a1c408fe62e3db83c354814a1333f19c983abd7028c2fd6cad8562f69f2a6)
+Reviewed packet: /home/arc/projects/claude/Codeos/reviews/codex/packets/20260702T185922Z-UPG-0034__CHG-20260702-006-stage-selfdev-step-3-d4cd5b0.packet.txt (sha256:e825c588b55263a233e69c74846abb6817b616e4edc62bcba67e5b3b4f5ed2a2)
+Human decision: (append with: codeos-reviewer decision UPG-0034__CHG-20260702-006 selfdev-step-3 <DECISION> "<reason>")
+
+## 2026-07-02T19:42:40Z REVIEW — UPG-0034__CHG-20260702-006 — Stage selfdev-step-3
+Base: (no base pin)  Review: d4cd5b0569aa71a636d0682362c39c980151be64  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 2502f1a6548990f0eb32f21556a9781f5575a75863009b518ac507fb39a6cdd8
+Reviewer: codex default-model (session 019f2430-d114-7a23-bf68-bb68a1322aa1)
+Effort: high   Wall time: 90573ms   Reconnects: 0
+Codex concern: DO NOT ADVANCE
+Effective concern: DO NOT ADVANCE
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: DO NOT ADVANCE — the post-invoke `git status` path still violates the stated silent-skip guarantee for non-zero Git exits
+Full assessment: /home/arc/projects/claude/Codeos/reviews/codex/2026-07-02T194240Z-UPG-0034__CHG-20260702-006-stage-selfdev-step-3-d4cd5b0.md (sha256:4bcd774012b6ee8c2412c60ab066922425146d025d550a1158bc6d2c16568400)
+Reviewed packet: /home/arc/projects/claude/Codeos/reviews/codex/packets/20260702T194239Z-UPG-0034__CHG-20260702-006-stage-selfdev-step-3-d4cd5b0.packet.txt (sha256:79a5382f879f8abf544eb6202fe04ffd8818bf5702f1d4372688e8aac69f7191)
+Human decision: (append with: codeos-reviewer decision UPG-0034__CHG-20260702-006 selfdev-step-3 <DECISION> "<reason>")
+
+## 2026-07-02T20:02:15Z REVIEW — UPG-0034__CHG-20260702-006 — Stage selfdev-step-3
+Base: (no base pin)  Review: d4cd5b0569aa71a636d0682362c39c980151be64  Branch: selfdev/upg-0029-review-durability
+Diff-hash: f2d9c25304e9906dd8fd447e6e1bc346fc90b29e4e1ee7d5a04c08a1d8afa71b
+Reviewer: codex default-model (session 019f2430-d114-7a23-bf68-bb68a1322aa1)
+Effort: high   Wall time: 48882ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — the revised implementation now matches the stated read-only warning contract, including silent skip on non-zero git exits
+Full assessment: /home/arc/projects/claude/Codeos/reviews/codex/2026-07-02T200215Z-UPG-0034__CHG-20260702-006-stage-selfdev-step-3-d4cd5b0.md (sha256:a789fd5f09de7c862b73efba961118268ac61a7f0203c0c99725e8f2aa22a7a4)
+Reviewed packet: /home/arc/projects/claude/Codeos/reviews/codex/packets/20260702T200215Z-UPG-0034__CHG-20260702-006-stage-selfdev-step-3-d4cd5b0.packet.txt (sha256:bb3f3bfa9a52c7819b8a0f17cc004868e6d46a69cdefdc8c678207caeaa51ebf)
+Human decision: (append with: codeos-reviewer decision UPG-0034__CHG-20260702-006 selfdev-step-3 <DECISION> "<reason>")
+
+### REV__UPG-0034__CHG-20260702-006__S3__R1 — 2026-07-02 (selfdev-step-3)
+
+**Reviewer verdict:** DO NOT ADVANCE (evidence A)
+**Assessment:** `reviews/codex/2026-07-02T185922Z-UPG-0034__CHG-20260702-006-stage-selfdev-step-3-d4cd5b0.md`
+
+**Findings:**
+- F1 (IN-SCOPE BLOCKER): Post-invoke check skipped when `prov.invoke()` returns error — `Err` arm returned before post-snapshot block. **FIXED**: hoisted `invoke_result`, post-check runs before error return.
+- F2 (IN-SCOPE BLOCKER): Pre-invoke `.ok()` without `.filter(success())` — non-zero git exit treated as valid snapshot. **FIXED**: added `.filter(|o| o.status.success())` to pre-snapshot.
+- F3 (IN-SCOPE BLOCKER): AC-7 live-path warning test absent. **ACCEPTED as structural limitation** (cannot test without real provider); AC-7 narrowed to what's testable.
+- F4 (scope drift): `smoke.rs` not declared in "What changes"; AC-6 "all other files" wording contradicted. **FIXED**: `smoke.rs` added to What changes table; AC-6 reworded to name specific untouched files.
+
+**Human decision:** Apply F1/F2/F4 fixes; accept F3 as structural limitation (same ruling as UPG-0035 AC-6). Proceed to R2.
+
+### REV__UPG-0034__CHG-20260702-006__S3__R2 — 2026-07-02 (selfdev-step-3)
+
+**Reviewer verdict:** DO NOT ADVANCE (evidence A)
+**Assessment:** `reviews/codex/2026-07-02T194240Z-UPG-0034__CHG-20260702-006-stage-selfdev-step-3-d4cd5b0.md`
+
+**Finding:** F2 residual — post-invoke path used raw `if let Ok(post) = ...output()`, which passes even when git exits non-zero. Pre-snapshot fixed in R1 but post-snapshot was missed.
+**FIXED:** Applied same `.ok().filter(|o| o.status.success())` pattern to post-invoke snapshot.
+
+**Human decision:** Fix applied. Proceed to R3.
+
+### REV__UPG-0034__CHG-20260702-006__S3__R3 — 2026-07-02 (selfdev-step-3)
+
+**Reviewer verdict:** NO OBJECTION (evidence A)
+**Assessment:** `reviews/codex/2026-07-02T200215Z-UPG-0034__CHG-20260702-006-stage-selfdev-step-3-d4cd5b0.md`
+
+All blockers resolved. Both snapshots apply `.filter(success())`; post-check runs before error handling; AC-6/AC-7 documentation correct. **Step 3 APPROVED (pending human gate).**
+
+## 2026-07-02T20:08:17Z REVIEW — UPG-0034__CHG-20260702-006 — Stage selfdev-step-3
+Base: (no base pin)  Review: d4cd5b0569aa71a636d0682362c39c980151be64  Branch: selfdev/upg-0029-review-durability
+Diff-hash: f2d9c25304e9906dd8fd447e6e1bc346fc90b29e4e1ee7d5a04c08a1d8afa71b
+Reviewer: codex default-model (session 019f2430-d114-7a23-bf68-bb68a1322aa1)
+Effort: high   Wall time: 740205ms   Reconnects: 1
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — the revised implementation now matches the stated advisory read-only invariant contract
+Full assessment: /home/arc/projects/claude/Codeos/reviews/codex/2026-07-02T200817Z-UPG-0034__CHG-20260702-006-stage-selfdev-step-3-d4cd5b0.md (sha256:a22e9988528799a5e81f34411a5e84ba7b0ac3766cbfa030caca3fe5dcd6ba01)
+Reviewed packet: /home/arc/projects/claude/Codeos/reviews/codex/packets/20260702T200817Z-UPG-0034__CHG-20260702-006-stage-selfdev-step-3-d4cd5b0.packet.txt (sha256:7fdc0866ce5c3c31d6cc94bcfd83b68bf5c2be5f099db9e5e1572a49ffe22e6f)
+Human decision: (append with: codeos-reviewer decision UPG-0034__CHG-20260702-006 selfdev-step-3 <DECISION> "<reason>")
+
+## 2026-07-02T20:13:05Z REVIEW — UPG-0034__CHG-20260702-006 — Stage selfdev-step-4
+Base: (no base pin)  Review: d4cd5b0569aa71a636d0682362c39c980151be64  Branch: selfdev/upg-0029-review-durability
+Diff-hash: c1c3082f131fffe27d01b5140b9edd48de3506532f21c90e7549d1eef2413484
+Reviewer: codex default-model (session 019f2430-d114-7a23-bf68-bb68a1322aa1)
+Effort: high   Wall time: 71063ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — the Step 4 reconcile is supported by the packet and the implementation matches the stated advisory read-only invariant contract
+Full assessment: /home/arc/projects/claude/Codeos/reviews/codex/2026-07-02T201305Z-UPG-0034__CHG-20260702-006-stage-selfdev-step-4-d4cd5b0.md (sha256:c10b84848f03874b668cbb0c3067ea7d564f495e8c4aa0927e3ed806d6ee1f4c)
+Reviewed packet: /home/arc/projects/claude/Codeos/reviews/codex/packets/20260702T201305Z-UPG-0034__CHG-20260702-006-stage-selfdev-step-4-d4cd5b0.packet.txt (sha256:e5724590c88824a167f0380c321e9075bfacda2d55d2efcebd535795f1fadc9b)
+Human decision: (append with: codeos-reviewer decision UPG-0034__CHG-20260702-006 selfdev-step-4 <DECISION> "<reason>")
+
+### REV__UPG-0034__CHG-20260702-006__S4__R1 — 2026-07-02 (selfdev-step-4)
+
+**Reviewer verdict:** NO OBJECTION (evidence A)
+**Assessment:** `reviews/codex/2026-07-02T201305Z-UPG-0034__CHG-20260702-006-stage-selfdev-step-4-d4cd5b0.md`
+
+All 7 ACs verified directly from code and tests. Both git status snapshots filter on
+`status.success()`; post-check runs before provider-error handling; AC-6/AC-7 documentation
+matches implementation. **Step 4 APPROVED (pending human gate).**
+
+## 2026-07-02T20:13:21Z HUMAN DECISION — UPG-0034__CHG-20260702-006 — Stage selfdev-step-4
+Commit at decision: d4cd5b0569aa71a636d0682362c39c980151be64
+Decision: APPROVE_STAGE
+Reason/next: Step 4 R1 NO OBJECTION; all 7 ACs verified; 59 tests pass
+Verified against: /home/arc/projects/claude/Codeos/reviews/codex/2026-07-02T201305Z-UPG-0034__CHG-20260702-006-stage-selfdev-step-4-d4cd5b0.md
+Artifact integrity (informational audit, not a gate):
+  MATCH   changes/UPG-0034__CHG-20260702-006__reviewer-readonly-invariant-check.md
+  MATCH   tools/reviewer/src/cmd/review.rs
+  MATCH   tools/reviewer/tests/smoke.rs
+  MATCH   changes/UPG-0034__CHG-20260702-006__reviewer-readonly-invariant-check.md
+  MATCH   tools/reviewer/src/cmd/review.rs
+  MATCH   tools/reviewer/tests/smoke.rs
