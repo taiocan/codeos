@@ -2,7 +2,7 @@
 feature_id: UPG-0032
 slug: rust-reviewer-engine-multi-provider
 title: Rust Reviewer Engine with Multi-Provider Support
-status: PROPOSED
+status: IN_PROGRESS
 priority: P2
 depends_on: [UPG-0027]
 related_features: [UPG-0015, UPG-0003, UPG-0018]
@@ -13,7 +13,7 @@ superseded_by: []
 # Upgrade: rust-reviewer-engine-multi-provider — Rust Reviewer Engine with Multi-Provider Support
 
 **Priority**: P2 (rises to P1 if a second provider is needed near-term)
-**Status**: PROPOSED
+**Status**: IN_PROGRESS
 **Type**: script-tooling
 **Supersedes**: UPG-0018 (Typed reviewer engine to replace the Bash pilot)
 **Related**: UPG-0003 (reviewer pilot), UPG-0015 (decision-integrity), UPG-0027 (packet architecture)
@@ -188,6 +188,7 @@ the human gate.
 
 | Change ID | File | Purpose | State |
 |---|---|---|---|
+| CHG-20260702-001 | `changes/UPG-0032__CHG-20260702-001__rust-reviewer-engine.md` | Full Rust implementation: provider trait, CodexProvider, typed packet, precheck, CLI drop-in replacement for codeos-review.sh | IN_PROGRESS |
 
 ### Reviews
 

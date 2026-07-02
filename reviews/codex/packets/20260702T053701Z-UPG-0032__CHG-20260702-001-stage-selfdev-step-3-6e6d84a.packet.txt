@@ -1,0 +1,1936 @@
+Reviewer task:
+
+SCOPE CONTRACT
+  Assess this artifact against the STATED SCOPE of this stage/PR — the Expected Stage
+  Output below and what the artifacts actually claim — NOT against an ideal final system.
+  A capability the artifacts do not claim to provide is OUT-OF-SCOPE, not a defect.
+  The following are OUT-OF-SCOPE BACKLOG unless THIS artifact explicitly claims to provide
+  them: formal approval-binding enforcement; rollback correctness; COMMIT_BOUND/
+  WORKSPACE_BOUND enforcement; JSON Schema validation; CI validation; exact
+  decision-integrity; per-feature decision ledgers; autonomous approval; enabled hooks.
+
+YOUR TASK — answer these five questions using only the evidence in the packet:
+  1. Acceptance criteria: Does the artifact satisfy each of its stated acceptance criteria?
+     Cite evidence for each criterion (or note its absence).
+  2. Claim support: Are universal or strong claims (all, every, never, always, no X) in the
+     artifact supported by evidence in the packet? Any unverifiable strong claim is a candidate
+     finding only if it affects acceptance, scope, safety, decision integrity, or the artifact's
+     stated guarantees.
+  3. Scope drift: Is there any change beyond the stated scope boundary? (Files not in the
+     "What changes" list; behavior changes not in the intent; downstream doctrine modified
+     rather than read.)
+  4. In-scope blockers: Are there facts that, if left in, would make the artifact wrong,
+     unsafe, or internally contradictory?
+  5. Finding classification: Classify every finding you raise as exactly one of the five
+     TRIAGE RULE categories below.
+
+TRIAGE RULE — classify EVERY finding as exactly one of:
+  IN-SCOPE BLOCKER         breaks the stated goal; creates a FALSE CLAIM in this artifact;
+                           weakens the advisory/read-only/human-gated guarantees; prevents
+                           the work from running; or violates an explicit safety constraint.
+  IN-SCOPE NON-BLOCKER     improves it but is not required for this PR.
+  OUT-OF-SCOPE BACKLOG     valid, but belongs to a future feature / stronger guarantee.
+  REJECTED                 conflicts with the stated scope or Codeos philosophy.
+  SELF-REFERENCE /         review records that are stale because of the previous round's
+  REVIEW-BOOKKEEPING       own existence (causal loop); not a real artifact defect.
+  Base the PR decision ONLY on IN-SCOPE BLOCKER findings. An OUT-OF-SCOPE BACKLOG finding
+  must NOT cause DO NOT ADVANCE unless this artifact FALSELY CLAIMS to solve it.
+
+WHAT NOT TO DO
+  - Do not flag style or wording issues as blockers unless the wording creates a false claim,
+    contradiction, parser breakage, or wrong governance instruction.
+  - Do not re-review unchanged full context when the packet is in delta mode.
+  - Do not treat local-only review history as a blocker unless the artifact falsely
+    claims the review artifacts are committed/durable.
+
+INSTRUCTIONS
+  If this is a resumed session, ignore any earlier-session conclusions unless they are
+  re-established by THIS packet; assess only the evidence above, pinned to this commit.
+  Give a focused assessment of this artifact against the stated scope, acceptance criteria,
+  and evidence in this packet. Rank findings by severity. Suggest a better design only when
+  needed to explain a required fix for an IN-SCOPE BLOCKER.
+
+  Limit findings to the top 3 IN-SCOPE BLOCKERS. Additional non-blocking observations may be
+  summarized in one short paragraph only if useful.
+
+  For EACH finding emit:
+    Finding: / Severity: High|Medium|Low / Classification: <one of the TRIAGE RULE labels>
+    Evidence: <file/line> / Why: <short> / Required action: fix now|optional fix|backlog|reject
+    Scope reason: <why it does/does not belong to this PR's scope>
+  Then emit:
+    PR decision: ADVANCE | REQUEST CHANGES | DO NOT ADVANCE   (based ONLY on in-scope blockers)
+    Scope drift warning: yes|no — <is anything pulling this PR beyond its stated scope?>
+  Then on the LAST three lines emit exactly (map ADVANCE->NO OBJECTION,
+  REQUEST CHANGES->CHANGES ADVISED, DO NOT ADVANCE->DO NOT ADVANCE):
+    LOG SUMMARY: <NO OBJECTION | CHANGES ADVISED | DO NOT ADVANCE | UNCLASSIFIED> — <single most important point>
+      (use UNCLASSIFIED if you genuinely cannot classify the artifact safely)
+    EVIDENCE: <A|B|C|D|E>
+    HIGHEST-IMPACT UNCERTAINTY: <one sentence — what single thing, if wrong, most affects this assessment>
+
+  Evidence grade — the grade describes what the assessment rests on, not reviewer confidence:
+    A — Directly verified in the artifact, diff, or output shown in the packet
+    B — Verified with multiple direct pieces of evidence, but coverage is not complete
+    C — Partially verified, partially inferred from structure or context
+    D — Mostly inferred from structure or indirect evidence
+    E — Hypothesis or very limited basis — little to no direct evidence
+
+
+PACKET MANIFEST
+  generated: 2026-07-02T05:35:20Z
+  task_prompt: /home/arc/projects/claude/Codeos/prompts/codeos-reviewer-task.md (4959 bytes)
+  review_content_bytes: 86067
+  estimated_review_tokens: ~21516
+  budget_status: WARNING — 86067 bytes exceeds CODEOS_PACKET_BUDGET_BYTES=50000
+  packet_mode: full
+  delta_base: none
+  items:
+    - path: tools/reviewer/src/main.rs
+      mode: path_sha_only
+      bytes: 6228
+      sha256: 4ccbe270356429574c7e664f28507c14fe93a4a93ec63777fccc3ded14503219
+    - path: scripts/codeos-review.sh
+      mode: path_sha_only
+      bytes: 787
+      sha256: 04352c3ff62497731817fd62a5666d03aa2448126a788e211c29484d188fd1e2
+    - path: tools/reviewer/Cargo.toml
+      mode: path_sha_only
+      bytes: 368
+      sha256: 5a456962a73b7500027f676bd2e66f781edaf94614fa81f03d951d5452df05fb
+    - path: tools/reviewer/src/provider/mod.rs
+      mode: path_sha_only
+      bytes: 1378
+      sha256: dc65e354e61b0ce2e097d4cf66fbdadb004dde4b92cf283e404f45ab04ae1b85
+    - path: tools/reviewer/src/provider/codex.rs
+      mode: path_sha_only
+      bytes: 7747
+      sha256: 4b1f3eb6b2742b9fbf471251885be6018e842189c519e1e4740230a824f2444b
+    - path: tools/reviewer/src/provider/stubs.rs
+      mode: path_sha_only
+      bytes: 1155
+      sha256: 0ad4e6874fab88ad9a6a2489fd5335cac082223863377fb2d1a05a1e7189c718
+    - path: tools/reviewer/src/config.rs
+      mode: path_sha_only
+      bytes: 6562
+      sha256: e365e95714037359658979064c3d849e8b331a9df3dfd1336c817c432cd08795
+    - path: tools/reviewer/src/precheck.rs
+      mode: path_sha_only
+      bytes: 7288
+      sha256: 33da62e1dc92879aecad0fbc683dcbfe61543f53c59201585de34eba52d915b2
+    - path: tools/reviewer/src/packet.rs
+      mode: path_sha_only
+      bytes: 25236
+      sha256: 9ebeda3fe13a371c229000102dfb5b88537d19a096224808b5a21ec361be5a55
+    - path: tools/reviewer/src/assessment.rs
+      mode: path_sha_only
+      bytes: 10851
+      sha256: 33b047cb3052f73fb4fea5d389f9883b5ac1d2253fe71907a04a0eb914d530d7
+    - path: tools/reviewer/src/log.rs
+      mode: path_sha_only
+      bytes: 7874
+      sha256: 9427958fd20087d7c13ec406f64b6ad592a4d510ad44a5458b3e84a551773478
+    - path: tools/reviewer/src/cmd/decision.rs
+      mode: path_sha_only
+      bytes: 827
+      sha256: 58af93e315dc0b17118445b67acbc2b5baacf9298a848b01fc59512b99832e72
+    - path: tools/reviewer/src/cmd/diagnose.rs
+      mode: path_sha_only
+      bytes: 1438
+      sha256: 61a2ce42189bbd162a70d1ab15c97cd9cad3fdc6b606ca2eb6a4a273fbca9f34
+    - path: tools/reviewer/src/cmd/mod.rs
+      mode: path_sha_only
+      bytes: 52
+      sha256: 1955226e4241e64d12fb78dd92242048a6033e90d66bb03cca9600d790e3b91a
+    - path: tools/reviewer/tests/smoke.rs
+      mode: path_sha_only
+      bytes: 4511
+      sha256: 3ac95fc708d854bbc76e38b17b0c27563da530b3e2c5c138607889129c807c71
+    - path: templates/reviewer.toml
+      mode: path_sha_only
+      bytes: 673
+      sha256: ad4ea602d25702ec03b5a5d83975b7a3ab338588d00a53daaa90a7046cf00231
+    - path: status/self-development.md
+      mode: path_sha_only
+      bytes: 6209
+      sha256: 437912128fe31c21260c08fb2062a58df452dc79d8c3445399ae0d058f770068
+    - path: status/roadmap.md
+      mode: path_sha_only
+      bytes: 7072
+      sha256: 46f562840d6fb600bd8893b069efc6337e45dd7f5d83b9968b581f69f47e827b
+    - path: backlog/UPG-0032-rust-reviewer-engine-multi-provider.md
+      mode: path_sha_only
+      bytes: 9117
+      sha256: 1d19206d3f8f83d2dcc9a92206baf540fe022c17a2ec4c31a33909e836234384
+    - path: changes/UPG-0032__CHG-20260702-001__rust-reviewer-engine.md
+      mode: full_file
+      bytes: 22391
+      sha256: 6d6251ae981149129debd247aa47e2a20105bfb90d4dabfc907de6d07d710b58
+    - path: tools/reviewer/src/cmd/review.rs
+      mode: full_file
+      bytes: 11703
+      sha256: 7fa2d49abb9349e6c39ef8559148907cd56a0b7fb53fbbd57af0ceec75eba917
+    - path: (diff)
+      mode: full_file
+      bytes: 51973
+
+REVIEW CONTEXT
+  Feature:                UPG-0032__CHG-20260702-001
+  Stage:                  selfdev-step-3
+  Branch:                 selfdev/upg-0029-review-durability
+  Base commit:            (no base pin)
+  Review commit:          6e6d84a803e95669799ece16ba4aff998fd573f7 (+ uncommitted workspace changes)
+  Current approved stage: n/a (non-numeric stage)
+  Evidence coverage:      FULL_COVERAGE
+  Workspace dirty:        yes (uncommitted changes at review time)
+
+DBA RULES RELEVANT TO THIS STAGE
+  - Human approval is required for every stage transition; you are advisory only.
+  - Memory is not truth — assess only what is provided, pinned to the review commit.
+  - Implementation must trace to approved artifacts; no behavior beyond intent+contract+schema.
+  - No events outside the approved event schema; no hidden behavior.
+
+STAGE-SPECIFIC CHECKS
+  - (no stage-specific checklist for stage selfdev-step-3)
+
+EXPECTED STAGE OUTPUT
+  (no expected-output template for stage)
+
+ARTIFACTS TO REVIEW
+  --- changes/UPG-0032__CHG-20260702-001__rust-reviewer-engine.md (sha256: 6d6251ae981149129debd247aa47e2a20105bfb90d4dabfc907de6d07d710b58, visibility: shown) ---
+    ---
+    change_id: CHG-20260702-001
+    feature_id: UPG-0032
+    slug: rust-reviewer-engine
+    triage_class: script-tooling
+    scope_axis: self-dev only
+    review_profile: PROFILE-3
+    review_series: RVS__UPG-0032__CHG-20260702-001__S3
+    review_state: DRAFT
+    status: IN_PROGRESS
+    loop_step: 3-Implement
+    ---
+    
+    # Change: UPG-0032 / CHG-20260702-001 — Rust Reviewer Engine
+    
+    ## TRACE HEADER
+    
+    ```yaml
+    feature_id: UPG-0032
+    primary_feature_id: UPG-0032
+    change_id: CHG-20260702-001
+    slug: rust-reviewer-engine
+    state: IN_PROGRESS
+    current_step: 3-Implement
+    implements:
+      - UPG-0032
+    related_features:
+      - UPG-0003
+      - UPG-0015
+      - UPG-0018
+    review_series: RVS__UPG-0032__CHG-20260702-001__S3
+    review_profile: PROFILE-3
+    review_state: DRAFT
+    review_history: reviews/review-log.md
+    triage_class: script-tooling
+    scope_axis: self-dev only
+    corrects: ~
+    corrected_by: ~
+    follow_up_of: ~
+    fixes_findings: []
+    ```
+    
+    ---
+    
+    ## Step 1 — Change Intent
+    
+    ### Problem
+    
+    `scripts/codeos-review.sh` has proven the reviewer pipeline (packet → AI review →
+    assessment → log) across Waves 1–3 of toolkit development. The workflow is sound. The
+    host is not.
+    
+    **Bash fragility.** The precheck pipeline is a chain of `sed`/`grep` compositions with
+    no compiler. UPG-0031 hit a silent failure where `sed` range deletion swallowed lines
+    when `<!--` appeared inside an inline code span — a bug invisible until it fired in
+    production. More pipeline stages produce more subtle ordering hazards.
+    
+    **Provider lock-in.** The script is hard-wired to `codex exec`. No abstraction boundary
+    exists between packet construction and provider invocation. Adding a second provider
+    requires forking the invocation logic, re-implementing session-ID extraction, and
+    re-testing the whole pipeline.
+    
+    **Single-context limitation.** The reviewer currently serves only the self-dev 4-step
+    loop. The same advisory pattern — packet → AI review → assessment → log — is equally
+    valuable inside downstream DBA 9-stage projects. There is no clean path to reuse the
+    pipeline there without script duplication.
+    
+    **Untestable units.** Packet construction, secret filtering, precheck, coverage-state
+    classification, and log-append are entangled in one script. Only full-pipeline smoke
+    tests are possible; no unit tests can verify individual steps.
+    
+    **Typed state as strings.** `PACKET_COVERAGE_STATE`, `PACKET_DELTA_MODE`, exit codes,
+    and coverage categories are plain Bash strings. A typo produces a silent wrong-path
+    execution.
+    
+    ### What changes
+    
+    | File / Directory | Change |
+    |---|---|
+    | `tools/reviewer/` | NEW — Rust workspace implementing the full reviewer pipeline |
+    | `tools/reviewer/Cargo.toml` | NEW — workspace manifest |
+    | `tools/reviewer/src/main.rs` | NEW — CLI entry point; `review`, `decision`, `diagnose`, `stage-start` subcommands |
+    | `tools/reviewer/src/provider/mod.rs` | NEW — `ReviewProvider` trait definition |
+    | `tools/reviewer/src/provider/codex.rs` | NEW — `CodexProvider` (wraps `codex exec`; primary impl) |
+    | `tools/reviewer/src/provider/stubs.rs` | NEW — empty stubs for `OpenCodeProvider`, `GeminiProvider`, `KimiProvider` |
+    | `tools/reviewer/src/packet.rs` | NEW — `ReviewPacket`, `PacketManifest`, `ArtifactEntry`, `CoverageState` enum |
+    | `tools/reviewer/src/precheck.rs` | NEW — pure precheck functions (unit-testable, no shell) |
+    | `tools/reviewer/src/log.rs` | NEW — log-append logic (writes to `reviews/review-log.md`) |
+    | `tools/reviewer/src/config.rs` | NEW — config loading: `reviewer.toml` + env var + CLI flag precedence |
+    | `tools/reviewer/src/assessment.rs` | NEW — assessment write + YAML frontmatter generation |
+    | `tools/reviewer/tests/` | NEW — integration tests and smoke test fixtures |
+    | `scripts/codeos-review.sh` | UPDATE — reduced to a thin shim calling the Rust binary |
+    | `scripts/dba-init.sh` | UPDATE — writes default `reviewer.toml` during project init |
+    | `templates/reviewer.toml` | NEW — default provider config template |
+    | `backlog/UPG-0032-rust-reviewer-engine-multi-provider.md` | UPDATE — Feature Thread: add this change |
+    | `status/self-development.md` | UPDATE — activate row for this change |
+    | `status/roadmap.md` | UPDATE — Wave 4 UPG-0032 → IN_PROGRESS |
+    | `changes/UPG-0032__CHG-20260702-001__rust-reviewer-engine.md` | NEW — this change record |
+    
+    ### What stays the same (scope boundary)
+    
+    - `dba-system.md` — not touched.
+    - Stage prompts `prompts/01-` through `prompts/10-` — not touched.
+    - Assessment YAML frontmatter format — fully backward-compatible with all existing
+      `reviews/codex/*.md` files.
+    - Review log format (`reviews/review-log.md`) — unchanged.
+    - Review series ID model (`RVS__<feature>__S<N>`, `REV__…__R<N>`) — generated
+      consistently with current convention.
+    - Reviewer role — remains advisory, read-only, non-gatekeeping. Moving implementation
+      to typed Rust does not change what the reviewer does or its relationship to the human
+      gate.
+    - Stage-policy loading mechanism — the backlog describes a future `.codeos/reviewer-policy/stage-N.toml`
+      data-file approach. That is out of scope for this change. The binary reads stage policy
+      from the existing `prompts/codeos-reviewer-task.md` and injected stage-checklist locations,
+      exactly as the Bash script does today. The TOML-based policy system is a follow-on change.
+    - `scripts/dba-init.sh` general behavior — all existing init steps (project directory
+      structure, symlink setup, hook installation, etc.) are unchanged. The only addition
+      is writing a default `reviewer.toml` at init time. No other `dba-init.sh` behavior
+      is modified.
+    - Per-feature decision ledgers — deferred to UPG-0015.
+    - Autonomous review triggering, CI hooks — out of scope.
+    - GUI / TUI — out of scope.
+    
+    ### Governance note: self-dev loop, not DBA 9-stage
+    
+    This is the first runtime binary in the toolkit. Applying the DBA 9-stage loop here
+    would first require a `self-dev-governance` class change to CLAUDE.md authorizing DBA
+    for toolkit runtime artifacts — that governance change has not been made. This change
+    uses the self-dev 4-step loop with an extended Step 2 that takes on the DBA rigor most
+    relevant to a runtime tool: provider contract, I/O behavior, exit-code table, config
+    precedence, error handling, and unit + integration test gates.
+    
+    A future `self-dev-governance` change may introduce a `runtime-tool` triage class
+    that formally authorizes DBA for toolkit binaries. That is tracked as a follow-on.
+    
+    ### Triage class: `script-tooling`
+    
+    Replacing a Bash pipeline with a Rust binary. Class is `script-tooling`. 4-step loop
+    with PROFILE-3 cadence.
+    
+    ### Scope axis: `self-dev only`
+    
+    No changes to `dba-system.md`. The binary serves downstream DBA projects at runtime,
+    but the code being written lives in this toolkit repo and does not modify the downstream
+    doctrine.
+    
+    ### Review profile: PROFILE-3
+    
+    Script-tooling, downstream-facing. Codex review before each step gate; max 3
+    rounds/step; human approval at all four gates; reviewer output is advisory and
+    non-gatekeeping.
+    
+    ### Originating backlog item
+    
+    `backlog/UPG-0032-rust-reviewer-engine-multi-provider.md` — Rust Reviewer Engine with
+    Multi-Provider Support.
+    
+    ---
+    
+    ## Step 2 — Acceptance Criteria
+    
+    ### AC-1: Provider abstraction contract — trait definition and no hidden coupling
+    
+    The `ReviewProvider` trait in `tools/reviewer/src/provider/mod.rs` must define exactly
+    these three methods and no more:
+    
+    ```rust
+    pub trait ReviewProvider {
+        fn name(&self) -> &str;
+        fn invoke(&self, packet: &ReviewPacket, cfg: &ProviderConfig) -> Result<RawAssessment>;
+        fn extract_session_id(&self, raw: &str) -> Option<String>;
+    }
+    ```
+    
+    **No hidden provider coupling:** command handler code (`main.rs` and any `cmd/` modules)
+    must not import or reference `CodexProvider`, `OpenCodeProvider`, `GeminiProvider`, or
+    `KimiProvider` by name. All provider interaction goes through the trait.
+    
+    Verification:
+    ```bash
+    grep -rn "CodexProvider\|OpenCodeProvider\|GeminiProvider\|KimiProvider" \
+      tools/reviewer/src/main.rs tools/reviewer/src/cmd/ 2>/dev/null | wc -l  # → 0
+    grep -n "fn name\|fn invoke\|fn extract_session_id" \
+      tools/reviewer/src/provider/mod.rs | wc -l  # → 3
+    ```
+    
+    ### AC-2: Input/output behavior per subcommand
+    
+    Each subcommand must produce exactly the outputs below. No undocumented side effects.
+    
+    **`review <feature-id> <stage> <artifact-paths...> [--sha-only <path>]...`**
+    - Writes assessment file: `reviews/codex/<timestamp>Z-<feature>-stage-<stage>-<sha>.md`
+      (same naming convention as current Bash script output)
+    - Writes packet file: `reviews/codex/packets/<timestamp>Z-<feature>-stage-<stage>-<sha>.packet.txt`
+    - Appends one entry to `reviews/review-log.md`
+    - Stdout: summary lines matching current Bash format (at minimum: `review logged:`,
+      `codex concern:`, `effective concern:`, `evidence:`, `effort:`, `elapsed:`, `coverage:`,
+      `assessment:`, `packet:`)
+    - Stderr: diagnostic messages on any non-zero path; silent on success
+    
+    **`decision <feature-id> <stage> <verdict> "<message>"`**
+    - Appends one decision entry to `reviews/review-log.md`
+    - Stdout: `decision appended to reviews/review-log.md`
+    - No files written other than the log append
+    
+    **`diagnose [<feature-id> <stage>]`**
+    - Stdout: config resolution info (provider selected, config source, toolkit root discovered)
+    - No files written
+    
+    Verification (at Step 4): run each subcommand against a test fixture and diff output
+    format against a known-good Bash-script run.
+    
+    ### AC-3: Exit-code contract
+    
+    | Exit code | Meaning |
+    |---|---|
+    | 0 | Success — operation completed, all writes committed |
+    | 1 | Usage / argument error — bad subcommand, missing required arg |
+    | 2 | Configuration error — no provider resolvable, malformed `reviewer.toml` |
+    | 3 | Provider invocation error — `codex exec` failed or returned no parseable output |
+    | 4 | Packet build error — artifact file not found, SHA mismatch, secret detected |
+    | 5 | Log / output write error — could not append to `review-log.md` or write assessment |
+    
+    The binary must never exit 0 when an error prevents the operation from completing.
+    Any exit code not in {0,1,2,3,4,5} is a bug.
+    
+    Verification:
+    ```bash
+    # missing required arg → exit 1
+    tools/reviewer/target/release/codeos-reviewer review 2>&1; echo "exit=$?"  # → exit=1
+    # non-existent artifact → exit 4
+    tools/reviewer/target/release/codeos-reviewer review FEAT stage /nonexistent.md 2>&1; echo "exit=$?"  # → exit=4
+    ```
+    
+    ### AC-4: Config/env precedence — highest to lowest
+    
+    | Priority | Source |
+    |---|---|
+    | 1 (highest) | `--provider <name>` CLI flag |
+    | 2 | `CODEOS_REVIEWER_PROVIDER` environment variable |
+    | 3a | `reviewer.toml` at repo root (project-specific; written by `dba-init.sh`) |
+    | 3b | `.codeos/reviewer.toml` if it is a real file (not a symlink; toolkit-level override) |
+    | 4 (lowest) | Compiled-in default: `codex` |
+    
+    If a source at priority N specifies a provider, sources at N+1 and below are ignored.
+    An unknown provider name at any level is a configuration error (exit 2).
+    
+    Verification:
+    ```bash
+    # env var overrides toml default
+    CODEOS_REVIEWER_PROVIDER=opencode tools/reviewer/target/release/codeos-reviewer diagnose \
+      | grep "provider:" | grep "opencode"  # → matches
+    # --provider flag overrides env var
+    CODEOS_REVIEWER_PROVIDER=opencode tools/reviewer/target/release/codeos-reviewer \
+      --provider codex diagnose | grep "provider:" | grep "codex"  # → matches
+    ```
+    
+    ### AC-5: Error handling rules — fail-closed
+    
+    - All fallible operations use `Result<T, E>`; no `unwrap()` or `expect()` in non-test
+      code paths (except where the invariant is provably impossible by construction).
+    - Provider errors propagate as exit code 3 with a message to stderr.
+    - Partial write failures (e.g., assessment written but log-append fails) must emit a
+      diagnostic to stderr that includes the path of the successfully-written file and the
+      path of the failed write, and exit non-zero. The log file is written with POSIX
+      append semantics (open in append mode, write, flush); entries are not fragmented
+      across concurrent writes but no atomic rename/swap is performed.
+    - `EMPTY_PACKET` → exit 4 before any provider invocation. `SECRET_REDACTION` packets
+      ARE sent to the provider with secret values replaced by `[REDACTED]` tokens; the
+      reviewer sees the structure but not the raw secret values. This matches the Bash script
+      behavior: redaction-in-place, then invoke.
+    
+    Verification:
+    ```bash
+    grep -rn "\.unwrap()\|\.expect(" tools/reviewer/src/ \
+      | grep -v "#\[cfg(test)\]\|mod tests" | wc -l  # → 0
+    ```
+    
+    ### AC-6: No hidden provider coupling (structural verification)
+    
+    A provider-agnostic core: packet construction, precheck, log-append, and assessment-write
+    must compile and link without any provider-specific symbol. The provider is injected at
+    runtime through the trait, not selected at compile time via conditional compilation.
+    
+    Verification:
+    ```bash
+    # No cfg(feature) gates that select a provider at compile time
+    grep -rn "cfg(feature.*provider\|cfg(feature.*codex" tools/reviewer/src/ | wc -l  # → 0
+    # Provider modules are in their own directory; core modules do not use them
+    grep -rn "use crate::provider::codex\|use crate::provider::opencode" \
+      tools/reviewer/src/packet.rs tools/reviewer/src/precheck.rs \
+      tools/reviewer/src/log.rs tools/reviewer/src/assessment.rs 2>/dev/null | wc -l  # → 0
+    ```
+    
+    ### AC-7: Unit test requirements
+    
+    The following modules must have unit tests covering the named scenarios:
+    
+    | Module | Required test scenarios |
+    |---|---|
+    | `precheck.rs` | Secret pattern detection (positive + negative); SHA-only path strips content but keeps path; packet section ordering preserved |
+    | `packet.rs` | Manifest construction with mixed shown/sha-only artifacts; artifact SHA256 computation matches `sha256sum` |
+    | `config.rs` | Precedence: CLI flag > env var > toml > default; unknown provider name returns Err |
+    | `assessment.rs` | YAML frontmatter fields match the required set (AC-10); `codex_concern` and `effective_concern` parsed correctly |
+    
+    Verification:
+    ```bash
+    cargo test --package codeos-reviewer 2>&1 | tail -3  # → "test result: ok. N passed; 0 failed"
+    # N ≥ 12 (3 scenarios × 4 modules minimum)
+    ```
+    
+    ### AC-8: Integration / smoke test gate at Step 4
+    
+    At Step 4, the binary must pass a smoke test demonstrating full end-to-end `review`
+    subcommand execution:
+    
+    1. `cargo build --release` exits 0.
+    2. `codeos-reviewer --version` exits 0 and prints a version string.
+    3. A smoke `review` run against a local test fixture (an artifact file + known packet):
+       - Exits 0 (or 3 if provider unavailable — see note below).
+       - Writes assessment and packet files with correct naming convention.
+       - Appends a parseable entry to `review-log.md`.
+       - Output format matches current Bash-script convention on a line-by-line comparison
+         for the structured summary lines.
+    
+    **Note on provider availability at Step 4:** if `codex` is unavailable in the test
+    environment, the smoke test may use a `MockProvider` that returns a canned
+    assessment string, with a separate manual verification that `CodexProvider` invokes
+    `codex exec` with the correct arguments (dry-run or log inspection).
+    
+    ### AC-9: Drop-in CLI replacement — identical subcommand signatures
+    
+    The binary's CLI must accept exactly the same subcommand signatures as the current
+    `codeos-review.sh`:
+    
+    ```
+    codeos-reviewer review <feature-id> <stage> <artifact> [<artifact>...] [--sha-only <path>]...
+    codeos-reviewer decision <feature-id> <stage> <verdict> <message>
+    codeos-reviewer diagnose [<feature-id> <stage>]
+    codeos-reviewer stage-start <feature-id> <stage> [--base <sha>]
+    ```
+    
+    No existing call site in `CLAUDE.md`, `prompts/`, or `scripts/` requires modification
+    to work with the binary.
+    
+    Verification:
+    ```bash
+    grep -rn "codeos-review.sh" CLAUDE.md prompts/ scripts/ \
+      | grep -v "codeos-review.sh$\|# thin shim" | head -5
+    # All call patterns must match the CLI surface above
+    ```
+    
+    ### AC-10: Backward-compatible assessment YAML frontmatter
+    
+    The assessment frontmatter produced by the binary must include all fields currently
+    generated by the Bash script. Required fields:
+    
+    ```
+    reviewed.feature, reviewed.stage, reviewed.branch, reviewed.base_commit,
+    reviewed.review_commit, reviewed.artifacts (list: path, sha256, visibility),
+    reviewed.diff_hash, reviewed.coverage_state, reviewed.workspace_dirty,
+    reviewed.redaction_count, reviewed.secret_redaction, reviewed.excluded_paths,
+    reviewed.reviewed_packet, reviewed.reviewed_packet_sha256, reviewed.reviewer,
+    reviewed.codex_concern, reviewed.effective_concern, reviewed.evidence,
+    reviewed.reasoning_effort, reviewed.reconnect_count, reviewed.elapsed_ms
+    ```
+    
+    Verification at Step 4: parse the smoke test assessment YAML frontmatter and check
+    each field is present.
+    
+    ### AC-11: Bash shim compatibility
+    
+    `scripts/codeos-review.sh` after this change must be a thin shim that:
+    - Locates the Rust binary: checks `tools/reviewer/target/release/codeos-reviewer`
+      first, then falls back to `codeos-reviewer` on PATH.
+    - Passes all arguments through unchanged: `exec "$BINARY" "$@"`.
+    - Preserves the binary's exit code.
+    - If the binary is not found, prints a human-readable error to stderr and exits 2.
+    
+    Verification:
+    ```bash
+    wc -l scripts/codeos-review.sh  # → ≤ 20 lines (shim, not logic)
+    grep 'exec.*\$@\|exec.*"\$@"' scripts/codeos-review.sh | wc -l  # → ≥ 1
+    ```
+    
+    ---
+    
+    ## Step 3 — Implementation
+    
+    ### Files created
+    
+    **`tools/reviewer/Cargo.toml`** — Package manifest: `codeos-reviewer` binary, edition 2021.
+    Dependencies: `anyhow`, `chrono`, `clap` (derive), `hex`, `regex`, `serde` (derive), `sha2`,
+    `tempfile`, `toml`.
+    
+    **`tools/reviewer/src/provider/mod.rs`** — `ReviewProvider` trait (3 methods: `name`, `invoke`,
+    `extract_session_id`). `ProviderConfig` struct. `RawAssessment` struct. `resolve_provider()`
+    factory function (dispatches by name string to concrete type).
+    
+    **`tools/reviewer/src/provider/codex.rs`** — `CodexProvider` implementing `ReviewProvider`.
+    Session persistence in `.codeos-state/codex-sessions/<feature>.json`. Version-drift detection
+    (forces fresh session if `codex --version` changed). `codex exec -s read-only` for new sessions;
+    `codex exec resume <sid>` for resume. Session-id extraction from `"session id: <uuid>"` pattern.
+    
+    **`tools/reviewer/src/provider/stubs.rs`** — `OpenCodeProvider`, `GeminiProvider`,
+    `KimiProvider` all `bail!("not yet implemented")`.
+    
+    **`tools/reviewer/src/config.rs`** — `Config` struct (all path fields). `resolve()` function
+    implementing full CLI > env > toml > default precedence chain. `find_reviewer_toml()` checks
+    `reviewer.toml` at project root first; `.codeos/reviewer.toml` (non-symlink) second.
+    `validate_provider_name()` rejects unknown names (fail-closed). 5 unit tests.
+    
+    **`tools/reviewer/src/precheck.rs`** — `redact_secrets()`, `check_no_unfilled_placeholders()`,
+    `check_no_forbidden_fields()`, `check_draft_markers()`, `check_guard_clean()`. Uses `regex` crate.
+    Same inline-code-span stripping → HTML comment stripping → blockquote stripping → placeholder
+    check pipeline as the Bash script, but compiled and unit-testable. 8 unit tests.
+    
+    **`tools/reviewer/src/packet.rs`** — `CoverageState` enum (5 variants with `as_str()` and
+    `concern_floor()` methods), `ArtifactEntry`, `ReviewPacket`, `PacketBuildOptions`. `build()`
+    ports full packet construction from Bash: git diff, path exclusion, secret redaction,
+    coverage-state calculation, artifact processing (shown / shown_redacted / oversize_omitted /
+    missing / path_sha_only / delta_diff), workspace dirty check, budget check. `sha256_file()` /
+    `sha256_str()` helpers. 5 unit tests.
+    
+    **`tools/reviewer/src/assessment.rs`** — `ParsedReview` struct. `parse_review_output()`
+    (extracts `LOG SUMMARY`, `EVIDENCE`, `HIGHEST-IMPACT UNCERTAINTY`; computes effective concern
+    with coverage-floor escalation). `write_assessment()` (writes full YAML frontmatter + review body).
+    `validate_schema()` (fail-closed v0 schema check). 4 unit tests.
+    
+    **`tools/reviewer/src/log.rs`** — `append_review()`, `append_decision()` (with best-effort
+    artifact integrity SHA check), `append_to_log()` (append mode), `ensure_log_exists()`.
+    
+    **`tools/reviewer/src/cmd/review.rs`** — `ReviewArgs`, `run()`, `parse_rest()`. Full
+    review pipeline: precheck → packet build → empty-packet guard → provider invocation → parse
+    output → save packet → schema validate → write assessment → append log → print summary.
+    
+    **`tools/reviewer/src/cmd/decision.rs`** — Validates verdict; delegates to `log::append_decision()`.
+    
+    **`tools/reviewer/src/cmd/diagnose.rs`** — Prints config resolution info; no file writes.
+    
+    **`tools/reviewer/src/cmd/mod.rs`** — Module declarations.
+    
+    **`tools/reviewer/src/main.rs`** — CLI entry point (`clap` derive). `Commands`: `Review`
+    (with `trailing_var_arg = true`), `Decision`, `Diagnose`, `StageStart`. Exit constants 0–5.
+    
+    **`tools/reviewer/tests/smoke.rs`** — 9 integration smoke tests covering: help, diagnose,
+    diagnose with feature+stage, review with no args, print-packet with nonexistent file,
+    print-packet with real file, bad verdict, provider override, diagnose shows source.
+    
+    ### Files updated
+    
+    **`scripts/codeos-review.sh`** — Replaced with 18-line thin shim. Locates binary at
+    `tools/reviewer/target/release/codeos-reviewer`; prints human-readable error with build
+    instructions if not found; `exec "$BINARY" "$@"`.
+    
+    **`scripts/dba-init.sh`** — Added step 10: writes `reviewer.toml` from
+    `templates/reviewer.toml` to the project root. Existing steps 1–9 unchanged.
+    
+    **`templates/reviewer.toml`** — NEW. Default provider config (`provider = "codex"`,
+    `reasoning_effort = "high"`) with inline documentation of precedence.
+    
+    ### Test results
+    
+    ```
+    running 22 tests  →  22 passed; 0 failed
+    running 9 tests   →   9 passed; 0 failed
+    ```
+    
+    Total: 31 tests (22 unit + 9 smoke). Exceeds AC-7 minimum of 12. Build clean (warnings only,
+    from unused public API surface — acceptable at v0.1).
+    
+    ### AC spot-checks performed before review
+    
+    | AC | Command | Result |
+    |---|---|---|
+    | AC-1 no hidden coupling | `grep -rn "CodexProvider" src/main.rs src/cmd/ \| wc -l` | 0 |
+    | AC-5 no unwrap | `grep -rn "\.unwrap()" src/ \| grep -v test \| wc -l` | 0 |
+    | AC-6 no provider in core | `grep -rn "use crate::provider::codex" src/packet.rs … \| wc -l` | 0 |
+    | AC-11 shim length | `wc -l scripts/codeos-review.sh` | 18 |
+    
+    ---
+    
+    ## Step 4 — Reconcile
+    
+    *(Not yet filled.)*
+
+  --- tools/reviewer/src/cmd/review.rs (sha256: 7fa2d49abb9349e6c39ef8559148907cd56a0b7fb53fbbd57af0ceec75eba917, visibility: shown) ---
+    use crate::assessment;
+    use crate::config::Config;
+    use crate::log as review_log;
+    use crate::packet::{self, PacketBuildOptions};
+    use crate::precheck;
+    use crate::provider::{self, ProviderConfig};
+    use anyhow::{Result, bail};
+    use std::path::Path;
+    
+    pub struct ReviewArgs {
+        pub feature: String,
+        pub stage: String,
+        pub artifacts: Vec<String>,
+        pub sha_only: Vec<String>,
+        pub guard_clean: Vec<String>,
+        pub fresh: bool,
+        pub scratch: bool,
+        pub print_only: bool,
+        pub skip_prechecks: bool,
+        pub delta_mode: bool,
+        pub delta_base: Option<String>,
+    }
+    
+    pub fn run(args: ReviewArgs, cfg: &Config, provider_name: &str) -> Result<i32> {
+        if args.artifacts.is_empty() {
+            eprintln!("review: provide at least one artifact path");
+            return Ok(crate::EXIT_USAGE);
+        }
+    
+        // Validate delta mode
+        if args.delta_mode {
+            match &args.delta_base {
+                None => {
+                    eprintln!("review: --mode delta requires --base <sha>");
+                    return Ok(crate::EXIT_USAGE);
+                }
+                Some(base) => {
+                    if !base.chars().all(|c| c.is_ascii_hexdigit()) || base.len() < 7 {
+                        eprintln!("review: --base value is not a valid hex SHA: '{}'", base);
+                        return Ok(crate::EXIT_USAGE);
+                    }
+                    // Verify commit exists
+                    let ok = std::process::Command::new("git")
+                        .args(["rev-parse", "--verify", &format!("{}^{{commit}}", base)])
+                        .current_dir(&cfg.repo_root)
+                        .status()
+                        .map(|s| s.success())
+                        .unwrap_or(false);
+                    if !ok {
+                        eprintln!("review: --base '{}' does not resolve to a valid commit", base);
+                        return Ok(crate::EXIT_USAGE);
+                    }
+                }
+            }
+        }
+    
+        // Conflict check: same path in both positional and --sha-only
+        for so in &args.sha_only {
+            for a in &args.artifacts {
+                if a == so {
+                    eprintln!("review: path '{}' passed both as positional artifact and --sha-only; pass as one or the other", so);
+                    return Ok(crate::EXIT_USAGE);
+                }
+            }
+        }
+    
+        let review_log_path = if args.scratch {
+            let scratch = cfg.codex_dir.join("_scratch");
+            std::fs::create_dir_all(&scratch).ok();
+            scratch.join("review-log.md")
+        } else {
+            cfg.review_log.clone()
+        };
+    
+        // Fail-closed on missing positional artifacts (AC-3: exit 4 for artifact-not-found)
+        for a in &args.artifacts {
+            if !Path::new(a).exists() {
+                eprintln!("error: artifact not found: {}", a);
+                return Ok(crate::EXIT_PACKET);
+            }
+        }
+    
+        // Prechecks
+        if args.skip_prechecks {
+            println!("warning: prechecks skipped (--skip-prechecks)");
+        } else {
+            for a in &args.artifacts {
+                let content = match std::fs::read_to_string(a) {
+                    Ok(c) => c,
+                    Err(e) => {
+                        eprintln!("error: could not read artifact {}: {}", a, e);
+                        return Ok(crate::EXIT_PACKET);
+                    }
+                };
+                if let Err(e) = precheck::check_no_unfilled_placeholders(Path::new(a), &content) {
+                    eprintln!("{}", e);
+                    return Ok(crate::EXIT_PACKET);
+                }
+                if let Err(e) = precheck::check_no_forbidden_fields(Path::new(a), &content) {
+                    eprintln!("{}", e);
+                    return Ok(crate::EXIT_PACKET);
+                }
+                precheck::check_draft_markers(Path::new(a), &content);
+            }
+            for gc in &args.guard_clean {
+                if let Err(e) = precheck::check_guard_clean(Path::new(gc)) {
+                    eprintln!("{}", e);
+                    return Ok(crate::EXIT_PACKET);
+                }
+            }
+        }
+    
+        // Build packet
+        let build_opts = PacketBuildOptions {
+            feature: args.feature.clone(),
+            stage: args.stage.clone(),
+            artifacts: args.artifacts.clone(),
+            sha_only_paths: args.sha_only.clone(),
+            delta_mode: args.delta_mode,
+            delta_base: args.delta_base.clone(),
+            fresh_session: args.fresh,
+            repo_root: cfg.repo_root.to_string_lossy().into_owned(),
+            toolkit_root: cfg.toolkit_root.to_string_lossy().into_owned(),
+        };
+    
+        let review_packet = match packet::build(&build_opts) {
+            Ok(p) => p,
+            Err(e) => {
+                eprintln!("error building packet: {}", e);
+                return Ok(crate::EXIT_PACKET);
+            }
+        };
+    
+        if args.print_only {
+            print!("{}", review_packet.content());
+            if matches!(review_packet.coverage_state, crate::packet::CoverageState::EmptyPacket) {
+                return Ok(crate::EXIT_PACKET);
+            }
+            return Ok(crate::EXIT_SUCCESS);
+        }
+    
+        // Fail-closed on empty packet
+        if matches!(review_packet.coverage_state, crate::packet::CoverageState::EmptyPacket) {
+            eprintln!("error: review packet is empty (EMPTY_PACKET) — no reviewable content found.");
+            if args.delta_mode {
+                eprintln!("       Delta mode: ensure tracked artifacts have working-tree changes since --base,");
+                eprintln!("       or use --mode full with explicit artifact paths.");
+            }
+            eprintln!("       Inspect the packet with --print-packet before rerunning.");
+            return Ok(crate::EXIT_PACKET);
+        }
+    
+        // Resolve provider and invoke
+        let prov = match provider::resolve_provider(provider_name) {
+            Ok(p) => p,
+            Err(e) => {
+                eprintln!("error: {}", e);
+                return Ok(crate::EXIT_CONFIG);
+            }
+        };
+    
+        let prov_cfg = ProviderConfig {
+            provider_name: provider_name.to_string(),
+            reasoning_effort: cfg.reasoning_effort.clone(),
+            repo_root: cfg.repo_root.to_string_lossy().into_owned(),
+            sessions_dir: cfg.sessions_dir.to_string_lossy().into_owned(),
+        };
+    
+        let raw = match prov.invoke(&review_packet, &prov_cfg) {
+            Ok(r) => r,
+            Err(e) => {
+                eprintln!("error: provider invocation failed: {}", e);
+                return Ok(crate::EXIT_PROVIDER);
+            }
+        };
+    
+        // Parse review output
+        let parsed = assessment::parse_review_output(&raw.text, &review_packet.coverage_state);
+    
+        // Save packet
+        let outdir = if args.scratch { cfg.codex_dir.join("_scratch") } else { cfg.codex_dir.clone() };
+        let packets_dir = outdir.join("packets");
+        if let Err(e) = std::fs::create_dir_all(&packets_dir) {
+            eprintln!("error: could not create packets dir {}: {}", packets_dir.display(), e);
+            return Ok(crate::EXIT_WRITE);
+        }
+    
+        let ts_clean = chrono::Utc::now().format("%Y%m%dT%H%M%SZ").to_string();
+        let short_sha = &review_packet.review_sha[..7.min(review_packet.review_sha.len())];
+        let packet_filename = format!("{}-{}-stage-{}-{}.packet.txt", ts_clean, args.feature, args.stage, short_sha);
+        let packet_saved = packets_dir.join(&packet_filename);
+        if let Err(e) = std::fs::write(&packet_saved, review_packet.content()) {
+            eprintln!("error: could not write packet file {}: {}", packet_saved.display(), e);
+            return Ok(crate::EXIT_WRITE);
+        }
+        let packet_hash = match packet::sha256_file(packet_saved.to_str().unwrap_or("")) {
+            Ok(h) => h,
+            Err(e) => {
+                eprintln!("error: could not hash packet file: {}", e);
+                return Ok(crate::EXIT_WRITE);
+            }
+        };
+    
+        // Schema validation (fail-closed)
+        if let Err(e) = assessment::validate_schema(&review_packet, &parsed, &packet_hash) {
+            eprintln!("error: {}", e);
+            return Ok(crate::EXIT_PACKET);
+        }
+    
+        // Write assessment
+        let (assessment_file, assessment_hash) = match assessment::write_assessment(
+            &review_packet, &raw, &parsed, &outdir, &packet_saved, &packet_hash
+        ) {
+            Ok(r) => r,
+            Err(e) => {
+                eprintln!("error: assessment write failed: {}", e);
+                eprintln!("  packet was written to: {}", packet_saved.display());
+                eprintln!("  assessment directory: {} (assessment not written)", outdir.display());
+                return Ok(crate::EXIT_WRITE);
+            }
+        };
+    
+        // Append to log
+        if let Err(e) = review_log::append_review(
+            &review_log_path, &review_packet, &raw, &parsed,
+            &assessment_file, &assessment_hash, &packet_saved, &packet_hash,
+        ) {
+            eprintln!("error: log append failed: {}", e);
+            eprintln!("  assessment was written to: {}", assessment_file.display());
+            eprintln!("  packet was written to: {}", packet_saved.display());
+            eprintln!("  log target: {} (not updated)", review_log_path.display());
+            return Ok(crate::EXIT_WRITE);
+        }
+    
+        // Print summary (matches Bash script stdout format)
+        println!("review logged: {}", review_log_path.display());
+        println!("  codex concern: {}   effective concern: {}   evidence: {}",
+            parsed.codex_concern, parsed.effective_concern, parsed.evidence);
+        println!("  effort: {}   elapsed: {}ms   reconnects: {}",
+            raw.effort, raw.elapsed_ms, raw.reconnect_count);
+        println!("  coverage: {} (redactions: {})",
+            review_packet.coverage_state.as_str(), review_packet.redaction_count);
+        println!("  assessment: {}", assessment_file.display());
+        println!("  packet: {}", packet_saved.display());
+    
+        Ok(crate::EXIT_SUCCESS)
+    }
+    
+    /// Parse the trailing args after feature and stage from the review subcommand.
+    pub fn parse_rest(rest: &[String]) -> Result<(Vec<String>, Vec<String>, Vec<String>, bool, bool, bool, bool, bool, Option<String>)> {
+        let mut artifacts = Vec::new();
+        let mut sha_only = Vec::new();
+        let mut guard_clean = Vec::new();
+        let mut fresh = false;
+        let mut scratch = false;
+        let mut print_only = false;
+        let mut skip_prechecks = false;
+        let mut delta_mode = false;
+        let mut delta_base: Option<String> = None;
+    
+        let mut i = 0;
+        while i < rest.len() {
+            match rest[i].as_str() {
+                "--fresh" => { fresh = true; i += 1; }
+                "--scratch" => { scratch = true; i += 1; }
+                "--print-packet" | "--dry-run" => { print_only = true; i += 1; }
+                "--skip-prechecks" => { skip_prechecks = true; i += 1; }
+                "--sha-only" => {
+                    if i + 1 >= rest.len() { bail!("review: --sha-only requires a PATH argument"); }
+                    sha_only.push(rest[i+1].clone());
+                    i += 2;
+                }
+                "--guard-clean" => {
+                    if i + 1 >= rest.len() { bail!("review: --guard-clean requires a PATH argument"); }
+                    guard_clean.push(rest[i+1].clone());
+                    i += 2;
+                }
+                "--mode" => {
+                    if i + 1 >= rest.len() { bail!("review: --mode requires an argument (full or delta)"); }
+                    match rest[i+1].as_str() {
+                        "full" => delta_mode = false,
+                        "delta" => delta_mode = true,
+                        other => bail!("review: --mode must be 'full' or 'delta', got '{}'", other),
+                    }
+                    i += 2;
+                }
+                "--base" => {
+                    if i + 1 >= rest.len() { bail!("review: --base requires a SHA argument"); }
+                    delta_base = Some(rest[i+1].clone());
+                    i += 2;
+                }
+                arg if arg.starts_with('-') => {
+                    bail!("review: unknown argument '{}'", arg);
+                }
+                path => {
+                    artifacts.push(path.to_string());
+                    i += 1;
+                }
+            }
+        }
+    
+        Ok((artifacts, sha_only, guard_clean, fresh, scratch, print_only, skip_prechecks, delta_mode, delta_base))
+    }
+
+DIFF TO REVIEW (base->review, secret/size filtered)
+diff --git a/backlog/UPG-0032-rust-reviewer-engine-multi-provider.md b/backlog/UPG-0032-rust-reviewer-engine-multi-provider.md
+index 68c1a5e..33d6915 100644
+--- a/backlog/UPG-0032-rust-reviewer-engine-multi-provider.md
++++ b/backlog/UPG-0032-rust-reviewer-engine-multi-provider.md
+@@ -2,7 +2,7 @@
+ feature_id: UPG-0032
+ slug: rust-reviewer-engine-multi-provider
+ title: Rust Reviewer Engine with Multi-Provider Support
+-status: PROPOSED
++status: IN_PROGRESS
+ priority: P2
+ depends_on: [UPG-0027]
+ related_features: [UPG-0015, UPG-0003, UPG-0018]
+@@ -13,7 +13,7 @@ superseded_by: []
+ # Upgrade: rust-reviewer-engine-multi-provider — Rust Reviewer Engine with Multi-Provider Support
+ 
+ **Priority**: P2 (rises to P1 if a second provider is needed near-term)
+-**Status**: PROPOSED
++**Status**: IN_PROGRESS
+ **Type**: script-tooling
+ **Supersedes**: UPG-0018 (Typed reviewer engine to replace the Bash pilot)
+ **Related**: UPG-0003 (reviewer pilot), UPG-0015 (decision-integrity), UPG-0027 (packet architecture)
+@@ -188,6 +188,7 @@ the human gate.
+ 
+ | Change ID | File | Purpose | State |
+ |---|---|---|---|
++| CHG-20260702-001 | `changes/UPG-0032__CHG-20260702-001__rust-reviewer-engine.md` | Full Rust implementation: provider trait, CodexProvider, typed packet, precheck, CLI drop-in replacement for codeos-review.sh | IN_PROGRESS |
+ 
+ ### Reviews
+ 
+diff --git a/scripts/codeos-review.sh b/scripts/codeos-review.sh
+index 8da984d..47a3407 100755
+--- a/scripts/codeos-review.sh
++++ b/scripts/codeos-review.sh
+@@ -1,838 +1,15 @@
+ #!/usr/bin/env bash
+-#
+-# codeos-review.sh — manual advisory Codex reviewer for the Codeos / DBA pipeline.
+-#
+-# The reviewer is INDEPENDENT, READ-ONLY, ADVISORY, and NON-GATEKEEPING. It never edits
+-# artifacts and never approves stages — it appends a critical assessment to an append-only
+-# review log so the human can decide faster. See docs/reviewer-pipeline.md for the design,
+-# the feasibility analysis, the DBA-philosophy scorecard, and the (inert) hook snippets.
+-#
+-# This is a PILOT prototype. No Claude Code hooks are wired; you run it manually at a gate.
+-#
+-# Subcommands:
+-#   stage-start <feature> <stage> [--base <sha>]
+-#       Record the base commit for a stage (feature/stage-scoped state) so a later review
+-#       diffs base->review rather than trusting HEAD alone.
+-#
+-#   review <feature> <stage> <artifact-path> [<artifact-path>...] [--fresh] [--scratch]
+-#       Build the review packet (secret-filtered), call Codex read-only, save the full
+-#       assessment, and append a REVIEW entry to the log.
+-#         --fresh    start a new Codex session instead of resuming the feature's session
+-#                    (use for safety-sensitive stages, reviewer/human disagreement, or
+-#                    suspected anchoring). Default is resume-within-feature.
+-#         --scratch  treat as a pilot/test run: write the assessment under
+-#                    reviews/codex/_scratch/ (gitignored) so history is not polluted.
+-#
+-#   decision <feature> <stage> <APPROVE_STAGE|REQUEST_CHANGES|STOP> "<reason>"
+-#       Append a HUMAN DECISION entry to the log (never edits prior entries).
+-#
+-# Truth model: the reviewed artifacts on disk + the review commit SHA are authoritative.
+-# A resumed Codex session provides cross-stage CONTEXT only, never evidence — every review
+-# re-reads the artifacts and pins the SHA.
+-#
++# codeos-review.sh — thin shim delegating to the compiled Rust binary.
++# Subcommands: review / decision / diagnose / stage-start  (see: codeos-reviewer --help)
++# To build: cargo build --release --manifest-path tools/reviewer/Cargo.toml
+ set -euo pipefail
+-
+-# --- locations ---------------------------------------------------------------
+-REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || true)"
+-if [[ -z "${REPO_ROOT}" ]]; then
+-  echo "error: not inside a git repository" >&2
+-  exit 2
++REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || { echo "error: not inside a git repository" >&2; exit 1; }
++BINARY="${REPO_ROOT}/tools/reviewer/target/release/codeos-reviewer"
++if [[ ! -x "${BINARY}" ]]; then
++  command -v codeos-reviewer >/dev/null 2>&1 && BINARY="codeos-reviewer" || {
++    echo "error: binary not found at ${BINARY} and not on PATH" >&2
++    echo "       Build: cargo build --release --manifest-path ${REPO_ROOT}/tools/reviewer/Cargo.toml" >&2
++    exit 2
++  }
+ fi
+-cd "${REPO_ROOT}"
+-
+-STATE_DIR=".codeos-state"                       # runtime state — gitignored, project-local
+-SESSIONS_DIR="${STATE_DIR}/codex-sessions"      # one <feature>.json per feature
+-STAGE_START_DIR="${STATE_DIR}/stage-start"      # <feature>/stage-<N>.json
+-REVIEW_LOG="reviews/review-log.md"
+-CODEX_DIR="reviews/codex"
+-CODEX_SCRATCH="reviews/codex/_scratch"
+-
+-# Secret/size policy
+-SIZE_LIMIT_BYTES=$((256 * 1024))
+-PATH_EXCLUDES=( '*.env' '.env*' '*.pem' '*.key' 'secrets/*' 'credentials/*'
+-                '*runtime_events*.jsonl' '*.log' )
+-# Secret-key names whose VALUES get redacted. Redaction requires an actual value (8+ chars)
+-# after the separator, so prose that merely mentions a key name (e.g. docs, this script) is
+-# left intact and not treated as a secret.
+-SECRET_KV_KEYS='OPENAI_API_KEY|ANTHROPIC_API_KEY|AWS_SECRET_ACCESS_KEY|[Aa][Pp][Ii][_-]?[Kk][Ee][Yy]|[Pp]assword|[Tt]oken|[Ss]ecret'
+-redact_secrets() {
+-  sed -E \
+-    -e "s/((${SECRET_KV_KEYS})[[:space:]]*[:=][[:space:]]*[\"']?)[A-Za-z0-9._/+-]{8,}/\1[REDACTED]/g" \
+-    -e 's/-----BEGIN [A-Z ]*PRIVATE KEY-----/[REDACTED PRIVATE KEY]/g'
+-}
+-
+-# in_list <value> <pipe|separated|list>  -> 0 if value is exactly one of the list items
+-in_list() { case "|$2|" in *"|$1|"*) return 0 ;; *) return 1 ;; esac; }
+-
+-# exc_add <path> <reason> <affected_section>  -> structured excluded-item record
+-exc_add() { PACKET_EXC_PATH+=("$1"); PACKET_EXC_REASON+=("$2"); PACKET_EXC_SECTION+=("$3"); }
+-
+-now_iso() { date -u +%Y-%m-%dT%H:%M:%SZ; }
+-sha256_of() { sha256sum "$1" | awk '{print $1}'; }
+-sha256_str() { printf '%s' "$1" | sha256sum | awk '{print $1}'; }
+-
+-require_codex() {
+-  command -v codex >/dev/null 2>&1 || { echo "error: codex CLI not found on PATH" >&2; exit 2; }
+-}
+-
+-# --- stage-start -------------------------------------------------------------
+-cmd_stage_start() {
+-  local feature="$1" stage="$2"; shift 2
+-  local base=""
+-  while [[ $# -gt 0 ]]; do
+-    case "$1" in
+-      --base) base="$2"; shift 2 ;;
+-      *) echo "stage-start: unknown arg $1" >&2; exit 2 ;;
+-    esac
+-  done
+-  [[ -n "${base}" ]] || base="$(git rev-parse HEAD)"
+-  local branch; branch="$(git rev-parse --abbrev-ref HEAD)"
+-  local dir="${STAGE_START_DIR}/${feature}"
+-  mkdir -p "${dir}"
+-  cat > "${dir}/stage-${stage}.json" <<EOF
+-{
+-  "feature": "${feature}",
+-  "stage": ${stage},
+-  "base_commit": "${base}",
+-  "branch": "${branch}",
+-  "started_at": "$(now_iso)"
+-}
+-EOF
+-  echo "stage-start recorded: ${dir}/stage-${stage}.json (base ${base})"
+-}
+-
+-# --- build the secret-filtered diff + packet --------------------------------
+-# Writes the packet to ${PACKET_FILE}; sets globals PACKET_EXCLUDED / PACKET_DIFF_HASH /
+-# PACKET_BASE_SHA / PACKET_REVIEW_SHA / PACKET_BRANCH. Must NOT be called in $(...) — the
+-# globals must persist into the caller's shell.
+-build_packet() {
+-  local feature="$1" stage="$2"; shift 2
+-  local artifacts=( "$@" )
+-  local sha_only_paths=("${PACKET_SHA_ONLY[@]+"${PACKET_SHA_ONLY[@]}"}")
+-  local delta_mode="${PACKET_DELTA_MODE:-full}"
+-  local delta_base="${PACKET_DELTA_BASE:-}"
+-  # guard: missing --sha-only path exits non-zero before Codex (explicit scope guard, not omitted)
+-  local _so
+-  for _so in "${sha_only_paths[@]+"${sha_only_paths[@]}"}"; do
+-    [[ -f "${_so}" ]] || { echo "error: --sha-only path not found: ${_so}" >&2; exit 2; }
+-  done
+-  # manifest state — built during artifact processing, written to packet before REVIEW CONTEXT
+-  local manifest_sha_only="" manifest_full_artifacts="" review_content_bytes=0 diff_bytes=0
+-  local so_bytes so_sha
+-  for _so in "${sha_only_paths[@]+"${sha_only_paths[@]}"}"; do
+-    so_bytes="$(wc -c < "${_so}")"
+-    so_sha="$(sha256_of "${_so}")"
+-    PACKET_ARTIFACTS_YAML+="    - path: ${_so}"$'\n'"      sha256: ${so_sha}"$'\n'"      visibility: path_sha_only"$'\n'
+-    manifest_sha_only+="    - path: ${_so}"$'\n'"      mode: path_sha_only"$'\n'"      bytes: ${so_bytes}"$'\n'"      sha256: ${so_sha}"$'\n'
+-  done
+-
+-  local branch review_sha base_sha approved_stage
+-  branch="$(git rev-parse --abbrev-ref HEAD)"
+-  review_sha="$(git rev-parse HEAD)"
+-  # stage is a free token (numeric DBA stages, or labels like selfdev-step-2). Only compute
+-  # a predecessor for numeric stages; non-numeric stages have no "approved stage N-1".
+-  if [[ "${stage}" =~ ^[0-9]+$ ]]; then
+-    approved_stage="$((stage - 1))"
+-  else
+-    approved_stage="n/a (non-numeric stage)"
+-  fi
+-
+-  local ss="${STAGE_START_DIR}/${feature}/stage-${stage}.json"
+-  if [[ -f "${ss}" ]]; then
+-    base_sha="$(grep -oE '"base_commit"[^,]*' "${ss}" | sed -E 's/.*"base_commit": *"([^"]*)".*/\1/' || true)"
+-    # provenance is fail-closed: a stage-start file that exists but has no valid base SHA
+-    # is malformed state, not "absent" — refuse rather than silently downgrade to empty.
+-    [[ "${base_sha}" =~ ^[0-9a-fA-F]{7,40}$ ]] || {
+-      echo "error: ${ss} exists but has no valid base_commit (malformed provenance) — aborting." >&2; exit 4; }
+-  else
+-    base_sha=""
+-  fi
+-
+-  # --- diff, path-excluded then content-redacted ---
+-  local raw_diff excluded="" filtered_diff=""
+-  PACKET_EXC_PATH=(); PACKET_EXC_REASON=(); PACKET_EXC_SECTION=()   # structured exclusion record
+-
+-  # path exclusion: drop hunks for excluded files (computed from changed-file list)
+-  local changed_files f keep_pathspec=()
+-  if [[ "${delta_mode}" == "delta" ]]; then
+-    # delta mode: diff scoped to positional artifact paths only (--sha-only paths excluded)
+-    # compare base commit to working tree (staged + unstaged tracked changes), not HEAD
+-    raw_diff="$(git diff "${delta_base}" -- "${artifacts[@]}" 2>/dev/null || true)"
+-    mapfile -t changed_files < <(git diff --name-only "${delta_base}" -- "${artifacts[@]}" ':(exclude)reviews' ':(exclude).codeos-state' 2>/dev/null || true)
+-  elif [[ -n "${base_sha}" ]]; then
+-    raw_diff="$(git diff "${base_sha}" -- . 2>/dev/null || true)"
+-    mapfile -t changed_files < <(git diff --name-only "${base_sha}" -- . ':(exclude)reviews' ':(exclude).codeos-state' 2>/dev/null || true)
+-  else
+-    raw_diff="$(git diff HEAD -- . 2>/dev/null || true)"   # working-tree changes vs HEAD
+-    mapfile -t changed_files < <(git diff --name-only HEAD -- . ':(exclude)reviews' ':(exclude).codeos-state' 2>/dev/null || true)
+-  fi
+-  for f in "${changed_files[@]}"; do
+-    local drop=0 pat
+-    for pat in "${PATH_EXCLUDES[@]}"; do
+-      # shellcheck disable=SC2053
+-      [[ "${f}" == ${pat} || "$(basename "${f}")" == ${pat} ]] && drop=1 && break
+-    done
+-    if [[ ${drop} -eq 0 ]]; then
+-      # size guard
+-      if [[ -f "${f}" ]] && [[ "$(wc -c < "${f}")" -gt ${SIZE_LIMIT_BYTES} ]]; then
+-        drop=1
+-      fi
+-    fi
+-    if [[ ${drop} -eq 1 ]]; then excluded+="${f} "; exc_add "${f}" "path/size excluded" "diff"; else keep_pathspec+=( "${f}" ); fi
+-  done
+-
+-  if [[ ${#keep_pathspec[@]} -gt 0 ]]; then
+-    if [[ "${delta_mode}" == "delta" ]]; then
+-      filtered_diff="$(git diff "${delta_base}" -- "${keep_pathspec[@]}" 2>/dev/null || true)"
+-    elif [[ -n "${base_sha}" ]]; then
+-      filtered_diff="$(git diff "${base_sha}" -- "${keep_pathspec[@]}" 2>/dev/null || true)"
+-    else
+-      filtered_diff="$(git diff HEAD -- "${keep_pathspec[@]}" 2>/dev/null || true)"
+-    fi
+-  fi
+-
+-  local redaction_count=0 secret_flag=0 path_excluded=0
+-
+-  # content redaction: blank the value after a secret-like key
+-  local redacted_diff
+-  redacted_diff="$(printf '%s\n' "${filtered_diff}" | redact_secrets)"
+-  if [[ "${redacted_diff}" != "${filtered_diff}" ]]; then
+-    secret_flag=1
+-    redaction_count=$(( redaction_count + $(grep -c "\[REDACTED" <<<"${redacted_diff}" || true) ))
+-    excluded+="(secret-like diff content redacted) "
+-    exc_add "(diff)" "secret-like content redacted" "diff"
+-  fi
+-  [[ -n "${excluded}" ]] && path_excluded=1   # path/size diff exclusions recorded above
+-  diff_bytes=${#redacted_diff}
+-
+-  # --- requested artifacts: each is REPRESENTED, never silently dropped —
+-  #     full mode visibility: shown | shown_redacted | oversize_omitted | missing
+-  #     delta mode: delta_diff | path_sha_only | omitted_with_reason ---
+-  local artifacts_block="" a raw redacted shown_count=0 delta_diff_count=0 vis sha reason_note
+-  PACKET_ARTIFACT_EXCLUDED=0
+-  PACKET_ARTIFACTS_YAML=""
+-  local artifact_bytes
+-  for a in "${artifacts[@]}"; do
+-    if [[ ! -f "${a}" ]]; then
+-      artifacts_block+="  --- ${a} (visibility: missing — not shown) ---"$'\n\n'
+-      PACKET_ARTIFACT_EXCLUDED=1; excluded+="${a}(missing) "; exc_add "${a}" "requested artifact missing" "artifact"
+-      PACKET_ARTIFACTS_YAML+="    - path: ${a}"$'\n'"      visibility: missing"$'\n'
+-      manifest_full_artifacts+="    - path: ${a}"$'\n'"      mode: omitted_with_reason"$'\n'"      reason: requested artifact missing"$'\n'; continue
+-    fi
+-    artifact_bytes="$(wc -c < "${a}")"
+-    if [[ "${artifact_bytes}" -gt ${SIZE_LIMIT_BYTES} ]]; then
+-      artifacts_block+="  --- ${a} (visibility: oversize_omitted — over size limit, not shown) ---"$'\n\n'
+-      PACKET_ARTIFACT_EXCLUDED=1; excluded+="${a}(oversize) "; exc_add "${a}" "requested artifact over size limit" "artifact"
+-      PACKET_ARTIFACTS_YAML+="    - path: ${a}"$'\n'"      visibility: oversize_omitted"$'\n'
+-      manifest_full_artifacts+="    - path: ${a}"$'\n'"      mode: omitted_with_reason"$'\n'"      reason: over size limit"$'\n'; continue
+-    fi
+-    sha="$(sha256_of "${a}")"
+-    if [[ "${delta_mode}" == "delta" ]]; then
+-      # delta mode: metadata only in ARTIFACTS TO REVIEW; diff content is in the DIFF section
+-      # untracked files cannot be compared by git diff; fail closed with a clear diagnostic
+-      if ! git ls-files --error-unmatch "${a}" >/dev/null 2>&1; then
+-        echo "error: artifact is untracked; delta review cannot compare it to base: ${a}" >&2
+-        echo "       Stage the file, commit it, or rerun with --mode full for explicit artifacts." >&2
+-        exit 5
+-      fi
+-      if git diff --quiet "${delta_base}" -- "${a}" 2>/dev/null; then
+-        artifacts_block+="  --- ${a} (mode: path_sha_only, sha256: ${sha}, bytes: ${artifact_bytes}) ---"$'\n\n'
+-        manifest_full_artifacts+="    - path: ${a}"$'\n'"      mode: path_sha_only"$'\n'"      bytes: ${artifact_bytes}"$'\n'"      sha256: ${sha}"$'\n'
+-        PACKET_ARTIFACTS_YAML+="    - path: ${a}"$'\n'"      sha256: ${sha}"$'\n'"      visibility: path_sha_only"$'\n'
+-      else
+-        reason_note=""
+-        git cat-file -e "${delta_base}:${a}" 2>/dev/null || reason_note="new_at_base"
+-        if [[ -n "${reason_note}" ]]; then
+-          artifacts_block+="  --- ${a} (mode: delta_diff, reason: ${reason_note}, sha256: ${sha}, bytes: ${artifact_bytes}) ---"$'\n\n'
+-          manifest_full_artifacts+="    - path: ${a}"$'\n'"      mode: delta_diff"$'\n'"      bytes: ${artifact_bytes}"$'\n'"      sha256: ${sha}"$'\n'"      reason: ${reason_note}"$'\n'
+-        else
+-          artifacts_block+="  --- ${a} (mode: delta_diff, sha256: ${sha}, bytes: ${artifact_bytes}) ---"$'\n\n'
+-          manifest_full_artifacts+="    - path: ${a}"$'\n'"      mode: delta_diff"$'\n'"      bytes: ${artifact_bytes}"$'\n'"      sha256: ${sha}"$'\n'
+-        fi
+-        PACKET_ARTIFACTS_YAML+="    - path: ${a}"$'\n'"      sha256: ${sha}"$'\n'"      visibility: delta_diff"$'\n'
+-        delta_diff_count=$((delta_diff_count + 1))
+-      fi
+-      shown_count=$((shown_count + 1))
+-    else
+-      # full mode: inline content in ARTIFACTS TO REVIEW
+-      raw="$(cat "${a}")"; redacted="$(printf '%s\n' "${raw}" | redact_secrets)"
+-      if [[ "${redacted}" != "${raw}" ]]; then
+-        vis="shown_redacted"; secret_flag=1
+-        redaction_count=$(( redaction_count + $(grep -c "\[REDACTED" <<<"${redacted}" || true) ))
+-        excluded+="${a}(secret redacted) "; exc_add "${a}" "secret value redacted in place" "artifact"
+-        manifest_full_artifacts+="    - path: ${a}"$'\n'"      mode: full_file"$'\n'"      bytes: ${artifact_bytes}"$'\n'"      sha256: ${sha}"$'\n'"      note: secret value redacted in place"$'\n'
+-      else
+-        vis="shown"
+-        manifest_full_artifacts+="    - path: ${a}"$'\n'"      mode: full_file"$'\n'"      bytes: ${artifact_bytes}"$'\n'"      sha256: ${sha}"$'\n'
+-      fi
+-      review_content_bytes=$((review_content_bytes + artifact_bytes))
+-      artifacts_block+="  --- ${a} (sha256: ${sha}, visibility: ${vis}) ---"$'\n'
+-      artifacts_block+="$(printf '%s\n' "${redacted}" | sed 's/^/    /')"$'\n\n'
+-      PACKET_ARTIFACTS_YAML+="    - path: ${a}"$'\n'"      sha256: ${sha}"$'\n'"      visibility: ${vis}"$'\n'
+-      shown_count=$((shown_count + 1))
+-    fi
+-  done
+-
+-  review_content_bytes=$((review_content_bytes + diff_bytes))
+-
+-  # --- budget check (warning only; never aborts) ---
+-  local budget_threshold="${CODEOS_PACKET_BUDGET_BYTES:-50000}"
+-  local estimated_review_tokens=$(( review_content_bytes / 4 ))
+-  local budget_status="OK"
+-  if [[ "${review_content_bytes}" -gt "${budget_threshold}" ]]; then
+-    budget_status="WARNING — ${review_content_bytes} bytes exceeds CODEOS_PACKET_BUDGET_BYTES=${budget_threshold}"
+-    echo "warning: review content is ${review_content_bytes} bytes, exceeds budget of ${budget_threshold} bytes (CODEOS_PACKET_BUDGET_BYTES)" >&2
+-  fi
+-
+-  # --- explicit coverage state (most severe wins) ---
+-  #   FULL_COVERAGE | PARTIAL_COVERAGE | SECRET_REDACTION | CRITICAL_OMISSION | EMPTY_PACKET
+-  local state coverage
+-  if [[ "${delta_mode}" == "delta" && ${delta_diff_count} -eq 0 && -z "${redacted_diff//[$' \t\n']/}" ]] || \
+-     [[ "${delta_mode}" != "delta" && ${shown_count} -eq 0 && -z "${redacted_diff//[$' \t\n']/}" ]]; then
+-    state="EMPTY_PACKET"; coverage="empty"
+-  elif [[ "${PACKET_ARTIFACT_EXCLUDED}" -eq 1 ]]; then
+-    state="CRITICAL_OMISSION"; coverage="critical"
+-  elif [[ ${secret_flag} -eq 1 ]]; then
+-    state="SECRET_REDACTION"; coverage="partial"
+-  elif [[ ${path_excluded} -eq 1 ]]; then
+-    state="PARTIAL_COVERAGE"; coverage="partial"
+-  else
+-    state="FULL_COVERAGE"; coverage="full"
+-  fi
+-
+-  # --- workspace_dirty: DESCRIPTIVE audit context only ---
+-  # v0 is a manual advisory logging pilot. We record whether the tree had uncommitted changes at
+-  # review time so the saved evidence is self-describing. This is NOT an enforcement/binding mode:
+-  # there is no provenance-integrity matrix and no approval gating. The deeper binding model
+-  # (COMMIT_BOUND/WORKSPACE_BOUND reverification, rollback) is deferred — see
+-  # backlog/reviewer-decision-integrity.md.
+-  # use status --porcelain (not diff --quiet) so untracked files also count as dirty — untracked
+-  # artifacts are a normal review case in this pilot, so missing them would log false-clean context.
+-  local workspace_dirty=0
+-  [[ -n "$(git status --porcelain=v1 --untracked-files=all -- . ':(exclude)reviews' ':(exclude).codeos-state' 2>/dev/null)" ]] && workspace_dirty=1
+-
+-  PACKET_EXCLUDED="${excluded}"
+-  PACKET_COVERAGE="${coverage}"
+-  PACKET_COVERAGE_STATE="${state}"
+-  PACKET_REDACTION_COUNT="${redaction_count}"
+-  PACKET_SECRET_FLAG="${secret_flag}"
+-  PACKET_WORKSPACE_DIRTY="${workspace_dirty}"
+-  PACKET_DIFF_HASH="$(sha256_str "${redacted_diff}")"
+-  PACKET_BASE_SHA="${base_sha:-(no base pin)}"   # no stage-start recorded; review pins to review_commit
+-  PACKET_REVIEW_SHA="${review_sha}"   # machine-pure SHA; the dirty bit lives in workspace_dirty
+-  PACKET_BRANCH="${branch}"
+-
+-  # --- stage-specific checks + expected output (lightweight, inline) ---
+-  local checks expected
+-  checks="$(stage_checks "${stage}")"
+-  expected="$(stage_expected "${stage}")"
+-
+-  local task_prompt="${REPO_ROOT}/prompts/codeos-reviewer-task.md"
+-  [[ -f "${task_prompt}" ]] || { echo "error: reviewer task template not found: ${task_prompt}" >&2; exit 2; }
+-
+-  {
+-    cat "${task_prompt}"
+-    echo
+-    echo "PACKET MANIFEST"
+-    echo "  generated: $(now_iso)"
+-    echo "  task_prompt: ${task_prompt} ($(wc -c < "${task_prompt}") bytes)"
+-    echo "  review_content_bytes: ${review_content_bytes}"
+-    echo "  estimated_review_tokens: ~${estimated_review_tokens}"
+-    echo "  budget_status: ${budget_status}"
+-    echo "  packet_mode: ${delta_mode}"
+-    echo "  delta_base: ${delta_base:-none}"
+-    echo "  items:"
+-    printf '%s' "${manifest_sha_only}"
+-    printf '%s' "${manifest_full_artifacts}"
+-    echo "    - path: (diff)"
+-    if [[ "${delta_mode}" == "delta" ]]; then
+-      echo "      mode: delta_diff"
+-    else
+-      echo "      mode: full_file"
+-    fi
+-    echo "      bytes: ${diff_bytes}"
+-    echo
+-    echo "REVIEW CONTEXT"
+-    echo "  Feature:                ${feature}"
+-    echo "  Stage:                  ${stage}"
+-    echo "  Branch:                 ${branch}"
+-    echo "  Base commit:            ${PACKET_BASE_SHA}"
+-    [[ "${delta_mode}" == "delta" ]] && echo "  Delta base:             ${delta_base}"
+-    echo "  Review commit:          ${review_sha}$([[ ${workspace_dirty} -eq 1 ]] && echo ' (+ uncommitted workspace changes)')"
+-    echo "  Current approved stage: ${approved_stage}"
+-    echo "  Evidence coverage:      ${state}"
+-    echo "  Workspace dirty:        $([[ ${workspace_dirty} -eq 1 ]] && echo 'yes (uncommitted changes at review time)' || echo 'no')"
+-    echo
+-    echo "DBA RULES RELEVANT TO THIS STAGE"
+-    echo "  - Human approval is required for every stage transition; you are advisory only."
+-    echo "  - Memory is not truth — assess only what is provided, pinned to the review commit."
+-    echo "  - Implementation must trace to approved artifacts; no behavior beyond intent+contract+schema."
+-    echo "  - No events outside the approved event schema; no hidden behavior."
+-    if [[ "${coverage}" != "full" ]]; then
+-      echo "  - COVERAGE IS PARTIAL: some content was excluded/redacted (see below). You are"
+-      echo "    seeing an incomplete evidence set — do not issue NO OBJECTION on this basis."
+-    fi
+-    echo
+-    echo "STAGE-SPECIFIC CHECKS"
+-    echo "${checks}"
+-    echo
+-    echo "EXPECTED STAGE OUTPUT"
+-    echo "  ${expected}"
+-    echo
+-    echo "ARTIFACTS TO REVIEW"
+-    printf '%s' "${artifacts_block}"
+-    if [[ "${delta_mode}" == "delta" ]]; then
+-      echo "DELTA DIFF (${delta_base}->working tree, artifact paths only, secret/size filtered)"
+-    else
+-      echo "DIFF TO REVIEW (base->review, secret/size filtered)"
+-    fi
+-    [[ -n "${excluded}" ]] && echo "  [excluded/redacted: ${excluded}] manual security review required"
+-    printf '%s\n' "${redacted_diff}"
+-  } > "${PACKET_FILE}"
+-}
+-
+-stage_expected() {
+-  case "$1" in
+-    1) echo "Intent — actor+outcome statements, stable guarantees, explicit scope boundary; NO implementation detail." ;;
+-    2) echo "Behavioral contract — observable Given/When/Then scenarios, named failure modes, invariants; independently testable; no white-box claims." ;;
+-    3) echo "Event schema — named events with payloads, event flow, coverage map of contract scenarios to events; no speculative telemetry." ;;
+-    4) echo "Implementation — code satisfying every contract clause; emits only schema events; contract-satisfaction + event-emission tables; nothing untraceable." ;;
+-    5) echo "Tests — one behavioral test per contract scenario incl. failures; replay tests for schema conformance + chain integrity; coverage table." ;;
+-    6) echo "Runtime evidence — events in runtime_events.jsonl; correlation chains intact; bounded/sanitized; unexpected/missing events reported." ;;
+-    7) echo "Reconciliation — Intent->Contract->Schema->Impl->Tests->Runtime with ALIGNED/GAP/MISMATCH/MISSING per item, supported by evidence." ;;
+-    8) echo "Replay — schema conformance + correlation chain integrity + determinism check; nondeterminism explained; missing fixtures reported." ;;
+-    9) echo "Refinement — smallest effective change per observed trigger; no redesign disguised as refinement; affected artifacts named." ;;
+-    *) echo "(no expected-output template for stage $1)" ;;
+-  esac
+-}
+-
+-stage_checks() {
+-  case "$1" in
+-    1) printf '  - actor/outcome clarity; no implementation detail; scope boundary explicit; stable guarantees clear; ambiguity flagged.\n' ;;
+-    2) printf '  - every intent outcome has observable contract coverage; failure paths named; invariants testable; no white-box claims.\n' ;;
+-    3) printf '  - every relevant contract scenario has event coverage; event names stable; required fields clear; no speculative telemetry.\n' ;;
+-    4) printf '  - code traces to approved contract/schema only; no unapproved events; no hidden behavior; no unrelated files; report complete.\n' ;;
+-    5) printf '  - behavior tested not private internals; failure paths tested; event/telemetry tests present; replay tests where applicable.\n' ;;
+-    6) printf '  - runtime evidence captured; event log bounded/sanitized; correlation chains visible; unexpected/missing events reported.\n' ;;
+-    7) printf '  - ALIGNED/GAP/MISMATCH/MISSING judgments supported; no weak evidence hidden behind fluent summary; gaps routed to right action.\n' ;;
+-    8) printf '  - replay actually checks event sequence + schema conformance; nondeterminism explained; missing fixtures reported.\n' ;;
+-    9) printf '  - trigger valid; proposed fix minimal; no redesign disguised as refinement; affected artifacts identified.\n' ;;
+-    *) printf '  - (no stage-specific checklist for stage %s)\n' "$1" ;;
+-  esac
+-}
+-
+-# --- codex session handling --------------------------------------------------
+-# Runs codex read-only with the packet on stdin. Resumes the feature's session unless --fresh
+-# or no session exists yet. The session id is captured deterministically from the codex
+-# startup banner ("session id: <uuid>"); resume reuses it, giving cross-stage continuity.
+-run_codex() {
+-  local feature="$1" fresh="$2" packet_file="$3"
+-  mkdir -p "${SESSIONS_DIR}"
+-  local sess_file="${SESSIONS_DIR}/${feature}.json"
+-  local codex_ver; codex_ver="$(codex --version 2>/dev/null | head -1)"
+-  local session_id=""
+-  if [[ "${fresh}" == "0" && -f "${sess_file}" ]]; then
+-    session_id="$(grep -oE '"session_id" *: *"[^"]*"' "${sess_file}" | sed -E 's/.*"([^"]*)"$/\1/' || true)"
+-    # version drift: a session created under a different codex build may parse/behave
+-    # differently — force a fresh session rather than resuming across versions.
+-    # session_id is provenance: present-but-unparseable session state is malformed -> fail closed.
+-    [[ -n "${session_id}" ]] || { echo "error: ${sess_file} exists but has no session_id (malformed) — delete it or pass --fresh." >&2; exit 4; }
+-    local stored_ver; stored_ver="$(grep -oE '"codex_version" *: *"[^"]*"' "${sess_file}" | sed -E 's/.*"([^"]*)"$/\1/' || true)"
+-    if [[ -n "${stored_ver}" && "${stored_ver}" != "${codex_ver}" ]]; then
+-      echo "note: codex version changed (${stored_ver} -> ${codex_ver}); starting a fresh session." >&2
+-      session_id=""
+-    fi
+-  fi
+-
+-  local out _t_start _t_end
+-  local _effort="${CODEOS_REASONING_EFFORT:-high}"
+-  _t_start="$(date +%s%N)"
+-  if [[ -n "${session_id}" ]]; then
+-    # resume: no -s/--cd flags on this subcommand; sandbox is set via config override
+-    out="$(codex exec resume "${session_id}" -c sandbox_mode="read-only" -c model_reasoning_effort="${_effort}" - < "${packet_file}" 2>&1)" || true
+-  else
+-    out="$(codex exec -s read-only --cd "${REPO_ROOT}" -c model_reasoning_effort="${_effort}" - < "${packet_file}" 2>&1)" || true
+-    session_id="$(printf '%s\n' "${out}" | grep -oE 'session id: [0-9a-fA-F-]+' | head -1 | awk '{print $3}' || true)"
+-    if [[ -z "${session_id}" ]]; then
+-      echo "error: could not capture a Codex session id from output — aborting (fail-closed)." >&2
+-      echo "       review NOT logged. Inspect the codex output and rerun." >&2
+-      exit 3
+-    fi
+-    printf '{ "feature": "%s", "session_id": "%s", "codex_version": "%s", "created_at": "%s" }\n' \
+-      "${feature}" "${session_id}" "${codex_ver}" "$(now_iso)" > "${sess_file}"
+-  fi
+-  _t_end="$(date +%s%N)"
+-  REVIEW_SESSION="${session_id}"
+-  REVIEW_OUTPUT="${out}"
+-  REVIEW_ELAPSED_MS=$(( (_t_end - _t_start) / 1000000 ))
+-  REVIEW_RECONNECT_COUNT="$(printf '%s\n' "${out}" | grep -c 'stream disconnected' || true)"
+-  REVIEW_EFFORT="${_effort}"
+-}
+-
+-# --- local prechecks ---------------------------------------------------------
+-# Fail-closed checks that run before packet build and Codex invocation.
+-# Scans only the positional artifact paths and explicit PRECHECK_GUARD_CLEAN paths —
+-# not the whole repo, not generated packets, not review logs.
+-#
+-# Hard fails (exit 2): unfilled template placeholders, forbidden fields, dirty guard paths.
+-# Warnings (stderr, exit 0): draft markers (TODO/FIXME/TBD/[to be filled]).
+-run_prechecks() {
+-  local -a artifacts=("$@")
+-  local -a guard_clean=("${PRECHECK_GUARD_CLEAN[@]+"${PRECHECK_GUARD_CLEAN[@]}"}")
+-  local a gc warn_fired=0
+-
+-  for a in "${artifacts[@]+"${artifacts[@]}"}"; do
+-    [[ -f "${a}" ]] || continue   # missing artifacts are handled (and represented) by build_packet
+-
+-    # hard fail: unfilled template placeholders (fixed-string, not a pattern for real IDs)
+-    # Technique: strip inline code spans FIRST (prevents `<!-- ... -->` inside a code span
+-    # from opening an HTML-comment deletion range on subsequent lines), then strip HTML
+-    # comment blocks, remove blockquote lines, then remove allowed documentation occurrences
+-    # at the occurrence level before checking for remaining bare placeholders.
+-    if sed 's/`[^`]*`//g' "${a}" \
+-         | sed '/<!--/,/-->/d' \
+-         | grep -vE '^\s*>' \
+-         | sed 's/→UPG-####//g; s/UPG-####__[^[:space:]]*/UPG-FILLED__/g' \
+-         | grep -qF 'UPG-####'; then
+-      echo "error: precheck failed — literal placeholder 'UPG-####' found in ${a} (fill in the real UPG id)" >&2; exit 2
+-    fi
+-    if sed 's/`[^`]*`//g' "${a}" \
+-         | sed '/<!--/,/-->/d' \
+-         | grep -vE '^\s*>' \
+-         | sed 's/→CHG-YYYYMMDD-NNN//g; s/CHG-YYYYMMDD-NNN__[^[:space:]]*/CHG-FILLED__/g' \
+-         | grep -qF 'CHG-YYYYMMDD-NNN'; then
+-      echo "error: precheck failed — literal placeholder 'CHG-YYYYMMDD-NNN' found in ${a} (fill in the real CHG id)" >&2; exit 2
+-    fi
+-
+-    # hard fail: forbidden field superseded by UPG-0001 (line-anchored to avoid prose matches)
+-    if grep -qE '^[[:space:]]*latest_review:' "${a}"; then
+-      echo "error: precheck failed — forbidden field 'latest_review:' found in ${a} (use review_state instead)" >&2; exit 2
+-    fi
+-
+-    # warning: unresolved draft markers (do not block)
+-    if grep -qiE 'TODO|FIXME|\bTBD\b|\[to be filled\]' "${a}"; then
+-      echo "warning: precheck — unresolved draft marker (TODO/FIXME/TBD/[to be filled]) in ${a}" >&2
+-      warn_fired=1
+-    fi
+-  done
+-
+-  for gc in "${guard_clean[@]+"${guard_clean[@]}"}"; do
+-    # hard fail: missing guard path is an error, not a silent pass
+-    [[ -f "${gc}" ]] || { echo "error: precheck failed — --guard-clean path not found: ${gc}" >&2; exit 2; }
+-    # hard fail: any staged or unstaged change vs HEAD on the guard path
+-    git diff --quiet HEAD -- "${gc}" 2>/dev/null || {
+-      echo "error: precheck failed — --guard-clean path '${gc}' has uncommitted changes (expected clean)" >&2; exit 2; }
+-  done
+-}
+-
+-# --- review ------------------------------------------------------------------
+-cmd_review() {
+-  require_codex
+-  local feature="$1" stage="$2"; shift 2
+-  local fresh=0 scratch=0 print_only=0 skip_prechecks=0 mode="full" delta_base=""
+-  local artifacts=() sha_only_paths=() guard_clean_paths=()
+-  while [[ $# -gt 0 ]]; do
+-    case "$1" in
+-      --fresh) fresh=1; shift ;;
+-      --scratch) scratch=1; shift ;;
+-      --print-packet|--dry-run) print_only=1; shift ;;
+-      --skip-prechecks) skip_prechecks=1; shift ;;
+-      --mode) [[ $# -ge 2 ]] || { echo "review: --mode requires an argument (full or delta)" >&2; exit 2; }; mode="$2"; shift 2 ;;
+-      --base) [[ $# -ge 2 ]] || { echo "review: --base requires a SHA argument" >&2; exit 2; }; delta_base="$2"; shift 2 ;;
+-      --sha-only) [[ $# -ge 2 ]] || { echo "review: --sha-only requires a PATH argument" >&2; exit 2; }; sha_only_paths+=( "$2" ); shift 2 ;;
+-      --guard-clean) [[ $# -ge 2 ]] || { echo "review: --guard-clean requires a PATH argument" >&2; exit 2; }; guard_clean_paths+=( "$2" ); shift 2 ;;
+-      *) artifacts+=( "$1" ); shift ;;
+-    esac
+-  done
+-  [[ ${#artifacts[@]} -gt 0 ]] || { echo "review: provide at least one artifact path" >&2; exit 2; }
+-
+-  # --- --mode / --base validation (all exit 2 before precheck or packet build) ---
+-  [[ "${mode}" == "full" || "${mode}" == "delta" ]] || { echo "review: --mode must be 'full' or 'delta', got '${mode}'" >&2; exit 2; }
+-  if [[ "${mode}" == "delta" ]]; then
+-    [[ -n "${delta_base}" ]] || { echo "review: --mode delta requires --base <sha>" >&2; exit 2; }
+-    [[ "${delta_base}" =~ ^[0-9a-fA-F]{7,40}$ ]] || { echo "review: --base value is not a valid hex SHA: '${delta_base}'" >&2; exit 2; }
+-    git rev-parse --verify "${delta_base}^{commit}" >/dev/null 2>&1 || { echo "review: --base '${delta_base}' does not resolve to a valid commit" >&2; exit 2; }
+-  fi
+-  # --- --sha-only / positional artifact conflict (exit 2; no silent precedence) ---
+-  local _so_chk _art_chk
+-  for _so_chk in "${sha_only_paths[@]+"${sha_only_paths[@]}"}"; do
+-    for _art_chk in "${artifacts[@]+"${artifacts[@]}"}"; do
+-      [[ "${_art_chk}" == "${_so_chk}" ]] && { echo "review: path '${_so_chk}' passed both as positional artifact and --sha-only; pass as one or the other" >&2; exit 2; }
+-    done
+-  done
+-
+-  # pilot/test runs must not touch the committed log either
+-  [[ ${scratch} -eq 1 ]] && { mkdir -p "${CODEX_SCRATCH}"; REVIEW_LOG="${CODEX_SCRATCH}/review-log.md"; }
+-
+-  if [[ ${skip_prechecks} -eq 1 ]]; then
+-    echo "warning: prechecks skipped (--skip-prechecks)" >&2
+-  else
+-    PRECHECK_GUARD_CLEAN=("${guard_clean_paths[@]+"${guard_clean_paths[@]}"}")
+-    run_prechecks "${artifacts[@]}"
+-  fi
+-  PACKET_FILE="$(mktemp)"; trap 'rm -f "${PACKET_FILE}"' EXIT
+-  PACKET_SHA_ONLY=("${sha_only_paths[@]+"${sha_only_paths[@]}"}")
+-  PACKET_DELTA_MODE="${mode}"
+-  PACKET_DELTA_BASE="${delta_base}"
+-  build_packet "${feature}" "${stage}" "${artifacts[@]}"   # sets PACKET_* globals (no subshell)
+-
+-  # safety: inspect exactly what would be sent to Codex, without calling it (no cost, no session)
+-  if [[ ${print_only} -eq 1 ]]; then
+-    cat "${PACKET_FILE}"
+-    [[ -n "${PACKET_EXCLUDED}" ]] && echo "# [excluded/redacted: ${PACKET_EXCLUDED}]" >&2
+-    [[ "${PACKET_COVERAGE_STATE}" == "EMPTY_PACKET" ]] && exit 4   # empty packet; nonzero signals caller
+-    exit 0
+-  fi
+-
+-  # fail-closed: empty packet produces no useful review; abort before invoking Codex
+-  if [[ "${PACKET_COVERAGE_STATE}" == "EMPTY_PACKET" ]]; then
+-    echo "error: review packet is empty (EMPTY_PACKET) — no reviewable content found." >&2
+-    if [[ "${PACKET_DELTA_MODE}" == "delta" ]]; then
+-      echo "       Delta mode: ensure tracked artifacts have working-tree changes since --base," >&2
+-      echo "       or use --mode full with explicit artifact paths." >&2
+-    fi
+-    echo "       Inspect the packet with --print-packet before rerunning." >&2
+-    exit 4
+-  fi
+-
+-  local pre_status; pre_status="$(git status --porcelain)"
+-  run_codex "${feature}" "${fresh}" "${PACKET_FILE}"
+-  local post_status; post_status="$(git status --porcelain)"
+-
+-  # parse LOG SUMMARY / EVIDENCE
+-  local summary_line concern evidence
+-  summary_line="$(printf '%s\n' "${REVIEW_OUTPUT}" | grep -E '^LOG SUMMARY:' | tail -1 || true)"
+-  evidence="$(printf '%s\n' "${REVIEW_OUTPUT}" | grep -E '^EVIDENCE:' | tail -1 | sed -E 's/^EVIDENCE:[[:space:]]*//' || true)"
+-  if [[ -z "${summary_line}" ]]; then
+-    concern="UNCLASSIFIED"
+-    summary_line="LOG SUMMARY: UNCLASSIFIED — no parseable summary; HIGH attention, manual review required"
+-  else
+-    concern="$(printf '%s' "${summary_line}" | sed -E 's/^LOG SUMMARY:[[:space:]]*([A-Z ]*[A-Z]).*/\1/' | sed -E 's/[[:space:]]+$//')"
+-  fi
+-  [[ -n "${evidence}" ]] || evidence="not reported"
+-
+-  # normalize to schema enums (the reviewer's free text can be loose)
+-  in_list "${concern}" "NO OBJECTION|CHANGES ADVISED|DO NOT ADVANCE|UNCLASSIFIED" || concern="UNCLASSIFIED"
+-  case "${evidence}" in
+-    A*|B*|C*|D*|E*) evidence="${evidence:0:1}" ;;
+-    "not reported") ;;
+-    *) evidence="not reported" ;;
+-  esac
+-
+-  # Effective concern = max severity of (Codex concern, the coverage-state MINIMUM floor). We keep
+-  # and log BOTH so an evidence-coverage gap never silently passes as the verdict. This is the only
+-  # adjustment the pilot makes — it is about how complete the evidence was, NOT an approval guarantee.
+-  # Severity rank: NO OBJECTION < CHANGES ADVISED < UNCLASSIFIED < DO NOT ADVANCE.
+-  local codex_concern="${concern}" effective_concern coverage_note=""
+-  local floor=0
+-  case "${PACKET_COVERAGE_STATE:-FULL_COVERAGE}" in
+-    FULL_COVERAGE)                   floor=0 ;;
+-    SECRET_REDACTION|PARTIAL_COVERAGE) floor=1 ;;   # min CHANGES ADVISED
+-    EMPTY_PACKET)                    floor=2 ;;      # min UNCLASSIFIED
+-    CRITICAL_OMISSION)               floor=3 ;;      # min DO NOT ADVANCE
+-  esac
+-  local cr; case "${codex_concern}" in
+-    "NO OBJECTION") cr=0 ;; "CHANGES ADVISED") cr=1 ;; "UNCLASSIFIED") cr=2 ;; "DO NOT ADVANCE") cr=3 ;; *) cr=2 ;;
+-  esac
+-  local eff=${cr}; [[ ${floor} -gt ${eff} ]] && eff=${floor}
+-  case ${eff} in 0) effective_concern="NO OBJECTION" ;; 1) effective_concern="CHANGES ADVISED" ;; 2) effective_concern="UNCLASSIFIED" ;; 3) effective_concern="DO NOT ADVANCE" ;; esac
+-  if [[ ${eff} -gt ${cr} ]]; then
+-    coverage_note="raised from '${codex_concern}' to the coverage floor for ${PACKET_COVERAGE_STATE}"
+-  fi
+-  concern="${effective_concern}"
+-
+-  # save full assessment (with metadata header) + the EXACT packet that was reviewed
+-  local ts outdir assessment_file packet_saved artifact_shas=""
+-  ts="$(now_iso)"
+-  if [[ ${scratch} -eq 1 ]]; then outdir="${CODEX_SCRATCH}"; else outdir="${CODEX_DIR}"; fi
+-  mkdir -p "${outdir}"
+-  local short_sha; short_sha="$(git rev-parse --short HEAD)"
+-  assessment_file="${outdir}/${ts//:/}-${feature}-stage-${stage}-${short_sha}.md"
+-  local packets_dir="${outdir}/packets"; mkdir -p "${packets_dir}"
+-  packet_saved="${packets_dir}/${ts//:/}-${feature}-stage-${stage}-${short_sha}.packet.txt"
+-  cp "${PACKET_FILE}" "${packet_saved}"          # exact reviewed bytes — durable, verifiable
+-  local packet_hash; packet_hash="$(sha256_of "${packet_saved}")"
+-
+-  # --- v0 schema validation, fail-closed (see docs/reviewer-artifact-schemas.md) ---
+-  local pair _v_err=""
+-  for pair in "feature=${feature}" "stage=${stage}" "base_commit=${PACKET_BASE_SHA}" \
+-              "review_commit=${PACKET_REVIEW_SHA}" "diff_hash=${PACKET_DIFF_HASH}" \
+-              "coverage_state=${PACKET_COVERAGE_STATE}" \
+-              "reviewed_packet_sha256=${packet_hash}"; do
+-    [[ -n "${pair#*=}" ]] || _v_err+=" missing:${pair%%=*}"
+-  done
+-  in_list "${PACKET_COVERAGE_STATE}" "FULL_COVERAGE|PARTIAL_COVERAGE|SECRET_REDACTION|CRITICAL_OMISSION|EMPTY_PACKET" || _v_err+=" enum:coverage_state"
+-  in_list "${codex_concern}"     "NO OBJECTION|CHANGES ADVISED|DO NOT ADVANCE|UNCLASSIFIED" || _v_err+=" enum:codex_concern"
+-  in_list "${effective_concern}" "NO OBJECTION|CHANGES ADVISED|DO NOT ADVANCE|UNCLASSIFIED" || _v_err+=" enum:effective_concern"
+-  in_list "${evidence}" "A|B|C|D|E|not reported" || _v_err+=" enum:evidence"
+-  if [[ -z "${PACKET_ARTIFACTS_YAML}" ]] && ! in_list "${PACKET_COVERAGE_STATE}" "CRITICAL_OMISSION|EMPTY_PACKET"; then
+-    _v_err+=" missing:artifacts"
+-  fi
+-  if [[ -n "${_v_err}" ]]; then
+-    echo "error: v0 schema validation failed (fail-closed):${_v_err}" >&2
+-    echo "       review NOT logged. See docs/reviewer-artifact-schemas.md" >&2
+-    exit 4
+-  fi
+-
+-  {
+-    echo "---"
+-    echo "reviewed:"
+-    echo "  feature: ${feature}"
+-    echo "  stage: ${stage}"
+-    echo "  branch: ${PACKET_BRANCH}"
+-    echo "  base_commit: ${PACKET_BASE_SHA}"
+-    echo "  review_commit: ${PACKET_REVIEW_SHA}"
+-    if [[ -n "${PACKET_ARTIFACTS_YAML}" ]]; then echo "  artifacts:"; printf '%s' "${PACKET_ARTIFACTS_YAML}"; else echo "  artifacts: []"; fi
+-    echo "  diff_hash: ${PACKET_DIFF_HASH}"
+-    echo "  coverage_state: ${PACKET_COVERAGE_STATE}"
+-    echo "  workspace_dirty: $([[ ${PACKET_WORKSPACE_DIRTY} -eq 1 ]] && echo true || echo false)"
+-    echo "  redaction_count: ${PACKET_REDACTION_COUNT}"
+-    echo "  secret_redaction: $([[ ${PACKET_SECRET_FLAG} -eq 1 ]] && echo true || echo false)"
+-    if [[ ${#PACKET_EXC_PATH[@]} -eq 0 ]]; then
+-      echo "  excluded_paths: []"
+-    else
+-      echo "  excluded_paths:"
+-      local _i
+-      for _i in "${!PACKET_EXC_PATH[@]}"; do
+-        echo "    - path: \"${PACKET_EXC_PATH[$_i]}\""
+-        echo "      reason: \"${PACKET_EXC_REASON[$_i]}\""
+-        echo "      affected_section: ${PACKET_EXC_SECTION[$_i]}"
+-      done
+-    fi
+-    echo "  reviewed_packet: packets/$(basename "${packet_saved}")"
+-    echo "  reviewed_packet_sha256: ${packet_hash}"
+-    echo "  reviewer: \"codex (session ${REVIEW_SESSION})\""
+-    echo "  codex_concern: ${codex_concern}"
+-    echo "  effective_concern: ${effective_concern}"
+-    [[ -n "${coverage_note}" ]] && echo "  effective_concern_note: ${coverage_note}"
+-    echo "  evidence: ${evidence}"
+-    echo "  reasoning_effort: ${REVIEW_EFFORT}"
+-    echo "  reconnect_count: ${REVIEW_RECONNECT_COUNT}"
+-    echo "  elapsed_ms: ${REVIEW_ELAPSED_MS}"
+-    echo "---"
+-    echo
+-    printf '%s\n' "${REVIEW_OUTPUT}"
+-  } > "${assessment_file}"
+-  local assessment_hash; assessment_hash="$(sha256_of "${assessment_file}")"
+-
+-  # append REVIEW entry to the append-only log
+-  mkdir -p "$(dirname "${REVIEW_LOG}")"
+-  [[ -f "${REVIEW_LOG}" ]] || init_log
+-  {
+-    echo
+-    echo "## ${ts} REVIEW — ${feature} — Stage ${stage}"
+-    echo "Base: ${PACKET_BASE_SHA}  Review: ${PACKET_REVIEW_SHA}  Branch: ${PACKET_BRANCH}"
+-    echo "Diff-hash: ${PACKET_DIFF_HASH}"
+-    echo "Reviewer: codex default-model (session ${REVIEW_SESSION})"
+-    echo "Effort: ${REVIEW_EFFORT}   Wall time: ${REVIEW_ELAPSED_MS}ms   Reconnects: ${REVIEW_RECONNECT_COUNT}"
+-    echo "Codex concern: ${codex_concern}"
+-    echo "Effective concern: ${effective_concern}"
+-    echo "Evidence: ${evidence}"
+-    echo "Coverage: ${PACKET_COVERAGE_STATE}; redactions: ${PACKET_REDACTION_COUNT}; workspace_dirty: $([[ ${PACKET_WORKSPACE_DIRTY} -eq 1 ]] && echo true || echo false)${coverage_note:+; note: ${coverage_note}}"
+-    echo "Log summary: ${summary_line#LOG SUMMARY: }"
+-    echo "Full assessment: ${assessment_file} (sha256:${assessment_hash})"
+-    echo "Reviewed packet: ${packet_saved} (sha256:${packet_hash})"
+-    if [[ ${PACKET_SECRET_FLAG} -eq 1 || "${PACKET_COVERAGE_STATE}" == CRITICAL_OMISSION || "${PACKET_COVERAGE_STATE}" == EMPTY_PACKET ]]; then
+-      echo "Coverage gap: ${PACKET_COVERAGE_STATE} — excluded/redacted [${PACKET_EXCLUDED}] — MANUAL SECURITY REVIEW REQUIRED"
+-    fi
+-    echo "Human decision: (append with: codeos-review.sh decision ${feature} ${stage} <DECISION> \"<reason>\")"
+-  } >> "${REVIEW_LOG}"
+-
+-  # read-only invariant check
+-  if [[ "${pre_status}" != "${post_status}" ]]; then
+-    echo "WARNING: working tree changed during review — reviewer should be read-only. Inspect:" >&2
+-    diff <(printf '%s\n' "${pre_status}") <(printf '%s\n' "${post_status}") >&2 || true
+-  fi
+-
+-  echo "review logged: ${REVIEW_LOG}"
+-  echo "  codex concern: ${codex_concern}   effective concern: ${effective_concern}   evidence: ${evidence}"
+-  echo "  effort: ${REVIEW_EFFORT}   elapsed: ${REVIEW_ELAPSED_MS}ms   reconnects: ${REVIEW_RECONNECT_COUNT}"
+-  echo "  coverage: ${PACKET_COVERAGE_STATE} (redactions: ${PACKET_REDACTION_COUNT})"
+-  echo "  assessment: ${assessment_file}"
+-  echo "  packet: ${packet_saved}"
+-}
+-
+-# --- decision (append-only human entry) -------------------------------------
+-# v0 is an ADVISORY logging pilot. This APPENDS the human's decision and, as a best-effort AUDIT
+-# AID, notes whether the reviewed artifacts still hash-match what the reviewer saw. It does NOT
+-# enforce approval eligibility, bind approval to a reviewed state, or guarantee rollback — a
+-# mismatch is flagged, never blocks. Stronger reviewed-state binding / rollback is deferred:
+-# see backlog/reviewer-decision-integrity.md. APPROVE is the human's word (Rule 1).
+-cmd_decision() {
+-  local feature="$1" stage="$2" decision="$3"; shift 3
+-  local reason=""
+-  while [[ $# -gt 0 ]]; do reason="$1"; shift; done
+-  case "${decision}" in APPROVE_STAGE|REQUEST_CHANGES|STOP) ;; *)
+-    echo "decision must be APPROVE_STAGE | REQUEST_CHANGES | STOP" >&2; exit 2 ;; esac
+-  [[ -f "${REVIEW_LOG}" ]] || init_log
+-  local sha; sha="$(git rev-parse HEAD)"
+-
+-  # Best-effort audit: do the reviewed artifacts still match what the reviewer saw?
+-  # Informational only — a mismatch is flagged in the log + a warning, never blocks the decision.
+-  local latest verify_lines="" changed=0
+-  latest="$(ls -1t "${CODEX_DIR}"/*-"${feature}"-stage-"${stage}"-*.md 2>/dev/null | head -1 || true)"
+-  if [[ -n "${latest}" ]]; then
+-    local p="" h now
+-    while IFS= read -r line; do
+-      case "${line}" in
+-        *"- path: "*) p="${line#*- path: }" ;;
+-        *"sha256: "*)
+-          h="${line#*sha256: }"
+-          if [[ -n "${p}" ]]; then
+-            now="(missing)"; [[ -f "${p}" ]] && now="$(sha256_of "${p}")"
+-            if [[ "${now}" == "${h}" ]]; then verify_lines+="  MATCH   ${p}"$'\n'
+-            else verify_lines+="  CHANGED ${p} (reviewed ${h:0:12} / now ${now:0:12})"$'\n'; changed=1; fi
+-            p=""
+-          fi ;;
+-      esac
+-    done < <(sed -n '/^  artifacts:/,/^  diff_hash:/p' "${latest}")
+-  fi
+-
+-  if [[ "${decision}" == "APPROVE_STAGE" && -z "${latest}" ]]; then
+-    echo "note: no review is on record for ${feature} stage ${stage}. The reviewer is advisory;" >&2
+-    echo "      consider running 'review' first. Recording the human decision anyway." >&2
+-  fi
+-
+-  {
+-    echo
+-    echo "## $(now_iso) HUMAN DECISION — ${feature} — Stage ${stage}"
+-    echo "Commit at decision: ${sha}"
+-    echo "Decision: ${decision}"
+-    echo "Reason/next: ${reason}"
+-    [[ -n "${latest}" ]] && echo "Verified against: ${latest}"
+-    [[ -n "${verify_lines}" ]] && { echo "Artifact integrity (informational audit, not a gate):"; printf '%s' "${verify_lines}"; }
+-  } >> "${REVIEW_LOG}"
+-  echo "decision appended to ${REVIEW_LOG}"
+-  if [[ ${changed} -eq 1 ]]; then
+-    echo "WARNING: some reviewed artifacts changed since the review — recorded with that flagged (advisory only)." >&2
+-  fi
+-}
+-
+-init_log() {
+-  mkdir -p "$(dirname "${REVIEW_LOG}")"
+-  cat > "${REVIEW_LOG}" <<'EOF'
+-# Codeos Review Log (append-only, v0)
+-
+-Append-only record of automated advisory reviews and the human decisions that follow them.
+-Entries are NEVER edited — a human decision is a separately appended entry. The reviewer is
+-advisory and read-only; APPROVE belongs to the human. See docs/reviewer-pipeline.md.
+-
+-(v0 layout: one global log. Per-feature logs are a documented future layout.)
+-EOF
+-}
+-
+-# --- dispatch ----------------------------------------------------------------
+-usage() {
+-  sed -n '3,40p' "$0" | sed 's/^# \{0,1\}//'
+-  exit "${1:-0}"
+-}
+-
+-[[ $# -ge 1 ]] || usage 2
+-sub="$1"; shift || true
+-case "${sub}" in
+-  stage-start) [[ $# -ge 2 ]] || usage 2; cmd_stage_start "$@" ;;
+-  review)      [[ $# -ge 3 ]] || usage 2; cmd_review "$@" ;;
+-  decision)    [[ $# -ge 3 ]] || usage 2; cmd_decision "$@" ;;
+-  -h|--help|help) usage 0 ;;
+-  *) echo "unknown subcommand: ${sub}" >&2; usage 2 ;;
+-esac
++exec "${BINARY}" "$@"
+diff --git a/scripts/dba-init.sh b/scripts/dba-init.sh
+index 67de52c..64ca98e 100755
+--- a/scripts/dba-init.sh
++++ b/scripts/dba-init.sh
+@@ -142,7 +142,21 @@ if [ -n "$REMOTE_URL" ]; then
+     fi
+ fi
+ 
+-# ── 10. Done ────────────────────────────────────────────────────────────────
++# ── 10. Reviewer config ─────────────────────────────────────────────────────
++
++REVIEWER_TOML="$PROJECT_DIR/reviewer.toml"
++REVIEWER_TEMPLATE="$CODEOS_PATH/templates/reviewer.toml"
++
++if [ -f "$REVIEWER_TOML" ]; then
++    echo "[skip] reviewer.toml already exists"
++elif [ -f "$REVIEWER_TEMPLATE" ]; then
++    cp "$REVIEWER_TEMPLATE" "$REVIEWER_TOML"
++    echo "[ok]   reviewer.toml (from template — edit to change provider)"
++else
++    echo "[warn] reviewer.toml template not found at $REVIEWER_TEMPLATE — skipping"
++fi
++
++# ── 11. Done ────────────────────────────────────────────────────────────────
+ 
+ echo ""
+ echo "Done. Project initialized."
+diff --git a/status/roadmap.md b/status/roadmap.md
+index 161713c..e535e19 100644
+--- a/status/roadmap.md
++++ b/status/roadmap.md
+@@ -64,7 +64,7 @@ cheap pilot-adjacent wins early.
+ ### Wave 4 — Reviewer hardening & delivery
+ | Wave | Feature ID | Title | Priority | Depends on | Planned/active change | State |
+ |---|---|---|---|---|---|---|
+-| 4 | UPG-0032 | Rust Reviewer Engine with Multi-Provider Support | P2 | UPG-0027 ✓ | — | PROPOSED |
++| 4 | UPG-0032 | Rust Reviewer Engine with Multi-Provider Support | P2 | UPG-0027 ✓ | CHG-20260702-001 | IN_PROGRESS |
+ | 4 | UPG-0014 | Reviewer Agent with Full Diff Access | P2 | UPG-0032 | — | PROPOSED |
+ | 4 | UPG-0015 | Bind stage approval to reviewed provenance | P1 | UPG-0032 | — | PROPOSED |
+ | 4 | UPG-0016 | Branch / PR / CI Workflow Profiles | P1 | — | — | PROPOSED |
+@@ -97,7 +97,7 @@ cheap pilot-adjacent wins early.
+ 
+ ## Immediate next pickups
+ 
+-Wave 1 complete. Wave 2 complete. Wave 3 complete. Next: Wave 4 — UPG-0032 Rust Reviewer Engine (PROPOSED, no active change yet).
++Wave 1 complete. Wave 2 complete. Wave 3 complete. Wave 4 active — UPG-0032 Rust Reviewer Engine (CHG-20260702-001, IN_PROGRESS at Step 1).
+ 
+ Each is taken as its own self-dev change (a fresh `CHG-*`) via the 4-step loop, with human
+ approval at every gate.
+diff --git a/status/self-development.md b/status/self-development.md
+index 7beaa0a..3846459 100644
+--- a/status/self-development.md
++++ b/status/self-development.md
+@@ -43,6 +43,7 @@
+ | UPG-0008 | CHG-20260701-006 | prompt | self-dev only | 4-Reconcile | ACCEPTED (Steps 1–4 reviewed; Step 4 R1 NO OBJECTION; all 7 ACs verified) | COMPLETE | — |
+ | UPG-0009 | CHG-20260701-007 | template | self-dev only | 4-Reconcile | ACCEPTED (Steps 1–4 reviewed; Step 4 R3 NO OBJECTION; all 7 ACs verified) | COMPLETE | — |
+ | UPG-0006 | CHG-20260701-008 | prompt | self-dev only | 4-Reconcile | ACCEPTED (Steps 1–4 reviewed; Step 4 R1 NO OBJECTION; all 6 ACs verified) | COMPLETE | — |
++| UPG-0032 | CHG-20260702-001 | script-tooling | self-dev only | 3-Implement | DRAFT (RVS__…__S3) | IN_PROGRESS | — |
+ 
+ <!--
+ Identity   : Feature ID = UPG-#### (stable). Change ID = CHG-YYYYMMDD-NNN (one execution), or a

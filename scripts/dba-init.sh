@@ -142,7 +142,21 @@ if [ -n "$REMOTE_URL" ]; then
     fi
 fi
 
-# ── 10. Done ────────────────────────────────────────────────────────────────
+# ── 10. Reviewer config ─────────────────────────────────────────────────────
+
+REVIEWER_TOML="$PROJECT_DIR/reviewer.toml"
+REVIEWER_TEMPLATE="$CODEOS_PATH/templates/reviewer.toml"
+
+if [ -f "$REVIEWER_TOML" ]; then
+    echo "[skip] reviewer.toml already exists"
+elif [ -f "$REVIEWER_TEMPLATE" ]; then
+    cp "$REVIEWER_TEMPLATE" "$REVIEWER_TOML"
+    echo "[ok]   reviewer.toml (from template — edit to change provider)"
+else
+    echo "[warn] reviewer.toml template not found at $REVIEWER_TEMPLATE — skipping"
+fi
+
+# ── 11. Done ────────────────────────────────────────────────────────────────
 
 echo ""
 echo "Done. Project initialized."

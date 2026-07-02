@@ -184,3 +184,32 @@ the file list declared in a change's "What changes" table, rather than the full
 working-tree diff. This would make packet isolation a property of the declared scope rather
 than a reviewer workaround. Logged as a future backlog candidate. See [[AJ-007]] for the
 shared-function scope-claim problem.
+
+---
+
+## AJ-010 — Advisory round budgets are not hard gates; the human decides when to advance
+
+*Origin: UPG-0032 / CHG-20260702-001 (Rust reviewer engine), Step 3 review rounds R1–R6.*
+
+PROFILE-3 specifies a 3-round budget per step. Step 3 ran 6 rounds: each returned CHANGES
+ADVISED with genuine in-scope blockers (exit-code routing errors, false AC claims about
+SECRET_REDACTION and config location, missing fail-closed handling). All findings were
+applied. The human approved Step 3 after R6 with the explicit rationale that all blockers
+were fixed, 31/31 tests passed, and the round budget is advisory not binding.
+
+**Lesson / how to apply:** A reviewer verdict is advisory. A round budget is a cost-management
+guide, not a gatekeeping rule. The "max 3 rounds" limit means: "signal to the human that
+the review loop may be chasing diminishing returns." When each round finds new legitimate
+blockers (not the same finding restated), the loop is doing its job — the human should
+decide whether the cost of another round is worth it, not whether the budget rule triggers.
+The protocol enforces human approval at every step gate; it never auto-blocks.
+
+In practice: R1–R6 each found real implementation defects that were worth fixing (incorrect
+exit-code mapping, false contract claims in the AC text, unsafe `.ok()` discards). The budget
+was exceeded because the implementation had real gaps — not because the reviewer was
+misfiring. Once the human confirmed all blockers were closed, they advanced. That is the
+correct behavior.
+
+**Corollary:** When the reviewer begins repeating claims or finding style points, that is when
+to exercise the advisory override and advance. When it finds new structural correctness issues,
+fix them.
