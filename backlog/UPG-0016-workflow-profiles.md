@@ -2,7 +2,7 @@
 feature_id: UPG-0016
 slug: workflow-profiles
 title: Branch / PR / CI Workflow Profiles
-status: PROPOSED
+status: COMPLETE
 priority: P1
 depends_on: []
 related_features: []
@@ -13,7 +13,7 @@ superseded_by: []
 # Upgrade: workflow-profiles — Branch / PR / CI Workflow Profiles
 
 **Priority**: P1
-**Status**: PROPOSED
+**Status**: COMPLETE
 **Type**: toolkit-upgrade
 **Related**: branch-helper, feature-registry, ci-profile, reviewer-full-diff
 
@@ -115,6 +115,7 @@ what later enables checkpoint-based rollback.
 
 | Change ID | File | Purpose | State |
 |---|---|---|---|
+| CHG-20260702-003 | `changes/UPG-0016__CHG-20260702-003__workflow-profiles.md` | New `docs/workflow-profiles.md` — three workflow profiles + reviewer-agent access model | COMPLETE |
 
 ### Reviews
 

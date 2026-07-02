@@ -1,0 +1,466 @@
+Reviewer task:
+
+SCOPE CONTRACT
+  Assess this artifact against the STATED SCOPE of this stage/PR — the Expected Stage
+  Output below and what the artifacts actually claim — NOT against an ideal final system.
+  A capability the artifacts do not claim to provide is OUT-OF-SCOPE, not a defect.
+  The following are OUT-OF-SCOPE BACKLOG unless THIS artifact explicitly claims to provide
+  them: formal approval-binding enforcement; rollback correctness; COMMIT_BOUND/
+  WORKSPACE_BOUND enforcement; JSON Schema validation; CI validation; exact
+  decision-integrity; per-feature decision ledgers; autonomous approval; enabled hooks.
+
+YOUR TASK — answer these five questions using only the evidence in the packet:
+  1. Acceptance criteria: Does the artifact satisfy each of its stated acceptance criteria?
+     Cite evidence for each criterion (or note its absence).
+  2. Claim support: Are universal or strong claims (all, every, never, always, no X) in the
+     artifact supported by evidence in the packet? Any unverifiable strong claim is a candidate
+     finding only if it affects acceptance, scope, safety, decision integrity, or the artifact's
+     stated guarantees.
+  3. Scope drift: Is there any change beyond the stated scope boundary? (Files not in the
+     "What changes" list; behavior changes not in the intent; downstream doctrine modified
+     rather than read.)
+  4. In-scope blockers: Are there facts that, if left in, would make the artifact wrong,
+     unsafe, or internally contradictory?
+  5. Finding classification: Classify every finding you raise as exactly one of the five
+     TRIAGE RULE categories below.
+
+TRIAGE RULE — classify EVERY finding as exactly one of:
+  IN-SCOPE BLOCKER         breaks the stated goal; creates a FALSE CLAIM in this artifact;
+                           weakens the advisory/read-only/human-gated guarantees; prevents
+                           the work from running; or violates an explicit safety constraint.
+  IN-SCOPE NON-BLOCKER     improves it but is not required for this PR.
+  OUT-OF-SCOPE BACKLOG     valid, but belongs to a future feature / stronger guarantee.
+  REJECTED                 conflicts with the stated scope or Codeos philosophy.
+  SELF-REFERENCE /         review records that are stale because of the previous round's
+  REVIEW-BOOKKEEPING       own existence (causal loop); not a real artifact defect.
+  Base the PR decision ONLY on IN-SCOPE BLOCKER findings. An OUT-OF-SCOPE BACKLOG finding
+  must NOT cause DO NOT ADVANCE unless this artifact FALSELY CLAIMS to solve it.
+
+WHAT NOT TO DO
+  - Do not flag style or wording issues as blockers unless the wording creates a false claim,
+    contradiction, parser breakage, or wrong governance instruction.
+  - Do not re-review unchanged full context when the packet is in delta mode.
+  - Do not treat local-only review history as a blocker unless the artifact falsely
+    claims the review artifacts are committed/durable.
+
+INSTRUCTIONS
+  If this is a resumed session, ignore any earlier-session conclusions unless they are
+  re-established by THIS packet; assess only the evidence above, pinned to this commit.
+  Give a focused assessment of this artifact against the stated scope, acceptance criteria,
+  and evidence in this packet. Rank findings by severity. Suggest a better design only when
+  needed to explain a required fix for an IN-SCOPE BLOCKER.
+
+  Limit findings to the top 3 IN-SCOPE BLOCKERS. Additional non-blocking observations may be
+  summarized in one short paragraph only if useful.
+
+  For EACH finding emit:
+    Finding: / Severity: High|Medium|Low / Classification: <one of the TRIAGE RULE labels>
+    Evidence: <file/line> / Why: <short> / Required action: fix now|optional fix|backlog|reject
+    Scope reason: <why it does/does not belong to this PR's scope>
+  Then emit:
+    PR decision: ADVANCE | REQUEST CHANGES | DO NOT ADVANCE   (based ONLY on in-scope blockers)
+    Scope drift warning: yes|no — <is anything pulling this PR beyond its stated scope?>
+  Then on the LAST three lines emit exactly (map ADVANCE->NO OBJECTION,
+  REQUEST CHANGES->CHANGES ADVISED, DO NOT ADVANCE->DO NOT ADVANCE):
+    LOG SUMMARY: <NO OBJECTION | CHANGES ADVISED | DO NOT ADVANCE | UNCLASSIFIED> — <single most important point>
+      (use UNCLASSIFIED if you genuinely cannot classify the artifact safely)
+    EVIDENCE: <A|B|C|D|E>
+    HIGHEST-IMPACT UNCERTAINTY: <one sentence — what single thing, if wrong, most affects this assessment>
+
+  Evidence grade — the grade describes what the assessment rests on, not reviewer confidence:
+    A — Directly verified in the artifact, diff, or output shown in the packet
+    B — Verified with multiple direct pieces of evidence, but coverage is not complete
+    C — Partially verified, partially inferred from structure or context
+    D — Mostly inferred from structure or indirect evidence
+    E — Hypothesis or very limited basis — little to no direct evidence
+
+
+PACKET MANIFEST
+  generated: 2026-07-02T12:46:45Z
+  task_prompt: /home/arc/projects/claude/Codeos/prompts/codeos-reviewer-task.md (4959 bytes)
+  review_content_bytes: 13918
+  estimated_review_tokens: ~3479
+  budget_status: OK
+  packet_mode: full
+  delta_base: none
+  items:
+    - path: changes/UPG-0016__CHG-20260702-003__workflow-profiles.md
+      mode: full_file
+      bytes: 6182
+      sha256: 03b3f53d897ed7b03fd31dbef13a08288f07ab02e5b9d2138e43a5610c82db85
+    - path: docs/workflow-profiles.md
+      mode: full_file
+      bytes: 5269
+      sha256: e6dd87ca1fe1b09cdaf5bad8c54e8dfc610181a51631ad193cccd43451f918f6
+    - path: (diff)
+      mode: full_file
+      bytes: 2467
+
+REVIEW CONTEXT
+  Feature:                UPG-0016__CHG-20260702-003
+  Stage:                  selfdev-step-4
+  Branch:                 selfdev/upg-0029-review-durability
+  Base commit:            (no base pin)
+  Review commit:          54fc62bd435e9b7893397a91d5958d91b5c85c64 (+ uncommitted workspace changes)
+  Current approved stage: n/a (non-numeric stage)
+  Evidence coverage:      FULL_COVERAGE
+  Workspace dirty:        yes (uncommitted changes at review time)
+
+DBA RULES RELEVANT TO THIS STAGE
+  - Human approval is required for every stage transition; you are advisory only.
+  - Memory is not truth — assess only what is provided, pinned to the review commit.
+  - Implementation must trace to approved artifacts; no behavior beyond intent+contract+schema.
+  - No events outside the approved event schema; no hidden behavior.
+
+STAGE-SPECIFIC CHECKS
+  - (no stage-specific checklist for stage selfdev-step-4)
+
+EXPECTED STAGE OUTPUT
+  (no expected-output template for stage)
+
+ARTIFACTS TO REVIEW
+  --- changes/UPG-0016__CHG-20260702-003__workflow-profiles.md (sha256: 03b3f53d897ed7b03fd31dbef13a08288f07ab02e5b9d2138e43a5610c82db85, visibility: shown) ---
+    ---
+    change_id: CHG-20260702-003
+    feature_id: UPG-0016
+    slug: workflow-profiles
+    triage_class: documentation
+    scope_axis: self-dev only
+    review_profile: PROFILE-2
+    review_series: RVS__UPG-0016__CHG-20260702-003__S4
+    review_state: DRAFT
+    status: IN_PROGRESS
+    loop_step: 4-Reconcile
+    ---
+    
+    # Change: UPG-0016 / CHG-20260702-003 — Workflow Profiles
+    
+    ## TRACE HEADER
+    
+    ```yaml
+    feature_id: UPG-0016
+    primary_feature_id: UPG-0016
+    change_id: CHG-20260702-003
+    slug: workflow-profiles
+    state: IN_PROGRESS
+    current_step: 4-Reconcile
+    implements:
+      - UPG-0016
+    related_features: []
+    review_series: RVS__UPG-0016__CHG-20260702-003__S4
+    review_profile: PROFILE-2
+    review_state: DRAFT
+    review_history: reviews/review-log.md
+    fixes_findings: []
+    follow_up_of: null
+    ```
+    
+    ---
+    
+    ## Step 1 — Change Intent
+    
+    ### Problem
+    
+    DBA projects have no documented guidance for branch/PR/CI discipline. Stage 9 says "commit
+    and push" — adequate for small solo work, but as features grow there is no model for:
+    
+    - When to create a feature branch vs commit directly to main
+    - When to open a draft PR, and what CI should run
+    - How to split large or risky features so the reviewer agent gets digestible diffs
+    - What evidence the reviewer agent should be given access to at review time
+    
+    Without documented profiles, every project invents its own discipline ad hoc, and the
+    reviewer agent never gets the full diff needed to detect scope drift or hidden behavior.
+    
+    ### What changes
+    
+    | File | Change |
+    |---|---|
+    | `docs/workflow-profiles.md` | New: three workflow profiles (A — simple local, B — branch-per-feature, C — split PRs) with selection guidance and reviewer-agent access model |
+    | `backlog/UPG-0016-workflow-profiles.md` | Feature Thread updated |
+    | `status/self-development.md` | Row activated |
+    | `status/roadmap.md` | UPG-0016 → IN_PROGRESS |
+    
+    ### Scope boundary — what stays the same
+    
+    - `dba-system.md` — not touched; downstream doctrine unchanged
+    - Existing Stage 9 behavior — profiles are optional, not mandatory; Stage 9 commit/push
+      is still valid for small work
+    - All other docs, prompts, templates, scripts — no changes; no cross-references needed
+    - Reviewer pipeline scripts (`codeos-review.sh`) — the "reviewer agent access" checklist
+      in the doc is design guidance only, not a script change (that belongs to UPG-0014)
+    - `dba-system.md` cross-references — none required; this is an additive doc
+    
+    ### What is explicitly deferred (scope boundary)
+    
+    - Automating branch creation or PR opening (tooling, UPG-0014 area)
+    - CI configuration templates or GitHub Actions setup
+    - Per-project `.codeos/workflow-profile.yml` config file (future)
+    - Mandatory profile selection in `dba-init.sh`
+    
+    ### Triage
+    
+    - Class: `documentation` (normative)
+    - Scope axis: `self-dev only`
+    - Review profile: `PROFILE-2` (Codex review at Reconcile only, max 2 rounds; Step 1–3
+      gates require human approval but no intermediate Codex review)
+    - Originating backlog id: `UPG-0016`
+    
+    ---
+    
+    ## Step 2 — Acceptance Criteria
+    
+    Each criterion is independently verifiable against `docs/workflow-profiles.md`.
+    
+    ### AC-1 — All three profiles are present and complete
+    
+    The doc defines exactly three profiles (A, B, C), each with:
+    - A name and use-when guidance
+    - A concrete workflow sequence (what steps to take, in what order)
+    - No mandatory language that overrides the existing Stage 9 commit/push default
+    
+    ### AC-2 — Profile selection guidance is clear and non-contradictory
+    
+    The doc provides guidance on when to use each profile (not just what each profile does).
+    Guidance must be consistent — no two profiles claim the same "use when" condition.
+    
+    ### AC-3 — Reviewer-agent access model is documented
+    
+    The doc specifies what the reviewer agent should be given access to when running in a
+    branch/PR context. The checklist is marked as guidance (informational), not a pipeline
+    contract or script requirement.
+    
+    ### AC-4 — No mandatory policy language
+    
+    No profile may be described as required, mandatory, or the only correct approach for any
+    category of work. The current Stage 9 commit/push-to-main flow must remain explicitly valid
+    for small work (per the backlog brief guardrail).
+    
+    ### AC-5 — No downstream doctrine touched
+    
+    `dba-system.md` is not modified. No stage descriptions, vocabulary, or behavioral contracts
+    in the downstream doctrine are altered. Verified by `git diff` showing no change to
+    `dba-system.md`.
+    
+    ### AC-6 — No broken internal references
+    
+    Every file path, feature ID, or section link mentioned inside `docs/workflow-profiles.md`
+    either exists in the repo or is clearly marked as a future artifact.
+    
+    ### AC-7 — Deferred scope is absent from the doc
+    
+    The following are NOT present in the doc:
+    - Per-project `.codeos/workflow-profile.yml` config schema
+    - `dba-init.sh` profile selection prompts
+    - GitHub Actions or CI configuration snippets
+    - Any claim that profile selection is automated
+    
+    ---
+    
+    ## Step 3 — Implementation
+    
+    ### File created
+    
+    `docs/workflow-profiles.md` — new doc, ~140 lines. Sections:
+    - Selection table (A/B/C with use-when conditions)
+    - Profile A: simple local flow
+    - Profile B: branch per feature (recommended default); explains one-commit-per-stage rationale
+    - Profile C: split PRs table (PR 1–4)
+    - Reviewer-agent access model + checklist (marked as guidance, not pipeline contract)
+    - "What Profile B Does Not Require" (no mandatory PR template, CI, or automated branch creation)
+    - "Relationship to Existing Workflow" (explicit: profiles are optional; DBA gates unchanged)
+    
+    ### AC pre-check
+    
+    | AC | Result |
+    |---|---|
+    | AC-1 | 3 profiles present, each with use-when + sequence ✅ |
+    | AC-2 | Distinct conditions: A=solo/small/low-risk, B=3+ stages/CI/review, C=large/risky/multi-subsystem ✅ |
+    | AC-3 | Reviewer-agent section present; checklist explicitly "guidance...not enforced by the pipeline" ✅ |
+    | AC-4 | "What Profile B Does Not Require" section; "profile selection is a human decision...not enforced by any tool"; Stage 9 explicitly preserved ✅ |
+    | AC-5 | `git diff dba-system.md` = 0 lines ✅ |
+    | AC-6 | No file paths or links referencing non-existent artifacts ✅ |
+    | AC-7 | No config schema, no `dba-init.sh`, no GitHub Actions, no automation claims ✅ |
+
+  --- docs/workflow-profiles.md (sha256: e6dd87ca1fe1b09cdaf5bad8c54e8dfc610181a51631ad193cccd43451f918f6, visibility: shown) ---
+    # Workflow Profiles
+    
+    Optional guidance for branch, PR, and CI discipline in DBA projects. The existing Stage 9
+    commit-and-push-to-main flow is always valid for small work. Choose a profile when more
+    structure helps.
+    
+    ---
+    
+    ## Choosing a Profile
+    
+    | Profile | Use when |
+    |---|---|
+    | **A — Simple local** | Solo work; small feature (1–2 stages); low risk; no CI; no external review needed |
+    | **B — Branch per feature** | Feature spans 3+ stages; other contributors may touch the same code; CI exists; reviewer needs staged visibility |
+    | **C — Split PRs** | Feature is large or risky; multiple subsystems touched; security / compliance concern; reviewer needs smaller diffs to give a useful signal |
+    
+    When in doubt, start with B. It adds minimal ceremony and preserves stage history.
+    
+    ---
+    
+    ## Profile A — Simple Local Flow
+    
+    ```
+    Run Stages 1–9 locally.
+    Commit after Stage 9.
+    Push to main.
+    Optional: run a reviewer pass before the final commit.
+    ```
+    
+    **Notes:**
+    - No branch required; work directly on main.
+    - The Stage 9 commit message becomes the sole audit trail, so write it carefully.
+    - If the feature grows mid-flight, switch to Profile B rather than continuing on main.
+    
+    ---
+    
+    ## Profile B — Branch per Feature (Recommended Default)
+    
+    ```
+    1. Create feature/<feature_id> from main.
+    2. Commit after each approved stage (keeps gate history visible in git log).
+    3. Open a draft PR after Stage 3 (approved artifacts) or Stage 5 (approved
+       implementation), whichever comes first.
+    4. Run CI as soon as implementation and tests exist (Stage 5 or Stage 6).
+    5. Merge to main only after Stage 8 (approved; pending runtime) or Stage 9 (complete).
+    ```
+    
+    **Why one commit per stage:** each gate becomes a checkpoint. If Stage 7 reveals a
+    problem, you can see exactly what was approved at Stage 5 without reading prose. It also
+    lets a reviewer diff from any approved gate forward.
+    
+    **Notes:**
+    - Use `feature/<feature_id>` as the branch name (e.g. `feature/EVT-0012`).
+    - Draft PR is optional before Stage 5 if no CI is configured yet.
+    - Squash-merge is fine at the end if stage history in the PR description is sufficient.
+    
+    ---
+    
+    ## Profile C — Split PRs for Large or Risky Features
+    
+    Split the feature into up to four sequential PRs, each merged before the next opens.
+    
+    | PR | What it contains | Merge gate |
+    |---|---|---|
+    | PR 1 — Artifacts | Intent, contract, event schema (Stages 1–3) | Stages 1–3 approved |
+    | PR 2 — Implementation | Code, behavioral tests, telemetry tests (Stages 4–6) | Stages 4–6 approved + CI green |
+    | PR 3 — Runtime evidence | Sanitized fixtures, replay tests, reconciliation reports (Stages 7–8) | Stages 7–8 approved |
+    | PR 4 — Refinement | Only if Stage 9 required a substantive change | Stage 9 approved |
+    
+    **Notes:**
+    - Not all four PRs are always needed. A feature with no replay evidence skips PR 3.
+    - Each PR should be reviewable in isolation; the reviewer agent gets the diff for that
+      PR only, not the full feature history.
+    - If PR 2 reveals a design issue, go back to PR 1 (already merged) via a follow-up
+      change, not by amending the merged branch.
+    
+    ---
+    
+    ## Reviewer-Agent Access Model
+    
+    When running a reviewer pass in a branch or PR context, give the reviewer agent access to
+    the following evidence (as available):
+    
+    ```
+    Approved artifacts for the current stage
+    Full git diff of the branch (or PR diff)
+    Stage reports (Stage 4 contract, Stage 5 schema, Stage 6 test report, …)
+    Test output / CI log
+    Runtime fixtures or replay evidence (Stages 7–8)
+    ```
+    
+    Suggested checklist for the reviewer to work through:
+    
+    ```
+    Diff scope:
+      - Which files changed?
+      - Any files changed that are not in the approved scope?
+    
+    Approved artifacts:
+      - Were any approved Stage 1–3 artifacts modified after approval?
+    
+    Implementation ↔ contract:
+      - Does the implementation match the approved contract and event schema?
+    
+    Tests ↔ contract:
+      - Do tests cover the failure modes named in the contract?
+      - Any test that is not traceable to a contract clause?
+    
+    Runtime evidence:
+      - Is runtime / replay evidence present where Stages 7–8 require it?
+    
+    Risk:
+      - Hidden behavior or side effects not mentioned in the contract?
+      - CI green?
+    
+    Recommended decision: NO OBJECTION / CHANGES ADVISED / DO NOT ADVANCE
+    ```
+    
+    This checklist is guidance for the reviewer prompt; it is not enforced by the pipeline.
+    Reviewer output is advisory and non-gatekeeping at every profile (see `dba-system.md`).
+    
+    ---
+    
+    ## What Profile B Does Not Require
+    
+    - A mandatory PR template
+    - CI configuration (use CI when it exists; profiles work without it)
+    - Automated branch creation (create the branch manually with `git checkout -b`)
+    - A specific merge strategy (merge, rebase, or squash — team preference)
+    
+    ---
+    
+    ## Relationship to Existing Workflow
+    
+    These profiles sit on top of the 9-stage DBA loop. They govern *how commits and PRs are
+    structured*, not *what is approved at each gate*. The human-approval gates and reviewer
+    cadence defined in `dba-system.md` are unchanged.
+    
+    Profile selection is a human decision made at the start of a feature, not enforced by any
+    tool. If you change your mind mid-feature (e.g. a Profile A feature grows into Profile B
+    territory), switching is fine — just create the branch from the current commit and keep
+    going.
+
+DIFF TO REVIEW (base->review, secret/size filtered)
+diff --git a/backlog/UPG-0016-workflow-profiles.md b/backlog/UPG-0016-workflow-profiles.md
+index f4d6959..bb3cd6c 100644
+--- a/backlog/UPG-0016-workflow-profiles.md
++++ b/backlog/UPG-0016-workflow-profiles.md
+@@ -115,6 +115,7 @@ what later enables checkpoint-based rollback.
+ 
+ | Change ID | File | Purpose | State |
+ |---|---|---|---|
++| CHG-20260702-003 | `changes/UPG-0016__CHG-20260702-003__workflow-profiles.md` | New `docs/workflow-profiles.md` — three workflow profiles + reviewer-agent access model | IN_PROGRESS |
+ 
+ ### Reviews
+ 
+diff --git a/status/roadmap.md b/status/roadmap.md
+index 3a8d350..e77b2e9 100644
+--- a/status/roadmap.md
++++ b/status/roadmap.md
+@@ -67,7 +67,7 @@ cheap pilot-adjacent wins early.
+ | 4 | UPG-0032 | Rust Reviewer Engine with Multi-Provider Support | P2 | UPG-0027 ✓ | CHG-20260702-001 ✓ | COMPLETE |
+ | 4 | UPG-0014 | Reviewer Agent with Full Diff Access | P2 | UPG-0032 | — | PROPOSED |
+ | 4 | UPG-0015 | Bind stage approval to reviewed provenance | P1 | UPG-0032 ✓ | CHG-20260702-002 | COMPLETE |
+-| 4 | UPG-0016 | Branch / PR / CI Workflow Profiles | P1 | — | — | PROPOSED |
++| 4 | UPG-0016 | Branch / PR / CI Workflow Profiles | P1 | — | CHG-20260702-003 | IN_PROGRESS |
+ | 4 | UPG-0017 | Stack Manifest with Automatic Reconciliation | P2 | — | — | PROPOSED |
+ 
+ ### Wave 5 — Advanced automation & generators  *(mostly P3 + the big P2 rewrite)*
+diff --git a/status/self-development.md b/status/self-development.md
+index bbc4751..52ed8a7 100644
+--- a/status/self-development.md
++++ b/status/self-development.md
+@@ -45,6 +45,7 @@
+ | UPG-0006 | CHG-20260701-008 | prompt | self-dev only | 4-Reconcile | ACCEPTED (Steps 1–4 reviewed; Step 4 R1 NO OBJECTION; all 6 ACs verified) | COMPLETE | — |
+ | UPG-0032 | CHG-20260702-001 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (Step 3: 6 rounds, all blockers applied; Step 4 R1 NO OBJECTION; all 11 ACs verified; 33 tests; post-reconcile delta-mode fix applied) | COMPLETE | UPG-0034, UPG-0035 |
+ | UPG-0015 | CHG-20260702-002 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (Steps 1–4 reviewed; Step 4 R2 NO OBJECTION; all 13 ACs verified; 48 tests; coverage gate + provenance binding in Rust engine) | COMPLETE | — |
++| UPG-0016 | CHG-20260702-003 | documentation | self-dev only | 4-Reconcile | DRAFT | IN_PROGRESS | — |
+ 
+ <!--
+ Identity   : Feature ID = UPG-#### (stable). Change ID = CHG-YYYYMMDD-NNN (one execution), or a
