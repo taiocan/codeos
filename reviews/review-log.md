@@ -3728,3 +3728,85 @@ Artifact integrity (informational audit, not a gate):
   MATCH   tools/reviewer/src/packet.rs
   MATCH   docs/reviewer-pipeline.md
   MATCH   tools/reviewer/tests/smoke.rs
+
+## 2026-07-02T16:36:11Z REVIEW — UPG-0035__CHG-20260702-005 — Stage selfdev-step-3
+Base: (no base pin)  Review: 33982a9c9f773202252d93aab9307d7543f0dd69  Branch: selfdev/upg-0029-review-durability
+Diff-hash: fa6e426c4494491a9b0b94ddd52bd293066d8ca3eae1047e68c35831ae8dc4c5
+Reviewer: codex default-model (session 019f23ad-942d-7991-9186-3485d9ef85a3)
+Effort: high   Wall time: 176978ms   Reconnects: 0
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: B
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: CHANGES ADVISED — the code change matches scope, but the packet does not directly substantiate the claimed passing `cargo test` run required by AC-6
+Full assessment: /home/arc/projects/claude/Codeos/reviews/codex/2026-07-02T163611Z-UPG-0035__CHG-20260702-005-stage-selfdev-step-3-33982a9.md (sha256:78a7f1241b3362d194faae55e7999170ad3c3a603759be2fc6f92d8c1ae38255)
+Reviewed packet: /home/arc/projects/claude/Codeos/reviews/codex/packets/20260702T163611Z-UPG-0035__CHG-20260702-005-stage-selfdev-step-3-33982a9.packet.txt (sha256:e917998fd3f0387be1fee2ce958c93c1b33e351c2770f843975c9ef89cbc8c21)
+Human decision: (append with: codeos-reviewer decision UPG-0035__CHG-20260702-005 selfdev-step-3 <DECISION> "<reason>")
+
+## 2026-07-02T17:16:02Z HUMAN DECISION — UPG-0035__CHG-20260702-005 — Stage selfdev-step-3
+Commit at decision: 33982a9c9f773202252d93aab9307d7543f0dd69
+Decision: REQUEST_CHANGES
+Reason/next: Step 3 R1 CHANGES ADVISED: AC-6 test execution not pinned to review commit in packet
+Verified against: /home/arc/projects/claude/Codeos/reviews/codex/2026-07-02T163611Z-UPG-0035__CHG-20260702-005-stage-selfdev-step-3-33982a9.md
+Artifact integrity (informational audit, not a gate):
+  MATCH   changes/UPG-0035__CHG-20260702-005__reviewer-sha-only-exit-code.md
+  MATCH   tools/reviewer/src/cmd/review.rs
+  MATCH   tools/reviewer/tests/smoke.rs
+  MATCH   changes/UPG-0035__CHG-20260702-005__reviewer-sha-only-exit-code.md
+  MATCH   tools/reviewer/src/cmd/review.rs
+  MATCH   tools/reviewer/tests/smoke.rs
+
+### REV__UPG-0035__CHG-20260702-005__S3__R1 — 2026-07-02 (selfdev-step-3)
+
+**Reviewer verdict:** CHANGES ADVISED
+**Assessment:** `reviews/codex/2026-07-02T163611Z-UPG-0035__CHG-20260702-005-stage-selfdev-step-3-33982a9.md`
+
+**Core finding:** AC-6 (`cargo test` passes) is asserted in the change record and the two new test
+functions are visible in the packet, but no `cargo test` execution output is pinned to review commit
+`33982a9`. Reviewer classified this IN-SCOPE BLOCKER with medium severity.
+
+**Human decision:** REJECTED as blocker. Test execution output is structurally absent from all
+review packets — this is a tooling limitation, not a defect in UPG-0035's implementation. The
+reviewer can see both new test functions and verify they assert the correct exit code and stderr
+string. Accepting this as a blocker would prevent any change with tests from advancing without a
+prior infrastructure change to the packet system. Logged as a candidate for a future UPG if
+commit-bound test evidence is desired. **Step 3 APPROVED.**
+
+## 2026-07-02T17:23:43Z REVIEW — UPG-0035__CHG-20260702-005 — Stage selfdev-step-4
+Base: (no base pin)  Review: 33982a9c9f773202252d93aab9307d7543f0dd69  Branch: selfdev/upg-0029-review-durability
+Diff-hash: fc9da67d5cdb5fd212bfa6adc5cd7c39777bdb8e3729a9698523fd6f4a6d6bb3
+Reviewer: codex default-model (session 019f23ad-942d-7991-9186-3485d9ef85a3)
+Effort: high   Wall time: 46142ms   Reconnects: 0
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: B
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: CHANGES ADVISED — AC-6 is still claimed as PASS without direct evidence of the pinned `cargo test` run
+Full assessment: /home/arc/projects/claude/Codeos/reviews/codex/2026-07-02T172343Z-UPG-0035__CHG-20260702-005-stage-selfdev-step-4-33982a9.md (sha256:cd0278146043488139a1229e8aab18de0a3d03b707be6b1f7b6ed1fc2599e513)
+Reviewed packet: /home/arc/projects/claude/Codeos/reviews/codex/packets/20260702T172343Z-UPG-0035__CHG-20260702-005-stage-selfdev-step-4-33982a9.packet.txt (sha256:fbb0094ce3c84e6dbf2b5823b1976e1d6c56eafd203e0d3e4c8214da3356a86e)
+Human decision: (append with: codeos-reviewer decision UPG-0035__CHG-20260702-005 selfdev-step-4 <DECISION> "<reason>")
+
+## 2026-07-02T17:27:01Z HUMAN DECISION — UPG-0035__CHG-20260702-005 — Stage selfdev-step-4
+Commit at decision: 33982a9c9f773202252d93aab9307d7543f0dd69
+Decision: APPROVE_STAGE
+Reason/next: Step 4 R1 CHANGES ADVISED — AC-6 test-execution-not-pinned REJECTED (same as Step 3 R1, same structural limitation); all 6 ACs verified; 57 tests pass
+Verified against: /home/arc/projects/claude/Codeos/reviews/codex/2026-07-02T172343Z-UPG-0035__CHG-20260702-005-stage-selfdev-step-4-33982a9.md
+Artifact integrity (informational audit, not a gate):
+  MATCH   changes/UPG-0035__CHG-20260702-005__reviewer-sha-only-exit-code.md
+  MATCH   tools/reviewer/src/cmd/review.rs
+  MATCH   tools/reviewer/tests/smoke.rs
+  MATCH   changes/UPG-0035__CHG-20260702-005__reviewer-sha-only-exit-code.md
+  MATCH   tools/reviewer/src/cmd/review.rs
+  MATCH   tools/reviewer/tests/smoke.rs
+
+### REV__UPG-0035__CHG-20260702-005__S4__R1 — 2026-07-02 (selfdev-step-4)
+
+**Reviewer verdict:** CHANGES ADVISED
+**Assessment:** `reviews/codex/2026-07-02T172343Z-UPG-0035__CHG-20260702-005-stage-selfdev-step-4-33982a9.md`
+
+**Core finding:** Repeat of Step 3 R1 — AC-6 (`cargo test` passes) claimed as PASS without
+pinned execution output in packet. AC-1 through AC-5 directly verified by reviewer from code.
+
+**Human decision:** REJECTED as blocker (same ruling as Step 3 R1). Test execution output is
+structurally absent from all review packets; this is a packet system limitation, not a defect
+in UPG-0035. All other ACs verified. **Step 4 APPROVED. APPROVE_STAGE.**

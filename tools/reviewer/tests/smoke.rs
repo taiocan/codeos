@@ -980,3 +980,65 @@ fn smoke_full_context_diff_no_clip_within_budget() {
         "packet must NOT have CLIPPED marker when diff fits within budget"
     );
 }
+
+// --- UPG-0035: --sha-only missing-path exit code ---
+
+#[test]
+fn smoke_sha_only_missing_path_exits_usage() {
+    let (dir, _sha) = setup_temp_git_repo();
+    let p = dir.path();
+    setup_codeos_symlink(p);
+
+    let out = Command::new(binary())
+        .args([
+            "review", "FEAT", "test-sha-only-missing",
+            "--sha-only", "nonexistent-file.md",
+            "--skip-prechecks",
+            "tracked.md",
+        ])
+        .current_dir(p)
+        .output()
+        .expect("run binary");
+
+    assert_eq!(
+        out.status.code().unwrap_or(-1), 1,
+        "missing --sha-only path must exit 1 (EXIT_USAGE)"
+    );
+    let stderr = String::from_utf8_lossy(&out.stderr);
+    assert!(
+        stderr.contains("--sha-only path not found: nonexistent-file.md"),
+        "stderr must name the missing path; got: {}", stderr
+    );
+}
+
+#[test]
+fn smoke_sha_only_existing_path_no_spurious_exit1() {
+    let (dir, _sha) = setup_temp_git_repo();
+    let p = dir.path();
+    setup_codeos_symlink(p);
+
+    // sha_only_artifact.md exists — should not trigger the missing-path check
+    std::fs::write(p.join("sha_only_artifact.md"), "# sha only\n").expect("write sha_only");
+
+    // --print-packet + --skip-prechecks avoids needing a real Codex session
+    let out = Command::new(binary())
+        .args([
+            "review", "FEAT", "test-sha-only-exists",
+            "--sha-only", "sha_only_artifact.md",
+            "--print-packet", "--skip-prechecks",
+            "tracked.md",
+        ])
+        .current_dir(p)
+        .output()
+        .expect("run binary");
+
+    let stderr = String::from_utf8_lossy(&out.stderr);
+    assert_ne!(
+        out.status.code().unwrap_or(-1), 1,
+        "existing --sha-only path must not exit 1; stderr: {}", stderr
+    );
+    assert!(
+        !stderr.contains("--sha-only path not found"),
+        "existing path must not trigger missing-path error; stderr: {}", stderr
+    );
+}

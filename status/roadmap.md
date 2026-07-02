@@ -93,7 +93,7 @@ cheap pilot-adjacent wins early.
 | UPG-0031 | Review script delta-mode fix + fail-closed guard | P1 | UPG-0027 | CHG-20260630-002/003 | COMPLETE |
 | UPG-0033 | Review Script Instrumentation — Timing, Reconnect Count, Reasoning Effort | P1 | UPG-0027 | CHG-20260701-001 | COMPLETE |
 | UPG-0034 | Rust Reviewer: Read-Only Invariant Check | P3 | UPG-0032 | — | PROPOSED |
-| UPG-0035 | Rust Reviewer: --sha-only exit-code parity | P3 | UPG-0032 | — | PROPOSED |
+| UPG-0035 | Rust Reviewer: --sha-only exit-code parity | P3 | UPG-0032 | CHG-20260702-005 | COMPLETE |
 
 ---
 

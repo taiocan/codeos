@@ -2,7 +2,7 @@
 feature_id: UPG-0035
 title: "Rust Reviewer: --sha-only missing-path exit code parity (Bash=2, Rust=4)"
 priority: P3
-status: PROPOSED
+status: COMPLETE
 depends_on: UPG-0032
 origin_change: CHG-20260702-001
 ---
@@ -49,4 +49,4 @@ P3 — purely cosmetic exit-code difference; no functional impact on normal usag
 
 | Change ID | State | Notes |
 |---|---|---|
-| — | PROPOSED | Origin: parity gap found during UPG-0032 / CHG-20260702-001 reconcile |
+| CHG-20260702-005 | COMPLETE | `changes/UPG-0035__CHG-20260702-005__reviewer-sha-only-exit-code.md` |

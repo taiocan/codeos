@@ -88,6 +88,14 @@ pub fn run(args: ReviewArgs, cfg: &Config, provider_name: &str) -> Result<i32> {
         }
     }
 
+    // Missing --sha-only path is a bad CLI argument (exit 1, not packet error 4)
+    for so in &args.sha_only {
+        if !Path::new(so).exists() {
+            eprintln!("error: --sha-only path not found: {}", so);
+            return Ok(crate::EXIT_USAGE);
+        }
+    }
+
     // Prechecks
     if !args.skip_prechecks {
         for a in &args.artifacts {
