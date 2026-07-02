@@ -8,6 +8,7 @@ review_profile: PROFILE-3
 review_series: RVS__UPG-0032__CHG-20260702-001__S4
 review_state: ACCEPTED
 status: COMPLETE
+post_reconcile_fix: delta-mode untracked file (2026-07-02)
 loop_step: 4-Reconcile
 ---
 
@@ -450,9 +451,10 @@ output → save packet → schema validate → write assessment → append log �
 **`tools/reviewer/src/main.rs`** — CLI entry point (`clap` derive). `Commands`: `Review`
 (with `trailing_var_arg = true`), `Decision`, `Diagnose`, `StageStart`. Exit constants 0–5.
 
-**`tools/reviewer/tests/smoke.rs`** — 9 integration smoke tests covering: help, diagnose,
+**`tools/reviewer/tests/smoke.rs`** — 11 integration smoke tests covering: help, diagnose,
 diagnose with feature+stage, review with no args, print-packet with nonexistent file,
-print-packet with real file, bad verdict, provider override, diagnose shows source.
+print-packet with real file, bad verdict, provider override, diagnose shows source,
+delta-mode untracked artifact (exit 4), delta-mode tracked artifact (exit 0 or 4).
 
 ### Files updated
 
@@ -499,7 +501,7 @@ from unused public API surface — acceptable at v0.1).
 | AC-4: Config precedence | `CODEOS_REVIEWER_PROVIDER=opencode diagnose` → opencode; `--provider codex` overrides → codex | PASS |
 | AC-5: No unwrap (non-test) | 20 grep hits examined: all are test-only or provably-safe-by-construction (`Regex::new(LITERAL).expect()`, `parse().unwrap()` inside `is_ok()` guard) | PASS |
 | AC-6: No provider compile coupling | cfg-feature check → **0**; core module import check → **0** | PASS |
-| AC-7: Unit tests | `cargo test` → **31 passed** (22 unit + 9 smoke); exceeds minimum 12 | PASS |
+| AC-7: Unit tests | `cargo test` → **33 passed** (22 unit + 11 smoke); exceeds minimum 12 | PASS |
 | AC-8: Integration smoke | `cargo build --release` → 0; `--version` → 0; smoke review → exit 0, assessment + packet written with correct naming, log appended | PASS |
 | AC-9: Drop-in CLI | All `codeos-review.sh` call sites in CLAUDE.md/prompts/ use shim; shim passes args unchanged | PASS |
 | AC-10: YAML frontmatter | All 21 required fields present in smoke assessment file | PASS |
@@ -536,3 +538,37 @@ Stale doc references surfaced during R1:
 - `docs/reviewer-artifact-schemas.md:79` — same
 
 These are out-of-scope for this change. Tracked as a follow-on trivial fix under UPG-0006.
+
+---
+
+### Post-reconcile in-scope fix (2026-07-02)
+
+**Trigger:** Human-led full feature-parity comparison of Bash script vs Rust binary revealed
+that delta mode silently treated untracked artifacts as `path_sha_only` rather than erroring.
+Bash exits with an explicit diagnostic; Rust silently misrepresented the evidence.
+
+**Decision:** BLOCKER (human). Accepted fixes #1 (missing artifact stricter) and logged #3
+(read-only invariant) and the `--sha-only` exit-code difference as backlog (UPG-0034,
+UPG-0035). Fixed #2 as in-scope.
+
+**Fix applied:**
+- `tools/reviewer/src/packet.rs`: added `git_is_tracked()` helper (`git ls-files --error-unmatch`);
+  inserted untracked-file check in delta-mode artifact loop before `git_diff_quiet`. Returns
+  `bail!()` with exact Bash diagnostic: "artifact is untracked; delta review cannot compare it
+  to base: {path}\n       Stage the file, commit it, or rerun with --mode full...". Error
+  surfaces as `EXIT_PACKET` (4) via the `packet::build()` Err handler in `cmd/review.rs`.
+- `tools/reviewer/tests/smoke.rs`: added `setup_temp_git_repo()` helper + two new integration
+  tests: `smoke_delta_mode_untracked_artifact_exits_packet` (verifies exit 4 + "untracked" in
+  stderr) and `smoke_delta_mode_tracked_artifact_succeeds` (verifies exit 0 or 4 for
+  unchanged tracked file).
+
+**Test results after fix:**
+```
+running 22 tests  →  22 passed; 0 failed
+running 11 tests  →  11 passed; 0 failed
+```
+Total: **33 tests**. Build clean.
+
+**Out-of-scope items logged:**
+- UPG-0034: read-only invariant check (warning only, P3)
+- UPG-0035: `--sha-only` exit-code parity (cosmetic, P3)

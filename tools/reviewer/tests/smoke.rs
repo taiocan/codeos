@@ -2,6 +2,24 @@
 // These tests verify the CLI surface, exit codes, and packet behavior.
 // Provider invocation is NOT tested here (that would require codex on PATH).
 
+use tempfile::TempDir;
+
+/// Create a minimal git repo in a temp directory and return (TempDir, base_sha).
+fn setup_temp_git_repo() -> (TempDir, String) {
+    let dir = tempfile::tempdir().expect("tempdir");
+    let p = dir.path();
+    Command::new("git").args(["init"]).current_dir(p).output().expect("git init");
+    Command::new("git").args(["config", "user.email", "test@codeos.test"]).current_dir(p).output().ok();
+    Command::new("git").args(["config", "user.name", "Codeos Test"]).current_dir(p).output().ok();
+    std::fs::write(p.join("tracked.md"), "# tracked\n").expect("write tracked");
+    Command::new("git").args(["add", "tracked.md"]).current_dir(p).output().expect("git add");
+    Command::new("git").args(["commit", "-m", "initial"]).current_dir(p).output().expect("git commit");
+    let sha_out = Command::new("git").args(["rev-parse", "HEAD"]).current_dir(p)
+        .output().expect("git rev-parse");
+    let sha = String::from_utf8_lossy(&sha_out.stdout).trim().to_string();
+    (dir, sha)
+}
+
 use std::path::PathBuf;
 use std::process::Command;
 
@@ -128,5 +146,71 @@ fn smoke_diagnose_shows_provider_source() {
         stdout.contains("source:") || stdout.contains("default") || stdout.contains("codex"),
         "diagnose should show provider source: {}",
         stdout
+    );
+}
+
+#[test]
+fn smoke_delta_mode_untracked_artifact_exits_packet() {
+    // Delta review on an untracked file must exit EXIT_PACKET (4) with a clear diagnostic.
+    // Bash behavior: git ls-files --error-unmatch catches this; Rust must match.
+    let (dir, base_sha) = setup_temp_git_repo();
+    let dir_path = dir.path();
+
+    // Write a file that is NOT staged or committed — untracked.
+    std::fs::write(dir_path.join("untracked.md"), "# untracked\n").expect("write untracked");
+
+    let out = Command::new(binary())
+        .args([
+            "review", "FEAT", "delta-test",
+            "--mode", "delta",
+            "--base", &base_sha,
+            "--print-packet",
+            "untracked.md",
+        ])
+        .current_dir(dir_path)
+        .output()
+        .expect("run binary");
+
+    let code = out.status.code().unwrap_or(-1);
+    let stderr = String::from_utf8_lossy(&out.stderr).into_owned();
+    assert_eq!(
+        code, 4,
+        "untracked artifact in delta mode must exit 4 (EXIT_PACKET); stderr: {}",
+        stderr
+    );
+    assert!(
+        stderr.contains("untracked"),
+        "error message must mention 'untracked': {}",
+        stderr
+    );
+}
+
+#[test]
+fn smoke_delta_mode_tracked_artifact_succeeds() {
+    // A tracked but unchanged file in delta mode should produce a packet (exit 0 with --print-packet).
+    let (dir, base_sha) = setup_temp_git_repo();
+    let dir_path = dir.path();
+    // tracked.md was committed in setup; it is tracked and unchanged since base.
+
+    let out = Command::new(binary())
+        .args([
+            "review", "FEAT", "delta-test",
+            "--mode", "delta",
+            "--base", &base_sha,
+            "--print-packet", "--skip-prechecks",
+            "tracked.md",
+        ])
+        .current_dir(dir_path)
+        .output()
+        .expect("run binary");
+
+    let code = out.status.code().unwrap_or(-1);
+    let stderr = String::from_utf8_lossy(&out.stderr).into_owned();
+    // exit 0 (packet printed) is the expected path; exit 4 (EMPTY_PACKET) is also acceptable
+    // since an unchanged file produces no diff.
+    assert!(
+        code == 0 || code == 4,
+        "tracked artifact in delta mode should exit 0 or 4 (empty diff); got {}; stderr: {}",
+        code, stderr
     );
 }

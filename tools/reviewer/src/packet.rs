@@ -213,8 +213,14 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
         let sha = sha256_file(a)?;
 
         if opts.delta_mode {
-            // Delta mode: check if file changed since base
             let base = opts.delta_base.as_deref().unwrap_or("HEAD");
+            // fail-closed: untracked files can't be compared to a base commit; clear diagnostic.
+            if !git_is_tracked(a, &opts.repo_root) {
+                bail!(
+                    "artifact is untracked; delta review cannot compare it to base: {}\n       Stage the file, commit it, or rerun with --mode full for explicit artifacts.",
+                    a
+                );
+            }
             let changed = !git_diff_quiet(base, a, &opts.repo_root)?;
             let vis = if changed { "delta_diff" } else { "path_sha_only" };
             artifacts_block.push_str(&format!(
@@ -460,6 +466,15 @@ fn git_diff_quiet(base: &str, path: &str, repo_root: &str) -> Result<bool> {
         .status()
         .context("git diff --quiet")?;
     Ok(status.success())
+}
+
+fn git_is_tracked(path: &str, repo_root: &str) -> bool {
+    Command::new("git")
+        .args(["ls-files", "--error-unmatch", path])
+        .current_dir(repo_root)
+        .output()
+        .map(|o| o.status.success())
+        .unwrap_or(false)
 }
 
 fn git_is_dirty(repo_root: &str) -> bool {
