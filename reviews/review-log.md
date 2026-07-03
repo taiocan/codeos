@@ -4123,3 +4123,84 @@ Human decision: (append with: codeos-reviewer decision UPG-0020__CHG-20260703-00
 AC-1 through AC-9 all verified by reviewer. **Step 4 APPROVED (pending human gate).**
 
 **Human decision (Step 4 gate):** Step 4 R1 accepted. AC-1 through AC-9 verified. AC-10 finding REJECTED — matches accepted structural limitation from UPG-0035 and UPG-0034 (test execution output never in review packets). No in-scope blocker remains. UPG-0020 / CHG-20260703-002 marked COMPLETE.
+
+## 2026-07-03T12:10:09Z REVIEW — UPG-0021__CHG-20260703-003 — Stage selfdev-step-2
+Base: (no base pin)  Review: 44e728b95de3d366092bce738f086e2322adbf5f  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 2d0a1d4cd12f8da93f69e35fdc20656c87f4339e759ecf54382caa68a79145f6
+Reviewer: codex default-model (session 019f27e0-dd20-7ee2-a3f3-fd5cf64fcca3)
+Effort: high   Wall time: 141695ms   Reconnects: 0
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: CHANGES ADVISED — the acceptance contract does not yet make total field coverage and inferred-value behavior objectively verifiable
+Full assessment: /home/arc/projects/claude/Codeos/reviews/codex/2026-07-03T121009Z-UPG-0021__CHG-20260703-003-stage-selfdev-step-2-44e728b.md (sha256:49fb731664f226f03c9afe2816bfd8effc10c8ffdd53de7558e53dc058556257)
+Reviewed packet: /home/arc/projects/claude/Codeos/reviews/codex/packets/20260703T121009Z-UPG-0021__CHG-20260703-003-stage-selfdev-step-2-44e728b.packet.txt (sha256:1c5eccbd7f11daa0a3dcde8ae2b51337f684f5c29d26b76b457a24854f52f116)
+Human decision: (append with: codeos-reviewer decision UPG-0021__CHG-20260703-003 selfdev-step-2 <DECISION> "<reason>")
+
+## 2026-07-03T12:12:31Z REVIEW — UPG-0021__CHG-20260703-003 — Stage selfdev-step-2
+Base: (no base pin)  Review: 44e728b95de3d366092bce738f086e2322adbf5f  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 2d0a1d4cd12f8da93f69e35fdc20656c87f4339e759ecf54382caa68a79145f6
+Reviewer: codex default-model (session 019f27e2-d164-74c0-a12a-47ec7a95769c)
+Effort: high   Wall time: 153258ms   Reconnects: 0
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: CHANGES ADVISED — the acceptance contract is not internally coherent around `[INFERRED]` semantics and optional-input failure behavior  
+Full assessment: /home/arc/projects/claude/Codeos/reviews/codex/2026-07-03T121231Z-UPG-0021__CHG-20260703-003-stage-selfdev-step-2-44e728b.md (sha256:dd0e56c3b67e3e0eea23887455538c2c1949581a60d75dd7e64bf38a7797a4ce)
+Reviewed packet: /home/arc/projects/claude/Codeos/reviews/codex/packets/20260703T121231Z-UPG-0021__CHG-20260703-003-stage-selfdev-step-2-44e728b.packet.txt (sha256:ea5a86f697d23a8fd75564ba014784a524f61ac8ed9430dfc2644b8ea9b4afc6)
+Human decision: (append with: codeos-reviewer decision UPG-0021__CHG-20260703-003 selfdev-step-2 <DECISION> "<reason>")
+
+## 2026-07-03T12:20:50Z REVIEW — UPG-0021__CHG-20260703-003 — Stage selfdev-step-2
+Base: (no base pin)  Review: 44e728b95de3d366092bce738f086e2322adbf5f  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 2d0a1d4cd12f8da93f69e35fdc20656c87f4339e759ecf54382caa68a79145f6
+Reviewer: codex default-model (session 019f27e2-d164-74c0-a12a-47ec7a95769c)
+Effort: high   Wall time: 68691ms   Reconnects: 0
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: CHANGES ADVISED — the acceptance contract still has unresolved contradictions around `[INFERRED]` semantics and Stage 6 failure handling
+Full assessment: /home/arc/projects/claude/Codeos/reviews/codex/2026-07-03T122050Z-UPG-0021__CHG-20260703-003-stage-selfdev-step-2-44e728b.md (sha256:69aad0e0f870c7f2678e266446a172e8a2fe6db57f0374f15911daaba1a36b1e)
+Reviewed packet: /home/arc/projects/claude/Codeos/reviews/codex/packets/20260703T122050Z-UPG-0021__CHG-20260703-003-stage-selfdev-step-2-44e728b.packet.txt (sha256:3bcdabe79a69bb975d9aecdcda5913a60e0cbfc8e1e4dfc9be7a136bb4a94942)
+Human decision: (append with: codeos-reviewer decision UPG-0021__CHG-20260703-003 selfdev-step-2 <DECISION> "<reason>")
+
+## 2026-07-03T12:23:03Z REVIEW — UPG-0021__CHG-20260703-003 — Stage selfdev-step-2
+Base: (no base pin)  Review: 44e728b95de3d366092bce738f086e2322adbf5f  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 2d0a1d4cd12f8da93f69e35fdc20656c87f4339e759ecf54382caa68a79145f6
+Reviewer: codex default-model (session 019f27e2-d164-74c0-a12a-47ec7a95769c)
+Effort: high   Wall time: 68315ms   Reconnects: 0
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: CHANGES ADVISED — AC-9 still mis-specifies how skipped/ignored tests contribute to `Tests run`
+Full assessment: /home/arc/projects/claude/Codeos/reviews/codex/2026-07-03T122303Z-UPG-0021__CHG-20260703-003-stage-selfdev-step-2-44e728b.md (sha256:48ec9cffee29131e8d1e75360fe4383a5141b1807978108451bd7d486964e338)
+Reviewed packet: /home/arc/projects/claude/Codeos/reviews/codex/packets/20260703T122303Z-UPG-0021__CHG-20260703-003-stage-selfdev-step-2-44e728b.packet.txt (sha256:42db13c3e4b63aec664cee2a42518db11c373b53559f1dec7113e0bc2ea383a5)
+Human decision: (append with: codeos-reviewer decision UPG-0021__CHG-20260703-003 selfdev-step-2 <DECISION> "<reason>")
+
+## 2026-07-03T12:24:22Z REVIEW — UPG-0021__CHG-20260703-003 — Stage selfdev-step-2
+Base: (no base pin)  Review: 44e728b95de3d366092bce738f086e2322adbf5f  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 2d0a1d4cd12f8da93f69e35fdc20656c87f4339e759ecf54382caa68a79145f6
+Reviewer: codex default-model (session 019f27e2-d164-74c0-a12a-47ec7a95769c)
+Effort: high   Wall time: 50336ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — the Step 2 acceptance contract is now internally coherent and in scope
+Full assessment: /home/arc/projects/claude/Codeos/reviews/codex/2026-07-03T122422Z-UPG-0021__CHG-20260703-003-stage-selfdev-step-2-44e728b.md (sha256:ef997db5fd2fb3158804a0b8db60ea84a953483ca1c55b8ea4e16e4d3eb84976)
+Reviewed packet: /home/arc/projects/claude/Codeos/reviews/codex/packets/20260703T122422Z-UPG-0021__CHG-20260703-003-stage-selfdev-step-2-44e728b.packet.txt (sha256:d89cfaef51b5631fc75ad120a89db6dcefce4a66bf48b09d266e45db503fb183)
+Human decision: (append with: codeos-reviewer decision UPG-0021__CHG-20260703-003 selfdev-step-2 <DECISION> "<reason>")
+
+## 2026-07-03T12:37:45Z HUMAN DECISION — UPG-0021__CHG-20260703-003 — Stage selfdev-step-2
+Commit at decision: 44e728b95de3d366092bce738f086e2322adbf5f
+Decision: APPROVE_STAGE
+Reason/next: Step 2 AC accepted after 4 rounds; 7 blockers fixed across field coverage, [INFERRED] semantics, empty-diff handling, cargo test mapping, AC-4 scope, AC-10 error handling
+Verified against: /home/arc/projects/claude/Codeos/reviews/codex/2026-07-03T122422Z-UPG-0021__CHG-20260703-003-stage-selfdev-step-2-44e728b.md
+Artifact integrity (informational audit, not a gate):
+  MATCH   changes/UPG-0021__CHG-20260703-003__stage-report-generator.md
+  MATCH   templates/stage-4-6-report.md
+  MATCH   changes/UPG-0021__CHG-20260703-003__stage-report-generator.md
+  MATCH   templates/stage-4-6-report.md

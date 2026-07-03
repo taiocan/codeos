@@ -2,7 +2,7 @@
 feature_id: UPG-0021
 slug: stage-report-generator
 title: Stage Report Generator
-status: PROPOSED
+status: IN_PROGRESS
 priority: P3
 depends_on: []
 related_features: []
@@ -73,6 +73,7 @@ evidence is never mistaken for verified human/model judgment.
 
 | Change ID | File | Purpose | State |
 |---|---|---|---|
+| CHG-20260703-003 | `changes/UPG-0021__CHG-20260703-003__stage-report-generator.md` | New Rust subcommand: `generate-report` | IN_PROGRESS |
 
 ### Reviews
 

@@ -76,7 +76,7 @@ cheap pilot-adjacent wins early.
 | 5 | UPG-0018 | Typed reviewer engine (replace Bash pilot) | P2 | — | — | SUPERSEDED by UPG-0032 |
 | 5 | UPG-0019 | CI Integration Profile | P3 | UPG-0017 | — | PROPOSED |
 | 5 | UPG-0020 | Stack / Config Drift Detector | P3 | UPG-0017 | CHG-20260703-002 | COMPLETE |
-| 5 | UPG-0021 | Stage Report Generator | P3 | UPG-0004 | — | PROPOSED |
+| 5 | UPG-0021 | Stage Report Generator | P3 | UPG-0004 | CHG-20260703-003 | IN_PROGRESS |
 | 5 | UPG-0022 | 00b → ADR Candidate Generator | P3 | UPG-0007 | — | PROPOSED |
 | 5 | UPG-0023 | Human Approval Dashboard | P3 | UPG-0009, UPG-0003 | — | PROPOSED |
 | 5 | UPG-0024 | Pre-Release Evidence Package | P3 | — | — | PROPOSED |
