@@ -16,6 +16,7 @@ pub const EXIT_CONFIG: i32 = 2;
 pub const EXIT_PROVIDER: i32 = 3;
 pub const EXIT_PACKET: i32 = 4;
 pub const EXIT_WRITE: i32 = 5;
+pub const EXIT_DRIFT: i32 = 6;
 
 #[derive(Parser)]
 #[command(name = "codeos-reviewer", version = "0.1.0")]
@@ -61,6 +62,15 @@ enum Commands {
         #[arg(long)]
         base: Option<String>,
     },
+    /// Detect stack/config drift — exits 6 if watched dependency/config files changed without a reconciliation report
+    CheckDrift {
+        /// Git ref to diff against (default: main)
+        #[arg(long, default_value = "main")]
+        base: String,
+        /// Prefix output with STRICT MODE (same exit behaviour)
+        #[arg(long)]
+        strict: bool,
+    },
 }
 
 fn main() {
@@ -87,6 +97,11 @@ fn run() -> i32 {
             return EXIT_CONFIG;
         }
     };
+
+    // Dispatch check-drift before config resolution — needs no provider config.
+    if let Commands::CheckDrift { base, strict } = &cli.command {
+        return cmd::check_drift::run(base, *strict, &repo_root);
+    }
 
     // Resolve config
     let cfg = match config::resolve(cli.provider.as_deref(), &repo_root) {
@@ -152,6 +167,9 @@ fn run() -> i32 {
                 }
             }
         }
+
+        // Handled above before config resolution; unreachable here.
+        Commands::CheckDrift { .. } => EXIT_SUCCESS,
     }
 }
 

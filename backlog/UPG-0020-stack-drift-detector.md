@@ -2,7 +2,7 @@
 feature_id: UPG-0020
 slug: stack-drift-detector
 title: Stack / Config Drift Detector
-status: PROPOSED
+status: COMPLETE
 priority: P3
 depends_on: []
 related_features: []
@@ -13,7 +13,7 @@ superseded_by: []
 # Upgrade: stack-drift-detector — Stack / Config Drift Detector
 
 **Priority**: P3
-**Status**: PROPOSED
+**Status**: IN_PROGRESS
 **Type**: toolkit-upgrade
 **Related**: stack-manifest, readiness-checklist, ci-profile
 
@@ -68,11 +68,16 @@ not memory-based.
 
 | Change ID | File | Purpose | State |
 |---|---|---|---|
+| CHG-20260703-002 | `changes/UPG-0020__CHG-20260703-002__stack-drift-detector.md` | New Rust subcommand: `check-drift` on the reviewer binary | COMPLETE |
 
 ### Reviews
 
 | Review ID | Change ID | Step | Round | Verdict |
 |---|---|---|---|---|
+| REV__UPG-0020__CHG-20260703-002__S3__R1 | CHG-20260703-002 | 3-Implement | R1 | CHANGES ADVISED |
+| REV__UPG-0020__CHG-20260703-002__S3__R2 | CHG-20260703-002 | 3-Implement | R2 | CHANGES ADVISED |
+| REV__UPG-0020__CHG-20260703-002__S3__R3 | CHG-20260703-002 | 3-Implement | R3 | CHANGES ADVISED (AC-10 REJECTED) |
+| REV__UPG-0020__CHG-20260703-002__S4__R1 | CHG-20260703-002 | 4-Reconcile | R1 | CHANGES ADVISED (AC-10 REJECTED) |
 
 ### Findings Tracked Inside This Feature
 

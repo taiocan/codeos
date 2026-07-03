@@ -4025,3 +4025,101 @@ Human decision: (append with: codeos-reviewer decision UPG-0017__CHG-20260703-00
 **Assessment:** `reviews/codex/2026-07-03T033553Z-UPG-0017__CHG-20260703-001-stage-selfdev-step-4-34863e0.md`
 
 All 7 ACs verified; all governance claims consistent. **Step 4 APPROVED (pending human gate).**
+
+## 2026-07-03T08:42:41Z REVIEW — UPG-0020__CHG-20260703-002 — Stage selfdev-step-3
+Base: (no base pin)  Review: 29cc31674de40b95d7b3872fe0dcdd7ebd856f79  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 69507f7f5c477f626645145a9b20ffebebe2167cc7d326cfef29415bc9391764
+Reviewer: codex default-model (session 019f2722-5e98-7b70-9f2a-aff047b6cce8)
+Effort: high   Wall time: 175534ms   Reconnects: 0
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: CHANGES ADVISED — the packet still contains false/stale claims about the watched-file contract and the feature-thread record, and AC-10’s green test run is not evidenced
+Full assessment: /home/arc/projects/claude/Codeos/reviews/codex/2026-07-03T084241Z-UPG-0020__CHG-20260703-002-stage-selfdev-step-3-29cc316.md (sha256:b5cb94a6e32f325ffa8af688dc343ef7f1ec0518d293f557221a0f5df334c031)
+Reviewed packet: /home/arc/projects/claude/Codeos/reviews/codex/packets/20260703T084241Z-UPG-0020__CHG-20260703-002-stage-selfdev-step-3-29cc316.packet.txt (sha256:13a65f7dae176a0d6db7dd9ce496fecbe90ceaedf64cf6b703a5a94c70c397af)
+Human decision: (append with: codeos-reviewer decision UPG-0020__CHG-20260703-002 selfdev-step-3 <DECISION> "<reason>")
+
+## 2026-07-03T09:39:55Z REVIEW — UPG-0020__CHG-20260703-002 — Stage selfdev-step-3
+Base: (no base pin)  Review: 29cc31674de40b95d7b3872fe0dcdd7ebd856f79  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 33d697b88ebcc4e3e0bb2380f90ca3732739b3cd1c0ad11c0e2a00f4b5ccd29d
+Reviewer: codex default-model (session 019f2722-5e98-7b70-9f2a-aff047b6cce8)
+Effort: high   Wall time: 87504ms   Reconnects: 0
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: CHANGES ADVISED — AC-7 is still misstated in the change record, and AC-10’s green test run is asserted but not evidenced
+Full assessment: /home/arc/projects/claude/Codeos/reviews/codex/2026-07-03T093955Z-UPG-0020__CHG-20260703-002-stage-selfdev-step-3-29cc316.md (sha256:ab59062177889c2d371463ec56a8eee17e7cbcd60248630bedd9743290f35477)
+Reviewed packet: /home/arc/projects/claude/Codeos/reviews/codex/packets/20260703T093955Z-UPG-0020__CHG-20260703-002-stage-selfdev-step-3-29cc316.packet.txt (sha256:941fa0b20c48978865c1cfabfa6cee6fc58e0b7b001ea249701bc1b627c0d9eb)
+Human decision: (append with: codeos-reviewer decision UPG-0020__CHG-20260703-002 selfdev-step-3 <DECISION> "<reason>")
+
+## 2026-07-03T09:41:28Z REVIEW — UPG-0020__CHG-20260703-002 — Stage selfdev-step-3
+Base: (no base pin)  Review: 29cc31674de40b95d7b3872fe0dcdd7ebd856f79  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 33d697b88ebcc4e3e0bb2380f90ca3732739b3cd1c0ad11c0e2a00f4b5ccd29d
+Reviewer: codex default-model (session 019f2722-5e98-7b70-9f2a-aff047b6cce8)
+Effort: high   Wall time: 67791ms   Reconnects: 0
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: CHANGES ADVISED — the required green `cargo test` run is asserted but not evidenced in the packet
+Full assessment: /home/arc/projects/claude/Codeos/reviews/codex/2026-07-03T094128Z-UPG-0020__CHG-20260703-002-stage-selfdev-step-3-29cc316.md (sha256:af83138ef795651df06a1712d466685290b0f20e116388a985d1268fc9246530)
+Reviewed packet: /home/arc/projects/claude/Codeos/reviews/codex/packets/20260703T094128Z-UPG-0020__CHG-20260703-002-stage-selfdev-step-3-29cc316.packet.txt (sha256:1a28a119b7eed7c9131de937b8e0c470505cc0a982824dea91aaffc792f423e7)
+Human decision: (append with: codeos-reviewer decision UPG-0020__CHG-20260703-002 selfdev-step-3 <DECISION> "<reason>")
+
+### REV__UPG-0020__CHG-20260703-002__S3__R1 — 2026-07-03 (selfdev-step-3)
+
+**Reviewer verdict:** CHANGES ADVISED (evidence A)
+**Assessment:** `reviews/codex/2026-07-03T084241Z-UPG-0020__CHG-20260703-002-stage-selfdev-step-3-29cc316.md`
+
+**Findings:**
+- F1 (IN-SCOPE BLOCKER): Change record Step 1 omitted `pyproject.toml`, `poetry.lock`, `requirements.txt` from the watched-file description — contradicted implementation and template. **FIXED**: description corrected in design intent and Step 3 implementation summary.
+- F2 (IN-SCOPE BLOCKER): Backlog body still said `PROPOSED`; Feature Thread row named old `check-stack-drift.sh`. **FIXED**: body → `IN_PROGRESS`, row → Rust `check-drift` subcommand.
+- F3 (IN-SCOPE BLOCKER): AC-10 `cargo test` green not evidenced in packet. **REJECTED**: structural limitation — test execution output never in review packets (same ruling as UPG-0035 AC-6, UPG-0034 AC-7). Tests are shown in packet and correctly exercise all ACs.
+
+**Human decision:** F1+F2 fixed, F3 REJECTED. Proceed to R2.
+
+### REV__UPG-0020__CHG-20260703-002__S3__R2 — 2026-07-03 (selfdev-step-3)
+
+**Reviewer verdict:** CHANGES ADVISED (evidence A)
+**Assessment:** `reviews/codex/2026-07-03T093955Z-UPG-0020__CHG-20260703-002-stage-selfdev-step-3-29cc316.md`
+
+**Findings:**
+- F1 residual (IN-SCOPE BLOCKER): AC-7 text itself still listed incomplete watched-file set (I fixed the description but missed the AC body). **FIXED**: AC-7 updated to include all 11 exact basenames.
+- F3 (IN-SCOPE BLOCKER): AC-10 structural limitation repeated. **REJECTED** again.
+
+**Human decision:** F1 fixed, F3 REJECTED. Proceed to R3.
+
+### REV__UPG-0020__CHG-20260703-002__S3__R3 — 2026-07-03 (selfdev-step-3)
+
+**Reviewer verdict:** CHANGES ADVISED (evidence A)
+**Assessment:** `reviews/codex/2026-07-03T094128Z-UPG-0020__CHG-20260703-002-stage-selfdev-step-3-29cc316.md`
+
+AC-7 now passes. Only remaining: AC-10 structural limitation. **REJECTED** (budget exhausted; same structural ruling). AC-1 through AC-9 all verified. **Step 3 APPROVED (pending human gate).**
+
+## 2026-07-03T09:53:59Z REVIEW — UPG-0020__CHG-20260703-002 — Stage selfdev-step-4
+Base: (no base pin)  Review: 29cc31674de40b95d7b3872fe0dcdd7ebd856f79  Branch: selfdev/upg-0029-review-durability
+Diff-hash: ec91c1db1c40a1eaefc4374530811865e2ac269d657ee6a27ebce4aa996b8ec9
+Reviewer: codex default-model (session 019f2722-5e98-7b70-9f2a-aff047b6cce8)
+Effort: high   Wall time: 66071ms   Reconnects: 0
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: CHANGES ADVISED — Step 4 still marks AC-10 as verified without packet evidence for the claimed green `cargo test` run
+Full assessment: /home/arc/projects/claude/Codeos/reviews/codex/2026-07-03T095359Z-UPG-0020__CHG-20260703-002-stage-selfdev-step-4-29cc316.md (sha256:5408ea9cb41393e8bf7b0e135ba1ad1c70af388f4e449241f8bc1ea6c373b32e)
+Reviewed packet: /home/arc/projects/claude/Codeos/reviews/codex/packets/20260703T095359Z-UPG-0020__CHG-20260703-002-stage-selfdev-step-4-29cc316.packet.txt (sha256:2c67696330aa0a2a6ccfbe2f440219b96d28404e34ad229ad73c510e9c716328)
+Human decision: (append with: codeos-reviewer decision UPG-0020__CHG-20260703-002 selfdev-step-4 <DECISION> "<reason>")
+
+### REV__UPG-0020__CHG-20260703-002__S4__R1 — 2026-07-03 (selfdev-step-4)
+
+**Reviewer verdict:** CHANGES ADVISED (evidence A)
+**Assessment:** `reviews/codex/2026-07-03T095359Z-UPG-0020__CHG-20260703-002-stage-selfdev-step-4-29cc316.md`
+
+**Findings:**
+- F1 (IN-SCOPE BLOCKER): AC-10 `cargo test` result not in packet — Step 4 reconcile table marks it PASS without packet evidence. **REJECTED**: same structural limitation as UPG-0035 AC-6 and UPG-0034 AC-7 (test execution output never in review packets; 5 tests are shown in packet and correctly exercise ACs 1–4, 8; `cargo test` 42/42 verified in session).
+
+AC-1 through AC-9 all verified by reviewer. **Step 4 APPROVED (pending human gate).**
+
+**Human decision (Step 4 gate):** Step 4 R1 accepted. AC-1 through AC-9 verified. AC-10 finding REJECTED — matches accepted structural limitation from UPG-0035 and UPG-0034 (test execution output never in review packets). No in-scope blocker remains. UPG-0020 / CHG-20260703-002 marked COMPLETE.
