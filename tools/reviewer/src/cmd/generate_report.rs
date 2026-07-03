@@ -42,7 +42,7 @@ fn build_stage4(feature_val: &str, base: Option<&str>, repo_root: &Path) -> Stri
     format!(
         "## Stage 4 Implementation Report\n\n\
 Feature: {feature}\n\n\
-Approved artifacts used:\n\
+Approved artifacts used: [FILL]\n\
 - Intent: [FILL]\n\
 - Contract: [FILL]\n\
 - Event schema: [FILL]\n\n\
@@ -145,12 +145,19 @@ fn parse_test_counts(path: &str) -> (String, String, String, String) {
 fn parse_cargo_summary_line(line: &str) -> Option<(String, String, String, String)> {
     // Matches: "test result: ok. N passed; M failed; P ignored[; ...]"
     //      or: "test result: FAILED. N passed; M failed; P ignored[; ...]"
+    // Status is case-sensitive and must be exactly "ok" or "FAILED" (AC-9's stated regex);
+    // any other status is treated as a non-matching line, not a parse of arbitrary text.
     let line = line.trim();
     if !line.starts_with("test result: ") {
         return None;
     }
     let after_prefix = &line["test result: ".len()..];
-    let after_status = after_prefix.splitn(2, ". ").nth(1)?;
+    let mut parts = after_prefix.splitn(2, ". ");
+    let status = parts.next()?;
+    if status != "ok" && status != "FAILED" {
+        return None;
+    }
+    let after_status = parts.next()?;
 
     let passed = extract_count(after_status, "passed")?;
     let failed = extract_count(after_status, "failed")?;
@@ -196,7 +203,7 @@ Unexpected events: [FILL]\n\n\
 Missing expected events: [FILL]\n\n\
 Correlation chains observed: [FILL]\n\n\
 Sanitization status: [FILL]\n\n\
-Raw logs committed:\n\
+Raw logs committed: [FILL]\n\
 - yes/no: [FILL]\n\
 - if yes, why safe: [FILL]\n\n\
 Derived replay fixtures produced: [FILL]\n\n\

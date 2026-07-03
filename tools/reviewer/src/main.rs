@@ -71,6 +71,24 @@ enum Commands {
         #[arg(long)]
         strict: bool,
     },
+    /// Generate a Stage 4/5/6 report skeleton with mechanically inferred fields
+    GenerateReport {
+        /// Report stage: 4, 5, or 6
+        #[arg(long)]
+        stage: String,
+        /// Feature id (e.g. UPG-0021) to populate the Feature field
+        #[arg(long)]
+        feature: Option<String>,
+        /// Git ref to diff against for Stage 4 Files changed (git diff --name-only <base>..HEAD)
+        #[arg(long)]
+        base: Option<String>,
+        /// Path to a cargo test output file to parse Stage 5 test counts from
+        #[arg(long = "test-output")]
+        test_output: Option<String>,
+        /// Path to a JSONL events file to count for Stage 6 Events captured
+        #[arg(long)]
+        events: Option<String>,
+    },
 }
 
 fn main() {
@@ -101,6 +119,18 @@ fn run() -> i32 {
     // Dispatch check-drift before config resolution — needs no provider config.
     if let Commands::CheckDrift { base, strict } = &cli.command {
         return cmd::check_drift::run(base, *strict, &repo_root);
+    }
+
+    // Dispatch generate-report before config resolution — needs no provider config.
+    if let Commands::GenerateReport { stage, feature, base, test_output, events } = &cli.command {
+        let args = cmd::generate_report::GenerateReportArgs {
+            stage,
+            feature: feature.as_deref(),
+            base: base.as_deref(),
+            test_output: test_output.as_deref(),
+            events: events.as_deref(),
+        };
+        return cmd::generate_report::run(args, &repo_root);
     }
 
     // Resolve config
@@ -170,6 +200,7 @@ fn run() -> i32 {
 
         // Handled above before config resolution; unreachable here.
         Commands::CheckDrift { .. } => EXIT_SUCCESS,
+        Commands::GenerateReport { .. } => EXIT_SUCCESS,
     }
 }
 

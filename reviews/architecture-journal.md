@@ -263,3 +263,33 @@ named-artifact evidence set) must:
 
 Failing to state this will cost 2–3 review rounds as the reviewer correctly flags the apparent
 gap, and the resolution ("it's intentional, supplementary-only") must be documented anyway.
+
+## AJ-013 — Change records must not narrate future gate outcomes before the gate happens
+
+*Origin: UPG-0021 / CHG-20260703-003, Step 4 R1 (DO NOT ADVANCE).*
+
+A Step 4 Reconcile section was drafted with an "Outcome" claiming the change record,
+dashboard, roadmap, and feature registry were "updated to COMPLETE together" — written
+*before* the Step 4 Codex review had even run, let alone before the human approved that
+gate. Frontmatter still said `IN_PROGRESS` while the prose claimed `COMPLETE`. The reviewer
+correctly flagged this as an in-scope blocker: it creates an internally contradictory
+artifact (prose vs. frontmatter) and a false human-approval claim, not just a wording slip.
+
+A second, smaller instance of the same failure mode in the same change: the dashboard row's
+"human APPROVE_STAGE" note (recorded for the Step 3 gate) read ambiguously once the row had
+moved to `4-Reconcile`, as if it were approval for the step the row currently named.
+
+**Rule:** Change-record prose must be strictly backward-looking. Write only what has already
+happened and been verified — acceptance-criteria checks against the code as it exists right
+now, review verdicts that have actually returned, decisions that have actually been logged.
+Never write "will be marked," "updated to X together," or similar forward claims, and never
+let a status note about one step's approval read as if it applies to a later step's row.
+The actual state-file edits (frontmatter `status`/`state`, dashboard row, roadmap, feature
+registry) happen only *after* the human decision is logged, as a separate, later pass — not
+narrated in advance inside the same artifact the reviewer is being asked to assess.
+
+**Why it matters beyond this one change:** the reviewer's job is to check claims against
+evidence in the packet. A claim about the artifact's own state is trivially falsifiable by
+the reviewer (it can just read the frontmatter), so this class of error reliably costs a full
+extra review round — cheap to avoid, easy to keep tripping over under time pressure to "just
+finish the change record" while the gate is still open.

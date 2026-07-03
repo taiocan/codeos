@@ -2,7 +2,7 @@
 feature_id: UPG-0021
 slug: stage-report-generator
 title: Stage Report Generator
-status: IN_PROGRESS
+status: COMPLETE
 priority: P3
 depends_on: []
 related_features: []
@@ -13,7 +13,7 @@ superseded_by: []
 # Upgrade: stage-report-generator — Stage Report Generator
 
 **Priority**: P3
-**Status**: PROPOSED
+**Status**: COMPLETE
 **Type**: toolkit-upgrade
 **Related**: stage-4-6-reports
 
@@ -73,12 +73,21 @@ evidence is never mistaken for verified human/model judgment.
 
 | Change ID | File | Purpose | State |
 |---|---|---|---|
-| CHG-20260703-003 | `changes/UPG-0021__CHG-20260703-003__stage-report-generator.md` | New Rust subcommand: `generate-report` | IN_PROGRESS |
+| CHG-20260703-003 | `changes/UPG-0021__CHG-20260703-003__stage-report-generator.md` | New Rust subcommand: `generate-report` | COMPLETE |
 
 ### Reviews
 
 | Review ID | Change ID | Step | Round | Verdict |
 |---|---|---|---|---|
+| REV__UPG-0021__CHG-20260703-003__S2__R1 | CHG-20260703-003 | 2-Acceptance | R1 | CHANGES ADVISED |
+| REV__UPG-0021__CHG-20260703-003__S2__R2 | CHG-20260703-003 | 2-Acceptance | R2 | CHANGES ADVISED |
+| REV__UPG-0021__CHG-20260703-003__S2__R3 | CHG-20260703-003 | 2-Acceptance | R3 | CHANGES ADVISED |
+| REV__UPG-0021__CHG-20260703-003__S2__R4 | CHG-20260703-003 | 2-Acceptance | R4 | CHANGES ADVISED |
+| REV__UPG-0021__CHG-20260703-003__S2__R5 | CHG-20260703-003 | 2-Acceptance | R5 | NO OBJECTION |
+| REV__UPG-0021__CHG-20260703-003__S3__R1 | CHG-20260703-003 | 3-Implement | R1 | DO NOT ADVANCE |
+| REV__UPG-0021__CHG-20260703-003__S3__R2 | CHG-20260703-003 | 3-Implement | R2 | NO OBJECTION |
+| REV__UPG-0021__CHG-20260703-003__S4__R1 | CHG-20260703-003 | 4-Reconcile | R1 | DO NOT ADVANCE |
+| REV__UPG-0021__CHG-20260703-003__S4__R2 | CHG-20260703-003 | 4-Reconcile | R2 | NO OBJECTION |
 
 ### Findings Tracked Inside This Feature
 

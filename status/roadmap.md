@@ -76,8 +76,8 @@ cheap pilot-adjacent wins early.
 | 5 | UPG-0018 | Typed reviewer engine (replace Bash pilot) | P2 | — | — | SUPERSEDED by UPG-0032 |
 | 5 | UPG-0019 | CI Integration Profile | P3 | UPG-0017 | — | PROPOSED |
 | 5 | UPG-0020 | Stack / Config Drift Detector | P3 | UPG-0017 | CHG-20260703-002 | COMPLETE |
-| 5 | UPG-0021 | Stage Report Generator | P3 | UPG-0004 | CHG-20260703-003 | IN_PROGRESS |
-| 5 | UPG-0022 | 00b → ADR Candidate Generator | P3 | UPG-0007 | — | PROPOSED |
+| 5 | UPG-0021 | Stage Report Generator | P3 | UPG-0004 | CHG-20260703-003 | COMPLETE |
+| 5 | UPG-0022 | 00b → ADR Candidate Generator | P3 | UPG-0007 | CHG-20260703-004 | IN_PROGRESS |
 | 5 | UPG-0023 | Human Approval Dashboard | P3 | UPG-0009, UPG-0003 | — | PROPOSED |
 | 5 | UPG-0024 | Pre-Release Evidence Package | P3 | — | — | PROPOSED |
 | 5 | UPG-0025 | Verification Packet for Reviewer Agent | P3 | UPG-0010 | — | PROPOSED |
@@ -99,7 +99,7 @@ cheap pilot-adjacent wins early.
 
 ## Immediate next pickups
 
-Wave 1 complete. Wave 2 complete. Wave 3 complete. Wave 4 complete — UPG-0032 COMPLETE 2026-07-02. UPG-0015 COMPLETE 2026-07-02. UPG-0016 COMPLETE 2026-07-02. UPG-0014 COMPLETE 2026-07-02. UPG-0017 COMPLETE 2026-07-03 (CHG-20260703-001; templates/stack-manifest.md + templates/stack-reconciliation-report.md).
+Waves 1–4 complete. Wave 5: UPG-0018 SUPERSEDED by UPG-0032; UPG-0020 COMPLETE 2026-07-03 (CHG-20260703-002); UPG-0021 COMPLETE 2026-07-03 (CHG-20260703-003). UPG-0022 activated 2026-07-03 (CHG-20260703-004, Step 1 Intent). Remaining Wave 5 items (UPG-0019, UPG-0023, UPG-0024, UPG-0025, UPG-0026) and unsequenced UPG-0028 are unblocked (deps already ✓) with no active change yet.
 
 Each is taken as its own self-dev change (a fresh `CHG-*`) via the 4-step loop, with human
 approval at every gate.

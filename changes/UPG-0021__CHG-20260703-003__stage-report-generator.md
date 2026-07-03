@@ -6,9 +6,9 @@ triage_class: script-tooling
 scope_axis: self-dev only
 review_profile: PROFILE-3
 review_series: RVS__UPG-0021__CHG-20260703-003__S1
-review_state: DRAFT
-status: IN_PROGRESS
-loop_step: 3-Implement (in progress)
+review_state: ACCEPTED
+status: COMPLETE
+loop_step: 4-Reconcile
 ---
 
 # Change: UPG-0021 / CHG-20260703-003 — Stage Report Generator
@@ -20,15 +20,15 @@ feature_id: UPG-0021
 primary_feature_id: UPG-0021
 change_id: CHG-20260703-003
 slug: stage-report-generator
-state: IN_PROGRESS
-current_step: 3-Implement
+state: COMPLETE
+current_step: 4-Reconcile
 implements:
   - UPG-0021
 related_features:
   - UPG-0004
 review_series: RVS__UPG-0021__CHG-20260703-003__S1
 review_profile: PROFILE-3
-review_state: DRAFT
+review_state: ACCEPTED
 review_history: reviews/review-log.md
 fixes_findings: []
 follow_up_of: null
@@ -117,7 +117,8 @@ three sub-items under `Approved artifacts used:`:
 - Event schema:
 ```
 These sub-items must appear in the output beneath their parent field, each with a value or
-`[FILL]`. The parent field line itself (`Approved artifacts used:`) is also emitted.
+`[FILL]`. The parent field line itself (`Approved artifacts used:`) is also emitted, and per
+AC-5 carries `[FILL]` rather than being left blank — it has no value of its own to infer.
 
 _Verify in Step 4:_ extract every `:` suffix line from the template section and the
 generated output; confirm the sets are identical and in the same order.
@@ -136,7 +137,8 @@ Includes the two sub-items under `Raw logs committed:`:
 - if yes, why safe:
 ```
 These sub-items must appear in the output beneath `Raw logs committed:`, each with a value or
-`[FILL]`.
+`[FILL]`. The parent field line itself carries `[FILL]` (same rule as AC-1's
+`Approved artifacts used:`).
 _Verify in Step 4:_ same field-name diff method as AC-1.
 
 **AC-4 — Inferred fields tagged `[INFERRED]`**
@@ -153,8 +155,11 @@ Stage 5 with `--feature` and `--test-output`, Stage 6 with `--feature` and `--ev
 
 **AC-5 — Judgment fields tagged `[FILL]`**
 Every field the tool cannot populate is tagged `[FILL]` (no blank lines or missing fields).
-_Verify in Step 4:_ run without optional inputs; confirm every unpopulated field contains
-`[FILL]`, not an empty value.
+This includes parent labels for a nested sub-item group (`Approved artifacts used:`,
+`Raw logs committed:`) — they carry no value of their own to infer, so they are `[FILL]` too,
+same as any other unpopulated field. No field is ever emitted blank.
+_Verify in Step 4:_ run without optional inputs; confirm every unpopulated field — including
+the two parent labels above — contains `[FILL]`, not an empty value.
 
 **AC-6 — Preamble present**
 Every generated report begins with the warning block:
@@ -173,8 +178,13 @@ _Verify in Step 4:_ smoke test with and without the flag.
 For Stage 4 with `--base <ref>`, `Files changed:` is populated with the output of
 `git diff --name-only <ref>..HEAD`, tagged `[INFERRED]`.
 
-- If git exits non-zero (e.g., unknown ref, not a git repo): field is `[FILL]`; error
-  printed to stderr. Exit code remains 0.
+- If `git diff --name-only <ref>..HEAD` exits non-zero (e.g., unknown ref): field is `[FILL]`;
+  error printed to stderr. Exit code remains 0. Not being inside a git repository at all is a
+  separate, earlier failure mode: `main.rs`'s `discover_repo_root()` runs before any subcommand
+  dispatches (shared by `review`, `decision`, `diagnose`, `check-drift`, and `generate-report`
+  alike) and exits 2 in that case — `generate-report` never reaches `git_diff_files` to produce
+  a `[FILL]` fallback for it, and is not expected to; this AC governs `git diff` failures once
+  inside a valid repo, not repo discovery itself.
 - If the diff is empty (zero files changed): field is `(none) [INFERRED]` — a known derived
   result, not an unknown one. No error is emitted. This is not treated as a fallback case.
 - If `--base` is omitted: field is `[FILL]`.
@@ -213,7 +223,8 @@ fallback). A read error is printed to stderr.
 If `--test-output` is not provided, all four fields are `[FILL]`.
 
 _Verify in Step 4:_ (a) supply a fixture file containing a valid summary line; confirm
-counts match the fixture values; (b) supply a fixture with no matching line; confirm
+counts match the fixture values; (b) supply a fixture with no matching line (including a line
+with a status other than `ok`/`FAILED`, e.g. a typo'd or unrecognized status word); confirm
 graceful `[FILL]` fallback; (c) supply a nonexistent file path; confirm `[FILL]` and error
 on stderr.
 
@@ -275,10 +286,97 @@ in the same order.
 
 ## Step 3 — Implement
 
-*(to be written after Step 2 approval)*
+### What was done
+
+| File | Change |
+|---|---|
+| `tools/reviewer/src/cmd/generate_report.rs` | `generate-report` core: `run()`, Stage 4/5/6 skeleton builders, `git diff --name-only` inference, cargo-test-summary parser, event-line counter. (Written prior to this session; unchanged here.) |
+| `tools/reviewer/src/cmd/mod.rs` | `pub mod generate_report;` registered. (Prior to this session.) |
+| `tools/reviewer/src/main.rs` | Added `Commands::GenerateReport { stage, feature, base, test_output, events }` variant; dispatched **before** `config::resolve()` (mirrors `CheckDrift`, satisfies AC-14); added the unreachable post-config match arm. |
+| `tools/reviewer/tests/smoke.rs` | Added 21 smoke tests (`smoke_generate_report_*`) covering AC-1 through AC-16: field-coverage diffing against `templates/stage-4-6-report.md` (AC-1/2/3/16), preamble (AC-6), `--feature` (AC-7), `--base` three cases incl. zero-diff and invalid ref (AC-8), `--test-output` four cases incl. unrecognized status (AC-9), `--events` two cases (AC-10), blanket `[FILL]`-never-blank check incl. parent labels (AC-5), stdout-only / stderr-on-error (AC-11), exit codes (AC-12/AC-13), no-provider-config dispatch (AC-14), determinism (AC-15). |
+
+### Verification
+
+`cargo build` and `cargo build --tests`: clean, no errors.
+`cargo test --test smoke`: **63 passed, 0 failed** (42 pre-existing + 21 new). No regressions.
+
+### Scope check
+
+No edits to `templates/stage-4-6-report.md`, `dba-system.md`, `scripts/codeos-review.sh`, or any other existing subcommand's behavior — matches the Step 1 scope boundary. `Commands::CheckDrift` dispatch/handling untouched.
+
+### Review round 1 fixes (selfdev-step-3, R1: DO NOT ADVANCE)
+
+Codex flagged 3 IN-SCOPE BLOCKERs, all fixed:
+
+1. **AC-5 blank parent fields** — `Approved artifacts used:` and `Raw logs committed:` were
+   emitted with no value instead of `[FILL]`. Fixed in `generate_report.rs`: both now emit
+   `<Label>: [FILL]`. AC-1/AC-3/AC-5 text in this record updated to state explicitly that
+   parent labels carry `[FILL]`, not blank. Smoke test tightened to assert this directly
+   instead of excluding these labels.
+2. **AC-9 status not validated** — `parse_cargo_summary_line` accepted any status token
+   before `. `, not just `ok`/`FAILED` as AC-9's stated regex requires. Fixed: status is now
+   checked against `"ok"`/`"FAILED"` (case-sensitive) before parsing counts; anything else is
+   treated as non-matching (graceful `[FILL]`, no error). Added
+   `smoke_generate_report_test_output_unrecognized_status`.
+3. **AC-8 "not a git repo" example unreachable** — `main.rs`'s `discover_repo_root()` runs
+   before any subcommand dispatches (shared with `review`/`decision`/`diagnose`/`check-drift`)
+   and exits 2 if not inside a git repo, so `generate-report` never reaches `git_diff_files`
+   for that case. This is existing, consistent CLI behavior, not a regression to fix in code —
+   the AC-8 text was corrected to describe it as a separate, earlier failure mode outside this
+   AC's scope, rather than claiming `generate-report` gracefully handles it.
+
+`cargo build`, `cargo build --tests`, `cargo test --test smoke` re-run clean after fixes:
+**63 passed, 0 failed**.
 
 ---
 
 ## Step 4 — Reconcile
 
-*(to be written after Step 3 approval)*
+### Acceptance criteria verification
+
+| AC | Verified by | Result |
+|---|---|---|
+| AC-1 Stage 4 field coverage/order | `smoke_generate_report_stage4_field_coverage` | PASS |
+| AC-2 Stage 5 field coverage/order | `smoke_generate_report_stage5_field_coverage` | PASS |
+| AC-3 Stage 6 field coverage/order | `smoke_generate_report_stage6_field_coverage` | PASS |
+| AC-4 `[INFERRED]` tagging | `smoke_generate_report_feature_flag_inferred`, `_base_populates_files_changed`, `_test_output_valid_summary`, `_events_fixture` | PASS |
+| AC-5 `[FILL]` tagging, no blanks (incl. parent labels) | `smoke_generate_report_all_fill_without_optional_inputs` | PASS |
+| AC-6 Preamble present | `smoke_generate_report_preamble_present` | PASS |
+| AC-7 `--feature` behavior | `smoke_generate_report_feature_flag_inferred` | PASS |
+| AC-8 `--base` (populated / zero-diff / invalid ref) | `smoke_generate_report_base_populates_files_changed`, `_base_zero_diff`, `_base_invalid_ref` | PASS |
+| AC-9 `--test-output` (valid / no-match / unrecognized-status / missing) | `smoke_generate_report_test_output_valid_summary`, `_no_matching_line`, `_unrecognized_status`, `_missing_file` | PASS |
+| AC-10 `--events` (fixture / missing) | `smoke_generate_report_events_fixture`, `_events_missing_file` | PASS |
+| AC-11 stdout/stderr split | `smoke_generate_report_stdout_only_no_stderr_on_success`, `_stdout_still_written_on_partial_error` | PASS |
+| AC-12 exit 0 on success | `smoke_generate_report_exit_zero_all_stages` | PASS |
+| AC-13 exit 1 on bad usage | `smoke_generate_report_invalid_stage_exits_usage` | PASS |
+| AC-14 dispatch before config resolution | `smoke_generate_report_no_provider_config_required` | PASS |
+| AC-15 deterministic output | `smoke_generate_report_deterministic_output` | PASS |
+| AC-16 total template field coverage | Same test as AC-1/2/3 (label-set diff, not just presence) | PASS |
+
+`cargo test --test smoke`: **63 passed, 0 failed** (verified again at Step 4, post round-2 fixes).
+
+### Cross-reference sweep
+
+- `grep -rln "check-drift\|CheckDrift"` across `docs/`, `backlog/`, `prompts/`, `templates/` returns only `backlog/UPG-0020-stack-drift-detector.md` — confirming `docs/reviewer-pipeline.md` does not maintain a general subcommand list (it documents the `review`/`decision` pipeline specifically). By the same precedent, `generate-report` requires no doc cross-reference update; this is not an omission, it matches how `check-drift` (UPG-0020) was integrated.
+- `templates/stage-4-6-report.md`: untouched, confirmed via `git diff` (empty) — matches the Step 1 scope boundary of "not modified."
+- `dba-system.md`, `scripts/codeos-review.sh`: untouched — confirmed via `git status` (no changes to either file across this change).
+- `backlog/UPG-0021-stage-report-generator.md`: Feature Thread already carries the `CHG-20260703-003` row (activated at Step 1); no other edit made to it in this reconcile section.
+
+### Reviewer scope triage (Step 4 findings)
+
+R1 (DO NOT ADVANCE): 3 IN-SCOPE BLOCKERs — this record's dashboard/status prose made
+unsupported claims of human approval and COMPLETE-state ahead of the actual gate, and cited
+a `backlog/features.md` update outside the Step 1 file list without diff evidence. Fixed:
+forward-looking claims removed from Step 4 prose (see prior revision); reworded to record
+verification results only, deferring state-file edits until after this review + human
+approval.
+R2 (NO OBJECTION): confirmed the fix — "Step 4 completion is correctly left pending human
+gate." No IN-SCOPE BLOCKER findings remained.
+
+### Outcome
+
+All 16 ACs verified against the final code and tests (table above). No in-scope blockers
+open. No scope drift. Step 4 R2 NO OBJECTION; human APPROVE_STAGE recorded
+(2026-07-03T15:37:59Z). Change record, `status/self-development.md`, `status/roadmap.md`,
+`backlog/features.md`, and `backlog/UPG-0021-stage-report-generator.md` updated to COMPLETE
+in this same pass, following that approval.

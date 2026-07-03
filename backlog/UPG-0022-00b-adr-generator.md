@@ -2,7 +2,7 @@
 feature_id: UPG-0022
 slug: 00b-adr-generator
 title: 00b to ADR Candidate Generator
-status: PROPOSED
+status: IN_PROGRESS
 priority: P3
 depends_on: []
 related_features: []
@@ -13,7 +13,7 @@ superseded_by: []
 # Upgrade: 00b-adr-generator — 00b to ADR Candidate Generator
 
 **Priority**: P3
-**Status**: PROPOSED
+**Status**: IN_PROGRESS
 **Type**: toolkit-upgrade
 **Related**: solution-discovery-00b, config-discovery
 
@@ -79,6 +79,7 @@ approved stage. Keeps 00b discovery from silently becoming architecture.
 
 | Change ID | File | Purpose | State |
 |---|---|---|---|
+| CHG-20260703-004 | `changes/UPG-0022__CHG-20260703-004__00b-adr-generator.md` | New Rust subcommand: `generate-adr-candidates` | IN_PROGRESS |
 
 ### Reviews
 
