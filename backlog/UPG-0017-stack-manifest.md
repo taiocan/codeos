@@ -2,7 +2,7 @@
 feature_id: UPG-0017
 slug: stack-manifest
 title: Stack Manifest with Automatic Reconciliation
-status: PROPOSED
+status: COMPLETE
 priority: P2
 depends_on: []
 related_features: []
@@ -13,7 +13,7 @@ superseded_by: []
 # Upgrade: stack-manifest — Stack Manifest with Automatic Reconciliation
 
 **Priority**: P2
-**Status**: PROPOSED
+**Status**: COMPLETE
 **Type**: toolkit-upgrade
 **Related**: stack-drift-detector, config-discovery, readiness-checklist
 
@@ -32,9 +32,8 @@ Stack/config knowledge; checked on dependency/config diffs, not every stage.
 
 ## Proposed artifact(s)
 
-`docs/stack-manifest.md`
-
-Optional: `templates/stack-reconciliation-report.md`
+`templates/stack-manifest.md`
+`templates/stack-reconciliation-report.md`
 
 ## Design notes
 
@@ -126,11 +125,16 @@ honest without adding a manual maintenance burden.
 
 | Change ID | File | Purpose | State |
 |---|---|---|---|
+| CHG-20260703-001 | `changes/UPG-0017__CHG-20260703-001__stack-manifest.md` | New templates: stack-manifest.md + stack-reconciliation-report.md | COMPLETE |
 
 ### Reviews
 
 | Review ID | Change ID | Step | Round | Verdict |
 |---|---|---|---|---|
+| REV__UPG-0017__CHG-20260703-001__S3__R1 | CHG-20260703-001 | 3-Implement | R1 | CHANGES ADVISED |
+| REV__UPG-0017__CHG-20260703-001__S3__R2 | CHG-20260703-001 | 3-Implement | R2 | NO OBJECTION |
+| REV__UPG-0017__CHG-20260703-001__S4__R1 | CHG-20260703-001 | 4-Reconcile | R1 | CHANGES ADVISED |
+| REV__UPG-0017__CHG-20260703-001__S4__R2 | CHG-20260703-001 | 4-Reconcile | R2 | NO OBJECTION |
 
 ### Findings Tracked Inside This Feature
 

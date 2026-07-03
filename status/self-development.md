@@ -49,6 +49,7 @@
 | UPG-0014 | CHG-20260702-004 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (Step 3: 3 rounds + budget-exceeded inline fixes; Step 4 R3 NO OBJECTION; all 9 ACs verified; 55 tests) | COMPLETE | — |
 | UPG-0035 | CHG-20260702-005 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (Step 3 R1 + Step 4 R1 CHANGES ADVISED — AC-6 test-exec-not-pinned REJECTED both rounds; all 6 ACs verified; 57 tests) | COMPLETE | — |
 | UPG-0034 | CHG-20260702-006 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (Step 3: 3 rounds — F1 post-error skip, F2 missing success filter (both snapshots), F4 scope drift fixed; F3 live-path test accepted as structural limitation; Step 4 R1 NO OBJECTION; all 7 ACs verified; 59 tests) | COMPLETE | — |
+| UPG-0017 | CHG-20260703-001 | template | self-dev only | 4-Reconcile | ACCEPTED (Step 3: R1 CHANGES ADVISED — 3 blockers fixed; R2 NO OBJECTION; Step 4: R1 CHANGES ADVISED — F1 review-state contradiction, F2 backlog `docs/` orphan fixed; R2 NO OBJECTION; all 7 ACs verified) | COMPLETE | — |
 
 <!--
 Identity   : Feature ID = UPG-#### (stable). Change ID = CHG-YYYYMMDD-NNN (one execution), or a

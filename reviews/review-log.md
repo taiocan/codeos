@@ -3932,3 +3932,96 @@ Artifact integrity (informational audit, not a gate):
   MATCH   changes/UPG-0034__CHG-20260702-006__reviewer-readonly-invariant-check.md
   MATCH   tools/reviewer/src/cmd/review.rs
   MATCH   tools/reviewer/tests/smoke.rs
+
+## 2026-07-03T03:00:46Z REVIEW — UPG-0017__CHG-20260703-001 — Stage selfdev-step-3
+Base: (no base pin)  Review: 34863e0227d979da8e8af2eefe46a7a8086bf377  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 6161a9c841466879d017338c782220ebbabb66e7b2c25bec6f22c2c41c4f8166
+Reviewer: codex default-model (session 019f25ea-0183-7790-a9aa-ad4d1afc8b9e)
+Effort: high   Wall time: 138856ms   Reconnects: 0
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: B
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: CHANGES ADVISED — the reconciliation report misses AC-3’s explicit YES/NO field, and the touched backlog activation is not internally consistent  
+Full assessment: /home/arc/projects/claude/Codeos/reviews/codex/2026-07-03T030046Z-UPG-0017__CHG-20260703-001-stage-selfdev-step-3-34863e0.md (sha256:3c3d5abea726d8f5f8d81b73251534f2d3c1bfcc0a46b1176c9808dfc11805f1)
+Reviewed packet: /home/arc/projects/claude/Codeos/reviews/codex/packets/20260703T030046Z-UPG-0017__CHG-20260703-001-stage-selfdev-step-3-34863e0.packet.txt (sha256:948364254eab97f496d75d4d269b18a0c72bfb30606dbb0393b27eaffc33cb5f)
+Human decision: (append with: codeos-reviewer decision UPG-0017__CHG-20260703-001 selfdev-step-3 <DECISION> "<reason>")
+
+## 2026-07-03T03:02:39Z REVIEW — UPG-0017__CHG-20260703-001 — Stage selfdev-step-3
+Base: (no base pin)  Review: 34863e0227d979da8e8af2eefe46a7a8086bf377  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 64f865d8ed492e62b667fd9a8261e68d81c611d86fed3a2b7be88f65e6106288
+Reviewer: codex default-model (session 019f25ea-0183-7790-a9aa-ad4d1afc8b9e)
+Effort: high   Wall time: 85972ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — the stated acceptance criteria are satisfied on direct packet evidence  
+Full assessment: /home/arc/projects/claude/Codeos/reviews/codex/2026-07-03T030239Z-UPG-0017__CHG-20260703-001-stage-selfdev-step-3-34863e0.md (sha256:46c7b67516347449d20dd7f608c233071277a50aa723811004953d04ce2307eb)
+Reviewed packet: /home/arc/projects/claude/Codeos/reviews/codex/packets/20260703T030239Z-UPG-0017__CHG-20260703-001-stage-selfdev-step-3-34863e0.packet.txt (sha256:7160ca4f476c230bf3107523a58ad8a5243a94320137fc817cf9bd0b265f445b)
+Human decision: (append with: codeos-reviewer decision UPG-0017__CHG-20260703-001 selfdev-step-3 <DECISION> "<reason>")
+
+### REV__UPG-0017__CHG-20260703-001__S3__R1 — 2026-07-03 (selfdev-step-3)
+
+**Reviewer verdict:** CHANGES ADVISED (evidence B)
+**Assessment:** `reviews/codex/2026-07-03T030046Z-UPG-0017__CHG-20260703-001-stage-selfdev-step-3-34863e0.md`
+
+**Findings:**
+- F1 (IN-SCOPE BLOCKER): `Does the stack manifest need updating?:` didn't constrain to YES/NO — AC-3 gap. **FIXED**: field now reads `(YES / NO)`.
+- F2 (IN-SCOPE BLOCKER): Backlog body still said `**Status**: PROPOSED` while frontmatter said `IN_PROGRESS`. **FIXED**: body updated to `IN_PROGRESS`.
+- F3 (IN-SCOPE BLOCKER): AC-4 checklist linkage not evidenced — `readiness-checklist.md` not in packet. **FIXED**: included in R2 packet.
+
+**Human decision:** All three in-scope fixes applied. Proceed to R2.
+
+### REV__UPG-0017__CHG-20260703-001__S3__R2 — 2026-07-03 (selfdev-step-3)
+
+**Reviewer verdict:** NO OBJECTION (evidence A)
+**Assessment:** `reviews/codex/2026-07-03T030239Z-UPG-0017__CHG-20260703-001-stage-selfdev-step-3-34863e0.md`
+
+All 7 ACs verified with `readiness-checklist.md` included. **Step 3 APPROVED (pending human gate).**
+
+## 2026-07-03T03:34:15Z REVIEW — UPG-0017__CHG-20260703-001 — Stage selfdev-step-4
+Base: (no base pin)  Review: 34863e0227d979da8e8af2eefe46a7a8086bf377  Branch: selfdev/upg-0029-review-durability
+Diff-hash: db4904059bd1eda58ab7f0276a3478a40157d213d331acc14ee7260dc99d7a73
+Reviewer: codex default-model (session 019f25ea-0183-7790-a9aa-ad4d1afc8b9e)
+Effort: high   Wall time: 115523ms   Reconnects: 0
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: CHANGES ADVISED — the Step 4 reconciliation record makes two false governance claims about review state and reference cleanup  
+Full assessment: /home/arc/projects/claude/Codeos/reviews/codex/2026-07-03T033415Z-UPG-0017__CHG-20260703-001-stage-selfdev-step-4-34863e0.md (sha256:4d2acde35ebe90fb1f5d5e8d560097df3285fb2134003b7708cddd0ecc8dc84b)
+Reviewed packet: /home/arc/projects/claude/Codeos/reviews/codex/packets/20260703T033415Z-UPG-0017__CHG-20260703-001-stage-selfdev-step-4-34863e0.packet.txt (sha256:9d67536d4a10207f050b00a24577bd8ceab3b2d5915efa1afe344647bbfc3a73)
+Human decision: (append with: codeos-reviewer decision UPG-0017__CHG-20260703-001 selfdev-step-4 <DECISION> "<reason>")
+
+## 2026-07-03T03:35:53Z REVIEW — UPG-0017__CHG-20260703-001 — Stage selfdev-step-4
+Base: (no base pin)  Review: 34863e0227d979da8e8af2eefe46a7a8086bf377  Branch: selfdev/upg-0029-review-durability
+Diff-hash: 30fa0623369ef51b33dcd5d39be63f35a7afb4b3881776a9636469c3f65978e4
+Reviewer: codex default-model (session 019f25ea-0183-7790-a9aa-ad4d1afc8b9e)
+Effort: high   Wall time: 63414ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — the stated acceptance criteria are satisfied and the prior Step 4 governance contradictions are resolved  
+Full assessment: /home/arc/projects/claude/Codeos/reviews/codex/2026-07-03T033553Z-UPG-0017__CHG-20260703-001-stage-selfdev-step-4-34863e0.md (sha256:4fd056f415a6db21dd0cee8c5b66fbfcd4bfd5aa07aad99289ae0d2338760f4a)
+Reviewed packet: /home/arc/projects/claude/Codeos/reviews/codex/packets/20260703T033553Z-UPG-0017__CHG-20260703-001-stage-selfdev-step-4-34863e0.packet.txt (sha256:ac4018f67372341a43cf1ba8992f9b426b58a106e82bdf71449bd10e89d42f21)
+Human decision: (append with: codeos-reviewer decision UPG-0017__CHG-20260703-001 selfdev-step-4 <DECISION> "<reason>")
+
+### REV__UPG-0017__CHG-20260703-001__S4__R1 — 2026-07-03 (selfdev-step-4)
+
+**Reviewer verdict:** CHANGES ADVISED (evidence A)
+**Assessment:** `reviews/codex/2026-07-03T033415Z-UPG-0017__CHG-20260703-001-stage-selfdev-step-4-34863e0.md`
+
+**Findings:**
+- F1 (IN-SCOPE BLOCKER): Frontmatter said `review_state: ACCEPTED`; trace header said `DRAFT`; dashboard said `IN_REVIEW` — three-way contradiction. **FIXED**: both set to `IN_REVIEW` (correct for Step 4 in-flight).
+- F2 (IN-SCOPE BLOCKER): Backlog brief still listed `docs/stack-manifest.md` as proposed artifact; Step 4 sweep claimed no orphan. **FIXED**: backlog updated to `templates/stack-manifest.md` + `templates/stack-reconciliation-report.md`.
+
+**Human decision:** Both in-scope blockers fixed. Proceed to R2.
+
+### REV__UPG-0017__CHG-20260703-001__S4__R2 — 2026-07-03 (selfdev-step-4)
+
+**Reviewer verdict:** NO OBJECTION (evidence A)
+**Assessment:** `reviews/codex/2026-07-03T033553Z-UPG-0017__CHG-20260703-001-stage-selfdev-step-4-34863e0.md`
+
+All 7 ACs verified; all governance claims consistent. **Step 4 APPROVED (pending human gate).**
