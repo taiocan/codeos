@@ -53,7 +53,7 @@ The goal is to speed up Codeos development without weakening DBA advantages.
 | UPG-0019 | [UPG-0019-ci-profile.md](UPG-0019-ci-profile.md) | CI Integration Profile | P3 | PROPOSED |
 | UPG-0020 | [UPG-0020-stack-drift-detector.md](UPG-0020-stack-drift-detector.md) | Stack / Config Drift Detector | P3 | COMPLETE |
 | UPG-0021 | [UPG-0021-stage-report-generator.md](UPG-0021-stage-report-generator.md) | Stage Report Generator | P3 | COMPLETE |
-| UPG-0022 | [UPG-0022-00b-adr-generator.md](UPG-0022-00b-adr-generator.md) | 00b → ADR Candidate Generator | P3 | PROPOSED |
+| UPG-0022 | [UPG-0022-00b-adr-generator.md](UPG-0022-00b-adr-generator.md) | 00b → ADR Candidate Generator | P3 | COMPLETE |
 | UPG-0023 | [UPG-0023-approval-dashboard.md](UPG-0023-approval-dashboard.md) | Human Approval Dashboard | P3 | PROPOSED |
 | UPG-0024 | [UPG-0024-release-evidence-package.md](UPG-0024-release-evidence-package.md) | Pre-Release Evidence Package | P3 | PROPOSED |
 | UPG-0025 | [UPG-0025-reviewer-verification-packet.md](UPG-0025-reviewer-verification-packet.md) | Verification Packet for Reviewer Agent | P3 | PROPOSED |

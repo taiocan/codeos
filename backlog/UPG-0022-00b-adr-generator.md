@@ -2,7 +2,7 @@
 feature_id: UPG-0022
 slug: 00b-adr-generator
 title: 00b to ADR Candidate Generator
-status: IN_PROGRESS
+status: COMPLETE
 priority: P3
 depends_on: []
 related_features: []
@@ -13,7 +13,7 @@ superseded_by: []
 # Upgrade: 00b-adr-generator — 00b to ADR Candidate Generator
 
 **Priority**: P3
-**Status**: IN_PROGRESS
+**Status**: COMPLETE
 **Type**: toolkit-upgrade
 **Related**: solution-discovery-00b, config-discovery
 
@@ -79,12 +79,17 @@ approved stage. Keeps 00b discovery from silently becoming architecture.
 
 | Change ID | File | Purpose | State |
 |---|---|---|---|
-| CHG-20260703-004 | `changes/UPG-0022__CHG-20260703-004__00b-adr-generator.md` | New Rust subcommand: `generate-adr-candidates` | IN_PROGRESS |
+| CHG-20260703-004 | `changes/UPG-0022__CHG-20260703-004__00b-adr-generator.md` | New Rust subcommand: `generate-adr-candidates` | COMPLETE |
 
 ### Reviews
 
 | Review ID | Change ID | Step | Round | Verdict |
 |---|---|---|---|---|
+| REV__UPG-0022__CHG-20260703-004__S1__R1 | CHG-20260703-004 | 1-Intent | R1 | DO NOT ADVANCE (packet scope-polluted by uncommitted UPG-0021 work; roadmap contradiction) |
+| REV__UPG-0022__CHG-20260703-004__S1__R2 | CHG-20260703-004 | 1-Intent | R2 | NO OBJECTION |
+| REV__UPG-0022__CHG-20260703-004__S2__R1 | CHG-20260703-004 | 2-Acceptance | R1 | NO OBJECTION |
+| REV__UPG-0022__CHG-20260703-004__S3__R1 | CHG-20260703-004 | 3-Implement | R1 | NO OBJECTION |
+| REV__UPG-0022__CHG-20260703-004__S4__R1 | CHG-20260703-004 | 4-Reconcile | R1 | NO OBJECTION |
 
 ### Findings Tracked Inside This Feature
 

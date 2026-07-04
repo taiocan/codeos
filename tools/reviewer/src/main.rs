@@ -89,6 +89,13 @@ enum Commands {
         #[arg(long)]
         events: Option<String>,
     },
+    /// Extract "## Architectural Risks" bullets from a 00b Solution Discovery doc into
+    /// non-authoritative ADR candidate skeletons
+    GenerateAdrCandidates {
+        /// Path to the 00b Solution Discovery source document
+        #[arg(long)]
+        source: String,
+    },
 }
 
 fn main() {
@@ -131,6 +138,13 @@ fn run() -> i32 {
             events: events.as_deref(),
         };
         return cmd::generate_report::run(args, &repo_root);
+    }
+
+    // Dispatch generate-adr-candidates before config resolution — needs no provider config.
+    if let Commands::GenerateAdrCandidates { source } = &cli.command {
+        return cmd::generate_adr_candidates::run(cmd::generate_adr_candidates::GenerateAdrCandidatesArgs {
+            source,
+        });
     }
 
     // Resolve config
@@ -201,6 +215,7 @@ fn run() -> i32 {
         // Handled above before config resolution; unreachable here.
         Commands::CheckDrift { .. } => EXIT_SUCCESS,
         Commands::GenerateReport { .. } => EXIT_SUCCESS,
+        Commands::GenerateAdrCandidates { .. } => EXIT_SUCCESS,
     }
 }
 

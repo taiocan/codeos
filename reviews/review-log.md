@@ -4294,3 +4294,99 @@ Log summary: DO NOT ADVANCE — Packet scope is polluted by unrelated UPG-0021 c
 Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-03T155343Z-UPG-0022__CHG-20260703-004-stage-selfdev-step-1-9169d9c.md (sha256:92cf4cf7556b3c371fb015ef806106f98f65320ab628b705706f0c4670bde52b)
 Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260703T155343Z-UPG-0022__CHG-20260703-004-stage-selfdev-step-1-9169d9c.packet.txt (sha256:6440275afe441804b797d050e240ead2241235f39cba58fe9740ae4b09bb4aa6)
 Human decision: (append with: codeos-reviewer decision UPG-0022__CHG-20260703-004 selfdev-step-1 <DECISION> "<reason>")
+
+## 2026-07-03T16:04:27Z REVIEW — UPG-0022__CHG-20260703-004 — Stage selfdev-step-1
+Base: (no base pin)  Review: ceb046444ce11df91e4677cb8263c9ea3ef3ae40  Branch: main
+Diff-hash: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+Reviewer: codex default-model (session 019f28af-39f8-7a22-a9b0-db5524f3d56a)
+Effort: high   Wall time: 29597ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: B
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: false
+Log summary: NO OBJECTION — Step 1 intent matches the UPG-0022 backlog and preserves the non-authoritative ADR-candidate guardrail.
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-03T160427Z-UPG-0022__CHG-20260703-004-stage-selfdev-step-1-ceb0464.md (sha256:5c76dfd8e947b1c77186dd53abce127d180b7d362037d4c8db715937d85c3eab)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260703T160427Z-UPG-0022__CHG-20260703-004-stage-selfdev-step-1-ceb0464.packet.txt (sha256:6007240536c08f9feb150e29c67f976646bf86d84825c3e7ad1af1a560ffaf33)
+Human decision: (append with: codeos-reviewer decision UPG-0022__CHG-20260703-004 selfdev-step-1 <DECISION> "<reason>")
+
+## 2026-07-03T16:05:34Z HUMAN DECISION — UPG-0022__CHG-20260703-004 — Stage selfdev-step-1
+Commit at decision: ceb046444ce11df91e4677cb8263c9ea3ef3ae40
+Decision: APPROVE_STAGE
+Reason/next: Step 1 NO OBJECTION (evidence B — reviewer didn't see 00b prompt file itself, not a blocker). generate-adr-candidates design intent approved: extracts Architectural Risks bullets from 00b docs into non-authoritative ADR candidate skeletons, [INFERRED]/[FILL] pattern matching generate-report precedent. No scope drift.
+Provenance:
+  assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-03T160427Z-UPG-0022__CHG-20260703-004-stage-selfdev-step-1-ceb0464.md
+  review_commit: ceb046444ce11df91e4677cb8263c9ea3ef3ae40  [HEAD_MATCH]
+  packet_sha256: [MATCH]
+  coverage_state: FULL_COVERAGE  [OK]
+
+## 2026-07-03T16:08:33Z REVIEW — UPG-0022__CHG-20260703-004 — Stage selfdev-step-2
+Base: (no base pin)  Review: ceb046444ce11df91e4677cb8263c9ea3ef3ae40  Branch: main
+Diff-hash: 96dac64605f6915e84bc7c4db13ece12b81758bceac628c594684015d224a04b
+Reviewer: codex default-model (session 019f28af-39f8-7a22-a9b0-db5524f3d56a)
+Effort: high   Wall time: 22733ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — Step 2 defines testable ACs for the ADR candidate generator without weakening the non-authoritative guardrail.
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-03T160833Z-UPG-0022__CHG-20260703-004-stage-selfdev-step-2-ceb0464.md (sha256:1ab20ec49856dd5ccf691fd6bc979ac8b173b51621214770381a796c1a1bfc70)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260703T160833Z-UPG-0022__CHG-20260703-004-stage-selfdev-step-2-ceb0464.packet.txt (sha256:bd1cbe7eb0a414d390768d1824631516d84aca1330f8e240d80bb630b9298046)
+Human decision: (append with: codeos-reviewer decision UPG-0022__CHG-20260703-004 selfdev-step-2 <DECISION> "<reason>")
+
+## 2026-07-03T16:10:47Z HUMAN DECISION — UPG-0022__CHG-20260703-004 — Stage selfdev-step-2
+Commit at decision: ceb046444ce11df91e4677cb8263c9ea3ef3ae40
+Decision: APPROVE_STAGE
+Reason/next: Step 2 NO OBJECTION: all 14 ACs testable and internally consistent, no scope drift, non-authoritative guardrail preserved. Carry into Step 3: deterministic bullet extraction (no nested-bullet ambiguity), dedicated tests for the three exit paths (no section / empty section / unreadable source), verbatim banner emission for AC-5/14.
+Provenance:
+  assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-03T160833Z-UPG-0022__CHG-20260703-004-stage-selfdev-step-2-ceb0464.md
+  review_commit: ceb046444ce11df91e4677cb8263c9ea3ef3ae40  [HEAD_MATCH]
+  packet_sha256: [MATCH]
+  coverage_state: FULL_COVERAGE  [OK]
+
+## 2026-07-03T16:15:58Z REVIEW — UPG-0022__CHG-20260703-004 — Stage selfdev-step-3
+Base: (no base pin)  Review: ceb046444ce11df91e4677cb8263c9ea3ef3ae40  Branch: main
+Diff-hash: a6afccab4b774b8a2158db9bbd6598ea9c7459285518b9eeb54b2644c821bb22
+Reviewer: codex default-model (session 019f28af-39f8-7a22-a9b0-db5524f3d56a)
+Effort: high   Wall time: 44061ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — Implementation and tests satisfy all 14 stated ACs while preserving the non-authoritative ADR-candidate guardrail.
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-03T161558Z-UPG-0022__CHG-20260703-004-stage-selfdev-step-3-ceb0464.md (sha256:44f42db604647842737beca641587da9eaad54773c9c8fd8807c7240da5801ff)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260703T161558Z-UPG-0022__CHG-20260703-004-stage-selfdev-step-3-ceb0464.packet.txt (sha256:49b389993c58c00cbc2db7ce4703e51a1f5a79062d5efe67dca54d6d707f8696)
+Human decision: (append with: codeos-reviewer decision UPG-0022__CHG-20260703-004 selfdev-step-3 <DECISION> "<reason>")
+
+## 2026-07-03T16:21:20Z HUMAN DECISION — UPG-0022__CHG-20260703-004 — Stage selfdev-step-3
+Commit at decision: ceb046444ce11df91e4677cb8263c9ea3ef3ae40
+Decision: APPROVE_STAGE
+Reason/next: Step 3 NO OBJECTION on first round: all 14 ACs verified against implementation and tests (77 total, 14 new), no scope drift. Deterministic bullet extraction, distinct exit paths for no-section/empty-section/missing-source, and verbatim guardrail banner all confirmed per the carry-forward items from Step 2 approval.
+Provenance:
+  assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-03T161558Z-UPG-0022__CHG-20260703-004-stage-selfdev-step-3-ceb0464.md
+  review_commit: ceb046444ce11df91e4677cb8263c9ea3ef3ae40  [HEAD_MATCH]
+  packet_sha256: [MATCH]
+  coverage_state: FULL_COVERAGE  [OK]
+
+## 2026-07-03T16:22:42Z REVIEW — UPG-0022__CHG-20260703-004 — Stage selfdev-step-4
+Base: (no base pin)  Review: ceb046444ce11df91e4677cb8263c9ea3ef3ae40  Branch: main
+Diff-hash: cf167697b13f1f8bbe8fb908336a376d66c4f18ee3231b5528e9c3994e3f243a
+Reviewer: codex default-model (session 019f28af-39f8-7a22-a9b0-db5524f3d56a)
+Effort: high   Wall time: 36517ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — Step 4 verification shows all 14 ACs passing and preserves the non-authoritative ADR-candidate guardrail.
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-03T162242Z-UPG-0022__CHG-20260703-004-stage-selfdev-step-4-ceb0464.md (sha256:8a19e2e5e5bdf5887ed20189f061853acc9e30df18601e8ab397f7bc72c498d2)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260703T162242Z-UPG-0022__CHG-20260703-004-stage-selfdev-step-4-ceb0464.packet.txt (sha256:799e7b6967185fb7439cbf21f3d3e29cfa20df0241d58b40a6e06caa1ef8462a)
+Human decision: (append with: codeos-reviewer decision UPG-0022__CHG-20260703-004 selfdev-step-4 <DECISION> "<reason>")
+
+## 2026-07-03T16:38:52Z HUMAN DECISION — UPG-0022__CHG-20260703-004 — Stage selfdev-step-4
+Commit at decision: ceb046444ce11df91e4677cb8263c9ea3ef3ae40
+Decision: APPROVE_STAGE
+Reason/next: Step 4 R1 NO OBJECTION: all 14 ACs verified against final code/tests (77 passing), no scope drift, cross-reference sweep clean, guardrail inseparable from output confirmed. UPG-0022 / CHG-20260703-004 marked COMPLETE.
+Provenance:
+  assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-03T162242Z-UPG-0022__CHG-20260703-004-stage-selfdev-step-4-ceb0464.md
+  review_commit: ceb046444ce11df91e4677cb8263c9ea3ef3ae40  [HEAD_MATCH]
+  packet_sha256: [MATCH]
+  coverage_state: FULL_COVERAGE  [OK]

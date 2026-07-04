@@ -1,0 +1,3307 @@
+Reviewer task:
+
+SCOPE CONTRACT
+  Assess this artifact against the STATED SCOPE of this stage/PR — the Expected Stage
+  Output below and what the artifacts actually claim — NOT against an ideal final system.
+  A capability the artifacts do not claim to provide is OUT-OF-SCOPE, not a defect.
+  The following are OUT-OF-SCOPE BACKLOG unless THIS artifact explicitly claims to provide
+  them: formal approval-binding enforcement; rollback correctness; COMMIT_BOUND/
+  WORKSPACE_BOUND enforcement; JSON Schema validation; CI validation; exact
+  decision-integrity; per-feature decision ledgers; autonomous approval; enabled hooks.
+
+YOUR TASK — answer these five questions using only the evidence in the packet:
+  1. Acceptance criteria: Does the artifact satisfy each of its stated acceptance criteria?
+     Cite evidence for each criterion (or note its absence).
+  2. Claim support: Are universal or strong claims (all, every, never, always, no X) in the
+     artifact supported by evidence in the packet? Any unverifiable strong claim is a candidate
+     finding only if it affects acceptance, scope, safety, decision integrity, or the artifact's
+     stated guarantees.
+  3. Scope drift: Is there any change beyond the stated scope boundary? (Files not in the
+     "What changes" list; behavior changes not in the intent; downstream doctrine modified
+     rather than read.)
+  4. In-scope blockers: Are there facts that, if left in, would make the artifact wrong,
+     unsafe, or internally contradictory?
+  5. Finding classification: Classify every finding you raise as exactly one of the five
+     TRIAGE RULE categories below.
+
+TRIAGE RULE — classify EVERY finding as exactly one of:
+  IN-SCOPE BLOCKER         breaks the stated goal; creates a FALSE CLAIM in this artifact;
+                           weakens the advisory/read-only/human-gated guarantees; prevents
+                           the work from running; or violates an explicit safety constraint.
+  IN-SCOPE NON-BLOCKER     improves it but is not required for this PR.
+  OUT-OF-SCOPE BACKLOG     valid, but belongs to a future feature / stronger guarantee.
+  REJECTED                 conflicts with the stated scope or Codeos philosophy.
+  SELF-REFERENCE /         review records that are stale because of the previous round's
+  REVIEW-BOOKKEEPING       own existence (causal loop); not a real artifact defect.
+  Base the PR decision ONLY on IN-SCOPE BLOCKER findings. An OUT-OF-SCOPE BACKLOG finding
+  must NOT cause DO NOT ADVANCE unless this artifact FALSELY CLAIMS to solve it.
+
+WHAT NOT TO DO
+  - Do not flag style or wording issues as blockers unless the wording creates a false claim,
+    contradiction, parser breakage, or wrong governance instruction.
+  - Do not re-review unchanged full context when the packet is in delta mode.
+  - Do not treat local-only review history as a blocker unless the artifact falsely
+    claims the review artifacts are committed/durable.
+
+INSTRUCTIONS
+  If this is a resumed session, ignore any earlier-session conclusions unless they are
+  re-established by THIS packet; assess only the evidence above, pinned to this commit.
+  Give a focused assessment of this artifact against the stated scope, acceptance criteria,
+  and evidence in this packet. Rank findings by severity. Suggest a better design only when
+  needed to explain a required fix for an IN-SCOPE BLOCKER.
+
+  Limit findings to the top 3 IN-SCOPE BLOCKERS. Additional non-blocking observations may be
+  summarized in one short paragraph only if useful.
+
+  For EACH finding emit:
+    Finding: / Severity: High|Medium|Low / Classification: <one of the TRIAGE RULE labels>
+    Evidence: <file/line> / Why: <short> / Required action: fix now|optional fix|backlog|reject
+    Scope reason: <why it does/does not belong to this PR's scope>
+  Then emit:
+    PR decision: ADVANCE | REQUEST CHANGES | DO NOT ADVANCE   (based ONLY on in-scope blockers)
+    Scope drift warning: yes|no — <is anything pulling this PR beyond its stated scope?>
+  Then on the LAST three lines emit exactly (map ADVANCE->NO OBJECTION,
+  REQUEST CHANGES->CHANGES ADVISED, DO NOT ADVANCE->DO NOT ADVANCE):
+    LOG SUMMARY: <NO OBJECTION | CHANGES ADVISED | DO NOT ADVANCE | UNCLASSIFIED> — <single most important point>
+      (use UNCLASSIFIED if you genuinely cannot classify the artifact safely)
+    EVIDENCE: <A|B|C|D|E>
+    HIGHEST-IMPACT UNCERTAINTY: <one sentence — what single thing, if wrong, most affects this assessment>
+
+  Evidence grade — the grade describes what the assessment rests on, not reviewer confidence:
+    A — Directly verified in the artifact, diff, or output shown in the packet
+    B — Verified with multiple direct pieces of evidence, but coverage is not complete
+    C — Partially verified, partially inferred from structure or context
+    D — Mostly inferred from structure or indirect evidence
+    E — Hypothesis or very limited basis — little to no direct evidence
+
+
+PACKET MANIFEST
+  generated: 2026-07-03T16:15:14Z
+  task_prompt: /home/rimo/projects/Codeos/prompts/codeos-reviewer-task.md (4959 bytes)
+  review_content_bytes: 134091
+  estimated_review_tokens: ~33522
+  budget_status: WARNING — 134091 bytes exceeds CODEOS_PACKET_BUDGET_BYTES=50000
+  packet_mode: full
+  delta_base: none
+  items:
+    - path: changes/UPG-0022__CHG-20260703-004__00b-adr-generator.md
+      mode: full_file
+      bytes: 15587
+      sha256: aca1048737d7b38ba411a7caf09d2c7f75b774c8c39aa647378b7be9d51e1399
+    - path: tools/reviewer/src/main.rs
+      mode: full_file
+      bytes: 9187
+      sha256: 00b7909f461fa21b4d8788f63e04e1b027ab7d076f998d223004c213e1c3328d
+    - path: tools/reviewer/src/cmd/generate_adr_candidates.rs
+      mode: full_file
+      bytes: 2488
+      sha256: e195b8f4874bf5868e8cc20d107b6291a62b9e6235b6bab42f41ec5616754dd6
+    - path: tools/reviewer/tests/smoke.rs
+      mode: full_file
+      bytes: 77872
+      sha256: cd67104df2c0fd539e5a38eaf89beda22c19a0f716b579d82424c9b664515427
+    - path: (diff)
+      mode: full_file
+      bytes: 28957
+
+REVIEW CONTEXT
+  Feature:                UPG-0022__CHG-20260703-004
+  Stage:                  selfdev-step-3
+  Branch:                 main
+  Base commit:            (no base pin)
+  Review commit:          ceb046444ce11df91e4677cb8263c9ea3ef3ae40 (+ uncommitted workspace changes)
+  Current approved stage: n/a (non-numeric stage)
+  Evidence coverage:      FULL_COVERAGE
+  Workspace dirty:        yes (uncommitted changes at review time)
+
+DBA RULES RELEVANT TO THIS STAGE
+  - Human approval is required for every stage transition; you are advisory only.
+  - Memory is not truth — assess only what is provided, pinned to the review commit.
+  - Implementation must trace to approved artifacts; no behavior beyond intent+contract+schema.
+  - No events outside the approved event schema; no hidden behavior.
+
+STAGE-SPECIFIC CHECKS
+  - (no stage-specific checklist for stage selfdev-step-3)
+
+EXPECTED STAGE OUTPUT
+  (no expected-output template for stage)
+
+ARTIFACTS TO REVIEW
+  --- changes/UPG-0022__CHG-20260703-004__00b-adr-generator.md (sha256: aca1048737d7b38ba411a7caf09d2c7f75b774c8c39aa647378b7be9d51e1399, visibility: shown) ---
+    ---
+    change_id: CHG-20260703-004
+    feature_id: UPG-0022
+    slug: 00b-adr-generator
+    triage_class: script-tooling
+    scope_axis: self-dev only
+    review_profile: PROFILE-3
+    review_series: RVS__UPG-0022__CHG-20260703-004__S1
+    review_state: REVIEWED
+    status: IN_PROGRESS
+    loop_step: 3-Implement
+    ---
+    
+    # Change: UPG-0022 / CHG-20260703-004 — 00b → ADR Candidate Generator
+    
+    ## TRACE HEADER
+    
+    ```yaml
+    feature_id: UPG-0022
+    primary_feature_id: UPG-0022
+    change_id: CHG-20260703-004
+    slug: 00b-adr-generator
+    state: IN_PROGRESS
+    current_step: 3-Implement
+    implements:
+      - UPG-0022
+    related_features:
+      - UPG-0007
+    review_series: RVS__UPG-0022__CHG-20260703-004__S1
+    review_profile: PROFILE-3
+    review_state: REVIEWED
+    review_history: reviews/review-log.md
+    fixes_findings: []
+    follow_up_of: null
+    ```
+    
+    ---
+    
+    ## Step 1 — Change Intent
+    
+    ### Problem
+    
+    `prompts/00b-solution-discovery.md` (UPG-0007) produces a `## Architectural Risks` section
+    listing named design risks discovered during pre-Stage-1 domain exploration. Today those
+    risks just sit in a planning document — there is no mechanical step turning "we noticed
+    this risk" into a routable ADR candidate, so risks are easy to lose between a discovery
+    session and someone actually deciding what to do about them (the UPG-0022 backlog brief's
+    stated problem: "Expanded 00b may identify architecture risks but they can be lost").
+    
+    ### What changes
+    
+    | File | Change |
+    |---|---|
+    | `tools/reviewer/src/cmd/generate_adr_candidates.rs` | New: `generate-adr-candidates` subcommand |
+    | `tools/reviewer/src/cmd/mod.rs` | Register `generate_adr_candidates` module |
+    | `tools/reviewer/src/main.rs` | Add `GenerateAdrCandidates` variant; dispatch before config resolution (same pattern as `check-drift` / `generate-report`) |
+    | `tools/reviewer/tests/smoke.rs` | Smoke tests |
+    | `backlog/UPG-0022-00b-adr-generator.md` | Feature Thread: CHG-20260703-004 activated (done) |
+    | `status/self-development.md` | Row activated (done) |
+    | `status/roadmap.md` | UPG-0022 → IN_PROGRESS (done) |
+    
+    ### Scope boundary — what stays the same
+    
+    - `prompts/00b-solution-discovery.md` — not modified. The `## Architectural Risks` section
+      format it already documents (a Markdown section containing risk bullets) is the input
+      contract this tool reads; the prompt itself is not touched.
+    - `dba-system.md` — not touched.
+    - No existing subcommand's behavior changed (`review`, `decision`, `diagnose`, `stage-start`,
+      `check-drift`, `generate-report` all untouched).
+    - `scripts/codeos-review.sh` — not touched (shim passes through automatically).
+    - No change to what counts as an "approved" artifact: ADR candidates remain explicitly
+      non-authoritative output (per the backlog brief's Guardrail), same as 00b discovery output
+      itself is already labeled CANDIDATE/HYPOTHESIZED and non-authoritative.
+    
+    ### Design intent
+    
+    Follows the same mechanical-inference-plus-explicit-authorship-marker pattern established by
+    `generate-report` (UPG-0021): mechanically extractable content is tagged `[INFERRED]`; content
+    requiring judgment is tagged `[FILL]`. Nothing here becomes an approved decision — the tool's
+    own output states this explicitly (see banner below), matching the backlog brief's Guardrail
+    ("Candidates only; non-authoritative until routed through Stage 1–3 or Stage 10").
+    
+    `codeos-reviewer generate-adr-candidates --source <path>`
+    
+    **Input contract:** `--source <path>` names a Markdown file (a 00b Solution Discovery
+    document). The tool locates the `## Architectural Risks` section (from that heading to the
+    next `## ` heading or EOF) and reads each top-level bullet line (`- ` or `* ` at column 0
+    within that section) as one named risk. Sub-bullets/continuation lines are not treated as
+    separate risks — the single top-level bullet's raw text is treated as one risk entry's
+    identifying text; nested detail is out of scope for this generator (a human/model still
+    elaborates the ADR candidate's non-mechanical fields).
+    
+    **Output:** one ADR Candidate block per risk found, in source order, each shaped per the
+    UPG-0022 backlog brief's Proposed artifact:
+    
+    ```markdown
+    # ADR Candidates
+    
+    Decision needed: <risk bullet text> [INFERRED]
+    Why now: [FILL]
+    Features affected: [FILL]
+    Options: [FILL]
+    Risk if deferred: [FILL]
+    Does this affect behavior: [FILL]
+    Recommended route: [FILL]
+    - Stage 1–3
+    - Stage 10
+    - no action yet
+    ```
+    
+    Every generated output opens with:
+    ```
+    > [INFERRED] fields were populated automatically by extracting risk bullets from the source
+    > document — verify before submitting. [FILL] fields require human or model authorship.
+    > ADR candidates are non-authoritative until routed through Stage 1–3 or Stage 10.
+    ```
+    (exact wording to be finalized in Step 2 — the third line is the non-negotiable guardrail
+    carry-through from the backlog brief; it must survive verbatim into the generated artifact
+    so a reader of the *generated output alone*, without the backlog brief in hand, cannot
+    mistake a candidate for an approved decision.)
+    
+    **No risks found:** if the `## Architectural Risks` section is absent or contains no
+    top-level bullets, the tool does not fabricate a candidate. It prints a message to that
+    effect (exact stdout/stderr placement and exit code to be pinned down as an AC in Step 2)
+    rather than emitting an empty or placeholder ADR block.
+    
+    Output is written to stdout (redirect to file). Dispatched before `config::resolve()` (no
+    provider config required — same as `check-drift` and `generate-report`).
+    
+    ### Triage
+    
+    - Class: `script-tooling`
+    - Scope axis: `self-dev only`
+    - Review profile: `PROFILE-3`
+    - Originating backlog id: `UPG-0022`
+    
+    ---
+    
+    ## Step 2 — Acceptance Criteria
+    
+    ### Functional I/O
+    
+    **AC-1 — Section extraction boundary**
+    The tool locates the *first* line in the source file that is exactly equal to
+    `## Architectural Risks` after trimming trailing whitespace (case-sensitive, exact match —
+    not a prefix or substring match, so `## Architectural Risks (draft)` does not match). The
+    section spans from that line (exclusive) to the next line that starts with `## ` (any H2
+    heading), or EOF, whichever comes first. Only content in this span is scanned for risk
+    bullets. If the heading appears more than once, only the first occurrence's span is used.
+    _Verify in Step 4:_ fixture with the heading followed by bullets, then a later `## ` heading
+    with unrelated content; confirm only the first span's bullets are extracted and the later
+    section's content is not.
+    
+    **AC-2 — Risk bullet extraction**
+    Within the section (AC-1), every line starting at column 0 with `- ` or `* ` (a literal
+    hyphen or asterisk, one space, then content) is one risk bullet. The candidate's identifying
+    text is that line's content after stripping the marker and surrounding whitespace, taken
+    verbatim — no markdown normalization, no re-wrapping. Indented or continuation lines (any
+    line not itself starting with `- `/`* ` at column 0) are not appended to the preceding
+    bullet's text and never form their own risk entries. A bullet whose content is empty after
+    stripping the marker (e.g. a bare `- ` with nothing else) is skipped — it does not produce a
+    risk entry.
+    _Verify in Step 4:_ fixture with (a) plain top-level bullets, (b) an indented continuation
+    line under a bullet, (c) a bare `- ` with no text, (d) intro prose before the first bullet.
+    Confirm exactly the expected bullets are extracted, in source order, with continuation lines
+    and prose ignored and the bare bullet skipped.
+    
+    **AC-3 — Multiple risks: output structure and order**
+    For N risks found (N ≥ 1), the tool emits exactly one `# ADR Candidates` heading, followed by
+    N candidate groups in source order, each preceded by a `## Candidate <n>` subheading
+    (1-indexed, e.g. `## Candidate 1`, `## Candidate 2`, ...). Each group contains exactly these
+    seven fields plus the three-item route list, in this order:
+    ```
+    Decision needed: <risk text> [INFERRED]
+    Why now: [FILL]
+    Features affected: [FILL]
+    Options: [FILL]
+    Risk if deferred: [FILL]
+    Does this affect behavior: [FILL]
+    Recommended route: [FILL]
+    - Stage 1–3
+    - Stage 10
+    - no action yet
+    ```
+    (The `## Candidate <n>` subheading is a Step 2 design addition beyond the single-example
+    block shown in Step 1's backlog-derived proposed artifact — needed to unambiguously delimit
+    multiple candidate groups in one document. It does not change any field's name or order.)
+    _Verify in Step 4:_ fixture with 3 risks; confirm one `# ADR Candidates` heading, three
+    `## Candidate N` subheadings in order 1/2/3, and each group's seven fields + route list
+    present, complete, and correctly ordered.
+    
+    **AC-4 — `[INFERRED]` / `[FILL]` tagging**
+    `Decision needed:` is the only mechanically-derived field and is tagged `[INFERRED]`. All
+    other fields (`Why now`, `Features affected`, `Options`, `Risk if deferred`,
+    `Does this affect behavior`, `Recommended route`) are always `[FILL]` — the tool never
+    attempts to infer them from source content. No field is ever blank.
+    _Verify in Step 4:_ same fixture as AC-3; confirm exactly one `[INFERRED]` tag per candidate
+    group (on `Decision needed:`) and `[FILL]` on all six other fields, for every group.
+    
+    **AC-5 — Preamble present**
+    Whenever at least one risk is found, output begins with this banner verbatim:
+    ```
+    > [INFERRED] fields were populated automatically by extracting risk bullets from the source
+    > document — verify before submitting. [FILL] fields require human or model authorship.
+    > ADR candidates are non-authoritative until routed through Stage 1–3 or Stage 10.
+    ```
+    _Verify in Step 4:_ assert the first three non-blank lines of stdout match this banner
+    verbatim, byte for byte.
+    
+    **AC-6 — No `## Architectural Risks` section found**
+    If no line in the source file exactly matches `## Architectural Risks` (AC-1's match rule),
+    the tool writes nothing to stdout, writes
+    `error: no "## Architectural Risks" section found in <path>` to stderr, and exits 0 — this is
+    a valid-but-empty result, not a usage failure.
+    _Verify in Step 4:_ fixture with no such heading; confirm empty stdout, stderr names the
+    source path, exit code 0.
+    
+    **AC-7 — Section found but no bullets**
+    If the `## Architectural Risks` section (AC-1) exists but contains zero valid risk bullets
+    (AC-2 — including a section containing only prose, or only a bare empty bullet), the tool
+    writes nothing to stdout, writes
+    `error: "## Architectural Risks" section in <path> contains no risk bullets` to stderr, and
+    exits 0.
+    _Verify in Step 4:_ fixture with the heading present but only prose beneath it; confirm empty
+    stdout, a stderr message distinct from AC-6's, exit code 0.
+    
+    **AC-8 — Missing or unreadable `--source` file**
+    If the path given to `--source` does not exist or cannot be read, the tool writes nothing to
+    stdout, writes `error: cannot read source file '<path>': <os error>` to stderr, and exits 1
+    (`EXIT_USAGE`) — distinct from AC-6/AC-7 because there is no valid input to reason about at
+    all. (This intentionally diverges from `generate-report`'s optional-input graceful-`[FILL]`
+    pattern: `--source` is this tool's sole required input, not an auxiliary one — there is
+    nothing meaningful to generate without it.)
+    _Verify in Step 4:_ `--source does-not-exist.md`; confirm exit 1, stderr names the path.
+    
+    **AC-9 — `--source` is required**
+    `--source <path>` is a required flag (not optional). Omitting it, or passing an unknown flag,
+    is a clap usage error: exit 1, a usage message on stderr, nothing on stdout.
+    _Verify in Step 4:_ smoke test `generate-adr-candidates` with no `--source`; confirm exit 1.
+    
+    **AC-10 — Output to stdout only**
+    All report content (banner + candidate groups) is written to stdout only, never stderr. On a
+    successful non-empty run, stderr is empty. In the AC-6/AC-7/AC-8 cases, stdout is exactly
+    empty — no partial banner, no partial candidate content.
+    _Verify in Step 4:_ (a) run against a fixture with risks; confirm stderr is empty; (b) run
+    each of the AC-6/7/8 cases; confirm stdout is exactly empty in each.
+    
+    ### Exit codes
+    
+    **AC-11 — Exit 0 on success**
+    Any invocation that finds ≥ 1 risk bullet exits 0.
+    _Verify in Step 4:_ smoke test with a valid fixture; assert exit 0.
+    
+    **AC-12 — Dispatch before config resolution**
+    `generate-adr-candidates` runs without a configured provider, dispatching before
+    `config::resolve()` (same pattern as `check-drift` / `generate-report`).
+    _Verify in Step 4:_ run in a temp repo with no provider config set up at all; confirm no
+    config-resolution error occurs (exit 0 either via AC-6's no-section path or a successful
+    candidate-producing run).
+    
+    ### Idempotency
+    
+    **AC-13 — Deterministic output**
+    Given an unchanged source file, two invocations produce byte-for-byte identical stdout.
+    _Verify in Step 4:_ run twice against the same fixture; diff the outputs.
+    
+    ### Cross-reference integrity
+    
+    **AC-14 — Non-authoritative guardrail is inseparable from output**
+    The third preamble line ("ADR candidates are non-authoritative...") is part of the same
+    constant banner as the first two lines (AC-5) and is never conditionally omitted by any flag
+    or code path while candidate content is still emitted.
+    _Verify in Step 4:_ confirm the full banner (AC-5) appears in every test that produces
+    non-empty stdout; there is no separate flag or branch that prints candidates without it.
+    
+    ---
+    
+    ## Step 3 — Implement
+    
+    ### What was done
+    
+    | File | Change |
+    |---|---|
+    | `tools/reviewer/src/cmd/generate_adr_candidates.rs` | New: `generate-adr-candidates` core. `run()` reads `--source`, locates the first exact `## Architectural Risks` line, bounds the section at the next `## ` heading or EOF, extracts top-level `- `/`* ` bullets (skipping empty-after-strip bullets, ignoring indented continuation lines and prose), and emits one `# ADR Candidates` heading followed by one `## Candidate <n>` group per risk in source order. |
+    | `tools/reviewer/src/cmd/mod.rs` | `pub mod generate_adr_candidates;` registered. |
+    | `tools/reviewer/src/main.rs` | Added `Commands::GenerateAdrCandidates { source }` variant (`source` a required `String`, so clap itself enforces AC-9); dispatched before `config::resolve()` (mirrors `check-drift` / `generate-report`, satisfies AC-12); added the unreachable post-config match arm. |
+    | `tools/reviewer/tests/smoke.rs` | Added 14 smoke tests (`smoke_generate_adr_*`) covering AC-1 through AC-14: section boundary (AC-1), bullet extraction incl. continuation/prose/bare-bullet (AC-2), multi-candidate structure and order (AC-3), `[INFERRED]`/`[FILL]` counts (AC-4), verbatim banner (AC-5), no-section / empty-section / missing-source distinct exit paths (AC-6/7/8), missing `--source` clap usage error (AC-9), stdout-only across success and all three empty/error cases (AC-10), exit 0 on success (AC-11), no-provider-config dispatch (AC-12), determinism (AC-13), guardrail present across single- and multi-candidate runs (AC-14). |
+    
+    ### Verification
+    
+    `cargo build` and `cargo build --tests`: clean, no errors.
+    `cargo test --test smoke`: **77 passed, 0 failed** (63 pre-existing + 14 new). No regressions.
+    One test bug was caught and fixed during this pass: `smoke_generate_adr_inferred_and_fill_tagging`
+    initially counted `[INFERRED]` across the whole stdout, which double-counts the banner's own
+    use of that literal substring; fixed to count only within the `# ADR Candidates` section.
+    
+    ### Scope check
+    
+    No edits to `prompts/00b-solution-discovery.md`, `dba-system.md`, `scripts/codeos-review.sh`,
+    or any other existing subcommand's behavior — matches the Step 1 scope boundary. `check-drift`
+    and `generate-report` dispatch/handling untouched.
+    
+    ---
+    
+    ## Step 4 — Reconcile
+    
+    *(to be written after Step 3 approval)*
+
+  --- tools/reviewer/src/main.rs (sha256: 00b7909f461fa21b4d8788f63e04e1b027ab7d076f998d223004c213e1c3328d, visibility: shown) ---
+    use clap::{Parser, Subcommand};
+    use std::path::PathBuf;
+    use std::process;
+    
+    mod assessment;
+    mod cmd;
+    mod config;
+    mod log;
+    mod packet;
+    mod precheck;
+    mod provider;
+    
+    pub const EXIT_SUCCESS: i32 = 0;
+    pub const EXIT_USAGE: i32 = 1;
+    pub const EXIT_CONFIG: i32 = 2;
+    pub const EXIT_PROVIDER: i32 = 3;
+    pub const EXIT_PACKET: i32 = 4;
+    pub const EXIT_WRITE: i32 = 5;
+    pub const EXIT_DRIFT: i32 = 6;
+    
+    #[derive(Parser)]
+    #[command(name = "codeos-reviewer", version = "0.1.0")]
+    #[command(about = "Codeos advisory reviewer pipeline — advisory, read-only, non-gatekeeping")]
+    struct Cli {
+        /// Override provider for this invocation (highest priority)
+        #[arg(long, global = true)]
+        provider: Option<String>,
+    
+        #[command(subcommand)]
+        command: Commands,
+    }
+    
+    #[derive(Subcommand)]
+    enum Commands {
+        /// Build packet, invoke reviewer, save assessment, append log
+        Review {
+            feature: String,
+            stage: String,
+            /// All remaining args: artifact paths, --sha-only, --fresh, --mode, --base, etc.
+            #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
+            rest: Vec<String>,
+        },
+        /// Append a human decision entry to the log
+        Decision {
+            feature: String,
+            stage: String,
+            verdict: String,
+            reason: String,
+            /// Override the coverage gate for CRITICAL_OMISSION / EMPTY_PACKET; requires a rationale
+            #[arg(long = "override", value_name = "RATIONALE")]
+            override_reason: Option<String>,
+        },
+        /// Show config resolution and diagnostic info
+        Diagnose {
+            feature: Option<String>,
+            stage: Option<String>,
+        },
+        /// Record base commit for a stage (for future delta reviews)
+        StageStart {
+            feature: String,
+            stage: String,
+            #[arg(long)]
+            base: Option<String>,
+        },
+        /// Detect stack/config drift — exits 6 if watched dependency/config files changed without a reconciliation report
+        CheckDrift {
+            /// Git ref to diff against (default: main)
+            #[arg(long, default_value = "main")]
+            base: String,
+            /// Prefix output with STRICT MODE (same exit behaviour)
+            #[arg(long)]
+            strict: bool,
+        },
+        /// Generate a Stage 4/5/6 report skeleton with mechanically inferred fields
+        GenerateReport {
+            /// Report stage: 4, 5, or 6
+            #[arg(long)]
+            stage: String,
+            /// Feature id (e.g. UPG-0021) to populate the Feature field
+            #[arg(long)]
+            feature: Option<String>,
+            /// Git ref to diff against for Stage 4 Files changed (git diff --name-only <base>..HEAD)
+            #[arg(long)]
+            base: Option<String>,
+            /// Path to a cargo test output file to parse Stage 5 test counts from
+            #[arg(long = "test-output")]
+            test_output: Option<String>,
+            /// Path to a JSONL events file to count for Stage 6 Events captured
+            #[arg(long)]
+            events: Option<String>,
+        },
+        /// Extract "## Architectural Risks" bullets from a 00b Solution Discovery doc into
+        /// non-authoritative ADR candidate skeletons
+        GenerateAdrCandidates {
+            /// Path to the 00b Solution Discovery source document
+            #[arg(long)]
+            source: String,
+        },
+    }
+    
+    fn main() {
+        let exit_code = run();
+        process::exit(exit_code);
+    }
+    
+    fn run() -> i32 {
+        let cli = match Cli::try_parse() {
+            Ok(c) => c,
+            Err(e) => {
+                // Help and version print to stdout and exit 0; real argument errors exit 1 (AC-3).
+                let code = if e.use_stderr() { EXIT_USAGE } else { EXIT_SUCCESS };
+                e.print().unwrap_or(());
+                return code;
+            }
+        };
+    
+        // Discover repo root
+        let repo_root = match discover_repo_root() {
+            Ok(r) => r,
+            Err(e) => {
+                eprintln!("error: {}", e);
+                return EXIT_CONFIG;
+            }
+        };
+    
+        // Dispatch check-drift before config resolution — needs no provider config.
+        if let Commands::CheckDrift { base, strict } = &cli.command {
+            return cmd::check_drift::run(base, *strict, &repo_root);
+        }
+    
+        // Dispatch generate-report before config resolution — needs no provider config.
+        if let Commands::GenerateReport { stage, feature, base, test_output, events } = &cli.command {
+            let args = cmd::generate_report::GenerateReportArgs {
+                stage,
+                feature: feature.as_deref(),
+                base: base.as_deref(),
+                test_output: test_output.as_deref(),
+                events: events.as_deref(),
+            };
+            return cmd::generate_report::run(args, &repo_root);
+        }
+    
+        // Dispatch generate-adr-candidates before config resolution — needs no provider config.
+        if let Commands::GenerateAdrCandidates { source } = &cli.command {
+            return cmd::generate_adr_candidates::run(cmd::generate_adr_candidates::GenerateAdrCandidatesArgs {
+                source,
+            });
+        }
+    
+        // Resolve config
+        let cfg = match config::resolve(cli.provider.as_deref(), &repo_root) {
+            Ok(c) => c,
+            Err(e) => {
+                eprintln!("error: {}", e);
+                return EXIT_CONFIG;
+            }
+        };
+    
+        match cli.command {
+            Commands::Review { feature, stage, rest } => {
+                let parsed = match cmd::review::parse_rest(&rest) {
+                    Ok(p) => p,
+                    Err(e) => {
+                        eprintln!("{}", e);
+                        return EXIT_USAGE;
+                    }
+                };
+                let (artifacts, sha_only, guard_clean, fresh, scratch, print_only,
+                     skip_prechecks, delta_mode, delta_base) = parsed;
+    
+                let args = cmd::review::ReviewArgs {
+                    feature, stage, artifacts, sha_only, guard_clean,
+                    fresh, scratch, print_only, skip_prechecks, delta_mode, delta_base,
+                };
+    
+                match cmd::review::run(args, &cfg, &cfg.provider_name) {
+                    Ok(code) => code,
+                    Err(e) => {
+                        eprintln!("internal error: {}", e);
+                        EXIT_WRITE
+                    }
+                }
+            }
+    
+            Commands::Decision { feature, stage, verdict, reason, override_reason } => {
+                match cmd::decision::run(&feature, &stage, &verdict, &reason, override_reason.as_deref(), &cfg) {
+                    Ok(code) => code,
+                    Err(e) => {
+                        eprintln!("error: {}", e);
+                        EXIT_WRITE
+                    }
+                }
+            }
+    
+            Commands::Diagnose { feature, stage } => {
+                cmd::diagnose::run(
+                    feature.as_deref(),
+                    stage.as_deref(),
+                    &cfg,
+                    cfg.provider_source,
+                );
+                EXIT_SUCCESS
+            }
+    
+            Commands::StageStart { feature, stage, base } => {
+                match run_stage_start(&feature, &stage, base.as_deref(), &cfg) {
+                    Ok(code) => code,
+                    Err(e) => {
+                        eprintln!("error: {}", e);
+                        EXIT_CONFIG
+                    }
+                }
+            }
+    
+            // Handled above before config resolution; unreachable here.
+            Commands::CheckDrift { .. } => EXIT_SUCCESS,
+            Commands::GenerateReport { .. } => EXIT_SUCCESS,
+            Commands::GenerateAdrCandidates { .. } => EXIT_SUCCESS,
+        }
+    }
+    
+    fn discover_repo_root() -> anyhow::Result<PathBuf> {
+        let out = std::process::Command::new("git")
+            .args(["rev-parse", "--show-toplevel"])
+            .output()
+            .map_err(|_| anyhow::anyhow!("not inside a git repository"))?;
+        if !out.status.success() {
+            anyhow::bail!("not inside a git repository");
+        }
+        Ok(PathBuf::from(String::from_utf8_lossy(&out.stdout).trim()))
+    }
+    
+    fn run_stage_start(
+        feature: &str,
+        stage: &str,
+        base: Option<&str>,
+        cfg: &config::Config,
+    ) -> anyhow::Result<i32> {
+        let base_sha = if let Some(b) = base {
+            b.to_string()
+        } else {
+            let out = std::process::Command::new("git")
+                .args(["rev-parse", "HEAD"])
+                .current_dir(&cfg.repo_root)
+                .output()
+                .map_err(|e| anyhow::anyhow!("git rev-parse: {}", e))?;
+            String::from_utf8_lossy(&out.stdout).trim().to_string()
+        };
+    
+        let branch_out = std::process::Command::new("git")
+            .args(["rev-parse", "--abbrev-ref", "HEAD"])
+            .current_dir(&cfg.repo_root)
+            .output()
+            .map_err(|e| anyhow::anyhow!("git branch: {}", e))?;
+        let branch = String::from_utf8_lossy(&branch_out.stdout).trim().to_string();
+    
+        let dir = cfg.stage_start_dir.join(feature);
+        std::fs::create_dir_all(&dir)
+            .map_err(|e| anyhow::anyhow!("create stage-start dir: {}", e))?;
+    
+        let ts = chrono::Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string();
+        let json = format!(
+            "{{\n  \"feature\": \"{}\",\n  \"stage\": \"{}\",\n  \"base_commit\": \"{}\",\n  \"branch\": \"{}\",\n  \"started_at\": \"{}\"\n}}\n",
+            feature, stage, base_sha, branch, ts
+        );
+        let out_file = dir.join(format!("stage-{}.json", stage));
+        std::fs::write(&out_file, &json)
+            .map_err(|e| anyhow::anyhow!("write stage-start file: {}", e))?;
+    
+        println!("stage-start recorded: {} (base {})", out_file.display(), base_sha);
+        Ok(EXIT_SUCCESS)
+    }
+
+  --- tools/reviewer/src/cmd/generate_adr_candidates.rs (sha256: e195b8f4874bf5868e8cc20d107b6291a62b9e6235b6bab42f41ec5616754dd6, visibility: shown) ---
+    const PREAMBLE: &str = "\
+    > [INFERRED] fields were populated automatically by extracting risk bullets from the source\n\
+    > document — verify before submitting. [FILL] fields require human or model authorship.\n\
+    > ADR candidates are non-authoritative until routed through Stage 1–3 or Stage 10.";
+    
+    const RISKS_HEADING: &str = "## Architectural Risks";
+    
+    pub struct GenerateAdrCandidatesArgs<'a> {
+        pub source: &'a str,
+    }
+    
+    pub fn run(args: GenerateAdrCandidatesArgs) -> i32 {
+        let content = match std::fs::read_to_string(args.source) {
+            Ok(c) => c,
+            Err(e) => {
+                eprintln!("error: cannot read source file '{}': {}", args.source, e);
+                return crate::EXIT_USAGE;
+            }
+        };
+    
+        let lines: Vec<&str> = content.lines().collect();
+    
+        let heading_idx = match lines.iter().position(|l| l.trim_end() == RISKS_HEADING) {
+            Some(i) => i,
+            None => {
+                eprintln!(
+                    "error: no \"{}\" section found in {}",
+                    RISKS_HEADING, args.source
+                );
+                return crate::EXIT_SUCCESS;
+            }
+        };
+    
+        let end_idx = lines[heading_idx + 1..]
+            .iter()
+            .position(|l| l.starts_with("## "))
+            .map(|rel| heading_idx + 1 + rel)
+            .unwrap_or(lines.len());
+    
+        let risks: Vec<&str> = lines[heading_idx + 1..end_idx]
+            .iter()
+            .filter_map(|l| {
+                if l.starts_with("- ") || l.starts_with("* ") {
+                    let text = l[2..].trim();
+                    if text.is_empty() {
+                        None
+                    } else {
+                        Some(text)
+                    }
+                } else {
+                    None
+                }
+            })
+            .collect();
+    
+        if risks.is_empty() {
+            eprintln!(
+                "error: \"{}\" section in {} contains no risk bullets",
+                RISKS_HEADING, args.source
+            );
+            return crate::EXIT_SUCCESS;
+        }
+    
+        let mut report = String::from("# ADR Candidates\n");
+        for (i, risk) in risks.iter().enumerate() {
+            report.push_str(&format!(
+                "\n## Candidate {n}\n\n\
+    Decision needed: {risk} [INFERRED]\n\
+    Why now: [FILL]\n\
+    Features affected: [FILL]\n\
+    Options: [FILL]\n\
+    Risk if deferred: [FILL]\n\
+    Does this affect behavior: [FILL]\n\
+    Recommended route: [FILL]\n\
+    - Stage 1–3\n\
+    - Stage 10\n\
+    - no action yet\n",
+                n = i + 1,
+                risk = risk,
+            ));
+        }
+    
+        println!("{}\n", PREAMBLE);
+        print!("{}", report);
+        crate::EXIT_SUCCESS
+    }
+
+  --- tools/reviewer/tests/smoke.rs (sha256: cd67104df2c0fd539e5a38eaf89beda22c19a0f716b579d82424c9b664515427, visibility: shown) ---
+    // Integration / smoke tests — require a git repo and bash; fast to run.
+    // These tests verify the CLI surface, exit codes, and packet behavior.
+    // Provider invocation is NOT tested here (that would require codex on PATH).
+    
+    use tempfile::TempDir;
+    
+    /// Create a minimal git repo in a temp directory and return (TempDir, base_sha).
+    fn setup_temp_git_repo() -> (TempDir, String) {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let p = dir.path();
+        Command::new("git").args(["init"]).current_dir(p).output().expect("git init");
+        Command::new("git").args(["config", "user.email", "test@codeos.test"]).current_dir(p).output().ok();
+        Command::new("git").args(["config", "user.name", "Codeos Test"]).current_dir(p).output().ok();
+        std::fs::write(p.join("tracked.md"), "# tracked\n").expect("write tracked");
+        Command::new("git").args(["add", "tracked.md"]).current_dir(p).output().expect("git add");
+        Command::new("git").args(["commit", "-m", "initial"]).current_dir(p).output().expect("git commit");
+        let sha_out = Command::new("git").args(["rev-parse", "HEAD"]).current_dir(p)
+            .output().expect("git rev-parse");
+        let sha = String::from_utf8_lossy(&sha_out.stdout).trim().to_string();
+        (dir, sha)
+    }
+    
+    use std::path::PathBuf;
+    use std::process::Command;
+    
+    fn binary() -> PathBuf {
+        let mut p = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        p.push("target/debug/codeos-reviewer");
+        p
+    }
+    
+    fn repo_root() -> PathBuf {
+        let mut p = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        p.pop(); p.pop(); // tools/reviewer -> Codeos/
+        p
+    }
+    
+    /// Run the binary with given args from the repo root, return (exit code, stdout, stderr).
+    fn run(args: &[&str]) -> (i32, String, String) {
+        let out = Command::new(binary())
+            .args(args)
+            .current_dir(repo_root())
+            .output()
+            .expect("failed to run codeos-reviewer binary");
+        let code = out.status.code().unwrap_or(-1);
+        let stdout = String::from_utf8_lossy(&out.stdout).into_owned();
+        let stderr = String::from_utf8_lossy(&out.stderr).into_owned();
+        (code, stdout, stderr)
+    }
+    
+    #[test]
+    fn smoke_help_exits_zero() {
+        let (code, stdout, _) = run(&["--help"]);
+        assert_eq!(code, 0, "help should exit 0");
+        assert!(stdout.contains("codeos-reviewer"), "help should mention binary name");
+    }
+    
+    #[test]
+    fn smoke_diagnose_exits_zero() {
+        let (code, stdout, _) = run(&["diagnose"]);
+        assert_eq!(code, 0, "diagnose should exit 0");
+        assert!(stdout.contains("provider:"), "diagnose should output provider");
+    }
+    
+    #[test]
+    fn smoke_diagnose_with_feature_and_stage() {
+        let (code, stdout, _) = run(&["diagnose", "UPG-9999", "selfdev-step-1"]);
+        assert_eq!(code, 0);
+        assert!(stdout.contains("UPG-9999"), "diagnose should echo feature");
+    }
+    
+    #[test]
+    fn smoke_review_no_args_exits_usage() {
+        let (code, _, stderr) = run(&["review"]);
+        // clap will exit 2 (usage error) when required positional args are missing
+        assert_ne!(code, 0, "review with no args should fail");
+        let _ = stderr; // may contain clap error message
+    }
+    
+    #[test]
+    fn smoke_review_print_packet_nonexistent_file() {
+        // --print-packet (--dry-run) with a nonexistent file should exit non-zero (EXIT_PACKET=4)
+        let (code, _, stderr) = run(&[
+            "review", "UPG-SMOKE-TEST", "selfdev-step-0",
+            "--print-packet",
+            "does-not-exist-smoke-test.md",
+        ]);
+        // packet build should succeed if file is not found (shown as missing), but an empty packet fails.
+        // Either PACKET (4) or the file is treated as missing and results in empty packet.
+        assert!(
+            code == 4 || code == 0,
+            "expected exit 4 (PACKET) or 0 (file shown as missing), got {}: {}",
+            code, stderr
+        );
+    }
+    
+    #[test]
+    fn smoke_review_print_packet_existing_file() {
+        // Pass an actual file in the repo; --print-packet should produce output and exit 0
+        let (code, stdout, stderr) = run(&[
+            "review", "UPG-SMOKE-TEST", "selfdev-step-0",
+            "--print-packet", "--skip-prechecks",
+            "CLAUDE.md",
+        ]);
+        assert_eq!(
+            code, 0,
+            "--print-packet with a real file should exit 0; stderr: {}",
+            stderr
+        );
+        assert!(stdout.len() > 10, "packet output should be non-empty");
+    }
+    
+    #[test]
+    fn smoke_decision_bad_verdict_exits_usage() {
+        let (code, _, stderr) = run(&[
+            "decision", "UPG-SMOKE", "selfdev-step-0", "WRONG_VERDICT", "reason",
+        ]);
+        assert_ne!(code, 0, "bad verdict should fail");
+        assert!(
+            stderr.contains("APPROVE_STAGE") || stderr.contains("REQUEST_CHANGES"),
+            "should mention valid verdicts: {}",
+            stderr
+        );
+    }
+    
+    #[test]
+    fn smoke_provider_override_unknown() {
+        // An unknown provider via --provider flag should exit with EXIT_CONFIG (2) or EXIT_PROVIDER (3)
+        let (code, _, stderr) = run(&[
+            "--provider", "nonexistent-provider-xyz",
+            "review", "UPG-SMOKE", "selfdev-step-0",
+            "--print-packet", "--skip-prechecks",
+            "CLAUDE.md",
+        ]);
+        // With --print-packet, provider is never invoked; config resolution may still reject it
+        // Accept either success (provider not resolved yet) or config error
+        let _ = (code, stderr);
+    }
+    
+    #[test]
+    fn smoke_diagnose_shows_provider_source() {
+        let (code, stdout, _) = run(&["diagnose"]);
+        assert_eq!(code, 0);
+        // Should mention where provider came from
+        assert!(
+            stdout.contains("source:") || stdout.contains("default") || stdout.contains("codex"),
+            "diagnose should show provider source: {}",
+            stdout
+        );
+    }
+    
+    #[test]
+    fn smoke_delta_mode_untracked_artifact_exits_packet() {
+        // Delta review on an untracked file must exit EXIT_PACKET (4) with a clear diagnostic.
+        // Bash behavior: git ls-files --error-unmatch catches this; Rust must match.
+        let (dir, base_sha) = setup_temp_git_repo();
+        let dir_path = dir.path();
+    
+        // Write a file that is NOT staged or committed — untracked.
+        std::fs::write(dir_path.join("untracked.md"), "# untracked\n").expect("write untracked");
+    
+        let out = Command::new(binary())
+            .args([
+                "review", "FEAT", "delta-test",
+                "--mode", "delta",
+                "--base", &base_sha,
+                "--print-packet",
+                "untracked.md",
+            ])
+            .current_dir(dir_path)
+            .output()
+            .expect("run binary");
+    
+        let code = out.status.code().unwrap_or(-1);
+        let stderr = String::from_utf8_lossy(&out.stderr).into_owned();
+        assert_eq!(
+            code, 4,
+            "untracked artifact in delta mode must exit 4 (EXIT_PACKET); stderr: {}",
+            stderr
+        );
+        assert!(
+            stderr.contains("untracked"),
+            "error message must mention 'untracked': {}",
+            stderr
+        );
+    }
+    
+    // ── Decision provenance tests ─────────────────────────────────────────────────
+    
+    /// Write a minimal fake assessment file into `<repo>/reviews/codex/` and return the
+    /// path to the packet file (so callers can optionally modify it).
+    fn write_fake_assessment(
+        repo_path: &std::path::Path,
+        feature: &str,
+        stage: &str,
+        coverage_state: &str,
+        packet_sha_override: Option<&str>, // None = use real sha of packet content
+        review_commit: &str,
+    ) -> (String, String) {
+        let codex_dir = repo_path.join("reviews/codex");
+        let packets_dir = codex_dir.join("packets");
+        std::fs::create_dir_all(&packets_dir).expect("create codex/packets dir");
+    
+        let packet_content = "FAKE PACKET CONTENT FOR TEST\n";
+        let actual_sha = codeos_reviewer_sha256(packet_content);
+        let packet_name = format!("20260101T000000Z-{}-stage-{}-abcdef1.packet.txt", feature, stage);
+        std::fs::write(packets_dir.join(&packet_name), packet_content).expect("write packet");
+    
+        let stored_sha = packet_sha_override.unwrap_or(&actual_sha);
+        let filename = format!("20260101T000000Z-{}-stage-{}-abcdef1.md", feature, stage);
+        let content = format!(
+            "---\nreviewed:\n  feature: {}\n  stage: {}\n  review_commit: {}\n  coverage_state: {}\n  reviewed_packet: packets/{}\n  reviewed_packet_sha256: {}\n---\n\nAssessment text.\n",
+            feature, stage, review_commit, coverage_state, packet_name, stored_sha
+        );
+        std::fs::write(codex_dir.join(&filename), &content).expect("write assessment");
+        (codex_dir.join(&filename).display().to_string(), actual_sha)
+    }
+    
+    fn codeos_reviewer_sha256(s: &str) -> String {
+        use std::collections::hash_map::DefaultHasher;
+        use std::hash::{Hash, Hasher};
+        // Use SHA-256 via the binary's known output for determinism.
+        // We compute it ourselves with sha2 if available, else use a stable stand-in.
+        // Since the test only checks MATCH/MISMATCH behaviour, a stable deterministic value works.
+        let mut h = DefaultHasher::new();
+        s.hash(&mut h);
+        format!("{:016x}{:016x}{:016x}{:016x}", h.finish(), h.finish() ^ 0xdead, h.finish() ^ 0xbeef, h.finish() ^ 0xcafe)
+    }
+    
+    /// Write a malformed assessment file (exists but has no parseable frontmatter).
+    fn write_malformed_assessment(
+        repo_path: &std::path::Path,
+        feature: &str,
+        stage: &str,
+    ) {
+        let codex_dir = repo_path.join("reviews/codex");
+        std::fs::create_dir_all(&codex_dir).expect("create codex dir");
+        let filename = format!("20260101T000000Z-{}-stage-{}-abcdef1.md", feature, stage);
+        // No YAML frontmatter — just body text, so parse_assessment_frontmatter returns None.
+        std::fs::write(codex_dir.join(&filename), "This assessment has no frontmatter.\n")
+            .expect("write malformed assessment");
+    }
+    
+    /// Write an assessment that has frontmatter but is missing coverage_state (partial provenance).
+    fn write_partial_frontmatter_assessment(
+        repo_path: &std::path::Path,
+        feature: &str,
+        stage: &str,
+        review_commit: &str,
+    ) {
+        let codex_dir = repo_path.join("reviews/codex");
+        std::fs::create_dir_all(&codex_dir).expect("create codex dir");
+        let filename = format!("20260101T000000Z-{}-stage-{}-abcdef2.md", feature, stage);
+        // Has review_commit but no coverage_state — partial provenance.
+        let content = format!(
+            "---\nreviewed:\n  feature: {}\n  stage: {}\n  review_commit: {}\n---\n\nAssessment.\n",
+            feature, stage, review_commit
+        );
+        std::fs::write(codex_dir.join(&filename), &content)
+            .expect("write partial frontmatter assessment");
+    }
+    
+    /// Write a minimal review log file so the decision command can append to it.
+    fn setup_review_log(repo_path: &std::path::Path) -> std::path::PathBuf {
+        let reviews_dir = repo_path.join("reviews");
+        std::fs::create_dir_all(&reviews_dir).expect("create reviews dir");
+        let log_path = reviews_dir.join("review-log.md");
+        if !log_path.exists() {
+            std::fs::write(&log_path, "# Codeos Review Log (append-only, v0)\n").expect("write log");
+        }
+        log_path
+    }
+    
+    fn run_decision_in(
+        repo_path: &std::path::Path,
+        args: &[&str],
+    ) -> (i32, String, String) {
+        let out = Command::new(binary())
+            .args(args)
+            .current_dir(repo_path)
+            .output()
+            .expect("run decision");
+        let code = out.status.code().unwrap_or(-1);
+        let stdout = String::from_utf8_lossy(&out.stdout).into_owned();
+        let stderr = String::from_utf8_lossy(&out.stderr).into_owned();
+        (code, stdout, stderr)
+    }
+    
+    #[test]
+    fn smoke_decision_coverage_gate_blocks_critical_omission() {
+        // AC-1: APPROVE_STAGE with CRITICAL_OMISSION must exit 1 and NOT write to the log.
+        let (dir, _) = setup_temp_git_repo();
+        let p = dir.path();
+        let log_path = setup_review_log(p);
+        let log_size_before = std::fs::metadata(&log_path).map(|m| m.len()).unwrap_or(0);
+    
+        let head = Command::new("git").args(["rev-parse", "HEAD"]).current_dir(p)
+            .output().expect("git rev-parse");
+        let head_sha = String::from_utf8_lossy(&head.stdout).trim().to_string();
+    
+        write_fake_assessment(p, "FEAT", "my-stage", "CRITICAL_OMISSION", None, &head_sha);
+    
+        let (code, _, stderr) = run_decision_in(p, &[
+            "decision", "FEAT", "my-stage", "APPROVE_STAGE", "reason",
+        ]);
+        assert_eq!(code, 1, "coverage gate must exit 1; stderr: {}", stderr);
+        assert!(stderr.contains("APPROVE_STAGE refused"), "must mention refusal: {}", stderr);
+        assert!(stderr.contains("CRITICAL_OMISSION"), "must name coverage_state: {}", stderr);
+    
+        let log_size_after = std::fs::metadata(&log_path).map(|m| m.len()).unwrap_or(0);
+        assert_eq!(log_size_before, log_size_after, "log must not grow when gate blocks");
+    }
+    
+    #[test]
+    fn smoke_decision_coverage_gate_blocks_empty_packet() {
+        // AC-1: APPROVE_STAGE with EMPTY_PACKET must also exit 1.
+        let (dir, _) = setup_temp_git_repo();
+        let p = dir.path();
+        setup_review_log(p);
+    
+        let head = Command::new("git").args(["rev-parse", "HEAD"]).current_dir(p)
+            .output().expect("git rev-parse");
+        let head_sha = String::from_utf8_lossy(&head.stdout).trim().to_string();
+    
+        write_fake_assessment(p, "FEAT", "my-stage", "EMPTY_PACKET", None, &head_sha);
+    
+        let (code, _, stderr) = run_decision_in(p, &[
+            "decision", "FEAT", "my-stage", "APPROVE_STAGE", "reason",
+        ]);
+        assert_eq!(code, 1, "EMPTY_PACKET must also exit 1; stderr: {}", stderr);
+        assert!(stderr.contains("EMPTY_PACKET"), "must name coverage_state: {}", stderr);
+    }
+    
+    #[test]
+    fn smoke_decision_override_lifts_gate_and_records_both() {
+        // AC-2: --override lifts the gate; log must contain BOTH coverage_state AND rationale.
+        let (dir, _) = setup_temp_git_repo();
+        let p = dir.path();
+        let log_path = setup_review_log(p);
+    
+        let head = Command::new("git").args(["rev-parse", "HEAD"]).current_dir(p)
+            .output().expect("git rev-parse");
+        let head_sha = String::from_utf8_lossy(&head.stdout).trim().to_string();
+    
+        write_fake_assessment(p, "FEAT", "my-stage", "CRITICAL_OMISSION", None, &head_sha);
+    
+        let (code, stdout, stderr) = run_decision_in(p, &[
+            "decision", "FEAT", "my-stage", "APPROVE_STAGE", "reason",
+            "--override", "I accept the risk: packet was empty due to scratch run",
+        ]);
+        assert_eq!(code, 0, "override must lift gate; stderr: {}; stdout: {}", stderr, stdout);
+        assert!(stdout.contains("decision appended"), "must confirm log write: {}", stdout);
+    
+        let log_content = std::fs::read_to_string(&log_path).expect("read log");
+        assert!(log_content.contains("CRITICAL_OMISSION"), "log must record coverage_state: {}", log_content);
+        assert!(log_content.contains("COVERAGE_GATE_OVERRIDDEN"), "log must record gate overridden: {}", log_content);
+        assert!(log_content.contains("I accept the risk"), "log must record override rationale: {}", log_content);
+    }
+    
+    #[test]
+    fn smoke_decision_approve_not_gated_for_full_coverage() {
+        // AC-9: APPROVE_STAGE with FULL_COVERAGE must exit 0.
+        let (dir, _) = setup_temp_git_repo();
+        let p = dir.path();
+        setup_review_log(p);
+    
+        let head = Command::new("git").args(["rev-parse", "HEAD"]).current_dir(p)
+            .output().expect("git rev-parse");
+        let head_sha = String::from_utf8_lossy(&head.stdout).trim().to_string();
+    
+        write_fake_assessment(p, "FEAT", "my-stage", "FULL_COVERAGE", None, &head_sha);
+    
+        let (code, _, stderr) = run_decision_in(p, &[
+            "decision", "FEAT", "my-stage", "APPROVE_STAGE", "all good",
+        ]);
+        assert_eq!(code, 0, "FULL_COVERAGE must not be gated; stderr: {}", stderr);
+    }
+    
+    #[test]
+    fn smoke_decision_request_changes_not_gated_even_critical_omission() {
+        // AC-7: REQUEST_CHANGES must never be refused regardless of coverage_state.
+        let (dir, _) = setup_temp_git_repo();
+        let p = dir.path();
+        setup_review_log(p);
+    
+        let head = Command::new("git").args(["rev-parse", "HEAD"]).current_dir(p)
+            .output().expect("git rev-parse");
+        let head_sha = String::from_utf8_lossy(&head.stdout).trim().to_string();
+    
+        write_fake_assessment(p, "FEAT", "my-stage", "CRITICAL_OMISSION", None, &head_sha);
+    
+        let (code, _, stderr) = run_decision_in(p, &[
+            "decision", "FEAT", "my-stage", "REQUEST_CHANGES", "needs rework",
+        ]);
+        assert_eq!(code, 0, "REQUEST_CHANGES must never be gated; stderr: {}", stderr);
+    }
+    
+    #[test]
+    fn smoke_decision_no_assessment_fallback_exits_zero() {
+        // AC-6: no assessment for feature+stage → existing behavior preserved, exit 0.
+        let (dir, _) = setup_temp_git_repo();
+        let p = dir.path();
+        setup_review_log(p);
+        // Do NOT write any assessment file.
+    
+        let (code, _, stderr) = run_decision_in(p, &[
+            "decision", "FEAT-UNKNOWN", "no-stage", "APPROVE_STAGE", "proceeding without review",
+        ]);
+        assert_eq!(code, 0, "no assessment must fall through to exit 0; stderr: {}", stderr);
+    }
+    
+    #[test]
+    fn smoke_decision_packet_hash_mismatch_warns_but_proceeds() {
+        // AC-4: packet hash mismatch → advisory warning to stderr; MISMATCH in log Provenance block.
+        let (dir, _) = setup_temp_git_repo();
+        let p = dir.path();
+        let log_path = setup_review_log(p);
+    
+        let head = Command::new("git").args(["rev-parse", "HEAD"]).current_dir(p)
+            .output().expect("git rev-parse");
+        let head_sha = String::from_utf8_lossy(&head.stdout).trim().to_string();
+    
+        // Write assessment with a deliberately wrong stored SHA.
+        write_fake_assessment(p, "FEAT", "my-stage", "FULL_COVERAGE",
+            Some("0000000000000000000000000000000000000000000000000000000000000000"),
+            &head_sha);
+    
+        let (code, _, stderr) = run_decision_in(p, &[
+            "decision", "FEAT", "my-stage", "APPROVE_STAGE", "proceeding",
+        ]);
+        assert_eq!(code, 0, "packet mismatch must not block; stderr: {}", stderr);
+        assert!(stderr.contains("mismatch") || stderr.contains("MISMATCH") || stderr.contains("warning"),
+            "mismatch must produce a warning: {}", stderr);
+    
+        let log_content = std::fs::read_to_string(&log_path).expect("read log");
+        assert!(log_content.contains("MISMATCH"),
+            "log Provenance block must contain MISMATCH: {}", log_content);
+    }
+    
+    #[test]
+    fn smoke_decision_provenance_block_written_to_log() {
+        // AC-3: every decision log entry must contain a Provenance block when assessment exists.
+        let (dir, _) = setup_temp_git_repo();
+        let p = dir.path();
+        let log_path = setup_review_log(p);
+    
+        let head = Command::new("git").args(["rev-parse", "HEAD"]).current_dir(p)
+            .output().expect("git rev-parse");
+        let head_sha = String::from_utf8_lossy(&head.stdout).trim().to_string();
+    
+        write_fake_assessment(p, "FEAT", "my-stage", "FULL_COVERAGE", None, &head_sha);
+    
+        let (code, _, stderr) = run_decision_in(p, &[
+            "decision", "FEAT", "my-stage", "APPROVE_STAGE", "all verified",
+        ]);
+        assert_eq!(code, 0, "should succeed; stderr: {}", stderr);
+    
+        let log_content = std::fs::read_to_string(&log_path).expect("read log");
+        assert!(log_content.contains("Provenance:"), "log must contain Provenance block: {}", log_content);
+        assert!(log_content.contains("assessment:"), "provenance must show assessment path: {}", log_content);
+        assert!(log_content.contains("coverage_state:"), "provenance must show coverage_state: {}", log_content);
+    }
+    
+    #[test]
+    fn smoke_decision_commit_drift_warns_and_records_head_drift() {
+        // AC-5: review_commit != HEAD → advisory warning to stderr; HEAD_DRIFT in log Provenance block.
+        let (dir, _) = setup_temp_git_repo();
+        let p = dir.path();
+        let log_path = setup_review_log(p);
+    
+        // Use a synthetic stale commit SHA that is deliberately different from current HEAD.
+        let stale_commit = "0000000000000000000000000000000000000000";
+        write_fake_assessment(p, "FEAT", "my-stage", "FULL_COVERAGE", None, stale_commit);
+    
+        let (code, _, stderr) = run_decision_in(p, &[
+            "decision", "FEAT", "my-stage", "APPROVE_STAGE", "proceeding with drift",
+        ]);
+        assert_eq!(code, 0, "commit drift must not block; stderr: {}", stderr);
+        assert!(
+            stderr.contains("warning") || stderr.contains("HEAD") || stderr.contains("drift"),
+            "commit drift must produce a warning: {}",
+            stderr
+        );
+    
+        let log_content = std::fs::read_to_string(&log_path).expect("read log");
+        assert!(log_content.contains("HEAD_DRIFT"),
+            "log Provenance block must contain HEAD_DRIFT: {}", log_content);
+    }
+    
+    #[test]
+    fn smoke_decision_malformed_assessment_blocks_without_override() {
+        // Fail-closed: assessment file exists but is unparseable → exit 1, no log write.
+        let (dir, _) = setup_temp_git_repo();
+        let p = dir.path();
+        let log_path = setup_review_log(p);
+        let log_size_before = std::fs::metadata(&log_path).map(|m| m.len()).unwrap_or(0);
+    
+        write_malformed_assessment(p, "FEAT", "my-stage");
+    
+        let (code, _, stderr) = run_decision_in(p, &[
+            "decision", "FEAT", "my-stage", "APPROVE_STAGE", "proceeding",
+        ]);
+        assert_eq!(code, 1,
+            "malformed assessment must block without --override; stderr: {}", stderr);
+        assert!(
+            stderr.contains("provenance") || stderr.contains("assessment") || stderr.contains("parsed"),
+            "must explain provenance issue: {}", stderr
+        );
+    
+        let log_size_after = std::fs::metadata(&log_path).map(|m| m.len()).unwrap_or(0);
+        assert_eq!(log_size_before, log_size_after, "log must not grow when fail-closed");
+    }
+    
+    #[test]
+    fn smoke_decision_partial_frontmatter_also_blocks() {
+        // Fail-closed: assessment with frontmatter but missing coverage_state → exit 1.
+        let (dir, _) = setup_temp_git_repo();
+        let p = dir.path();
+        let log_path = setup_review_log(p);
+        let log_size_before = std::fs::metadata(&log_path).map(|m| m.len()).unwrap_or(0);
+    
+        let head = Command::new("git").args(["rev-parse", "HEAD"]).current_dir(p)
+            .output().expect("git rev-parse");
+        let head_sha = String::from_utf8_lossy(&head.stdout).trim().to_string();
+        write_partial_frontmatter_assessment(p, "FEAT", "my-stage", &head_sha);
+    
+        let (code, _, stderr) = run_decision_in(p, &[
+            "decision", "FEAT", "my-stage", "APPROVE_STAGE", "proceeding",
+        ]);
+        assert_eq!(code, 1,
+            "partial frontmatter (missing coverage_state) must also block; stderr: {}", stderr);
+        let log_size_after = std::fs::metadata(&log_path).map(|m| m.len()).unwrap_or(0);
+        assert_eq!(log_size_before, log_size_after, "log must not grow when fail-closed");
+    }
+    
+    #[test]
+    fn smoke_decision_malformed_assessment_override_proceeds_and_records() {
+        // Fail-closed with escape hatch: --override allows proceeding; log records PROVENANCE_UNVERIFIABLE.
+        let (dir, _) = setup_temp_git_repo();
+        let p = dir.path();
+        let log_path = setup_review_log(p);
+    
+        write_malformed_assessment(p, "FEAT", "my-stage");
+    
+        let (code, stdout, stderr) = run_decision_in(p, &[
+            "decision", "FEAT", "my-stage", "APPROVE_STAGE", "proceeding despite broken assessment",
+            "--override", "assessment was regenerated and lost; evidence reviewed in session",
+        ]);
+        assert_eq!(code, 0,
+            "--override must allow proceeding past broken provenance; stderr: {}; stdout: {}",
+            stderr, stdout);
+    
+        let log_content = std::fs::read_to_string(&log_path).expect("read log");
+        assert!(log_content.contains("PROVENANCE_UNVERIFIABLE"),
+            "log must record PROVENANCE_UNVERIFIABLE: {}", log_content);
+        assert!(log_content.contains("assessment was regenerated"),
+            "log must record override rationale: {}", log_content);
+    }
+    
+    #[test]
+    fn smoke_decision_override_with_request_changes_is_graceful() {
+        // AC-10: --override alongside REQUEST_CHANGES must not error or change exit code.
+        let (dir, _) = setup_temp_git_repo();
+        let p = dir.path();
+        setup_review_log(p);
+    
+        let head = Command::new("git").args(["rev-parse", "HEAD"]).current_dir(p)
+            .output().expect("git rev-parse");
+        let head_sha = String::from_utf8_lossy(&head.stdout).trim().to_string();
+        write_fake_assessment(p, "FEAT", "my-stage", "FULL_COVERAGE", None, &head_sha);
+    
+        let (code, _, stderr) = run_decision_in(p, &[
+            "decision", "FEAT", "my-stage", "REQUEST_CHANGES", "needs rework",
+            "--override", "unused rationale",
+        ]);
+        assert_eq!(code, 0,
+            "--override with REQUEST_CHANGES must exit 0; stderr: {}", stderr);
+    }
+    
+    #[test]
+    fn smoke_decision_packet_missing_records_provenance_unverifiable() {
+        // AC-6c: when the packet file is missing, log must show PROVENANCE_UNVERIFIABLE.
+        let (dir, _) = setup_temp_git_repo();
+        let p = dir.path();
+        let log_path = setup_review_log(p);
+    
+        let head = Command::new("git").args(["rev-parse", "HEAD"]).current_dir(p)
+            .output().expect("git rev-parse");
+        let head_sha = String::from_utf8_lossy(&head.stdout).trim().to_string();
+    
+        // Write assessment that references a packet file that does NOT exist.
+        let codex_dir = p.join("reviews/codex");
+        std::fs::create_dir_all(&codex_dir).expect("create codex dir");
+        let content = format!(
+            "---\nreviewed:\n  feature: FEAT\n  stage: my-stage\n  review_commit: {}\n  coverage_state: FULL_COVERAGE\n  reviewed_packet: packets/missing-packet.txt\n  reviewed_packet_sha256: abc123\n---\n",
+            head_sha
+        );
+        std::fs::write(codex_dir.join("20260101T000000Z-FEAT-stage-my-stage-abcdef1.md"), &content)
+            .expect("write assessment");
+        // Do NOT write the packet file.
+    
+        let (code, _, stderr) = run_decision_in(p, &[
+            "decision", "FEAT", "my-stage", "APPROVE_STAGE", "all clear",
+        ]);
+        assert_eq!(code, 0, "missing packet must not block; stderr: {}", stderr);
+        assert!(
+            stderr.contains("warning") || stderr.contains("unverifiable") || stderr.contains("not found"),
+            "must warn about missing packet: {}", stderr
+        );
+    
+        let log_content = std::fs::read_to_string(&log_path).expect("read log");
+        assert!(log_content.contains("PROVENANCE_UNVERIFIABLE"),
+            "log must show PROVENANCE_UNVERIFIABLE for missing packet: {}", log_content);
+    }
+    
+    #[test]
+    fn smoke_decision_no_stored_sha_warns_and_records_provenance_unverifiable() {
+        // AC-6c: assessment exists with no reviewed_packet_sha256 → warning to stderr + PROVENANCE_UNVERIFIABLE in log.
+        let (dir, _) = setup_temp_git_repo();
+        let p = dir.path();
+        let log_path = setup_review_log(p);
+    
+        let head = Command::new("git").args(["rev-parse", "HEAD"]).current_dir(p)
+            .output().expect("git rev-parse");
+        let head_sha = String::from_utf8_lossy(&head.stdout).trim().to_string();
+    
+        let codex_dir = p.join("reviews/codex");
+        std::fs::create_dir_all(codex_dir.join("packets")).expect("create packets dir");
+        let packet_path = "packets/real-packet.txt";
+        std::fs::write(codex_dir.join(packet_path), "packet content").expect("write packet");
+    
+        // Assessment has reviewed_packet but NO reviewed_packet_sha256.
+        let content = format!(
+            "---\nreviewed:\n  feature: FEAT\n  stage: my-stage\n  review_commit: {}\n  coverage_state: FULL_COVERAGE\n  reviewed_packet: {}\n---\n",
+            head_sha, packet_path
+        );
+        std::fs::write(
+            codex_dir.join("20260101T000000Z-FEAT-stage-my-stage-abcdef1.md"),
+            &content,
+        ).expect("write assessment");
+    
+        let (code, _, stderr) = run_decision_in(p, &[
+            "decision", "FEAT", "my-stage", "APPROVE_STAGE", "looks good",
+        ]);
+        assert_eq!(code, 0, "no stored sha must not block; stderr: {}", stderr);
+        assert!(
+            stderr.contains("no stored sha") || stderr.contains("unverifiable"),
+            "must warn about missing stored sha; stderr: {}", stderr
+        );
+    
+        let log_content = std::fs::read_to_string(&log_path).expect("read log");
+        assert!(
+            log_content.contains("PROVENANCE_UNVERIFIABLE"),
+            "log must record PROVENANCE_UNVERIFIABLE for no-stored-sha case: {}", log_content
+        );
+    }
+    
+    #[test]
+    fn smoke_delta_mode_tracked_artifact_succeeds() {
+        // A tracked but unchanged file in delta mode should produce a packet (exit 0 with --print-packet).
+        let (dir, base_sha) = setup_temp_git_repo();
+        let dir_path = dir.path();
+        // tracked.md was committed in setup; it is tracked and unchanged since base.
+    
+        let out = Command::new(binary())
+            .args([
+                "review", "FEAT", "delta-test",
+                "--mode", "delta",
+                "--base", &base_sha,
+                "--print-packet", "--skip-prechecks",
+                "tracked.md",
+            ])
+            .current_dir(dir_path)
+            .output()
+            .expect("run binary");
+    
+        let code = out.status.code().unwrap_or(-1);
+        let stderr = String::from_utf8_lossy(&out.stderr).into_owned();
+        // exit 0 (packet printed) is the expected path; exit 4 (EMPTY_PACKET) is also acceptable
+        // since an unchanged file produces no diff.
+        assert!(
+            code == 0 || code == 4,
+            "tracked artifact in delta mode should exit 0 or 4 (empty diff); got {}; stderr: {}",
+            code, stderr
+        );
+    }
+    
+    // ---- Full Context Diff tests (AC-1, AC-2, AC-3, AC-4) ----
+    
+    /// Create a .codeos symlink in the temp repo pointing to the real Codeos toolkit root.
+    /// This lets the binary find prompts/codeos-reviewer-task.md from a temp repo.
+    fn setup_codeos_symlink(repo_path: &std::path::Path) {
+        let target = repo_root();
+        std::os::unix::fs::symlink(&target, repo_path.join(".codeos"))
+            .expect("create .codeos symlink");
+    }
+    
+    /// Helper: add a new commit with an extra file to the temp repo.
+    fn add_extra_commit(repo_path: &std::path::Path, filename: &str, content: &str) -> String {
+        std::fs::write(repo_path.join(filename), content).expect("write extra file");
+        Command::new("git").args(["add", filename]).current_dir(repo_path).output().expect("git add");
+        Command::new("git").args(["commit", "-m", "extra"]).current_dir(repo_path).output().expect("git commit");
+        let out = Command::new("git").args(["rev-parse", "HEAD"]).current_dir(repo_path)
+            .output().expect("git rev-parse");
+        String::from_utf8_lossy(&out.stdout).trim().to_string()
+    }
+    
+    #[test]
+    fn smoke_full_context_diff_present_in_delta_plus_base() {
+        // AC-1: Full Context Diff section appears when --mode delta AND --base are both active.
+        let (dir, base_sha) = setup_temp_git_repo();
+        let p = dir.path();
+        setup_codeos_symlink(p);
+        // Modify the named artifact AND add a second file, so the packet is non-empty AND the
+        // full context diff contains changes beyond the named artifact.
+        std::fs::write(p.join("tracked.md"), "# tracked\nmodified\n").expect("modify tracked");
+        add_extra_commit(p, "extra.md", "# extra\n");
+    
+        let out = Command::new(binary())
+            .args([
+                "review", "FEAT", "full-diff-test",
+                "--mode", "delta",
+                "--base", &base_sha,
+                "--print-packet", "--skip-prechecks",
+                "tracked.md",
+            ])
+            .current_dir(p)
+            .output()
+            .expect("run binary");
+    
+        let code = out.status.code().unwrap_or(-1);
+        let stdout = String::from_utf8_lossy(&out.stdout).into_owned();
+        let stderr = String::from_utf8_lossy(&out.stderr).into_owned();
+        assert_eq!(code, 0, "delta+base should exit 0; stderr: {}", stderr);
+        assert!(
+            stdout.contains("Full Context Diff (informational"),
+            "packet must contain Full Context Diff section; got: {}", &stdout[..stdout.len().min(500)]
+        );
+    }
+    
+    #[test]
+    fn smoke_full_context_diff_absent_in_full_mode() {
+        // AC-1/AC-2: No Full Context Diff section when --mode full is used (no --base).
+        let (dir, _) = setup_temp_git_repo();
+        let p = dir.path();
+        setup_codeos_symlink(p);
+        add_extra_commit(p, "extra.md", "# extra\n");
+    
+        let out = Command::new(binary())
+            .args([
+                "review", "FEAT", "full-diff-test",
+                "--mode", "full",  // full mode, no --base
+                "--print-packet", "--skip-prechecks",
+                "tracked.md",
+            ])
+            .current_dir(p)
+            .output()
+            .expect("run binary");
+    
+        let code = out.status.code().unwrap_or(-1);
+        let stdout = String::from_utf8_lossy(&out.stdout).into_owned();
+        let stderr = String::from_utf8_lossy(&out.stderr).into_owned();
+        assert_eq!(code, 0, "full mode should exit 0; stderr: {}", stderr);
+        assert!(
+            !stdout.contains("Full Context Diff (informational"),
+            "packet must NOT contain Full Context Diff in full mode"
+        );
+    }
+    
+    #[test]
+    fn smoke_full_context_diff_absent_in_delta_without_base() {
+        // AC-1: No Full Context Diff section when --mode delta is used WITHOUT --base.
+        // Guard is `delta_mode && delta_base.is_some()` — delta without base → absent.
+        let (dir, _) = setup_temp_git_repo();
+        let p = dir.path();
+        setup_codeos_symlink(p);
+        // Modify tracked.md so delta mode finds a change (avoids EMPTY_PACKET).
+        std::fs::write(p.join("tracked.md"), "# tracked\nmodified\n").expect("modify tracked");
+        add_extra_commit(p, "extra.md", "# extra\n");
+    
+        let out = Command::new(binary())
+            .args([
+                "review", "FEAT", "delta-no-base-test",
+                "--mode", "delta",  // delta mode, but NO --base
+                "--print-packet", "--skip-prechecks",
+                "tracked.md",
+            ])
+            .current_dir(p)
+            .output()
+            .expect("run binary");
+    
+        let stdout = String::from_utf8_lossy(&out.stdout).into_owned();
+        let stderr = String::from_utf8_lossy(&out.stderr).into_owned();
+        // Delta without --base diffs against HEAD; tracked.md has no uncommitted changes after
+        // add_extra_commit, so may be EMPTY_PACKET (exit 4). Either way, no Full Context Diff.
+        assert!(
+            !stdout.contains("Full Context Diff (informational"),
+            "delta-without-base must NOT contain Full Context Diff; stderr: {}", stderr
+        );
+    }
+    
+    #[test]
+    fn smoke_full_context_diff_named_artifact_section_unchanged() {
+        // AC-3: Named artifact section is present and unmodified alongside the Full Context Diff.
+        let (dir, base_sha) = setup_temp_git_repo();
+        let p = dir.path();
+        setup_codeos_symlink(p);
+        // Modify the named artifact so the delta packet is non-empty (exit 0).
+        std::fs::write(p.join("tracked.md"), "# tracked\nmodified\n").expect("modify tracked");
+        add_extra_commit(p, "extra.md", "# extra\n");
+    
+        // Get packet WITH delta+base (includes Full Context Diff).
+        let out_delta = Command::new(binary())
+            .args([
+                "review", "FEAT", "ac3-test",
+                "--mode", "delta",
+                "--base", &base_sha,
+                "--print-packet", "--skip-prechecks",
+                "tracked.md",
+            ])
+            .current_dir(p)
+            .output()
+            .expect("run binary");
+        let stdout_delta = String::from_utf8_lossy(&out_delta.stdout).into_owned();
+    
+        // Get packet WITHOUT delta (no Full Context Diff).
+        let out_full = Command::new(binary())
+            .args([
+                "review", "FEAT", "ac3-test",
+                "--mode", "full",
+                "--print-packet", "--skip-prechecks",
+                "tracked.md",
+            ])
+            .current_dir(p)
+            .output()
+            .expect("run binary");
+        let stdout_full = String::from_utf8_lossy(&out_full.stdout).into_owned();
+    
+        // Both must contain the ARTIFACTS TO REVIEW section.
+        assert!(stdout_delta.contains("ARTIFACTS TO REVIEW"), "delta packet missing artifacts section");
+        assert!(stdout_full.contains("ARTIFACTS TO REVIEW"), "full packet missing artifacts section");
+    
+        // The delta packet must also have the Full Context Diff — it must appear AFTER the
+        // artifact+diff section, proving Full Context Diff is additive (not replacing).
+        let artifacts_pos = stdout_delta.find("ARTIFACTS TO REVIEW")
+            .expect("delta packet must have ARTIFACTS TO REVIEW");
+        let full_diff_pos = stdout_delta.find("Full Context Diff (informational")
+            .expect("delta packet must have Full Context Diff section");
+        assert!(
+            artifacts_pos < full_diff_pos,
+            "ARTIFACTS TO REVIEW must appear before Full Context Diff — named artifacts must not be replaced"
+        );
+    
+        // Verify the named-artifact diff content is present, appears before Full Context Diff,
+        // and matches the raw git diff output — proving Full Context Diff is purely additive.
+        // tracked.md was modified from "# tracked\n" to "# tracked\nmodified\n".
+        let expected_diff = Command::new("git")
+            .args(["diff", &base_sha, "--", "tracked.md"])
+            .current_dir(p)
+            .output()
+            .expect("git diff tracked.md");
+        let expected_diff_str = String::from_utf8_lossy(&expected_diff.stdout).to_string();
+        let expected_trimmed = expected_diff_str.trim();
+    
+        // The packet's DELTA DIFF section (from "ARTIFACTS TO REVIEW" to "Full Context Diff")
+        // must contain the raw diff of tracked.md unchanged.
+        let named_diff_section = &stdout_delta[artifacts_pos..full_diff_pos];
+        assert!(
+            named_diff_section.contains(expected_trimmed),
+            "named-artifact diff section must contain the exact git diff of tracked.md; expected: {:?}; section excerpt: {}",
+            &expected_trimmed[..expected_trimmed.len().min(200)],
+            &named_diff_section[..named_diff_section.len().min(400)]
+        );
+    }
+    
+    #[test]
+    fn smoke_full_context_diff_clipping_marker() {
+        // AC-4: When the diff exceeds budget, CLIPPED marker appears.
+        let (dir, base_sha) = setup_temp_git_repo();
+        let p = dir.path();
+        setup_codeos_symlink(p);
+        // Modify the named artifact and add a large file, so there is a non-empty full diff.
+        std::fs::write(p.join("tracked.md"), "# tracked\nmodified\n").expect("modify tracked");
+        let large_content = "x".repeat(200);
+        add_extra_commit(p, "large.md", &large_content);
+    
+        // Run with a tiny budget (0) to guarantee the full diff is clipped.
+        // CODEOS_PACKET_BUDGET_BYTES=0 means remaining=0, so clip marker is always emitted
+        // when the full diff is non-empty.
+        let out = Command::new(binary())
+            .args([
+                "review", "FEAT", "clip-test",
+                "--mode", "delta",
+                "--base", &base_sha,
+                "--print-packet", "--skip-prechecks",
+                "tracked.md",
+            ])
+            .current_dir(p)
+            .env("CODEOS_PACKET_BUDGET_BYTES", "0")  // zero budget → always clips
+            .output()
+            .expect("run binary");
+    
+        let stdout = String::from_utf8_lossy(&out.stdout).into_owned();
+        let stderr = String::from_utf8_lossy(&out.stderr).into_owned();
+        // The Full Context Diff section must have the CLIPPED marker (not just the header).
+        assert!(
+            stdout.contains("Full Context Diff (informational"),
+            "packet must have Full Context Diff section; stderr: {}", stderr
+        );
+        assert!(
+            stdout.contains("CLIPPED"),
+            "packet must have CLIPPED marker when budget is zero; stdout: {}", &stdout[..stdout.len().min(800)]
+        );
+    }
+    
+    #[test]
+    fn smoke_full_context_diff_absent_in_full_mode_with_base() {
+        // AC-1/AC-2: No Full Context Diff section when --mode full is used WITH --base.
+        // Guard is `delta_mode && delta_base.is_some()` — full mode (delta_mode=false) → absent
+        // even when --base is provided.
+        let (dir, base_sha) = setup_temp_git_repo();
+        let p = dir.path();
+        setup_codeos_symlink(p);
+        add_extra_commit(p, "extra.md", "# extra\n");
+    
+        let out = Command::new(binary())
+            .args([
+                "review", "FEAT", "full-base-test",
+                "--mode", "full",
+                "--base", &base_sha,  // base provided, but mode is full (not delta)
+                "--print-packet", "--skip-prechecks",
+                "tracked.md",
+            ])
+            .current_dir(p)
+            .output()
+            .expect("run binary");
+    
+        let stdout = String::from_utf8_lossy(&out.stdout).into_owned();
+        let stderr = String::from_utf8_lossy(&out.stderr).into_owned();
+        assert_eq!(out.status.code().unwrap_or(-1), 0, "full mode with base should exit 0; stderr: {}", stderr);
+        assert!(
+            !stdout.contains("Full Context Diff (informational"),
+            "full mode with --base must NOT contain Full Context Diff section"
+        );
+    }
+    
+    #[test]
+    fn smoke_full_context_diff_no_clip_within_budget() {
+        // AC-4: When the full diff fits within the remaining content budget, no CLIPPED marker.
+        let (dir, base_sha) = setup_temp_git_repo();
+        let p = dir.path();
+        setup_codeos_symlink(p);
+        // Small named-artifact change + tiny extra file → diff fits in default budget (50 000).
+        std::fs::write(p.join("tracked.md"), "# tracked\nmodified\n").expect("modify tracked");
+        add_extra_commit(p, "extra.md", "# extra\n");
+    
+        // Default budget (50 000); in delta mode, review_content_bytes = named-artifact diff bytes
+        // only (~100 bytes), so remaining ≈ 49 900 bytes — far larger than the tiny full diff.
+        let out = Command::new(binary())
+            .args([
+                "review", "FEAT", "no-clip-test",
+                "--mode", "delta",
+                "--base", &base_sha,
+                "--print-packet", "--skip-prechecks",
+                "tracked.md",
+            ])
+            .current_dir(p)
+            .output()
+            .expect("run binary");
+    
+        let stdout = String::from_utf8_lossy(&out.stdout).into_owned();
+        let stderr = String::from_utf8_lossy(&out.stderr).into_owned();
+        assert_eq!(out.status.code().unwrap_or(-1), 0, "delta+base with small diff should exit 0; stderr: {}", stderr);
+        assert!(
+            stdout.contains("Full Context Diff (informational"),
+            "packet must have Full Context Diff section"
+        );
+        assert!(
+            !stdout.contains("CLIPPED"),
+            "packet must NOT have CLIPPED marker when diff fits within budget"
+        );
+    }
+    
+    // --- UPG-0035: --sha-only missing-path exit code ---
+    
+    #[test]
+    fn smoke_sha_only_missing_path_exits_usage() {
+        let (dir, _sha) = setup_temp_git_repo();
+        let p = dir.path();
+        setup_codeos_symlink(p);
+    
+        let out = Command::new(binary())
+            .args([
+                "review", "FEAT", "test-sha-only-missing",
+                "--sha-only", "nonexistent-file.md",
+                "--skip-prechecks",
+                "tracked.md",
+            ])
+            .current_dir(p)
+            .output()
+            .expect("run binary");
+    
+        assert_eq!(
+            out.status.code().unwrap_or(-1), 1,
+            "missing --sha-only path must exit 1 (EXIT_USAGE)"
+        );
+        let stderr = String::from_utf8_lossy(&out.stderr);
+        assert!(
+            stderr.contains("--sha-only path not found: nonexistent-file.md"),
+            "stderr must name the missing path; got: {}", stderr
+        );
+    }
+    
+    #[test]
+    fn smoke_sha_only_existing_path_no_spurious_exit1() {
+        let (dir, _sha) = setup_temp_git_repo();
+        let p = dir.path();
+        setup_codeos_symlink(p);
+    
+        // sha_only_artifact.md exists — should not trigger the missing-path check
+        std::fs::write(p.join("sha_only_artifact.md"), "# sha only\n").expect("write sha_only");
+    
+        // --print-packet + --skip-prechecks avoids needing a real Codex session
+        let out = Command::new(binary())
+            .args([
+                "review", "FEAT", "test-sha-only-exists",
+                "--sha-only", "sha_only_artifact.md",
+                "--print-packet", "--skip-prechecks",
+                "tracked.md",
+            ])
+            .current_dir(p)
+            .output()
+            .expect("run binary");
+    
+        let stderr = String::from_utf8_lossy(&out.stderr);
+        assert_ne!(
+            out.status.code().unwrap_or(-1), 1,
+            "existing --sha-only path must not exit 1; stderr: {}", stderr
+        );
+        assert!(
+            !stderr.contains("--sha-only path not found"),
+            "existing path must not trigger missing-path error; stderr: {}", stderr
+        );
+    }
+    
+    // --- UPG-0020: check-drift subcommand ---
+    
+    fn run_in_dir(repo_path: &std::path::Path, args: &[&str]) -> (i32, String, String) {
+        let out = Command::new(binary())
+            .args(args)
+            .current_dir(repo_path)
+            .output()
+            .expect("run binary in dir");
+        let code = out.status.code().unwrap_or(-1);
+        let stdout = String::from_utf8_lossy(&out.stdout).into_owned();
+        let stderr = String::from_utf8_lossy(&out.stderr).into_owned();
+        (code, stdout, stderr)
+    }
+    
+    #[test]
+    fn smoke_check_drift_clean_diff_exits_zero() {
+        // AC-1: no watched files in diff → exit 0.
+        let (dir, base_sha) = setup_temp_git_repo();
+        let p = dir.path();
+        // Add a commit with a non-watched file only.
+        add_extra_commit(p, "notes.md", "# notes\n");
+    
+        let (code, _, stderr) = run_in_dir(p, &["check-drift", "--base", &base_sha]);
+        assert_eq!(code, 0, "clean diff must exit 0; stderr: {}", stderr);
+    }
+    
+    #[test]
+    fn smoke_check_drift_watched_file_no_report_exits_drift() {
+        // AC-2: watched file changed, no reconciliation report → exit 6 (EXIT_DRIFT).
+        let (dir, base_sha) = setup_temp_git_repo();
+        let p = dir.path();
+        add_extra_commit(p, "Cargo.toml", "[package]\nname = \"test\"\n");
+    
+        let (code, _, stderr) = run_in_dir(p, &["check-drift", "--base", &base_sha]);
+        assert_eq!(code, 6, "drift without report must exit 6; stderr: {}", stderr);
+        assert!(stderr.contains("Cargo.toml"), "stderr must name triggering file; got: {}", stderr);
+        assert!(
+            stderr.contains("stack-reconciliation-report.md"),
+            "stderr must name the required report; got: {}", stderr
+        );
+    }
+    
+    #[test]
+    fn smoke_check_drift_watched_file_with_report_exits_zero() {
+        // AC-3: watched file changed + reconciliation report in diff → exit 0.
+        let (dir, base_sha) = setup_temp_git_repo();
+        let p = dir.path();
+        // Commit both Cargo.toml and the reconciliation report in one go.
+        std::fs::write(p.join("Cargo.toml"), "[package]\nname = \"test\"\n").expect("write Cargo.toml");
+        std::fs::write(p.join("stack-reconciliation-report.md"), "# Stack Reconciliation Report\n").expect("write report");
+        Command::new("git").args(["add", "Cargo.toml", "stack-reconciliation-report.md"]).current_dir(p).output().ok();
+        Command::new("git").args(["commit", "-m", "drift+report"]).current_dir(p).output().ok();
+    
+        let (code, _, stderr) = run_in_dir(p, &["check-drift", "--base", &base_sha]);
+        assert_eq!(code, 0, "reconciled drift must exit 0; stderr: {}", stderr);
+    }
+    
+    #[test]
+    fn smoke_check_drift_invalid_base_exits_config() {
+        // AC-4: git diff fails on an invalid base ref → exit 2 (EXIT_CONFIG).
+        let (dir, _) = setup_temp_git_repo();
+        let p = dir.path();
+    
+        let (code, _, stderr) = run_in_dir(p, &["check-drift", "--base", "nonexistent-ref-xyz"]);
+        assert_eq!(code, 2, "invalid base ref must exit 2 (EXIT_CONFIG); stderr: {}", stderr);
+    }
+    
+    #[test]
+    fn smoke_check_drift_strict_flag_accepted() {
+        // AC-8: --strict is accepted; drift message prefixed with STRICT MODE.
+        let (dir, base_sha) = setup_temp_git_repo();
+        let p = dir.path();
+        add_extra_commit(p, "Cargo.toml", "[package]\nname = \"test\"\n");
+    
+        let (code, _, stderr) = run_in_dir(p, &["check-drift", "--base", &base_sha, "--strict"]);
+        assert_eq!(code, 6, "--strict drift must still exit 6; stderr: {}", stderr);
+        assert!(stderr.contains("STRICT MODE"), "--strict must prefix message; stderr: {}", stderr);
+    }
+    
+    // --- UPG-0034: read-only invariant check ---
+    
+    #[test]
+    fn smoke_readonly_invariant_no_warning_on_print_packet() {
+        // AC-5: --print-packet never invokes the provider, so no pre/post snapshot is taken
+        // and no WARNING can appear on stderr regardless of working-tree state.
+        let (dir, _) = setup_temp_git_repo();
+        let p = dir.path();
+        setup_codeos_symlink(p);
+    
+        // Make the working tree dirty so that IF a snapshot were taken and compared it would differ.
+        std::fs::write(p.join("dirty.md"), "# dirty\n").expect("write dirty file");
+    
+        let out = Command::new(binary())
+            .args([
+                "review", "FEAT", "readonly-test",
+                "--print-packet", "--skip-prechecks",
+                "tracked.md",
+            ])
+            .current_dir(p)
+            .output()
+            .expect("run binary");
+    
+        let stderr = String::from_utf8_lossy(&out.stderr);
+        assert!(
+            !stderr.contains("WARNING: working tree changed"),
+            "--print-packet must not emit read-only warning; stderr: {}", stderr
+        );
+    }
+    
+    #[test]
+    fn smoke_readonly_invariant_git_status_porcelain_detects_mutation() {
+        // Verify the underlying git mechanism: porcelain output differs when a file is added.
+        // This is the comparison logic the invariant check relies on (AC-1/AC-2/AC-3).
+        let (dir, _) = setup_temp_git_repo();
+        let p = dir.path();
+    
+        let clean = Command::new("git")
+            .args(["status", "--porcelain"])
+            .current_dir(p)
+            .output()
+            .expect("git status clean");
+        assert!(clean.stdout.is_empty(), "clean repo must have empty porcelain output");
+    
+        std::fs::write(p.join("mutated.md"), "# mutated\n").expect("write file");
+    
+        let dirty = Command::new("git")
+            .args(["status", "--porcelain"])
+            .current_dir(p)
+            .output()
+            .expect("git status dirty");
+        assert!(
+            dirty.stdout != clean.stdout,
+            "porcelain output must differ after mutation (pre != post)"
+        );
+        assert!(
+            !dirty.stdout.is_empty(),
+            "dirty repo must have non-empty porcelain output"
+        );
+    }
+    
+    // --- UPG-0021: generate-report subcommand ---
+    
+    fn read_template() -> String {
+        std::fs::read_to_string(repo_root().join("templates/stage-4-6-report.md"))
+            .expect("read stage-4-6-report.md template")
+    }
+    
+    /// Slice out the `## Stage <n> ...` section of the template, up to the next stage header (or EOF).
+    fn template_section(stage: &str) -> String {
+        let content = read_template();
+        let start_marker = format!("## Stage {} ", stage);
+        let start = content.find(&start_marker).expect("stage header not found in template");
+        let rest = &content[start..];
+        let next_marker = match stage {
+            "4" => Some("## Stage 5 "),
+            "5" => Some("## Stage 6 "),
+            _ => None,
+        };
+        match next_marker {
+            Some(marker) => rest[..rest.find(marker).expect("next stage header not found")].to_string(),
+            None => rest.to_string(),
+        }
+    }
+    
+    /// Extract field labels (text up to and including the first `:`) from non-heading,
+    /// non-comment, non-blank lines, in order. Used to diff template field coverage against
+    /// generator output regardless of the value appended after the colon.
+    fn extract_field_labels(text: &str) -> Vec<String> {
+        text.lines()
+            .filter_map(|l| {
+                let trimmed_start = l.trim_start();
+                if trimmed_start.is_empty()
+                    || trimmed_start.starts_with('#')
+                    || trimmed_start.starts_with('*')
+                    || trimmed_start.starts_with('>')
+                {
+                    return None;
+                }
+                let idx = l.find(':')?;
+                Some(l[..=idx].trim_start().to_string())
+            })
+            .collect()
+    }
+    
+    #[test]
+    fn smoke_generate_report_stage4_field_coverage() {
+        // AC-1 / AC-16: every field from the Stage 4 template section appears in the generated
+        // output, in the same order, including the nested "Approved artifacts used:" sub-items.
+        let (dir, _sha) = setup_temp_git_repo();
+        let (code, stdout, stderr) = run_in_dir(dir.path(), &["generate-report", "--stage", "4"]);
+        assert_eq!(code, 0, "stage 4 must exit 0; stderr: {}", stderr);
+    
+        let expected = extract_field_labels(&template_section("4"));
+        let actual = extract_field_labels(&stdout);
+        assert_eq!(actual, expected, "stage 4 field labels must match template order/coverage");
+    }
+    
+    #[test]
+    fn smoke_generate_report_stage5_field_coverage() {
+        // AC-2 / AC-16.
+        let (dir, _sha) = setup_temp_git_repo();
+        let (code, stdout, stderr) = run_in_dir(dir.path(), &["generate-report", "--stage", "5"]);
+        assert_eq!(code, 0, "stage 5 must exit 0; stderr: {}", stderr);
+    
+        let expected = extract_field_labels(&template_section("5"));
+        let actual = extract_field_labels(&stdout);
+        assert_eq!(actual, expected, "stage 5 field labels must match template order/coverage");
+    }
+    
+    #[test]
+    fn smoke_generate_report_stage6_field_coverage() {
+        // AC-3 / AC-16: includes the nested "Raw logs committed:" sub-items.
+        let (dir, _sha) = setup_temp_git_repo();
+        let (code, stdout, stderr) = run_in_dir(dir.path(), &["generate-report", "--stage", "6"]);
+        assert_eq!(code, 0, "stage 6 must exit 0; stderr: {}", stderr);
+    
+        let expected = extract_field_labels(&template_section("6"));
+        let actual = extract_field_labels(&stdout);
+        assert_eq!(actual, expected, "stage 6 field labels must match template order/coverage");
+    }
+    
+    #[test]
+    fn smoke_generate_report_preamble_present() {
+        // AC-6: every generated report opens with the [INFERRED]/[FILL] warning block.
+        let (dir, _sha) = setup_temp_git_repo();
+        let (code, stdout, stderr) = run_in_dir(dir.path(), &["generate-report", "--stage", "4"]);
+        assert_eq!(code, 0, "stderr: {}", stderr);
+    
+        let mut lines = stdout.lines();
+        assert_eq!(
+            lines.next().unwrap_or(""),
+            "> [INFERRED] fields were populated automatically from CLI arguments, git, test output, or"
+        );
+        assert_eq!(
+            lines.next().unwrap_or(""),
+            "> events — verify before submitting. [FILL] fields require human or model authorship."
+        );
+    }
+    
+    #[test]
+    fn smoke_generate_report_feature_flag_inferred() {
+        // AC-7 / AC-4: --feature populates "Feature:" as "<id> [INFERRED]"; omitted -> "[FILL]".
+        let (dir, _sha) = setup_temp_git_repo();
+    
+        let (code, stdout, stderr) =
+            run_in_dir(dir.path(), &["generate-report", "--stage", "4", "--feature", "UPG-9999"]);
+        assert_eq!(code, 0, "stderr: {}", stderr);
+        assert!(stdout.contains("Feature: UPG-9999 [INFERRED]"), "stdout: {}", stdout);
+    
+        let (code, stdout, stderr) = run_in_dir(dir.path(), &["generate-report", "--stage", "4"]);
+        assert_eq!(code, 0, "stderr: {}", stderr);
+        assert!(stdout.contains("Feature: [FILL]"), "stdout: {}", stdout);
+    }
+    
+    #[test]
+    fn smoke_generate_report_base_populates_files_changed() {
+        // AC-8(a) / AC-4: --base <known-commit> with a subsequent commit populates Files changed.
+        let (dir, base_sha) = setup_temp_git_repo();
+        let p = dir.path();
+        add_extra_commit(p, "changed.md", "# changed\n");
+    
+        let (code, stdout, stderr) =
+            run_in_dir(p, &["generate-report", "--stage", "4", "--base", &base_sha]);
+        assert_eq!(code, 0, "stderr: {}", stderr);
+        assert!(stdout.contains("Files changed: [INFERRED]"), "stdout: {}", stdout);
+        assert!(stdout.contains("changed.md"), "stdout: {}", stdout);
+    }
+    
+    #[test]
+    fn smoke_generate_report_base_zero_diff() {
+        // AC-8(b): --base HEAD (no diff) -> "(none) [INFERRED]", exit 0, no error.
+        let (dir, _sha) = setup_temp_git_repo();
+        let p = dir.path();
+    
+        let (code, stdout, stderr) =
+            run_in_dir(p, &["generate-report", "--stage", "4", "--base", "HEAD"]);
+        assert_eq!(code, 0, "stderr: {}", stderr);
+        assert!(stdout.contains("Files changed: (none) [INFERRED]"), "stdout: {}", stdout);
+        assert!(stderr.is_empty(), "no error expected for zero-diff; stderr: {}", stderr);
+    }
+    
+    #[test]
+    fn smoke_generate_report_base_invalid_ref() {
+        // AC-8(c): --base nonexistent-ref -> Files changed [FILL], error on stderr, exit 0.
+        let (dir, _sha) = setup_temp_git_repo();
+        let p = dir.path();
+    
+        let (code, stdout, stderr) =
+            run_in_dir(p, &["generate-report", "--stage", "4", "--base", "nonexistent-ref-xyz"]);
+        assert_eq!(code, 0, "invalid base must not fail the whole command; stderr: {}", stderr);
+        assert!(stdout.contains("Files changed: [FILL]"), "stdout: {}", stdout);
+        assert!(!stderr.is_empty(), "expected an error on stderr for invalid base ref");
+    }
+    
+    #[test]
+    fn smoke_generate_report_test_output_valid_summary() {
+        // AC-9(a) / AC-4: a fixture with a valid cargo test summary line populates all four counts.
+        let (dir, _sha) = setup_temp_git_repo();
+        let p = dir.path();
+        let fixture = p.join("test-output.txt");
+        std::fs::write(
+            &fixture,
+            "running 10 tests\n...\ntest result: ok. 7 passed; 2 failed; 1 ignored; 0 measured; 0 filtered out\n",
+        )
+        .expect("write fixture");
+    
+        let (code, stdout, stderr) = run_in_dir(
+            p,
+            &["generate-report", "--stage", "5", "--test-output", fixture.to_str().unwrap()],
+        );
+        assert_eq!(code, 0, "stderr: {}", stderr);
+        assert!(stdout.contains("Tests run: 9 [INFERRED]"), "stdout: {}", stdout);
+        assert!(stdout.contains("Tests passed: 7 [INFERRED]"), "stdout: {}", stdout);
+        assert!(stdout.contains("Tests failed: 2 [INFERRED]"), "stdout: {}", stdout);
+        assert!(stdout.contains("Tests skipped: 1 [INFERRED]"), "stdout: {}", stdout);
+    }
+    
+    #[test]
+    fn smoke_generate_report_test_output_no_matching_line() {
+        // AC-9(b): a fixture with no matching summary line falls back to [FILL] for all four,
+        // with no error (graceful fallback, distinct from a read error).
+        let (dir, _sha) = setup_temp_git_repo();
+        let p = dir.path();
+        let fixture = p.join("test-output.txt");
+        std::fs::write(&fixture, "no summary here\n").expect("write fixture");
+    
+        let (code, stdout, stderr) = run_in_dir(
+            p,
+            &["generate-report", "--stage", "5", "--test-output", fixture.to_str().unwrap()],
+        );
+        assert_eq!(code, 0, "stderr: {}", stderr);
+        assert!(stdout.contains("Tests run: [FILL]"), "stdout: {}", stdout);
+        assert!(stdout.contains("Tests passed: [FILL]"), "stdout: {}", stdout);
+        assert!(stdout.contains("Tests failed: [FILL]"), "stdout: {}", stdout);
+        assert!(stdout.contains("Tests skipped: [FILL]"), "stdout: {}", stdout);
+        assert!(stderr.is_empty(), "no error expected for non-matching content; stderr: {}", stderr);
+    }
+    
+    #[test]
+    fn smoke_generate_report_test_output_missing_file() {
+        // AC-9(c): a nonexistent --test-output path -> [FILL] fallback + error on stderr.
+        let (dir, _sha) = setup_temp_git_repo();
+        let p = dir.path();
+    
+        let (code, stdout, stderr) = run_in_dir(
+            p,
+            &["generate-report", "--stage", "5", "--test-output", "does-not-exist.txt"],
+        );
+        assert_eq!(code, 0, "missing file must not fail the whole command; stderr: {}", stderr);
+        assert!(stdout.contains("Tests run: [FILL]"), "stdout: {}", stdout);
+        assert!(!stderr.is_empty(), "expected an error on stderr for missing test-output file");
+    }
+    
+    #[test]
+    fn smoke_generate_report_events_fixture() {
+        // AC-10(a) / AC-4: a readable --events file populates Events captured with its line count.
+        let (dir, _sha) = setup_temp_git_repo();
+        let p = dir.path();
+        let fixture = p.join("events.jsonl");
+        std::fs::write(&fixture, "{}\n{}\n{}\n").expect("write fixture");
+    
+        let (code, stdout, stderr) = run_in_dir(
+            p,
+            &["generate-report", "--stage", "6", "--events", fixture.to_str().unwrap()],
+        );
+        assert_eq!(code, 0, "stderr: {}", stderr);
+        assert!(stdout.contains("Events captured: 3 [INFERRED]"), "stdout: {}", stdout);
+    }
+    
+    #[test]
+    fn smoke_generate_report_events_missing_file() {
+        // AC-10(b): a nonexistent --events path -> [FILL] fallback + error on stderr.
+        let (dir, _sha) = setup_temp_git_repo();
+        let p = dir.path();
+    
+        let (code, stdout, stderr) = run_in_dir(
+            p,
+            &["generate-report", "--stage", "6", "--events", "does-not-exist.jsonl"],
+        );
+        assert_eq!(code, 0, "missing events file must not fail the whole command; stderr: {}", stderr);
+        assert!(stdout.contains("Events captured: [FILL]"), "stdout: {}", stdout);
+        assert!(!stderr.is_empty(), "expected an error on stderr for missing events file");
+    }
+    
+    #[test]
+    fn smoke_generate_report_all_fill_without_optional_inputs() {
+        // AC-5: with no optional inputs, every field the tool cannot infer is [FILL] — never
+        // blank, including the "Raw logs committed:" / "Approved artifacts used:" parent labels
+        // for nested sub-item groups (they have no value of their own to infer either).
+        let (dir, _sha) = setup_temp_git_repo();
+        let (code, stdout, stderr) = run_in_dir(dir.path(), &["generate-report", "--stage", "6"]);
+        assert_eq!(code, 0, "stderr: {}", stderr);
+    
+        let mut checked_parent_labels = 0;
+        for line in stdout.lines() {
+            let trimmed = line.trim_start();
+            if trimmed.is_empty() || trimmed.starts_with('#') || trimmed.starts_with('>') {
+                continue;
+            }
+            if trimmed == "Raw logs committed: [FILL]" {
+                checked_parent_labels += 1;
+            }
+            if let Some(idx) = line.find(':') {
+                let value = line[idx + 1..].trim();
+                assert!(!value.is_empty(), "field must not be blank; line: {}", line);
+            }
+        }
+        assert_eq!(checked_parent_labels, 1, "Raw logs committed: must carry [FILL], not be blank");
+    }
+    
+    #[test]
+    fn smoke_generate_report_test_output_unrecognized_status() {
+        // AC-9: a summary line whose status is neither "ok" nor "FAILED" (case-sensitive) does
+        // not match the stated regex and must fall back to [FILL], same as no matching line.
+        let (dir, _sha) = setup_temp_git_repo();
+        let p = dir.path();
+        let fixture = p.join("test-output.txt");
+        std::fs::write(
+            &fixture,
+            "test result: WEIRD. 7 passed; 2 failed; 1 ignored; 0 measured; 0 filtered out\n",
+        )
+        .expect("write fixture");
+    
+        let (code, stdout, stderr) = run_in_dir(
+            p,
+            &["generate-report", "--stage", "5", "--test-output", fixture.to_str().unwrap()],
+        );
+        assert_eq!(code, 0, "stderr: {}", stderr);
+        assert!(stdout.contains("Tests run: [FILL]"), "stdout: {}", stdout);
+        assert!(stdout.contains("Tests passed: [FILL]"), "stdout: {}", stdout);
+        assert!(stdout.contains("Tests failed: [FILL]"), "stdout: {}", stdout);
+        assert!(stdout.contains("Tests skipped: [FILL]"), "stdout: {}", stdout);
+    }
+    
+    #[test]
+    fn smoke_generate_report_stdout_only_no_stderr_on_success() {
+        // AC-11: on a clean run, stderr is empty; all content goes to stdout.
+        let (dir, _sha) = setup_temp_git_repo();
+        let (code, stdout, stderr) = run_in_dir(dir.path(), &["generate-report", "--stage", "4"]);
+        assert_eq!(code, 0);
+        assert!(stderr.is_empty(), "clean run must have empty stderr; got: {}", stderr);
+        assert!(!stdout.is_empty());
+    }
+    
+    #[test]
+    fn smoke_generate_report_stdout_still_written_on_partial_error() {
+        // AC-11: a bad --events path still yields a full report on stdout with [FILL] fallback,
+        // while the error goes to stderr only.
+        let (dir, _sha) = setup_temp_git_repo();
+        let (code, stdout, stderr) = run_in_dir(
+            dir.path(),
+            &["generate-report", "--stage", "6", "--events", "does-not-exist.jsonl"],
+        );
+        assert_eq!(code, 0);
+        assert!(stdout.contains("## Stage 6 Runtime Evidence Report"), "stdout: {}", stdout);
+        assert!(!stderr.is_empty());
+    }
+    
+    #[test]
+    fn smoke_generate_report_exit_zero_all_stages() {
+        // AC-12: all valid invocations exit 0.
+        let (dir, _sha) = setup_temp_git_repo();
+        for stage in ["4", "5", "6"] {
+            let (code, _, stderr) = run_in_dir(dir.path(), &["generate-report", "--stage", stage]);
+            assert_eq!(code, 0, "stage {} must exit 0; stderr: {}", stage, stderr);
+        }
+    }
+    
+    #[test]
+    fn smoke_generate_report_invalid_stage_exits_usage() {
+        // AC-13: an out-of-range --stage value exits 1 (EXIT_USAGE) with a message on stderr.
+        let (dir, _sha) = setup_temp_git_repo();
+        let (code, _, stderr) = run_in_dir(dir.path(), &["generate-report", "--stage", "7"]);
+        assert_eq!(code, 1, "invalid stage must exit 1 (EXIT_USAGE); stderr: {}", stderr);
+        assert!(!stderr.is_empty(), "expected a usage message on stderr");
+    }
+    
+    #[test]
+    fn smoke_generate_report_no_provider_config_required() {
+        // AC-14: generate-report dispatches before config::resolve() and needs no provider config
+        // (this temp repo has no .codeos symlink or reviewer.toml set up at all).
+        let (dir, _sha) = setup_temp_git_repo();
+        let (code, _, stderr) = run_in_dir(dir.path(), &["generate-report", "--stage", "4"]);
+        assert_eq!(code, 0, "must succeed without provider config; stderr: {}", stderr);
+    }
+    
+    #[test]
+    fn smoke_generate_report_deterministic_output() {
+        // AC-15: identical inputs produce byte-for-byte identical stdout across two invocations.
+        let (dir, base_sha) = setup_temp_git_repo();
+        let p = dir.path();
+        add_extra_commit(p, "changed.md", "# changed\n");
+    
+        let args = ["generate-report", "--stage", "4", "--feature", "UPG-9999", "--base", base_sha.as_str()];
+        let (code1, stdout1, _) = run_in_dir(p, &args);
+        let (code2, stdout2, _) = run_in_dir(p, &args);
+        assert_eq!(code1, 0);
+        assert_eq!(code2, 0);
+        assert_eq!(stdout1, stdout2, "output must be deterministic for identical inputs");
+    }
+    
+    // --- UPG-0022: generate-adr-candidates subcommand ---
+    
+    const ADR_BANNER_LINE_1: &str =
+        "> [INFERRED] fields were populated automatically by extracting risk bullets from the source";
+    const ADR_BANNER_LINE_2: &str =
+        "> document — verify before submitting. [FILL] fields require human or model authorship.";
+    const ADR_BANNER_LINE_3: &str =
+        "> ADR candidates are non-authoritative until routed through Stage 1–3 or Stage 10.";
+    
+    #[test]
+    fn smoke_generate_adr_section_boundary() {
+        // AC-1: only bullets between "## Architectural Risks" and the next "## " heading are used;
+        // content in a later section must not leak in.
+        let (dir, _sha) = setup_temp_git_repo();
+        let p = dir.path();
+        let fixture = p.join("00b.md");
+        std::fs::write(
+            &fixture,
+            "# Solution Discovery: Test Domain\n\n\
+    ## Architectural Risks\n\n\
+    - Risk A: something\n\
+    - Risk B: something else\n\n\
+    ## Explicit Non-Decisions\n\n\
+    - Not a risk bullet, must be excluded\n",
+        )
+        .expect("write fixture");
+    
+        let (code, stdout, stderr) =
+            run_in_dir(p, &["generate-adr-candidates", "--source", fixture.to_str().unwrap()]);
+        assert_eq!(code, 0, "stderr: {}", stderr);
+        assert!(stdout.contains("Decision needed: Risk A: something [INFERRED]"), "stdout: {}", stdout);
+        assert!(stdout.contains("Decision needed: Risk B: something else [INFERRED]"), "stdout: {}", stdout);
+        assert!(
+            !stdout.contains("Not a risk bullet"),
+            "content from a later section must not leak in; stdout: {}",
+            stdout
+        );
+    }
+    
+    #[test]
+    fn smoke_generate_adr_bullet_extraction() {
+        // AC-2: top-level bullets only; indented continuation lines ignored, prose ignored,
+        // a bare bullet with no text after the marker produces no candidate.
+        let (dir, _sha) = setup_temp_git_repo();
+        let p = dir.path();
+        let fixture = p.join("00b.md");
+        std::fs::write(
+            &fixture,
+            "## Architectural Risks\n\n\
+    Some intro prose before the first bullet.\n\n\
+    - Risk One\n\
+      this indented continuation line must be ignored\n\
+    -   \n\
+    - Risk Two\n",
+        )
+        .expect("write fixture");
+    
+        let (code, stdout, stderr) =
+            run_in_dir(p, &["generate-adr-candidates", "--source", fixture.to_str().unwrap()]);
+        assert_eq!(code, 0, "stderr: {}", stderr);
+        assert!(stdout.contains("Decision needed: Risk One [INFERRED]"), "stdout: {}", stdout);
+        assert!(stdout.contains("Decision needed: Risk Two [INFERRED]"), "stdout: {}", stdout);
+        assert!(
+            !stdout.contains("continuation line"),
+            "indented continuation must not become its own or appended content; stdout: {}",
+            stdout
+        );
+        assert!(
+            !stdout.contains("intro prose"),
+            "prose before bullets must not become a candidate; stdout: {}",
+            stdout
+        );
+        // Exactly two candidates: the bare "-   " bullet must not produce a third.
+        assert_eq!(
+            stdout.matches("## Candidate").count(),
+            2,
+            "bare bullet with no text must not produce a candidate; stdout: {}",
+            stdout
+        );
+    }
+    
+    #[test]
+    fn smoke_generate_adr_multiple_candidates_structure() {
+        // AC-3: one "# ADR Candidates" heading, N "## Candidate n" subheadings in source order.
+        let (dir, _sha) = setup_temp_git_repo();
+        let p = dir.path();
+        let fixture = p.join("00b.md");
+        std::fs::write(
+            &fixture,
+            "## Architectural Risks\n\n- Risk Alpha\n- Risk Beta\n- Risk Gamma\n",
+        )
+        .expect("write fixture");
+    
+        let (code, stdout, stderr) =
+            run_in_dir(p, &["generate-adr-candidates", "--source", fixture.to_str().unwrap()]);
+        assert_eq!(code, 0, "stderr: {}", stderr);
+        assert_eq!(stdout.matches("# ADR Candidates").count(), 1, "stdout: {}", stdout);
+    
+        let c1 = stdout.find("## Candidate 1").expect("Candidate 1 present");
+        let c2 = stdout.find("## Candidate 2").expect("Candidate 2 present");
+        let c3 = stdout.find("## Candidate 3").expect("Candidate 3 present");
+        assert!(c1 < c2 && c2 < c3, "candidates must appear in source order; stdout: {}", stdout);
+    
+        for field in [
+            "Decision needed:",
+            "Why now: [FILL]",
+            "Features affected: [FILL]",
+            "Options: [FILL]",
+            "Risk if deferred: [FILL]",
+            "Does this affect behavior: [FILL]",
+            "Recommended route: [FILL]",
+            "- Stage 1–3",
+            "- Stage 10",
+            "- no action yet",
+        ] {
+            assert_eq!(
+                stdout.matches(field).count(),
+                3,
+                "field '{}' must appear once per candidate group; stdout: {}",
+                field,
+                stdout
+            );
+        }
+    }
+    
+    #[test]
+    fn smoke_generate_adr_inferred_and_fill_tagging() {
+        // AC-4: exactly one [INFERRED] per group (on Decision needed), [FILL] on the other six.
+        let (dir, _sha) = setup_temp_git_repo();
+        let p = dir.path();
+        let fixture = p.join("00b.md");
+        std::fs::write(&fixture, "## Architectural Risks\n\n- Risk Alpha\n- Risk Beta\n")
+            .expect("write fixture");
+    
+        let (code, stdout, stderr) =
+            run_in_dir(p, &["generate-adr-candidates", "--source", fixture.to_str().unwrap()]);
+        assert_eq!(code, 0, "stderr: {}", stderr);
+        // Count only within the candidates section — the banner itself contains the literal
+        // substring "[INFERRED]" in its explanatory text, which must not be counted here.
+        let candidates_section = &stdout[stdout.find("# ADR Candidates").expect("heading present")..];
+        assert_eq!(
+            candidates_section.matches("[INFERRED]").count(),
+            2,
+            "exactly one [INFERRED] per candidate (Decision needed only); stdout: {}",
+            stdout
+        );
+        assert_eq!(
+            candidates_section.matches("[FILL]").count(),
+            12,
+            "six [FILL] fields per candidate x 2 candidates; stdout: {}",
+            stdout
+        );
+    }
+    
+    #[test]
+    fn smoke_generate_adr_preamble_present() {
+        // AC-5: banner is the first three non-blank lines, verbatim.
+        let (dir, _sha) = setup_temp_git_repo();
+        let p = dir.path();
+        let fixture = p.join("00b.md");
+        std::fs::write(&fixture, "## Architectural Risks\n\n- Risk Alpha\n").expect("write fixture");
+    
+        let (code, stdout, stderr) =
+            run_in_dir(p, &["generate-adr-candidates", "--source", fixture.to_str().unwrap()]);
+        assert_eq!(code, 0, "stderr: {}", stderr);
+    
+        let mut lines = stdout.lines();
+        assert_eq!(lines.next().unwrap_or(""), ADR_BANNER_LINE_1);
+        assert_eq!(lines.next().unwrap_or(""), ADR_BANNER_LINE_2);
+        assert_eq!(lines.next().unwrap_or(""), ADR_BANNER_LINE_3);
+    }
+    
+    #[test]
+    fn smoke_generate_adr_no_section_found() {
+        // AC-6: no "## Architectural Risks" heading at all -> empty stdout, stderr names the path,
+        // exit 0 (valid-but-empty, not a usage failure).
+        let (dir, _sha) = setup_temp_git_repo();
+        let p = dir.path();
+        let fixture = p.join("00b.md");
+        std::fs::write(
+            &fixture,
+            "# Solution Discovery: Test Domain\n\n## Explicit Non-Decisions\n\n- something\n",
+        )
+        .expect("write fixture");
+    
+        let (code, stdout, stderr) =
+            run_in_dir(p, &["generate-adr-candidates", "--source", fixture.to_str().unwrap()]);
+        assert_eq!(code, 0, "stderr: {}", stderr);
+        assert!(stdout.is_empty(), "stdout must be empty; got: {}", stdout);
+        assert!(stderr.contains("no \"## Architectural Risks\" section found"), "stderr: {}", stderr);
+        assert!(stderr.contains(fixture.to_str().unwrap()), "stderr must name the path; got: {}", stderr);
+    }
+    
+    #[test]
+    fn smoke_generate_adr_section_empty() {
+        // AC-7: heading present, zero valid bullets -> empty stdout, a distinct stderr message,
+        // exit 0.
+        let (dir, _sha) = setup_temp_git_repo();
+        let p = dir.path();
+        let fixture = p.join("00b.md");
+        std::fs::write(
+            &fixture,
+            "## Architectural Risks\n\nJust prose here, no bullets at all.\n\n## Explicit Non-Decisions\n",
+        )
+        .expect("write fixture");
+    
+        let (code, stdout, stderr) =
+            run_in_dir(p, &["generate-adr-candidates", "--source", fixture.to_str().unwrap()]);
+        assert_eq!(code, 0, "stderr: {}", stderr);
+        assert!(stdout.is_empty(), "stdout must be empty; got: {}", stdout);
+        assert!(stderr.contains("contains no risk bullets"), "stderr: {}", stderr);
+        assert!(
+            !stderr.contains("no \"## Architectural Risks\" section found"),
+            "AC-6 and AC-7 messages must be distinct; stderr: {}",
+            stderr
+        );
+    }
+    
+    #[test]
+    fn smoke_generate_adr_missing_source_file() {
+        // AC-8: unreadable/missing --source -> exit 1 (EXIT_USAGE), stderr names the path.
+        let (dir, _sha) = setup_temp_git_repo();
+        let p = dir.path();
+    
+        let (code, stdout, stderr) =
+            run_in_dir(p, &["generate-adr-candidates", "--source", "does-not-exist.md"]);
+        assert_eq!(code, 1, "missing source file must exit 1; stderr: {}", stderr);
+        assert!(stdout.is_empty(), "stdout must be empty; got: {}", stdout);
+        assert!(stderr.contains("does-not-exist.md"), "stderr must name the path; got: {}", stderr);
+    }
+    
+    #[test]
+    fn smoke_generate_adr_source_required() {
+        // AC-9: omitting --source is a clap usage error, exit 1.
+        let (dir, _sha) = setup_temp_git_repo();
+        let p = dir.path();
+    
+        let (code, _, stderr) = run_in_dir(p, &["generate-adr-candidates"]);
+        assert_eq!(code, 1, "missing --source must exit 1; stderr: {}", stderr);
+    }
+    
+    #[test]
+    fn smoke_generate_adr_stdout_only() {
+        // AC-10: stderr empty on a successful non-empty run; stdout exactly empty on the
+        // AC-6/AC-7/AC-8 error/empty paths.
+        let (dir, _sha) = setup_temp_git_repo();
+        let p = dir.path();
+        let fixture = p.join("00b.md");
+        std::fs::write(&fixture, "## Architectural Risks\n\n- Risk Alpha\n").expect("write fixture");
+    
+        let (code, _, stderr) =
+            run_in_dir(p, &["generate-adr-candidates", "--source", fixture.to_str().unwrap()]);
+        assert_eq!(code, 0);
+        assert!(stderr.is_empty(), "successful run must have empty stderr; got: {}", stderr);
+    
+        let no_section = p.join("no-section.md");
+        std::fs::write(&no_section, "# Just a title\n").expect("write fixture");
+        let (_, stdout, _) =
+            run_in_dir(p, &["generate-adr-candidates", "--source", no_section.to_str().unwrap()]);
+        assert!(stdout.is_empty(), "AC-6 case must have empty stdout; got: {}", stdout);
+    
+        let empty_section = p.join("empty-section.md");
+        std::fs::write(&empty_section, "## Architectural Risks\n\nprose only\n").expect("write fixture");
+        let (_, stdout, _) =
+            run_in_dir(p, &["generate-adr-candidates", "--source", empty_section.to_str().unwrap()]);
+        assert!(stdout.is_empty(), "AC-7 case must have empty stdout; got: {}", stdout);
+    
+        let (_, stdout, _) =
+            run_in_dir(p, &["generate-adr-candidates", "--source", "does-not-exist.md"]);
+        assert!(stdout.is_empty(), "AC-8 case must have empty stdout; got: {}", stdout);
+    }
+    
+    #[test]
+    fn smoke_generate_adr_exit_zero_on_success() {
+        // AC-11: any invocation finding >= 1 risk bullet exits 0.
+        let (dir, _sha) = setup_temp_git_repo();
+        let p = dir.path();
+        let fixture = p.join("00b.md");
+        std::fs::write(&fixture, "## Architectural Risks\n\n- Risk Alpha\n").expect("write fixture");
+    
+        let (code, _, stderr) =
+            run_in_dir(p, &["generate-adr-candidates", "--source", fixture.to_str().unwrap()]);
+        assert_eq!(code, 0, "stderr: {}", stderr);
+    }
+    
+    #[test]
+    fn smoke_generate_adr_no_provider_config_required() {
+        // AC-12: dispatches before config::resolve(); no provider config needed.
+        let (dir, _sha) = setup_temp_git_repo();
+        let p = dir.path();
+        let fixture = p.join("00b.md");
+        std::fs::write(&fixture, "## Architectural Risks\n\n- Risk Alpha\n").expect("write fixture");
+    
+        let (code, _, stderr) =
+            run_in_dir(p, &["generate-adr-candidates", "--source", fixture.to_str().unwrap()]);
+        assert_eq!(code, 0, "must succeed without provider config; stderr: {}", stderr);
+    }
+    
+    #[test]
+    fn smoke_generate_adr_deterministic_output() {
+        // AC-13: identical source produces byte-for-byte identical stdout across two invocations.
+        let (dir, _sha) = setup_temp_git_repo();
+        let p = dir.path();
+        let fixture = p.join("00b.md");
+        std::fs::write(
+            &fixture,
+            "## Architectural Risks\n\n- Risk Alpha\n- Risk Beta\n",
+        )
+        .expect("write fixture");
+    
+        let args = ["generate-adr-candidates", "--source", fixture.to_str().unwrap()];
+        let (code1, stdout1, _) = run_in_dir(p, &args);
+        let (code2, stdout2, _) = run_in_dir(p, &args);
+        assert_eq!(code1, 0);
+        assert_eq!(code2, 0);
+        assert_eq!(stdout1, stdout2, "output must be deterministic for identical inputs");
+    }
+    
+    #[test]
+    fn smoke_generate_adr_guardrail_inseparable_from_output() {
+        // AC-14: the non-authoritative guardrail line is present in every non-empty-stdout run,
+        // for both a single-candidate and a multi-candidate fixture — there is no code path that
+        // emits candidate content without it.
+        let (dir, _sha) = setup_temp_git_repo();
+        let p = dir.path();
+    
+        let single = p.join("single.md");
+        std::fs::write(&single, "## Architectural Risks\n\n- Risk Alpha\n").expect("write fixture");
+        let (code, stdout, stderr) =
+            run_in_dir(p, &["generate-adr-candidates", "--source", single.to_str().unwrap()]);
+        assert_eq!(code, 0, "stderr: {}", stderr);
+        assert!(stdout.contains(ADR_BANNER_LINE_3), "stdout: {}", stdout);
+    
+        let multi = p.join("multi.md");
+        std::fs::write(&multi, "## Architectural Risks\n\n- Risk Alpha\n- Risk Beta\n- Risk Gamma\n")
+            .expect("write fixture");
+        let (code, stdout, stderr) =
+            run_in_dir(p, &["generate-adr-candidates", "--source", multi.to_str().unwrap()]);
+        assert_eq!(code, 0, "stderr: {}", stderr);
+        assert!(stdout.contains(ADR_BANNER_LINE_3), "stdout: {}", stdout);
+    }
+
+DIFF TO REVIEW (base->review, secret/size filtered)
+diff --git a/changes/UPG-0022__CHG-20260703-004__00b-adr-generator.md b/changes/UPG-0022__CHG-20260703-004__00b-adr-generator.md
+index 3d8833e..619e701 100644
+--- a/changes/UPG-0022__CHG-20260703-004__00b-adr-generator.md
++++ b/changes/UPG-0022__CHG-20260703-004__00b-adr-generator.md
+@@ -6,9 +6,9 @@ triage_class: script-tooling
+ scope_axis: self-dev only
+ review_profile: PROFILE-3
+ review_series: RVS__UPG-0022__CHG-20260703-004__S1
+-review_state: DRAFT
++review_state: REVIEWED
+ status: IN_PROGRESS
+-loop_step: 1-Intent
++loop_step: 3-Implement
+ ---
+ 
+ # Change: UPG-0022 / CHG-20260703-004 — 00b → ADR Candidate Generator
+@@ -21,14 +21,14 @@ primary_feature_id: UPG-0022
+ change_id: CHG-20260703-004
+ slug: 00b-adr-generator
+ state: IN_PROGRESS
+-current_step: 1-Intent
++current_step: 3-Implement
+ implements:
+   - UPG-0022
+ related_features:
+   - UPG-0007
+ review_series: RVS__UPG-0022__CHG-20260703-004__S1
+ review_profile: PROFILE-3
+-review_state: DRAFT
++review_state: REVIEWED
+ review_history: reviews/review-log.md
+ fixes_findings: []
+ follow_up_of: null
+@@ -138,13 +138,167 @@ provider config required — same as `check-drift` and `generate-report`).
+ 
+ ## Step 2 — Acceptance Criteria
+ 
+-*(to be written after Step 1 approval)*
++### Functional I/O
++
++**AC-1 — Section extraction boundary**
++The tool locates the *first* line in the source file that is exactly equal to
++`## Architectural Risks` after trimming trailing whitespace (case-sensitive, exact match —
++not a prefix or substring match, so `## Architectural Risks (draft)` does not match). The
++section spans from that line (exclusive) to the next line that starts with `## ` (any H2
++heading), or EOF, whichever comes first. Only content in this span is scanned for risk
++bullets. If the heading appears more than once, only the first occurrence's span is used.
++_Verify in Step 4:_ fixture with the heading followed by bullets, then a later `## ` heading
++with unrelated content; confirm only the first span's bullets are extracted and the later
++section's content is not.
++
++**AC-2 — Risk bullet extraction**
++Within the section (AC-1), every line starting at column 0 with `- ` or `* ` (a literal
++hyphen or asterisk, one space, then content) is one risk bullet. The candidate's identifying
++text is that line's content after stripping the marker and surrounding whitespace, taken
++verbatim — no markdown normalization, no re-wrapping. Indented or continuation lines (any
++line not itself starting with `- `/`* ` at column 0) are not appended to the preceding
++bullet's text and never form their own risk entries. A bullet whose content is empty after
++stripping the marker (e.g. a bare `- ` with nothing else) is skipped — it does not produce a
++risk entry.
++_Verify in Step 4:_ fixture with (a) plain top-level bullets, (b) an indented continuation
++line under a bullet, (c) a bare `- ` with no text, (d) intro prose before the first bullet.
++Confirm exactly the expected bullets are extracted, in source order, with continuation lines
++and prose ignored and the bare bullet skipped.
++
++**AC-3 — Multiple risks: output structure and order**
++For N risks found (N ≥ 1), the tool emits exactly one `# ADR Candidates` heading, followed by
++N candidate groups in source order, each preceded by a `## Candidate <n>` subheading
++(1-indexed, e.g. `## Candidate 1`, `## Candidate 2`, ...). Each group contains exactly these
++seven fields plus the three-item route list, in this order:
++```
++Decision needed: <risk text> [INFERRED]
++Why now: [FILL]
++Features affected: [FILL]
++Options: [FILL]
++Risk if deferred: [FILL]
++Does this affect behavior: [FILL]
++Recommended route: [FILL]
++- Stage 1–3
++- Stage 10
++- no action yet
++```
++(The `## Candidate <n>` subheading is a Step 2 design addition beyond the single-example
++block shown in Step 1's backlog-derived proposed artifact — needed to unambiguously delimit
++multiple candidate groups in one document. It does not change any field's name or order.)
++_Verify in Step 4:_ fixture with 3 risks; confirm one `# ADR Candidates` heading, three
++`## Candidate N` subheadings in order 1/2/3, and each group's seven fields + route list
++present, complete, and correctly ordered.
++
++**AC-4 — `[INFERRED]` / `[FILL]` tagging**
++`Decision needed:` is the only mechanically-derived field and is tagged `[INFERRED]`. All
++other fields (`Why now`, `Features affected`, `Options`, `Risk if deferred`,
++`Does this affect behavior`, `Recommended route`) are always `[FILL]` — the tool never
++attempts to infer them from source content. No field is ever blank.
++_Verify in Step 4:_ same fixture as AC-3; confirm exactly one `[INFERRED]` tag per candidate
++group (on `Decision needed:`) and `[FILL]` on all six other fields, for every group.
++
++**AC-5 — Preamble present**
++Whenever at least one risk is found, output begins with this banner verbatim:
++```
++> [INFERRED] fields were populated automatically by extracting risk bullets from the source
++> document — verify before submitting. [FILL] fields require human or model authorship.
++> ADR candidates are non-authoritative until routed through Stage 1–3 or Stage 10.
++```
++_Verify in Step 4:_ assert the first three non-blank lines of stdout match this banner
++verbatim, byte for byte.
++
++**AC-6 — No `## Architectural Risks` section found**
++If no line in the source file exactly matches `## Architectural Risks` (AC-1's match rule),
++the tool writes nothing to stdout, writes
++`error: no "## Architectural Risks" section found in <path>` to stderr, and exits 0 — this is
++a valid-but-empty result, not a usage failure.
++_Verify in Step 4:_ fixture with no such heading; confirm empty stdout, stderr names the
++source path, exit code 0.
++
++**AC-7 — Section found but no bullets**
++If the `## Architectural Risks` section (AC-1) exists but contains zero valid risk bullets
++(AC-2 — including a section containing only prose, or only a bare empty bullet), the tool
++writes nothing to stdout, writes
++`error: "## Architectural Risks" section in <path> contains no risk bullets` to stderr, and
++exits 0.
++_Verify in Step 4:_ fixture with the heading present but only prose beneath it; confirm empty
++stdout, a stderr message distinct from AC-6's, exit code 0.
++
++**AC-8 — Missing or unreadable `--source` file**
++If the path given to `--source` does not exist or cannot be read, the tool writes nothing to
++stdout, writes `error: cannot read source file '<path>': <os error>` to stderr, and exits 1
++(`EXIT_USAGE`) — distinct from AC-6/AC-7 because there is no valid input to reason about at
++all. (This intentionally diverges from `generate-report`'s optional-input graceful-`[FILL]`
++pattern: `--source` is this tool's sole required input, not an auxiliary one — there is
++nothing meaningful to generate without it.)
++_Verify in Step 4:_ `--source does-not-exist.md`; confirm exit 1, stderr names the path.
++
++**AC-9 — `--source` is required**
++`--source <path>` is a required flag (not optional). Omitting it, or passing an unknown flag,
++is a clap usage error: exit 1, a usage message on stderr, nothing on stdout.
++_Verify in Step 4:_ smoke test `generate-adr-candidates` with no `--source`; confirm exit 1.
++
++**AC-10 — Output to stdout only**
++All report content (banner + candidate groups) is written to stdout only, never stderr. On a
++successful non-empty run, stderr is empty. In the AC-6/AC-7/AC-8 cases, stdout is exactly
++empty — no partial banner, no partial candidate content.
++_Verify in Step 4:_ (a) run against a fixture with risks; confirm stderr is empty; (b) run
++each of the AC-6/7/8 cases; confirm stdout is exactly empty in each.
++
++### Exit codes
++
++**AC-11 — Exit 0 on success**
++Any invocation that finds ≥ 1 risk bullet exits 0.
++_Verify in Step 4:_ smoke test with a valid fixture; assert exit 0.
++
++**AC-12 — Dispatch before config resolution**
++`generate-adr-candidates` runs without a configured provider, dispatching before
++`config::resolve()` (same pattern as `check-drift` / `generate-report`).
++_Verify in Step 4:_ run in a temp repo with no provider config set up at all; confirm no
++config-resolution error occurs (exit 0 either via AC-6's no-section path or a successful
++candidate-producing run).
++
++### Idempotency
++
++**AC-13 — Deterministic output**
++Given an unchanged source file, two invocations produce byte-for-byte identical stdout.
++_Verify in Step 4:_ run twice against the same fixture; diff the outputs.
++
++### Cross-reference integrity
++
++**AC-14 — Non-authoritative guardrail is inseparable from output**
++The third preamble line ("ADR candidates are non-authoritative...") is part of the same
++constant banner as the first two lines (AC-5) and is never conditionally omitted by any flag
++or code path while candidate content is still emitted.
++_Verify in Step 4:_ confirm the full banner (AC-5) appears in every test that produces
++non-empty stdout; there is no separate flag or branch that prints candidates without it.
+ 
+ ---
+ 
+ ## Step 3 — Implement
+ 
+-*(to be written after Step 2 approval)*
++### What was done
++
++| File | Change |
++|---|---|
++| `tools/reviewer/src/cmd/generate_adr_candidates.rs` | New: `generate-adr-candidates` core. `run()` reads `--source`, locates the first exact `## Architectural Risks` line, bounds the section at the next `## ` heading or EOF, extracts top-level `- `/`* ` bullets (skipping empty-after-strip bullets, ignoring indented continuation lines and prose), and emits one `# ADR Candidates` heading followed by one `## Candidate <n>` group per risk in source order. |
++| `tools/reviewer/src/cmd/mod.rs` | `pub mod generate_adr_candidates;` registered. |
++| `tools/reviewer/src/main.rs` | Added `Commands::GenerateAdrCandidates { source }` variant (`source` a required `String`, so clap itself enforces AC-9); dispatched before `config::resolve()` (mirrors `check-drift` / `generate-report`, satisfies AC-12); added the unreachable post-config match arm. |
++| `tools/reviewer/tests/smoke.rs` | Added 14 smoke tests (`smoke_generate_adr_*`) covering AC-1 through AC-14: section boundary (AC-1), bullet extraction incl. continuation/prose/bare-bullet (AC-2), multi-candidate structure and order (AC-3), `[INFERRED]`/`[FILL]` counts (AC-4), verbatim banner (AC-5), no-section / empty-section / missing-source distinct exit paths (AC-6/7/8), missing `--source` clap usage error (AC-9), stdout-only across success and all three empty/error cases (AC-10), exit 0 on success (AC-11), no-provider-config dispatch (AC-12), determinism (AC-13), guardrail present across single- and multi-candidate runs (AC-14). |
++
++### Verification
++
++`cargo build` and `cargo build --tests`: clean, no errors.
++`cargo test --test smoke`: **77 passed, 0 failed** (63 pre-existing + 14 new). No regressions.
++One test bug was caught and fixed during this pass: `smoke_generate_adr_inferred_and_fill_tagging`
++initially counted `[INFERRED]` across the whole stdout, which double-counts the banner's own
++use of that literal substring; fixed to count only within the `# ADR Candidates` section.
++
++### Scope check
++
++No edits to `prompts/00b-solution-discovery.md`, `dba-system.md`, `scripts/codeos-review.sh`,
++or any other existing subcommand's behavior — matches the Step 1 scope boundary. `check-drift`
++and `generate-report` dispatch/handling untouched.
+ 
+ ---
+ 
+diff --git a/status/self-development.md b/status/self-development.md
+index d6bd027..1b3a1ae 100644
+--- a/status/self-development.md
++++ b/status/self-development.md
+@@ -52,7 +52,7 @@
+ | UPG-0017 | CHG-20260703-001 | template | self-dev only | 4-Reconcile | ACCEPTED (Step 3: R1 CHANGES ADVISED — 3 blockers fixed; R2 NO OBJECTION; Step 4: R1 CHANGES ADVISED — F1 review-state contradiction, F2 backlog `docs/` orphan fixed; R2 NO OBJECTION; all 7 ACs verified) | COMPLETE | — |
+ | UPG-0020 | CHG-20260703-002 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (Step 3: R1–R3 CHANGES ADVISED — F1 watched-set description fixed x2, F2 backlog stale fixed, F3/AC-10 REJECTED structural limitation; Step 4 R1 CHANGES ADVISED — AC-10 REJECTED structural limitation; all 9 substantive ACs verified; 42 tests) | COMPLETE | — |
+ | UPG-0021 | CHG-20260703-003 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 3 R1→R2 NO OBJECTION; Step 4 R1→R2 NO OBJECTION; all 16 ACs verified; 63 tests) | COMPLETE | — |
+-| UPG-0022 | CHG-20260703-004 | script-tooling | self-dev only | 1-Intent | — | IN_PROGRESS | — |
++| UPG-0022 | CHG-20260703-004 | script-tooling | self-dev only | 3-Implement | Step 1 NO OBJECTION; Step 2 NO OBJECTION (14 ACs) | IN_PROGRESS | — |
+ 
+ <!--
+ Identity   : Feature ID = UPG-#### (stable). Change ID = CHG-YYYYMMDD-NNN (one execution), or a
+diff --git a/tools/reviewer/src/cmd/mod.rs b/tools/reviewer/src/cmd/mod.rs
+index a276b3e..252fd08 100644
+--- a/tools/reviewer/src/cmd/mod.rs
++++ b/tools/reviewer/src/cmd/mod.rs
+@@ -1,5 +1,6 @@
+ pub mod check_drift;
+ pub mod decision;
+ pub mod diagnose;
++pub mod generate_adr_candidates;
+ pub mod generate_report;
+ pub mod review;
+diff --git a/tools/reviewer/src/main.rs b/tools/reviewer/src/main.rs
+index b57ea0e..699ee52 100644
+--- a/tools/reviewer/src/main.rs
++++ b/tools/reviewer/src/main.rs
+@@ -89,6 +89,13 @@ enum Commands {
+         #[arg(long)]
+         events: Option<String>,
+     },
++    /// Extract "## Architectural Risks" bullets from a 00b Solution Discovery doc into
++    /// non-authoritative ADR candidate skeletons
++    GenerateAdrCandidates {
++        /// Path to the 00b Solution Discovery source document
++        #[arg(long)]
++        source: String,
++    },
+ }
+ 
+ fn main() {
+@@ -133,6 +140,13 @@ fn run() -> i32 {
+         return cmd::generate_report::run(args, &repo_root);
+     }
+ 
++    // Dispatch generate-adr-candidates before config resolution — needs no provider config.
++    if let Commands::GenerateAdrCandidates { source } = &cli.command {
++        return cmd::generate_adr_candidates::run(cmd::generate_adr_candidates::GenerateAdrCandidatesArgs {
++            source,
++        });
++    }
++
+     // Resolve config
+     let cfg = match config::resolve(cli.provider.as_deref(), &repo_root) {
+         Ok(c) => c,
+@@ -201,6 +215,7 @@ fn run() -> i32 {
+         // Handled above before config resolution; unreachable here.
+         Commands::CheckDrift { .. } => EXIT_SUCCESS,
+         Commands::GenerateReport { .. } => EXIT_SUCCESS,
++        Commands::GenerateAdrCandidates { .. } => EXIT_SUCCESS,
+     }
+ }
+ 
+diff --git a/tools/reviewer/tests/smoke.rs b/tools/reviewer/tests/smoke.rs
+index e592ede..96b663e 100644
+--- a/tools/reviewer/tests/smoke.rs
++++ b/tools/reviewer/tests/smoke.rs
+@@ -1543,3 +1543,345 @@ fn smoke_generate_report_deterministic_output() {
+     assert_eq!(code2, 0);
+     assert_eq!(stdout1, stdout2, "output must be deterministic for identical inputs");
+ }
++
++// --- UPG-0022: generate-adr-candidates subcommand ---
++
++const ADR_BANNER_LINE_1: &str =
++    "> [INFERRED] fields were populated automatically by extracting risk bullets from the source";
++const ADR_BANNER_LINE_2: &str =
++    "> document — verify before submitting. [FILL] fields require human or model authorship.";
++const ADR_BANNER_LINE_3: &str =
++    "> ADR candidates are non-authoritative until routed through Stage 1–3 or Stage 10.";
++
++#[test]
++fn smoke_generate_adr_section_boundary() {
++    // AC-1: only bullets between "## Architectural Risks" and the next "## " heading are used;
++    // content in a later section must not leak in.
++    let (dir, _sha) = setup_temp_git_repo();
++    let p = dir.path();
++    let fixture = p.join("00b.md");
++    std::fs::write(
++        &fixture,
++        "# Solution Discovery: Test Domain\n\n\
++## Architectural Risks\n\n\
++- Risk A: something\n\
++- Risk B: something else\n\n\
++## Explicit Non-Decisions\n\n\
++- Not a risk bullet, must be excluded\n",
++    )
++    .expect("write fixture");
++
++    let (code, stdout, stderr) =
++        run_in_dir(p, &["generate-adr-candidates", "--source", fixture.to_str().unwrap()]);
++    assert_eq!(code, 0, "stderr: {}", stderr);
++    assert!(stdout.contains("Decision needed: Risk A: something [INFERRED]"), "stdout: {}", stdout);
++    assert!(stdout.contains("Decision needed: Risk B: something else [INFERRED]"), "stdout: {}", stdout);
++    assert!(
++        !stdout.contains("Not a risk bullet"),
++        "content from a later section must not leak in; stdout: {}",
++        stdout
++    );
++}
++
++#[test]
++fn smoke_generate_adr_bullet_extraction() {
++    // AC-2: top-level bullets only; indented continuation lines ignored, prose ignored,
++    // a bare bullet with no text after the marker produces no candidate.
++    let (dir, _sha) = setup_temp_git_repo();
++    let p = dir.path();
++    let fixture = p.join("00b.md");
++    std::fs::write(
++        &fixture,
++        "## Architectural Risks\n\n\
++Some intro prose before the first bullet.\n\n\
++- Risk One\n\
++  this indented continuation line must be ignored\n\
++-   \n\
++- Risk Two\n",
++    )
++    .expect("write fixture");
++
++    let (code, stdout, stderr) =
++        run_in_dir(p, &["generate-adr-candidates", "--source", fixture.to_str().unwrap()]);
++    assert_eq!(code, 0, "stderr: {}", stderr);
++    assert!(stdout.contains("Decision needed: Risk One [INFERRED]"), "stdout: {}", stdout);
++    assert!(stdout.contains("Decision needed: Risk Two [INFERRED]"), "stdout: {}", stdout);
++    assert!(
++        !stdout.contains("continuation line"),
++        "indented continuation must not become its own or appended content; stdout: {}",
++        stdout
++    );
++    assert!(
++        !stdout.contains("intro prose"),
++        "prose before bullets must not become a candidate; stdout: {}",
++        stdout
++    );
++    // Exactly two candidates: the bare "-   " bullet must not produce a third.
++    assert_eq!(
++        stdout.matches("## Candidate").count(),
++        2,
++        "bare bullet with no text must not produce a candidate; stdout: {}",
++        stdout
++    );
++}
++
++#[test]
++fn smoke_generate_adr_multiple_candidates_structure() {
++    // AC-3: one "# ADR Candidates" heading, N "## Candidate n" subheadings in source order.
++    let (dir, _sha) = setup_temp_git_repo();
++    let p = dir.path();
++    let fixture = p.join("00b.md");
++    std::fs::write(
++        &fixture,
++        "## Architectural Risks\n\n- Risk Alpha\n- Risk Beta\n- Risk Gamma\n",
++    )
++    .expect("write fixture");
++
++    let (code, stdout, stderr) =
++        run_in_dir(p, &["generate-adr-candidates", "--source", fixture.to_str().unwrap()]);
++    assert_eq!(code, 0, "stderr: {}", stderr);
++    assert_eq!(stdout.matches("# ADR Candidates").count(), 1, "stdout: {}", stdout);
++
++    let c1 = stdout.find("## Candidate 1").expect("Candidate 1 present");
++    let c2 = stdout.find("## Candidate 2").expect("Candidate 2 present");
++    let c3 = stdout.find("## Candidate 3").expect("Candidate 3 present");
++    assert!(c1 < c2 && c2 < c3, "candidates must appear in source order; stdout: {}", stdout);
++
++    for field in [
++        "Decision needed:",
++        "Why now: [FILL]",
++        "Features affected: [FILL]",
++        "Options: [FILL]",
++        "Risk if deferred: [FILL]",
++        "Does this affect behavior: [FILL]",
++        "Recommended route: [FILL]",
++        "- Stage 1–3",
++        "- Stage 10",
++        "- no action yet",
++    ] {
++        assert_eq!(
++            stdout.matches(field).count(),
++            3,
++            "field '{}' must appear once per candidate group; stdout: {}",
++            field,
++            stdout
++        );
++    }
++}
++
++#[test]
++fn smoke_generate_adr_inferred_and_fill_tagging() {
++    // AC-4: exactly one [INFERRED] per group (on Decision needed), [FILL] on the other six.
++    let (dir, _sha) = setup_temp_git_repo();
++    let p = dir.path();
++    let fixture = p.join("00b.md");
++    std::fs::write(&fixture, "## Architectural Risks\n\n- Risk Alpha\n- Risk Beta\n")
++        .expect("write fixture");
++
++    let (code, stdout, stderr) =
++        run_in_dir(p, &["generate-adr-candidates", "--source", fixture.to_str().unwrap()]);
++    assert_eq!(code, 0, "stderr: {}", stderr);
++    // Count only within the candidates section — the banner itself contains the literal
++    // substring "[INFERRED]" in its explanatory text, which must not be counted here.
++    let candidates_section = &stdout[stdout.find("# ADR Candidates").expect("heading present")..];
++    assert_eq!(
++        candidates_section.matches("[INFERRED]").count(),
++        2,
++        "exactly one [INFERRED] per candidate (Decision needed only); stdout: {}",
++        stdout
++    );
++    assert_eq!(
++        candidates_section.matches("[FILL]").count(),
++        12,
++        "six [FILL] fields per candidate x 2 candidates; stdout: {}",
++        stdout
++    );
++}
++
++#[test]
++fn smoke_generate_adr_preamble_present() {
++    // AC-5: banner is the first three non-blank lines, verbatim.
++    let (dir, _sha) = setup_temp_git_repo();
++    let p = dir.path();
++    let fixture = p.join("00b.md");
++    std::fs::write(&fixture, "## Architectural Risks\n\n- Risk Alpha\n").expect("write fixture");
++
++    let (code, stdout, stderr) =
++        run_in_dir(p, &["generate-adr-candidates", "--source", fixture.to_str().unwrap()]);
++    assert_eq!(code, 0, "stderr: {}", stderr);
++
++    let mut lines = stdout.lines();
++    assert_eq!(lines.next().unwrap_or(""), ADR_BANNER_LINE_1);
++    assert_eq!(lines.next().unwrap_or(""), ADR_BANNER_LINE_2);
++    assert_eq!(lines.next().unwrap_or(""), ADR_BANNER_LINE_3);
++}
++
++#[test]
++fn smoke_generate_adr_no_section_found() {
++    // AC-6: no "## Architectural Risks" heading at all -> empty stdout, stderr names the path,
++    // exit 0 (valid-but-empty, not a usage failure).
++    let (dir, _sha) = setup_temp_git_repo();
++    let p = dir.path();
++    let fixture = p.join("00b.md");
++    std::fs::write(
++        &fixture,
++        "# Solution Discovery: Test Domain\n\n## Explicit Non-Decisions\n\n- something\n",
++    )
++    .expect("write fixture");
++
++    let (code, stdout, stderr) =
++        run_in_dir(p, &["generate-adr-candidates", "--source", fixture.to_str().unwrap()]);
++    assert_eq!(code, 0, "stderr: {}", stderr);
++    assert!(stdout.is_empty(), "stdout must be empty; got: {}", stdout);
++    assert!(stderr.contains("no \"## Architectural Risks\" section found"), "stderr: {}", stderr);
++    assert!(stderr.contains(fixture.to_str().unwrap()), "stderr must name the path; got: {}", stderr);
++}
++
++#[test]
++fn smoke_generate_adr_section_empty() {
++    // AC-7: heading present, zero valid bullets -> empty stdout, a distinct stderr message,
++    // exit 0.
++    let (dir, _sha) = setup_temp_git_repo();
++    let p = dir.path();
++    let fixture = p.join("00b.md");
++    std::fs::write(
++        &fixture,
++        "## Architectural Risks\n\nJust prose here, no bullets at all.\n\n## Explicit Non-Decisions\n",
++    )
++    .expect("write fixture");
++
++    let (code, stdout, stderr) =
++        run_in_dir(p, &["generate-adr-candidates", "--source", fixture.to_str().unwrap()]);
++    assert_eq!(code, 0, "stderr: {}", stderr);
++    assert!(stdout.is_empty(), "stdout must be empty; got: {}", stdout);
++    assert!(stderr.contains("contains no risk bullets"), "stderr: {}", stderr);
++    assert!(
++        !stderr.contains("no \"## Architectural Risks\" section found"),
++        "AC-6 and AC-7 messages must be distinct; stderr: {}",
++        stderr
++    );
++}
++
++#[test]
++fn smoke_generate_adr_missing_source_file() {
++    // AC-8: unreadable/missing --source -> exit 1 (EXIT_USAGE), stderr names the path.
++    let (dir, _sha) = setup_temp_git_repo();
++    let p = dir.path();
++
++    let (code, stdout, stderr) =
++        run_in_dir(p, &["generate-adr-candidates", "--source", "does-not-exist.md"]);
++    assert_eq!(code, 1, "missing source file must exit 1; stderr: {}", stderr);
++    assert!(stdout.is_empty(), "stdout must be empty; got: {}", stdout);
++    assert!(stderr.contains("does-not-exist.md"), "stderr must name the path; got: {}", stderr);
++}
++
++#[test]
++fn smoke_generate_adr_source_required() {
++    // AC-9: omitting --source is a clap usage error, exit 1.
++    let (dir, _sha) = setup_temp_git_repo();
++    let p = dir.path();
++
++    let (code, _, stderr) = run_in_dir(p, &["generate-adr-candidates"]);
++    assert_eq!(code, 1, "missing --source must exit 1; stderr: {}", stderr);
++}
++
++#[test]
++fn smoke_generate_adr_stdout_only() {
++    // AC-10: stderr empty on a successful non-empty run; stdout exactly empty on the
++    // AC-6/AC-7/AC-8 error/empty paths.
++    let (dir, _sha) = setup_temp_git_repo();
++    let p = dir.path();
++    let fixture = p.join("00b.md");
++    std::fs::write(&fixture, "## Architectural Risks\n\n- Risk Alpha\n").expect("write fixture");
++
++    let (code, _, stderr) =
++        run_in_dir(p, &["generate-adr-candidates", "--source", fixture.to_str().unwrap()]);
++    assert_eq!(code, 0);
++    assert!(stderr.is_empty(), "successful run must have empty stderr; got: {}", stderr);
++
++    let no_section = p.join("no-section.md");
++    std::fs::write(&no_section, "# Just a title\n").expect("write fixture");
++    let (_, stdout, _) =
++        run_in_dir(p, &["generate-adr-candidates", "--source", no_section.to_str().unwrap()]);
++    assert!(stdout.is_empty(), "AC-6 case must have empty stdout; got: {}", stdout);
++
++    let empty_section = p.join("empty-section.md");
++    std::fs::write(&empty_section, "## Architectural Risks\n\nprose only\n").expect("write fixture");
++    let (_, stdout, _) =
++        run_in_dir(p, &["generate-adr-candidates", "--source", empty_section.to_str().unwrap()]);
++    assert!(stdout.is_empty(), "AC-7 case must have empty stdout; got: {}", stdout);
++
++    let (_, stdout, _) =
++        run_in_dir(p, &["generate-adr-candidates", "--source", "does-not-exist.md"]);
++    assert!(stdout.is_empty(), "AC-8 case must have empty stdout; got: {}", stdout);
++}
++
++#[test]
++fn smoke_generate_adr_exit_zero_on_success() {
++    // AC-11: any invocation finding >= 1 risk bullet exits 0.
++    let (dir, _sha) = setup_temp_git_repo();
++    let p = dir.path();
++    let fixture = p.join("00b.md");
++    std::fs::write(&fixture, "## Architectural Risks\n\n- Risk Alpha\n").expect("write fixture");
++
++    let (code, _, stderr) =
++        run_in_dir(p, &["generate-adr-candidates", "--source", fixture.to_str().unwrap()]);
++    assert_eq!(code, 0, "stderr: {}", stderr);
++}
++
++#[test]
++fn smoke_generate_adr_no_provider_config_required() {
++    // AC-12: dispatches before config::resolve(); no provider config needed.
++    let (dir, _sha) = setup_temp_git_repo();
++    let p = dir.path();
++    let fixture = p.join("00b.md");
++    std::fs::write(&fixture, "## Architectural Risks\n\n- Risk Alpha\n").expect("write fixture");
++
++    let (code, _, stderr) =
++        run_in_dir(p, &["generate-adr-candidates", "--source", fixture.to_str().unwrap()]);
++    assert_eq!(code, 0, "must succeed without provider config; stderr: {}", stderr);
++}
++
++#[test]
++fn smoke_generate_adr_deterministic_output() {
++    // AC-13: identical source produces byte-for-byte identical stdout across two invocations.
++    let (dir, _sha) = setup_temp_git_repo();
++    let p = dir.path();
++    let fixture = p.join("00b.md");
++    std::fs::write(
++        &fixture,
++        "## Architectural Risks\n\n- Risk Alpha\n- Risk Beta\n",
++    )
++    .expect("write fixture");
++
++    let args = ["generate-adr-candidates", "--source", fixture.to_str().unwrap()];
++    let (code1, stdout1, _) = run_in_dir(p, &args);
++    let (code2, stdout2, _) = run_in_dir(p, &args);
++    assert_eq!(code1, 0);
++    assert_eq!(code2, 0);
++    assert_eq!(stdout1, stdout2, "output must be deterministic for identical inputs");
++}
++
++#[test]
++fn smoke_generate_adr_guardrail_inseparable_from_output() {
++    // AC-14: the non-authoritative guardrail line is present in every non-empty-stdout run,
++    // for both a single-candidate and a multi-candidate fixture — there is no code path that
++    // emits candidate content without it.
++    let (dir, _sha) = setup_temp_git_repo();
++    let p = dir.path();
++
++    let single = p.join("single.md");
++    std::fs::write(&single, "## Architectural Risks\n\n- Risk Alpha\n").expect("write fixture");
++    let (code, stdout, stderr) =
++        run_in_dir(p, &["generate-adr-candidates", "--source", single.to_str().unwrap()]);
++    assert_eq!(code, 0, "stderr: {}", stderr);
++    assert!(stdout.contains(ADR_BANNER_LINE_3), "stdout: {}", stdout);
++
++    let multi = p.join("multi.md");
++    std::fs::write(&multi, "## Architectural Risks\n\n- Risk Alpha\n- Risk Beta\n- Risk Gamma\n")
++        .expect("write fixture");
++    let (code, stdout, stderr) =
++        run_in_dir(p, &["generate-adr-candidates", "--source", multi.to_str().unwrap()]);
++    assert_eq!(code, 0, "stderr: {}", stderr);
++    assert!(stdout.contains(ADR_BANNER_LINE_3), "stdout: {}", stdout);
++}

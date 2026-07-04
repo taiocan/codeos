@@ -1,0 +1,684 @@
+Reviewer task:
+
+SCOPE CONTRACT
+  Assess this artifact against the STATED SCOPE of this stage/PR — the Expected Stage
+  Output below and what the artifacts actually claim — NOT against an ideal final system.
+  A capability the artifacts do not claim to provide is OUT-OF-SCOPE, not a defect.
+  The following are OUT-OF-SCOPE BACKLOG unless THIS artifact explicitly claims to provide
+  them: formal approval-binding enforcement; rollback correctness; COMMIT_BOUND/
+  WORKSPACE_BOUND enforcement; JSON Schema validation; CI validation; exact
+  decision-integrity; per-feature decision ledgers; autonomous approval; enabled hooks.
+
+YOUR TASK — answer these five questions using only the evidence in the packet:
+  1. Acceptance criteria: Does the artifact satisfy each of its stated acceptance criteria?
+     Cite evidence for each criterion (or note its absence).
+  2. Claim support: Are universal or strong claims (all, every, never, always, no X) in the
+     artifact supported by evidence in the packet? Any unverifiable strong claim is a candidate
+     finding only if it affects acceptance, scope, safety, decision integrity, or the artifact's
+     stated guarantees.
+  3. Scope drift: Is there any change beyond the stated scope boundary? (Files not in the
+     "What changes" list; behavior changes not in the intent; downstream doctrine modified
+     rather than read.)
+  4. In-scope blockers: Are there facts that, if left in, would make the artifact wrong,
+     unsafe, or internally contradictory?
+  5. Finding classification: Classify every finding you raise as exactly one of the five
+     TRIAGE RULE categories below.
+
+TRIAGE RULE — classify EVERY finding as exactly one of:
+  IN-SCOPE BLOCKER         breaks the stated goal; creates a FALSE CLAIM in this artifact;
+                           weakens the advisory/read-only/human-gated guarantees; prevents
+                           the work from running; or violates an explicit safety constraint.
+  IN-SCOPE NON-BLOCKER     improves it but is not required for this PR.
+  OUT-OF-SCOPE BACKLOG     valid, but belongs to a future feature / stronger guarantee.
+  REJECTED                 conflicts with the stated scope or Codeos philosophy.
+  SELF-REFERENCE /         review records that are stale because of the previous round's
+  REVIEW-BOOKKEEPING       own existence (causal loop); not a real artifact defect.
+  Base the PR decision ONLY on IN-SCOPE BLOCKER findings. An OUT-OF-SCOPE BACKLOG finding
+  must NOT cause DO NOT ADVANCE unless this artifact FALSELY CLAIMS to solve it.
+
+WHAT NOT TO DO
+  - Do not flag style or wording issues as blockers unless the wording creates a false claim,
+    contradiction, parser breakage, or wrong governance instruction.
+  - Do not re-review unchanged full context when the packet is in delta mode.
+  - Do not treat local-only review history as a blocker unless the artifact falsely
+    claims the review artifacts are committed/durable.
+
+INSTRUCTIONS
+  If this is a resumed session, ignore any earlier-session conclusions unless they are
+  re-established by THIS packet; assess only the evidence above, pinned to this commit.
+  Give a focused assessment of this artifact against the stated scope, acceptance criteria,
+  and evidence in this packet. Rank findings by severity. Suggest a better design only when
+  needed to explain a required fix for an IN-SCOPE BLOCKER.
+
+  Limit findings to the top 3 IN-SCOPE BLOCKERS. Additional non-blocking observations may be
+  summarized in one short paragraph only if useful.
+
+  For EACH finding emit:
+    Finding: / Severity: High|Medium|Low / Classification: <one of the TRIAGE RULE labels>
+    Evidence: <file/line> / Why: <short> / Required action: fix now|optional fix|backlog|reject
+    Scope reason: <why it does/does not belong to this PR's scope>
+  Then emit:
+    PR decision: ADVANCE | REQUEST CHANGES | DO NOT ADVANCE   (based ONLY on in-scope blockers)
+    Scope drift warning: yes|no — <is anything pulling this PR beyond its stated scope?>
+  Then on the LAST three lines emit exactly (map ADVANCE->NO OBJECTION,
+  REQUEST CHANGES->CHANGES ADVISED, DO NOT ADVANCE->DO NOT ADVANCE):
+    LOG SUMMARY: <NO OBJECTION | CHANGES ADVISED | DO NOT ADVANCE | UNCLASSIFIED> — <single most important point>
+      (use UNCLASSIFIED if you genuinely cannot classify the artifact safely)
+    EVIDENCE: <A|B|C|D|E>
+    HIGHEST-IMPACT UNCERTAINTY: <one sentence — what single thing, if wrong, most affects this assessment>
+
+  Evidence grade — the grade describes what the assessment rests on, not reviewer confidence:
+    A — Directly verified in the artifact, diff, or output shown in the packet
+    B — Verified with multiple direct pieces of evidence, but coverage is not complete
+    C — Partially verified, partially inferred from structure or context
+    D — Mostly inferred from structure or indirect evidence
+    E — Hypothesis or very limited basis — little to no direct evidence
+
+
+PACKET MANIFEST
+  generated: 2026-07-03T16:08:10Z
+  task_prompt: /home/rimo/projects/Codeos/prompts/codeos-reviewer-task.md (4959 bytes)
+  review_content_bytes: 24422
+  estimated_review_tokens: ~6105
+  budget_status: OK
+  packet_mode: full
+  delta_base: none
+  items:
+    - path: changes/UPG-0022__CHG-20260703-004__00b-adr-generator.md
+      mode: full_file
+      bytes: 13375
+      sha256: 5b864d2a086b970742a8cb455ecf8ae61b6536a1536f5625deffc365073defe5
+    - path: backlog/UPG-0022-00b-adr-generator.md
+      mode: full_file
+      bytes: 2044
+      sha256: 1ae93252a8df4a4c3c2246fab33d59caf19bd6a38b005b590e7e1bbbcaa3a7a0
+    - path: (diff)
+      mode: full_file
+      bytes: 9003
+
+REVIEW CONTEXT
+  Feature:                UPG-0022__CHG-20260703-004
+  Stage:                  selfdev-step-2
+  Branch:                 main
+  Base commit:            (no base pin)
+  Review commit:          ceb046444ce11df91e4677cb8263c9ea3ef3ae40 (+ uncommitted workspace changes)
+  Current approved stage: n/a (non-numeric stage)
+  Evidence coverage:      FULL_COVERAGE
+  Workspace dirty:        yes (uncommitted changes at review time)
+
+DBA RULES RELEVANT TO THIS STAGE
+  - Human approval is required for every stage transition; you are advisory only.
+  - Memory is not truth — assess only what is provided, pinned to the review commit.
+  - Implementation must trace to approved artifacts; no behavior beyond intent+contract+schema.
+  - No events outside the approved event schema; no hidden behavior.
+
+STAGE-SPECIFIC CHECKS
+  - (no stage-specific checklist for stage selfdev-step-2)
+
+EXPECTED STAGE OUTPUT
+  (no expected-output template for stage)
+
+ARTIFACTS TO REVIEW
+  --- changes/UPG-0022__CHG-20260703-004__00b-adr-generator.md (sha256: 5b864d2a086b970742a8cb455ecf8ae61b6536a1536f5625deffc365073defe5, visibility: shown) ---
+    ---
+    change_id: CHG-20260703-004
+    feature_id: UPG-0022
+    slug: 00b-adr-generator
+    triage_class: script-tooling
+    scope_axis: self-dev only
+    review_profile: PROFILE-3
+    review_series: RVS__UPG-0022__CHG-20260703-004__S1
+    review_state: REVIEWED
+    status: IN_PROGRESS
+    loop_step: 2-Acceptance
+    ---
+    
+    # Change: UPG-0022 / CHG-20260703-004 — 00b → ADR Candidate Generator
+    
+    ## TRACE HEADER
+    
+    ```yaml
+    feature_id: UPG-0022
+    primary_feature_id: UPG-0022
+    change_id: CHG-20260703-004
+    slug: 00b-adr-generator
+    state: IN_PROGRESS
+    current_step: 2-Acceptance
+    implements:
+      - UPG-0022
+    related_features:
+      - UPG-0007
+    review_series: RVS__UPG-0022__CHG-20260703-004__S1
+    review_profile: PROFILE-3
+    review_state: REVIEWED
+    review_history: reviews/review-log.md
+    fixes_findings: []
+    follow_up_of: null
+    ```
+    
+    ---
+    
+    ## Step 1 — Change Intent
+    
+    ### Problem
+    
+    `prompts/00b-solution-discovery.md` (UPG-0007) produces a `## Architectural Risks` section
+    listing named design risks discovered during pre-Stage-1 domain exploration. Today those
+    risks just sit in a planning document — there is no mechanical step turning "we noticed
+    this risk" into a routable ADR candidate, so risks are easy to lose between a discovery
+    session and someone actually deciding what to do about them (the UPG-0022 backlog brief's
+    stated problem: "Expanded 00b may identify architecture risks but they can be lost").
+    
+    ### What changes
+    
+    | File | Change |
+    |---|---|
+    | `tools/reviewer/src/cmd/generate_adr_candidates.rs` | New: `generate-adr-candidates` subcommand |
+    | `tools/reviewer/src/cmd/mod.rs` | Register `generate_adr_candidates` module |
+    | `tools/reviewer/src/main.rs` | Add `GenerateAdrCandidates` variant; dispatch before config resolution (same pattern as `check-drift` / `generate-report`) |
+    | `tools/reviewer/tests/smoke.rs` | Smoke tests |
+    | `backlog/UPG-0022-00b-adr-generator.md` | Feature Thread: CHG-20260703-004 activated (done) |
+    | `status/self-development.md` | Row activated (done) |
+    | `status/roadmap.md` | UPG-0022 → IN_PROGRESS (done) |
+    
+    ### Scope boundary — what stays the same
+    
+    - `prompts/00b-solution-discovery.md` — not modified. The `## Architectural Risks` section
+      format it already documents (a Markdown section containing risk bullets) is the input
+      contract this tool reads; the prompt itself is not touched.
+    - `dba-system.md` — not touched.
+    - No existing subcommand's behavior changed (`review`, `decision`, `diagnose`, `stage-start`,
+      `check-drift`, `generate-report` all untouched).
+    - `scripts/codeos-review.sh` — not touched (shim passes through automatically).
+    - No change to what counts as an "approved" artifact: ADR candidates remain explicitly
+      non-authoritative output (per the backlog brief's Guardrail), same as 00b discovery output
+      itself is already labeled CANDIDATE/HYPOTHESIZED and non-authoritative.
+    
+    ### Design intent
+    
+    Follows the same mechanical-inference-plus-explicit-authorship-marker pattern established by
+    `generate-report` (UPG-0021): mechanically extractable content is tagged `[INFERRED]`; content
+    requiring judgment is tagged `[FILL]`. Nothing here becomes an approved decision — the tool's
+    own output states this explicitly (see banner below), matching the backlog brief's Guardrail
+    ("Candidates only; non-authoritative until routed through Stage 1–3 or Stage 10").
+    
+    `codeos-reviewer generate-adr-candidates --source <path>`
+    
+    **Input contract:** `--source <path>` names a Markdown file (a 00b Solution Discovery
+    document). The tool locates the `## Architectural Risks` section (from that heading to the
+    next `## ` heading or EOF) and reads each top-level bullet line (`- ` or `* ` at column 0
+    within that section) as one named risk. Sub-bullets/continuation lines are not treated as
+    separate risks — the single top-level bullet's raw text is treated as one risk entry's
+    identifying text; nested detail is out of scope for this generator (a human/model still
+    elaborates the ADR candidate's non-mechanical fields).
+    
+    **Output:** one ADR Candidate block per risk found, in source order, each shaped per the
+    UPG-0022 backlog brief's Proposed artifact:
+    
+    ```markdown
+    # ADR Candidates
+    
+    Decision needed: <risk bullet text> [INFERRED]
+    Why now: [FILL]
+    Features affected: [FILL]
+    Options: [FILL]
+    Risk if deferred: [FILL]
+    Does this affect behavior: [FILL]
+    Recommended route: [FILL]
+    - Stage 1–3
+    - Stage 10
+    - no action yet
+    ```
+    
+    Every generated output opens with:
+    ```
+    > [INFERRED] fields were populated automatically by extracting risk bullets from the source
+    > document — verify before submitting. [FILL] fields require human or model authorship.
+    > ADR candidates are non-authoritative until routed through Stage 1–3 or Stage 10.
+    ```
+    (exact wording to be finalized in Step 2 — the third line is the non-negotiable guardrail
+    carry-through from the backlog brief; it must survive verbatim into the generated artifact
+    so a reader of the *generated output alone*, without the backlog brief in hand, cannot
+    mistake a candidate for an approved decision.)
+    
+    **No risks found:** if the `## Architectural Risks` section is absent or contains no
+    top-level bullets, the tool does not fabricate a candidate. It prints a message to that
+    effect (exact stdout/stderr placement and exit code to be pinned down as an AC in Step 2)
+    rather than emitting an empty or placeholder ADR block.
+    
+    Output is written to stdout (redirect to file). Dispatched before `config::resolve()` (no
+    provider config required — same as `check-drift` and `generate-report`).
+    
+    ### Triage
+    
+    - Class: `script-tooling`
+    - Scope axis: `self-dev only`
+    - Review profile: `PROFILE-3`
+    - Originating backlog id: `UPG-0022`
+    
+    ---
+    
+    ## Step 2 — Acceptance Criteria
+    
+    ### Functional I/O
+    
+    **AC-1 — Section extraction boundary**
+    The tool locates the *first* line in the source file that is exactly equal to
+    `## Architectural Risks` after trimming trailing whitespace (case-sensitive, exact match —
+    not a prefix or substring match, so `## Architectural Risks (draft)` does not match). The
+    section spans from that line (exclusive) to the next line that starts with `## ` (any H2
+    heading), or EOF, whichever comes first. Only content in this span is scanned for risk
+    bullets. If the heading appears more than once, only the first occurrence's span is used.
+    _Verify in Step 4:_ fixture with the heading followed by bullets, then a later `## ` heading
+    with unrelated content; confirm only the first span's bullets are extracted and the later
+    section's content is not.
+    
+    **AC-2 — Risk bullet extraction**
+    Within the section (AC-1), every line starting at column 0 with `- ` or `* ` (a literal
+    hyphen or asterisk, one space, then content) is one risk bullet. The candidate's identifying
+    text is that line's content after stripping the marker and surrounding whitespace, taken
+    verbatim — no markdown normalization, no re-wrapping. Indented or continuation lines (any
+    line not itself starting with `- `/`* ` at column 0) are not appended to the preceding
+    bullet's text and never form their own risk entries. A bullet whose content is empty after
+    stripping the marker (e.g. a bare `- ` with nothing else) is skipped — it does not produce a
+    risk entry.
+    _Verify in Step 4:_ fixture with (a) plain top-level bullets, (b) an indented continuation
+    line under a bullet, (c) a bare `- ` with no text, (d) intro prose before the first bullet.
+    Confirm exactly the expected bullets are extracted, in source order, with continuation lines
+    and prose ignored and the bare bullet skipped.
+    
+    **AC-3 — Multiple risks: output structure and order**
+    For N risks found (N ≥ 1), the tool emits exactly one `# ADR Candidates` heading, followed by
+    N candidate groups in source order, each preceded by a `## Candidate <n>` subheading
+    (1-indexed, e.g. `## Candidate 1`, `## Candidate 2`, ...). Each group contains exactly these
+    seven fields plus the three-item route list, in this order:
+    ```
+    Decision needed: <risk text> [INFERRED]
+    Why now: [FILL]
+    Features affected: [FILL]
+    Options: [FILL]
+    Risk if deferred: [FILL]
+    Does this affect behavior: [FILL]
+    Recommended route: [FILL]
+    - Stage 1–3
+    - Stage 10
+    - no action yet
+    ```
+    (The `## Candidate <n>` subheading is a Step 2 design addition beyond the single-example
+    block shown in Step 1's backlog-derived proposed artifact — needed to unambiguously delimit
+    multiple candidate groups in one document. It does not change any field's name or order.)
+    _Verify in Step 4:_ fixture with 3 risks; confirm one `# ADR Candidates` heading, three
+    `## Candidate N` subheadings in order 1/2/3, and each group's seven fields + route list
+    present, complete, and correctly ordered.
+    
+    **AC-4 — `[INFERRED]` / `[FILL]` tagging**
+    `Decision needed:` is the only mechanically-derived field and is tagged `[INFERRED]`. All
+    other fields (`Why now`, `Features affected`, `Options`, `Risk if deferred`,
+    `Does this affect behavior`, `Recommended route`) are always `[FILL]` — the tool never
+    attempts to infer them from source content. No field is ever blank.
+    _Verify in Step 4:_ same fixture as AC-3; confirm exactly one `[INFERRED]` tag per candidate
+    group (on `Decision needed:`) and `[FILL]` on all six other fields, for every group.
+    
+    **AC-5 — Preamble present**
+    Whenever at least one risk is found, output begins with this banner verbatim:
+    ```
+    > [INFERRED] fields were populated automatically by extracting risk bullets from the source
+    > document — verify before submitting. [FILL] fields require human or model authorship.
+    > ADR candidates are non-authoritative until routed through Stage 1–3 or Stage 10.
+    ```
+    _Verify in Step 4:_ assert the first three non-blank lines of stdout match this banner
+    verbatim, byte for byte.
+    
+    **AC-6 — No `## Architectural Risks` section found**
+    If no line in the source file exactly matches `## Architectural Risks` (AC-1's match rule),
+    the tool writes nothing to stdout, writes
+    `error: no "## Architectural Risks" section found in <path>` to stderr, and exits 0 — this is
+    a valid-but-empty result, not a usage failure.
+    _Verify in Step 4:_ fixture with no such heading; confirm empty stdout, stderr names the
+    source path, exit code 0.
+    
+    **AC-7 — Section found but no bullets**
+    If the `## Architectural Risks` section (AC-1) exists but contains zero valid risk bullets
+    (AC-2 — including a section containing only prose, or only a bare empty bullet), the tool
+    writes nothing to stdout, writes
+    `error: "## Architectural Risks" section in <path> contains no risk bullets` to stderr, and
+    exits 0.
+    _Verify in Step 4:_ fixture with the heading present but only prose beneath it; confirm empty
+    stdout, a stderr message distinct from AC-6's, exit code 0.
+    
+    **AC-8 — Missing or unreadable `--source` file**
+    If the path given to `--source` does not exist or cannot be read, the tool writes nothing to
+    stdout, writes `error: cannot read source file '<path>': <os error>` to stderr, and exits 1
+    (`EXIT_USAGE`) — distinct from AC-6/AC-7 because there is no valid input to reason about at
+    all. (This intentionally diverges from `generate-report`'s optional-input graceful-`[FILL]`
+    pattern: `--source` is this tool's sole required input, not an auxiliary one — there is
+    nothing meaningful to generate without it.)
+    _Verify in Step 4:_ `--source does-not-exist.md`; confirm exit 1, stderr names the path.
+    
+    **AC-9 — `--source` is required**
+    `--source <path>` is a required flag (not optional). Omitting it, or passing an unknown flag,
+    is a clap usage error: exit 1, a usage message on stderr, nothing on stdout.
+    _Verify in Step 4:_ smoke test `generate-adr-candidates` with no `--source`; confirm exit 1.
+    
+    **AC-10 — Output to stdout only**
+    All report content (banner + candidate groups) is written to stdout only, never stderr. On a
+    successful non-empty run, stderr is empty. In the AC-6/AC-7/AC-8 cases, stdout is exactly
+    empty — no partial banner, no partial candidate content.
+    _Verify in Step 4:_ (a) run against a fixture with risks; confirm stderr is empty; (b) run
+    each of the AC-6/7/8 cases; confirm stdout is exactly empty in each.
+    
+    ### Exit codes
+    
+    **AC-11 — Exit 0 on success**
+    Any invocation that finds ≥ 1 risk bullet exits 0.
+    _Verify in Step 4:_ smoke test with a valid fixture; assert exit 0.
+    
+    **AC-12 — Dispatch before config resolution**
+    `generate-adr-candidates` runs without a configured provider, dispatching before
+    `config::resolve()` (same pattern as `check-drift` / `generate-report`).
+    _Verify in Step 4:_ run in a temp repo with no provider config set up at all; confirm no
+    config-resolution error occurs (exit 0 either via AC-6's no-section path or a successful
+    candidate-producing run).
+    
+    ### Idempotency
+    
+    **AC-13 — Deterministic output**
+    Given an unchanged source file, two invocations produce byte-for-byte identical stdout.
+    _Verify in Step 4:_ run twice against the same fixture; diff the outputs.
+    
+    ### Cross-reference integrity
+    
+    **AC-14 — Non-authoritative guardrail is inseparable from output**
+    The third preamble line ("ADR candidates are non-authoritative...") is part of the same
+    constant banner as the first two lines (AC-5) and is never conditionally omitted by any flag
+    or code path while candidate content is still emitted.
+    _Verify in Step 4:_ confirm the full banner (AC-5) appears in every test that produces
+    non-empty stdout; there is no separate flag or branch that prints candidates without it.
+    
+    ---
+    
+    ## Step 3 — Implement
+    
+    *(to be written after Step 2 approval)*
+    
+    ---
+    
+    ## Step 4 — Reconcile
+    
+    *(to be written after Step 3 approval)*
+
+  --- backlog/UPG-0022-00b-adr-generator.md (sha256: 1ae93252a8df4a4c3c2246fab33d59caf19bd6a38b005b590e7e1bbbcaa3a7a0, visibility: shown) ---
+    ---
+    feature_id: UPG-0022
+    slug: 00b-adr-generator
+    title: 00b to ADR Candidate Generator
+    status: IN_PROGRESS
+    priority: P3
+    depends_on: []
+    related_features: []
+    supersedes: []
+    superseded_by: []
+    ---
+    
+    # Upgrade: 00b-adr-generator — 00b to ADR Candidate Generator
+    
+    **Priority**: P3
+    **Status**: IN_PROGRESS
+    **Type**: toolkit-upgrade
+    **Related**: solution-discovery-00b, config-discovery
+    
+    ## Problem
+    
+    Expanded 00b may identify architecture risks but they can be lost.
+    
+    ## Upgrade
+    
+    Generate ADR candidates from 00b.
+    
+    ## Scope
+    
+    Pre-Stage-1 → ADR candidate handoff.
+    
+    ## Proposed artifact(s)
+    
+    ADR candidate output:
+    
+    ```markdown
+    # ADR Candidates
+    
+    Decision needed:
+    Why now:
+    Features affected:
+    Options:
+    Risk if deferred:
+    Does this affect behavior:
+    Recommended route:
+    - Stage 1–3
+    - Stage 10
+    - no action yet
+    ```
+    
+    ## Design notes
+    
+    Keeps 00b architecture risks from being lost by turning them into explicit, routable ADR
+    candidates — without making 00b authoritative.
+    
+    ## Value
+    
+    Medium. Keeps 00b useful without making it authoritative.
+    
+    ## Risk
+    
+    ADR candidates treated as approved decisions.
+    
+    ## Guardrail
+    
+    Candidates only; non-authoritative until routed through Stage 1–3 or Stage 10.
+    
+    ## DBA-philosophy note
+    
+    Touches **artifact authority**: ADR candidates are non-authoritative until routed through an
+    approved stage. Keeps 00b discovery from silently becoming architecture.
+    
+    ## Feature Thread
+    
+    > Canonical thread rollup for this feature. Compact links/IDs only; full detail lives in the
+    > change records and review files. May be maintained manually.
+    
+    ### Changes
+    
+    | Change ID | File | Purpose | State |
+    |---|---|---|---|
+    | CHG-20260703-004 | `changes/UPG-0022__CHG-20260703-004__00b-adr-generator.md` | New Rust subcommand: `generate-adr-candidates` | IN_PROGRESS |
+    
+    ### Reviews
+    
+    | Review ID | Change ID | Step | Round | Verdict |
+    |---|---|---|---|---|
+    
+    ### Findings Tracked Inside This Feature
+    
+    | Finding ID | Review ID | Classification | Resolution |
+    |---|---|---|---|
+    
+    ### Follow-up Features
+    
+    | Feature ID | Reason | Source finding |
+    |---|---|---|
+
+DIFF TO REVIEW (base->review, secret/size filtered)
+diff --git a/changes/UPG-0022__CHG-20260703-004__00b-adr-generator.md b/changes/UPG-0022__CHG-20260703-004__00b-adr-generator.md
+index 3d8833e..accfcd5 100644
+--- a/changes/UPG-0022__CHG-20260703-004__00b-adr-generator.md
++++ b/changes/UPG-0022__CHG-20260703-004__00b-adr-generator.md
+@@ -6,9 +6,9 @@ triage_class: script-tooling
+ scope_axis: self-dev only
+ review_profile: PROFILE-3
+ review_series: RVS__UPG-0022__CHG-20260703-004__S1
+-review_state: DRAFT
++review_state: REVIEWED
+ status: IN_PROGRESS
+-loop_step: 1-Intent
++loop_step: 2-Acceptance
+ ---
+ 
+ # Change: UPG-0022 / CHG-20260703-004 — 00b → ADR Candidate Generator
+@@ -21,14 +21,14 @@ primary_feature_id: UPG-0022
+ change_id: CHG-20260703-004
+ slug: 00b-adr-generator
+ state: IN_PROGRESS
+-current_step: 1-Intent
++current_step: 2-Acceptance
+ implements:
+   - UPG-0022
+ related_features:
+   - UPG-0007
+ review_series: RVS__UPG-0022__CHG-20260703-004__S1
+ review_profile: PROFILE-3
+-review_state: DRAFT
++review_state: REVIEWED
+ review_history: reviews/review-log.md
+ fixes_findings: []
+ follow_up_of: null
+@@ -138,7 +138,140 @@ provider config required — same as `check-drift` and `generate-report`).
+ 
+ ## Step 2 — Acceptance Criteria
+ 
+-*(to be written after Step 1 approval)*
++### Functional I/O
++
++**AC-1 — Section extraction boundary**
++The tool locates the *first* line in the source file that is exactly equal to
++`## Architectural Risks` after trimming trailing whitespace (case-sensitive, exact match —
++not a prefix or substring match, so `## Architectural Risks (draft)` does not match). The
++section spans from that line (exclusive) to the next line that starts with `## ` (any H2
++heading), or EOF, whichever comes first. Only content in this span is scanned for risk
++bullets. If the heading appears more than once, only the first occurrence's span is used.
++_Verify in Step 4:_ fixture with the heading followed by bullets, then a later `## ` heading
++with unrelated content; confirm only the first span's bullets are extracted and the later
++section's content is not.
++
++**AC-2 — Risk bullet extraction**
++Within the section (AC-1), every line starting at column 0 with `- ` or `* ` (a literal
++hyphen or asterisk, one space, then content) is one risk bullet. The candidate's identifying
++text is that line's content after stripping the marker and surrounding whitespace, taken
++verbatim — no markdown normalization, no re-wrapping. Indented or continuation lines (any
++line not itself starting with `- `/`* ` at column 0) are not appended to the preceding
++bullet's text and never form their own risk entries. A bullet whose content is empty after
++stripping the marker (e.g. a bare `- ` with nothing else) is skipped — it does not produce a
++risk entry.
++_Verify in Step 4:_ fixture with (a) plain top-level bullets, (b) an indented continuation
++line under a bullet, (c) a bare `- ` with no text, (d) intro prose before the first bullet.
++Confirm exactly the expected bullets are extracted, in source order, with continuation lines
++and prose ignored and the bare bullet skipped.
++
++**AC-3 — Multiple risks: output structure and order**
++For N risks found (N ≥ 1), the tool emits exactly one `# ADR Candidates` heading, followed by
++N candidate groups in source order, each preceded by a `## Candidate <n>` subheading
++(1-indexed, e.g. `## Candidate 1`, `## Candidate 2`, ...). Each group contains exactly these
++seven fields plus the three-item route list, in this order:
++```
++Decision needed: <risk text> [INFERRED]
++Why now: [FILL]
++Features affected: [FILL]
++Options: [FILL]
++Risk if deferred: [FILL]
++Does this affect behavior: [FILL]
++Recommended route: [FILL]
++- Stage 1–3
++- Stage 10
++- no action yet
++```
++(The `## Candidate <n>` subheading is a Step 2 design addition beyond the single-example
++block shown in Step 1's backlog-derived proposed artifact — needed to unambiguously delimit
++multiple candidate groups in one document. It does not change any field's name or order.)
++_Verify in Step 4:_ fixture with 3 risks; confirm one `# ADR Candidates` heading, three
++`## Candidate N` subheadings in order 1/2/3, and each group's seven fields + route list
++present, complete, and correctly ordered.
++
++**AC-4 — `[INFERRED]` / `[FILL]` tagging**
++`Decision needed:` is the only mechanically-derived field and is tagged `[INFERRED]`. All
++other fields (`Why now`, `Features affected`, `Options`, `Risk if deferred`,
++`Does this affect behavior`, `Recommended route`) are always `[FILL]` — the tool never
++attempts to infer them from source content. No field is ever blank.
++_Verify in Step 4:_ same fixture as AC-3; confirm exactly one `[INFERRED]` tag per candidate
++group (on `Decision needed:`) and `[FILL]` on all six other fields, for every group.
++
++**AC-5 — Preamble present**
++Whenever at least one risk is found, output begins with this banner verbatim:
++```
++> [INFERRED] fields were populated automatically by extracting risk bullets from the source
++> document — verify before submitting. [FILL] fields require human or model authorship.
++> ADR candidates are non-authoritative until routed through Stage 1–3 or Stage 10.
++```
++_Verify in Step 4:_ assert the first three non-blank lines of stdout match this banner
++verbatim, byte for byte.
++
++**AC-6 — No `## Architectural Risks` section found**
++If no line in the source file exactly matches `## Architectural Risks` (AC-1's match rule),
++the tool writes nothing to stdout, writes
++`error: no "## Architectural Risks" section found in <path>` to stderr, and exits 0 — this is
++a valid-but-empty result, not a usage failure.
++_Verify in Step 4:_ fixture with no such heading; confirm empty stdout, stderr names the
++source path, exit code 0.
++
++**AC-7 — Section found but no bullets**
++If the `## Architectural Risks` section (AC-1) exists but contains zero valid risk bullets
++(AC-2 — including a section containing only prose, or only a bare empty bullet), the tool
++writes nothing to stdout, writes
++`error: "## Architectural Risks" section in <path> contains no risk bullets` to stderr, and
++exits 0.
++_Verify in Step 4:_ fixture with the heading present but only prose beneath it; confirm empty
++stdout, a stderr message distinct from AC-6's, exit code 0.
++
++**AC-8 — Missing or unreadable `--source` file**
++If the path given to `--source` does not exist or cannot be read, the tool writes nothing to
++stdout, writes `error: cannot read source file '<path>': <os error>` to stderr, and exits 1
++(`EXIT_USAGE`) — distinct from AC-6/AC-7 because there is no valid input to reason about at
++all. (This intentionally diverges from `generate-report`'s optional-input graceful-`[FILL]`
++pattern: `--source` is this tool's sole required input, not an auxiliary one — there is
++nothing meaningful to generate without it.)
++_Verify in Step 4:_ `--source does-not-exist.md`; confirm exit 1, stderr names the path.
++
++**AC-9 — `--source` is required**
++`--source <path>` is a required flag (not optional). Omitting it, or passing an unknown flag,
++is a clap usage error: exit 1, a usage message on stderr, nothing on stdout.
++_Verify in Step 4:_ smoke test `generate-adr-candidates` with no `--source`; confirm exit 1.
++
++**AC-10 — Output to stdout only**
++All report content (banner + candidate groups) is written to stdout only, never stderr. On a
++successful non-empty run, stderr is empty. In the AC-6/AC-7/AC-8 cases, stdout is exactly
++empty — no partial banner, no partial candidate content.
++_Verify in Step 4:_ (a) run against a fixture with risks; confirm stderr is empty; (b) run
++each of the AC-6/7/8 cases; confirm stdout is exactly empty in each.
++
++### Exit codes
++
++**AC-11 — Exit 0 on success**
++Any invocation that finds ≥ 1 risk bullet exits 0.
++_Verify in Step 4:_ smoke test with a valid fixture; assert exit 0.
++
++**AC-12 — Dispatch before config resolution**
++`generate-adr-candidates` runs without a configured provider, dispatching before
++`config::resolve()` (same pattern as `check-drift` / `generate-report`).
++_Verify in Step 4:_ run in a temp repo with no provider config set up at all; confirm no
++config-resolution error occurs (exit 0 either via AC-6's no-section path or a successful
++candidate-producing run).
++
++### Idempotency
++
++**AC-13 — Deterministic output**
++Given an unchanged source file, two invocations produce byte-for-byte identical stdout.
++_Verify in Step 4:_ run twice against the same fixture; diff the outputs.
++
++### Cross-reference integrity
++
++**AC-14 — Non-authoritative guardrail is inseparable from output**
++The third preamble line ("ADR candidates are non-authoritative...") is part of the same
++constant banner as the first two lines (AC-5) and is never conditionally omitted by any flag
++or code path while candidate content is still emitted.
++_Verify in Step 4:_ confirm the full banner (AC-5) appears in every test that produces
++non-empty stdout; there is no separate flag or branch that prints candidates without it.
+ 
+ ---
+ 
