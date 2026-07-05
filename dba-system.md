@@ -40,9 +40,55 @@ When a conflict cannot be resolved by these rules: surface it clearly to the hum
 
 ---
 
+## Default Advisory Review
+
+Advisory review runs by default at every reviewable gate across the whole workflow below —
+not only the numbered Stage 1-9 loop, but also Feature Brief, Onboarding, Solution Discovery
+(conditionally — see below), and Architectural Refinement. This mirrors the same default
+that Codeos's own toolkit development already holds itself to.
+
+**How to run it.** Before each gate's human-approval decision, run:
+```
+codeos-reviewer review <feature_id> <stage>
+```
+using the Stage ID from the table above (e.g. `codeos-reviewer review checkout-flow 2` before
+approving Stage 2's contract; `codeos-reviewer review checkout-flow brief` before confirming
+a Feature Brief). The reviewer is independent, read-only, and non-gatekeeping — its verdict
+(NO OBJECTION / CHANGES ADVISED / DO NOT ADVANCE) informs the human's decision but never
+auto-blocks. **The human decides at the gate; Non-Negotiable Rule #1 is unchanged.**
+
+**Round budget.** Round 1 runs before the gate. Rounds 2-3 are allowed for fixes or material
+deltas raised by the previous round. After 3 rounds, stop and require a human decision rather
+than continuing to iterate automatically.
+
+**Solution Discovery is reviewed conditionally, not unconditionally.** The Discovery session
+itself stays optional and non-authoritative — running it is never required, and its output is
+never an approved architecture. If its output is actually carried into a Feature Brief or a
+Stage 1 Intent, *that handoff* gets the default advisory review (or a Review Waiver, below).
+A Discovery session whose output nobody acts on is simply never reviewed — there is nothing
+yet to review.
+
+**Review Waiver.** If reviewer tooling is unavailable or not configured for this project, the
+human records an explicit waiver with a reason and may continue — skipping the review
+silently is not allowed, and neither is blocking the whole project over missing reviewer
+setup. Record it as a plain entry in that feature's review log: "Review waiver: reviewer not
+configured for this project; proceeding without advisory review at `<stage>`. Reason:
+`<text>`." **The waiver applies only to the advisory review run. It never waives
+Non-Negotiable Rule #1** — a waived review still requires the human to explicitly approve the
+stage transition, exactly as if the review had run.
+
+**Relationship to the Reviewer Activation Package** (`.codeos/prompts/pipeline-reviewer.md`).
+That prompt remains available as an **optional, supplementary** independent critical-assessor
+pass — a human can paste it into a separate reviewer session for a second opinion that is
+free to challenge the artifact, the feature, or DBA itself, not just check it against
+acceptance criteria. It does not replace the default review above.
+
+---
+
 ## The 9-Step DBA Development Loop
 
-Every feature follows this exact sequence. No skipping.
+Every feature follows this exact sequence. No skipping. Run the default advisory review
+(see "Default Advisory Review" above) before each gate below.
 
 ```
 STEP 1 — Intent
@@ -95,25 +141,35 @@ STEP 9 — Targeted Refinement
 
 ## What You Do at Each Stage
 
-Use the corresponding prompt file from `.codeos/prompts/` for detailed instructions:
+Use the corresponding prompt file from `.codeos/prompts/` for detailed instructions. The
+**Stage ID** column is the identifier vocabulary used both for documentation ordering and as
+the `<stage>` argument to `codeos-reviewer review <feature_id> <stage>` — see "Default
+Advisory Review" below.
 
-| Stage | File |
-|---|---|
-| Session start | `.codeos/prompts/00-session-start.md` |
-| Session end (handoff) | `.codeos/prompts/00-session-end.md` |
-| Feature Brief (pre-Stage 1) | `.codeos/prompts/00b-feature-brief.md` |
-| Existing Codebase Onboarding (Session Type D) | `.codeos/prompts/00c-onboarding.md` |
-| Stage 1: Intent | `.codeos/prompts/01-intent.md` |
-| Stage 2: Contracts | `.codeos/prompts/02-contract.md` |
-| Stage 3: Event Schema | `.codeos/prompts/03-event-schema.md` |
-| Stage 4: Implementation | `.codeos/prompts/04-implement.md` |
-| Stage 5: Tests | `.codeos/prompts/05-tests.md` |
-| Stage 6: Observation | `.codeos/prompts/06-observe.md` |
-| Stage 7: Reconcile | `.codeos/prompts/07-reconcile.md` |
-| Stage 8: Replay | `.codeos/prompts/08-replay.md` |
-| Stage 9: Refine | `.codeos/prompts/09-refine.md` |
-| **Architectural Refinement** (alternate loop) | `.codeos/prompts/10-arch-refine.md` |
-| Reviewer Activation Package | `.codeos/prompts/pipeline-reviewer.md` |
+| Stage | Stage ID | File |
+|---|---|---|
+| Session start | — | `.codeos/prompts/00-session-start.md` |
+| Session end (handoff) | — | `.codeos/prompts/00-session-end.md` |
+| Solution Discovery (Session Type E, pre-Feature-Brief) | `discovery` | `.codeos/prompts/00b-solution-discovery.md` |
+| Feature Brief (pre-Stage 1) | `brief` | `.codeos/prompts/00b-feature-brief.md` |
+| Existing Codebase Onboarding (Session Type D) | `onboarding` | `.codeos/prompts/00c-onboarding.md` |
+| Stage 1: Intent | `1` | `.codeos/prompts/01-intent.md` |
+| Stage 2: Contracts | `2` | `.codeos/prompts/02-contract.md` |
+| Stage 3: Event Schema | `3` | `.codeos/prompts/03-event-schema.md` |
+| Stage 4: Implementation | `4` | `.codeos/prompts/04-implement.md` |
+| Stage 5: Tests | `5` | `.codeos/prompts/05-tests.md` |
+| Stage 6: Observation | `6` | `.codeos/prompts/06-observe.md` |
+| Stage 7: Reconcile | `7` | `.codeos/prompts/07-reconcile.md` |
+| Stage 8: Replay | `8` | `.codeos/prompts/08-replay.md` |
+| Stage 9: Refine | `9` | `.codeos/prompts/09-refine.md` |
+| **Architectural Refinement** (alternate loop) | `10` | `.codeos/prompts/10-arch-refine.md` |
+| Reviewer Activation Package (optional second opinion) | — | `.codeos/prompts/pipeline-reviewer.md` |
+
+**On `onboarding`'s position in this list**: it is not a step every feature passes through
+after `brief`. It is an **alternate entry point**, used *instead of* `discovery`/`brief` only
+when bootstrapping an existing codebase that lacks DBA artifacts. The Stage ID sequence
+(`discovery, brief, onboarding, 1, 2, ..., 10`) is identifier vocabulary and documentation
+order — not a claim that every feature is a single linear path through all of it.
 
 The Architectural Refinement workflow is a 5-step alternative loop (Scope → Impact → Implement → Verify → Reconcile) for structural changes that have no behavioral contract or event schema. Use it for workspace restructuring, shared library extraction, dependency consolidation, test infrastructure, and naming normalization. Use the 9-step loop for any change that would alter a contract or schema.
 

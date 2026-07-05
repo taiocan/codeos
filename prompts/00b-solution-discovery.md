@@ -203,6 +203,12 @@ To continue with feature work:
 3. Use this discovery output as background context for those briefs — not as a binding
    specification. Stage 1 (Intent Capture) is the authoritative entry point.
 
+**If this output is carried into a Feature Brief or a Stage 1 Intent**, that handoff gets
+the default advisory review (`codeos-reviewer review <feature_id> discovery`) or an explicit
+Review Waiver — see `dba-system.md`'s "Default Advisory Review" section. This session
+itself stays optional and non-gating either way; a Discovery session whose output nobody
+carries forward is never reviewed, because there is nothing yet to review.
+
 The standard DBA path remains: **Intent → Contract → Schema → Implement → Tests →
 Runtime → Reconcile → Replay → Refinement**. This document is upstream context, not a
 new stage in that sequence.

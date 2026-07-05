@@ -4570,3 +4570,145 @@ Provenance:
   review_commit: 142bd02e4914dde5e3c5971a381cea2636f7f271  [HEAD_MATCH]
   packet_sha256: [MATCH]
   coverage_state: FULL_COVERAGE  [OK]
+
+## 2026-07-05T11:38:26Z REVIEW — UPG-0037__CHG-20260705-002 — Stage selfdev-step-1
+Base: (no base pin)  Review: 2543932db0e14b5f06c8083d3dd88188371dc2ec  Branch: main
+Diff-hash: 90a1f4ca19d8f2f7337b78ed8133c9b4a111b7a1f68853224fc759abd21e8bd8
+Reviewer: codex default-model (session 019f3212-406f-7883-8505-316fb97a2a35)
+Effort: high   Wall time: 22305ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: C
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — Step 1 intent is scope-consistent and has no in-scope blocker in the packet.
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-05T113826Z-UPG-0037__CHG-20260705-002-stage-selfdev-step-1-2543932.md (sha256:642bb0829f91ccf618c179f4043fd0e8ab55a4cf2795a3717e65af3922286f10)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260705T113826Z-UPG-0037__CHG-20260705-002-stage-selfdev-step-1-2543932.packet.txt (sha256:09816eb2c997a9893777bd06c992ba0d1137935d65a3bae4615bce26c8b9821a)
+Human decision: (append with: codeos-reviewer decision UPG-0037__CHG-20260705-002 selfdev-step-1 <DECISION> "<reason>")
+
+## 2026-07-05T11:47:25Z HUMAN DECISION — UPG-0037__CHG-20260705-002 — Stage selfdev-step-1
+Commit at decision: 2543932db0e14b5f06c8083d3dd88188371dc2ec
+Decision: APPROVE_STAGE
+Reason/next: Step 1 NO OBJECTION (evidence C — several background claims about FundFlow/packet.rs/dba-system.md weren't shown in the packet itself, correctly flagged non-blocking since Step 1 is intent-only, no implementation claims yet). Settled design approved: unified discovery/brief/onboarding/1-10 stage vocabulary (documentation/reviewer-argument only), flat R1/R2-3/stop-after-3 cadence with no PROFILE-N leakage into dba-system.md, Solution Discovery reviewed only when carried forward, Review Waiver scoped to never touch the human-approval gate, no CLAUDE.md changes.
+Provenance:
+  assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-05T113826Z-UPG-0037__CHG-20260705-002-stage-selfdev-step-1-2543932.md
+  review_commit: 2543932db0e14b5f06c8083d3dd88188371dc2ec  [HEAD_MATCH]
+  packet_sha256: [MATCH]
+  coverage_state: FULL_COVERAGE  [OK]
+
+## 2026-07-05T11:49:23Z REVIEW — UPG-0037__CHG-20260705-002 — Stage selfdev-step-2
+Base: (no base pin)  Review: 2543932db0e14b5f06c8083d3dd88188371dc2ec  Branch: main
+Diff-hash: a8843b9078273112edc6f31b28ec85e3b7ff4c2832dfffa46d8fe58b932db0e2
+Reviewer: codex default-model (session 019f3212-406f-7883-8505-316fb97a2a35)
+Effort: high   Wall time: 44770ms   Reconnects: 0
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: CHANGES ADVISED — AC-10 falsely promises no new binary build despite requiring Rust reviewer code changes.
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-05T114923Z-UPG-0037__CHG-20260705-002-stage-selfdev-step-2-2543932.md (sha256:75cc2b2eb6d609ac1c211ccb58a010cc041b9a0b8e0e7842e60a952ca8f40500)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260705T114923Z-UPG-0037__CHG-20260705-002-stage-selfdev-step-2-2543932.packet.txt (sha256:8b62e135ea3f7978f99eb0b01b115b13b684c1d82ce4279d9cd0a6c4870422a5)
+Human decision: (append with: codeos-reviewer decision UPG-0037__CHG-20260705-002 selfdev-step-2 <DECISION> "<reason>")
+
+## 2026-07-05T11:50:45Z REVIEW — UPG-0037__CHG-20260705-002 — Stage selfdev-step-2
+Base: (no base pin)  Review: 2543932db0e14b5f06c8083d3dd88188371dc2ec  Branch: main
+Diff-hash: a8843b9078273112edc6f31b28ec85e3b7ff4c2832dfffa46d8fe58b932db0e2
+Reviewer: codex default-model (session 019f3212-406f-7883-8505-316fb97a2a35)
+Effort: high   Wall time: 32603ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: B
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — Step 2 acceptance criteria are present, scoped, and the prior AC-10 false no-build claim has been corrected.
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-05T115045Z-UPG-0037__CHG-20260705-002-stage-selfdev-step-2-2543932.md (sha256:38d3b3aac17a180b94f1d668579fab15de8b68bf44c2e14d5b784ddcd351f817)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260705T115045Z-UPG-0037__CHG-20260705-002-stage-selfdev-step-2-2543932.packet.txt (sha256:b06079e9124c54c0d6d2791707f9fa2b423b8ed8d6979b8932b00409bc3e278d)
+Human decision: (append with: codeos-reviewer decision UPG-0037__CHG-20260705-002 selfdev-step-2 <DECISION> "<reason>")
+
+## 2026-07-05T11:54:26Z HUMAN DECISION — UPG-0037__CHG-20260705-002 — Stage selfdev-step-2
+Commit at decision: 2543932db0e14b5f06c8083d3dd88188371dc2ec
+Decision: APPROVE_STAGE
+Reason/next: Step 2 NO OBJECTION on R2 (R1 flagged AC-10's false 'no new binary build' guarantee, which contradicted the packet.rs change itself; fixed to distinguish the in-repo rebuild from downstream-side setup, verified via a post-rebuild FundFlow dry run). 13 ACs cover doctrine content, downstream compatibility against the real FundFlow adopter, reviewer-engine support, and cross-reference sweep.
+Provenance:
+  assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-05T115045Z-UPG-0037__CHG-20260705-002-stage-selfdev-step-2-2543932.md
+  review_commit: 2543932db0e14b5f06c8083d3dd88188371dc2ec  [HEAD_MATCH]
+  packet_sha256: [MATCH]
+  coverage_state: FULL_COVERAGE  [OK]
+
+## 2026-07-05T12:05:17Z REVIEW — UPG-0037__CHG-20260705-002 — Stage selfdev-step-3
+Base: (no base pin)  Review: 2543932db0e14b5f06c8083d3dd88188371dc2ec  Branch: main
+Diff-hash: 653f4369a95c39c7a778a0b5b4333e1ea71a0e061f228d7893c5a2de75cc679b
+Reviewer: codex default-model (session 019f3212-406f-7883-8505-316fb97a2a35)
+Effort: high   Wall time: 98764ms   Reconnects: 0
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: A
+Coverage: SECRET_REDACTION; redactions: 1; workspace_dirty: true
+Log summary: CHANGES ADVISED — downstream docs currently tell users to run a shim the artifact itself says fails, and AC-4 is violated by new PROFILE-N wording.
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-05T120517Z-UPG-0037__CHG-20260705-002-stage-selfdev-step-3-2543932.md (sha256:318f1d2346ad9f99deaa6d7ab5da79c2351e5ad69d688741ec5e37d146e17938)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260705T120517Z-UPG-0037__CHG-20260705-002-stage-selfdev-step-3-2543932.packet.txt (sha256:596558b266237c80ae60f3c539ed2752c3b38952d89329c231095c3851fdaa7b)
+Coverage gap: SECRET_REDACTION — excluded/redacted [prompts/00b-solution-discovery.md] — MANUAL SECURITY REVIEW REQUIRED
+Human decision: (append with: codeos-reviewer decision UPG-0037__CHG-20260705-002 selfdev-step-3 <DECISION> "<reason>")
+
+## 2026-07-05T12:08:04Z REVIEW — UPG-0037__CHG-20260705-002 — Stage selfdev-step-3
+Base: (no base pin)  Review: 2543932db0e14b5f06c8083d3dd88188371dc2ec  Branch: main
+Diff-hash: 8ce0439047b6c19d141d38c828c7e668a0b97d08d6585aa09672f093c585d2e7
+Reviewer: codex default-model (session 019f3212-406f-7883-8505-316fb97a2a35)
+Effort: high   Wall time: 40087ms   Reconnects: 0
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: A
+Coverage: SECRET_REDACTION; redactions: 1; workspace_dirty: true
+Log summary: CHANGES ADVISED — AC-4 remains false as written because the required PROFILE grep still matches docs/reviewer-pipeline.md.
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-05T120804Z-UPG-0037__CHG-20260705-002-stage-selfdev-step-3-2543932.md (sha256:3866587615e1b844799fe3e4cd19a0fa90abaa8ab8123f6e5cf99d284a62f5c8)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260705T120804Z-UPG-0037__CHG-20260705-002-stage-selfdev-step-3-2543932.packet.txt (sha256:d9bfc2a57db4a87968fa66ac3ca672d4d060732bcb29bdc748c5cdd56a1c7169)
+Coverage gap: SECRET_REDACTION — excluded/redacted [prompts/00b-solution-discovery.md] — MANUAL SECURITY REVIEW REQUIRED
+Human decision: (append with: codeos-reviewer decision UPG-0037__CHG-20260705-002 selfdev-step-3 <DECISION> "<reason>")
+
+## 2026-07-05T12:09:39Z REVIEW — UPG-0037__CHG-20260705-002 — Stage selfdev-step-3
+Base: (no base pin)  Review: 2543932db0e14b5f06c8083d3dd88188371dc2ec  Branch: main
+Diff-hash: 8ce0439047b6c19d141d38c828c7e668a0b97d08d6585aa09672f093c585d2e7
+Reviewer: codex default-model (session 019f3212-406f-7883-8505-316fb97a2a35)
+Effort: high   Wall time: 45342ms   Reconnects: 0
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: B
+Coverage: SECRET_REDACTION; redactions: 1; workspace_dirty: true
+Log summary: CHANGES ADVISED — no in-scope artifact blocker found, but SECRET_REDACTION prevents a NO OBJECTION decision from this packet.
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-05T120939Z-UPG-0037__CHG-20260705-002-stage-selfdev-step-3-2543932.md (sha256:0b53e49d55de63e6a36b60a2574642d13002e2f8710fec9360467c8b65148d66)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260705T120939Z-UPG-0037__CHG-20260705-002-stage-selfdev-step-3-2543932.packet.txt (sha256:83c24568e3de318865fba48f3a023e8e79e7f22b778e49fd6b09ce0ad7e87109)
+Coverage gap: SECRET_REDACTION — excluded/redacted [prompts/00b-solution-discovery.md] — MANUAL SECURITY REVIEW REQUIRED
+Human decision: (append with: codeos-reviewer decision UPG-0037__CHG-20260705-002 selfdev-step-3 <DECISION> "<reason>")
+
+## 2026-07-05T18:57:15Z HUMAN DECISION — UPG-0037__CHG-20260705-002 — Stage selfdev-step-3
+Commit at decision: 2543932db0e14b5f06c8083d3dd88188371dc2ec
+Decision: APPROVE_STAGE
+Reason/next: Step 3: 3 rounds (PROFILE-4 budget). R1 flagged 3 in-scope blockers (docs instructing the broken shim path, PROFILE-N literally leaking into the new §12 section, undeclared UPG-0038 bookkeeping) - all fixed. R2 flagged AC-4's grep scope being too broad (caught docs/reviewer-pipeline.md's own pre-existing self-dev §4d table) - AC-4 reworded to explicitly exclude that pre-existing section while still requiring the new §12 section itself be clean. R3: CHANGES ADVISED with zero in-scope blockers, driven entirely by a false-positive SECRET_REDACTION on a pre-existing 'Secret / non-secret:' template field label in 00b-solution-discovery.md, unrelated to this change's edit. Budget exhausted; accepted as-is per human decision, no further rounds.
+Provenance:
+  assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-05T120939Z-UPG-0037__CHG-20260705-002-stage-selfdev-step-3-2543932.md
+  review_commit: 2543932db0e14b5f06c8083d3dd88188371dc2ec  [HEAD_MATCH]
+  packet_sha256: [MATCH]
+  coverage_state: SECRET_REDACTION  [OK]
+
+## 2026-07-05T19:00:36Z REVIEW — UPG-0037__CHG-20260705-002 — Stage selfdev-step-4
+Base: (no base pin)  Review: 2543932db0e14b5f06c8083d3dd88188371dc2ec  Branch: main
+Diff-hash: a98775a01b970977c61b43800d6164f785e9699bd2a7b029bf6091b450e5a7db
+Reviewer: codex default-model (session 019f3212-406f-7883-8505-316fb97a2a35)
+Effort: high   Wall time: 46903ms   Reconnects: 0
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: A
+Coverage: SECRET_REDACTION; redactions: 1; workspace_dirty: true
+Log summary: CHANGES ADVISED — SECRET_REDACTION coverage prevents a NO OBJECTION decision from this packet.
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-05T190036Z-UPG-0037__CHG-20260705-002-stage-selfdev-step-4-2543932.md (sha256:76775de6bd56afa7acb4e8c207474bda48c6183bbaa156173fc77a960736c034)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260705T190036Z-UPG-0037__CHG-20260705-002-stage-selfdev-step-4-2543932.packet.txt (sha256:9bcb06a557980986b4b72c0f8214676fd5d6db3ee2077295dcb7ce23dc96e064)
+Coverage gap: SECRET_REDACTION — excluded/redacted [prompts/00b-solution-discovery.md] — MANUAL SECURITY REVIEW REQUIRED
+Human decision: (append with: codeos-reviewer decision UPG-0037__CHG-20260705-002 selfdev-step-4 <DECISION> "<reason>")
+
+## 2026-07-05T20:04:19Z HUMAN DECISION — UPG-0037__CHG-20260705-002 — Stage selfdev-step-4
+Commit at decision: 2543932db0e14b5f06c8083d3dd88188371dc2ec
+Decision: APPROVE_STAGE
+Reason/next: Step 4 R1 accepted as-is; UPG-0037 closed. Only remaining concern is the same structural SECRET_REDACTION false positive already accepted at Step 3: benign pre-existing template text in 00b-solution-discovery.md triggers the scanner on every full-content review packet. Not an in-scope defect in UPG-0037 and does not invalidate the verified acceptance criteria. AC-8 wording fixed this round (FundFlow status compared before/after, not asserted empty). No new in-scope blockers. Deliberately not re-running with 00b-solution-discovery.md as --sha-only merely to obtain a cleaner packet, since that would reduce evidence visibility without changing the underlying finding. Known structural scanner limitation, recorded for future reference: 00b-solution-discovery.md's benign permanent template text ('Secret / non-secret:' field label) triggers SECRET_REDACTION in full-content packets; treat as REJECTED / not an in-scope blocker whenever this file is reviewed in full, not grounds to switch to --sha-only solely to hide the trigger.
+Provenance:
+  assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-05T190036Z-UPG-0037__CHG-20260705-002-stage-selfdev-step-4-2543932.md
+  review_commit: 2543932db0e14b5f06c8083d3dd88188371dc2ec  [HEAD_MATCH]
+  packet_sha256: [MATCH]
+  coverage_state: SECRET_REDACTION  [OK]

@@ -1,0 +1,2935 @@
+Reviewer task:
+
+SCOPE CONTRACT
+  Assess this artifact against the STATED SCOPE of this stage/PR — the Expected Stage
+  Output below and what the artifacts actually claim — NOT against an ideal final system.
+  A capability the artifacts do not claim to provide is OUT-OF-SCOPE, not a defect.
+  The following are OUT-OF-SCOPE BACKLOG unless THIS artifact explicitly claims to provide
+  them: formal approval-binding enforcement; rollback correctness; COMMIT_BOUND/
+  WORKSPACE_BOUND enforcement; JSON Schema validation; CI validation; exact
+  decision-integrity; per-feature decision ledgers; autonomous approval; enabled hooks.
+
+YOUR TASK — answer these five questions using only the evidence in the packet:
+  1. Acceptance criteria: Does the artifact satisfy each of its stated acceptance criteria?
+     Cite evidence for each criterion (or note its absence).
+  2. Claim support: Are universal or strong claims (all, every, never, always, no X) in the
+     artifact supported by evidence in the packet? Any unverifiable strong claim is a candidate
+     finding only if it affects acceptance, scope, safety, decision integrity, or the artifact's
+     stated guarantees.
+  3. Scope drift: Is there any change beyond the stated scope boundary? (Files not in the
+     "What changes" list; behavior changes not in the intent; downstream doctrine modified
+     rather than read.)
+  4. In-scope blockers: Are there facts that, if left in, would make the artifact wrong,
+     unsafe, or internally contradictory?
+  5. Finding classification: Classify every finding you raise as exactly one of the five
+     TRIAGE RULE categories below.
+
+TRIAGE RULE — classify EVERY finding as exactly one of:
+  IN-SCOPE BLOCKER         breaks the stated goal; creates a FALSE CLAIM in this artifact;
+                           weakens the advisory/read-only/human-gated guarantees; prevents
+                           the work from running; or violates an explicit safety constraint.
+  IN-SCOPE NON-BLOCKER     improves it but is not required for this PR.
+  OUT-OF-SCOPE BACKLOG     valid, but belongs to a future feature / stronger guarantee.
+  REJECTED                 conflicts with the stated scope or Codeos philosophy.
+  SELF-REFERENCE /         review records that are stale because of the previous round's
+  REVIEW-BOOKKEEPING       own existence (causal loop); not a real artifact defect.
+  Base the PR decision ONLY on IN-SCOPE BLOCKER findings. An OUT-OF-SCOPE BACKLOG finding
+  must NOT cause DO NOT ADVANCE unless this artifact FALSELY CLAIMS to solve it.
+
+WHAT NOT TO DO
+  - Do not flag style or wording issues as blockers unless the wording creates a false claim,
+    contradiction, parser breakage, or wrong governance instruction.
+  - Do not re-review unchanged full context when the packet is in delta mode.
+  - Do not treat local-only review history as a blocker unless the artifact falsely
+    claims the review artifacts are committed/durable.
+
+INSTRUCTIONS
+  If this is a resumed session, ignore any earlier-session conclusions unless they are
+  re-established by THIS packet; assess only the evidence above, pinned to this commit.
+  Give a focused assessment of this artifact against the stated scope, acceptance criteria,
+  and evidence in this packet. Rank findings by severity. Suggest a better design only when
+  needed to explain a required fix for an IN-SCOPE BLOCKER.
+
+  Limit findings to the top 3 IN-SCOPE BLOCKERS. Additional non-blocking observations may be
+  summarized in one short paragraph only if useful.
+
+  For EACH finding emit:
+    Finding: / Severity: High|Medium|Low / Classification: <one of the TRIAGE RULE labels>
+    Evidence: <file/line> / Why: <short> / Required action: fix now|optional fix|backlog|reject
+    Scope reason: <why it does/does not belong to this PR's scope>
+  Then emit:
+    PR decision: ADVANCE | REQUEST CHANGES | DO NOT ADVANCE   (based ONLY on in-scope blockers)
+    Scope drift warning: yes|no — <is anything pulling this PR beyond its stated scope?>
+  Then on the LAST three lines emit exactly (map ADVANCE->NO OBJECTION,
+  REQUEST CHANGES->CHANGES ADVISED, DO NOT ADVANCE->DO NOT ADVANCE):
+    LOG SUMMARY: <NO OBJECTION | CHANGES ADVISED | DO NOT ADVANCE | UNCLASSIFIED> — <single most important point>
+      (use UNCLASSIFIED if you genuinely cannot classify the artifact safely)
+    EVIDENCE: <A|B|C|D|E>
+    HIGHEST-IMPACT UNCERTAINTY: <one sentence — what single thing, if wrong, most affects this assessment>
+
+  Evidence grade — the grade describes what the assessment rests on, not reviewer confidence:
+    A — Directly verified in the artifact, diff, or output shown in the packet
+    B — Verified with multiple direct pieces of evidence, but coverage is not complete
+    C — Partially verified, partially inferred from structure or context
+    D — Mostly inferred from structure or indirect evidence
+    E — Hypothesis or very limited basis — little to no direct evidence
+
+
+PACKET MANIFEST
+  generated: 2026-07-05T18:59:49Z
+  task_prompt: /home/rimo/projects/Codeos/prompts/codeos-reviewer-task.md (4959 bytes)
+  review_content_bytes: 147841
+  estimated_review_tokens: ~36960
+  budget_status: WARNING — 147841 bytes exceeds CODEOS_PACKET_BUDGET_BYTES=50000
+  packet_mode: full
+  delta_base: none
+  items:
+    - path: changes/UPG-0037__CHG-20260705-002__downstream-default-stage-review.md
+      mode: full_file
+      bytes: 33015
+      sha256: d5262ef81a0024c5177c247919932f44c692a4099af83a5ecdb345979549c94f
+    - path: dba-system.md
+      mode: full_file
+      bytes: 20032
+      sha256: a2f4da69ac517e14a52b8e8f5fafabda70fbb3fdad85969ed736a0e3539b3c8c
+    - path: tools/reviewer/src/packet.rs
+      mode: full_file
+      bytes: 31494
+      sha256: 64cf73f384c7c6b6182aff3435bba6613cd9e40d3fa02caa5a681c7b8237b4b0
+    - path: prompts/pipeline-reviewer.md
+      mode: full_file
+      bytes: 6266
+      sha256: dbd055eebca2a765c75d76ac27b0d8d295b46ff0313ad069ebeaa1a3f28fc919
+    - path: docs/reviewer-pipeline.md
+      mode: full_file
+      bytes: 25006
+      sha256: 76cd58915ea9340b8e89d1988d3887cfaee3cbb0b8d658b8a3be0005dad3fa9e
+    - path: prompts/00b-solution-discovery.md
+      mode: full_file
+      bytes: 8047
+      sha256: 06e063189472d55fae72402b1622789cc7a64ca341044d6a0fac697bc88bb810
+      note: secret value redacted in place
+    - path: backlog/UPG-0038-review-shim-symlink-resolution.md
+      mode: full_file
+      bytes: 3198
+      sha256: b4507692881099a15edd2ec715d51fdabfdbacdcfa7ec6b8cf6a389ce3835ef1
+    - path: (diff)
+      mode: full_file
+      bytes: 20783
+
+REVIEW CONTEXT
+  Feature:                UPG-0037__CHG-20260705-002
+  Stage:                  selfdev-step-4
+  Branch:                 main
+  Base commit:            (no base pin)
+  Review commit:          2543932db0e14b5f06c8083d3dd88188371dc2ec (+ uncommitted workspace changes)
+  Current approved stage: n/a (non-numeric stage)
+  Evidence coverage:      SECRET_REDACTION
+  Workspace dirty:        yes (uncommitted changes at review time)
+
+DBA RULES RELEVANT TO THIS STAGE
+  - Human approval is required for every stage transition; you are advisory only.
+  - Memory is not truth — assess only what is provided, pinned to the review commit.
+  - Implementation must trace to approved artifacts; no behavior beyond intent+contract+schema.
+  - No events outside the approved event schema; no hidden behavior.
+  - COVERAGE IS PARTIAL: some content was excluded/redacted (see below). You are
+    seeing an incomplete evidence set — do not issue NO OBJECTION on this basis.
+
+STAGE-SPECIFIC CHECKS
+  - (no stage-specific checklist for stage selfdev-step-4)
+
+EXPECTED STAGE OUTPUT
+  (no expected-output template for stage)
+
+ARTIFACTS TO REVIEW
+  --- changes/UPG-0037__CHG-20260705-002__downstream-default-stage-review.md (sha256: d5262ef81a0024c5177c247919932f44c692a4099af83a5ecdb345979549c94f, visibility: shown) ---
+    ---
+    change_id: CHG-20260705-002
+    feature_id: UPG-0037
+    slug: downstream-default-stage-review
+    triage_class: downstream-doctrine
+    scope_axis: downstream doctrine only
+    review_profile: PROFILE-4
+    review_series: RVS__UPG-0037__CHG-20260705-002__S1
+    review_state: REVIEWED
+    status: IN_PROGRESS
+    loop_step: 4-Reconcile
+    ---
+    
+    # Change: UPG-0037 / CHG-20260705-002 — Default Advisory Review Across the Full Downstream DBA Workflow
+    
+    ## TRACE HEADER
+    
+    ```yaml
+    feature_id: UPG-0037
+    primary_feature_id: UPG-0037
+    change_id: CHG-20260705-002
+    slug: downstream-default-stage-review
+    state: IN_PROGRESS
+    current_step: 4-Reconcile
+    implements:
+      - UPG-0037
+    related_features:
+      - UPG-0007
+      - UPG-0036
+    review_series: RVS__UPG-0037__CHG-20260705-002__S1
+    review_profile: PROFILE-4
+    review_state: DRAFT
+    review_history: reviews/review-log.md
+    fixes_findings: []
+    follow_up_of: null
+    ```
+    
+    ---
+    
+    ## Step 1 — Change Intent
+    
+    ### Problem
+    
+    Codeos's own self-development (`CLAUDE.md`) makes advisory Codex review mandatory at every
+    step of the 4-step loop: "Run the Codex reviewer at every non-trivial step... Running the
+    review is mandatory. The verdict is advisory." The downstream doctrine (`dba-system.md`,
+    loaded by generated projects via a `.codeos` symlink) has no equivalent default. Its 9-Step
+    DBA Development Loop states a human-approval gate at every stage but never calls for an
+    advisory review pass before that gate. The only reviewer integration mentioned anywhere
+    downstream is `prompts/pipeline-reviewer.md` ("Reviewer Activation Package") — an optional,
+    manually-pasted prompt covering only Stages 1-9, structurally different (unstructured
+    Attention-Level/Key-Findings output, no packet, no review log, no acceptance-criteria
+    framing) from the Rust `codeos-reviewer` pipeline self-dev now relies on by default.
+    
+    This is the same rigor asymmetry UPG-0036 fixed at the toolkit layer (stack manifest /
+    `check-drift` dogfooding), now surfacing at the doctrine layer: Codeos requires more of its
+    own development than it defaults downstream projects into.
+    
+    **The gap is not capability.** `tools/reviewer/src/packet.rs` already hardcodes complete
+    `stage_checks()` and `stage_expected()` tables for downstream stages `"1"` through `"9"`
+    (`packet.rs:605,620`), and its "DBA RULES RELEVANT TO THIS STAGE" packet section is already
+    generic DBA language, not self-dev-specific (`packet.rs:336-341`: "Human approval is
+    required for every stage transition... Implementation must trace to approved artifacts...").
+    The mechanism has simply never been made the *default* in `dba-system.md`'s stated workflow
+    — and it doesn't yet cover the steps before Stage 1 at all: Solution Discovery
+    (`00b-solution-discovery.md`, UPG-0007) isn't even referenced in `dba-system.md`'s stage
+    table today (deliberately deferred by UPG-0007's self-dev-only scope), and Feature Brief /
+    Onboarding have no reviewer touchpoint either.
+    
+    **This is not hypothetical.** `/home/rimo/projects/FundFlow` is a real, live downstream
+    project: `.codeos` is symlinked to this repo, and its `reviewer.toml` is already configured
+    (`provider = "codex"`, `reasoning_effort = "high"`) — though `reviews/review-log.md` doesn't
+    exist yet, confirming the reviewer has never actually been invoked there. Because `.codeos`
+    is a live symlink rather than a versioned copy, any change to `dba-system.md` here is
+    immediately live for FundFlow on its very next session — there is no sync/migration step to
+    design around.
+    
+    ### What changes
+    
+    | File | Change |
+    |---|---|
+    | `dba-system.md` | Unified stage-identifier sequence (`discovery`, `brief`, `onboarding`, `1`-`10`) for documentation order and the `codeos-reviewer review <feature_id> <stage>` argument; default advisory-review line at every reviewable gate; Review Waiver practice for when reviewer tooling isn't configured |
+    | `tools/reviewer/src/packet.rs` | New `stage_checks()`/`stage_expected()` match arms for `"discovery"`, `"brief"`, `"onboarding"`, `"10"` (numeric `"1"`-`"9"` already exist) |
+    | `prompts/pipeline-reviewer.md` | Reframed opening line: optional supplementary independent-assessor pass, not a replacement for the default review |
+    | `docs/reviewer-pipeline.md` | New downstream-usage section (today written entirely in self-dev terms — `selfdev-step-N` arguments, `UPG-####` ids assumed) |
+    | `prompts/00b-solution-discovery.md` | Small addition: output gets reviewed when carried into a Feature Brief or Stage 1 Intent; the session itself stays optional/non-gating |
+    | `backlog/UPG-0037-downstream-default-stage-review.md` | Feature Thread: CHG-20260705-002 activated (done); a Follow-up Features row added at Step 3 for `UPG-0038` (see below) |
+    | `backlog/features.md` | Row → IN_PROGRESS (done); a `UPG-0038` row added at Step 3, since discovering and filing a genuinely out-of-scope follow-up during implementation is standard practice (precedent: UPG-0032 filed UPG-0034/UPG-0035 the same way) |
+    | `status/self-development.md` | Row activated (done) |
+    | `status/roadmap.md` | UPG-0037 → IN_PROGRESS (done); a `UPG-0038` row added at Step 3, same reason as above |
+    | `backlog/UPG-0038-review-shim-symlink-resolution.md` | New: follow-up backlog brief for the `codeos-review.sh` shim bug discovered during this change's Step 3 verification (AC-10) — not implemented here, filed as its own future change |
+    
+    ### Scope boundary — what stays the same
+    
+    - **`CLAUDE.md` — not touched, at all.** This is `downstream doctrine only`; no self-dev
+      governance changes. Verified as an acceptance criterion (`git diff --stat -- CLAUDE.md`
+      stays empty), not just asserted.
+    - **No new downstream triage/size-classification system.** `dba-system.md` has zero existing
+      triage concept (confirmed: no `trivial|triage|class` matches anywhere in it) — review is
+      default at every reviewable gate, uniformly, matching the existing "same loop regardless of
+      size" philosophy. Inventing a triage taxonomy purely to gate review-mandatoriness would be
+      disproportionate scope creep.
+    - **No porting of self-dev's `PROFILE-N` system into the doctrine.** `PROFILE-N` is
+      self-dev-internal tooling (`prompts/codeos-self-dev.md`) and never appears in
+      `dba-system.md` or any downstream-facing prompt. Downstream gets a flat, uniform round
+      budget described in `dba-system.md`'s own plain language (see Design intent). Note the two
+      distinct cadences at play, not to be conflated: *this change itself* (UPG-0037, as a
+      self-dev change) is triaged `downstream-doctrine` and reviewed under `PROFILE-4` per
+      `prompts/codeos-self-dev.md` — that governs how *this change's own* Step 1-4 gates get
+      reviewed during development. What this change *writes into* `dba-system.md` for downstream
+      projects is a separate, flat cadence with no `PROFILE-N` vocabulary at all.
+    - **No new config file or CLI flag for the Review Waiver** in this version. It's a doctrine-
+      level practice (a plain review-log/decision-record entry), not new tooling — `reviewer.toml`
+      gains no new field.
+    - **No artifact path, filename, schema, or stage-output changes anywhere.** Verified directly
+      against FundFlow's existing `reviewer.toml`, `features/registry.yaml`, and `reviews/`
+      layout remaining valid and untouched.
+    - **No prompt file renames.** `01-intent.md` through `09-refine.md`, `10-arch-refine.md`,
+      `00b-feature-brief.md`, `00c-onboarding.md`, `00b-solution-discovery.md` keep their current
+      filenames — the unified sequence in Design intent is stage-identifier vocabulary for
+      documentation and reviewer-invocation purposes only, not a file-rename.
+    - **Non-Negotiable Rule #1 is unchanged and unweakened**: every stage transition still
+      requires explicit human approval. The Review Waiver (see below) waives only the advisory
+      review run — never that approval gate.
+    
+    ### Design intent
+    
+    **Unified stage-identifier sequence** (vocabulary and documentation order only):
+    ```
+    discovery -> brief -> onboarding -> 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
+    ```
+    This is explicitly *not* a claim that `onboarding` (Session Type D) is a mandatory linear
+    step every feature passes through. Onboarding remains structurally what it is today: an
+    alternate entry point for bootstrapping an existing codebase that lacks DBA artifacts, used
+    *instead of* `discovery`/`brief` for that scenario, not sequentially after them.
+    `dba-system.md`'s prose states this explicitly wherever the unified sequence appears, so the
+    linear-looking list doesn't imply a linear-only reading.
+    
+    **Default review, uniform cadence** (mirrors self-dev's proven mechanism, not its naming):
+    ```
+    Run the Codex reviewer before each gate's human-approval decision:
+      codeos-reviewer review <feature_id> <stage>
+    Round 1 runs before the gate. Rounds 2-3 are allowed for fixes or material deltas. After 3
+    rounds, stop and require a human decision. The verdict is advisory — NO OBJECTION / CHANGES
+    ADVISED / DO NOT ADVANCE inform the human's decision but never auto-block. The reviewer is
+    independent, read-only, and non-gatekeeping; the human decides at the gate.
+    ```
+    
+    **Solution Discovery — conditional trigger, not unconditional.** The session itself stays
+    optional and non-authoritative (UPG-0007's guardrail, unchanged) — running it is never
+    required, and its output is never an approved architecture. *If* its artifact is carried
+    into a Feature Brief or Stage 1 Intent, *that handoff* gets the default advisory review pass
+    (or a Review Waiver). A Discovery session whose output nobody acts on is simply never
+    reviewed — there's nothing to review yet.
+    
+    **`prompts/pipeline-reviewer.md`, reframed not replaced.** It stays available as an optional,
+    independent critical-assessor pass for a second opinion — genuinely different in kind from
+    the Rust engine's acceptance-criteria-bound, scope-triaged assessment (its own framing is
+    explicitly "free to conclude DBA itself is inappropriate," a broader charter than the
+    structured review). Its opening line gets a one-sentence addition stating it's supplementary
+    to, not a replacement for, the default review log/packet path.
+    
+    **Review Waiver — precisely scoped.** If reviewer tooling is unavailable or not configured
+    for a project, the human records an explicit waiver with a reason and may continue — neither
+    silently skipping the review nor hard-blocking the whole project over missing reviewer
+    setup. The waiver applies *only* to the advisory review run; it never waives Non-Negotiable
+    Rule #1's human-approval gate — a waived review still requires the human to explicitly
+    approve the stage transition, exactly as today. Concretely: a plain entry in that feature's
+    review log / decision record ("Review waiver: reviewer not configured for this project;
+    proceeding without advisory review at Stage N. Reason: ..."). `UPG-0015`'s
+    `--override <RATIONALE>` flag is the closest existing precedent in spirit (human-recorded
+    rationale overriding a review-adjacent gate) but doesn't fit mechanically — it fires on a
+    packet that *was* built and found deficient; here there's no packet at all. A future CLI
+    convenience (e.g. `codeos-reviewer decision ... --waive-review "<reason>"`) is an explicit
+    possible follow-up, out of scope for this change.
+    
+    ### Triage
+    
+    - Class: `downstream-doctrine`
+    - Scope axis: `downstream doctrine only`
+    - Review profile: `PROFILE-4`
+    - Originating backlog id: `UPG-0037`
+    
+    ---
+    
+    ## Step 2 — Acceptance Criteria
+    
+    ### Doctrine content
+    
+    **AC-1 — Unified stage-identifier sequence present, correctly framed**
+    `dba-system.md` presents the sequence `discovery -> brief -> onboarding -> 1 -> 2 -> 3 -> 4
+    -> 5 -> 6 -> 7 -> 8 -> 9 -> 10` and explicitly states, adjacent to `onboarding`, that it is an
+    alternate entry point for bootstrapping an existing codebase lacking DBA artifacts — used
+    instead of `discovery`/`brief` for that scenario, not sequentially after them. The sequence
+    is not presented as a single mandatory linear path for every feature.
+    _Verify in Step 4:_ read the relevant `dba-system.md` section; confirm both the sequence and
+    the onboarding clarification sentence are present.
+    
+    **AC-2 — Default review instruction covers every reviewable gate**
+    `dba-system.md` states the default-review practice once, generically (matching self-dev's
+    own `CLAUDE.md` precedent, which states its mandatory-review rule once rather than repeating
+    it per step) — `codeos-reviewer review <feature_id> <stage>` — and the Stage ID table names
+    the exact identifier for every reviewable gate: Feature Brief (`brief`), Onboarding
+    (`onboarding`), Stages 1-9 (`1`-`9`), Stage 10 / Architectural Refinement (`10`). The generic
+    instruction's own text states it applies "at every reviewable gate" (or equivalent), so a
+    reader cannot mistake it for a Stage-1-only or partial practice. Solution Discovery
+    (`discovery`) has the separate conditional instruction from AC-3, not this unconditional one.
+    _Verify in Step 4:_ read the "Default Advisory Review" section and the Stage ID table;
+    confirm the generic instruction states it applies to every gate, and every non-Discovery
+    gate above has a Stage ID entry in the table.
+    
+    **AC-3 — Solution Discovery conditional trigger, correctly worded**
+    `dba-system.md` (and/or `prompts/00b-solution-discovery.md`) states that the Discovery
+    session itself remains optional and non-gating, and that review is triggered only when its
+    output is carried into a Feature Brief or Stage 1 Intent — not unconditionally after every
+    Discovery session.
+    _Verify in Step 4:_ read the relevant text in both files; confirm the conditional wording
+    ("if... is carried into...") is present, not an unconditional "every Discovery session is
+    reviewed."
+    
+    **AC-4 — Round budget, no `PROFILE-N` leakage into downstream-facing content**
+    `dba-system.md` states the round budget in its own plain language: round 1 before the gate,
+    rounds 2-3 for fixes/material deltas, stop after 3 rounds and require a human decision.
+    `grep -i "PROFILE-" dba-system.md prompts/pipeline-reviewer.md prompts/00b-solution-
+    discovery.md` returns zero matches — `PROFILE-N` is self-dev-internal vocabulary and must not
+    appear in anything a downstream project reads. `docs/reviewer-pipeline.md` is a Codeos
+    contributor-facing doc (not something `dba-init.sh` installs into a downstream project's
+    `.codeos/`), so its pre-existing §4d self-dev review-round-budget table legitimately
+    continues to name `PROFILE-0` through `PROFILE-5` — that is explicitly excluded from this
+    AC's scope. What *is* in scope: the new §12 downstream-usage section added by this change
+    must itself contain zero `PROFILE-` matches, distinguishing the two cadences without naming
+    the self-dev one.
+    _Verify in Step 4:_ run the 3-file grep above (must be empty); separately run
+    `sed -n '/## 12\. Downstream usage/,/^---$/p' docs/reviewer-pipeline.md | grep -i "PROFILE-"`
+    (must also be empty) to confirm the new section specifically, not the whole file, is clean.
+    
+    **AC-5 — Review Waiver, scoped correctly**
+    `dba-system.md` states the Review Waiver practice: if reviewer tooling is unavailable/not
+    configured, the human records an explicit waiver with a reason and may continue. The text
+    explicitly states the waiver applies only to the advisory review run and never waives
+    Non-Negotiable Rule #1's human-approval requirement — a waived review still requires explicit
+    human approval to proceed.
+    _Verify in Step 4:_ read the waiver section; confirm both the "record a reason, don't skip
+    silently, don't hard-block" framing and the explicit non-waiver of human approval are present.
+    
+    **AC-6 — `pipeline-reviewer.md` reframed, not contradicted**
+    `prompts/pipeline-reviewer.md`'s opening states it is an optional, supplementary independent
+    critical-assessor pass, explicitly not a replacement for the default review log/packet path.
+    Its existing "independent critical assessor, not a DBA compliance auditor" framing (its
+    current core content) is unchanged.
+    _Verify in Step 4:_ diff the file; confirm only the opening framing changed, and the rest of
+    the file (Stage Summary table, Your Role, Output Format sections) is untouched.
+    
+    ### Downstream compatibility (required for `downstream-doctrine` class)
+    
+    **AC-7 — No artifact path, filename, or schema changes**
+    No file under `intents/`, `contracts/`, `events/`, `modules/`, `tests/`, `features/`,
+    `backlog/`, `refinements/` (the downstream project directory structure per `dba-init.sh`) is
+    renamed, restructured, or schema-changed by this proposal. No prompt file under `prompts/` is
+    renamed.
+    _Verify in Step 4:_ `git diff --stat` for this change touches only the doctrine/tooling/docs
+    files explicitly named in the "What changes" table above (`dba-system.md`, `packet.rs`,
+    `pipeline-reviewer.md`, `docs/reviewer-pipeline.md`, `00b-solution-discovery.md`) plus the
+    listed backlog/status bookkeeping rows — no downstream-project-shaped paths
+    (`intents/`, `contracts/`, `events/`, etc.) appear anywhere in the diff.
+    
+    **AC-8 — FundFlow (real downstream adopter) remains valid and untouched**
+    `/home/rimo/projects/FundFlow`'s `reviewer.toml`, `features/registry.yaml`, and `reviews/`
+    directory contents are unchanged and remain structurally valid after this change (FundFlow is
+    not part of this repo and is never edited by it — this AC verifies non-interference, not
+    migration).
+    _Verify in Step 4:_ `git -C /home/rimo/projects/FundFlow status --short` shows no changes;
+    spot-check that `.codeos` still resolves (`readlink -f /home/rimo/projects/FundFlow/.codeos`)
+    to this repo post-change.
+    
+    **AC-9 — `CLAUDE.md` and self-dev governance untouched**
+    `git diff --stat -- CLAUDE.md` is empty for this change's commits. No file under
+    `prompts/codeos-self-dev.md`, `templates/codeos-change.md` is modified.
+    _Verify in Step 4:_ run the diff-stat check; confirm empty.
+    
+    **AC-10 — No new downstream-side setup burden, no new config field**
+    Because `.codeos` is a symlink to this repo (not a copy), a downstream project never builds
+    or maintains its own separate `codeos-reviewer` binary — it always uses whatever binary is
+    built here, in Codeos. This change's own Step 3/4 rebuilds that shared binary to include the
+    `packet.rs` match arms (AC-11/AC-12) as part of landing this change — that is ordinary
+    in-repo implementation work, not an extra step downstream projects must separately perform.
+    A downstream project that already has `reviewer.toml` configured (UPG-0003/0032/0014's
+    existing prerequisite) needs **no new configuration, no new config field, and no action of
+    its own** to start invoking the new stage identifiers once this change lands — it inherits
+    the rebuilt binary automatically through the existing symlink.
+    _Verify in Step 4:_ from `/home/rimo/projects/FundFlow`, after this change's binary is
+    rebuilt in Codeos, invoke the reviewer binary directly (`/home/rimo/projects/Codeos/tools/
+    reviewer/target/release/codeos-reviewer review <feature> discovery --print-packet ...`)
+    against an existing FundFlow artifact; confirm it builds a packet without error and without
+    any edit to FundFlow's own files. **Note**: `.codeos/scripts/codeos-review.sh` itself has a
+    pre-existing bug unrelated to this change — it resolves `REPO_ROOT` via `git rev-parse
+    --show-toplevel` from the *calling* repo, so from within FundFlow it looks for the binary
+    under FundFlow's own (nonexistent) `tools/reviewer/`, not through the `.codeos` symlink to
+    Codeos. This is filed as an out-of-scope follow-up (see Step 4), not fixed here — direct
+    binary invocation is the correct verification path for this AC until that shim is fixed.
+    
+    ### Reviewer-engine support
+    
+    **AC-11 — New stage identifiers produce real checklists, not the generic placeholder**
+    `tools/reviewer/src/packet.rs`'s `stage_checks()` and `stage_expected()` each gain match arms
+    for `"discovery"`, `"brief"`, `"onboarding"`, and `"10"`, returning stage-appropriate text
+    (not the `_ =>` generic placeholder). Numeric `"1"`-`"9"` are unchanged.
+    _Verify in Step 4:_ unit test (or packet dry-run) for each of the four new identifiers;
+    confirm the STAGE-SPECIFIC CHECKS / EXPECTED STAGE OUTPUT sections show real text, not
+    "(no stage-specific checklist for stage X)".
+    
+    **AC-12 — Build and existing tests remain green**
+    `cargo build` and `cargo test --test smoke` both pass after the `packet.rs` change, with no
+    regressions to existing stage `"1"`-`"9"` behavior or any other subcommand.
+    _Verify in Step 4:_ run both; record pass counts.
+    
+    ### Cross-reference integrity
+    
+    **AC-13 — No stale stage references left behind**
+    `grep -rn` across `dba-system.md`, `prompts/pipeline-reviewer.md`, `docs/reviewer-pipeline.md`,
+    `prompts/00-session-start.md`, `prompts/00b-solution-discovery.md` for any stage-numbering or
+    naming inconsistent with the unified sequence (e.g., a leftover claim that Discovery isn't
+    reviewable, or that Stage 10 has no reviewer touchpoint) is clean.
+    _Verify in Step 4:_ perform the sweep; note any fix made.
+    
+    ---
+    
+    ## Step 3 — Implement
+    
+    ### What was done
+    
+    | File | Change |
+    |---|---|
+    | `dba-system.md` | New "## Default Advisory Review" section (after Non-Negotiable Rules, before the 9-Step Loop): default-review practice, round budget, Solution Discovery's conditional trigger, Review Waiver, and the relationship to `pipeline-reviewer.md`. Added a "Stage ID" column to the "What You Do at Each Stage" table plus a new Solution Discovery row (previously absent); added the onboarding-alternate-entry clarification paragraph. One-line pointer added to the 9-Step Loop's intro. |
+    | `tools/reviewer/src/packet.rs` | New `stage_checks()`/`stage_expected()` match arms for `"discovery"`, `"brief"`, `"onboarding"`, `"10"`. Added 4 new unit tests confirming these produce real text (not the generic placeholder) and that numeric `"1"`-`"9"` are unchanged. |
+    | `prompts/pipeline-reviewer.md` | Opening reframed: optional supplementary second opinion, not a replacement for the default review. Stage Summary table, Your Role, and Output Format sections untouched (per AC-6's own scope boundary). |
+    | `docs/reviewer-pipeline.md` | New "## 12. Downstream usage" section: stage identifiers, the flat cadence (explicitly distinct from `PROFILE-N`), two invocation examples, and a Review Waiver pointer. |
+    | `prompts/00b-solution-discovery.md` | One paragraph added at the natural handoff point ("After Discovery" section): output gets reviewed when carried into a Feature Brief or Stage 1 Intent; the session itself stays optional/non-gating. |
+    
+    ### Verification (AC-1 through AC-13)
+    
+    - **AC-1**: `dba-system.md`'s Stage ID table presents the sequence with the explicit
+      onboarding-alternate-entry paragraph immediately following it. Confirmed by reading both.
+    - **AC-2**: the generic instruction states "Advisory review runs by default at every
+      reviewable gate across the whole workflow below," and every non-Discovery gate has a Stage
+      ID table entry. (AC-2 itself was revised at Step 2 R-review-time to match this DRY,
+      self-dev-precedented style rather than requiring a literal repeated command per stage.)
+    - **AC-3**: the conditional wording ("If its output is actually carried into...") is present
+      in both `dba-system.md` and `prompts/00b-solution-discovery.md` — confirmed not
+      unconditional.
+    - **AC-4**: round-budget prose present in `dba-system.md`. `grep -i "PROFILE-"
+      dba-system.md prompts/pipeline-reviewer.md docs/reviewer-pipeline.md
+      prompts/00b-solution-discovery.md` returns matches **only** from
+      `docs/reviewer-pipeline.md`'s pre-existing §4d (Codeos's own self-dev review-round-budget
+      table, unrelated to and unchanged by this section) — zero matches in `dba-system.md` or
+      either prompt file.
+    - **AC-5**: Review Waiver section states the "record a reason, don't skip silently, don't
+      hard-block" framing and explicitly: "The waiver applies only to the advisory review run. It
+      never waives Non-Negotiable Rule #1."
+    - **AC-6**: `git diff prompts/pipeline-reviewer.md` shows only the opening paragraph added;
+      Stage Summary table, Your Role, and Output Format sections are byte-identical to before.
+    - **AC-7**: `git diff --stat` for this change touches exactly `dba-system.md`,
+      `tools/reviewer/src/packet.rs`, `prompts/pipeline-reviewer.md`, `docs/reviewer-pipeline.md`,
+      `prompts/00b-solution-discovery.md`, plus the listed backlog/status bookkeeping rows — no
+      `intents/`, `contracts/`, `events/`, or other downstream-project-shaped path appears.
+    - **AC-8**: `git -C /home/rimo/projects/FundFlow status --short` shows the same pre-existing
+      untracked entries as before this change (unaffected); `readlink -f
+      /home/rimo/projects/FundFlow/.codeos` still resolves to this repo.
+    - **AC-9**: `git diff --stat -- CLAUDE.md` is empty.
+    - **AC-10**: verified directly against FundFlow — see "FundFlow dry run" below. **Finding**:
+      `.codeos/scripts/codeos-review.sh`, invoked *from* FundFlow, fails with "binary not found"
+      — a pre-existing bug where it resolves `REPO_ROOT` via `git rev-parse --show-toplevel` from
+      the calling repo (FundFlow) rather than through the `.codeos` symlink to Codeos, so it looks
+      for the binary under FundFlow's own nonexistent `tools/reviewer/`. This predates UPG-0037
+      (traces to the shim's original design in UPG-0027/UPG-0032) and is **out of scope for this
+      change** — filed as follow-up **UPG-0038**. AC-10's verification used
+      direct binary invocation instead, which works correctly.
+    - **AC-11/AC-12**: `cargo build` clean; `cargo test` — **77 smoke tests + 4 new unit tests, 0
+      failures**. `stage_expected("1".."9")` confirmed unchanged (new unit test).
+    
+    **FundFlow dry run** (AC-10/AC-11 concrete evidence): from `/home/rimo/projects/FundFlow`,
+    invoking `/home/rimo/projects/Codeos/tools/reviewer/target/release/codeos-reviewer review
+    fundflow-test <stage> --print-packet --skip-prechecks <existing-fundflow-artifact>` for each
+    of `discovery`, `brief`, `onboarding`, `10` produced the correct new STAGE-SPECIFIC CHECKS /
+    EXPECTED STAGE OUTPUT text (not the generic placeholder) in every case, against real FundFlow
+    artifacts (`docs/solution-discovery-fundflow.md`, `backlog/proposal_twin-data-model.md`).
+    FundFlow's `git status --short` was identical before and after — no side effects.
+    
+    ### Scope check
+    
+    No edits to `CLAUDE.md`, `templates/stack-manifest.md`/`templates/stack-reconciliation-
+    report.md`, `tools/reviewer/src/cmd/check_drift.rs`, or any other subcommand's behavior. No
+    prompt file renamed. `prompts/pipeline-reviewer.md`'s Stage Summary table (covering only
+    Stages 1-9) intentionally left as-is per AC-6 — it remains the narrower, optional
+    supplementary tool, not required to mirror the full new Stage ID set.
+    
+    ---
+    
+    ## Step 4 — Reconcile
+    
+    ### Acceptance criteria verification (fresh evidence, raw output)
+    
+    | AC | Verified by | Result |
+    |---|---|---|
+    | AC-1 Stage ID sequence + onboarding clarification | Read `dba-system.md`'s Stage ID table + adjacent paragraph | PASS |
+    | AC-2 Default review at every gate | Read "Default Advisory Review" section; Stage ID table complete | PASS |
+    | AC-3 Solution Discovery conditional trigger | Read `dba-system.md` + `00b-solution-discovery.md` conditional wording | PASS |
+    | AC-4 No `PROFILE-N` leakage (revised scope) | `grep -i "PROFILE-" dba-system.md prompts/pipeline-reviewer.md prompts/00b-solution-discovery.md` → empty (exit 1); §12-isolated grep → empty (exit 1) | PASS |
+    | AC-5 Review Waiver scoped correctly | Read Review Waiver paragraph; "never waives Non-Negotiable Rule #1" present verbatim | PASS |
+    | AC-6 `pipeline-reviewer.md` reframed only | `git diff prompts/pipeline-reviewer.md` — only the opening paragraph added, rest untouched | PASS |
+    | AC-7 No artifact path/schema/filename changes | `git diff --stat` (below) — only doctrine/tooling/docs files + bookkeeping | PASS |
+    | AC-8 FundFlow unaffected | `git -C .../FundFlow status --short` — identical untracked set as pre-change; symlink resolves correctly | PASS |
+    | AC-9 `CLAUDE.md`/self-dev governance untouched | `git diff --stat -- CLAUDE.md prompts/codeos-self-dev.md templates/codeos-change.md` → empty | PASS |
+    | AC-10 No new downstream-side setup; shim limitation disclosed | Docs updated with direct-binary guidance + `UPG-0038` pointer; verified below | PASS |
+    | AC-11 New stage IDs produce real checklists | `cargo test` → 4 new unit tests pass; live FundFlow dry-run for all 4 identifiers (below) | PASS |
+    | AC-12 Build/tests green | `cargo build` clean; `cargo test` → **105 passed, 0 failed** (77 smoke + 28 unit, incl. 4 new) | PASS |
+    | AC-13 No stale cross-references | Swept `00b-solution-discovery.md`'s "Not a reviewer or approval gate" line — still accurate (session stays non-gating; only the *handoff* is reviewed) | PASS |
+    
+    **Raw evidence:**
+    
+    ```
+    $ grep -i "PROFILE-" dba-system.md prompts/pipeline-reviewer.md prompts/00b-solution-discovery.md
+    (no output, exit 1)
+    $ sed -n '/## 12\. Downstream usage/,/^---$/p' docs/reviewer-pipeline.md | grep -i "PROFILE-"
+    (no output, exit 1)
+    
+    $ git diff --stat
+     backlog/features.md               |   2 +
+     dba-system.md                     |  94 +++++++++++++++++++++++-------
+     docs/reviewer-pipeline.md         |  39 +++++++++++++
+     prompts/00b-solution-discovery.md |   6 ++
+     prompts/pipeline-reviewer.md      |   7 +++
+     status/roadmap.md                 |   2 +
+     status/self-development.md        |   1 +
+     tools/reviewer/src/packet.rs      |  47 +++++++++++++++
+     9 files changed, ... (plus reviews/review-log.md, append-only)
+    
+    $ cargo build && cargo test
+        Finished `dev` profile [unoptimized + debuginfo]
+    test result: ok. 105 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out
+    
+    $ git -C /home/rimo/projects/FundFlow status --short
+    ?? backlog/
+    ?? docs/solution-discovery-fundflow.md
+    ?? reviews/
+    ?? tenders/
+    (same 4 pre-existing untracked entries as before this change — no diff)
+    
+    $ readlink -f /home/rimo/projects/FundFlow/.codeos
+    /home/rimo/projects/Codeos
+    
+    # From /home/rimo/projects/FundFlow, direct binary invocation for each new stage:
+    $ .../codeos-reviewer review fundflow-test discovery --print-packet --skip-prechecks docs/codebase-digest.md
+    STAGE-SPECIFIC CHECKS
+      - every item labeled CANDIDATE/HYPOTHESIZED, not approved; non-authoritative banner present; ...
+    $ .../codeos-reviewer review fundflow-test brief --print-packet --skip-prechecks docs/codebase-digest.md
+    STAGE-SPECIFIC CHECKS
+      - problem clearly stated; scope explicitly bounded; no implementation detail; ...
+    $ .../codeos-reviewer review fundflow-test onboarding --print-packet --skip-prechecks docs/codebase-digest.md
+    STAGE-SPECIFIC CHECKS
+      - hypothesized intents clearly labeled as drafts, not approved; ...
+    $ .../codeos-reviewer review fundflow-test 10 --print-packet --skip-prechecks docs/codebase-digest.md
+    STAGE-SPECIFIC CHECKS
+      - genuinely structural (no contract/schema change); impact assessed before implementing; ...
+    ```
+    
+    ### Cross-reference sweep
+    
+    - Swept `dba-system.md`, `prompts/pipeline-reviewer.md`, `docs/reviewer-pipeline.md`,
+      `prompts/00-session-start.md`, `prompts/00b-solution-discovery.md` for stage-numbering or
+      reviewability claims inconsistent with the new default — clean; no fixes needed beyond
+      what Step 3 already made.
+    - Confirmed `prompts/00b-feature-brief.md` and `prompts/00c-onboarding.md` were not touched
+      (their reviewer touchpoint is fully described from `dba-system.md`'s side; no internal
+      contradiction introduced by leaving them as-is).
+    
+    ### Reviewer scope triage (Step 4 findings)
+    
+    Step 3 accumulated 3 rounds under `PROFILE-4`'s budget:
+    - R1 (`CHANGES ADVISED`, IN-SCOPE BLOCKER x3): docs instructing the broken shim path as if it
+      worked; `PROFILE-N` literally leaking into the new §12 section; undeclared `UPG-0038`
+      bookkeeping. All fixed.
+    - R2 (`CHANGES ADVISED`, IN-SCOPE BLOCKER x1): AC-4's grep scope was too broad, catching
+      `docs/reviewer-pipeline.md`'s own pre-existing self-dev §4d table. Fixed by narrowing AC-4
+      to explicitly exclude that pre-existing, legitimately-PROFILE-N-using section while still
+      requiring the *new* §12 section be clean.
+    - R3 (`CHANGES ADVISED`, zero IN-SCOPE BLOCKER findings): verdict driven entirely by a
+      `SECRET_REDACTION` coverage flag on a pre-existing, unrelated template field label
+      (`Secret / non-secret:`) in `00b-solution-discovery.md`. Budget exhausted at 3 rounds;
+      human reviewed and explicitly accepted (`APPROVE_STAGE`, 2026-07-05) rather than requesting
+      a 4th round, since no real defect remained.
+    
+    No Step 4-specific findings — Step 4's own review (below) is the first fresh pass against
+    the fully reconciled state.
+    
+    ### Outcome
+    
+    All 13 ACs verified against the final artifacts with raw command/test output (table and
+    evidence above). No in-scope blockers open. No scope drift — the one addition beyond the
+    original Step 1 list (`UPG-0038`'s backlog stub and its bookkeeping rows) was explicitly
+    declared and reviewed as in-scope follow-up filing, not implementation. This section records
+    verification results only; frontmatter `status`/`state`/dashboard-row updates to COMPLETE are
+    made separately, after this Step 4 review is accepted and the human approves the gate.
+
+  --- dba-system.md (sha256: a2f4da69ac517e14a52b8e8f5fafabda70fbb3fdad85969ed736a0e3539b3c8c, visibility: shown) ---
+    # Codeos DBA System — Master Doctrine (Downstream Projects)
+    
+    > **What this file is.** This is the downstream Codeos DBA doctrine. It is loaded by
+    > downstream projects through their root `CLAUDE.md`, which points to `.codeos/dba-system.md`.
+    > It is **not** the operating guide for developing the Codeos toolkit repository itself —
+    > that is the toolkit repo's own root `CLAUDE.md` (the Codeos Self-Development guide).
+    > The 9-stage substance below is authoritative and unchanged; only its location moved.
+    
+    ## Mode Declaration
+    
+    You are operating in **Declarative Behavioral Architecture (DBA)** mode, also called **Intent-Driven System (IDS)** mode.
+    
+    This toolkit is located at `.codeos/` (symlinked from `/home/arc/projects/claude/Codeos`).
+    
+    Read this file fully at the start of every session before doing anything else.
+    
+    ---
+    
+    ## Truth Authority and Conflict Resolution
+    
+    When intent, runtime evidence, and structural analysis disagree, resolve as follows:
+    
+    1. **Explicit human correction** (at any stage gate) overrides all other sources.
+    2. **Runtime behavior** (observed events) overrides intent text when behavior is more specific. Example: schema declares `"string"`, runtime consistently emits integer — this is empirical evidence of intent-text drift, not a runtime error.
+    3. **Safety, authorization, and invariant-enforcement logic** always preserves intent primacy regardless of runtime behavior. Example: runtime shows no authorization check was invoked — this is a contract violation, not an authorization redesign.
+    4. **Structural digest observations** (fan-in, god functions, known risk zones) do not override behavioral findings. They inform blast-radius estimates and remediation sequencing only.
+    
+    When a conflict cannot be resolved by these rules: surface it clearly to the human rather than silently resolving it.
+    
+    ---
+    
+    ## The Non-Negotiable Rules
+    
+    1. **Every stage transition requires explicit human approval.** You NEVER advance to the next stage without a human "APPROVED", "approved", "yes proceed", or equivalent.
+    2. **You NEVER implement before intent + contract + event schema are all approved.**
+    3. **You NEVER add abstractions, patterns, or behaviors beyond what the current intent + contract + event schema specifies.**
+    4. **You NEVER emit events not listed in the approved event schema.**
+    5. **You NEVER invent hidden behavior** — all behavior must be traceable to an approved artifact.
+    6. **After producing any stage output, you STOP and state: `AWAITING HUMAN APPROVAL`.**
+    
+    ---
+    
+    ## Default Advisory Review
+    
+    Advisory review runs by default at every reviewable gate across the whole workflow below —
+    not only the numbered Stage 1-9 loop, but also Feature Brief, Onboarding, Solution Discovery
+    (conditionally — see below), and Architectural Refinement. This mirrors the same default
+    that Codeos's own toolkit development already holds itself to.
+    
+    **How to run it.** Before each gate's human-approval decision, run:
+    ```
+    codeos-reviewer review <feature_id> <stage>
+    ```
+    using the Stage ID from the table above (e.g. `codeos-reviewer review checkout-flow 2` before
+    approving Stage 2's contract; `codeos-reviewer review checkout-flow brief` before confirming
+    a Feature Brief). The reviewer is independent, read-only, and non-gatekeeping — its verdict
+    (NO OBJECTION / CHANGES ADVISED / DO NOT ADVANCE) informs the human's decision but never
+    auto-blocks. **The human decides at the gate; Non-Negotiable Rule #1 is unchanged.**
+    
+    **Round budget.** Round 1 runs before the gate. Rounds 2-3 are allowed for fixes or material
+    deltas raised by the previous round. After 3 rounds, stop and require a human decision rather
+    than continuing to iterate automatically.
+    
+    **Solution Discovery is reviewed conditionally, not unconditionally.** The Discovery session
+    itself stays optional and non-authoritative — running it is never required, and its output is
+    never an approved architecture. If its output is actually carried into a Feature Brief or a
+    Stage 1 Intent, *that handoff* gets the default advisory review (or a Review Waiver, below).
+    A Discovery session whose output nobody acts on is simply never reviewed — there is nothing
+    yet to review.
+    
+    **Review Waiver.** If reviewer tooling is unavailable or not configured for this project, the
+    human records an explicit waiver with a reason and may continue — skipping the review
+    silently is not allowed, and neither is blocking the whole project over missing reviewer
+    setup. Record it as a plain entry in that feature's review log: "Review waiver: reviewer not
+    configured for this project; proceeding without advisory review at `<stage>`. Reason:
+    `<text>`." **The waiver applies only to the advisory review run. It never waives
+    Non-Negotiable Rule #1** — a waived review still requires the human to explicitly approve the
+    stage transition, exactly as if the review had run.
+    
+    **Relationship to the Reviewer Activation Package** (`.codeos/prompts/pipeline-reviewer.md`).
+    That prompt remains available as an **optional, supplementary** independent critical-assessor
+    pass — a human can paste it into a separate reviewer session for a second opinion that is
+    free to challenge the artifact, the feature, or DBA itself, not just check it against
+    acceptance criteria. It does not replace the default review above.
+    
+    ---
+    
+    ## The 9-Step DBA Development Loop
+    
+    Every feature follows this exact sequence. No skipping. Run the default advisory review
+    (see "Default Advisory Review" above) before each gate below.
+    
+    ```
+    STEP 1 — Intent
+      Human writes raw feature description.
+      AI verifies, corrects format, flags missing information.
+      Output: intents/[feature_id].md
+      Gate: human approves intent before step 2.
+    
+    STEP 2 — Behavioral Contracts
+      AI derives BDD-style contracts from approved intent.
+      Output: contracts/[feature_id]_contract.md
+      Gate: human approves contracts before step 3.
+    
+    STEP 3 — Event Schema
+      AI defines the complete event spine from approved intent + contracts.
+      This is the most constraining artifact — implementation is locked to it.
+      Output: events/[feature_id]_schema.md (or events/event_schema.md)
+      Gate: human approves schema before step 4.
+    
+    STEP 4 — AI Implementation
+      AI implements ONLY what is specified by the three approved artifacts.
+      Output: code in modules/
+      Gate: human approves implementation before step 5.
+    
+    STEP 5 — Tests
+      AI writes behavioral tests and replay tests.
+      Output: tests/behavioral/ and tests/replay/
+      Gate: human approves tests before step 6.
+    
+    STEP 6 — Runtime Execution
+      Human runs the implementation.
+      System emits events to events/runtime_events.jsonl (append-only).
+    
+    STEP 7 — AI Reconciliation Review
+      AI compares intent / contracts / event schema / implementation / tests / runtime events.
+      Produces reconciliation table with ALIGNED / GAP / MISMATCH / MISSING status.
+      Gate: human approves before step 8 or directs return to earlier step.
+    
+    STEP 8 — Replay Verification
+      AI verifies runtime_events.jsonl conforms to schema and contract sequence.
+      Gate: human approves before step 9 or directs return.
+    
+    STEP 9 — Targeted Refinement
+      AI proposes the smallest effective change for each observed problem.
+      Affected stages are re-run. No full rewrites.
+      Gate: human approves each refinement individually.
+    ```
+    
+    ---
+    
+    ## What You Do at Each Stage
+    
+    Use the corresponding prompt file from `.codeos/prompts/` for detailed instructions. The
+    **Stage ID** column is the identifier vocabulary used both for documentation ordering and as
+    the `<stage>` argument to `codeos-reviewer review <feature_id> <stage>` — see "Default
+    Advisory Review" below.
+    
+    | Stage | Stage ID | File |
+    |---|---|---|
+    | Session start | — | `.codeos/prompts/00-session-start.md` |
+    | Session end (handoff) | — | `.codeos/prompts/00-session-end.md` |
+    | Solution Discovery (Session Type E, pre-Feature-Brief) | `discovery` | `.codeos/prompts/00b-solution-discovery.md` |
+    | Feature Brief (pre-Stage 1) | `brief` | `.codeos/prompts/00b-feature-brief.md` |
+    | Existing Codebase Onboarding (Session Type D) | `onboarding` | `.codeos/prompts/00c-onboarding.md` |
+    | Stage 1: Intent | `1` | `.codeos/prompts/01-intent.md` |
+    | Stage 2: Contracts | `2` | `.codeos/prompts/02-contract.md` |
+    | Stage 3: Event Schema | `3` | `.codeos/prompts/03-event-schema.md` |
+    | Stage 4: Implementation | `4` | `.codeos/prompts/04-implement.md` |
+    | Stage 5: Tests | `5` | `.codeos/prompts/05-tests.md` |
+    | Stage 6: Observation | `6` | `.codeos/prompts/06-observe.md` |
+    | Stage 7: Reconcile | `7` | `.codeos/prompts/07-reconcile.md` |
+    | Stage 8: Replay | `8` | `.codeos/prompts/08-replay.md` |
+    | Stage 9: Refine | `9` | `.codeos/prompts/09-refine.md` |
+    | **Architectural Refinement** (alternate loop) | `10` | `.codeos/prompts/10-arch-refine.md` |
+    | Reviewer Activation Package (optional second opinion) | — | `.codeos/prompts/pipeline-reviewer.md` |
+    
+    **On `onboarding`'s position in this list**: it is not a step every feature passes through
+    after `brief`. It is an **alternate entry point**, used *instead of* `discovery`/`brief` only
+    when bootstrapping an existing codebase that lacks DBA artifacts. The Stage ID sequence
+    (`discovery, brief, onboarding, 1, 2, ..., 10`) is identifier vocabulary and documentation
+    order — not a claim that every feature is a single linear path through all of it.
+    
+    The Architectural Refinement workflow is a 5-step alternative loop (Scope → Impact → Implement → Verify → Reconcile) for structural changes that have no behavioral contract or event schema. Use it for workspace restructuring, shared library extraction, dependency consolidation, test infrastructure, and naming normalization. Use the 9-step loop for any change that would alter a contract or schema.
+    
+    Use the corresponding template from `.codeos/templates/` when producing artifacts:
+    
+    | Artifact | Template |
+    |---|---|
+    | Feature brief | `.codeos/templates/feature-brief.md` |
+    | Feature intent | `.codeos/templates/intent.md` |
+    | Behavioral contract | `.codeos/templates/contract.md` |
+    | Event schema | `.codeos/templates/event-schema.md` |
+    | Feature specification | `.codeos/templates/feature-spec.md` |
+    | Refinement log | `.codeos/templates/refinement.md` |
+    | Architectural refinement | `.codeos/templates/arch-refinement.md` |
+    | Codebase digest | `.codeos/templates/codebase-digest.md` |
+    | Session handoff | `.codeos/templates/handoff.md` |
+    | Review Package | `.codeos/templates/review-package.md` |
+    | Per-feature review file | `.codeos/templates/review-file.md` |
+    
+    ---
+    
+    ## What You NEVER Do
+    
+    - Implement before intent + contract + event schema are all APPROVED
+    - Add abstractions not demanded by the contracts
+    - Add "just in case" error handling not listed in the contract's failure modes
+    - Emit events not in the approved event schema
+    - Move to the next stage without explicit human approval
+    - Suggest full rewrites — only targeted, localized changes
+    - Add autonomous planning, self-direction, or multi-step autonomous execution
+    - Modify `events/runtime_events.jsonl` — it is append-only
+    
+    ---
+    
+    ## Naming Conventions
+    
+    See `.codeos/templates/conventions.md` for the authoritative naming convention reference.
+    
+    ---
+    
+    ## Artifact Classification
+    
+    Not all artifacts are required. This table tells you which artifacts block stage
+    advancement and which improve decision quality without being prerequisites.
+    
+    **Required artifacts block stage advancement. Optional and recommended artifacts
+    improve decision quality but are never prerequisites for stage transitions.**
+    
+    | Artifact | Classification | When it exists |
+    |---|---|---|
+    | Feature Brief (`backlog/[id].md`) | Optional | Pre-Stage-1 discovery; not required to start Stage 1 |
+    | Intent (`intents/[id].md`) | **Required** | Any behavioral work — must be APPROVED before Stage 2 |
+    | Contract (`contracts/[id]_contract.md`) | **Required** | Any behavioral work — must be APPROVED before Stage 3 |
+    | Event Schema (`events/[id]_schema.md`) | **Required** | Any behavioral work — must be APPROVED before Stage 4 |
+    | Feature Registry (`features/registry.yaml`) | Recommended | Multi-feature projects; not required for single-feature work |
+    | Codebase Digest (`docs/codebase-digest.md`) | Optional | Existing codebases and mature projects; absent digest is never a blocker |
+    | Structural Alignment (Stage 7 output section) | Optional output | Produced at Stage 7 only when architectural observations exist |
+    | Architectural Refinement (`refinements/arch/[id].md`) | Optional | Non-behavioral structural changes; uses the Stage 10 workflow |
+    | Onboarding artifacts (`HYPOTHESIZED_INTENT`) | Onboarding only | Produced by Session Type D; must pass Stage 1 review before advancing |
+    
+    ---
+    
+    ## File Layout
+    
+    ```
+    project/
+    ├── .codeos/                      ← this toolkit (symlink)
+    ├── CLAUDE.md                     ← project-level instructions (references this file)
+    ├── features/
+    │   └── registry.yaml             ← authoritative feature status index (human-maintained)
+    ├── intents/
+    │   └── [feature_id].md           ← one per feature
+    ├── contracts/
+    │   └── [feature_id]_contract.md  ← one per feature
+    ├── events/
+    │   ├── [feature_id]_schema.md    ← event schema per feature (or shared event_schema.md)
+    │   └── runtime_events.jsonl      ← append-only runtime log
+    ├── backlog/
+    │   └── [feature_id].md           ← feature briefs (pre-Stage-1 discovery)
+    ├── handoffs/
+    │   └── [YYYY-MM-DD]-[desc].md    ← session handoffs (optional, not DBA artifacts)
+    ├── reviews/
+    │   ├── [feature_id].md           ← per-feature: Decision Log + Decision Rationale (traceability)
+    │   └── architecture-journal.md   ← cross-feature institutional memory (AJ-NNN entries)
+    ├── refinements/
+    │   └── arch/
+    │       └── [refine_id].md        ← architectural refinement records
+    ├── modules/                      ← actual implementation code
+    └── tests/
+        ├── behavioral/               ← behavioral outcome tests
+        └── replay/                   ← replay verification tests
+    ```
+    
+    ---
+    
+    ## DBA Vocabulary
+    
+    | Term | Definition |
+    |---|---|
+    | **Intent** | Why a feature exists. Actor + outcome form. No implementation details. |
+    | **Behavioral Contract** | Observable truths derived from intent. BDD Given/When/Then. |
+    | **Event Spine** | The complete ordered set of events a feature is permitted to emit. |
+    | **Observational Event** | Raw runtime fact (e.g., `RequestReceived`). |
+    | **Behavioral Event** | Verified outcome (e.g., `CartItemAdded`). |
+    | **Failure Event** | Classified error condition (e.g., `CartItemAddFailed`). |
+    | **Reconciliation Review** | Structural comparison of all artifacts against each other for gaps/mismatches. |
+    | **Replay Verification** | Confirming runtime event log conforms to schema and contract sequence. |
+    | **Targeted Refinement** | Smallest effective change for a specific observed problem. Not a rewrite. |
+    | **Correlation ID** | UUID that links all events from a single feature execution chain. |
+    | **Shared Infrastructure Module** | A module depended on by ≥2 feature modules that provides only mechanical infrastructure (event emission, DTOs, constants, re-exports). Never contains domain logic. See `patterns/shared-infrastructure-boundary.md`. |
+    | **Vertical Drift** | Accumulation of domain logic in a shared infrastructure module. Bypasses lateral isolation guarantees even when feature→feature imports are blocked by workspace topology. |
+    
+    ---
+    
+    ## Human Navigation
+    
+    Intent files are precision artifacts optimized for contract derivation, not for fast reading.
+    When you need a quick plain-language explanation of what a feature does:
+    
+    **Ask Claude directly:**
+    > "Explain [feature_id] in plain English."
+    
+    Claude will read `intents/[feature_id].md` and produce a jargon-free explanation on demand.
+    No file is saved. No approval gate. No DBA lifecycle.
+    
+    This is the preferred pattern. It solves the readability gap without creating a second
+    intent surface or introducing drift between stored summaries and authoritative intents.
+    
+    **If a stored summary is needed** (e.g., for onboarding documentation or a project README):
+    Generate it on request, include provenance metadata (see below), and treat it as
+    generated output — never manually edit, regenerate from intent when the intent changes.
+    
+    Provenance metadata for any stored generated summary:
+    ```yaml
+    generated_from_intent: intents/[feature_id].md
+    generated_at: [ISO date]
+    generated_by: [Claude session / human]
+    ```
+    
+    Stored generated summaries are not DBA artifacts. They do not feed into any stage.
+    They do not carry `status`, `approved_by`, or `derived_contracts` fields.
+    
+    ---
+    
+    ## Review Logging
+    
+    When the human provides a reviewer's assessment and their decision on it, before writing
+    any review artifacts, Claude shows a brief preview of what it will write (5 lines inline).
+    Then Claude writes — **do this before proceeding to any other work:**
+    
+    1. **One row** to `reviews/[feature_id].md` Decision Log.
+    2. **A Decision Rationale section** to `reviews/[feature_id].md` — only when the decision
+       would be difficult to reconstruct from artifact history alone: a reframing, an
+       architectural pivot, a rejected direction. Not for wording revisions, contract
+       clarifications, or any change the diff already explains. Most stages do not get a section.
+    3. **One entry** to `reviews/architecture-journal.md` — only if the insight is likely to
+       remain useful six months from now to a reader who has forgotten this feature entirely.
+       When uncertain, journal only if future usefulness is clear. Missing an important finding
+       is more expensive than adding a few extra entries.
+    
+    **Human overrides (override automatic classification):**
+    - "do not log this review" — suppress all review artifacts for this cycle
+    - "journal this" — force a journal entry regardless of criteria
+    - "do not journal this" — suppress only the journal entry
+    
+    **Log fidelity:** Preserve the reviewer's core insight as close to verbatim as the format
+    allows. Compress explanation and context — never compress the insight itself.
+    
+    **Log quality:** Record conclusions and rationale, not conversation history. Capture what
+    was learned, not what happened. Review artifacts must never become meeting minutes.
+    
+    **Architecture Journal:** The journal is the long-term institutional knowledge artifact;
+    per-feature review files are primarily traceability artifacts. When an architectural
+    finding belongs equally in both, put it in the journal and keep the feature file entry
+    brief with a reference (e.g., `See AJ-014`). Journal entries must remain useful to a
+    future reader who has forgotten the feature entirely — if understanding requires feature
+    context, the entry belongs in `reviews/[feature_id].md` instead.
+    
+    **Decision Log rows are append-only.** Original findings and decisions are never
+    rewritten. Superseded decisions are addressed by adding a new row. Decision Rationale
+    sections may gain cross-references, supersession references, or clarification notes —
+    but never rewrites of original findings or decisions.
+    
+    Architecture Journal entry format (see `templates/review-file.md` for per-feature format):
+    ```
+    ## AJ-NNN — [topic]
+    Date: YYYY-MM-DD
+    Status: Active | Superseded | Rejected
+    
+    Context: [what triggered this — feature, stage, or discussion]
+    Finding: [the key insight or reframing]
+    Decision: [accepted / rejected / deferred and why]
+    Action: [what changed — pattern created, architecture revised, etc.]
+    Supersedes: [AJ-NNN or "none"]
+    Related: [AJ-NNN, AJ-NNN or "none"]
+    ```
+    
+    ---
+    
+    ## How to Use the Toolkit in a New Project
+    
+    1. Run from the new project root: `bash /home/arc/projects/claude/Codeos/scripts/dba-init.sh`
+    2. This creates `.codeos` symlink, all required directories, and a project `CLAUDE.md`
+    3. Start Claude Code in the project directory
+    4. Claude reads the project `CLAUDE.md` which directs it to read this file
+    5. Human pastes `.codeos/prompts/00-session-start.md` to begin a session
+
+  --- tools/reviewer/src/packet.rs (sha256: 64cf73f384c7c6b6182aff3435bba6613cd9e40d3fa02caa5a681c7b8237b4b0, visibility: shown) ---
+    use crate::precheck::redact_secrets;
+    use anyhow::{Context, Result, bail};
+    use sha2::{Digest, Sha256};
+    use std::path::Path;
+    use std::process::Command;
+    
+    const SIZE_LIMIT_BYTES: u64 = 256 * 1024;
+    
+    const PATH_EXCLUDES: &[&str] = &[
+        "*.env", ".env*", "*.pem", "*.key", "secrets/*", "credentials/*",
+        "*runtime_events*.jsonl", "*.log",
+    ];
+    
+    #[derive(Debug, Clone, PartialEq)]
+    pub enum CoverageState {
+        FullCoverage,
+        PartialCoverage,
+        SecretRedaction,
+        CriticalOmission,
+        EmptyPacket,
+    }
+    
+    impl CoverageState {
+        pub fn as_str(&self) -> &'static str {
+            match self {
+                CoverageState::FullCoverage     => "FULL_COVERAGE",
+                CoverageState::PartialCoverage  => "PARTIAL_COVERAGE",
+                CoverageState::SecretRedaction  => "SECRET_REDACTION",
+                CoverageState::CriticalOmission => "CRITICAL_OMISSION",
+                CoverageState::EmptyPacket      => "EMPTY_PACKET",
+            }
+        }
+    
+        /// Severity floor for effective_concern escalation.
+        pub fn concern_floor(&self) -> u8 {
+            match self {
+                CoverageState::FullCoverage                             => 0,
+                CoverageState::SecretRedaction | CoverageState::PartialCoverage => 1,
+                CoverageState::EmptyPacket                              => 2,
+                CoverageState::CriticalOmission                         => 3,
+            }
+        }
+    }
+    
+    #[derive(Debug)]
+    pub struct ArtifactEntry {
+        pub path: String,
+        pub sha256: String,
+        pub visibility: String,
+    }
+    
+    pub struct PacketManifestEntry {
+        pub path: String,
+        pub mode: String,
+        pub bytes: u64,
+        pub sha256: String,
+        pub reason: Option<String>,
+    }
+    
+    pub struct ReviewPacket {
+        pub feature: String,
+        pub stage: String,
+        pub branch: String,
+        pub review_sha: String,
+        pub base_sha: String,
+        pub diff_hash: String,
+        pub coverage_state: CoverageState,
+        pub workspace_dirty: bool,
+        pub redaction_count: usize,
+        pub secret_flag: bool,
+        pub artifacts: Vec<ArtifactEntry>,
+        pub excluded_paths: Vec<(String, String, String)>, // (path, reason, section)
+        content: String,
+    }
+    
+    impl ReviewPacket {
+        pub fn content(&self) -> &str {
+            &self.content
+        }
+    }
+    
+    pub struct PacketBuildOptions {
+        pub feature: String,
+        pub stage: String,
+        pub artifacts: Vec<String>,
+        pub sha_only_paths: Vec<String>,
+        pub delta_mode: bool,
+        pub delta_base: Option<String>,
+        pub fresh_session: bool,
+        pub repo_root: String,
+        pub toolkit_root: String,
+    }
+    
+    pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
+        // Validate sha_only paths exist before doing anything.
+        for so in &opts.sha_only_paths {
+            if !Path::new(so).exists() {
+                bail!("--sha-only path not found: {}", so);
+            }
+        }
+    
+        let branch = git_branch(&opts.repo_root)?;
+        let review_sha = git_rev_parse("HEAD", &opts.repo_root)?;
+        let approved_stage = if opts.stage.parse::<u32>().is_ok() {
+            let n: u32 = opts.stage.parse().unwrap();
+            format!("{}", n.saturating_sub(1))
+        } else {
+            "n/a (non-numeric stage)".to_string()
+        };
+    
+        let base_sha = load_base_sha(
+            &opts.feature, &opts.stage, &opts.repo_root, opts.delta_base.as_deref()
+        )?;
+    
+        // Build diff
+        let (_raw_diff, changed_files) = if opts.delta_mode {
+            let base = opts.delta_base.as_deref().unwrap_or("HEAD");
+            let diff = git_diff_range(base, &opts.artifacts, &opts.repo_root)?;
+            let files = git_diff_names(base, &opts.artifacts, &opts.repo_root)?;
+            (diff, files)
+        } else if !base_sha.is_empty() && base_sha != "(no base pin)" {
+            let diff = git_diff_range(&base_sha, &[], &opts.repo_root)?;
+            let files = git_diff_names(&base_sha, &[], &opts.repo_root)?;
+            (diff, files)
+        } else {
+            let diff = git_diff_head(&opts.repo_root)?;
+            let files = git_diff_names_head(&opts.repo_root)?;
+            (diff, files)
+        };
+    
+        let mut excluded_paths: Vec<(String, String, String)> = Vec::new();
+        let mut keep_files: Vec<String> = Vec::new();
+        for f in &changed_files {
+            if is_path_excluded(f) || is_oversize(f) {
+                excluded_paths.push((f.clone(), "path/size excluded".to_string(), "diff".to_string()));
+            } else {
+                keep_files.push(f.clone());
+            }
+        }
+    
+        let filtered_diff = if !keep_files.is_empty() {
+            if opts.delta_mode {
+                let base = opts.delta_base.as_deref().unwrap_or("HEAD");
+                git_diff_range(base, &keep_files, &opts.repo_root)?
+            } else if !base_sha.is_empty() && base_sha != "(no base pin)" {
+                git_diff_range(&base_sha, &keep_files, &opts.repo_root)?
+            } else {
+                git_diff_head_paths(&keep_files, &opts.repo_root)?
+            }
+        } else {
+            String::new()
+        };
+    
+        let (redacted_diff, mut redaction_count) = redact_secrets(&filtered_diff);
+        let mut secret_flag = redaction_count > 0;
+        if secret_flag {
+            excluded_paths.push(("(diff)".to_string(), "secret-like content redacted".to_string(), "diff".to_string()));
+        }
+    
+        let diff_bytes = redacted_diff.len() as u64;
+        let diff_hash = sha256_str(&redacted_diff);
+    
+        // Process artifacts
+        let mut artifacts: Vec<ArtifactEntry> = Vec::new();
+        let mut artifacts_block = String::new();
+        let mut manifest_full = String::new();
+        let mut manifest_sha_only = String::new();
+        let mut artifact_excluded = false;
+        let mut shown_count = 0usize;
+        let mut delta_diff_count = 0usize;
+        let mut review_content_bytes: u64 = 0;
+    
+        // sha_only artifacts first
+        for so in &opts.sha_only_paths {
+            let bytes = std::fs::metadata(so).map(|m| m.len()).unwrap_or(0);
+            let sha = sha256_file(so)?;
+            artifacts.push(ArtifactEntry {
+                path: so.clone(),
+                sha256: sha.clone(),
+                visibility: "path_sha_only".to_string(),
+            });
+            manifest_sha_only.push_str(&format!(
+                "    - path: {}\n      mode: path_sha_only\n      bytes: {}\n      sha256: {}\n",
+                so, bytes, sha
+            ));
+        }
+    
+        // Full / delta artifacts
+        for a in &opts.artifacts {
+            if !Path::new(a).exists() {
+                artifacts_block.push_str(&format!("  --- {} (visibility: missing — not shown) ---\n\n", a));
+                artifacts.push(ArtifactEntry { path: a.clone(), sha256: String::new(), visibility: "missing".to_string() });
+                manifest_full.push_str(&format!(
+                    "    - path: {}\n      mode: omitted_with_reason\n      reason: requested artifact missing\n", a
+                ));
+                artifact_excluded = true;
+                excluded_paths.push((a.clone(), "requested artifact missing".to_string(), "artifact".to_string()));
+                continue;
+            }
+    
+            let bytes = std::fs::metadata(a).map(|m| m.len()).unwrap_or(0);
+            if bytes > SIZE_LIMIT_BYTES {
+                artifacts_block.push_str(&format!("  --- {} (visibility: oversize_omitted — over size limit, not shown) ---\n\n", a));
+                artifacts.push(ArtifactEntry { path: a.clone(), sha256: String::new(), visibility: "oversize_omitted".to_string() });
+                manifest_full.push_str(&format!(
+                    "    - path: {}\n      mode: omitted_with_reason\n      reason: over size limit\n", a
+                ));
+                artifact_excluded = true;
+                excluded_paths.push((a.clone(), "requested artifact over size limit".to_string(), "artifact".to_string()));
+                continue;
+            }
+    
+            let sha = sha256_file(a)?;
+    
+            if opts.delta_mode {
+                let base = opts.delta_base.as_deref().unwrap_or("HEAD");
+                // fail-closed: untracked files can't be compared to a base commit; clear diagnostic.
+                if !git_is_tracked(a, &opts.repo_root) {
+                    bail!(
+                        "artifact is untracked; delta review cannot compare it to base: {}\n       Stage the file, commit it, or rerun with --mode full for explicit artifacts.",
+                        a
+                    );
+                }
+                let changed = !git_diff_quiet(base, a, &opts.repo_root)?;
+                let vis = if changed { "delta_diff" } else { "path_sha_only" };
+                artifacts_block.push_str(&format!(
+                    "  --- {} (mode: {}, sha256: {}, bytes: {}) ---\n\n", a, vis, sha, bytes
+                ));
+                artifacts.push(ArtifactEntry { path: a.clone(), sha256: sha.clone(), visibility: vis.to_string() });
+                manifest_full.push_str(&format!(
+                    "    - path: {}\n      mode: {}\n      bytes: {}\n      sha256: {}\n", a, vis, bytes, sha
+                ));
+                if changed { delta_diff_count += 1; }
+                shown_count += 1;
+            } else {
+                let raw = std::fs::read_to_string(a)
+                    .with_context(|| format!("could not read artifact {}", a))?;
+                let (redacted, rc) = redact_secrets(&raw);
+                let vis = if rc > 0 {
+                    secret_flag = true;
+                    redaction_count += rc;
+                    excluded_paths.push((a.clone(), "secret value redacted in place".to_string(), "artifact".to_string()));
+                    manifest_full.push_str(&format!(
+                        "    - path: {}\n      mode: full_file\n      bytes: {}\n      sha256: {}\n      note: secret value redacted in place\n",
+                        a, bytes, sha
+                    ));
+                    "shown_redacted"
+                } else {
+                    manifest_full.push_str(&format!(
+                        "    - path: {}\n      mode: full_file\n      bytes: {}\n      sha256: {}\n", a, bytes, sha
+                    ));
+                    "shown"
+                };
+                let indented: String = redacted.lines().map(|l| format!("    {}\n", l)).collect();
+                artifacts_block.push_str(&format!(
+                    "  --- {} (sha256: {}, visibility: {}) ---\n{}\n", a, sha, vis, indented
+                ));
+                artifacts.push(ArtifactEntry { path: a.clone(), sha256: sha, visibility: vis.to_string() });
+                review_content_bytes += bytes;
+                shown_count += 1;
+            }
+        }
+    
+        review_content_bytes += diff_bytes;
+    
+        // Coverage state (most severe wins)
+        let coverage_state = if (opts.delta_mode && delta_diff_count == 0 && redacted_diff.trim().is_empty())
+            || (!opts.delta_mode && shown_count == 0 && redacted_diff.trim().is_empty())
+        {
+            CoverageState::EmptyPacket
+        } else if artifact_excluded {
+            CoverageState::CriticalOmission
+        } else if secret_flag {
+            CoverageState::SecretRedaction
+        } else if !excluded_paths.is_empty() {
+            CoverageState::PartialCoverage
+        } else {
+            CoverageState::FullCoverage
+        };
+    
+        // workspace_dirty check
+        let workspace_dirty = git_is_dirty(&opts.repo_root);
+    
+        // Budget check (warning only)
+        let budget = std::env::var("CODEOS_PACKET_BUDGET_BYTES")
+            .ok().and_then(|v| v.parse::<u64>().ok()).unwrap_or(50_000);
+        if review_content_bytes > budget {
+            eprintln!(
+                "warning: review content is {} bytes, exceeds budget of {} bytes (CODEOS_PACKET_BUDGET_BYTES)",
+                review_content_bytes, budget
+            );
+        }
+    
+        // Stage-specific checks
+        let checks = stage_checks(&opts.stage);
+        let expected = stage_expected(&opts.stage);
+        let task_prompt_path = format!("{}/prompts/codeos-reviewer-task.md", opts.toolkit_root);
+        let task_prompt = std::fs::read_to_string(&task_prompt_path)
+            .with_context(|| format!("reviewer task template not found: {}", task_prompt_path))?;
+    
+        // Build the packet text
+        let mut content = String::new();
+        content.push_str(&task_prompt);
+        content.push('\n');
+    
+        let budget_status = if review_content_bytes > budget {
+            format!("WARNING — {} bytes exceeds CODEOS_PACKET_BUDGET_BYTES={}", review_content_bytes, budget)
+        } else {
+            "OK".to_string()
+        };
+    
+        let now = chrono::Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string();
+        let task_prompt_bytes = std::fs::metadata(&task_prompt_path).map(|m| m.len()).unwrap_or(0);
+        let estimated_tokens = review_content_bytes / 4;
+    
+        content.push_str(&format!(
+            "\nPACKET MANIFEST\n  generated: {now}\n  task_prompt: {task_prompt_path} ({task_prompt_bytes} bytes)\n  review_content_bytes: {review_content_bytes}\n  estimated_review_tokens: ~{estimated_tokens}\n  budget_status: {budget_status}\n  packet_mode: {mode}\n  delta_base: {delta_base}\n  items:\n{manifest_sha_only}{manifest_full}    - path: (diff)\n      mode: {diff_mode}\n      bytes: {diff_bytes}\n",
+            mode = if opts.delta_mode { "delta" } else { "full" },
+            delta_base = opts.delta_base.as_deref().unwrap_or("none"),
+            diff_mode = if opts.delta_mode { "delta_diff" } else { "full_file" },
+        ));
+    
+        let dirty_note = if workspace_dirty { " (+ uncommitted workspace changes)" } else { "" };
+        content.push_str(&format!(
+            "\nREVIEW CONTEXT\n  Feature:                {feature}\n  Stage:                  {stage}\n  Branch:                 {branch}\n  Base commit:            {base_sha}\n  Review commit:          {review_sha}{dirty_note}\n  Current approved stage: {approved_stage}\n  Evidence coverage:      {coverage}\n  Workspace dirty:        {dirty_text}\n",
+            feature = opts.feature,
+            stage = opts.stage,
+            branch = branch,
+            base_sha = if base_sha.is_empty() { "(no base pin)".to_string() } else { base_sha.clone() },
+            review_sha = review_sha,
+            approved_stage = approved_stage,
+            coverage = coverage_state.as_str(),
+            dirty_text = if workspace_dirty { "yes (uncommitted changes at review time)" } else { "no" },
+        ));
+    
+        content.push_str("\nDBA RULES RELEVANT TO THIS STAGE\n");
+        content.push_str("  - Human approval is required for every stage transition; you are advisory only.\n");
+        content.push_str("  - Memory is not truth — assess only what is provided, pinned to the review commit.\n");
+        content.push_str("  - Implementation must trace to approved artifacts; no behavior beyond intent+contract+schema.\n");
+        content.push_str("  - No events outside the approved event schema; no hidden behavior.\n");
+        if matches!(coverage_state, CoverageState::PartialCoverage | CoverageState::SecretRedaction | CoverageState::CriticalOmission) {
+            content.push_str("  - COVERAGE IS PARTIAL: some content was excluded/redacted (see below). You are\n");
+            content.push_str("    seeing an incomplete evidence set — do not issue NO OBJECTION on this basis.\n");
+        }
+    
+        content.push_str(&format!("\nSTAGE-SPECIFIC CHECKS\n{}\n", checks));
+        content.push_str(&format!("\nEXPECTED STAGE OUTPUT\n  {}\n", expected));
+        content.push_str("\nARTIFACTS TO REVIEW\n");
+        content.push_str(&artifacts_block);
+    
+        if opts.delta_mode {
+            let base = opts.delta_base.as_deref().unwrap_or("HEAD");
+            content.push_str(&format!(
+                "DELTA DIFF ({}->working tree, artifact paths only, secret/size filtered)\n", base
+            ));
+        } else {
+            content.push_str("DIFF TO REVIEW (base->review, secret/size filtered)\n");
+        }
+    
+        let excluded_summary: Vec<String> = excluded_paths.iter().map(|(p, _, _)| p.clone()).collect();
+        if !excluded_summary.is_empty() {
+            content.push_str(&format!("  [excluded/redacted: {}] manual security review required\n", excluded_summary.join(", ")));
+        }
+        content.push_str(&redacted_diff);
+    
+        // Full Context Diff (AC-1: auto-appended when delta_mode AND delta_base are both active).
+        if opts.delta_mode {
+            if let Some(ref base) = opts.delta_base {
+                content.push_str(&format!(
+                    "\nFull Context Diff (informational — all changed files since {}):\n",
+                    base
+                ));
+    
+                match git_diff_range(base, &[], &opts.repo_root) {
+                    Err(e) => {
+                        // Fail-closed: mark the section as unavailable rather than silently showing empty.
+                        content.push_str(&format!(
+                            "[ERROR: git diff failed — full context diff unavailable: {}]\n", e
+                        ));
+                    }
+                    Ok(full_raw) => {
+                        let (full_redacted, full_rc) = redact_secrets(&full_raw);
+                        if full_rc > 0 {
+                            secret_flag = true;
+                            redaction_count += full_rc;
+                        }
+    
+                        // remaining = budget minus content bytes already counted (approximation;
+                        // task prompt and section headers are excluded from review_content_bytes).
+                        let remaining = budget.saturating_sub(review_content_bytes);
+                        let full_total = full_redacted.len() as u64;
+    
+                        if full_total == 0 {
+                            content.push_str("(no changes detected outside named artifacts)\n");
+                        } else if remaining == 0 {
+                            content.push_str(&format!(
+                                "[CLIPPED: full diff exceeded packet budget — showing first 0 of {} bytes]\n",
+                                full_total
+                            ));
+                        } else if full_total > remaining {
+                            // Clip at a line boundary within the budget.
+                            let head = &full_redacted[..remaining as usize];
+                            let cutpoint = head.rfind('\n').map(|n| n + 1).unwrap_or(remaining as usize);
+                            content.push_str(&full_redacted[..cutpoint]);
+                            content.push_str(&format!(
+                                "\n[CLIPPED: full diff exceeded packet budget — showing first {} of {} bytes]\n",
+                                cutpoint, full_total
+                            ));
+                        } else {
+                            content.push_str(&full_redacted);
+                        }
+                    }
+                }
+            }
+        }
+    
+        let final_base_sha = if base_sha.is_empty() { "(no base pin)".to_string() } else { base_sha };
+    
+        Ok(ReviewPacket {
+            feature: opts.feature.clone(),
+            stage: opts.stage.clone(),
+            branch,
+            review_sha,
+            base_sha: final_base_sha,
+            diff_hash,
+            coverage_state,
+            workspace_dirty,
+            redaction_count,
+            secret_flag,
+            artifacts,
+            excluded_paths,
+            content,
+        })
+    }
+    
+    // --- git helpers ---
+    
+    fn git_branch(repo_root: &str) -> Result<String> {
+        let out = Command::new("git")
+            .args(["rev-parse", "--abbrev-ref", "HEAD"])
+            .current_dir(repo_root)
+            .output()
+            .context("git rev-parse branch")?;
+        Ok(String::from_utf8_lossy(&out.stdout).trim().to_string())
+    }
+    
+    fn git_rev_parse(rev: &str, repo_root: &str) -> Result<String> {
+        let out = Command::new("git")
+            .args(["rev-parse", rev])
+            .current_dir(repo_root)
+            .output()
+            .context("git rev-parse")?;
+        Ok(String::from_utf8_lossy(&out.stdout).trim().to_string())
+    }
+    
+    fn git_diff_range(base: &str, paths: &[String], repo_root: &str) -> Result<String> {
+        let mut args = vec!["diff", base, "--"];
+        for p in paths { args.push(p); }
+        let out = Command::new("git")
+            .args(&args)
+            .current_dir(repo_root)
+            .output()
+            .context("git diff")?;
+        Ok(String::from_utf8_lossy(&out.stdout).into_owned())
+    }
+    
+    fn git_diff_names(base: &str, paths: &[String], repo_root: &str) -> Result<Vec<String>> {
+        let mut args = vec!["diff", "--name-only", base, "--"];
+        for p in paths { args.push(p); }
+        args.extend_from_slice(&[":(exclude)reviews", ":(exclude).codeos-state"]);
+        let out = Command::new("git")
+            .args(&args)
+            .current_dir(repo_root)
+            .output()
+            .context("git diff --name-only")?;
+        Ok(String::from_utf8_lossy(&out.stdout)
+            .lines()
+            .filter(|l| !l.is_empty())
+            .map(|l| l.to_string())
+            .collect())
+    }
+    
+    fn git_diff_head(repo_root: &str) -> Result<String> {
+        let out = Command::new("git")
+            .args(["diff", "HEAD", "--", "."])
+            .current_dir(repo_root)
+            .output()
+            .context("git diff HEAD")?;
+        Ok(String::from_utf8_lossy(&out.stdout).into_owned())
+    }
+    
+    fn git_diff_names_head(repo_root: &str) -> Result<Vec<String>> {
+        let out = Command::new("git")
+            .args(["diff", "--name-only", "HEAD", "--", ".",
+                   ":(exclude)reviews", ":(exclude).codeos-state"])
+            .current_dir(repo_root)
+            .output()
+            .context("git diff --name-only HEAD")?;
+        Ok(String::from_utf8_lossy(&out.stdout)
+            .lines()
+            .filter(|l| !l.is_empty())
+            .map(|l| l.to_string())
+            .collect())
+    }
+    
+    fn git_diff_head_paths(paths: &[String], repo_root: &str) -> Result<String> {
+        let mut args = vec!["diff", "HEAD", "--"];
+        for p in paths { args.push(p); }
+        let out = Command::new("git").args(&args).current_dir(repo_root).output().context("git diff HEAD paths")?;
+        Ok(String::from_utf8_lossy(&out.stdout).into_owned())
+    }
+    
+    fn git_diff_quiet(base: &str, path: &str, repo_root: &str) -> Result<bool> {
+        let status = Command::new("git")
+            .args(["diff", "--quiet", base, "--", path])
+            .current_dir(repo_root)
+            .status()
+            .context("git diff --quiet")?;
+        Ok(status.success())
+    }
+    
+    fn git_is_tracked(path: &str, repo_root: &str) -> bool {
+        Command::new("git")
+            .args(["ls-files", "--error-unmatch", path])
+            .current_dir(repo_root)
+            .output()
+            .map(|o| o.status.success())
+            .unwrap_or(false)
+    }
+    
+    fn git_is_dirty(repo_root: &str) -> bool {
+        Command::new("git")
+            .args(["status", "--porcelain=v1", "--untracked-files=all", "--",
+                   ".", ":(exclude)reviews", ":(exclude).codeos-state"])
+            .current_dir(repo_root)
+            .output()
+            .map(|o| !o.stdout.is_empty())
+            .unwrap_or(false)
+    }
+    
+    fn load_base_sha(feature: &str, stage: &str, repo_root: &str, delta_base: Option<&str>) -> Result<String> {
+        if let Some(b) = delta_base { return Ok(b.to_string()); }
+        let ss = format!("{}/.codeos-state/stage-start/{}/stage-{}.json", repo_root, feature, stage);
+        if !Path::new(&ss).exists() { return Ok(String::new()); }
+        let content = std::fs::read_to_string(&ss)
+            .with_context(|| format!("could not read stage-start file {}", ss))?;
+        for line in content.lines() {
+            if line.contains("\"base_commit\"") {
+                if let Some(rest) = line.splitn(2, "\"base_commit\"").nth(1) {
+                    if let Some(after_colon) = rest.splitn(2, ':').nth(1) {
+                        let trimmed = after_colon.trim();
+                        if trimmed.starts_with('"') {
+                            let val: String = trimmed.chars().skip(1).take_while(|&c| c != '"').collect();
+                            if !val.is_empty() { return Ok(val); }
+                        }
+                    }
+                }
+            }
+        }
+        anyhow::bail!("{} exists but has no valid base_commit (malformed provenance) — aborting.", ss);
+    }
+    
+    fn is_path_excluded(path: &str) -> bool {
+        let name = Path::new(path).file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or(path);
+        for pat in PATH_EXCLUDES {
+            if glob_match(pat, path) || glob_match(pat, name) {
+                return true;
+            }
+        }
+        false
+    }
+    
+    fn glob_match(pattern: &str, s: &str) -> bool {
+        if let Some(suffix) = pattern.strip_prefix('*') {
+            s.ends_with(suffix)
+        } else if let Some(prefix) = pattern.strip_suffix('*') {
+            s.starts_with(prefix)
+        } else {
+            s == pattern
+        }
+    }
+    
+    fn is_oversize(path: &str) -> bool {
+        std::fs::metadata(path)
+            .map(|m| m.len() > SIZE_LIMIT_BYTES)
+            .unwrap_or(false)
+    }
+    
+    pub fn sha256_file(path: &str) -> Result<String> {
+        let bytes = std::fs::read(path)
+            .with_context(|| format!("could not read file for SHA: {}", path))?;
+        let mut hasher = Sha256::new();
+        hasher.update(&bytes);
+        Ok(hex::encode(hasher.finalize()))
+    }
+    
+    pub fn sha256_str(s: &str) -> String {
+        let mut hasher = Sha256::new();
+        hasher.update(s.as_bytes());
+        hex::encode(hasher.finalize())
+    }
+    
+    fn stage_expected(stage: &str) -> &'static str {
+        match stage {
+            "discovery" => "Solution Discovery — candidate feature topology, shared vocabulary, event/config hypotheses, architectural risks, explicit non-decisions; every item labeled CANDIDATE/HYPOTHESIZED; non-authoritative banner present; only reviewed when carried into a Feature Brief or Stage 1 Intent.",
+            "brief" => "Feature Brief — problem, upgrade, bounded scope, proposed artifact(s), value/risk/guardrail; a candidate for Stage 1, not yet approved; no implementation detail.",
+            "onboarding" => "Onboarding (Session Type D) — HYPOTHESIZED_INTENT drafts + codebase digest derived from evidence only; explicitly labeled draft, not APPROVED; must pass Stage 1 review before advancing.",
+            "1" => "Intent — actor+outcome statements, stable guarantees, explicit scope boundary; NO implementation detail.",
+            "2" => "Behavioral contract — observable Given/When/Then scenarios, named failure modes, invariants; independently testable; no white-box claims.",
+            "3" => "Event schema — named events with payloads, event flow, coverage map of contract scenarios to events; no speculative telemetry.",
+            "4" => "Implementation — code satisfying every contract clause; emits only schema events; contract-satisfaction + event-emission tables; nothing untraceable.",
+            "5" => "Tests — one behavioral test per contract scenario incl. failures; replay tests for schema conformance + chain integrity; coverage table.",
+            "6" => "Runtime evidence — events in runtime_events.jsonl; correlation chains intact; bounded/sanitized; unexpected/missing events reported.",
+            "7" => "Reconciliation — Intent->Contract->Schema->Impl->Tests->Runtime with ALIGNED/GAP/MISMATCH/MISSING per item, supported by evidence.",
+            "8" => "Replay — schema conformance + correlation chain integrity + determinism check; nondeterminism explained; missing fixtures reported.",
+            "9" => "Refinement — smallest effective change per observed trigger; no redesign disguised as refinement; affected artifacts named.",
+            "10" => "Architectural Refinement — Scope->Impact->Implement->Verify->Reconcile for structural changes with no behavioral contract or event schema; smallest effective change, no full rewrite.",
+            _ => "(no expected-output template for stage)",
+        }
+    }
+    
+    fn stage_checks(stage: &str) -> String {
+        match stage {
+            "discovery" => "  - every item labeled CANDIDATE/HYPOTHESIZED, not approved; non-authoritative banner present; no intent/contract/schema language; out-of-scope findings recorded as backlog candidates, not acted on.".to_string(),
+            "brief" => "  - problem clearly stated; scope explicitly bounded; no implementation detail; ready to become a Stage 1 Intent; value/risk/guardrail present.".to_string(),
+            "onboarding" => "  - hypothesized intents clearly labeled as drafts, not approved; digest derived from observed evidence only, no invented behavior; clear path to Stage 1 promotion named.".to_string(),
+            "1" => "  - actor/outcome clarity; no implementation detail; scope boundary explicit; stable guarantees clear; ambiguity flagged.".to_string(),
+            "2" => "  - every intent outcome has observable contract coverage; failure paths named; invariants testable; no white-box claims.".to_string(),
+            "3" => "  - every relevant contract scenario has event coverage; event names stable; required fields clear; no speculative telemetry.".to_string(),
+            "4" => "  - code traces to approved contract/schema only; no unapproved events; no hidden behavior; no unrelated files; report complete.".to_string(),
+            "5" => "  - behavior tested not private internals; failure paths tested; event/telemetry tests present; replay tests where applicable.".to_string(),
+            "6" => "  - runtime evidence captured; event log bounded/sanitized; correlation chains visible; unexpected/missing events reported.".to_string(),
+            "7" => "  - ALIGNED/GAP/MISMATCH/MISSING judgments supported; no weak evidence hidden behind fluent summary; gaps routed to right action.".to_string(),
+            "8" => "  - replay actually checks event sequence + schema conformance; nondeterminism explained; missing fixtures reported.".to_string(),
+            "9" => "  - trigger valid; proposed fix minimal; no redesign disguised as refinement; affected artifacts identified.".to_string(),
+            "10" => "  - genuinely structural (no contract/schema change); impact assessed before implementing; verification is real, not just described; no full rewrite disguised as refinement.".to_string(),
+            _ => format!("  - (no stage-specific checklist for stage {})", stage),
+        }
+    }
+    
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+    
+        #[test]
+        fn sha256_str_is_deterministic() {
+            let h1 = sha256_str("hello");
+            let h2 = sha256_str("hello");
+            assert_eq!(h1, h2);
+            assert_eq!(h1.len(), 64);
+        }
+    
+        #[test]
+        fn sha256_str_differs_for_different_inputs() {
+            assert_ne!(sha256_str("hello"), sha256_str("world"));
+        }
+    
+        #[test]
+        fn coverage_state_str_values() {
+            assert_eq!(CoverageState::FullCoverage.as_str(), "FULL_COVERAGE");
+            assert_eq!(CoverageState::EmptyPacket.as_str(), "EMPTY_PACKET");
+            assert_eq!(CoverageState::CriticalOmission.as_str(), "CRITICAL_OMISSION");
+        }
+    
+        #[test]
+        fn path_excluded_env_file() {
+            assert!(is_path_excluded("secrets/.env.local"));
+            assert!(is_path_excluded("config.key"));
+            assert!(!is_path_excluded("src/main.rs"));
+        }
+    
+        #[test]
+        fn sha256_file_matches_content_hash() {
+            use std::io::Write;
+            let mut f = tempfile::NamedTempFile::new().expect("tempfile");
+            f.write_all(b"test content").expect("write");
+            let path = f.path().to_str().expect("path");
+            let file_hash = sha256_file(path).expect("hash");
+            let str_hash = sha256_str("test content");
+            assert_eq!(file_hash, str_hash);
+        }
+    
+        #[test]
+        fn stage_expected_new_downstream_identifiers_are_real_not_placeholder() {
+            for stage in ["discovery", "brief", "onboarding", "10"] {
+                let text = stage_expected(stage);
+                assert_ne!(
+                    text, "(no expected-output template for stage)",
+                    "stage '{}' must have real expected-output text", stage
+                );
+            }
+        }
+    
+        #[test]
+        fn stage_checks_new_downstream_identifiers_are_real_not_placeholder() {
+            for stage in ["discovery", "brief", "onboarding", "10"] {
+                let text = stage_checks(stage);
+                assert!(
+                    !text.contains("no stage-specific checklist"),
+                    "stage '{}' must have real checklist text", stage
+                );
+            }
+        }
+    
+        #[test]
+        fn stage_expected_numeric_1_to_9_unchanged_by_extension() {
+            for stage in ["1", "2", "3", "4", "5", "6", "7", "8", "9"] {
+                let text = stage_expected(stage);
+                assert_ne!(
+                    text, "(no expected-output template for stage)",
+                    "numeric stage '{}' must still have its existing expected-output text", stage
+                );
+            }
+        }
+    
+        #[test]
+        fn stage_checks_unrecognized_identifier_still_falls_back_to_placeholder() {
+            let text = stage_checks("nonexistent-stage");
+            assert!(text.contains("no stage-specific checklist for stage nonexistent-stage"));
+        }
+    }
+
+  --- prompts/pipeline-reviewer.md (sha256: dbd055eebca2a765c75d76ac27b0d8d295b46ff0313ad069ebeaa1a3f28fc919, visibility: shown) ---
+    # Reviewer Activation Package — DBA / Codeos
+    
+    Paste this at the start of a reviewer LLM session before providing a stage artifact.
+    
+    **This is an optional, supplementary second opinion** — an independent critical-assessor
+    pass free to challenge the artifact, the feature, or DBA itself. It does not replace the
+    default advisory review (`codeos-reviewer review <feature_id> <stage>`, structured and
+    acceptance-criteria-bound) described in `dba-system.md`'s "Default Advisory Review" section.
+    Use both when a stage warrants extra scrutiny; use this alone only when the default review
+    tooling isn't available and a waiver has been recorded but a human still wants a second read.
+    
+    ---
+    
+    ## What Is DBA
+    
+    Declarative Behavioral Architecture (DBA) is a methodology for building software features
+    through a structured sequence of gated artifacts. Its core principle: behavior must be
+    specified before it is implemented, and every implementation decision must trace to an
+    approved specification.
+    
+    DBA distinguishes three kinds of truth:
+    - **Intent** — why the feature exists (actor + outcome, no implementation details)
+    - **Contracts** — what can be observed (BDD-style Given/When/Then, verifiable without reading code)
+    - **Events** — what the runtime will emit (the complete observable spine of the feature)
+    
+    These three artifacts are approved in sequence before any code is written. Implementation
+    is then constrained to satisfy only what the approved artifacts specify — no more, no less.
+    
+    ## How Stages Gate
+    
+    DBA has 9 stages. Each stage produces one artifact. Each artifact requires explicit human
+    approval before the next stage begins. A feature cannot move from Intent to Contract until
+    the human approves the Intent. It cannot move from Contract to Schema until the Contract
+    is approved. This sequence is non-negotiable.
+    
+    The result is a traceable chain: every line of code traces to an event, every event traces
+    to a contract clause, every contract clause traces to an intent statement. If something is
+    not in the chain, it is not supposed to exist.
+    
+    ## Stage Summary
+    
+    | Stage | Artifact | What a complete artifact looks like |
+    |---|---|---|
+    | 1 — Intent | `intents/[id].md` | Actor + outcome statements, stable guarantees, explicit scope boundary. No implementation details. |
+    | 2 — Contract | `contracts/[id]_contract.md` | Given/When/Then scenarios (happy path + failures + boundary + falsification). Invariants. Failure Classifications table. |
+    | 3 — Event Schema | `events/[id]_schema.md` | Named events with payload definitions. Event flow diagram. Coverage Check table mapping contract scenarios to events. |
+    | 4 — Implementation | `modules/[id]/` | Code satisfying every contract clause. Contract Satisfaction Table. Event Emission Table. |
+    | 5 — Tests | `tests/` | Behavioral tests (one per contract scenario). Replay tests (schema conformance + chain integrity). Contract Coverage Table. |
+    | 6 — Observation | runtime log | Human runs the system. Events appear in `events/runtime_events.jsonl`. |
+    | 7 — Reconciliation | review table | Structural comparison: Intent → Contract → Schema → Implementation → Tests → Runtime. ALIGNED / GAP / MISMATCH / MISSING status per item. |
+    | 8 — Replay | replay report | Schema conformance check. Correlation chain integrity. Determinism verification. |
+    | 9 — Refinement | refinement records | Smallest effective changes for observed problems only. One refinement per observed trigger. |
+    
+    ---
+    
+    ## Your Role
+    
+    You are an **independent critical assessor**, not a DBA compliance auditor.
+    
+    You may challenge anything in the artifact or the methodology: assumptions, architecture,
+    scope, process, framing, alternatives, or DBA itself. The most valuable findings rarely
+    come from checking compliance — they come from adjacent scope and fresh perspective.
+    
+    You must remain free to conclude that the stage output is wrong, that the feature is
+    solving the wrong problem, that the architecture is fragile, or that DBA itself is
+    inappropriate for this case.
+    
+    **Do not suppress concerns because they seem unconventional or outside the current stage.**
+    Report concerns proportional to their significance. If something seems architecturally
+    wrong but is technically outside the stage under review, report it.
+    
+    The human will decide what to act on. Your job is to surface what matters, not to gate
+    what proceeds.
+    
+    ---
+    
+    ## Typical Assessment Areas
+    
+    These are starting points — you are free to ignore all of them and raise something
+    entirely different. The most valuable finding in a session often comes from outside
+    this list.
+    
+    - Is the artifact internally consistent — does it contradict itself?
+    - Does it satisfy the stage purpose (see the Stage Summary table above)?
+    - Are there ambiguities or contradictions that would produce different implementations?
+    - Are there hidden assumptions that, if false, would invalidate the artifact?
+    - Is there a simpler alternative that achieves the same outcome with less complexity?
+    - What would a skeptical engineer ask about this artifact?
+    - What would someone from an adjacent domain (security, ops, UX) notice that a DBA author might miss?
+    
+    ---
+    
+    ## Output Format
+    
+    ```
+    Attention Level: High / Medium / Low
+    
+    Key Findings:
+    [Insights, risks, reframings — anything the human should weigh before deciding.
+    Some of the most valuable findings are reframings, not risks. Include them here
+    regardless of severity. E.g. "The real issue is vertical drift, not crate count."]
+    
+    Questions:
+    [Reviewer uncertainty or things worth clarifying before the human decides.]
+    
+    Observations:
+    [Anything else — out-of-scope concerns, process notes, broader patterns, things
+    that don't fit the above but shouldn't be lost.]
+    ```
+    
+    **Attention Level** is a scannability signal, not a verdict:
+    - **High** — read carefully before deciding; significant concerns present
+    - **Medium** — worth reviewing; some questions or observations
+    - **Low** — proceed is likely fine; minor notes only
+    
+    Do not use APPROVED / REVISE / BLOCKING / NON-BLOCKING. These turn you into a gatekeeper.
+    The human decides what to approve. You inform that decision.
+    
+    **You do not write the review log entry.** Claude writes it after the human has decided.
+    Your output ends with the Observations section.
+
+  --- docs/reviewer-pipeline.md (sha256: 76cd58915ea9340b8e89d1988d3887cfaee3cbb0b8d658b8a3be0005dad3fa9e, visibility: shown) ---
+    # Codeos Reviewer Pipeline — Manual Advisory Codex Reviewer
+    
+    *A read-only, advisory, cross-model reviewer for the DBA stage gates. It compresses each
+    stage artifact into a critical assessment and an append-only log entry so the human decides
+    faster — without ever becoming a gate.*
+    
+    > **v0 is a manual advisory review logging pilot.** It records review evidence and human
+    > decisions, but it does **not** enforce complete approval-integrity or rollback correctness.
+    > The persisted hashes, packet copy, and `workspace_dirty` flag are **audit aids**, not a formal
+    > guarantee that a human approval is bound to an unchanged repository state. The deeper binding
+    > model (approval bound to a reproducible reviewed state, decision-time reverification, rollback
+    > semantics) is **deferred** — see `backlog/UPG-0015-reviewer-decision-integrity.md`.
+    
+    > **The Bash implementation is a manual pilot wrapper.** It validates the workflow but is not the
+    > intended long-term review engine; the future typed engine is `backlog/UPG-0018-reviewer-engine-v1.md`.
+    
+    ```yaml
+    status: PILOT — manual operation; no Claude Code hooks wired
+    scope: implements backlog/UPG-0003-reviewer-decision-brief.md, pulls in UPG-0006 (evidence grade)
+    binding: changes no Codeos non-negotiable rule; stage prompts untouched
+    guarantees: advisory logging only — NOT approval-integrity or rollback (deferred to backlog)
+    ```
+    
+    ---
+    
+    ## 1. Roles
+    
+    - **Claude Code** runs the DBA development loop (Stages 1–9) and STOPs at
+      `AWAITING HUMAN APPROVAL`.
+    - **Codex** is the independent reviewer, invoked **read-only** (`-s read-only`) by
+      `scripts/codeos-review.sh`. Running a different model family gives cross-model adversarial
+      review (less self-review circularity); running read-only means it *physically cannot edit
+      artifacts* — it can only assess.
+    - **The human** decides. The reviewer recommends with non-gatekeeping vocabulary; `APPROVE`
+      is reserved for the human.
+    
+    This inherits the stance of `prompts/pipeline-reviewer.md` (the interactive Reviewer
+    Activation Package). This pipeline is the *automated* path; `prompts/reviewer-automated.md`
+    documents the prompt/packet convention.
+    
+    ## 2. The minimal prompt, the rich packet
+    
+    The static reviewer task — five focused questions, what-not-to-do guidance, five-category
+    triage rule, and required output shape — is defined in `prompts/codeos-reviewer-task.md`
+    and injected at the top of every packet by `scripts/codeos-review.sh`. What makes the
+    review *DBA-specific* rather than generic is the **evidence packet** that follows: review
+    context (feature/stage/branch/base+review SHA), the DBA rules relevant to the stage, the
+    stage-specific checklist (sourced from `backlog/UPG-0003-reviewer-decision-brief.md`), the
+    expected stage output, the artifact contents with hashes, and the secret-filtered diff. See
+    `prompts/reviewer-automated.md` for the full packet shape.
+    
+    Immediately after the reviewer task template and before `REVIEW CONTEXT`, every packet
+    includes a **`PACKET MANIFEST`** section listing each artifact with its inclusion mode
+    (`full_file`, `path_sha_only`, or `omitted_with_reason`), byte count, and sha256 (where
+    content is present), plus the diff size, `review_content_bytes` (full_file artifact bytes +
+    diff bytes), `estimated_review_tokens` (~`review_content_bytes / 4`), and `budget_status`.
+    If `review_content_bytes` exceeds `CODEOS_PACKET_BUDGET_BYTES` (default 50 000), a warning
+    is emitted to stderr and recorded in `budget_status`; the review is never aborted.
+    
+    Pass `--sha-only PATH` (repeatable) to include a file in the manifest as `path_sha_only`
+    (path + sha256 + original byte count) without sending its content to the reviewer. Useful
+    for large unchanged reference files where the reviewer only needs to verify identity. If a
+    `--sha-only` path does not exist on disk, the script exits non-zero before any Codex
+    invocation — a missing guard file is an error, not a quietly omitted artifact.
+    
+    ## 3. Session continuity — feasibility
+    
+    **Question:** can one Codex session be opened at the start and reused across every stage,
+    instead of a fresh session per stage?
+    
+    **Answer: yes — via `codex exec resume <session_id>`, not a held-open process.** This was
+    verified against Codex 0.114: the first review for a feature runs `codex exec` and the
+    session id is captured from the Codex startup banner (`session id: <uuid>`); later reviews
+    run `codex exec resume <id>`, which rehydrates the full prior conversation (a resumed session
+    correctly recalled context across separate processes in testing) while each call is a
+    crash-safe fresh process. This is the "same continuous session" semantically, achieved
+    durably. (`codex mcp-server` is a future alternative; a held-open live process was rejected
+    as fragile.)
+    
+    Invocation details that matter (0.114): `codex exec` takes `-s read-only` and `--cd`;
+    `codex exec resume` takes **neither** — sandbox is set via `-c sandbox_mode="read-only"` and
+    the working dir is the current dir. The script handles this difference.
+    
+    **Sessions are feature-scoped** — `.codeos-state/codex-sessions/<feature>.json`. Continuity
+    is valuable *within* a feature and dangerous *across* features, so a different feature gets
+    its own session and `--fresh` forces a brand-new one (use it for safety-sensitive stages,
+    reviewer/human disagreement, or suspected anchoring on stale/pre-correction context).
+    
+    **Memory is never truth.** Every review re-reads the artifacts and diff from disk pinned to
+    the review commit SHA, and records that SHA + per-artifact SHA256 + a diff hash. Session
+    memory aids cross-stage drift detection; the disk + hashes are authoritative. This is the
+    guardrail against the stale-context failure mode that DBA otherwise warns about.
+    
+    Session-id capture is **deterministic / fail-closed**: the id is parsed from the bootstrap
+    call's own banner output, so it is exactly the session just created. If no id can be parsed,
+    the script aborts and logs nothing.
+    
+    Sessions are also **version-pinned**: the session record stores the `codex --version` that
+    created it, and a resume across a changed Codex build is refused — the script starts a fresh
+    session instead of resuming under a different parser/behavior.
+    
+    ## 4. Evidence durability + append-only log
+    
+    The exact on-disk shapes of every persisted artifact below — packet, assessment header,
+    session state, REVIEW entry, HUMAN DECISION entry — are specified as **v0 normative schemas**
+    in [`reviewer-artifact-schemas.md`](reviewer-artifact-schemas.md), including required fields,
+    allowed enum values, and the lightweight fail-closed validation the script applies. Full
+    JSON Schema validation is deferred until pilot use shows it is needed.
+    
+    - The **full** Codex assessment is saved under `reviews/codex/<ts>-<feature>-stage-<N>-<sha>.md`,
+      opening with a self-contained YAML metadata header (feature/stage/branch/base+review
+      commit/artifacts+sha256/diff_hash/coverage_state/redaction_count/secret_redaction/
+      excluded_paths/reviewed_packet+sha256/codex_concern/effective_concern/evidence) so the file
+      is auditable on its own.
+    - The **exact bytes that were reviewed** are persisted as the canonical packet under
+      `reviews/codex/packets/<ts>-<feature>-stage-<N>-<sha>.packet.txt`, with its own SHA256
+      recorded in the assessment and the log. It contains the full context, artifact contents,
+      filtered diff, and the exclusion/redaction list — so for uncommitted artifacts, since-edited
+      files, and filtered diffs you can prove precisely what Codex saw, not merely a hash of it.
+      Going forward (see §4a), stage reviews that are part of the official audit trail are
+      committed with the feature branch; pilot/test runs use `reviews/codex/_scratch/` (gitignored).
+      Pre-policy reviews were not committed — see §4a and the `reviews/review-log.md` header.
+    - `reviews/review-log.md` is **append-only**. The REVIEW entry records **both** the raw
+      `Codex concern` and the `Effective concern` (after the coverage floor), the coverage state,
+      redaction count, hashes, and links. The human decision is a **separately appended** entry
+      via `codeos-review.sh decision …` — prior entries are never edited. As a **best-effort audit
+      aid**, that command re-hashes the named reviewed artifacts and records MATCH / CHANGED per
+      artifact; a `CHANGED` line is flagged (and a warning printed) but **never blocks** the
+      decision. **The decision command records the human's choice; it does not enforce approval
+      eligibility, refuse approvals, or bind approval to a reproducible reviewed state.** `APPROVE`
+      is the human's word (Non-Negotiable Rule 1). Stronger guarantees — binding approval to a
+      durable reviewed state (commit + diff hash + workspace snapshot), decision-time reverification,
+      hard stops, and rollback semantics — are **deferred** and tracked in
+      `backlog/UPG-0015-reviewer-decision-integrity.md`.
+    
+    ## 4a. Review artifact durability policy
+    
+    Not all review artifacts need to be committed. This policy (established by UPG-0029 /
+    CHG-20260629-001) defines which artifacts are **committed (durable)**, which are **scratch
+    (local-only)**, and what `reviews/review-log.md` references must satisfy.
+    
+    **Committed / durable:** A review assessment or packet is *committed (durable)* when it is
+    cited in `reviews/review-log.md` by path+sha without a `[local-only]` marker, and the file
+    is committed to the repository. Such files are verifiable from a fresh checkout — another
+    reviewer can locate and read them. Place durable files under `reviews/codex/` (root) and
+    `reviews/codex/packets/`; commit them with the feature branch.
+    
+    **Scratch / local-only:** Pilot runs, test reviews, and exploratory assessments that will
+    not be cited in the official log are kept local-only. Place them under
+    `reviews/codex/_scratch/` (gitignored); they are never committed.
+    
+    **The rule for `review-log.md` references:** A log entry that references a full assessment
+    by path+sha must *either* point to a file that is committed to the repository, *or* the log
+    entry must explicitly mark the reference as `[local-only]` / non-durable. A reference that
+    does neither creates a fake audit trail — a checkout cannot verify it, and another reviewer
+    cannot read it.
+    
+    See `reviews/review-log.md` header for the retroactive classification of pre-policy entries.
+    
+    ## 4b. Delta review mode (R2+)
+    
+    CLI: `bash scripts/codeos-review.sh review <feature> <stage> <artifacts…> --mode delta --base <sha>`
+    
+    When running R2 or later for the same step, send a **delta packet** rather than the full
+    context. A delta packet contains only:
+    
+    1. The specific acceptance criterion or claim under challenge (verbatim from the change record)
+    2. Changed lines since the previous round — exact unified diff of affected files only; no
+       surrounding unchanged context
+    3. One-line per-finding summary from the previous round: finding description,
+       IN-SCOPE BLOCKER|NON-BLOCKER classification, and what was changed to resolve it
+    4. Current trace header state: `state`, `current_step`, `review_state` only
+    
+    A delta packet must **NOT** include:
+    - Full backlog catalogs or feature briefs
+    - Full prior assessment prose
+    - Unchanged file contents
+    - Unrelated documents (roadmap, dba-system.md, downstream doctrine, etc.)
+    - The full change record if only one section changed
+    
+    **Round trigger:** use delta mode for R2 and every subsequent round at the same step. R1 always
+    gets the full packet.
+    
+    ## 4c. Claim audit
+    
+    Before every Codex call, scan all new or modified prose for **universal quantifiers**: "all",
+    "every", "never", "always", "no X", "any", "none". For each instance:
+    
+    1. **Provide evidence** — confirm the claim is literally true; state how you would verify it.
+    2. **Weaken** — replace with "most", "typically", "in most cases", or a conditional if the
+       claim is not universal.
+    3. **Remove** — if the claim adds no value or cannot be defended.
+    
+    Universal claims without evidence are the most common source of Codex-flagged false claims
+    across UPG-0001 and UPG-0029. Running this audit before calling Codex prevents a class of
+    blockers that would otherwise cost a full review round.
+    
+    ## 4d. Review-round budget table
+    
+    | Profile | Applies when | Max rounds/step | Budget-exceeded action |
+    |---|---|---|---|
+    | PROFILE-0 | `trivial` / direct-edit `backlog-only` | 0 (no review) | — |
+    | PROFILE-1 | Escalated `backlog-only` | 2 (Reconcile only) | Fix inline; escalate to human |
+    | PROFILE-2 | `documentation` | 2 (per step) | Fix inline; escalate to human |
+    | PROFILE-3 | `template` / `prompt` / `script-tooling` | 3 (per step) | Fix inline; escalate to human |
+    | PROFILE-4 | `downstream-doctrine` | 3 (per step) | Fix inline; escalate to human |
+    | PROFILE-5 | `self-dev-governance` | 3 (per step) | Fix inline; escalate to human |
+    
+    **Budget-exceeded escalation procedure:**
+    1. Fix any remaining in-scope findings inline without running another Codex round.
+    2. Append a budget-exhausted entry to `reviews/review-log.md` describing what was fixed and
+       what remains.
+    3. Escalate to the human at the gate — present the findings, what was fixed, and what requires
+       human judgment.
+    4. Do not run further Codex rounds automatically. The human decides whether any remaining issue
+       warrants another round (which counts against the budget) or can be accepted as-is.
+    
+    SELF-REFERENCE / REVIEW-BOOKKEEPING findings found at budget exhaustion are always resolved by
+    human decision without further review.
+    
+    ## 5. Coverage and effective concern
+    
+    Defined normatively in [`reviewer-artifact-schemas.md`](reviewer-artifact-schemas.md) (coverage
+    rules). In summary: two filtering layers run before anything reaches Codex — **path exclusion**
+    (`.env*`, `*.pem`, `secrets/*`, size limit, …) applies to the **diff and incidental files only**,
+    and **content redaction** blanks secret-like values in place in both the diff and requested
+    artifacts. A requested artifact is therefore never silently dropped — it is `shown`,
+    `shown_redacted`, `oversize_omitted`, or `missing`. The resulting `coverage_state` fixes the
+    **minimum effective concern** (an evidence-coverage gap is a verdict floor, not a footnote). This
+    is about *how complete the evidence was*, not approval eligibility. When anything is
+    excluded/redacted, or on a critical/empty state, the log flags **MANUAL SECURITY REVIEW
+    REQUIRED**. `workspace_dirty` is recorded as descriptive audit context only.
+    
+    **Full Context Diff (supplementary context only):** The Full Context Diff section
+    (appended in `--mode delta --base` runs) is supplementary and informational, not primary
+    evidence. Its redactions increment `redaction_count` in the assessment header, but they do
+    **not** change `coverage_state` and do not trigger the manual-security-review flag — because
+    `coverage_state` reflects named-artifact evidence completeness, not the supplementary diff.
+    A git error in the full-diff fetch is marked explicitly as `[ERROR: git diff failed — …]`
+    in the packet, so it is never silent.
+    
+    ## 6. Concern-level semantics + human responsibility
+    
+    - **NO OBJECTION** — no material reason to stop found; *this is not approval*.
+    - **CHANGES ADVISED** — issues that should be addressed or consciously waived.
+    - **DO NOT ADVANCE** — a material DBA risk; the human should not approve without resolving or
+      explicitly overriding.
+    - **UNCLASSIFIED** — malformed/insufficient reviewer output (no parseable `LOG SUMMARY`);
+      treated as **HIGH attention / manual review required**, never neutral.
+    
+    Evidence grade (optional, backlog #13): `EVIDENCE: A–E` — concern level is *what the reviewer
+    thinks*; evidence grade is *how well supported it is*. If absent, the log records
+    `Evidence: not reported`; #13 is not "done" until the reviewer reliably emits it.
+    
+    > **The reviewer reduces human reading load; it does not reduce human responsibility.** A
+    > human may approve a stage against the reviewer, but must record the reason in the HUMAN
+    > DECISION entry when doing so. The reviewer is evidence compression, not decision transfer.
+    
+    ## 7. What a good review looks like (calibration)
+    
+    This pipeline was itself shaped by several rounds of real Codex review of its own plan. The
+    qualities that made those reviews valuable are the bar the automated reviewer aims at:
+    
+    - **Operational, not only philosophical** — it named concrete bugs (append-only violations,
+      wrong state locations, brittle session capture), not just abstractions.
+    - **Ranked by severity** — required corrections separated from optional improvements.
+    - **Concrete better-designs** — every objection came with a specific proposed fix.
+    - **Honest about tradeoffs** — e.g. flagging when a "one cheap call" claim was really a
+      mini-pilot.
+    - **Ends with a clear decision** — approve / approve-with-fixes / do-not-approve, per area.
+    
+    The stage-specific checklists encode this intent; the packet's INSTRUCTIONS line asks for
+    exactly this shape.
+    
+    ## 8. DBA-philosophy scorecard
+    
+    | Capability | DBA impact | Why |
+    |---|---|---|
+    | Cross-model Codex reviewer, read-only | **Positive** | Adversarial second model; cannot edit artifacts |
+    | Feature-scoped session via `exec resume` | **Neutral** | Re-reads artifacts + SHA-pins every review; `--fresh` escape hatch; no cross-feature bleed |
+    | Durable assessments + append-only log (no mutable fields) | **Aligned** | Mirrors `runtime_events.jsonl` + existing append-only Decision Log |
+    | Advisory concern field (non-gatekeeping words) | **Neutral** | `APPROVE` reserved for the human |
+    | Secret/diff filtering | **Positive** | Reduces common credential-leakage risk in the review packet (heuristic, not a guarantee) |
+    | Automated hooks | **Risky → kept inert** | Documented (Appendix), not wired |
+    | Autonomous stage approval | **Negative — violates rule #1** | Rejected/deferred (Appendix) |
+    
+    ## 9. Acceptance criteria (mini-design gate)
+    
+    read-only reviewer edits no artifacts · review output durable (full assessment saved) ·
+    sessions feature-scoped · reviewed state pinned (base+review SHA, artifact hash) · malformed
+    output → UNCLASSIFIED/high-attention · secret/large-diff filtering present · no hooks active ·
+    no core rules changed.
+    
+    ## 10. Architecture: `codeos-review.sh` is a static locator shim
+    
+    ```bash
+    # scripts/codeos-review.sh — the entire file
+    exec "${BINARY}" "$@"
+    ```
+    
+    `codeos-review.sh` is a **15-line static locator shim**. It finds the compiled Rust binary
+    (`tools/reviewer/target/release/codeos-reviewer`) and passes all arguments through verbatim
+    (`"$@"`). It contains no argument preprocessing, no conditional logic, and no reviewer
+    capability.
+    
+    **Consequence for upgrades:** any reviewer capability change — new packet sections, new
+    subcommand behavior, new flags, new decision-log fields — lives in the **Rust engine**
+    (`tools/reviewer/src/`). Changing only the bash script cannot add or modify reviewer
+    behavior. The bash script only needs to change if the binary location or build instructions
+    change.
+    
+    ## 11. Usage
+    
+    ```bash
+    # record the base commit for a stage (so review diffs base->review, not just HEAD)
+    scripts/codeos-review.sh stage-start listing-ingestion 2
+    
+    # review an artifact (resumes the feature's Codex session; --fresh starts a new one)
+    scripts/codeos-review.sh review listing-ingestion 2 contracts/listing-ingestion_contract.md
+    
+    # after the human decides, append the decision (never edits prior log entries)
+    scripts/codeos-review.sh decision listing-ingestion 2 REQUEST_CHANGES "missing failure scenario"
+    ```
+    
+    **Local prechecks** run automatically before the packet is built and before any Codex
+    invocation. They scan only the positional artifact paths passed to `review`. Two hard-fail
+    checks exit non-zero immediately: (1) a literal unfilled template placeholder (`UPG-####` or
+    `CHG-YYYYMMDD-NNN`) in any artifact, and (2) a line-anchored `latest_review:` field (a
+    schema field superseded by UPG-0001). A warning is emitted to stderr (but Codex is still
+    invoked) for unresolved draft markers: `TODO`, `FIXME`, `TBD`, `[to be filled]`. Pass
+    `--guard-clean PATH` (repeatable) to assert that a specific file — e.g. `dba-system.md`
+    during a `self-dev only` change — has no uncommitted changes; a non-existent path or a dirty
+    path both exit non-zero before Codex. Pass `--skip-prechecks` to bypass all checks (emits a
+    visible `warning: prechecks skipped` to stderr); useful for inspecting draft artifacts with
+    `--print-packet`.
+    
+    ---
+    
+    ## 12. Downstream usage (DBA projects, not Codeos self-development)
+    
+    Everything above documents this pipeline from Codeos's own self-development perspective. A
+    downstream project — one that ran `dba-init.sh` and loads `.codeos/dba-system.md` — uses the
+    exact same `codeos-reviewer` binary and `review`/`decision`/`diagnose` subcommands, with two
+    differences:
+    
+    1. **Stage identifiers are the downstream Stage IDs**, not `selfdev-step-N`: `discovery`,
+       `brief`, `onboarding`, `1` through `9`, and `10` — see `dba-system.md`'s "What You Do at
+       Each Stage" table for the full mapping and "Default Advisory Review" for when each is used.
+    2. **Cadence is the flat rule in `dba-system.md`'s "Default Advisory Review" section** —
+       round 1 before the gate, rounds 2-3 for fixes/deltas, stop after 3 and escalate to a human.
+       This is a separate, uniform cadence from the review-round-budget table used for triaging
+       Codeos's own toolkit changes (§4d above) — that internal triage system never appears in
+       downstream-facing doctrine or prompts.
+    
+    **Known limitation — invoke the binary directly for now, not the shim.**
+    `.codeos/scripts/codeos-review.sh` currently resolves its binary path via the *calling*
+    project's git root, which breaks when run from within a downstream project (it looks for the
+    binary under that project's own nonexistent `tools/reviewer/`, instead of resolving through
+    the `.codeos` symlink to Codeos). Until this is fixed (tracked as `UPG-0038`), invoke the
+    compiled binary directly, e.g. reviewing a Stage 2 contract:
+    ```bash
+    /path/to/Codeos/tools/reviewer/target/release/codeos-reviewer review checkout-flow 2 \
+      contracts/checkout-flow_contract.md
+    ```
+    Reviewing a Feature Brief before confirming it:
+    ```bash
+    /path/to/Codeos/tools/reviewer/target/release/codeos-reviewer review checkout-flow brief \
+      backlog/checkout-flow.md
+    ```
+    (`/path/to/Codeos` is wherever `.codeos` resolves to — check with `readlink -f .codeos`.)
+    
+    **If reviewer tooling isn't built or configured** for a downstream project, see
+    `dba-system.md`'s Review Waiver practice — record a plain reason in that feature's review
+    log and proceed; the human-approval gate (Non-Negotiable Rule #1) still applies regardless.
+    
+    ---
+    
+    ## Appendix A — Inert hook snippets (NOT part of the pilot)
+    
+    These are provided for a *future* phase only. **Do not add them to `.claude/settings.json`
+    yet** — the pilot runs the script manually until the advisory reviewer has a proven track
+    record. A guarded `Stop` hook keyed on a sentinel avoids reviewing every stop.
+    
+    The hook delegates to a small wrapper rather than an inline one-liner, because the cleanup
+    must be **success-gated** (do not consume the request if the review failed) and the artifact
+    paths must be **quoted/arrayed** (never word-split a `jq` expansion):
+    
+    ```jsonc
+    // .claude/settings.json — illustrative ONLY, not enabled
+    {
+      "hooks": {
+        "Stop": [
+          { "command": "scripts/codeos-review-hook.sh" }   // no-op unless the sentinel exists
+        ]
+      }
+    }
+    ```
+    
+    ```bash
+    # scripts/codeos-review-hook.sh — illustrative ONLY
+    #!/usr/bin/env bash
+    set -euo pipefail
+    req=".codeos-state/review-request.json"
+    [[ -f "${req}" ]] || exit 0                       # nothing requested → no-op
+    feature="$(jq -r '.feature' "${req}")"
+    stage="$(jq -r '.stage' "${req}")"
+    mapfile -t paths < <(jq -r '.artifacts[]' "${req}")   # array-safe, no word-splitting
+    # abort WITHOUT deleting the sentinel if the request is unparseable or names no artifacts
+    [[ -n "${feature}" && -n "${stage}" && ${#paths[@]} -gt 0 ]] || {
+      echo "review-hook: malformed/empty request; sentinel preserved" >&2; exit 1; }
+    if scripts/codeos-review.sh review "${feature}" "${stage}" "${paths[@]}"; then
+      rm -f "${req}"                                  # consume the sentinel ONLY on success
+    fi
+    ```
+    
+    ## Appendix B — Rejected / Deferred — Not Approved for Implementation
+    
+    **Autonomous stage approval.** Letting the reviewer approve stages for "simple" features
+    contradicts **non-negotiable rule #1** (every stage transition requires explicit human
+    approval) and converts DBA from *synchronous prevention* (the gate blocks a bad transition)
+    to *asynchronous detection + rollback* (it happens, is caught later, is reverted). Recorded
+    for traceability only. It would separately require: per-feature human opt-in, one commit per
+    stage, feature-registry support (#14), a rollback design, low-risk-only scope that **never**
+    includes safety/authorization/invariant contracts, a hard stop on any `DO NOT ADVANCE` or
+    low-evidence review, and an amendment to the human-approval invariant. Not built toward now.
+
+  --- prompts/00b-solution-discovery.md (sha256: 06e063189472d55fae72402b1622789cc7a64ca341044d6a0fac697bc88bb810, visibility: shown_redacted) ---
+    # Solution Discovery: Pre-Feature-Brief Domain Exploration
+    
+    ## Your Role
+    
+    You are an advisory discovery facilitator. Your job is to help the human map an
+    unfamiliar problem domain — identifying candidate feature families, shared vocabulary,
+    architectural pressure points, and explicit non-decisions — before any Feature Brief
+    is written.
+    
+    **This session is optional and non-gating.** Its outputs are planning candidates, not
+    approved DBA artifacts. A feature may enter Stage 1 without a prior Solution Discovery
+    session. Nothing produced here is authoritative.
+    
+    ---
+    
+    ## When to Use This Prompt
+    
+    Use Session Type E when the team wants to explore a new problem domain before writing
+    individual Feature Briefs — to surface what kinds of features might exist, what vocabulary
+    they will share, what configuration needs will appear, and what to defer entirely.
+    
+    Do NOT use this prompt as a substitute for Stage 1 (Intent Capture). It is upstream of
+    Stage 1 and produces candidates for Feature Briefs, not approved intents.
+    
+    ---
+    
+    ## What This Session Is NOT
+    
+    - Not a gate before Feature Stage Work (Session Type B)
+    - Not a prerequisite for writing a Feature Brief (Session Type A)
+    - Not an approval activity — no artifact produced here is approved
+    - Not a replacement for Stages 1–9 of the DBA loop
+    - Not a reviewer or approval gate — its outputs inform; they do not block
+    
+    If the human asks to write intents, contracts, event schemas, or implementation during
+    this session: decline and explain that those belong in Stage 1 and beyond. Redirect to
+    the appropriate session type.
+    
+    ---
+    
+    ## Discovery Areas
+    
+    Work through whichever areas are relevant to the session. You do not need to cover
+    all of them. Ask the human which areas they want to explore, then proceed.
+    
+    ### 1. Domain Problem Framing
+    
+    - What is the core problem this domain is trying to solve?
+    - Who are the primary human actors? What do they need to do?
+    - What currently happens without this system? What workarounds exist?
+    - What does success look like at the domain level (not the individual feature level)?
+    
+    ### 2. Candidate Feature Topology
+    
+    - What major capability clusters might exist in this domain?
+    - Which clusters are likely to appear in Stage 1 first? Which might be deferred?
+    - Which clusters are independent? Which share vocabulary or data?
+    - Are there capabilities that seem necessary but warrant validation before committing?
+    
+    Label all outputs as CANDIDATE — not approved features.
+    
+    ### 3. Shared Vocabulary
+    
+    - What domain terms will multiple features need to define consistently?
+    - Are there status values, lifecycle states, or relationship types that need early consensus?
+    - Where do vocabulary conflicts exist between different stakeholders or problem frames?
+    
+    ### 4. Event Family Hypotheses
+    
+    - What runtime events does this domain likely produce? (Examples only — not a schema.)
+    - Which events are likely high-frequency vs. low-frequency?
+    - Are there events that span multiple feature clusters?
+    
+    Label all as HYPOTHESIZED — not approved event schemas.
+    
+    ### 5. Configuration Hypotheses and Candidate Requirements
+    
+    > Output from this section is HYPOTHESIZED / CANDIDATE only — non-authoritative until
+    > routed through approved DBA stages or an ADR.
+    
+    Start with framing questions:
+    
+    - What configuration needs are likely to appear across multiple features?
+    - Are there environment-specific or deployment-specific concerns worth surfacing early?
+    - Which configuration items might block Stage 1 if left undiscovered?
+    
+    For each candidate configuration item identified, record a structured entry:
+    
+    ```
+    Config name:
+    Purpose:
+    Feature(s) likely affected:
+    Default:
+    Required / optional:
+    Secret / non-secret=[REDACTED]:
+    Runtime-changeable:
+    Validation needed:
+    Possible failure mode:
+    Possible event impact:
+    ```
+    
+    **Routing note** — if a config item becomes real, route it through:
+    - Stage 1–3 if it changes observable behavior (it is behavioral scope)
+    - Stage 10 / ADR if it is structural or infrastructure-level
+    - Readiness checklist if it requires documentation or example updates
+    
+    Do not carry config hypotheses into implementation without explicit routing.
+    
+    ### 6. Architectural Risks
+    
+    - What design decisions, if made incorrectly in early features, would be hard to change later?
+    - Where do you expect the DBA loop to be most expensive (most back-and-forth) in this domain?
+    - Are there external dependencies or integration points that carry significant uncertainty?
+    
+    ### 7. Explicit Non-Decisions
+    
+    - What might this domain accidentally become if Stage 1 intents are written too broadly?
+    - What is explicitly out of scope for v1 across this entire domain?
+    - What adjacent problem spaces should be consciously deferred?
+    
+    ---
+    
+    ## Handling Out-of-Scope Findings
+    
+    During discovery, you may surface improvements or decisions outside the session's stated
+    scope. Record these as **backlog candidates for later evaluation** — do not incorporate
+    them into the current discovery output without the human's explicit decision to expand scope.
+    
+    When you identify an out-of-scope finding, state:
+    > "This appears to be outside the current scope. I'm noting it as a backlog candidate:
+    > [brief description]. Do you want to include it in this session or keep it separate?"
+    
+    Do not act on out-of-scope findings without explicit human approval.
+    
+    ---
+    
+    ## Output Format
+    
+    For each discovery area covered, produce a clearly labeled section. Use CANDIDATE or
+    HYPOTHESIZED labels throughout so the non-authoritative status is visible inline.
+    
+    **Every output document must begin with the following banner verbatim:**
+    
+    ---
+    
+    > This document is non-authoritative planning material.
+    > It does not approve features, architecture, contracts, schemas, events, or implementation.
+    > If this document conflicts with later approved DBA artifacts, the approved DBA artifacts win.
+    
+    ---
+    
+    Suggested structure:
+    
+    ```markdown
+    # Solution Discovery: [Domain Name]
+    
+    > This document is non-authoritative planning material.
+    > It does not approve features, architecture, contracts, schemas, events, or implementation.
+    > If this document conflicts with later approved DBA artifacts, the approved DBA artifacts win.
+    
+    ## Candidate Feature Topology
+    [CANDIDATE clusters with brief rationale for each]
+    
+    ## Shared Vocabulary (candidates)
+    [Terms, definitions as currently understood]
+    
+    ## Event Family Hypotheses
+    [HYPOTHESIZED events — names and rough descriptions only]
+    
+    ## Configuration Hypotheses
+    [HYPOTHESIZED config needs]
+    
+    ## Architectural Risks
+    [Named risks with brief explanation]
+    
+    ## Explicit Non-Decisions
+    [What is deferred and why]
+    
+    ## Backlog Candidates (out of scope for this session)
+    [Items surfaced but not explored — record for later]
+    ```
+    
+    Save as `docs/solution-discovery-[domain].md` or any location the project uses for
+    planning documents. There is no required path.
+    
+    ---
+    
+    ## After Discovery
+    
+    When the session is complete, state:
+    
+    ---
+    
+    **Solution Discovery: COMPLETE**
+    
+    This is advisory planning material. None of these outputs are approved DBA artifacts.
+    
+    To continue with feature work:
+    1. Identify which candidate features to prioritize.
+    2. Start a new session using **Session Type A** (Feature Brief) for each candidate you
+       want to develop into a DBA feature.
+    3. Use this discovery output as background context for those briefs — not as a binding
+       specification. Stage 1 (Intent Capture) is the authoritative entry point.
+    
+    **If this output is carried into a Feature Brief or a Stage 1 Intent**, that handoff gets
+    the default advisory review (`codeos-reviewer review <feature_id> discovery`) or an explicit
+    Review Waiver — see `dba-system.md`'s "Default Advisory Review" section. This session
+    itself stays optional and non-gating either way; a Discovery session whose output nobody
+    carries forward is never reviewed, because there is nothing yet to review.
+    
+    The standard DBA path remains: **Intent → Contract → Schema → Implement → Tests →
+    Runtime → Reconcile → Replay → Refinement**. This document is upstream context, not a
+    new stage in that sequence.
+    
+    ---
+
+  --- backlog/UPG-0038-review-shim-symlink-resolution.md (sha256: b4507692881099a15edd2ec715d51fdabfdbacdcfa7ec6b8cf6a389ce3835ef1, visibility: shown) ---
+    ---
+    feature_id: UPG-0038
+    slug: review-shim-symlink-resolution
+    title: Fix codeos-review.sh Binary Resolution for Symlinked Downstream Projects
+    status: PROPOSED
+    priority: P1
+    depends_on: [UPG-0032]
+    related_features: [UPG-0037]
+    supersedes: []
+    superseded_by: []
+    ---
+    
+    # Upgrade: review-shim-symlink-resolution — Fix codeos-review.sh Binary Resolution for Symlinked Downstream Projects
+    
+    **Priority**: P1
+    **Status**: PROPOSED
+    **Type**: script-tooling
+    
+    ## Problem
+    
+    `scripts/codeos-review.sh` resolves `REPO_ROOT` via `git rev-parse --show-toplevel`, then
+    looks for the reviewer binary at `${REPO_ROOT}/tools/reviewer/target/release/codeos-reviewer`.
+    When invoked from within a downstream project (e.g. `.codeos/scripts/codeos-review.sh` run
+    from `/home/rimo/projects/FundFlow`), `git rev-parse --show-toplevel` resolves to the
+    *downstream project's own* repo root, not through the `.codeos` symlink to Codeos — so the
+    shim looks for a binary that only exists in Codeos, not in the downstream project, and fails
+    with "binary not found."
+    
+    Discovered during UPG-0037's Step 3 verification (2026-07-05): direct invocation of the
+    compiled binary works correctly against real FundFlow artifacts; the shim wrapper does not.
+    This is a pre-existing bug tracing to the shim's original design (UPG-0027/UPG-0032), not
+    introduced by UPG-0037 — filed as an out-of-scope-for-UPG-0037 follow-up.
+    
+    ## Upgrade
+    
+    Fix `scripts/codeos-review.sh` to resolve the binary relative to the shim script's own
+    location (which, via the `.codeos` symlink, correctly points at Codeos's `tools/reviewer/`)
+    rather than the calling repo's git root — e.g. resolve `SCRIPT_DIR` via
+    `$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)` (following symlinks) and derive the binary
+    path from that, falling back to the current `git rev-parse` behavior only for Codeos's own
+    self-development use (where the shim's location and the repo root coincide).
+    
+    ## Scope
+    
+    `scripts/codeos-review.sh` only. No change to the Rust binary itself.
+    
+    ## Value
+    
+    High for downstream usability — without this fix, UPG-0037's entire default-review practice
+    is unusable via the documented shim invocation from any real downstream project; only direct
+    binary invocation works today.
+    
+    ## Risk
+    
+    Must not break Codeos's own self-development usage of the same shim (where repo-root and
+    shim-location currently coincide) — needs a compatibility check against both usage modes.
+    
+    ## Guardrail
+    
+    No change to binary discovery precedence beyond fixing path resolution — `--provider` CLI
+    flag and `CODEOS_REVIEWER_PROVIDER` env var precedence remain unchanged.
+    
+    ## DBA-philosophy note
+    
+    Not applicable — pure tooling fix, no doctrine change.
+    
+    ## Feature Thread
+    
+    > Canonical thread rollup for this feature. Compact links/IDs only; full detail lives in the
+    > change records and review files. May be maintained manually.
+    
+    ### Changes
+    
+    | Change ID | File | Purpose | State |
+    |---|---|---|---|
+    
+    ### Reviews
+    
+    | Review ID | Change ID | Step | Round | Verdict |
+    |---|---|---|---|---|
+    
+    ### Findings Tracked Inside This Feature
+    
+    | Finding ID | Review ID | Classification | Resolution |
+    |---|---|---|---|
+    
+    ### Follow-up Features
+    
+    | Feature ID | Reason | Source finding |
+    |---|---|---|
+
+DIFF TO REVIEW (base->review, secret/size filtered)
+  [excluded/redacted: prompts/00b-solution-discovery.md] manual security review required
+diff --git a/backlog/features.md b/backlog/features.md
+index b863c95..ce94ebb 100644
+--- a/backlog/features.md
++++ b/backlog/features.md
+@@ -67,6 +67,8 @@ The goal is to speed up Codeos development without weakening DBA advantages.
+ | UPG-0034 | [UPG-0034-reviewer-readonly-invariant-check.md](UPG-0034-reviewer-readonly-invariant-check.md) | Rust Reviewer: Read-Only Invariant Check (pre/post git status warning) | P3 | COMPLETE |
+ | UPG-0035 | [UPG-0035-reviewer-sha-only-exit-code.md](UPG-0035-reviewer-sha-only-exit-code.md) | Rust Reviewer: --sha-only missing-path exit code parity (Bash=2, Rust=4) | P3 | COMPLETE |
+ | UPG-0036 | [UPG-0036-stack-manifest-dogfooding.md](UPG-0036-stack-manifest-dogfooding.md) | Stack Manifest & Drift Reconciliation Dogfooding for Codeos Self-Development | P2 | COMPLETE |
++| UPG-0037 | [UPG-0037-downstream-default-stage-review.md](UPG-0037-downstream-default-stage-review.md) | Default Advisory Review Across the Full Downstream DBA Workflow | P1 | IN_PROGRESS |
++| UPG-0038 | [UPG-0038-review-shim-symlink-resolution.md](UPG-0038-review-shim-symlink-resolution.md) | Fix codeos-review.sh Binary Resolution for Symlinked Downstream Projects | P1 | PROPOSED |
+ 
+ > Priority `—` = no formal P-rank (a completed cleanup, or a discovery note). Feature IDs are
+ > assigned once and never reused. `UPG-0002` and `UPG-0003` are historical/piloted work given IDs
+diff --git a/dba-system.md b/dba-system.md
+index 88ecd00..118eaaf 100644
+--- a/dba-system.md
++++ b/dba-system.md
+@@ -40,9 +40,55 @@ When a conflict cannot be resolved by these rules: surface it clearly to the hum
+ 
+ ---
+ 
++## Default Advisory Review
++
++Advisory review runs by default at every reviewable gate across the whole workflow below —
++not only the numbered Stage 1-9 loop, but also Feature Brief, Onboarding, Solution Discovery
++(conditionally — see below), and Architectural Refinement. This mirrors the same default
++that Codeos's own toolkit development already holds itself to.
++
++**How to run it.** Before each gate's human-approval decision, run:
++```
++codeos-reviewer review <feature_id> <stage>
++```
++using the Stage ID from the table above (e.g. `codeos-reviewer review checkout-flow 2` before
++approving Stage 2's contract; `codeos-reviewer review checkout-flow brief` before confirming
++a Feature Brief). The reviewer is independent, read-only, and non-gatekeeping — its verdict
++(NO OBJECTION / CHANGES ADVISED / DO NOT ADVANCE) informs the human's decision but never
++auto-blocks. **The human decides at the gate; Non-Negotiable Rule #1 is unchanged.**
++
++**Round budget.** Round 1 runs before the gate. Rounds 2-3 are allowed for fixes or material
++deltas raised by the previous round. After 3 rounds, stop and require a human decision rather
++than continuing to iterate automatically.
++
++**Solution Discovery is reviewed conditionally, not unconditionally.** The Discovery session
++itself stays optional and non-authoritative — running it is never required, and its output is
++never an approved architecture. If its output is actually carried into a Feature Brief or a
++Stage 1 Intent, *that handoff* gets the default advisory review (or a Review Waiver, below).
++A Discovery session whose output nobody acts on is simply never reviewed — there is nothing
++yet to review.
++
++**Review Waiver.** If reviewer tooling is unavailable or not configured for this project, the
++human records an explicit waiver with a reason and may continue — skipping the review
++silently is not allowed, and neither is blocking the whole project over missing reviewer
++setup. Record it as a plain entry in that feature's review log: "Review waiver: reviewer not
++configured for this project; proceeding without advisory review at `<stage>`. Reason:
++`<text>`." **The waiver applies only to the advisory review run. It never waives
++Non-Negotiable Rule #1** — a waived review still requires the human to explicitly approve the
++stage transition, exactly as if the review had run.
++
++**Relationship to the Reviewer Activation Package** (`.codeos/prompts/pipeline-reviewer.md`).
++That prompt remains available as an **optional, supplementary** independent critical-assessor
++pass — a human can paste it into a separate reviewer session for a second opinion that is
++free to challenge the artifact, the feature, or DBA itself, not just check it against
++acceptance criteria. It does not replace the default review above.
++
++---
++
+ ## The 9-Step DBA Development Loop
+ 
+-Every feature follows this exact sequence. No skipping.
++Every feature follows this exact sequence. No skipping. Run the default advisory review
++(see "Default Advisory Review" above) before each gate below.
+ 
+ ```
+ STEP 1 — Intent
+@@ -95,25 +141,35 @@ STEP 9 — Targeted Refinement
+ 
+ ## What You Do at Each Stage
+ 
+-Use the corresponding prompt file from `.codeos/prompts/` for detailed instructions:
++Use the corresponding prompt file from `.codeos/prompts/` for detailed instructions. The
++**Stage ID** column is the identifier vocabulary used both for documentation ordering and as
++the `<stage>` argument to `codeos-reviewer review <feature_id> <stage>` — see "Default
++Advisory Review" below.
+ 
+-| Stage | File |
+-|---|---|
+-| Session start | `.codeos/prompts/00-session-start.md` |
+-| Session end (handoff) | `.codeos/prompts/00-session-end.md` |
+-| Feature Brief (pre-Stage 1) | `.codeos/prompts/00b-feature-brief.md` |
+-| Existing Codebase Onboarding (Session Type D) | `.codeos/prompts/00c-onboarding.md` |
+-| Stage 1: Intent | `.codeos/prompts/01-intent.md` |
+-| Stage 2: Contracts | `.codeos/prompts/02-contract.md` |
+-| Stage 3: Event Schema | `.codeos/prompts/03-event-schema.md` |
+-| Stage 4: Implementation | `.codeos/prompts/04-implement.md` |
+-| Stage 5: Tests | `.codeos/prompts/05-tests.md` |
+-| Stage 6: Observation | `.codeos/prompts/06-observe.md` |
+-| Stage 7: Reconcile | `.codeos/prompts/07-reconcile.md` |
+-| Stage 8: Replay | `.codeos/prompts/08-replay.md` |
+-| Stage 9: Refine | `.codeos/prompts/09-refine.md` |
+-| **Architectural Refinement** (alternate loop) | `.codeos/prompts/10-arch-refine.md` |
+-| Reviewer Activation Package | `.codeos/prompts/pipeline-reviewer.md` |
++| Stage | Stage ID | File |
++|---|---|---|
++| Session start | — | `.codeos/prompts/00-session-start.md` |
++| Session end (handoff) | — | `.codeos/prompts/00-session-end.md` |
++| Solution Discovery (Session Type E, pre-Feature-Brief) | `discovery` | `.codeos/prompts/00b-solution-discovery.md` |
++| Feature Brief (pre-Stage 1) | `brief` | `.codeos/prompts/00b-feature-brief.md` |
++| Existing Codebase Onboarding (Session Type D) | `onboarding` | `.codeos/prompts/00c-onboarding.md` |
++| Stage 1: Intent | `1` | `.codeos/prompts/01-intent.md` |
++| Stage 2: Contracts | `2` | `.codeos/prompts/02-contract.md` |
++| Stage 3: Event Schema | `3` | `.codeos/prompts/03-event-schema.md` |
++| Stage 4: Implementation | `4` | `.codeos/prompts/04-implement.md` |
++| Stage 5: Tests | `5` | `.codeos/prompts/05-tests.md` |
++| Stage 6: Observation | `6` | `.codeos/prompts/06-observe.md` |
++| Stage 7: Reconcile | `7` | `.codeos/prompts/07-reconcile.md` |
++| Stage 8: Replay | `8` | `.codeos/prompts/08-replay.md` |
++| Stage 9: Refine | `9` | `.codeos/prompts/09-refine.md` |
++| **Architectural Refinement** (alternate loop) | `10` | `.codeos/prompts/10-arch-refine.md` |
++| Reviewer Activation Package (optional second opinion) | — | `.codeos/prompts/pipeline-reviewer.md` |
++
++**On `onboarding`'s position in this list**: it is not a step every feature passes through
++after `brief`. It is an **alternate entry point**, used *instead of* `discovery`/`brief` only
++when bootstrapping an existing codebase that lacks DBA artifacts. The Stage ID sequence
++(`discovery, brief, onboarding, 1, 2, ..., 10`) is identifier vocabulary and documentation
++order — not a claim that every feature is a single linear path through all of it.
+ 
+ The Architectural Refinement workflow is a 5-step alternative loop (Scope → Impact → Implement → Verify → Reconcile) for structural changes that have no behavioral contract or event schema. Use it for workspace restructuring, shared library extraction, dependency consolidation, test infrastructure, and naming normalization. Use the 9-step loop for any change that would alter a contract or schema.
+ 
+diff --git a/docs/reviewer-pipeline.md b/docs/reviewer-pipeline.md
+index a2ebf2a..e6a82f8 100644
+--- a/docs/reviewer-pipeline.md
++++ b/docs/reviewer-pipeline.md
+@@ -336,6 +336,45 @@ visible `warning: prechecks skipped` to stderr); useful for inspecting draft art
+ 
+ ---
+ 
++## 12. Downstream usage (DBA projects, not Codeos self-development)
++
++Everything above documents this pipeline from Codeos's own self-development perspective. A
++downstream project — one that ran `dba-init.sh` and loads `.codeos/dba-system.md` — uses the
++exact same `codeos-reviewer` binary and `review`/`decision`/`diagnose` subcommands, with two
++differences:
++
++1. **Stage identifiers are the downstream Stage IDs**, not `selfdev-step-N`: `discovery`,
++   `brief`, `onboarding`, `1` through `9`, and `10` — see `dba-system.md`'s "What You Do at
++   Each Stage" table for the full mapping and "Default Advisory Review" for when each is used.
++2. **Cadence is the flat rule in `dba-system.md`'s "Default Advisory Review" section** —
++   round 1 before the gate, rounds 2-3 for fixes/deltas, stop after 3 and escalate to a human.
++   This is a separate, uniform cadence from the review-round-budget table used for triaging
++   Codeos's own toolkit changes (§4d above) — that internal triage system never appears in
++   downstream-facing doctrine or prompts.
++
++**Known limitation — invoke the binary directly for now, not the shim.**
++`.codeos/scripts/codeos-review.sh` currently resolves its binary path via the *calling*
++project's git root, which breaks when run from within a downstream project (it looks for the
++binary under that project's own nonexistent `tools/reviewer/`, instead of resolving through
++the `.codeos` symlink to Codeos). Until this is fixed (tracked as `UPG-0038`), invoke the
++compiled binary directly, e.g. reviewing a Stage 2 contract:
++```bash
++/path/to/Codeos/tools/reviewer/target/release/codeos-reviewer review checkout-flow 2 \
++  contracts/checkout-flow_contract.md
++```
++Reviewing a Feature Brief before confirming it:
++```bash
++/path/to/Codeos/tools/reviewer/target/release/codeos-reviewer review checkout-flow brief \
++  backlog/checkout-flow.md
++```
++(`/path/to/Codeos` is wherever `.codeos` resolves to — check with `readlink -f .codeos`.)
++
++**If reviewer tooling isn't built or configured** for a downstream project, see
++`dba-system.md`'s Review Waiver practice — record a plain reason in that feature's review
++log and proceed; the human-approval gate (Non-Negotiable Rule #1) still applies regardless.
++
++---
++
+ ## Appendix A — Inert hook snippets (NOT part of the pilot)
+ 
+ These are provided for a *future* phase only. **Do not add them to `.claude/settings.json`
+diff --git a/prompts/00b-solution-discovery.md b/prompts/00b-solution-discovery.md
+index 3af0937..9fc93d5 100644
+--- a/prompts/00b-solution-discovery.md
++++ b/prompts/00b-solution-discovery.md
+@@ -203,6 +203,12 @@ To continue with feature work:
+ 3. Use this discovery output as background context for those briefs — not as a binding
+    specification. Stage 1 (Intent Capture) is the authoritative entry point.
+ 
++**If this output is carried into a Feature Brief or a Stage 1 Intent**, that handoff gets
++the default advisory review (`codeos-reviewer review <feature_id> discovery`) or an explicit
++Review Waiver — see `dba-system.md`'s "Default Advisory Review" section. This session
++itself stays optional and non-gating either way; a Discovery session whose output nobody
++carries forward is never reviewed, because there is nothing yet to review.
++
+ The standard DBA path remains: **Intent → Contract → Schema → Implement → Tests →
+ Runtime → Reconcile → Replay → Refinement**. This document is upstream context, not a
+ new stage in that sequence.
+diff --git a/prompts/pipeline-reviewer.md b/prompts/pipeline-reviewer.md
+index 35d8024..81e4875 100644
+--- a/prompts/pipeline-reviewer.md
++++ b/prompts/pipeline-reviewer.md
+@@ -2,6 +2,13 @@
+ 
+ Paste this at the start of a reviewer LLM session before providing a stage artifact.
+ 
++**This is an optional, supplementary second opinion** — an independent critical-assessor
++pass free to challenge the artifact, the feature, or DBA itself. It does not replace the
++default advisory review (`codeos-reviewer review <feature_id> <stage>`, structured and
++acceptance-criteria-bound) described in `dba-system.md`'s "Default Advisory Review" section.
++Use both when a stage warrants extra scrutiny; use this alone only when the default review
++tooling isn't available and a waiver has been recorded but a human still wants a second read.
++
+ ---
+ 
+ ## What Is DBA
+diff --git a/status/roadmap.md b/status/roadmap.md
+index f75aeb9..018f0b2 100644
+--- a/status/roadmap.md
++++ b/status/roadmap.md
+@@ -95,6 +95,8 @@ cheap pilot-adjacent wins early.
+ | UPG-0034 | Rust Reviewer: Read-Only Invariant Check | P3 | UPG-0032 | CHG-20260702-006 | COMPLETE |
+ | UPG-0035 | Rust Reviewer: --sha-only exit-code parity | P3 | UPG-0032 | CHG-20260702-005 | COMPLETE |
+ | UPG-0036 | Stack Manifest & Drift Reconciliation Dogfooding | P2 | UPG-0017 ✓, UPG-0020 ✓ | CHG-20260705-001 | COMPLETE |
++| UPG-0037 | Default Advisory Review Across the Full Downstream DBA Workflow | P1 | UPG-0003 ✓, UPG-0032 ✓, UPG-0014 ✓, UPG-0015 ✓ | CHG-20260705-002 | IN_PROGRESS |
++| UPG-0038 | Fix codeos-review.sh Binary Resolution for Symlinked Downstream Projects | P1 | UPG-0032 ✓ | — | PROPOSED |
+ 
+ ---
+ 
+diff --git a/status/self-development.md b/status/self-development.md
+index f690451..bde181a 100644
+--- a/status/self-development.md
++++ b/status/self-development.md
+@@ -55,6 +55,7 @@
+ | UPG-0022 | CHG-20260703-004 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION; Step 2 NO OBJECTION; Step 3 NO OBJECTION; Step 4 NO OBJECTION; all 14 ACs verified; 77 tests) | COMPLETE | — |
+ | UPG-0023 | CHG-20260704-001 | script-tooling | self-dev only | 1-Intent | Step 1 NO OBJECTION — awaiting Step 2 go-ahead | IN_PROGRESS | — |
+ | UPG-0036 | CHG-20260705-001 | self-dev-governance | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION R3; Step 2 NO OBJECTION R2; Step 3 NO OBJECTION R3; Step 4 NO OBJECTION R1; all 10 ACs verified; real check-drift run) | COMPLETE | — |
++| UPG-0037 | CHG-20260705-002 | downstream-doctrine | downstream doctrine only | 4-Reconcile | Step 1 NO OBJECTION; Step 2 NO OBJECTION R2; Step 3 accepted at budget (R3, 0 blockers, SECRET_REDACTION coverage) | IN_PROGRESS | UPG-0038 |
+ 
+ <!--
+ Identity   : Feature ID = UPG-#### (stable). Change ID = CHG-YYYYMMDD-NNN (one execution), or a
+diff --git a/tools/reviewer/src/packet.rs b/tools/reviewer/src/packet.rs
+index f041f75..c44802a 100644
+--- a/tools/reviewer/src/packet.rs
++++ b/tools/reviewer/src/packet.rs
+@@ -604,6 +604,9 @@ pub fn sha256_str(s: &str) -> String {
+ 
+ fn stage_expected(stage: &str) -> &'static str {
+     match stage {
++        "discovery" => "Solution Discovery — candidate feature topology, shared vocabulary, event/config hypotheses, architectural risks, explicit non-decisions; every item labeled CANDIDATE/HYPOTHESIZED; non-authoritative banner present; only reviewed when carried into a Feature Brief or Stage 1 Intent.",
++        "brief" => "Feature Brief — problem, upgrade, bounded scope, proposed artifact(s), value/risk/guardrail; a candidate for Stage 1, not yet approved; no implementation detail.",
++        "onboarding" => "Onboarding (Session Type D) — HYPOTHESIZED_INTENT drafts + codebase digest derived from evidence only; explicitly labeled draft, not APPROVED; must pass Stage 1 review before advancing.",
+         "1" => "Intent — actor+outcome statements, stable guarantees, explicit scope boundary; NO implementation detail.",
+         "2" => "Behavioral contract — observable Given/When/Then scenarios, named failure modes, invariants; independently testable; no white-box claims.",
+         "3" => "Event schema — named events with payloads, event flow, coverage map of contract scenarios to events; no speculative telemetry.",
+@@ -613,12 +616,16 @@ fn stage_expected(stage: &str) -> &'static str {
+         "7" => "Reconciliation — Intent->Contract->Schema->Impl->Tests->Runtime with ALIGNED/GAP/MISMATCH/MISSING per item, supported by evidence.",
+         "8" => "Replay — schema conformance + correlation chain integrity + determinism check; nondeterminism explained; missing fixtures reported.",
+         "9" => "Refinement — smallest effective change per observed trigger; no redesign disguised as refinement; affected artifacts named.",
++        "10" => "Architectural Refinement — Scope->Impact->Implement->Verify->Reconcile for structural changes with no behavioral contract or event schema; smallest effective change, no full rewrite.",
+         _ => "(no expected-output template for stage)",
+     }
+ }
+ 
+ fn stage_checks(stage: &str) -> String {
+     match stage {
++        "discovery" => "  - every item labeled CANDIDATE/HYPOTHESIZED, not approved; non-authoritative banner present; no intent/contract/schema language; out-of-scope findings recorded as backlog candidates, not acted on.".to_string(),
++        "brief" => "  - problem clearly stated; scope explicitly bounded; no implementation detail; ready to become a Stage 1 Intent; value/risk/guardrail present.".to_string(),
++        "onboarding" => "  - hypothesized intents clearly labeled as drafts, not approved; digest derived from observed evidence only, no invented behavior; clear path to Stage 1 promotion named.".to_string(),
+         "1" => "  - actor/outcome clarity; no implementation detail; scope boundary explicit; stable guarantees clear; ambiguity flagged.".to_string(),
+         "2" => "  - every intent outcome has observable contract coverage; failure paths named; invariants testable; no white-box claims.".to_string(),
+         "3" => "  - every relevant contract scenario has event coverage; event names stable; required fields clear; no speculative telemetry.".to_string(),
+@@ -628,6 +635,7 @@ fn stage_checks(stage: &str) -> String {
+         "7" => "  - ALIGNED/GAP/MISMATCH/MISSING judgments supported; no weak evidence hidden behind fluent summary; gaps routed to right action.".to_string(),
+         "8" => "  - replay actually checks event sequence + schema conformance; nondeterminism explained; missing fixtures reported.".to_string(),
+         "9" => "  - trigger valid; proposed fix minimal; no redesign disguised as refinement; affected artifacts identified.".to_string(),
++        "10" => "  - genuinely structural (no contract/schema change); impact assessed before implementing; verification is real, not just described; no full rewrite disguised as refinement.".to_string(),
+         _ => format!("  - (no stage-specific checklist for stage {})", stage),
+     }
+ }
+@@ -673,4 +681,43 @@ mod tests {
+         let str_hash = sha256_str("test content");
+         assert_eq!(file_hash, str_hash);
+     }
++
++    #[test]
++    fn stage_expected_new_downstream_identifiers_are_real_not_placeholder() {
++        for stage in ["discovery", "brief", "onboarding", "10"] {
++            let text = stage_expected(stage);
++            assert_ne!(
++                text, "(no expected-output template for stage)",
++                "stage '{}' must have real expected-output text", stage
++            );
++        }
++    }
++
++    #[test]
++    fn stage_checks_new_downstream_identifiers_are_real_not_placeholder() {
++        for stage in ["discovery", "brief", "onboarding", "10"] {
++            let text = stage_checks(stage);
++            assert!(
++                !text.contains("no stage-specific checklist"),
++                "stage '{}' must have real checklist text", stage
++            );
++        }
++    }
++
++    #[test]
++    fn stage_expected_numeric_1_to_9_unchanged_by_extension() {
++        for stage in ["1", "2", "3", "4", "5", "6", "7", "8", "9"] {
++            let text = stage_expected(stage);
++            assert_ne!(
++                text, "(no expected-output template for stage)",
++                "numeric stage '{}' must still have its existing expected-output text", stage
++            );
++        }
++    }
++
++    #[test]
++    fn stage_checks_unrecognized_identifier_still_falls_back_to_placeholder() {
++        let text = stage_checks("nonexistent-stage");
++        assert!(text.contains("no stage-specific checklist for stage nonexistent-stage"));
++    }
+ }

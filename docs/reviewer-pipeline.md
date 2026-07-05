@@ -336,6 +336,45 @@ visible `warning: prechecks skipped` to stderr); useful for inspecting draft art
 
 ---
 
+## 12. Downstream usage (DBA projects, not Codeos self-development)
+
+Everything above documents this pipeline from Codeos's own self-development perspective. A
+downstream project — one that ran `dba-init.sh` and loads `.codeos/dba-system.md` — uses the
+exact same `codeos-reviewer` binary and `review`/`decision`/`diagnose` subcommands, with two
+differences:
+
+1. **Stage identifiers are the downstream Stage IDs**, not `selfdev-step-N`: `discovery`,
+   `brief`, `onboarding`, `1` through `9`, and `10` — see `dba-system.md`'s "What You Do at
+   Each Stage" table for the full mapping and "Default Advisory Review" for when each is used.
+2. **Cadence is the flat rule in `dba-system.md`'s "Default Advisory Review" section** —
+   round 1 before the gate, rounds 2-3 for fixes/deltas, stop after 3 and escalate to a human.
+   This is a separate, uniform cadence from the review-round-budget table used for triaging
+   Codeos's own toolkit changes (§4d above) — that internal triage system never appears in
+   downstream-facing doctrine or prompts.
+
+**Known limitation — invoke the binary directly for now, not the shim.**
+`.codeos/scripts/codeos-review.sh` currently resolves its binary path via the *calling*
+project's git root, which breaks when run from within a downstream project (it looks for the
+binary under that project's own nonexistent `tools/reviewer/`, instead of resolving through
+the `.codeos` symlink to Codeos). Until this is fixed (tracked as `UPG-0038`), invoke the
+compiled binary directly, e.g. reviewing a Stage 2 contract:
+```bash
+/path/to/Codeos/tools/reviewer/target/release/codeos-reviewer review checkout-flow 2 \
+  contracts/checkout-flow_contract.md
+```
+Reviewing a Feature Brief before confirming it:
+```bash
+/path/to/Codeos/tools/reviewer/target/release/codeos-reviewer review checkout-flow brief \
+  backlog/checkout-flow.md
+```
+(`/path/to/Codeos` is wherever `.codeos` resolves to — check with `readlink -f .codeos`.)
+
+**If reviewer tooling isn't built or configured** for a downstream project, see
+`dba-system.md`'s Review Waiver practice — record a plain reason in that feature's review
+log and proceed; the human-approval gate (Non-Negotiable Rule #1) still applies regardless.
+
+---
+
 ## Appendix A — Inert hook snippets (NOT part of the pilot)
 
 These are provided for a *future* phase only. **Do not add them to `.claude/settings.json`

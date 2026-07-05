@@ -604,6 +604,9 @@ pub fn sha256_str(s: &str) -> String {
 
 fn stage_expected(stage: &str) -> &'static str {
     match stage {
+        "discovery" => "Solution Discovery — candidate feature topology, shared vocabulary, event/config hypotheses, architectural risks, explicit non-decisions; every item labeled CANDIDATE/HYPOTHESIZED; non-authoritative banner present; only reviewed when carried into a Feature Brief or Stage 1 Intent.",
+        "brief" => "Feature Brief — problem, upgrade, bounded scope, proposed artifact(s), value/risk/guardrail; a candidate for Stage 1, not yet approved; no implementation detail.",
+        "onboarding" => "Onboarding (Session Type D) — HYPOTHESIZED_INTENT drafts + codebase digest derived from evidence only; explicitly labeled draft, not APPROVED; must pass Stage 1 review before advancing.",
         "1" => "Intent — actor+outcome statements, stable guarantees, explicit scope boundary; NO implementation detail.",
         "2" => "Behavioral contract — observable Given/When/Then scenarios, named failure modes, invariants; independently testable; no white-box claims.",
         "3" => "Event schema — named events with payloads, event flow, coverage map of contract scenarios to events; no speculative telemetry.",
@@ -613,12 +616,16 @@ fn stage_expected(stage: &str) -> &'static str {
         "7" => "Reconciliation — Intent->Contract->Schema->Impl->Tests->Runtime with ALIGNED/GAP/MISMATCH/MISSING per item, supported by evidence.",
         "8" => "Replay — schema conformance + correlation chain integrity + determinism check; nondeterminism explained; missing fixtures reported.",
         "9" => "Refinement — smallest effective change per observed trigger; no redesign disguised as refinement; affected artifacts named.",
+        "10" => "Architectural Refinement — Scope->Impact->Implement->Verify->Reconcile for structural changes with no behavioral contract or event schema; smallest effective change, no full rewrite.",
         _ => "(no expected-output template for stage)",
     }
 }
 
 fn stage_checks(stage: &str) -> String {
     match stage {
+        "discovery" => "  - every item labeled CANDIDATE/HYPOTHESIZED, not approved; non-authoritative banner present; no intent/contract/schema language; out-of-scope findings recorded as backlog candidates, not acted on.".to_string(),
+        "brief" => "  - problem clearly stated; scope explicitly bounded; no implementation detail; ready to become a Stage 1 Intent; value/risk/guardrail present.".to_string(),
+        "onboarding" => "  - hypothesized intents clearly labeled as drafts, not approved; digest derived from observed evidence only, no invented behavior; clear path to Stage 1 promotion named.".to_string(),
         "1" => "  - actor/outcome clarity; no implementation detail; scope boundary explicit; stable guarantees clear; ambiguity flagged.".to_string(),
         "2" => "  - every intent outcome has observable contract coverage; failure paths named; invariants testable; no white-box claims.".to_string(),
         "3" => "  - every relevant contract scenario has event coverage; event names stable; required fields clear; no speculative telemetry.".to_string(),
@@ -628,6 +635,7 @@ fn stage_checks(stage: &str) -> String {
         "7" => "  - ALIGNED/GAP/MISMATCH/MISSING judgments supported; no weak evidence hidden behind fluent summary; gaps routed to right action.".to_string(),
         "8" => "  - replay actually checks event sequence + schema conformance; nondeterminism explained; missing fixtures reported.".to_string(),
         "9" => "  - trigger valid; proposed fix minimal; no redesign disguised as refinement; affected artifacts identified.".to_string(),
+        "10" => "  - genuinely structural (no contract/schema change); impact assessed before implementing; verification is real, not just described; no full rewrite disguised as refinement.".to_string(),
         _ => format!("  - (no stage-specific checklist for stage {})", stage),
     }
 }
@@ -672,5 +680,44 @@ mod tests {
         let file_hash = sha256_file(path).expect("hash");
         let str_hash = sha256_str("test content");
         assert_eq!(file_hash, str_hash);
+    }
+
+    #[test]
+    fn stage_expected_new_downstream_identifiers_are_real_not_placeholder() {
+        for stage in ["discovery", "brief", "onboarding", "10"] {
+            let text = stage_expected(stage);
+            assert_ne!(
+                text, "(no expected-output template for stage)",
+                "stage '{}' must have real expected-output text", stage
+            );
+        }
+    }
+
+    #[test]
+    fn stage_checks_new_downstream_identifiers_are_real_not_placeholder() {
+        for stage in ["discovery", "brief", "onboarding", "10"] {
+            let text = stage_checks(stage);
+            assert!(
+                !text.contains("no stage-specific checklist"),
+                "stage '{}' must have real checklist text", stage
+            );
+        }
+    }
+
+    #[test]
+    fn stage_expected_numeric_1_to_9_unchanged_by_extension() {
+        for stage in ["1", "2", "3", "4", "5", "6", "7", "8", "9"] {
+            let text = stage_expected(stage);
+            assert_ne!(
+                text, "(no expected-output template for stage)",
+                "numeric stage '{}' must still have its existing expected-output text", stage
+            );
+        }
+    }
+
+    #[test]
+    fn stage_checks_unrecognized_identifier_still_falls_back_to_placeholder() {
+        let text = stage_checks("nonexistent-stage");
+        assert!(text.contains("no stage-specific checklist for stage nonexistent-stage"));
     }
 }
