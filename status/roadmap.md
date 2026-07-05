@@ -97,6 +97,7 @@ cheap pilot-adjacent wins early.
 | UPG-0036 | Stack Manifest & Drift Reconciliation Dogfooding | P2 | UPG-0017 ✓, UPG-0020 ✓ | CHG-20260705-001 | COMPLETE |
 | UPG-0037 | Default Advisory Review Across the Full Downstream DBA Workflow | P1 | UPG-0003 ✓, UPG-0032 ✓, UPG-0014 ✓, UPG-0015 ✓ | CHG-20260705-002 | COMPLETE |
 | UPG-0038 | Fix codeos-review.sh Binary Resolution for Symlinked Downstream Projects | P1 | UPG-0032 ✓ | — | PROPOSED |
+| UPG-0039 | Resolve the 00b Prompt-Filename Collision (Discovery -> 00a) | P3 | UPG-0007 ✓ | — | PROPOSED |
 
 ---
 
