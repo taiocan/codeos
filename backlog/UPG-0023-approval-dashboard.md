@@ -2,7 +2,7 @@
 feature_id: UPG-0023
 slug: approval-dashboard
 title: Human Approval Dashboard
-status: PROPOSED
+status: IN_PROGRESS
 priority: P3
 depends_on: []
 related_features: []
@@ -13,7 +13,7 @@ superseded_by: []
 # Upgrade: approval-dashboard — Human Approval Dashboard
 
 **Priority**: P3
-**Status**: PROPOSED
+**Status**: IN_PROGRESS
 **Type**: toolkit-upgrade
 **Related**: feature-registry, reviewer-decision-brief, release-evidence-package
 
@@ -70,6 +70,7 @@ guard required; it is a navigation aid, not a decision record.
 
 | Change ID | File | Purpose | State |
 |---|---|---|---|
+| CHG-20260704-001 | `changes/UPG-0023__CHG-20260704-001__approval-dashboard.md` | New Rust subcommand: `generate-approval-dashboard` | IN_PROGRESS |
 
 ### Reviews
 

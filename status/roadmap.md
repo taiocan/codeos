@@ -78,7 +78,7 @@ cheap pilot-adjacent wins early.
 | 5 | UPG-0020 | Stack / Config Drift Detector | P3 | UPG-0017 | CHG-20260703-002 | COMPLETE |
 | 5 | UPG-0021 | Stage Report Generator | P3 | UPG-0004 | CHG-20260703-003 | COMPLETE |
 | 5 | UPG-0022 | 00b → ADR Candidate Generator | P3 | UPG-0007 | CHG-20260703-004 | COMPLETE |
-| 5 | UPG-0023 | Human Approval Dashboard | P3 | UPG-0009, UPG-0003 | — | PROPOSED |
+| 5 | UPG-0023 | Human Approval Dashboard | P3 | UPG-0009, UPG-0003 | CHG-20260704-001 | IN_PROGRESS |
 | 5 | UPG-0024 | Pre-Release Evidence Package | P3 | — | — | PROPOSED |
 | 5 | UPG-0025 | Verification Packet for Reviewer Agent | P3 | UPG-0010 | — | PROPOSED |
 | 5 | UPG-0026 | Optional Branch Creation Helper | P2 | — | — | PROPOSED |
@@ -94,6 +94,7 @@ cheap pilot-adjacent wins early.
 | UPG-0033 | Review Script Instrumentation — Timing, Reconnect Count, Reasoning Effort | P1 | UPG-0027 | CHG-20260701-001 | COMPLETE |
 | UPG-0034 | Rust Reviewer: Read-Only Invariant Check | P3 | UPG-0032 | CHG-20260702-006 | COMPLETE |
 | UPG-0035 | Rust Reviewer: --sha-only exit-code parity | P3 | UPG-0032 | CHG-20260702-005 | COMPLETE |
+| UPG-0036 | Stack Manifest & Drift Reconciliation Dogfooding | P2 | UPG-0017 ✓, UPG-0020 ✓ | CHG-20260705-001 | IN_PROGRESS |
 
 ---
 
