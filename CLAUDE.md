@@ -130,6 +130,24 @@ After each step output (and its review), STOP and state:
 
 ---
 
+## Stack / Dependency Reconciliation
+
+Evidence hygiene tied to watched files — not a second governance layer, not doctrine, and not
+an independent approval authority. `status/stack-manifest.md` records the current observed
+stack and dependency-policy status for Codeos self-development. Human approval at each gate
+remains the authority; the manifest and reconciliation reports are evidence, not authority.
+
+- Dependency/stack-file changes (watched files: `Cargo.toml`, `Cargo.lock` in this repo — see
+  `status/stack-manifest.md` for the full list and which patterns actually apply here) must be
+  declared in Step 1's "What changes," or explicitly re-triaged before implementation if
+  discovered later.
+- If Step 1 declares a watched-file change, Step 2 must include a verification criterion for
+  it.
+- Step 4 verifies that a `status/stack-reconciliation/<CHG-id>-stack-reconciliation-report.md`
+  instance exists for the change, and runs `check-drift` against it.
+
+---
+
 ## What You NEVER Do (self-development)
 
 - Treat a non-trivial change as trivial to skip the loop.
@@ -151,7 +169,9 @@ Codeos/                          ← toolkit repo (this repo)
 ├── dba-system.md                ← downstream DBA doctrine (loaded by downstream projects)
 ├── status/
 │   ├── self-development.md       ← live Self-Development Status dashboard (mutable; Feature ID + Change ID)
-│   └── roadmap.md                ← dependency-aware wave plan, keyed by UPG-#### (mutable)
+│   ├── roadmap.md                ← dependency-aware wave plan, keyed by UPG-#### (mutable)
+│   ├── stack-manifest.md         ← live stack/dependency status (evidence, not authority; mutable)
+│   └── stack-reconciliation/     ← one *-stack-reconciliation-report.md per watched-file change
 ├── changes/
 │   └── UPG-####__CHG-YYYYMMDD-NNN__slug.md  ← per-change source of truth (one per non-trivial change)
 ├── backlog/

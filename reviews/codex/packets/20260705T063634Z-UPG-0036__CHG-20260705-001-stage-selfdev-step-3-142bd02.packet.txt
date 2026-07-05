@@ -1,0 +1,772 @@
+Reviewer task:
+
+SCOPE CONTRACT
+  Assess this artifact against the STATED SCOPE of this stage/PR — the Expected Stage
+  Output below and what the artifacts actually claim — NOT against an ideal final system.
+  A capability the artifacts do not claim to provide is OUT-OF-SCOPE, not a defect.
+  The following are OUT-OF-SCOPE BACKLOG unless THIS artifact explicitly claims to provide
+  them: formal approval-binding enforcement; rollback correctness; COMMIT_BOUND/
+  WORKSPACE_BOUND enforcement; JSON Schema validation; CI validation; exact
+  decision-integrity; per-feature decision ledgers; autonomous approval; enabled hooks.
+
+YOUR TASK — answer these five questions using only the evidence in the packet:
+  1. Acceptance criteria: Does the artifact satisfy each of its stated acceptance criteria?
+     Cite evidence for each criterion (or note its absence).
+  2. Claim support: Are universal or strong claims (all, every, never, always, no X) in the
+     artifact supported by evidence in the packet? Any unverifiable strong claim is a candidate
+     finding only if it affects acceptance, scope, safety, decision integrity, or the artifact's
+     stated guarantees.
+  3. Scope drift: Is there any change beyond the stated scope boundary? (Files not in the
+     "What changes" list; behavior changes not in the intent; downstream doctrine modified
+     rather than read.)
+  4. In-scope blockers: Are there facts that, if left in, would make the artifact wrong,
+     unsafe, or internally contradictory?
+  5. Finding classification: Classify every finding you raise as exactly one of the five
+     TRIAGE RULE categories below.
+
+TRIAGE RULE — classify EVERY finding as exactly one of:
+  IN-SCOPE BLOCKER         breaks the stated goal; creates a FALSE CLAIM in this artifact;
+                           weakens the advisory/read-only/human-gated guarantees; prevents
+                           the work from running; or violates an explicit safety constraint.
+  IN-SCOPE NON-BLOCKER     improves it but is not required for this PR.
+  OUT-OF-SCOPE BACKLOG     valid, but belongs to a future feature / stronger guarantee.
+  REJECTED                 conflicts with the stated scope or Codeos philosophy.
+  SELF-REFERENCE /         review records that are stale because of the previous round's
+  REVIEW-BOOKKEEPING       own existence (causal loop); not a real artifact defect.
+  Base the PR decision ONLY on IN-SCOPE BLOCKER findings. An OUT-OF-SCOPE BACKLOG finding
+  must NOT cause DO NOT ADVANCE unless this artifact FALSELY CLAIMS to solve it.
+
+WHAT NOT TO DO
+  - Do not flag style or wording issues as blockers unless the wording creates a false claim,
+    contradiction, parser breakage, or wrong governance instruction.
+  - Do not re-review unchanged full context when the packet is in delta mode.
+  - Do not treat local-only review history as a blocker unless the artifact falsely
+    claims the review artifacts are committed/durable.
+
+INSTRUCTIONS
+  If this is a resumed session, ignore any earlier-session conclusions unless they are
+  re-established by THIS packet; assess only the evidence above, pinned to this commit.
+  Give a focused assessment of this artifact against the stated scope, acceptance criteria,
+  and evidence in this packet. Rank findings by severity. Suggest a better design only when
+  needed to explain a required fix for an IN-SCOPE BLOCKER.
+
+  Limit findings to the top 3 IN-SCOPE BLOCKERS. Additional non-blocking observations may be
+  summarized in one short paragraph only if useful.
+
+  For EACH finding emit:
+    Finding: / Severity: High|Medium|Low / Classification: <one of the TRIAGE RULE labels>
+    Evidence: <file/line> / Why: <short> / Required action: fix now|optional fix|backlog|reject
+    Scope reason: <why it does/does not belong to this PR's scope>
+  Then emit:
+    PR decision: ADVANCE | REQUEST CHANGES | DO NOT ADVANCE   (based ONLY on in-scope blockers)
+    Scope drift warning: yes|no — <is anything pulling this PR beyond its stated scope?>
+  Then on the LAST three lines emit exactly (map ADVANCE->NO OBJECTION,
+  REQUEST CHANGES->CHANGES ADVISED, DO NOT ADVANCE->DO NOT ADVANCE):
+    LOG SUMMARY: <NO OBJECTION | CHANGES ADVISED | DO NOT ADVANCE | UNCLASSIFIED> — <single most important point>
+      (use UNCLASSIFIED if you genuinely cannot classify the artifact safely)
+    EVIDENCE: <A|B|C|D|E>
+    HIGHEST-IMPACT UNCERTAINTY: <one sentence — what single thing, if wrong, most affects this assessment>
+
+  Evidence grade — the grade describes what the assessment rests on, not reviewer confidence:
+    A — Directly verified in the artifact, diff, or output shown in the packet
+    B — Verified with multiple direct pieces of evidence, but coverage is not complete
+    C — Partially verified, partially inferred from structure or context
+    D — Mostly inferred from structure or indirect evidence
+    E — Hypothesis or very limited basis — little to no direct evidence
+
+
+PACKET MANIFEST
+  generated: 2026-07-05T06:35:56Z
+  task_prompt: /home/rimo/projects/Codeos/prompts/codeos-reviewer-task.md (4959 bytes)
+  review_content_bytes: 36663
+  estimated_review_tokens: ~9165
+  budget_status: OK
+  packet_mode: full
+  delta_base: none
+  items:
+    - path: changes/UPG-0036__CHG-20260705-001__stack-manifest-dogfooding.md
+      mode: full_file
+      bytes: 15914
+      sha256: ec0a28113575321c5b1a29926655eece423b482ccf38f638fc2d996d56709b0e
+    - path: CLAUDE.md
+      mode: full_file
+      bytes: 11587
+      sha256: 5261f990de158f5811d96a99be7d127638b588f239355f7c8208e619dfcefc68
+    - path: status/stack-manifest.md
+      mode: full_file
+      bytes: 3299
+      sha256: 133f57cea150497451b858818e14a50bc9e20a6eaa4c2b7fb9f382ae58acac97
+    - path: status/stack-reconciliation/CHG-20260702-001-stack-reconciliation-report.md
+      mode: full_file
+      bytes: 2204
+      sha256: 6fc73e73263712f8a293571f872acd61f65899941f9e9ec17af87870d5e1e8b0
+    - path: (diff)
+      mode: full_file
+      bytes: 3659
+
+REVIEW CONTEXT
+  Feature:                UPG-0036__CHG-20260705-001
+  Stage:                  selfdev-step-3
+  Branch:                 main
+  Base commit:            (no base pin)
+  Review commit:          142bd02e4914dde5e3c5971a381cea2636f7f271 (+ uncommitted workspace changes)
+  Current approved stage: n/a (non-numeric stage)
+  Evidence coverage:      FULL_COVERAGE
+  Workspace dirty:        yes (uncommitted changes at review time)
+
+DBA RULES RELEVANT TO THIS STAGE
+  - Human approval is required for every stage transition; you are advisory only.
+  - Memory is not truth — assess only what is provided, pinned to the review commit.
+  - Implementation must trace to approved artifacts; no behavior beyond intent+contract+schema.
+  - No events outside the approved event schema; no hidden behavior.
+
+STAGE-SPECIFIC CHECKS
+  - (no stage-specific checklist for stage selfdev-step-3)
+
+EXPECTED STAGE OUTPUT
+  (no expected-output template for stage)
+
+ARTIFACTS TO REVIEW
+  --- changes/UPG-0036__CHG-20260705-001__stack-manifest-dogfooding.md (sha256: ec0a28113575321c5b1a29926655eece423b482ccf38f638fc2d996d56709b0e, visibility: shown) ---
+    ---
+    change_id: CHG-20260705-001
+    feature_id: UPG-0036
+    slug: stack-manifest-dogfooding
+    triage_class: self-dev-governance
+    scope_axis: self-dev only
+    review_profile: PROFILE-5
+    review_series: RVS__UPG-0036__CHG-20260705-001__S1
+    review_state: REVIEWED
+    status: IN_PROGRESS
+    loop_step: 3-Implement
+    ---
+    
+    # Change: UPG-0036 / CHG-20260705-001 — Stack Manifest & Drift Reconciliation Dogfooding
+    
+    ## TRACE HEADER
+    
+    ```yaml
+    feature_id: UPG-0036
+    primary_feature_id: UPG-0036
+    change_id: CHG-20260705-001
+    slug: stack-manifest-dogfooding
+    state: IN_PROGRESS
+    current_step: 3-Implement
+    implements:
+      - UPG-0036
+    related_features:
+      - UPG-0017
+      - UPG-0020
+    review_series: RVS__UPG-0036__CHG-20260705-001__S1
+    review_profile: PROFILE-5
+    review_state: REVIEWED
+    review_history: reviews/review-log.md
+    fixes_findings: []
+    follow_up_of: null
+    ```
+    
+    ---
+    
+    ## Step 1 — Change Intent
+    
+    ### Problem
+    
+    `templates/stack-manifest.md` + `templates/stack-reconciliation-report.md` (UPG-0017) and the
+    `check-drift` subcommand (UPG-0020) are complete, tested, and COMPLETE in the roadmap — but
+    only as downstream-facing machinery. Codeos has never instantiated a stack manifest for its
+    own `tools/reviewer` Rust crate. `tools/reviewer/Cargo.toml` has changed exactly once before
+    (UPG-0032 / `CHG-20260702-001`, establishing the original 9 dependencies: `anyhow`, `chrono`,
+    `clap`, `hex`, `regex`, `serde`, `sha2`, `tempfile`, `toml`), with no reconciliation record at
+    all. If Codeos requires this discipline of downstream projects but never applies it to
+    itself, the toolkit is performative rather than dogfooded.
+    
+    ### What changes
+    
+    | File | Change |
+    |---|---|
+    | `CLAUDE.md` | New, narrowly-scoped rule: dependency/stack-file changes must be declared in Step 1 or re-triaged; Step 2 adds a verification criterion when a watched file is touched; Step 4 verifies the reconciliation-report instance exists and runs `check-drift`. Expressed in 4-step-loop terms only — no downstream Stage 9/10/readiness-checklist language. |
+    | `status/stack-manifest.md` | New: live status file recording Codeos's actual stack (Rust/Cargo, `cargo test`, no event log/replay, dependency approval = Step 1/2 human gate), explicitly labeled as evidence/status, not an independent approval authority. |
+    | `status/stack-reconciliation/CHG-20260702-001-stack-reconciliation-report.md` | New: retroactive, clearly-labeled historical record for UPG-0032's original 9-dependency addition — not a claim that this process existed at the time. |
+    | `backlog/UPG-0036-stack-manifest-dogfooding.md` | Feature Thread: CHG-20260705-001 activated. Untracked/new — not yet committed at time of this review; shown in full in the review packet. |
+    | `backlog/features.md` | UPG-0036 row added. Not yet committed at time of this review; shown as a diff in the review packet. |
+    | `status/self-development.md` | Row activated. **Already committed** in `142bd02` (bundled, by mistake, with UPG-0023's separate Step 1 approval commit) — not visible in this review's diff-vs-HEAD as a result. Verifiable via `git show 142bd02 -- status/self-development.md`. |
+    | `status/roadmap.md` | UPG-0036 row added, unsequenced. **Already committed** in `142bd02` for the same reason as the row above — verifiable via `git show 142bd02 -- status/roadmap.md`. |
+    
+    ### Scope boundary — what stays the same
+    
+    - `dba-system.md` — **not touched**. This is self-dev governance, not downstream doctrine.
+      If any part of this change were later found to require a downstream-doctrine edit, it would
+      be re-triaged as `downstream-doctrine` (or `both`) before proceeding — not folded in here.
+    - `templates/stack-manifest.md` / `templates/stack-reconciliation-report.md` — **not
+      modified**. Codeos reuses their existing field structure for its own instances rather than
+      forking the downstream templates.
+    - `tools/reviewer/src/cmd/check_drift.rs` — **not modified**. Its existing hardcoded
+      `WATCHED_EXACT` list already covers `Cargo.toml`/`Cargo.lock`; this change documents which
+      of its watched patterns actually apply to this repo (only those two — the rest are
+      generic/downstream-oriented and currently match nothing here), it does not change the tool.
+    - **No new governance layer.** `status/stack-manifest.md` is evidence/status, same tier as
+      `status/self-development.md` and `status/roadmap.md` — never authority. Human approval at
+      every Step 1–4 gate remains the sole authority; the manifest cannot override or bypass it.
+    - **UPG-0023 is not backfilled here.** UPG-0023 (the approval-dashboard change, currently
+      parked at Step 1 awaiting Step 2 approval) has not yet touched `Cargo.toml` — its
+      `serde_yaml` addition hasn't happened yet. Only UPG-0032 is backfilled, because it is the
+      one dependency change that has actually already occurred without a reconciliation record.
+      UPG-0023's own Step 3/4 becomes the *first live application* of the trigger rule this change
+      establishes, not a second backfill.
+    - No autonomous enforcement. `check-drift` remains a manually-run, advisory, read-only tool;
+      running it at Step 4 is a human-followed practice, not a CI gate or hook.
+    
+    ### Design intent
+    
+    **Trigger rule** (to be added to `CLAUDE.md`, in 4-step-loop terms — not downstream stage
+    terms):
+    
+    > Dependency/stack-file changes must be declared in Step 1 "What changes," or explicitly
+    > re-triaged before implementation if discovered later. If Step 1 declares a watched-file
+    > change, Step 2 must include a verification criterion for it. Step 4 verifies the
+    > stack-reconciliation-report instance exists and runs `check-drift` against the change.
+    > Human approval at each gate remains the authority; the manifest and reconciliation reports
+    > are evidence, not authority.
+    
+    **Watched files for this repo:** `Cargo.toml`, `Cargo.lock` — the only two of
+    `check-drift`'s hardcoded watched patterns (`pyproject.toml`, `package.json`, `Dockerfile`,
+    `config/*.yaml`, etc.) that exist in this repo today. `status/stack-manifest.md` states this
+    explicitly rather than re-listing the tool's full generic pattern set as if all of it applied.
+    
+    **`status/stack-manifest.md` authority disclaimer** (verbatim, per the corrected wording):
+    
+    > This file records the current observed stack and dependency-policy status for Codeos
+    > self-development. It is not an independent approval authority. If it conflicts with the
+    > self-dev workflow, `CLAUDE.md` and the approved change record govern.
+    
+    **Reconciliation report instance location:** `status/stack-reconciliation/<CHG-id>-stack-
+    reconciliation-report.md` — one file per change that touches a watched file, named so its
+    suffix (`stack-reconciliation-report.md`) matches `check-drift`'s existing `ends_with()`
+    check regardless of directory. The UPG-0032 backfill instance is dated as of *this* change
+    (2026-07-05), not backdated to UPG-0032's original commit date, and is explicitly labeled
+    retroactive in its own text.
+    
+    ### Triage
+    
+    - Class: `self-dev-governance` (changes the self-dev loop trigger rule via `CLAUDE.md`)
+    - Scope axis: `self-dev only`
+    - Review profile: `PROFILE-5`
+    - Originating backlog id: `UPG-0036`
+    
+    ---
+    
+    ## Step 2 — Acceptance Criteria
+    
+    **AC-1 — Manifest exists and records the real facts**
+    `status/stack-manifest.md` exists and records: Rust/Cargo as the runtime/build stack,
+    `cargo test` as primary verification, "not applicable" for event log/replay (self-dev has
+    none — matches `CLAUDE.md`'s Mode Declaration), and the dependency approval rule (Step 1/2
+    human gate).
+    _Verify in Step 4:_ read the file; confirm each of the four facts is present.
+    
+    **AC-2 — Explicit non-authority disclaimer**
+    The manifest carries this disclaimer verbatim: "This file records the current observed stack
+    and dependency-policy status for Codeos self-development. It is not an independent approval
+    authority. If it conflicts with the self-dev workflow, `CLAUDE.md` and the approved change
+    record govern."
+    _Verify in Step 4:_ the sentence's wording (not necessarily on one physical line — prose in
+    this repo wraps at ~90 chars) must be present in full. Verify with line-wrap collapsed:
+    `sed 's/^> //' status/stack-manifest.md | tr '\n' ' ' | grep -o "<sentence>"`.
+    
+    **AC-3 — No downstream stage language in the trigger rule**
+    The new `CLAUDE.md` section is expressed only in 4-step-loop terms (references Step 1 / Step
+    2 / Step 4) and contains no "Stage 9", "Stage 10", or "readiness checklist" language.
+    _Verify in Step 4:_ grep the new section (case-insensitive) for `Stage 9`, `Stage 10`,
+    `readiness checklist` — zero matches; confirm Step 1/2/4 are each referenced.
+    
+    **AC-4 — Watched files stated explicitly, scoped to this repo**
+    `status/stack-manifest.md` lists `Cargo.toml` and `Cargo.lock` as the watched files that
+    actually apply to this repo, and states that `check-drift`'s other hardcoded patterns
+    (`pyproject.toml`, `package.json`, `Dockerfile`, `config/*.yaml`, etc.) exist for downstream
+    repos and currently match nothing here.
+    _Verify in Step 4:_ read the file; confirm both statements are present.
+    
+    **AC-5 — Trigger rule's three clauses are all present**
+    The `CLAUDE.md` addition states, at minimum: (a) a watched-file change must be declared in
+    Step 1's "What changes," or explicitly re-triaged if discovered later; (b) if declared, Step
+    2 must include a verification criterion for it; (c) Step 4 verifies the
+    stack-reconciliation-report instance exists and runs `check-drift`.
+    _Verify in Step 4:_ read the new section; confirm all three clauses (a)/(b)/(c) are present,
+    each traceable to a specific sentence.
+    
+    **AC-6 — UPG-0032 backfill only; UPG-0023 explicitly not backfilled**
+    `status/stack-reconciliation/CHG-20260702-001-stack-reconciliation-report.md` exists,
+    documents UPG-0032's original 9 dependencies (`anyhow`, `chrono`, `clap`, `hex`, `regex`,
+    `serde`, `sha2`, `tempfile`, `toml`) by name, and is explicitly labeled retroactive/historical
+    — it must not claim this reconciliation process existed at the time of UPG-0032's actual
+    commit. No `serde_yaml`/UPG-0023 reconciliation-report instance is created by this change —
+    that is UPG-0023's own Step 3/4 responsibility once it actually touches `Cargo.toml`.
+    
+    The "one real historical gap" premise itself must be mechanically checked, not merely
+    asserted: `git log --oneline -- tools/reviewer/Cargo.toml tools/reviewer/Cargo.lock` must
+    show exactly one commit across *both* watched files (not just `Cargo.toml` alone) before this
+    change's own commit(s). If that command shows more than one prior commit, the "backfill only
+    UPG-0032" claim is false and this AC fails — the additional prior change(s) would also need a
+    retroactive reconciliation-report instance.
+    _Verify in Step 4:_ (a) run the `git log` command above and record its output in the change
+    record; confirm it shows exactly one prior commit (`a66bda9`, UPG-0032's `CHG-20260702-001`);
+    (b) read the backfill instance; confirm all 9 dependencies are named and the retroactive
+    framing is present; (c) confirm `status/stack-reconciliation/` contains exactly one file (the
+    UPG-0032 backfill) and nothing referencing `serde_yaml` or UPG-0023.
+    
+    **AC-7 — `check-drift` actually run against this change**
+    This change's own Step 4 records the literal `check-drift` invocation run against the Codeos
+    repo for this change's diff, and its exit code/output — a functional demonstration that the
+    mechanism works, not just a description of it.
+    _Verify in Step 4:_ the Step 4 section shows the exact command run and its result.
+    
+    **AC-8 — No doctrine-specific language leaks into the self-dev artifacts**
+    Neither `status/stack-manifest.md` nor the new `CLAUDE.md` section contains "Stage 9",
+    "Stage 10", or "replay" as an *active* concept (a negation such as "no event log/replay" is
+    fine — that is stating the concept doesn't apply, not importing it as doctrine).
+    _Verify in Step 4:_ grep both files; manually confirm any "replay" hit is a negation, not an
+    active reference.
+    
+    **AC-9 — `dba-system.md` untouched**
+    This change does not modify `dba-system.md`.
+    _Verify in Step 4:_ `git diff --stat -- dba-system.md` is empty for this change's commits.
+    
+    **AC-10 — No autonomous enforcement; human gates preserved**
+    No hook, CI configuration, or auto-blocking mechanism is added. `check-drift` remains a
+    manually-invoked, read-only, advisory tool. The `CLAUDE.md` rule's text includes, verbatim,
+    "Human approval at each gate remains the authority; the manifest and reconciliation reports
+    are evidence, not authority."
+    _Verify in Step 4:_ confirm no hook/CI file is added or modified in this change's diff; the
+    sentence's wording must be present in full (prose wraps at ~90 chars, so a naive single-line
+    grep is not the check) — verify with line-wrap collapsed:
+    `tr '\n' ' ' < CLAUDE.md | grep -o "<sentence>"`.
+    
+    ---
+    
+    ## Step 3 — Implement
+    
+    ### What was done
+    
+    | File | Change |
+    |---|---|
+    | `CLAUDE.md` | New "## Stack / Dependency Reconciliation" section (inserted after "### Gate discipline", before "## What You NEVER Do"). States the evidence-not-authority framing, the watched-files pointer, and the three trigger clauses (Step 1 declare/re-triage, Step 2 verification criterion, Step 4 verify + `check-drift`). |
+    | `status/stack-manifest.md` | New. Records Codeos's actual stack facts, the non-authority disclaimer, the two watched files that apply to this repo, the dependency policy, the reconciliation trigger, and a History table with the UPG-0032 backfill entry. |
+    | `status/stack-reconciliation/CHG-20260702-001-stack-reconciliation-report.md` | New. Retroactive/historical reconciliation instance for UPG-0032's original 9 dependencies, explicitly labeled as written 2026-07-05 (not backdated), using the existing template's field structure without the downstream "readiness-checklist" framing line. |
+    
+    ### Verification (AC-1 through AC-10)
+    
+    - **AC-1/AC-4**: `status/stack-manifest.md` states Rust/Cargo, `cargo test`, "not applicable" for event log/replay, the Step 1/2 dependency approval point, and lists `Cargo.toml`/`Cargo.lock` as the two applicable watched files — read directly, present.
+    - **AC-2**: disclaimer sentence confirmed present verbatim (checked with blockquote markers stripped): "It is not an independent approval authority. If it conflicts with the self-dev workflow, `CLAUDE.md` and the approved change record govern."
+    - **AC-3/AC-8**: `grep -in "stage 9\|stage 10\|readiness checklist" CLAUDE.md status/stack-manifest.md status/stack-reconciliation/CHG-20260702-001-stack-reconciliation-report.md` → **zero matches**. The only "replay" mentions are negations ("no replay" in `CLAUDE.md`'s pre-existing Mode Declaration; "not applicable ... no runtime events or replay" in the new manifest) — not an active reference.
+    - **AC-5**: `CLAUDE.md`'s new section states all three clauses: Step 1 declare/re-triage, Step 2 verification criterion, Step 4 verify + run `check-drift`.
+    - **AC-6**: `git log --oneline -- tools/reviewer/Cargo.toml tools/reviewer/Cargo.lock` → **exactly one commit**, `a66bda9` (UPG-0032 / `CHG-20260702-001`). The backfill instance names all 9 dependencies and is explicitly dated/labeled retroactive. `status/stack-reconciliation/` contains exactly this one file — nothing for `serde_yaml`/UPG-0023.
+    - **AC-7**: recorded in Step 4 below (the actual `check-drift` run for this change).
+    - **AC-9**: `git diff --stat -- dba-system.md` → empty; untouched.
+    - **AC-10**: no hook/CI file added or modified (`git status --short` shows no such paths). `CLAUDE.md`'s new section contains, verbatim: "Human approval at each gate remains the authority; the manifest and reconciliation reports are evidence, not authority."
+    
+    ### Scope check
+    
+    No edits to `dba-system.md`, `templates/stack-manifest.md`, `templates/stack-reconciliation-report.md`, or `tools/reviewer/src/cmd/check_drift.rs`. No hook, CI configuration, or autonomous enforcement introduced.
+    
+    ---
+    
+    ## Step 4 — Reconcile
+    
+    *(to be written after Step 3 approval)*
+
+  --- CLAUDE.md (sha256: 5261f990de158f5811d96a99be7d127638b588f239355f7c8208e619dfcefc68, visibility: shown) ---
+    # Codeos Self-Development — Toolkit Operating Guide
+    
+    > **What this file is.** This file governs development of the **Codeos toolkit repository
+    > itself** — its prompts, templates, docs, patterns, and scripts. It does **not** replace
+    > the downstream DBA doctrine in [`dba-system.md`](dba-system.md), which is what
+    > *downstream projects* load via `.codeos/dba-system.md`. Do not run the full 9-stage DBA
+    > loop on the toolkit; use the lean self-development loop below.
+    
+    This is a **stable rulebook**. It contains no live workflow state. Current status lives in
+    [`status/self-development.md`](status/self-development.md); per-change detail lives in
+    `changes/UPG-####__CHG-YYYYMMDD-NNN__slug.md`.
+    
+    All paths in this file are **repo-relative** (`prompts/`, `templates/`, `scripts/`, …).
+    There is no `.codeos/` symlink inside this repo — that prefix is only for downstream projects.
+    
+    ---
+    
+    ## Mode Declaration
+    
+    You are developing the Codeos toolkit. Codeos *defines* Declarative Behavioral Architecture
+    (DBA); it does not need to prove DBA to itself. Toolkit changes are prose (prompts,
+    templates, docs, patterns) and bash tooling (the reviewer pipeline, `dba-init.sh`). There
+    are no runtime events, no event schema, and no replay here — so the 9-stage loop does not
+    apply. Self-development keeps DBA's **philosophy** — intent primacy, approve-the-WHAT-before-
+    the-HOW, human-approved gates, advisory (never gatekeeping) review — in a leaner shape.
+    
+    ---
+    
+    ## At Session Start
+    
+    1. Read this file.
+    2. Read [`status/self-development.md`](status/self-development.md) — the live Self-Development
+       Status dashboard (what is in flight and at which step).
+    3. Inspect the active `changes/UPG-####__CHG-YYYYMMDD-NNN__slug.md` for any IN_PROGRESS row.
+    4. Confirm the current state with the human, then **STOP** and ask what to work on.
+    
+    ---
+    
+    ## Truth Authority (inherited)
+    
+    1. **Explicit human correction** at any gate overrides everything else.
+    2. **The artifacts on disk are authoritative** — never memory of them. Re-read before acting.
+    3. Surface unresolved conflicts to the human rather than silently resolving them.
+    
+    The downstream doctrine in `dba-system.md` is the authority on DBA *substance*. When a
+    self-development change touches it, see the `downstream-doctrine` rules below.
+    
+    ---
+    
+    ## Triage Front-Door
+    
+    Classify every change before doing anything. Class determines rigor.
+    
+    | Class | Path |
+    |---|---|
+    | `trivial` | Direct edit. No loop, no review, no change record. |
+    | `backlog-only` | Direct edit, unless it changes accepted scope (then 4-step loop). |
+    | `documentation` (normative) | 4-step loop. |
+    | `template` / `prompt` / `script-tooling` | 4-step loop. |
+    | `downstream-doctrine` | 4-step loop **+ downstream-compatibility acceptance criteria + grep cross-reference verification + reviewer scope-triage**. |
+    | `self-dev-governance` | 4-step loop **+ scope-drift review** (changes to this file or the self-dev loop itself). |
+    
+    **`trivial` means non-semantic only:** typo, broken link, formatting, a wording
+    clarification that does not change meaning, or a backlog note with no implementation.
+    **Anything** that touches process, policy, behavior, script behavior, template meaning,
+    prompt semantics, doctrine, stage names, approval rules, file layout, or generated-project
+    layout is **non-trivial** and uses the 4-step loop. When unsure, treat it as non-trivial.
+    
+    **Scope axis** — every non-trivial change must declare its scope in Step 1:
+    `self-dev only` | `downstream doctrine only` | `both`. This prevents accidental drift into
+    the downstream master doctrine.
+    
+    After triage, assign a **review profile** (Step 0a of `prompts/codeos-self-dev.md`); the
+    profile governs Codex review cadence and round limits.
+    
+    ---
+    
+    ## The 4-Step Self-Development Loop
+    
+    Anchor each non-trivial change to a `backlog/` item (create one if none exists). Use
+    [`prompts/codeos-self-dev.md`](prompts/codeos-self-dev.md) for the detailed step prompt and
+    [`templates/codeos-change.md`](templates/codeos-change.md) for the change record. One change
+    record per non-trivial change: `changes/UPG-####__CHG-YYYYMMDD-NNN__slug.md`.
+    
+    Each step: **produce output → run the Codex review if required by profile → STOP at the
+    gate → human approves → next step.** (Profile governs review cadence — see Step 0a of
+    `prompts/codeos-self-dev.md`.)
+    
+    1. **Change Intent** — Why (problem in the toolkit), what changes (named files), what stays
+       the same (scope boundary), triage class, scope axis, originating backlog id. Start the
+       change record; activate the row in `status/self-development.md`.
+    2. **Acceptance Criteria** — The consistency contracts the change must hold.
+       *Doctrine/downstream:* cross-reference integrity, downstream-compatibility (the generated
+       project still loads `.codeos/dba-system.md`; stage tables, prompt filenames, and
+       references move together), no internal contradiction. *Tooling:* I/O behavior, exit-code /
+       fail-closed cases, idempotency.
+    3. **Implement** — Edits constrained to the approved scope. Update **all** cross-references
+       in the same change. No scope creep. If a change you discover is out of scope, stop and
+       re-triage it as its own change.
+    4. **Reconcile** — Verify each acceptance criterion. Sweep the toolkit for stale references,
+       orphaned links, and stage-table↔prompt-file drift (grep). For tooling, do a smoke run.
+       Apply reviewer **scope triage** (IN-SCOPE BLOCKER / IN-SCOPE NON-BLOCKER /
+       OUT-OF-SCOPE BACKLOG / REJECTED / SELF-REFERENCE / REVIEW-BOOKKEEPING). Mark the row COMPLETE in `status/self-development.md`;
+       log the decision (see Review Logging).
+    
+    ### Review cadence and advisory verdict
+    
+    Review cadence is governed by the **review profile** assigned in Step 0a of
+    `prompts/codeos-self-dev.md`. High-risk profiles (PROFILE-3 through PROFILE-5) require
+    a Codex review before each step gate. Lighter profiles (PROFILE-1, PROFILE-2) may
+    limit Codex review to Reconcile only or reduce the round budget, as defined by the
+    profile. Human approval at each step transition is required at every profile; reviewer
+    output is advisory and non-gatekeeping at every profile.
+    
+    To run the reviewer:
+    
+    ```
+    bash scripts/codeos-review.sh review UPG-####__CHG-YYYYMMDD-NNN selfdev-step-<N> changes/UPG-####__CHG-YYYYMMDD-NNN__slug.md <touched-files>
+    ```
+    
+    The verdict is **advisory** — NO OBJECTION / CHANGES ADVISED / DO NOT ADVANCE inform
+    the human's decision but never auto-block. The reviewer is independent, read-only, and
+    non-gatekeeping; the human decides at the gate.
+    
+    ### Gate discipline
+    
+    After each step output (and its review), STOP and state:
+    `AWAITING HUMAN APPROVAL TO PROCEED TO STEP [N+1]`. Advance only on an explicit
+    "APPROVED" / "approved" / "yes proceed" / equivalent. Anything else is a revision request.
+    
+    ---
+    
+    ## Stack / Dependency Reconciliation
+    
+    Evidence hygiene tied to watched files — not a second governance layer, not doctrine, and not
+    an independent approval authority. `status/stack-manifest.md` records the current observed
+    stack and dependency-policy status for Codeos self-development. Human approval at each gate
+    remains the authority; the manifest and reconciliation reports are evidence, not authority.
+    
+    - Dependency/stack-file changes (watched files: `Cargo.toml`, `Cargo.lock` in this repo — see
+      `status/stack-manifest.md` for the full list and which patterns actually apply here) must be
+      declared in Step 1's "What changes," or explicitly re-triaged before implementation if
+      discovered later.
+    - If Step 1 declares a watched-file change, Step 2 must include a verification criterion for
+      it.
+    - Step 4 verifies that a `status/stack-reconciliation/<CHG-id>-stack-reconciliation-report.md`
+      instance exists for the change, and runs `check-drift` against it.
+    
+    ---
+    
+    ## What You NEVER Do (self-development)
+    
+    - Treat a non-trivial change as trivial to skip the loop.
+    - Advance a step without running the review required by your profile and getting explicit approval.
+    - Change the downstream doctrine (`dba-system.md`) as a side effect — that requires an
+      explicit `downstream-doctrine` (or `both`) scope declaration in Step 1.
+    - Rewrite downstream 9-stage substance when only a path/location change is intended.
+    - Put live status into this file — it belongs in `status/self-development.md`.
+    - Turn `prompts/codeos-self-dev.md` into a second doctrine; keep it a practical step prompt.
+    - Let the reviewer become an enforcement engine — its verdict is advisory, scope-triaged.
+    
+    ---
+    
+    ## Self-Development File Layout
+    
+    ```
+    Codeos/                          ← toolkit repo (this repo)
+    ├── CLAUDE.md                    ← THIS FILE — stable self-development operating guide
+    ├── dba-system.md                ← downstream DBA doctrine (loaded by downstream projects)
+    ├── status/
+    │   ├── self-development.md       ← live Self-Development Status dashboard (mutable; Feature ID + Change ID)
+    │   └── roadmap.md                ← dependency-aware wave plan, keyed by UPG-#### (mutable)
+    ├── changes/
+    │   └── UPG-####__CHG-YYYYMMDD-NNN__slug.md  ← per-change source of truth (one per non-trivial change)
+    ├── backlog/
+    │   ├── features.md               ← authoritative UPG-#### → file map (identity)
+    │   └── UPG-####-slug.md          ← feature briefs w/ trace header + Feature Thread (feed Step 1)
+    ├── prompts/                     ← stage + self-dev step prompts
+    ├── templates/                   ← artifact templates
+    ├── patterns/                    ← structural patterns
+    ├── docs/                        ← toolkit documentation
+    ├── scripts/                     ← dba-init.sh, codeos-review.sh
+    └── reviews/
+        ├── review-log.md             ← append-only review + decision log
+        ├── architecture-journal.md   ← cross-cutting institutional memory (AJ-NNN)
+        └── codex/                     ← reviewer assessments + packets
+    ```
+    
+    **Identity & IDs (Feature Thread model).** Work is traced by stable **`UPG-####`** feature ids,
+    per-execution **`CHG-YYYYMMDD-NNN`** change ids, **`REV__…__S<N>__R<N>`** review-round ids, and the
+    stable **`RVS__…__S<N>`** review-series id. **Self-Reference Boundary:** reviewed artifacts carry
+    `review_series` + `review_state`, never a live round — exact rounds live only in `reviews/`. The
+    dashboard separates Feature ID from Change ID, and every backlog brief carries a
+    `## Feature Thread` rollup. The full model is `backlog/UPG-0001-feature-thread-traceability.md`.
+    In-scope review fixes stay inside the same `CHG-*`; only OUT-OF-SCOPE BACKLOG findings spawn a new
+    `UPG-####` (see the Review-Fix Rule in `prompts/codeos-self-dev.md`).
+    
+    ---
+    
+    ## Review Logging
+    
+    When the human gives a reviewer's assessment and their decision, before any other work:
+    show a brief (≈5-line) preview of what you will write, then write it.
+    
+    1. **One entry** to `reviews/review-log.md` (append-only) capturing the reviewer's core
+       insight (close to verbatim) and the human decision separately.
+    2. **One entry** to `reviews/architecture-journal.md` (`AJ-NNN`) only if the insight will
+       still matter six months from now to someone who has forgotten this change. When unsure,
+       journal only if future usefulness is clear.
+    
+    **Human overrides:** "do not log this review" / "journal this" / "do not journal this".
+    
+    **Fidelity:** preserve the insight verbatim; compress only context. Record conclusions and
+    rationale, not conversation history. Log entries are append-only — supersede with a new
+    entry, never rewrite.
+
+  --- status/stack-manifest.md (sha256: 133f57cea150497451b858818e14a50bc9e20a6eaa4c2b7fb9f382ae58acac97, visibility: shown) ---
+    # Codeos Toolkit Stack Manifest
+    
+    > This file records the current observed stack and dependency-policy status for Codeos
+    > self-development. It is not an independent approval authority. If it conflicts with the
+    > self-dev workflow, `CLAUDE.md` and the approved change record govern.
+    >
+    > Mutable status file — like `status/self-development.md` and `status/roadmap.md`, this is
+    > evidence/status, not doctrine. See `CLAUDE.md`'s "Stack / Dependency Reconciliation" section
+    > for the trigger rule this file supports.
+    
+    ---
+    
+    ## Stable Stack Decisions
+    
+    Runtime/build stack: Rust / Cargo (the `tools/reviewer` crate, binary `codeos-reviewer`)
+    Primary verification: `cargo test` (smoke tests in `tools/reviewer/tests/smoke.rs`)
+    Event log / replay: not applicable — self-dev has no runtime events or replay to reconcile
+    (see `CLAUDE.md`'s Mode Declaration)
+    Dependency approval point: Step 1 ("What changes" names the dependency) and Step 2
+    (acceptance criteria) of the 4-step self-development loop — see "Dependency Policy" below.
+    
+    ---
+    
+    ## Watched Files (this repo)
+    
+    `check-drift` (UPG-0020) hardcodes a generic watched-file list shared with downstream
+    projects that adopt this toolkit. Of that list, only these two currently exist and apply in
+    Codeos's own repo:
+    
+    - `Cargo.toml`
+    - `Cargo.lock`
+    
+    The tool's other patterns — `pyproject.toml`, `poetry.lock`, `requirements.txt`,
+    `package.json`, `package-lock.json`, `pnpm-lock.yaml`, `Dockerfile`, `docker-compose.yml`,
+    `.env.example`, `config/*.toml`, `config/*.yaml`, `settings.*` — exist for downstream repos
+    using this shared binary and currently match nothing in this repo.
+    
+    ---
+    
+    ## Dependency Policy
+    
+    When a new dependency may be added: any self-dev change whose implementation needs a new
+    `tools/reviewer` Cargo dependency.
+    Who approves: the human, at the Step 1 and Step 2 gates of the 4-step self-development loop
+    (see `CLAUDE.md`).
+    Required justification: stated in the change record's Step 1 "Design intent" — why this
+    dependency, and why not a hand-rolled alternative (the pattern already established by
+    `generate-report`/`generate-adr-candidates`, which avoided new dependencies for simpler
+    Markdown-structured inputs).
+    Where it must be documented: the change record itself, plus a
+    `status/stack-reconciliation/<CHG-id>-stack-reconciliation-report.md` instance (see below).
+    Required tests before merge: `cargo build` and `cargo test --test smoke` both clean.
+    
+    ---
+    
+    ## Reconciliation
+    
+    Trigger: any self-dev change whose Step 1 "What changes" touches `Cargo.toml` or `Cargo.lock`
+    must include a `status/stack-reconciliation/<CHG-id>-stack-reconciliation-report.md` instance
+    in the same change, verified at that change's Step 4 — see `CLAUDE.md`'s "Stack / Dependency
+    Reconciliation" rule. `check-drift` is run against the repo at that change's Step 4 as a
+    functional check, not just described.
+    
+    ## History
+    
+    | Change | Dependency event | Reconciliation report |
+    |---|---|---|
+    | UPG-0032 / `CHG-20260702-001` | Original 9 dependencies added (`anyhow`, `chrono`, `clap`, `hex`, `regex`, `serde`, `sha2`, `tempfile`, `toml`). Retroactively backfilled by UPG-0036 (2026-07-05) — this reconciliation process did not exist at the time of the original commit. | `status/stack-reconciliation/CHG-20260702-001-stack-reconciliation-report.md` |
+
+  --- status/stack-reconciliation/CHG-20260702-001-stack-reconciliation-report.md (sha256: 6fc73e73263712f8a293571f872acd61f65899941f9e9ec17af87870d5e1e8b0, visibility: shown) ---
+    # Stack Reconciliation Report
+    
+    > **Retroactive / historical record.** This report is written 2026-07-05, as part of
+    > UPG-0036 (`CHG-20260705-001`), which introduces the stack-reconciliation trigger rule
+    > itself. It documents what happened in `CHG-20260702-001` after the fact — it is not a claim
+    > that this reconciliation process existed or was enforced at the time of that commit.
+    
+    ---
+    
+    Feature/Change: UPG-0032 / `CHG-20260702-001` — Rust Reviewer Engine with Multi-Provider Support
+    Date of original change: 2026-07-02
+    Commit: `a66bda9` (per `git log --oneline -- tools/reviewer/Cargo.toml tools/reviewer/Cargo.lock`)
+    
+    ---
+    
+    ## What changed
+    
+    Dependency/config files changed: `tools/reviewer/Cargo.toml`, `tools/reviewer/Cargo.lock`
+    (both created new — this was the crate's first commit).
+    New dependencies added: `anyhow`, `chrono` (with `clock` feature), `clap` (with `derive`
+    feature), `hex`, `regex`, `serde` (with `derive` feature), `sha2`, `tempfile`, `toml`.
+    Dependencies removed: none (initial dependency set).
+    Version changes: not applicable (initial dependency set).
+    
+    ---
+    
+    ## Impact
+    
+    Runtime impact: established the `codeos-reviewer` Rust binary as the reviewer engine,
+    replacing the prior Bash pilot (superseding UPG-0018).
+    Test impact: introduced `tools/reviewer/tests/smoke.rs` as the test surface; all subsequent
+    self-dev changes to this crate are verified via `cargo test --test smoke`.
+    Configuration impact: introduced `tools/reviewer/src/config.rs`, using `toml::from_str` for
+    `reviewer.toml` resolution.
+    Security/supply-chain notes: none flagged retroactively; all 9 crates are widely-used,
+    actively-maintained dependencies at the time of this backfill.
+    
+    ---
+    
+    ## Stack manifest update
+    
+    Does the stack manifest need updating? YES — `status/stack-manifest.md` (created by
+    UPG-0036) records this dependency set in its History table as this change's outcome.
+    If NO, why not: not applicable.
+    
+    ---
+    
+    ## Decision
+    
+    - [x] Manifest updated (created for the first time by UPG-0036, with this history entry)
+    - [x] Historical gap closed — this is the only prior commit touching either watched file, per
+      `git log --oneline -- tools/reviewer/Cargo.toml tools/reviewer/Cargo.lock` (AC-6).
+
+DIFF TO REVIEW (base->review, secret/size filtered)
+diff --git a/CLAUDE.md b/CLAUDE.md
+index 724384e..b3b5dbc 100644
+--- a/CLAUDE.md
++++ b/CLAUDE.md
+@@ -130,6 +130,24 @@ After each step output (and its review), STOP and state:
+ 
+ ---
+ 
++## Stack / Dependency Reconciliation
++
++Evidence hygiene tied to watched files — not a second governance layer, not doctrine, and not
++an independent approval authority. `status/stack-manifest.md` records the current observed
++stack and dependency-policy status for Codeos self-development. Human approval at each gate
++remains the authority; the manifest and reconciliation reports are evidence, not authority.
++
++- Dependency/stack-file changes (watched files: `Cargo.toml`, `Cargo.lock` in this repo — see
++  `status/stack-manifest.md` for the full list and which patterns actually apply here) must be
++  declared in Step 1's "What changes," or explicitly re-triaged before implementation if
++  discovered later.
++- If Step 1 declares a watched-file change, Step 2 must include a verification criterion for
++  it.
++- Step 4 verifies that a `status/stack-reconciliation/<CHG-id>-stack-reconciliation-report.md`
++  instance exists for the change, and runs `check-drift` against it.
++
++---
++
+ ## What You NEVER Do (self-development)
+ 
+ - Treat a non-trivial change as trivial to skip the loop.
+diff --git a/backlog/features.md b/backlog/features.md
+index 2477247..9c64fb0 100644
+--- a/backlog/features.md
++++ b/backlog/features.md
+@@ -66,6 +66,7 @@ The goal is to speed up Codeos development without weakening DBA advantages.
+ | UPG-0033 | [UPG-0033-review-script-instrumentation.md](UPG-0033-review-script-instrumentation.md) | Review Script Instrumentation — Timing, Reconnect Count, Reasoning Effort | P1 | COMPLETE |
+ | UPG-0034 | [UPG-0034-reviewer-readonly-invariant-check.md](UPG-0034-reviewer-readonly-invariant-check.md) | Rust Reviewer: Read-Only Invariant Check (pre/post git status warning) | P3 | COMPLETE |
+ | UPG-0035 | [UPG-0035-reviewer-sha-only-exit-code.md](UPG-0035-reviewer-sha-only-exit-code.md) | Rust Reviewer: --sha-only missing-path exit code parity (Bash=2, Rust=4) | P3 | COMPLETE |
++| UPG-0036 | [UPG-0036-stack-manifest-dogfooding.md](UPG-0036-stack-manifest-dogfooding.md) | Stack Manifest & Drift Reconciliation Dogfooding for Codeos Self-Development | P2 | IN_PROGRESS |
+ 
+ > Priority `—` = no formal P-rank (a completed cleanup, or a discovery note). Feature IDs are
+ > assigned once and never reused. `UPG-0002` and `UPG-0003` are historical/piloted work given IDs
+diff --git a/status/self-development.md b/status/self-development.md
+index b1a5987..f3d3d10 100644
+--- a/status/self-development.md
++++ b/status/self-development.md
+@@ -54,7 +54,7 @@
+ | UPG-0021 | CHG-20260703-003 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 3 R1→R2 NO OBJECTION; Step 4 R1→R2 NO OBJECTION; all 16 ACs verified; 63 tests) | COMPLETE | — |
+ | UPG-0022 | CHG-20260703-004 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION; Step 2 NO OBJECTION; Step 3 NO OBJECTION; Step 4 NO OBJECTION; all 14 ACs verified; 77 tests) | COMPLETE | — |
+ | UPG-0023 | CHG-20260704-001 | script-tooling | self-dev only | 1-Intent | Step 1 NO OBJECTION — awaiting Step 2 go-ahead | IN_PROGRESS | — |
+-| UPG-0036 | CHG-20260705-001 | self-dev-governance | self-dev only | 1-Intent | — | IN_PROGRESS | — |
++| UPG-0036 | CHG-20260705-001 | self-dev-governance | self-dev only | 3-Implement | Step 1 NO OBJECTION (R3); Step 2 NO OBJECTION (R2) | IN_PROGRESS | — |
+ 
+ <!--
+ Identity   : Feature ID = UPG-#### (stable). Change ID = CHG-YYYYMMDD-NNN (one execution), or a

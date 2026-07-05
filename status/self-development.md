@@ -54,7 +54,7 @@
 | UPG-0021 | CHG-20260703-003 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 3 R1→R2 NO OBJECTION; Step 4 R1→R2 NO OBJECTION; all 16 ACs verified; 63 tests) | COMPLETE | — |
 | UPG-0022 | CHG-20260703-004 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION; Step 2 NO OBJECTION; Step 3 NO OBJECTION; Step 4 NO OBJECTION; all 14 ACs verified; 77 tests) | COMPLETE | — |
 | UPG-0023 | CHG-20260704-001 | script-tooling | self-dev only | 1-Intent | Step 1 NO OBJECTION — awaiting Step 2 go-ahead | IN_PROGRESS | — |
-| UPG-0036 | CHG-20260705-001 | self-dev-governance | self-dev only | 1-Intent | — | IN_PROGRESS | — |
+| UPG-0036 | CHG-20260705-001 | self-dev-governance | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION R3; Step 2 NO OBJECTION R2; Step 3 NO OBJECTION R3; Step 4 NO OBJECTION R1; all 10 ACs verified; real check-drift run) | COMPLETE | — |
 
 <!--
 Identity   : Feature ID = UPG-#### (stable). Change ID = CHG-YYYYMMDD-NNN (one execution), or a

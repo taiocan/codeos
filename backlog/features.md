@@ -66,6 +66,7 @@ The goal is to speed up Codeos development without weakening DBA advantages.
 | UPG-0033 | [UPG-0033-review-script-instrumentation.md](UPG-0033-review-script-instrumentation.md) | Review Script Instrumentation — Timing, Reconnect Count, Reasoning Effort | P1 | COMPLETE |
 | UPG-0034 | [UPG-0034-reviewer-readonly-invariant-check.md](UPG-0034-reviewer-readonly-invariant-check.md) | Rust Reviewer: Read-Only Invariant Check (pre/post git status warning) | P3 | COMPLETE |
 | UPG-0035 | [UPG-0035-reviewer-sha-only-exit-code.md](UPG-0035-reviewer-sha-only-exit-code.md) | Rust Reviewer: --sha-only missing-path exit code parity (Bash=2, Rust=4) | P3 | COMPLETE |
+| UPG-0036 | [UPG-0036-stack-manifest-dogfooding.md](UPG-0036-stack-manifest-dogfooding.md) | Stack Manifest & Drift Reconciliation Dogfooding for Codeos Self-Development | P2 | COMPLETE |
 
 > Priority `—` = no formal P-rank (a completed cleanup, or a discovery note). Feature IDs are
 > assigned once and never reused. `UPG-0002` and `UPG-0003` are historical/piloted work given IDs
