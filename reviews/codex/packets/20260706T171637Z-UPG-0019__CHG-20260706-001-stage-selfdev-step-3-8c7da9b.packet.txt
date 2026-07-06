@@ -1,0 +1,630 @@
+Reviewer task:
+
+SCOPE CONTRACT
+  Assess this artifact against the STATED SCOPE of this stage/PR — the Expected Stage
+  Output below and what the artifacts actually claim — NOT against an ideal final system.
+  A capability the artifacts do not claim to provide is OUT-OF-SCOPE, not a defect.
+  The following are OUT-OF-SCOPE BACKLOG unless THIS artifact explicitly claims to provide
+  them: formal approval-binding enforcement; rollback correctness; COMMIT_BOUND/
+  WORKSPACE_BOUND enforcement; JSON Schema validation; CI validation; exact
+  decision-integrity; per-feature decision ledgers; autonomous approval; enabled hooks.
+
+YOUR TASK — answer these five questions using only the evidence in the packet:
+  1. Acceptance criteria: Does the artifact satisfy each of its stated acceptance criteria?
+     Cite evidence for each criterion (or note its absence).
+  2. Claim support: Are universal or strong claims (all, every, never, always, no X) in the
+     artifact supported by evidence in the packet? Any unverifiable strong claim is a candidate
+     finding only if it affects acceptance, scope, safety, decision integrity, or the artifact's
+     stated guarantees.
+  3. Scope drift: Is there any change beyond the stated scope boundary? (Files not in the
+     "What changes" list; behavior changes not in the intent; downstream doctrine modified
+     rather than read.)
+  4. In-scope blockers: Are there facts that, if left in, would make the artifact wrong,
+     unsafe, or internally contradictory?
+  5. Finding classification: Classify every finding you raise as exactly one of the five
+     TRIAGE RULE categories below.
+
+TRIAGE RULE — classify EVERY finding as exactly one of:
+  IN-SCOPE BLOCKER         breaks the stated goal; creates a FALSE CLAIM in this artifact;
+                           weakens the advisory/read-only/human-gated guarantees; prevents
+                           the work from running; or violates an explicit safety constraint.
+  IN-SCOPE NON-BLOCKER     improves it but is not required for this PR.
+  OUT-OF-SCOPE BACKLOG     valid, but belongs to a future feature / stronger guarantee.
+  REJECTED                 conflicts with the stated scope or Codeos philosophy.
+  SELF-REFERENCE /         review records that are stale because of the previous round's
+  REVIEW-BOOKKEEPING       own existence (causal loop); not a real artifact defect.
+  Base the PR decision ONLY on IN-SCOPE BLOCKER findings. An OUT-OF-SCOPE BACKLOG finding
+  must NOT cause DO NOT ADVANCE unless this artifact FALSELY CLAIMS to solve it.
+
+WHAT NOT TO DO
+  - Do not flag style or wording issues as blockers unless the wording creates a false claim,
+    contradiction, parser breakage, or wrong governance instruction.
+  - Do not re-review unchanged full context when the packet is in delta mode.
+  - Do not treat local-only review history as a blocker unless the artifact falsely
+    claims the review artifacts are committed/durable.
+
+INSTRUCTIONS
+  If this is a resumed session, ignore any earlier-session conclusions unless they are
+  re-established by THIS packet; assess only the evidence above, pinned to this commit.
+  Give a focused assessment of this artifact against the stated scope, acceptance criteria,
+  and evidence in this packet. Rank findings by severity. Suggest a better design only when
+  needed to explain a required fix for an IN-SCOPE BLOCKER.
+
+  Limit findings to the top 3 IN-SCOPE BLOCKERS. Additional non-blocking observations may be
+  summarized in one short paragraph only if useful.
+
+  For EACH finding emit:
+    Finding: / Severity: High|Medium|Low / Classification: <one of the TRIAGE RULE labels>
+    Evidence: <file/line> / Why: <short> / Required action: fix now|optional fix|backlog|reject
+    Scope reason: <why it does/does not belong to this PR's scope>
+  Then emit:
+    PR decision: ADVANCE | REQUEST CHANGES | DO NOT ADVANCE   (based ONLY on in-scope blockers)
+    Scope drift warning: yes|no — <is anything pulling this PR beyond its stated scope?>
+  Then on the LAST three lines emit exactly (map ADVANCE->NO OBJECTION,
+  REQUEST CHANGES->CHANGES ADVISED, DO NOT ADVANCE->DO NOT ADVANCE):
+    LOG SUMMARY: <NO OBJECTION | CHANGES ADVISED | DO NOT ADVANCE | UNCLASSIFIED> — <single most important point>
+      (use UNCLASSIFIED if you genuinely cannot classify the artifact safely)
+    EVIDENCE: <A|B|C|D|E>
+    HIGHEST-IMPACT UNCERTAINTY: <one sentence — what single thing, if wrong, most affects this assessment>
+
+  Evidence grade — the grade describes what the assessment rests on, not reviewer confidence:
+    A — Directly verified in the artifact, diff, or output shown in the packet
+    B — Verified with multiple direct pieces of evidence, but coverage is not complete
+    C — Partially verified, partially inferred from structure or context
+    D — Mostly inferred from structure or indirect evidence
+    E — Hypothesis or very limited basis — little to no direct evidence
+
+
+PACKET MANIFEST
+  generated: 2026-07-06T17:16:01Z
+  task_prompt: /home/rimo/projects/Codeos/prompts/codeos-reviewer-task.md (4959 bytes)
+  review_content_bytes: 23127
+  estimated_review_tokens: ~5781
+  budget_status: OK
+  packet_mode: full
+  delta_base: none
+  items:
+    - path: changes/UPG-0019__CHG-20260706-001__ci-profile.md
+      mode: full_file
+      bytes: 10223
+      sha256: 7cf108bfa202cf2cca9369d7fe1ddbc5b2307242d283fee27527088c3a6d9004
+    - path: docs/ci-integration-profile.md
+      mode: full_file
+      bytes: 5720
+      sha256: 6d3232d59cea20b7ae46bdf333ea8f8f6a93f26c4a0b3370e2a0860da6f38ff1
+    - path: tools/reviewer/src/cmd/check_drift.rs
+      mode: full_file
+      bytes: 2406
+      sha256: 2584be9249846e3114b71ac6540c2f0dfe54e92093700be76a36efc951a7b117
+    - path: (diff)
+      mode: full_file
+      bytes: 4778
+
+REVIEW CONTEXT
+  Feature:                UPG-0019__CHG-20260706-001
+  Stage:                  selfdev-step-3
+  Branch:                 main
+  Base commit:            (no base pin)
+  Review commit:          8c7da9bc8ff5315bc39712267c05e665b1a1b146 (+ uncommitted workspace changes)
+  Current approved stage: n/a (non-numeric stage)
+  Evidence coverage:      FULL_COVERAGE
+  Workspace dirty:        yes (uncommitted changes at review time)
+
+DBA RULES RELEVANT TO THIS STAGE
+  - Human approval is required for every stage transition; you are advisory only.
+  - Memory is not truth — assess only what is provided, pinned to the review commit.
+  - Implementation must trace to approved artifacts; no behavior beyond intent+contract+schema.
+  - No events outside the approved event schema; no hidden behavior.
+
+STAGE-SPECIFIC CHECKS
+  - (no stage-specific checklist for stage selfdev-step-3)
+
+EXPECTED STAGE OUTPUT
+  (no expected-output template for stage)
+
+ARTIFACTS TO REVIEW
+  --- changes/UPG-0019__CHG-20260706-001__ci-profile.md (sha256: 7cf108bfa202cf2cca9369d7fe1ddbc5b2307242d283fee27527088c3a6d9004, visibility: shown) ---
+    ---
+    change_id: CHG-20260706-001
+    feature_id: UPG-0019
+    slug: ci-profile
+    triage_class: documentation
+    scope_axis: self-dev only
+    review_profile: PROFILE-2
+    review_series: RVS__UPG-0019__CHG-20260706-001__S1
+    review_state: REVIEWED
+    status: IN_PROGRESS
+    loop_step: 3-Implement
+    ---
+    
+    # Change: UPG-0019 / CHG-20260706-001 — CI Integration Profile
+    
+    ## TRACE HEADER
+    
+    ```yaml
+    feature_id: UPG-0019
+    primary_feature_id: UPG-0019
+    change_id: CHG-20260706-001
+    slug: ci-profile
+    state: IN_PROGRESS
+    current_step: 3-Implement
+    implements:
+      - UPG-0019
+    related_features:
+      - UPG-0016
+      - UPG-0020
+    review_series: RVS__UPG-0019__CHG-20260706-001__S1
+    review_profile: PROFILE-2
+    review_state: DRAFT
+    review_history: reviews/review-log.md
+    fixes_findings: []
+    follow_up_of: null
+    ```
+    
+    ---
+    
+    ## Step 1 — Change Intent
+    
+    ### Problem
+    
+    A downstream DBA project's local evidence (behavioral tests passing, replay verification
+    clean, schema conformance holding) can silently diverge from what CI actually checks, if CI
+    was never told what DBA-specific evidence exists to check in the first place. Codeos has no
+    documentation mapping its evidence types onto concrete CI gates — a project adopting CI has
+    to invent this mapping from scratch.
+    
+    ### What changes
+    
+    | File | Change |
+    |---|---|
+    | `docs/ci-integration-profile.md` | New: maps the 7 evidence types named in the UPG-0019 backlog brief onto illustrative CI job/step definitions a downstream DBA project can optionally adopt |
+    | `backlog/UPG-0019-ci-profile.md` | Feature Thread: CHG-20260706-001 activated (done) |
+    | `backlog/features.md` | Row → IN_PROGRESS (done) |
+    | `status/self-development.md` | Row activated (done) |
+    | `status/roadmap.md` | UPG-0019 → IN_PROGRESS (done) |
+    
+    ### Scope boundary — what stays the same
+    
+    - **`dba-system.md` — not touched.** This is documentation guidance, not downstream
+      doctrine — matching UPG-0016's (Workflow Profiles) precedent exactly: a `docs/` reference
+      file a downstream project may optionally read, not something `dba-init.sh` installs or
+      `dba-system.md`'s stage table references.
+    - **No real CI added anywhere** — not to Codeos's own repo, not as a template a downstream
+      project's `dba-init.sh` run would install. This is guidance/mapping only, matching the
+      backlog's own Guardrail ("Start with minimal checks") and DBA-philosophy note ("No rule
+      touched... reinforces, rather than alters"). Explicitly confirmed with the human before
+      drafting this Step 1 (two options were offered: docs-only vs. also wiring real CI onto
+      Codeos's own `tools/reviewer` crate; docs-only was chosen).
+    - **No existing subcommand or tool behavior changed** — `check-drift` (UPG-0020) is
+      *referenced* by this doc as the concrete mechanism for the "stack manifest reconciliation"
+      check, not modified.
+    - **`docs/workflow-profiles.md` (UPG-0016) — not modified.** Distinct concern (branch/PR
+      discipline vs. evidence-to-CI-gate mapping); the new doc may cross-reference it, not merge
+      with it.
+    
+    ### Design intent
+    
+    New file `docs/ci-integration-profile.md`, structured as one section per evidence type from
+    the backlog's "Proposed artifact(s)" list, each with: what DBA evidence it checks, why it
+    matters, and an illustrative (language-agnostic where possible) CI step sketch:
+    
+    1. **Behavioral tests** — run the project's Stage 5 behavioral test suite; fail the build on
+       any failure.
+    2. **Replay tests** — run Stage 5/8 replay verification tests; fail on any failure.
+    3. **Schema conformance tests** — verify captured runtime events conform to the approved
+       event schema (Stage 8 evidence); can be folded into replay tests or run as a distinct step.
+    4. **Lint/typecheck** — standard language-appropriate static checks (illustrative only — "use
+       your project's normal lint/typecheck tooling").
+    5. **No unapproved event names** — a check that diffs emitted event names (from a runtime log
+       sample or replay fixture) against the approved event schema's named events; fails if an
+       emitted name isn't in the schema.
+    6. **No raw runtime log leakage** — a check that `events/runtime_events.jsonl` (or excerpts
+       committed as fixtures) don't leak unsanitized secrets/PII; illustrative grep-for-known-
+       patterns sketch, not a new tool.
+    7. **Stack manifest reconciliation if dependency/config changed** — the one check with an
+       already-built, concrete mechanism: run `codeos-reviewer check-drift --base <ref>` (UPG-0020)
+       as a CI step. Exits 6 if a watched dependency/config file changed without a
+       `stack-reconciliation-report.md` in the diff; CI treats a non-zero exit as a failed gate.
+    
+    Every section states explicitly: **optional, illustrative, not enforced by Codeos** — a
+    downstream project adapts these sketches to its own CI system (GitHub Actions, GitLab CI,
+    etc.), language, and risk tolerance. No non-negotiable rule requires any project to adopt
+    this doc's suggestions.
+    
+    ### Triage
+    
+    - Class: `documentation`
+    - Scope axis: `self-dev only`
+    - Review profile: `PROFILE-2`
+    - Originating backlog id: `UPG-0019`
+    
+    ---
+    
+    ## Step 2 — Acceptance Criteria
+    
+    **AC-1 — All 7 evidence types present, matching the backlog list**
+    `docs/ci-integration-profile.md` contains one section per evidence type named in the
+    UPG-0019 backlog brief's "Proposed artifact(s)" list, in that order: behavioral tests, replay
+    tests, schema conformance tests, lint/typecheck, no unapproved event names, no raw runtime
+    log leakage, stack manifest reconciliation.
+    _Verify in Step 4:_ read the doc; confirm all 7 section headings are present, in order,
+    matching the backlog list's wording.
+    
+    **AC-2 — Every section states "optional, illustrative, not enforced"**
+    Each of the 7 sections (or the doc's opening framing, applying to all of them) explicitly
+    states that Codeos does not enforce the suggestion and a downstream project must actively
+    adopt/adapt it.
+    _Verify in Step 4:_ confirm the optional/illustrative framing is present and applies
+    unambiguously to every section, not just some.
+    
+    **AC-3 — Stack manifest reconciliation section is technically accurate**
+    That section names the actual command `codeos-reviewer check-drift --base <ref>` (UPG-0020)
+    and correctly describes its real behavior: exits 6 (`EXIT_DRIFT`) if a watched
+    dependency/config file changed since `<ref>` without a `stack-reconciliation-report.md` in
+    the diff; exits 0 otherwise.
+    _Verify in Step 4:_ cross-check this description against `tools/reviewer/src/cmd/
+    check_drift.rs`'s actual behavior (already implemented, unmodified by this change) — must
+    match exactly, not just approximately.
+    
+    **AC-4 — No downstream-doctrine or new-tooling claims**
+    The doc does not claim `dba-system.md` requires any of these checks, does not claim any new
+    Codeos tool/subcommand exists beyond what's already built (`check-drift`), and does not
+    describe non-existent CI wiring as if Codeos ships or installs it.
+    _Verify in Step 4:_ read the doc; confirm no "Codeos requires..." or "dba-init.sh installs
+    this CI config" framing appears anywhere.
+    
+    **AC-5 — `docs/workflow-profiles.md` referenced, not duplicated or merged**
+    If the new doc cross-references `docs/workflow-profiles.md` (branch/PR discipline), it does
+    so as a pointer/link, not by copying or restating that doc's content.
+    _Verify in Step 4:_ confirm no substantial content overlap between the two docs; a
+    cross-reference link is fine, a restatement is not.
+    
+    ### Cross-reference integrity
+    
+    **AC-6 — No `dba-system.md` changes**
+    `git diff --stat -- dba-system.md` is empty for this change's commits.
+    _Verify in Step 4:_ run the diff-stat check; confirm empty.
+    
+    **AC-7 — No new CI files added anywhere**
+    No `.github/workflows/*`, `.gitlab-ci.yml`, or equivalent CI configuration file is added to
+    this repo by this change — the deliverable is documentation only.
+    _Verify in Step 4:_ `git diff --stat` for this change shows only `docs/ci-integration-
+    profile.md` plus the declared backlog/status bookkeeping rows — no CI config file paths.
+    
+    **AC-8 — No existing tool behavior changed**
+    `tools/reviewer/src/cmd/check_drift.rs` and every other existing subcommand are untouched —
+    this change only *references* `check-drift`, it does not modify it.
+    _Verify in Step 4:_ `git diff --stat -- tools/reviewer/` is empty for this change.
+    
+    ---
+    
+    ## Step 3 — Implement
+    
+    ### What was done
+    
+    | File | Change |
+    |---|---|
+    | `docs/ci-integration-profile.md` | New. Seven sections (behavioral tests, replay tests, schema conformance, lint/typecheck, no unapproved event names, no raw runtime log leakage, stack manifest reconciliation), each with what it checks and an illustrative CI step. Opening framing states "optional, illustrative, not enforced" explicitly. Cross-references `workflow-profiles.md` as a pointer, no content overlap. |
+    
+    ### Verification (AC-1 through AC-8)
+    
+    - **AC-1**: `grep -n "^## "` confirms all 7 section headings present, in the backlog's stated
+      order, plus an "Adopting this profile" closing section.
+    - **AC-2**: the opening blockquote states the optional/illustrative/not-enforced framing
+      once, applying to the whole document — every section inherits it rather than restating it
+      seven times.
+    - **AC-3**: Section 7's description of `check-drift` (exit 0 if no watched file changed or a
+      reconciliation report is present; exit 6/`EXIT_DRIFT` otherwise; `--strict` only changes
+      the message prefix) was written by reading `tools/reviewer/src/cmd/check_drift.rs` directly
+      — matches exactly, not approximately.
+    - **AC-4**: `grep -in "codeos requires\|dba-init.sh installs\|codeos ships"` → empty.
+    - **AC-5**: the doc links to `workflow-profiles.md` once, in the intro, with one sentence
+      distinguishing the two concerns (CI gates vs. branch/PR discipline) — no restated content.
+    - **AC-6**: `git diff --stat -- dba-system.md` → empty.
+    - **AC-7**: `git status --short | grep -iE ".github/workflows|.gitlab-ci"` → empty; no CI
+      config file added anywhere in the repo.
+    - **AC-8**: `git diff --stat -- tools/reviewer/` → empty.
+    
+    ### Scope check
+    
+    Only `docs/ci-integration-profile.md` added, plus the declared backlog/status bookkeeping.
+    No downstream doctrine, no existing tool, no CI configuration touched.
+    
+    ---
+    
+    ## Step 4 — Reconcile
+    
+    *(to be written after Step 3 approval)*
+
+  --- docs/ci-integration-profile.md (sha256: 6d3232d59cea20b7ae46bdf333ea8f8f6a93f26c4a0b3370e2a0860da6f38ff1, visibility: shown) ---
+    # CI Integration Profile
+    
+    > **Optional, illustrative, not enforced.** Nothing in this document is required by Codeos.
+    > It maps the DBA evidence types a project already produces onto concrete CI gate sketches a
+    > downstream DBA project can adopt, adapt, or ignore. No Codeos tool installs or requires any
+    > of these checks; `dba-system.md` does not reference this document.
+    
+    Local evidence (a passing behavioral test suite, a clean replay run) can silently diverge
+    from what CI actually checks if CI was never told what DBA-specific evidence exists to check
+    in the first place. This document closes that gap by naming, for each evidence type Codeos
+    already produces, what a corresponding CI gate could look like.
+    
+    Related but distinct: [`workflow-profiles.md`](workflow-profiles.md) covers branch/PR
+    discipline (when to branch, when to split a PR). This document covers what CI *checks* once
+    you have one — a different concern. Read both if you're setting up CI for a DBA project.
+    
+    ---
+    
+    ## 1. Behavioral tests
+    
+    **What it checks:** the Stage 5 behavioral test suite (one test per contract scenario,
+    including failure paths) still passes.
+    
+    **Illustrative CI step:**
+    ```yaml
+    - name: Behavioral tests
+      run: <your test runner> tests/behavioral/
+    ```
+    Fail the build on any failure. This is the most standard check here — most CI setups already
+    run *some* test suite; this just names `tests/behavioral/` as the DBA-specific target.
+    
+    ---
+    
+    ## 2. Replay tests
+    
+    **What it checks:** Stage 5/8 replay verification tests — that recorded or fixture runtime
+    event sequences conform to the approved event schema and contract-derived ordering.
+    
+    **Illustrative CI step:**
+    ```yaml
+    - name: Replay tests
+      run: <your test runner> tests/replay/
+    ```
+    Fail the build on any failure, same as behavioral tests. Keep this as a separate step (not
+    merged into behavioral tests) so a replay-specific failure is immediately visible in CI logs.
+    
+    ---
+    
+    ## 3. Schema conformance tests
+    
+    **What it checks:** captured runtime events (from `events/runtime_events.jsonl` or a replay
+    fixture) conform to the approved event schema — named events only, required fields present,
+    no speculative telemetry.
+    
+    **Illustrative CI step:** this can be folded into the replay test step above if your replay
+    tests already assert schema conformance, or run as its own step if you maintain a separate
+    schema-validation script:
+    ```yaml
+    - name: Schema conformance
+      run: <your schema validator> events/<feature_id>_schema.md events/runtime_events.jsonl
+    ```
+    
+    ---
+    
+    ## 4. Lint / typecheck
+    
+    **What it checks:** standard static analysis for your language — not DBA-specific, but
+    listed here because it's part of the evidence bar a feature should clear before merge.
+    
+    **Illustrative CI step:** use your project's normal lint/typecheck tooling (e.g. `cargo
+    clippy`, `eslint`, `mypy`, `ruff`) — no Codeos-specific guidance needed here.
+    
+    ---
+    
+    ## 5. No unapproved event names
+    
+    **What it checks:** every event name actually emitted (sampled from a runtime log or replay
+    fixture) appears in the feature's approved event schema. An emitted name that isn't in the
+    schema is exactly the "hidden behavior" DBA's Non-Negotiable Rules prohibit.
+    
+    **Illustrative CI step (sketch, not a shipped tool):**
+    ```bash
+    # Extract emitted event names from a runtime log sample, diff against the schema's
+    # named events; fail if any emitted name is missing from the schema.
+    emitted=$(jq -r '.event' events/runtime_events.jsonl | sort -u)
+    approved=$(grep -oP '(?<=^### )\w+' events/<feature_id>_schema.md | sort -u)
+    comm -23 <(echo "$emitted") <(echo "$approved") | grep -q . && {
+      echo "unapproved event name(s) found"; exit 1;
+    }
+    ```
+    Adapt the extraction commands to your actual log/schema format — this is illustrative, not a
+    Codeos-shipped script.
+    
+    ---
+    
+    ## 6. No raw runtime log leakage
+    
+    **What it checks:** `events/runtime_events.jsonl` (or excerpts committed as fixtures) don't
+    leak unsanitized secrets or PII into version control.
+    
+    **Illustrative CI step (sketch):**
+    ```bash
+    # Fail if a committed runtime-log fixture matches an obvious secret pattern.
+    grep -RIlE '(api[_-]?key|secret|password|token)\s*[:=]' events/*.jsonl tests/replay/ && {
+      echo "possible unsanitized secret in a committed runtime log fixture"; exit 1;
+    }
+    ```
+    This is a starting point, not a substitute for a real secret-scanning tool if your project
+    needs one — see `dba-system.md`'s Sanitization Status guidance for the underlying practice.
+    
+    ---
+    
+    ## 7. Stack manifest reconciliation if dependency/config changed
+    
+    **What it checks:** if a dependency or config file changed (`Cargo.toml`, `package.json`,
+    `Dockerfile`, `config/*.yaml`, etc. — see `status/stack-manifest.md`'s watched-file list),
+    a `stack-reconciliation-report.md` instance is present in the same diff.
+    
+    **This one has an already-built, concrete mechanism** — no sketch needed:
+    ```yaml
+    - name: Stack drift check
+      run: codeos-reviewer check-drift --base ${{ github.event.pull_request.base.sha }}
+    ```
+    `check-drift` (`tools/reviewer/src/cmd/check_drift.rs`) exits `0` if no watched file changed,
+    or if one did change but a `stack-reconciliation-report.md` is present in the same diff. It
+    exits `6` (`EXIT_DRIFT`) if a watched file changed with no reconciliation report — treat a
+    non-zero exit as a failed CI gate. Pass `--strict` to prefix the drift message with
+    `STRICT MODE:` (same exit behavior either way).
+    
+    ---
+    
+    ## Adopting this profile
+    
+    None of the above is required. A project can adopt all seven checks, a subset, or none —
+    Codeos does not gate anything on this document. If you do adopt some subset, keep the CI
+    step names close to the section headings above so a reader can trace a CI failure back to
+    the evidence type it corresponds to.
+
+  --- tools/reviewer/src/cmd/check_drift.rs (sha256: 2584be9249846e3114b71ac6540c2f0dfe54e92093700be76a36efc951a7b117, visibility: shown) ---
+    use std::path::Path;
+    
+    // Exact basename matches (any directory depth) — mirrors templates/stack-manifest.md trigger list.
+    const WATCHED_EXACT: &[&str] = &[
+        "Cargo.toml",
+        "Cargo.lock",
+        "pyproject.toml",
+        "poetry.lock",
+        "requirements.txt",
+        "package.json",
+        "package-lock.json",
+        "pnpm-lock.yaml",
+        "Dockerfile",
+        "docker-compose.yml",
+        ".env.example",
+    ];
+    
+    fn is_watched(path: &str) -> bool {
+        let basename = path.rsplit('/').next().unwrap_or(path);
+        if WATCHED_EXACT.contains(&basename) {
+            return true;
+        }
+        // config/*.toml or config/*.yaml
+        if path.starts_with("config/") && (path.ends_with(".toml") || path.ends_with(".yaml")) {
+            return true;
+        }
+        // settings.* — any file whose basename starts with "settings."
+        if basename.starts_with("settings.") {
+            return true;
+        }
+        false
+    }
+    
+    pub fn run(base: &str, strict: bool, repo_root: &Path) -> i32 {
+        let spec = format!("{}..HEAD", base);
+        let diff_out = match std::process::Command::new("git")
+            .args(["diff", "--name-only", &spec])
+            .current_dir(repo_root)
+            .output()
+        {
+            Ok(o) if o.status.success() => o,
+            Ok(o) => {
+                eprintln!("error: git diff failed: {}", String::from_utf8_lossy(&o.stderr).trim());
+                return crate::EXIT_CONFIG;
+            }
+            Err(e) => {
+                eprintln!("error: git not available: {}", e);
+                return crate::EXIT_CONFIG;
+            }
+        };
+    
+        let changed: Vec<String> = String::from_utf8_lossy(&diff_out.stdout)
+            .lines()
+            .filter(|l| !l.is_empty())
+            .map(str::to_owned)
+            .collect();
+    
+        let triggered: Vec<&str> = changed.iter()
+            .filter(|p| is_watched(p))
+            .map(String::as_str)
+            .collect();
+    
+        if triggered.is_empty() {
+            return crate::EXIT_SUCCESS;
+        }
+    
+        let has_report = changed.iter().any(|p| p.ends_with("stack-reconciliation-report.md"));
+    
+        if has_report {
+            return crate::EXIT_SUCCESS;
+        }
+    
+        let prefix = if strict { "STRICT MODE: " } else { "" };
+        eprintln!(
+            "{}stack drift detected — dependency/config files changed without a stack-reconciliation-report.md",
+            prefix
+        );
+        eprintln!("triggered by: {}", triggered.join(", "));
+        eprintln!("action: fill in templates/stack-reconciliation-report.md and include it in this diff");
+    
+        crate::EXIT_DRIFT
+    }
+
+DIFF TO REVIEW (base->review, secret/size filtered)
+diff --git a/backlog/UPG-0019-ci-profile.md b/backlog/UPG-0019-ci-profile.md
+index f4af184..ccfb736 100644
+--- a/backlog/UPG-0019-ci-profile.md
++++ b/backlog/UPG-0019-ci-profile.md
+@@ -2,7 +2,7 @@
+ feature_id: UPG-0019
+ slug: ci-profile
+ title: CI Integration Profile
+-status: PROPOSED
++status: IN_PROGRESS
+ priority: P3
+ depends_on: []
+ related_features: []
+@@ -13,7 +13,7 @@ superseded_by: []
+ # Upgrade: ci-profile — CI Integration Profile
+ 
+ **Priority**: P3
+-**Status**: PROPOSED
++**Status**: IN_PROGRESS
+ **Type**: toolkit-upgrade
+ **Related**: workflow-profiles, stack-drift-detector
+ 
+@@ -74,6 +74,7 @@ events) — reinforces, rather than alters, the behavioral chain.
+ 
+ | Change ID | File | Purpose | State |
+ |---|---|---|---|
++| CHG-20260706-001 | `changes/UPG-0019__CHG-20260706-001__ci-profile.md` | New doc: `docs/ci-integration-profile.md` | IN_PROGRESS |
+ 
+ ### Reviews
+ 
+diff --git a/backlog/features.md b/backlog/features.md
+index e2afc80..a5774b9 100644
+--- a/backlog/features.md
++++ b/backlog/features.md
+@@ -50,7 +50,7 @@ The goal is to speed up Codeos development without weakening DBA advantages.
+ | UPG-0017 | [UPG-0017-stack-manifest.md](UPG-0017-stack-manifest.md) | Stack Manifest with Automatic Reconciliation | P2 | COMPLETE |
+ | UPG-0018 | [UPG-0018-reviewer-engine-v1.md](UPG-0018-reviewer-engine-v1.md) | Typed reviewer engine to replace the Bash pilot | P2 | SUPERSEDED by UPG-0032 |
+ | UPG-0032 | [UPG-0032-rust-reviewer-engine-multi-provider.md](UPG-0032-rust-reviewer-engine-multi-provider.md) | Rust Reviewer Engine with Multi-Provider Support | P2 | PROPOSED |
+-| UPG-0019 | [UPG-0019-ci-profile.md](UPG-0019-ci-profile.md) | CI Integration Profile | P3 | PROPOSED |
++| UPG-0019 | [UPG-0019-ci-profile.md](UPG-0019-ci-profile.md) | CI Integration Profile | P3 | IN_PROGRESS |
+ | UPG-0020 | [UPG-0020-stack-drift-detector.md](UPG-0020-stack-drift-detector.md) | Stack / Config Drift Detector | P3 | COMPLETE |
+ | UPG-0021 | [UPG-0021-stage-report-generator.md](UPG-0021-stage-report-generator.md) | Stage Report Generator | P3 | COMPLETE |
+ | UPG-0022 | [UPG-0022-00b-adr-generator.md](UPG-0022-00b-adr-generator.md) | 00b → ADR Candidate Generator | P3 | COMPLETE |
+diff --git a/status/roadmap.md b/status/roadmap.md
+index 5b56203..f1e8c80 100644
+--- a/status/roadmap.md
++++ b/status/roadmap.md
+@@ -74,7 +74,7 @@ cheap pilot-adjacent wins early.
+ | Wave | Feature ID | Title | Priority | Depends on | Planned/active change | State |
+ |---|---|---|---|---|---|---|
+ | 5 | UPG-0018 | Typed reviewer engine (replace Bash pilot) | P2 | — | — | SUPERSEDED by UPG-0032 |
+-| 5 | UPG-0019 | CI Integration Profile | P3 | UPG-0017 | — | PROPOSED |
++| 5 | UPG-0019 | CI Integration Profile | P3 | UPG-0017 | CHG-20260706-001 | IN_PROGRESS |
+ | 5 | UPG-0020 | Stack / Config Drift Detector | P3 | UPG-0017 | CHG-20260703-002 | COMPLETE |
+ | 5 | UPG-0021 | Stage Report Generator | P3 | UPG-0004 | CHG-20260703-003 | COMPLETE |
+ | 5 | UPG-0022 | 00b → ADR Candidate Generator | P3 | UPG-0007 | CHG-20260703-004 | COMPLETE |
+diff --git a/status/self-development.md b/status/self-development.md
+index 0ed7782..fb76e5e 100644
+--- a/status/self-development.md
++++ b/status/self-development.md
+@@ -54,6 +54,7 @@
+ | UPG-0021 | CHG-20260703-003 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 3 R1→R2 NO OBJECTION; Step 4 R1→R2 NO OBJECTION; all 16 ACs verified; 63 tests) | COMPLETE | — |
+ | UPG-0022 | CHG-20260703-004 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION; Step 2 NO OBJECTION; Step 3 NO OBJECTION; Step 4 NO OBJECTION; all 14 ACs verified; 77 tests) | COMPLETE | — |
+ | UPG-0023 | CHG-20260704-001 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION; Step 2 NO OBJECTION; Step 3 NO OBJECTION R2; Step 4 NO OBJECTION R1; all 15 ACs verified; 94 tests) | COMPLETE | UPG-0040, UPG-0041 |
++| UPG-0019 | CHG-20260706-001 | documentation | self-dev only | 3-Implement | Step 1 NO OBJECTION; Step 2 NO OBJECTION | IN_PROGRESS | — |
+ | UPG-0036 | CHG-20260705-001 | self-dev-governance | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION R3; Step 2 NO OBJECTION R2; Step 3 NO OBJECTION R3; Step 4 NO OBJECTION R1; all 10 ACs verified; real check-drift run) | COMPLETE | — |
+ | UPG-0037 | CHG-20260705-002 | downstream-doctrine | downstream doctrine only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION; Step 2 NO OBJECTION R2; Step 3 accepted at budget R3 (0 blockers, SECRET_REDACTION coverage); Step 4 accepted R1 (0 blockers, same SECRET_REDACTION cause); all 13 ACs verified; 105 tests; real FundFlow dry-runs) | COMPLETE | UPG-0038 |
+ 

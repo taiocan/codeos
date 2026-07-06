@@ -2,7 +2,7 @@
 feature_id: UPG-0019
 slug: ci-profile
 title: CI Integration Profile
-status: PROPOSED
+status: COMPLETE
 priority: P3
 depends_on: []
 related_features: []
@@ -13,7 +13,7 @@ superseded_by: []
 # Upgrade: ci-profile — CI Integration Profile
 
 **Priority**: P3
-**Status**: PROPOSED
+**Status**: COMPLETE
 **Type**: toolkit-upgrade
 **Related**: workflow-profiles, stack-drift-detector
 
@@ -74,11 +74,20 @@ events) — reinforces, rather than alters, the behavioral chain.
 
 | Change ID | File | Purpose | State |
 |---|---|---|---|
+| CHG-20260706-001 | `changes/UPG-0019__CHG-20260706-001__ci-profile.md` | New doc: `docs/ci-integration-profile.md` | COMPLETE |
 
 ### Reviews
 
 | Review ID | Change ID | Step | Round | Verdict |
 |---|---|---|---|---|
+| REV__UPG-0019__CHG-20260706-001__S1__R1 | CHG-20260706-001 | 1-Intent | R1 | NO OBJECTION |
+| REV__UPG-0019__CHG-20260706-001__S2__R1 | CHG-20260706-001 | 2-Acceptance | R1 | NO OBJECTION |
+| REV__UPG-0019__CHG-20260706-001__S3__R1 | CHG-20260706-001 | 3-Implement | R1 | NO OBJECTION (evidence B — check_drift.rs not shown) |
+| REV__UPG-0019__CHG-20260706-001__S3__R2 | CHG-20260706-001 | 3-Implement | R2 | DO NOT ADVANCE (missing EXIT_CONFIG exit path) |
+| REV__UPG-0019__CHG-20260706-001__S3__R3 | CHG-20260706-001 | 3-Implement | R3 | NO OBJECTION |
+| REV__UPG-0019__CHG-20260706-001__S4__R1 | CHG-20260706-001 | 4-Reconcile | R1 | DO NOT ADVANCE (numeric exit codes not shown) |
+| REV__UPG-0019__CHG-20260706-001__S4__R2 | CHG-20260706-001 | 4-Reconcile | R2 | DO NOT ADVANCE (evidence attributed to wrong file) |
+| REV__UPG-0019__CHG-20260706-001__S4__R3 | CHG-20260706-001 | 4-Reconcile | R3 | NO OBJECTION |
 
 ### Findings Tracked Inside This Feature
 

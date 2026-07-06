@@ -74,7 +74,7 @@ cheap pilot-adjacent wins early.
 | Wave | Feature ID | Title | Priority | Depends on | Planned/active change | State |
 |---|---|---|---|---|---|---|
 | 5 | UPG-0018 | Typed reviewer engine (replace Bash pilot) | P2 | — | — | SUPERSEDED by UPG-0032 |
-| 5 | UPG-0019 | CI Integration Profile | P3 | UPG-0017 | — | PROPOSED |
+| 5 | UPG-0019 | CI Integration Profile | P3 | UPG-0017 | CHG-20260706-001 | COMPLETE |
 | 5 | UPG-0020 | Stack / Config Drift Detector | P3 | UPG-0017 | CHG-20260703-002 | COMPLETE |
 | 5 | UPG-0021 | Stage Report Generator | P3 | UPG-0004 | CHG-20260703-003 | COMPLETE |
 | 5 | UPG-0022 | 00b → ADR Candidate Generator | P3 | UPG-0007 | CHG-20260703-004 | COMPLETE |
@@ -105,7 +105,7 @@ cheap pilot-adjacent wins early.
 
 ## Immediate next pickups
 
-Waves 1–4 complete. Wave 5: UPG-0018 SUPERSEDED by UPG-0032; UPG-0020 COMPLETE 2026-07-03 (CHG-20260703-002); UPG-0021 COMPLETE 2026-07-03 (CHG-20260703-003); UPG-0022 COMPLETE 2026-07-03 (CHG-20260703-004); UPG-0023 COMPLETE 2026-07-06 (CHG-20260704-001). Remaining Wave 5 items (UPG-0019, UPG-0024, UPG-0025, UPG-0026) and unsequenced UPG-0028, UPG-0038, UPG-0039, UPG-0040, UPG-0041 are unblocked with no active change yet.
+Waves 1–4 complete. Wave 5: UPG-0018 SUPERSEDED by UPG-0032; UPG-0019 COMPLETE 2026-07-06 (CHG-20260706-001); UPG-0020 COMPLETE 2026-07-03 (CHG-20260703-002); UPG-0021 COMPLETE 2026-07-03 (CHG-20260703-003); UPG-0022 COMPLETE 2026-07-03 (CHG-20260703-004); UPG-0023 COMPLETE 2026-07-06 (CHG-20260704-001). Remaining Wave 5 items (UPG-0024, UPG-0025, UPG-0026) and unsequenced UPG-0028, UPG-0038, UPG-0039, UPG-0040, UPG-0041 are unblocked with no active change yet.
 
 Each is taken as its own self-dev change (a fresh `CHG-*`) via the 4-step loop, with human
 approval at every gate.

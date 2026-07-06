@@ -4798,3 +4798,169 @@ Provenance:
   review_commit: 59a170dad102b39d87024214aef6413c5df9c7e4  [HEAD_MATCH]
   packet_sha256: [MATCH]
   coverage_state: FULL_COVERAGE  [OK]
+
+## 2026-07-06T17:08:29Z REVIEW — UPG-0019__CHG-20260706-001 — Stage selfdev-step-1
+Base: (no base pin)  Review: 8c7da9bc8ff5315bc39712267c05e665b1a1b146  Branch: main
+Diff-hash: 6d530b70e8ddc0c5eae4badfe37b67074b6bcd80695375187423c2bd2eba5428
+Reviewer: codex default-model (session 019f3866-c473-7972-8b7d-b45f8960ee88)
+Effort: high   Wall time: 24447ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — Step 1 intent is internally consistent and stays within the stated docs-only CI profile scope.
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-06T170829Z-UPG-0019__CHG-20260706-001-stage-selfdev-step-1-8c7da9b.md (sha256:91dffe50b37a6da004e5d57951d882ed2743604785ba69e589b395b367907ed1)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260706T170829Z-UPG-0019__CHG-20260706-001-stage-selfdev-step-1-8c7da9b.packet.txt (sha256:fa34bb33d67c71bb32bd593064cc146218d98778c1d51ee59203c7c1b615704c)
+Human decision: (append with: codeos-reviewer decision UPG-0019__CHG-20260706-001 selfdev-step-1 <DECISION> "<reason>")
+
+## 2026-07-06T17:09:43Z HUMAN DECISION — UPG-0019__CHG-20260706-001 — Stage selfdev-step-1
+Commit at decision: 8c7da9bc8ff5315bc39712267c05e665b1a1b146
+Decision: APPROVE_STAGE
+Reason/next: Step 1 NO OBJECTION on first round: docs-only scope confirmed (no dba-system.md change, no real CI added), 7 evidence-to-CI-check mapping matches the backlog list, check-drift (UPG-0020) anchors the stack-manifest-reconciliation check concretely. No scope drift.
+Provenance:
+  assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-06T170829Z-UPG-0019__CHG-20260706-001-stage-selfdev-step-1-8c7da9b.md
+  review_commit: 8c7da9bc8ff5315bc39712267c05e665b1a1b146  [HEAD_MATCH]
+  packet_sha256: [MATCH]
+  coverage_state: FULL_COVERAGE  [OK]
+
+## 2026-07-06T17:11:31Z REVIEW — UPG-0019__CHG-20260706-001 — Stage selfdev-step-2
+Base: (no base pin)  Review: 8c7da9bc8ff5315bc39712267c05e665b1a1b146  Branch: main
+Diff-hash: 76d7bb61c87daa5b342b35f5298fc3cba72748d5af4fbd4e8915f0fe490b0860
+Reviewer: codex default-model (session 019f3866-c473-7972-8b7d-b45f8960ee88)
+Effort: high   Wall time: 37996ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — Step 2 defines acceptance criteria that trace to the docs-only CI profile scope and preserve the advisory boundary.
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-06T171131Z-UPG-0019__CHG-20260706-001-stage-selfdev-step-2-8c7da9b.md (sha256:4005ec4ac725ac341edaf3f81308fb2bd3fa73f4686f3b09cfe396a54cd974c3)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260706T171131Z-UPG-0019__CHG-20260706-001-stage-selfdev-step-2-8c7da9b.packet.txt (sha256:2a9eca9e5d6c75ce816e482819875bc2b313023c677dcbb4f6b6c1e2727c9d5a)
+Human decision: (append with: codeos-reviewer decision UPG-0019__CHG-20260706-001 selfdev-step-2 <DECISION> "<reason>")
+
+## 2026-07-06T17:12:31Z HUMAN DECISION — UPG-0019__CHG-20260706-001 — Stage selfdev-step-2
+Commit at decision: 8c7da9bc8ff5315bc39712267c05e665b1a1b146
+Decision: APPROVE_STAGE
+Reason/next: Step 2 NO OBJECTION on first round: all 8 ACs trace to the docs-only CI profile scope, preserve the advisory/non-enforced boundary, no scope drift.
+Provenance:
+  assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-06T171131Z-UPG-0019__CHG-20260706-001-stage-selfdev-step-2-8c7da9b.md
+  review_commit: 8c7da9bc8ff5315bc39712267c05e665b1a1b146  [HEAD_MATCH]
+  packet_sha256: [MATCH]
+  coverage_state: FULL_COVERAGE  [OK]
+
+## 2026-07-06T17:15:35Z REVIEW — UPG-0019__CHG-20260706-001 — Stage selfdev-step-3
+Base: (no base pin)  Review: 8c7da9bc8ff5315bc39712267c05e665b1a1b146  Branch: main
+Diff-hash: cd5d23e193aa51e6ba3c2f62a2f8a1654762f46ced175739654ea838b5f880e1
+Reviewer: codex default-model (session 019f3866-c473-7972-8b7d-b45f8960ee88)
+Effort: high   Wall time: 78704ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: B
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — The docs-only implementation satisfies the stated acceptance criteria with one Step 4 verification dependency for exact `check-drift` behavior.
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-06T171535Z-UPG-0019__CHG-20260706-001-stage-selfdev-step-3-8c7da9b.md (sha256:1cafddf018b5f631e88375d9a004cf353e6fb1bdbd173a07c0c15f9a1ef62108)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260706T171535Z-UPG-0019__CHG-20260706-001-stage-selfdev-step-3-8c7da9b.packet.txt (sha256:5f020af2264b126b561ddd8e13a94d552d7b0f2a554ffbe82081b66cb24918a1)
+Human decision: (append with: codeos-reviewer decision UPG-0019__CHG-20260706-001 selfdev-step-3 <DECISION> "<reason>")
+
+## 2026-07-06T17:16:37Z REVIEW — UPG-0019__CHG-20260706-001 — Stage selfdev-step-3
+Base: (no base pin)  Review: 8c7da9bc8ff5315bc39712267c05e665b1a1b146  Branch: main
+Diff-hash: cd5d23e193aa51e6ba3c2f62a2f8a1654762f46ced175739654ea838b5f880e1
+Reviewer: codex default-model (session 019f3866-c473-7972-8b7d-b45f8960ee88)
+Effort: high   Wall time: 35332ms   Reconnects: 0
+Codex concern: DO NOT ADVANCE
+Effective concern: DO NOT ADVANCE
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: DO NOT ADVANCE — AC-3 falsely claims exact `check-drift` behavior while omitting the source’s `EXIT_CONFIG` error path.
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-06T171637Z-UPG-0019__CHG-20260706-001-stage-selfdev-step-3-8c7da9b.md (sha256:4476627c7812c39d8317986b71a41b70e4159971951a2e133b790ba085b2f81a)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260706T171637Z-UPG-0019__CHG-20260706-001-stage-selfdev-step-3-8c7da9b.packet.txt (sha256:22aa7dd5375817a636cdb238fc66a7f78429fe48fdfecee76aca8aca8ed7dcea)
+Human decision: (append with: codeos-reviewer decision UPG-0019__CHG-20260706-001 selfdev-step-3 <DECISION> "<reason>")
+
+## 2026-07-06T17:18:07Z REVIEW — UPG-0019__CHG-20260706-001 — Stage selfdev-step-3
+Base: (no base pin)  Review: 8c7da9bc8ff5315bc39712267c05e665b1a1b146  Branch: main
+Diff-hash: cd5d23e193aa51e6ba3c2f62a2f8a1654762f46ced175739654ea838b5f880e1
+Reviewer: codex default-model (session 019f3866-c473-7972-8b7d-b45f8960ee88)
+Effort: high   Wall time: 27909ms   Reconnects: 0
+Codex concern: DO NOT ADVANCE
+Effective concern: DO NOT ADVANCE
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: DO NOT ADVANCE — The doc is corrected, but the change record still contains a false AC-3 verification claim about `check-drift` exit behavior.
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-06T171807Z-UPG-0019__CHG-20260706-001-stage-selfdev-step-3-8c7da9b.md (sha256:eb566aa17b8e9358be7a377d88f15ca1307a09dc187d4ec356a4606964c9e273)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260706T171807Z-UPG-0019__CHG-20260706-001-stage-selfdev-step-3-8c7da9b.packet.txt (sha256:3d01ea2ebcddfbc7e85f85871586ad6a4454293ce3a75cf2684293f2f13863f4)
+Human decision: (append with: codeos-reviewer decision UPG-0019__CHG-20260706-001 selfdev-step-3 <DECISION> "<reason>")
+
+## 2026-07-06T17:19:27Z REVIEW — UPG-0019__CHG-20260706-001 — Stage selfdev-step-3
+Base: (no base pin)  Review: 8c7da9bc8ff5315bc39712267c05e665b1a1b146  Branch: main
+Diff-hash: cd5d23e193aa51e6ba3c2f62a2f8a1654762f46ced175739654ea838b5f880e1
+Reviewer: codex default-model (session 019f3866-c473-7972-8b7d-b45f8960ee88)
+Effort: high   Wall time: 42268ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: B
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — The Step 3 implementation now satisfies the stated docs-only acceptance criteria with no in-scope blockers.
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-06T171927Z-UPG-0019__CHG-20260706-001-stage-selfdev-step-3-8c7da9b.md (sha256:5ae5787f8b1f56f5bb708ff769d4dc39b5aab498c94ca07be36c2284de25db1e)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260706T171927Z-UPG-0019__CHG-20260706-001-stage-selfdev-step-3-8c7da9b.packet.txt (sha256:dd669602363c52f77e39858676ca54fa15b4a029bf72da1862f7407a759a1c01)
+Human decision: (append with: codeos-reviewer decision UPG-0019__CHG-20260706-001 selfdev-step-3 <DECISION> "<reason>")
+
+## 2026-07-06T17:45:05Z HUMAN DECISION — UPG-0019__CHG-20260706-001 — Stage selfdev-step-3
+Commit at decision: 8c7da9bc8ff5315bc39712267c05e665b1a1b146
+Decision: APPROVE_STAGE
+Reason/next: Step 3 NO OBJECTION on R3 (R1 flagged a Step-4-evidence gap on check-drift's exact behavior since the source wasn't shown; R2, with source shown, caught a real inaccuracy - a missing third exit path, EXIT_CONFIG/2, for git-diff failures; R3 caught that the fix updated the doc/AC but left the Step 3 verification bullet stale with the old two-path description). All 8 ACs verified, doc now correctly documents all three check-drift exit paths (0/6/2).
+Provenance:
+  assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-06T171927Z-UPG-0019__CHG-20260706-001-stage-selfdev-step-3-8c7da9b.md
+  review_commit: 8c7da9bc8ff5315bc39712267c05e665b1a1b146  [HEAD_MATCH]
+  packet_sha256: [MATCH]
+  coverage_state: FULL_COVERAGE  [OK]
+
+## 2026-07-06T17:47:27Z REVIEW — UPG-0019__CHG-20260706-001 — Stage selfdev-step-4
+Base: (no base pin)  Review: 8c7da9bc8ff5315bc39712267c05e665b1a1b146  Branch: main
+Diff-hash: c426187c56ad4d01657a7341c15a5c9c51a747ac87ccc4174b39e86a41d40e51
+Reviewer: codex default-model (session 019f3866-c473-7972-8b7d-b45f8960ee88)
+Effort: high   Wall time: 42479ms   Reconnects: 0
+Codex concern: DO NOT ADVANCE
+Effective concern: DO NOT ADVANCE
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: DO NOT ADVANCE — Step 4 still overclaims AC-3 evidence by saying `check_drift.rs` confirms numeric exit codes that are not shown in the packet.
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-06T174727Z-UPG-0019__CHG-20260706-001-stage-selfdev-step-4-8c7da9b.md (sha256:aa1425bfe2ab7ffebd8c1990a6a34880b89643ff9f9c1ff5d8b6326ae5e295a3)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260706T174727Z-UPG-0019__CHG-20260706-001-stage-selfdev-step-4-8c7da9b.packet.txt (sha256:e629ef4e9e54d9f93e5b4a82775dcf62b56fff338beb0c56708dcaf708da2dc5)
+Human decision: (append with: codeos-reviewer decision UPG-0019__CHG-20260706-001 selfdev-step-4 <DECISION> "<reason>")
+
+## 2026-07-06T17:48:19Z REVIEW — UPG-0019__CHG-20260706-001 — Stage selfdev-step-4
+Base: (no base pin)  Review: 8c7da9bc8ff5315bc39712267c05e665b1a1b146  Branch: main
+Diff-hash: c426187c56ad4d01657a7341c15a5c9c51a747ac87ccc4174b39e86a41d40e51
+Reviewer: codex default-model (session 019f3866-c473-7972-8b7d-b45f8960ee88)
+Effort: high   Wall time: 30424ms   Reconnects: 0
+Codex concern: DO NOT ADVANCE
+Effective concern: DO NOT ADVANCE
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: DO NOT ADVANCE — AC-3 is technically supported by the packet, but Step 4 still contains a false evidence claim about where numeric exit codes are verified.
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-06T174819Z-UPG-0019__CHG-20260706-001-stage-selfdev-step-4-8c7da9b.md (sha256:521bfdd283c1cf498dff787eaf4bb492adc31c84f7ac5d90d83147414b432a2c)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260706T174819Z-UPG-0019__CHG-20260706-001-stage-selfdev-step-4-8c7da9b.packet.txt (sha256:277b87fb01fa558e265c0a8075cbe1446f60c3cb753a1559fe134e9d70e70e58)
+Human decision: (append with: codeos-reviewer decision UPG-0019__CHG-20260706-001 selfdev-step-4 <DECISION> "<reason>")
+
+## 2026-07-06T17:49:34Z REVIEW — UPG-0019__CHG-20260706-001 — Stage selfdev-step-4
+Base: (no base pin)  Review: 8c7da9bc8ff5315bc39712267c05e665b1a1b146  Branch: main
+Diff-hash: c426187c56ad4d01657a7341c15a5c9c51a747ac87ccc4174b39e86a41d40e51
+Reviewer: codex default-model (session 019f3866-c473-7972-8b7d-b45f8960ee88)
+Effort: high   Wall time: 36031ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — Step 4 now verifies the docs-only CI profile against the stated acceptance criteria with direct source evidence for `check-drift`.
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-06T174934Z-UPG-0019__CHG-20260706-001-stage-selfdev-step-4-8c7da9b.md (sha256:5f377214b3cfa84d0b2ca1d2568135cff539bbfce07d66dd4606be6aa0e16e5b)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260706T174934Z-UPG-0019__CHG-20260706-001-stage-selfdev-step-4-8c7da9b.packet.txt (sha256:c3a14c081a661284e730d2cf9ac078dcbeba34b0e5119e145996ac6cfa32959a)
+Human decision: (append with: codeos-reviewer decision UPG-0019__CHG-20260706-001 selfdev-step-4 <DECISION> "<reason>")
+
+## 2026-07-06T18:01:59Z HUMAN DECISION — UPG-0019__CHG-20260706-001 — Stage selfdev-step-4
+Commit at decision: 8c7da9bc8ff5315bc39712267c05e665b1a1b146
+Decision: APPROVE_STAGE
+Reason/next: Step 4 R3 NO OBJECTION: all 8 ACs verified with fresh evidence, no scope drift. Both prior rounds were evidence-attribution precision issues (numeric exit-code values live in main.rs's constants, not check_drift.rs's symbolic returns; my evidence table initially attributed both to the wrong file) - the underlying doc content was correct throughout. UPG-0019 / CHG-20260706-001 marked COMPLETE.
+Provenance:
+  assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-06T174934Z-UPG-0019__CHG-20260706-001-stage-selfdev-step-4-8c7da9b.md
+  review_commit: 8c7da9bc8ff5315bc39712267c05e665b1a1b146  [HEAD_MATCH]
+  packet_sha256: [MATCH]
+  coverage_state: FULL_COVERAGE  [OK]
