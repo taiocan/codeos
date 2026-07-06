@@ -96,6 +96,12 @@ enum Commands {
         #[arg(long)]
         source: String,
     },
+    /// Generate a human approval dashboard from a feature-registry.yaml file
+    GenerateApprovalDashboard {
+        /// Path to the feature registry YAML file
+        #[arg(long)]
+        registry: String,
+    },
 }
 
 fn main() {
@@ -144,6 +150,13 @@ fn run() -> i32 {
     if let Commands::GenerateAdrCandidates { source } = &cli.command {
         return cmd::generate_adr_candidates::run(cmd::generate_adr_candidates::GenerateAdrCandidatesArgs {
             source,
+        });
+    }
+
+    // Dispatch generate-approval-dashboard before config resolution — needs no provider config.
+    if let Commands::GenerateApprovalDashboard { registry } = &cli.command {
+        return cmd::generate_approval_dashboard::run(cmd::generate_approval_dashboard::GenerateApprovalDashboardArgs {
+            registry,
         });
     }
 
@@ -216,6 +229,7 @@ fn run() -> i32 {
         Commands::CheckDrift { .. } => EXIT_SUCCESS,
         Commands::GenerateReport { .. } => EXIT_SUCCESS,
         Commands::GenerateAdrCandidates { .. } => EXIT_SUCCESS,
+        Commands::GenerateApprovalDashboard { .. } => EXIT_SUCCESS,
     }
 }
 

@@ -4712,3 +4712,89 @@ Provenance:
   review_commit: 2543932db0e14b5f06c8083d3dd88188371dc2ec  [HEAD_MATCH]
   packet_sha256: [MATCH]
   coverage_state: SECRET_REDACTION  [OK]
+
+## 2026-07-05T20:59:25Z REVIEW — UPG-0023__CHG-20260704-001 — Stage selfdev-step-2
+Base: (no base pin)  Review: 59a170dad102b39d87024214aef6413c5df9c7e4  Branch: main
+Diff-hash: 3344b7a2b8531026a627a547aaaf54037de173740c427c7bf31d4d37abe966b2
+Reviewer: codex default-model (session 019f2d36-4abc-74e3-957d-b659998ff730)
+Effort: high   Wall time: 46483ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — Step 2 defines complete, scoped acceptance criteria with no in-scope blocker
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-05T205925Z-UPG-0023__CHG-20260704-001-stage-selfdev-step-2-59a170d.md (sha256:cf188d4d60af2bee1b69af0bec555e45344187f62526b39420dc0cc074a28b63)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260705T205925Z-UPG-0023__CHG-20260704-001-stage-selfdev-step-2-59a170d.packet.txt (sha256:6e506b46fa651560d567cae1b5435e241158cce369d3e6acef1c3d40de0ffbde)
+Human decision: (append with: codeos-reviewer decision UPG-0023__CHG-20260704-001 selfdev-step-2 <DECISION> "<reason>")
+
+## 2026-07-05T21:04:34Z HUMAN DECISION — UPG-0023__CHG-20260704-001 — Stage selfdev-step-2
+Commit at decision: 59a170dad102b39d87024214aef6413c5df9c7e4
+Decision: APPROVE_STAGE
+Reason/next: Step 2 NO OBJECTION on first round: all 15 ACs testable and internally consistent, no scope drift. Non-blocking note: backlog's original 'registry plus reviewer briefs' framing is superseded by the accepted registry-only data-source narrowing, already documented as deliberate.
+Provenance:
+  assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-05T205925Z-UPG-0023__CHG-20260704-001-stage-selfdev-step-2-59a170d.md
+  review_commit: 59a170dad102b39d87024214aef6413c5df9c7e4  [HEAD_MATCH]
+  packet_sha256: [MATCH]
+  coverage_state: FULL_COVERAGE  [OK]
+
+## 2026-07-06T00:27:50Z REVIEW — UPG-0023__CHG-20260704-001 — Stage selfdev-step-3
+Base: (no base pin)  Review: 59a170dad102b39d87024214aef6413c5df9c7e4  Branch: main
+Diff-hash: 124d89766cb076810c7b8664308b5ccc66527e78cb4ff86815f9e9151f57ccd7
+Reviewer: codex default-model (session 019f2d36-4abc-74e3-957d-b659998ff730)
+Effort: high   Wall time: 58278ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — Implementation satisfies AC-1 through AC-15; only minor lockfile inventory drift noted
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-06T002750Z-UPG-0023__CHG-20260704-001-stage-selfdev-step-3-59a170d.md (sha256:fe2e3df97701592727827cf62f23f2865bfafdee20e045424558f2f81de21f42)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260706T002750Z-UPG-0023__CHG-20260704-001-stage-selfdev-step-3-59a170d.packet.txt (sha256:eebad8f7054cc0b399c7a08e3cad1f3b01d3074f1c38dfa0e8881b76ea840ab0)
+Human decision: (append with: codeos-reviewer decision UPG-0023__CHG-20260704-001 selfdev-step-3 <DECISION> "<reason>")
+
+## 2026-07-06T00:28:54Z REVIEW — UPG-0023__CHG-20260704-001 — Stage selfdev-step-3
+Base: (no base pin)  Review: 59a170dad102b39d87024214aef6413c5df9c7e4  Branch: main
+Diff-hash: 11a3fc5e987f6d74d1942ffb383309aba42f8ac3d5716c958377cbca854b942c
+Reviewer: codex default-model (session 019f2d36-4abc-74e3-957d-b659998ff730)
+Effort: high   Wall time: 23283ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — Implementation satisfies AC-1 through AC-15 with no in-scope blockers
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-06T002854Z-UPG-0023__CHG-20260704-001-stage-selfdev-step-3-59a170d.md (sha256:7ba904e08d05fde040622284214719a897dd2463f6f55ffd3519da72b7cfc9ee)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260706T002854Z-UPG-0023__CHG-20260704-001-stage-selfdev-step-3-59a170d.packet.txt (sha256:9285fc4c7e032c17bba6ab957943a952fde14cc842385499ba4b1187624cf5e2)
+Human decision: (append with: codeos-reviewer decision UPG-0023__CHG-20260704-001 selfdev-step-3 <DECISION> "<reason>")
+
+## 2026-07-06T00:30:58Z HUMAN DECISION — UPG-0023__CHG-20260704-001 — Stage selfdev-step-3
+Commit at decision: 59a170dad102b39d87024214aef6413c5df9c7e4
+Decision: APPROVE_STAGE
+Reason/next: Step 3 NO OBJECTION on R2 (R1 noted a minor non-blocking gap: Cargo.lock's mechanical change wasn't listed in the What changes/What was done tables; fixed). All 15 ACs verified against implementation and tests (94 total, 17 new), confirmed against the real templates/feature-registry.yaml, no scope drift.
+Provenance:
+  assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-06T002854Z-UPG-0023__CHG-20260704-001-stage-selfdev-step-3-59a170d.md
+  review_commit: 59a170dad102b39d87024214aef6413c5df9c7e4  [HEAD_MATCH]
+  packet_sha256: [MATCH]
+  coverage_state: FULL_COVERAGE  [OK]
+
+## 2026-07-06T00:35:22Z REVIEW — UPG-0023__CHG-20260704-001 — Stage selfdev-step-4
+Base: (no base pin)  Review: 59a170dad102b39d87024214aef6413c5df9c7e4  Branch: main
+Diff-hash: d8cebab15a21025703507abbe9928e9f9a0d2591fcfbb78e9d413c7d2aee4765
+Reviewer: codex default-model (session 019f2d36-4abc-74e3-957d-b659998ff730)
+Effort: high   Wall time: 49870ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — Step 4 verifies all ACs; only an unrelated pre-existing test race is filed as backlog
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-06T003522Z-UPG-0023__CHG-20260704-001-stage-selfdev-step-4-59a170d.md (sha256:e9944734e4ac72b345f6376bb5e9ca54244cf29af78de69b6b411e9f14bac754)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260706T003522Z-UPG-0023__CHG-20260704-001-stage-selfdev-step-4-59a170d.packet.txt (sha256:336134246a6620974df628f6869dfd4e7841fcd29c981f914889cc4694dc9ecc)
+Human decision: (append with: codeos-reviewer decision UPG-0023__CHG-20260704-001 selfdev-step-4 <DECISION> "<reason>")
+
+## 2026-07-06T06:13:32Z HUMAN DECISION — UPG-0023__CHG-20260704-001 — Stage selfdev-step-4
+Commit at decision: 59a170dad102b39d87024214aef6413c5df9c7e4
+Decision: APPROVE_STAGE
+Reason/next: Step 4 R1 NO OBJECTION: all 15 ACs verified against the canonical templates/feature-registry.yaml schema, no scope drift. Post-approval discovery: generate-approval-dashboard fails against FundFlow's real registry.yaml, which was deliberately rewritten ~11 hours after scaffolding to a stage-based schema inferred from dba-system.md's prose rather than extending the canonical UPG-0009 template. Not an in-scope defect - UPG-0023 never promised FundFlow-registry compatibility, verified only against the canonical schema throughout. Not patching the dashboard tool or FundFlow's registry now. Filed as deliberate follow-up UPG-0041 (feature-registry schema reconciliation, six open questions recorded, no quick patch). UPG-0023 / CHG-20260704-001 marked COMPLETE.
+Provenance:
+  assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-06T003522Z-UPG-0023__CHG-20260704-001-stage-selfdev-step-4-59a170d.md
+  review_commit: 59a170dad102b39d87024214aef6413c5df9c7e4  [HEAD_MATCH]
+  packet_sha256: [MATCH]
+  coverage_state: FULL_COVERAGE  [OK]
