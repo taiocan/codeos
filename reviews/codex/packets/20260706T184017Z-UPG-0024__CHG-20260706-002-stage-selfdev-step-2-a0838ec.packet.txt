@@ -1,0 +1,601 @@
+Reviewer task:
+
+SCOPE CONTRACT
+  Assess this artifact against the STATED SCOPE of this stage/PR — the Expected Stage
+  Output below and what the artifacts actually claim — NOT against an ideal final system.
+  A capability the artifacts do not claim to provide is OUT-OF-SCOPE, not a defect.
+  The following are OUT-OF-SCOPE BACKLOG unless THIS artifact explicitly claims to provide
+  them: formal approval-binding enforcement; rollback correctness; COMMIT_BOUND/
+  WORKSPACE_BOUND enforcement; JSON Schema validation; CI validation; exact
+  decision-integrity; per-feature decision ledgers; autonomous approval; enabled hooks.
+
+YOUR TASK — answer these five questions using only the evidence in the packet:
+  1. Acceptance criteria: Does the artifact satisfy each of its stated acceptance criteria?
+     Cite evidence for each criterion (or note its absence).
+  2. Claim support: Are universal or strong claims (all, every, never, always, no X) in the
+     artifact supported by evidence in the packet? Any unverifiable strong claim is a candidate
+     finding only if it affects acceptance, scope, safety, decision integrity, or the artifact's
+     stated guarantees.
+  3. Scope drift: Is there any change beyond the stated scope boundary? (Files not in the
+     "What changes" list; behavior changes not in the intent; downstream doctrine modified
+     rather than read.)
+  4. In-scope blockers: Are there facts that, if left in, would make the artifact wrong,
+     unsafe, or internally contradictory?
+  5. Finding classification: Classify every finding you raise as exactly one of the five
+     TRIAGE RULE categories below.
+
+TRIAGE RULE — classify EVERY finding as exactly one of:
+  IN-SCOPE BLOCKER         breaks the stated goal; creates a FALSE CLAIM in this artifact;
+                           weakens the advisory/read-only/human-gated guarantees; prevents
+                           the work from running; or violates an explicit safety constraint.
+  IN-SCOPE NON-BLOCKER     improves it but is not required for this PR.
+  OUT-OF-SCOPE BACKLOG     valid, but belongs to a future feature / stronger guarantee.
+  REJECTED                 conflicts with the stated scope or Codeos philosophy.
+  SELF-REFERENCE /         review records that are stale because of the previous round's
+  REVIEW-BOOKKEEPING       own existence (causal loop); not a real artifact defect.
+  Base the PR decision ONLY on IN-SCOPE BLOCKER findings. An OUT-OF-SCOPE BACKLOG finding
+  must NOT cause DO NOT ADVANCE unless this artifact FALSELY CLAIMS to solve it.
+
+WHAT NOT TO DO
+  - Do not flag style or wording issues as blockers unless the wording creates a false claim,
+    contradiction, parser breakage, or wrong governance instruction.
+  - Do not re-review unchanged full context when the packet is in delta mode.
+  - Do not treat local-only review history as a blocker unless the artifact falsely
+    claims the review artifacts are committed/durable.
+
+INSTRUCTIONS
+  If this is a resumed session, ignore any earlier-session conclusions unless they are
+  re-established by THIS packet; assess only the evidence above, pinned to this commit.
+  Give a focused assessment of this artifact against the stated scope, acceptance criteria,
+  and evidence in this packet. Rank findings by severity. Suggest a better design only when
+  needed to explain a required fix for an IN-SCOPE BLOCKER.
+
+  Limit findings to the top 3 IN-SCOPE BLOCKERS. Additional non-blocking observations may be
+  summarized in one short paragraph only if useful.
+
+  For EACH finding emit:
+    Finding: / Severity: High|Medium|Low / Classification: <one of the TRIAGE RULE labels>
+    Evidence: <file/line> / Why: <short> / Required action: fix now|optional fix|backlog|reject
+    Scope reason: <why it does/does not belong to this PR's scope>
+  Then emit:
+    PR decision: ADVANCE | REQUEST CHANGES | DO NOT ADVANCE   (based ONLY on in-scope blockers)
+    Scope drift warning: yes|no — <is anything pulling this PR beyond its stated scope?>
+  Then on the LAST three lines emit exactly (map ADVANCE->NO OBJECTION,
+  REQUEST CHANGES->CHANGES ADVISED, DO NOT ADVANCE->DO NOT ADVANCE):
+    LOG SUMMARY: <NO OBJECTION | CHANGES ADVISED | DO NOT ADVANCE | UNCLASSIFIED> — <single most important point>
+      (use UNCLASSIFIED if you genuinely cannot classify the artifact safely)
+    EVIDENCE: <A|B|C|D|E>
+    HIGHEST-IMPACT UNCERTAINTY: <one sentence — what single thing, if wrong, most affects this assessment>
+
+  Evidence grade — the grade describes what the assessment rests on, not reviewer confidence:
+    A — Directly verified in the artifact, diff, or output shown in the packet
+    B — Verified with multiple direct pieces of evidence, but coverage is not complete
+    C — Partially verified, partially inferred from structure or context
+    D — Mostly inferred from structure or indirect evidence
+    E — Hypothesis or very limited basis — little to no direct evidence
+
+
+PACKET MANIFEST
+  generated: 2026-07-06T18:39:38Z
+  task_prompt: /home/rimo/projects/Codeos/prompts/codeos-reviewer-task.md (4959 bytes)
+  review_content_bytes: 22492
+  estimated_review_tokens: ~5623
+  budget_status: OK
+  packet_mode: full
+  delta_base: none
+  items:
+    - path: changes/UPG-0024__CHG-20260706-002__release-evidence-package.md
+      mode: full_file
+      bytes: 15681
+      sha256: 7fed5e28996213cc7aa988a4bb81ce826f2e9cd4210192fedbbec68c2776de5c
+    - path: backlog/UPG-0024-release-evidence-package.md
+      mode: full_file
+      bytes: 1939
+      sha256: 4d94574afa4e68c509a8085312fb90c95ade0089e9a2385c681f7752b18bb1e2
+    - path: (diff)
+      mode: full_file
+      bytes: 4872
+
+REVIEW CONTEXT
+  Feature:                UPG-0024__CHG-20260706-002
+  Stage:                  selfdev-step-2
+  Branch:                 main
+  Base commit:            (no base pin)
+  Review commit:          a0838eca197d5096c319e1fea45ac76f089bb335 (+ uncommitted workspace changes)
+  Current approved stage: n/a (non-numeric stage)
+  Evidence coverage:      FULL_COVERAGE
+  Workspace dirty:        yes (uncommitted changes at review time)
+
+DBA RULES RELEVANT TO THIS STAGE
+  - Human approval is required for every stage transition; you are advisory only.
+  - Memory is not truth — assess only what is provided, pinned to the review commit.
+  - Implementation must trace to approved artifacts; no behavior beyond intent+contract+schema.
+  - No events outside the approved event schema; no hidden behavior.
+
+STAGE-SPECIFIC CHECKS
+  - (no stage-specific checklist for stage selfdev-step-2)
+
+EXPECTED STAGE OUTPUT
+  (no expected-output template for stage)
+
+ARTIFACTS TO REVIEW
+  --- changes/UPG-0024__CHG-20260706-002__release-evidence-package.md (sha256: 7fed5e28996213cc7aa988a4bb81ce826f2e9cd4210192fedbbec68c2776de5c, visibility: shown) ---
+    ---
+    change_id: CHG-20260706-002
+    feature_id: UPG-0024
+    slug: release-evidence-package
+    triage_class: script-tooling
+    scope_axis: self-dev only
+    review_profile: PROFILE-3
+    review_series: RVS__UPG-0024__CHG-20260706-002__S1
+    review_state: REVIEWED
+    status: IN_PROGRESS
+    loop_step: 2-Acceptance
+    ---
+    
+    # Change: UPG-0024 / CHG-20260706-002 — Pre-Release Evidence Package
+    
+    ## TRACE HEADER
+    
+    ```yaml
+    feature_id: UPG-0024
+    primary_feature_id: UPG-0024
+    change_id: CHG-20260706-002
+    slug: release-evidence-package
+    state: IN_PROGRESS
+    current_step: 2-Acceptance
+    implements:
+      - UPG-0024
+    related_features:
+      - UPG-0011
+      - UPG-0009
+      - UPG-0023
+    review_series: RVS__UPG-0024__CHG-20260706-002__S1
+    review_profile: PROFILE-3
+    review_state: DRAFT
+    review_history: reviews/review-log.md
+    fixes_findings: []
+    follow_up_of: null
+    ```
+    
+    ---
+    
+    ## Step 1 — Change Intent
+    
+    ### Problem
+    
+    Before release, a feature's evidence — approved artifacts, stage reports, reviewer history,
+    reconciliation/replay results, readiness checklist — is scattered across stage files,
+    reports, runtime logs, and reviewer summaries. There is no single generated overview a human
+    reviews before making a release decision.
+    
+    ### What changes
+    
+    | File | Change |
+    |---|---|
+    | `tools/reviewer/src/cmd/generate_release_evidence.rs` | New: `generate-release-evidence` subcommand |
+    | `tools/reviewer/src/cmd/mod.rs` | Register `generate_release_evidence` module |
+    | `tools/reviewer/src/main.rs` | Add `GenerateReleaseEvidence` variant; dispatch before config resolution (same pattern as the three prior generators) |
+    | `tools/reviewer/tests/smoke.rs` | Smoke tests |
+    | `backlog/UPG-0024-release-evidence-package.md` | Feature Thread: CHG-20260706-002 activated (done) |
+    | `backlog/features.md` | Row → IN_PROGRESS (done) |
+    | `status/self-development.md` | Row activated (done) |
+    | `status/roadmap.md` | UPG-0024 → IN_PROGRESS (done) |
+    
+    ### Scope boundary — what stays the same
+    
+    - `templates/feature-registry.yaml`, `templates/readiness-checklist.md`,
+      `templates/review-file.md` — none modified. Where read at all, read as optional input only
+      (see Design intent).
+    - `dba-system.md` — not touched.
+    - No existing subcommand's behavior changed (`review`, `decision`, `diagnose`, `stage-start`,
+      `check-drift`, `generate-report`, `generate-adr-candidates`,
+      `generate-approval-dashboard` all untouched).
+    - `scripts/codeos-review.sh` — not touched (shim passes through automatically, modulo
+      UPG-0038's separate, pre-existing symlink-resolution bug).
+    - **No parsing of `reviews/review-log.md` (self-dev's format) or `reviews/[feature_id].md`
+      (downstream's format) for "Reviewer briefs."** These are two genuinely different,
+      free-form-ish structures depending on context (self-dev vs. downstream), and reliably
+      auto-detecting/parsing either is exactly the "fragile free-form-log parser" UPG-0023's Step
+      1 already ruled out for the same reason. "Reviewer briefs" stays `[FILL]` unconditionally —
+      a deliberate scope-narrowing decision, not an oversight.
+    - **No parsing of stage reports, reconciliation results, replay results, verification-only
+      reports, or readiness checklist instances.** None of these have a fixed, discoverable
+      per-feature file path convention anywhere in the toolkit today (confirmed:
+      `templates/readiness-checklist.md` is a template with no recommended instance path,
+      unlike `templates/feature-registry.yaml` which explicitly recommends `features/
+      registry.yaml`). All six of these fields stay `[FILL]` unconditionally.
+    
+    ### Design intent
+    
+    `codeos-reviewer generate-release-evidence --feature <feature_id> [--registry <path>]`
+    
+    **Mechanical inference is deliberately narrow** (flagged for approval): of the 11 backlog
+    fields (`Feature`, `Branch/PR`, `Approved artifacts`, `Stage reports`, `Reviewer briefs`,
+    `Reconciliation result`, `Replay result`, `Verification-only report`, `Readiness checklist`,
+    `Known limitations`, `Release decision`), only three get any mechanical inference at all:
+    - `Feature:` → the `--feature` value, always `[INFERRED]`.
+    - `Branch:` (split out of the backlog's combined "Branch/PR" field — see below) → `git
+      rev-parse --abbrev-ref HEAD` from the repo root, always `[INFERRED]` (this tool must run
+      inside a git repo, matching `generate-report`'s existing pattern).
+    - `PR:` and `Approved artifacts:` → **only if `--registry <path>` is given** and the
+      feature's entry exists in that registry (UPG-0009's canonical schema, the same
+      `Registry`/`FeatureEntry` parsing pattern `generate-approval-dashboard` already
+      established): `pr` and `intent`/`contract`/`event_schema` fields, if non-null, become
+      `[INFERRED]`. Otherwise `[FILL]`.
+    
+    The remaining 7 fields (`Stage reports`, `Reviewer briefs`, `Reconciliation result`, `Replay
+    result`, `Verification-only report`, `Readiness checklist`, `Known limitations`, `Release
+    decision` — 8 by the backlog's own list, since `Known limitations` and `Release decision`
+    are always judgment) are always `[FILL]`.
+    
+    **`--registry` is optional here — a deliberate divergence from `generate-approval-
+    dashboard`'s required `--registry`, flagged for approval.** There, the registry *was* the
+    entire input. Here, it's an optional enrichment: a feature can get a release evidence
+    package even with no registry at all (everything beyond `Feature`/`Branch` is `[FILL]`), and
+    an unreadable/unparseable `--registry` degrades gracefully — logged to stderr, registry-
+    derived fields fall back to `[FILL]` — rather than hard-failing the whole command the way
+    `generate-approval-dashboard`'s required `--registry` does. Missing/bad `--registry` is not
+    "nothing to reason about" here the way a missing required input is elsewhere; there is
+    always something to emit (`Feature`, `Branch`, and 8 `[FILL]` fields at minimum).
+    
+    **Output** (`Branch` and `PR` split from the backlog's combined "Branch/PR" line, for
+    per-field `[INFERRED]`/`[FILL]` tagging clarity — everything else matches the backlog's
+    field list and order exactly):
+    
+    ```markdown
+    # Release Evidence Package
+    
+    Feature: <feature_id> [INFERRED]
+    Branch: <branch> [INFERRED]
+    PR: <pr, or [FILL]>
+    Approved artifacts:
+    - Intent: <path, or [FILL]>
+    - Contract: <path, or [FILL]>
+    - Event schema: <path, or [FILL]>
+    Stage reports: [FILL]
+    Reviewer briefs: [FILL]
+    Reconciliation result: [FILL]
+    Replay result: [FILL]
+    Verification-only report: [FILL]
+    Readiness checklist: [FILL]
+    Known limitations: [FILL]
+    Release decision: [FILL]
+    ```
+    
+    Every generated report opens with:
+    ```
+    > [INFERRED] fields were populated automatically from git and the feature registry (if
+    > --registry was given) — verify before submitting. [FILL] fields require human or model
+    > authorship. This package aggregates existing evidence; it is not itself a decision record
+    > — Release decision requires explicit human judgment and is never inferred.
+    ```
+    
+    Output is written to stdout (redirect to file; recommended downstream path
+    `reviews/release-evidence-[feature_id].md`, per the backlog's proposed artifact — this tool
+    does not write the file itself, matching the three prior generators' stdout-only
+    precedent). Dispatched before `config::resolve()` (no provider config required).
+    
+    ### Triage
+    
+    - Class: `script-tooling`
+    - Scope axis: `self-dev only`
+    - Review profile: `PROFILE-3`
+    - Originating backlog id: `UPG-0024`
+    
+    ---
+    
+    ## Step 2 — Acceptance Criteria
+    
+    ### Functional I/O
+    
+    **AC-1 — `Feature:` always `[INFERRED]`**
+    `Feature:` is the `--feature` value, tagged `[INFERRED]`, in every invocation.
+    _Verify in Step 4:_ smoke test asserting `Feature: <id> [INFERRED]` appears regardless of
+    whether `--registry` is given.
+    
+    **AC-2 — `Branch:` always `[INFERRED]` from git**
+    `Branch:` is `git rev-parse --abbrev-ref HEAD` from the repo root, tagged `[INFERRED]`, in
+    every invocation (the tool relies on the existing pre-dispatch `discover_repo_root()` check
+    in `main.rs` to fail before this subcommand ever runs outside a git repo — no separate
+    not-a-repo handling needed here).
+    _Verify in Step 4:_ fixture git repo on a named branch; confirm `Branch: <name> [INFERRED]`.
+    
+    **AC-3 — Report structure matches the backlog field list, `Branch`/`PR` split**
+    After the preamble banner (AC-6) and a blank line, the report body is exactly:
+    `# Release Evidence Package` heading, then `Feature:`, `Branch:`, `PR:`,
+    `Approved artifacts:` (with `- Intent:`, `- Contract:`, `- Event schema:` sub-items),
+    `Stage reports:`, `Reviewer briefs:`, `Reconciliation result:`, `Replay result:`,
+    `Verification-only report:`, `Readiness checklist:`, `Known limitations:`,
+    `Release decision:` — in that order, every time. (AC-6 governs what stdout literally starts
+    with; this AC governs the report content that follows it — the two are not in conflict.)
+    _Verify in Step 4:_ extract all `:` suffix lines from generated output (any invocation),
+    excluding the banner lines (which start with `>`);
+    confirm the set and order matches this list exactly, including the three `Approved
+    artifacts:` sub-items.
+    
+    **AC-4 — Registry-derived fields `[INFERRED]` only when genuinely available**
+    `PR:` and each `Approved artifacts:` sub-item are `[INFERRED]` with the registry's value
+    only when **all** of: `--registry` was given, the file parses, the `--feature` value matches
+    a `feature_id` in it, and that specific field (`pr`, `intent`, `contract`, `event_schema`) is
+    non-null in that entry. Any other combination (no `--registry`, unparseable file, feature
+    not found, or a null field) leaves that specific field `[FILL]` — evaluated independently
+    per field, not all-or-nothing.
+    _Verify in Step 4:_ fixture registry with one feature having `pr` and `intent` populated but
+    `contract`/`event_schema` null; confirm `PR:` and `- Intent:` are `[INFERRED]` while
+    `- Contract:` and `- Event schema:` are `[FILL]` in the same run.
+    
+    **AC-5 — The 8 always-`[FILL]` fields**
+    `Stage reports:`, `Reviewer briefs:`, `Reconciliation result:`, `Replay result:`,
+    `Verification-only report:`, `Readiness checklist:`, `Known limitations:`, and
+    `Release decision:` are `[FILL]` in every invocation, regardless of `--registry` content —
+    the tool never attempts to derive any of these.
+    _Verify in Step 4:_ any fixture with `--registry` fully populated; confirm all 8 fields are
+    still `[FILL]`.
+    
+    **AC-6 — Preamble present, verbatim**
+    Output begins with the banner verbatim:
+    ```
+    > [INFERRED] fields were populated automatically from git and the feature registry (if
+    > --registry was given) — verify before submitting. [FILL] fields require human or model
+    > authorship. This package aggregates existing evidence; it is not itself a decision record
+    > — Release decision requires explicit human judgment and is never inferred.
+    ```
+    _Verify in Step 4:_ assert the first four non-blank lines of stdout match this banner
+    verbatim.
+    
+    **AC-7 — Unreadable or unparseable `--registry` degrades gracefully**
+    If `--registry <path>` is given but the file doesn't exist, can't be read, or isn't valid
+    YAML/doesn't match the expected shape: `PR:` and all `Approved artifacts:` sub-items fall
+    back to `[FILL]`; a stderr note is printed (`warning: cannot read/parse registry file
+    '<path>': <error>; registry-derived fields left as [FILL]`); the rest of the report (all
+    other fields) is still emitted in full; exit code remains 0.
+    _Verify in Step 4:_ (a) `--registry does-not-exist.yaml`; (b) `--registry <malformed-file>`;
+    confirm full report on stdout in both cases, stderr carries the warning, exit 0.
+    
+    **AC-8 — Feature not found in a valid registry degrades gracefully**
+    If `--registry <path>` parses successfully but contains no entry matching `--feature`:
+    same graceful degradation as AC-7 — `PR:`/`Approved artifacts:` become `[FILL]`, a distinct
+    stderr note is printed (`warning: feature '<id>' not found in registry '<path>';
+    registry-derived fields left as [FILL]`), full report still emitted, exit 0.
+    _Verify in Step 4:_ fixture registry with only unrelated feature IDs; confirm the report is
+    still complete, the stderr message names both the feature id and the registry path, exit 0.
+    
+    **AC-9 — No `--registry` given is the normal case, not a degraded one**
+    If `--registry` is omitted entirely, `PR:`/`Approved artifacts:` are `[FILL]` with **no**
+    stderr message — this is expected, ordinary usage, not an error or a degradation to warn
+    about. Only AC-7/AC-8's cases (registry *was* given but couldn't be used) produce a stderr
+    note.
+    _Verify in Step 4:_ run with no `--registry`; confirm stderr is completely empty and exit
+    code is 0.
+    
+    **AC-10 — `--feature` is required**
+    `--feature <id>` is a required flag. Omitting it, or passing an unknown flag, is a clap
+    usage error: exit 1, usage message on stderr, nothing on stdout.
+    _Verify in Step 4:_ smoke test `generate-release-evidence` with no `--feature`; confirm
+    exit 1.
+    
+    **AC-11 — Output to stdout only**
+    All report content (banner + package) is written to stdout only. Stderr carries only the
+    AC-7/AC-8 warning notes when applicable, and is otherwise empty. Stdout is always the full
+    report — there is no empty-stdout case for this tool (unlike the prior three generators,
+    which have a "nothing found" empty-output path); `Feature`/`Branch` plus 8+ `[FILL]` fields
+    means there is always something to emit.
+    _Verify in Step 4:_ (a) run with no `--registry`; confirm stderr empty, stdout non-empty; (b)
+    run the AC-7/AC-8 cases; confirm stdout is still the full report, not empty, despite the
+    stderr warning.
+    
+    ### Exit codes
+    
+    **AC-12 — Exit 0 always, given a valid `--feature` inside a git repository**
+    Within a git repository, every invocation with a valid `--feature` (any `--registry` state —
+    absent, bad, feature-not-found, or fully valid) exits 0. This tool itself has no usage-
+    failure path beyond clap's own handling of a missing `--feature` (AC-10). Running outside a
+    git repository at all is excluded from this AC's scope: `main.rs`'s shared
+    `discover_repo_root()` check (AC-2) already exits non-zero before *any* subcommand
+    dispatches in that case — this is pre-existing behavior common to every subcommand, not
+    something `generate-release-evidence` implements or is responsible for.
+    _Verify in Step 4:_ smoke tests for the no-registry, bad-registry, feature-not-found, and
+    fully-valid-registry cases, all run inside a temp git repo; assert exit 0 in all four.
+    
+    **AC-13 — Dispatch before config resolution**
+    `generate-release-evidence` runs without a configured provider, dispatching before
+    `config::resolve()` (same pattern as the three prior generators).
+    _Verify in Step 4:_ run in a temp repo with no provider config set up at all; confirm no
+    config-resolution error occurs.
+    
+    ### Idempotency
+    
+    **AC-14 — Deterministic output**
+    Given the same `--feature`, the same (or absent) `--registry` content, and unchanged git
+    branch state, two invocations produce byte-for-byte identical stdout.
+    _Verify in Step 4:_ run twice with identical arguments against the same fixtures; diff the
+    outputs.
+    
+    ### Cross-reference integrity
+    
+    **AC-15 — `architectural_refinements:` never mistaken for a feature entry (when `--registry` given)**
+    When looking up `--feature` in a provided registry, the tool only searches the top-level
+    `features:` list — an `architectural_refinements:` entry with a colliding-looking `refine_id`
+    is never matched as if it were a feature.
+    _Verify in Step 4:_ fixture registry with a real feature and an `architectural_refinements:`
+    entry whose `refine_id` equals the `--feature` value being searched for; confirm the real
+    feature's data is used (or `[FILL]` if no real feature matches), never the refinement's.
+    
+    ---
+    
+    ## Step 3 — Implement
+    
+    *(to be written after Step 2 approval)*
+    
+    ---
+    
+    ## Step 4 — Reconcile
+    
+    *(to be written after Step 3 approval)*
+
+  --- backlog/UPG-0024-release-evidence-package.md (sha256: 4d94574afa4e68c509a8085312fb90c95ade0089e9a2385c681f7752b18bb1e2, visibility: shown) ---
+    ---
+    feature_id: UPG-0024
+    slug: release-evidence-package
+    title: Pre-Release Evidence Package
+    status: IN_PROGRESS
+    priority: P3
+    depends_on: []
+    related_features: []
+    supersedes: []
+    superseded_by: []
+    ---
+    
+    # Upgrade: release-evidence-package — Pre-Release Evidence Package
+    
+    **Priority**: P3
+    **Status**: IN_PROGRESS
+    **Type**: toolkit-upgrade
+    **Related**: readiness-checklist, reviewer-decision-brief, approval-dashboard
+    
+    ## Problem
+    
+    Before release, artifacts may be scattered across stage files, reports, runtime logs, replay
+    results, and reviewer summaries.
+    
+    ## Upgrade
+    
+    Create a release evidence package.
+    
+    ## Scope
+    
+    Pre-release aggregation.
+    
+    ## Proposed artifact(s)
+    
+    `reviews/release-evidence-[feature_id].md`
+    
+    ## Design notes
+    
+    ```markdown
+    Feature:
+    Branch/PR:
+    Approved artifacts:
+    Stage reports:
+    Reviewer briefs:
+    Reconciliation result:
+    Replay result:
+    Verification-only report:
+    Readiness checklist:
+    Known limitations:
+    Release decision:
+    ```
+    
+    ## Value
+    
+    Medium-high for serious releases.
+    
+    ## Risk
+    
+    Duplicative with existing reviews.
+    
+    ## Guardrail
+    
+    Generate from existing artifacts, do not manually rewrite.
+    
+    ## DBA-philosophy note
+    
+    No rule touched. **Generated** from existing artifacts (not a new authored surface) — avoids
+    creating a second source of truth.
+    
+    ## Feature Thread
+    
+    > Canonical thread rollup for this feature. Compact links/IDs only; full detail lives in the
+    > change records and review files. May be maintained manually.
+    
+    ### Changes
+    
+    | Change ID | File | Purpose | State |
+    |---|---|---|---|
+    | CHG-20260706-002 | `changes/UPG-0024__CHG-20260706-002__release-evidence-package.md` | New Rust subcommand: `generate-release-evidence` | IN_PROGRESS |
+    
+    ### Reviews
+    
+    | Review ID | Change ID | Step | Round | Verdict |
+    |---|---|---|---|---|
+    
+    ### Findings Tracked Inside This Feature
+    
+    | Finding ID | Review ID | Classification | Resolution |
+    |---|---|---|---|
+    
+    ### Follow-up Features
+    
+    | Feature ID | Reason | Source finding |
+    |---|---|---|
+
+DIFF TO REVIEW (base->review, secret/size filtered)
+diff --git a/backlog/UPG-0024-release-evidence-package.md b/backlog/UPG-0024-release-evidence-package.md
+index be7e86f..ed08eef 100644
+--- a/backlog/UPG-0024-release-evidence-package.md
++++ b/backlog/UPG-0024-release-evidence-package.md
+@@ -2,7 +2,7 @@
+ feature_id: UPG-0024
+ slug: release-evidence-package
+ title: Pre-Release Evidence Package
+-status: PROPOSED
++status: IN_PROGRESS
+ priority: P3
+ depends_on: []
+ related_features: []
+@@ -13,7 +13,7 @@ superseded_by: []
+ # Upgrade: release-evidence-package — Pre-Release Evidence Package
+ 
+ **Priority**: P3
+-**Status**: PROPOSED
++**Status**: IN_PROGRESS
+ **Type**: toolkit-upgrade
+ **Related**: readiness-checklist, reviewer-decision-brief, approval-dashboard
+ 
+@@ -76,6 +76,7 @@ creating a second source of truth.
+ 
+ | Change ID | File | Purpose | State |
+ |---|---|---|---|
++| CHG-20260706-002 | `changes/UPG-0024__CHG-20260706-002__release-evidence-package.md` | New Rust subcommand: `generate-release-evidence` | IN_PROGRESS |
+ 
+ ### Reviews
+ 
+diff --git a/backlog/features.md b/backlog/features.md
+index aa467b0..cc858b0 100644
+--- a/backlog/features.md
++++ b/backlog/features.md
+@@ -55,7 +55,7 @@ The goal is to speed up Codeos development without weakening DBA advantages.
+ | UPG-0021 | [UPG-0021-stage-report-generator.md](UPG-0021-stage-report-generator.md) | Stage Report Generator | P3 | COMPLETE |
+ | UPG-0022 | [UPG-0022-00b-adr-generator.md](UPG-0022-00b-adr-generator.md) | 00b → ADR Candidate Generator | P3 | COMPLETE |
+ | UPG-0023 | [UPG-0023-approval-dashboard.md](UPG-0023-approval-dashboard.md) | Human Approval Dashboard | P3 | COMPLETE |
+-| UPG-0024 | [UPG-0024-release-evidence-package.md](UPG-0024-release-evidence-package.md) | Pre-Release Evidence Package | P3 | PROPOSED |
++| UPG-0024 | [UPG-0024-release-evidence-package.md](UPG-0024-release-evidence-package.md) | Pre-Release Evidence Package | P3 | IN_PROGRESS |
+ | UPG-0025 | [UPG-0025-reviewer-verification-packet.md](UPG-0025-reviewer-verification-packet.md) | Verification Packet for Reviewer Agent | P3 | PROPOSED |
+ | UPG-0026 | [UPG-0026-branch-helper.md](UPG-0026-branch-helper.md) | Optional Branch Creation Helper | P2 | PROPOSED |
+ | UPG-0027 | [UPG-0027-lean-review-runner-packet-architecture](UPG-0027-replacing-review-scripts.md) | Lean Review Runner and Packet Architecture | P0 | COMPLETE |
+diff --git a/status/roadmap.md b/status/roadmap.md
+index 937c222..bfe308a 100644
+--- a/status/roadmap.md
++++ b/status/roadmap.md
+@@ -79,7 +79,7 @@ cheap pilot-adjacent wins early.
+ | 5 | UPG-0021 | Stage Report Generator | P3 | UPG-0004 | CHG-20260703-003 | COMPLETE |
+ | 5 | UPG-0022 | 00b → ADR Candidate Generator | P3 | UPG-0007 | CHG-20260703-004 | COMPLETE |
+ | 5 | UPG-0023 | Human Approval Dashboard | P3 | UPG-0009, UPG-0003 | CHG-20260704-001 | COMPLETE |
+-| 5 | UPG-0024 | Pre-Release Evidence Package | P3 | — | — | PROPOSED |
++| 5 | UPG-0024 | Pre-Release Evidence Package | P3 | — | CHG-20260706-002 | IN_PROGRESS |
+ | 5 | UPG-0025 | Verification Packet for Reviewer Agent | P3 | UPG-0010 | — | PROPOSED |
+ | 5 | UPG-0026 | Optional Branch Creation Helper | P2 | — | — | PROPOSED |
+ 
+diff --git a/status/self-development.md b/status/self-development.md
+index ebb7859..667a4e9 100644
+--- a/status/self-development.md
++++ b/status/self-development.md
+@@ -55,6 +55,7 @@
+ | UPG-0022 | CHG-20260703-004 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION; Step 2 NO OBJECTION; Step 3 NO OBJECTION; Step 4 NO OBJECTION; all 14 ACs verified; 77 tests) | COMPLETE | — |
+ | UPG-0023 | CHG-20260704-001 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION; Step 2 NO OBJECTION; Step 3 NO OBJECTION R2; Step 4 NO OBJECTION R1; all 15 ACs verified; 94 tests) | COMPLETE | UPG-0040, UPG-0041 |
+ | UPG-0019 | CHG-20260706-001 | documentation | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION; Step 2 NO OBJECTION; Step 3 NO OBJECTION R3; Step 4 NO OBJECTION R3; all 8 ACs verified) | COMPLETE | — |
++| UPG-0024 | CHG-20260706-002 | script-tooling | self-dev only | 2-Acceptance | Step 1 NO OBJECTION | IN_PROGRESS | — |
+ | UPG-0036 | CHG-20260705-001 | self-dev-governance | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION R3; Step 2 NO OBJECTION R2; Step 3 NO OBJECTION R3; Step 4 NO OBJECTION R1; all 10 ACs verified; real check-drift run) | COMPLETE | — |
+ | UPG-0037 | CHG-20260705-002 | downstream-doctrine | downstream doctrine only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION; Step 2 NO OBJECTION R2; Step 3 accepted at budget R3 (0 blockers, SECRET_REDACTION coverage); Step 4 accepted R1 (0 blockers, same SECRET_REDACTION cause); all 13 ACs verified; 105 tests; real FundFlow dry-runs) | COMPLETE | UPG-0038 |
+ 

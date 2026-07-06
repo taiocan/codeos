@@ -3,5 +3,6 @@ pub mod decision;
 pub mod diagnose;
 pub mod generate_adr_candidates;
 pub mod generate_approval_dashboard;
+pub mod generate_release_evidence;
 pub mod generate_report;
 pub mod review;

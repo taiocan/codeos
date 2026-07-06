@@ -102,6 +102,15 @@ enum Commands {
         #[arg(long)]
         registry: String,
     },
+    /// Generate a pre-release evidence package skeleton for a feature
+    GenerateReleaseEvidence {
+        /// Feature id (e.g. UPG-0024) to populate the Feature field
+        #[arg(long)]
+        feature: String,
+        /// Optional path to a feature-registry.yaml file to enrich PR / Approved artifacts
+        #[arg(long)]
+        registry: Option<String>,
+    },
 }
 
 fn main() {
@@ -158,6 +167,17 @@ fn run() -> i32 {
         return cmd::generate_approval_dashboard::run(cmd::generate_approval_dashboard::GenerateApprovalDashboardArgs {
             registry,
         });
+    }
+
+    // Dispatch generate-release-evidence before config resolution — needs no provider config.
+    if let Commands::GenerateReleaseEvidence { feature, registry } = &cli.command {
+        return cmd::generate_release_evidence::run(
+            cmd::generate_release_evidence::GenerateReleaseEvidenceArgs {
+                feature,
+                registry: registry.as_deref(),
+            },
+            &repo_root,
+        );
     }
 
     // Resolve config
@@ -230,6 +250,7 @@ fn run() -> i32 {
         Commands::GenerateReport { .. } => EXIT_SUCCESS,
         Commands::GenerateAdrCandidates { .. } => EXIT_SUCCESS,
         Commands::GenerateApprovalDashboard { .. } => EXIT_SUCCESS,
+        Commands::GenerateReleaseEvidence { .. } => EXIT_SUCCESS,
     }
 }
 
