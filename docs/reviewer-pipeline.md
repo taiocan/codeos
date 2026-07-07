@@ -294,20 +294,24 @@ no core rules changed.
 ## 10. Architecture: `codeos-review.sh` is a static locator shim
 
 ```bash
-# scripts/codeos-review.sh — the entire file
+# scripts/codeos-review.sh — final line; everything above it only locates the binary
 exec "${BINARY}" "$@"
 ```
 
-`codeos-review.sh` is a **15-line static locator shim**. It finds the compiled Rust binary
-(`tools/reviewer/target/release/codeos-reviewer`) and passes all arguments through verbatim
-(`"$@"`). It contains no argument preprocessing, no conditional logic, and no reviewer
-capability.
+`codeos-review.sh` is a **~28-line static locator shim** (see `UPG-0038` for why it isn't
+shorter: a caller-git-repository precondition, plus script-relative binary-path resolution
+that works correctly through the `.codeos` symlink from a downstream project, plus a PATH
+fallback if the compiled binary isn't found at its expected location). It finds the compiled
+Rust binary (`tools/reviewer/target/release/codeos-reviewer`) and passes all arguments
+through verbatim (`"$@"`). Its conditionals are entirely about *locating the binary and
+validating preconditions* — it contains no argument preprocessing and no reviewer capability
+of its own.
 
 **Consequence for upgrades:** any reviewer capability change — new packet sections, new
 subcommand behavior, new flags, new decision-log fields — lives in the **Rust engine**
 (`tools/reviewer/src/`). Changing only the bash script cannot add or modify reviewer
-behavior. The bash script only needs to change if the binary location or build instructions
-change.
+behavior. The bash script only needs to change if binary location, build instructions, or
+path-resolution semantics change.
 
 ## 11. Usage
 
@@ -352,22 +356,21 @@ differences:
    Codeos's own toolkit changes (§4d above) — that internal triage system never appears in
    downstream-facing doctrine or prompts.
 
-**Known limitation — invoke the binary directly for now, not the shim.**
-`.codeos/scripts/codeos-review.sh` currently resolves its binary path via the *calling*
-project's git root, which breaks when run from within a downstream project (it looks for the
-binary under that project's own nonexistent `tools/reviewer/`, instead of resolving through
-the `.codeos` symlink to Codeos). Until this is fixed (tracked as `UPG-0038`), invoke the
-compiled binary directly, e.g. reviewing a Stage 2 contract:
+**Invoking the shim from a downstream project.** `.codeos/scripts/codeos-review.sh` resolves
+its binary path from the script's own physical location (following the `.codeos` symlink
+through to Codeos), so it works correctly from within a downstream project (fixed by
+`UPG-0038`; previously it resolved via the *calling* project's git root instead, which broke
+under a symlinked invocation). E.g. reviewing a Stage 2 contract:
 ```bash
-/path/to/Codeos/tools/reviewer/target/release/codeos-reviewer review checkout-flow 2 \
-  contracts/checkout-flow_contract.md
+.codeos/scripts/codeos-review.sh review checkout-flow 2 contracts/checkout-flow_contract.md
 ```
 Reviewing a Feature Brief before confirming it:
 ```bash
-/path/to/Codeos/tools/reviewer/target/release/codeos-reviewer review checkout-flow brief \
-  backlog/checkout-flow.md
+.codeos/scripts/codeos-review.sh review checkout-flow brief backlog/checkout-flow.md
 ```
-(`/path/to/Codeos` is wherever `.codeos` resolves to — check with `readlink -f .codeos`.)
+Direct binary invocation (`/path/to/Codeos/tools/reviewer/target/release/codeos-reviewer
+...`, where `/path/to/Codeos` is wherever `.codeos` resolves to — check with `readlink -f
+.codeos`) still works identically and remains a valid alternative.
 
 **If reviewer tooling isn't built or configured** for a downstream project, see
 `dba-system.md`'s Review Waiver practice — record a plain reason in that feature's review

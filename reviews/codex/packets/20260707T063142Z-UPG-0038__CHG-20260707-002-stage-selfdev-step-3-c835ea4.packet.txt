@@ -1,0 +1,484 @@
+Reviewer task:
+
+SCOPE CONTRACT
+  Assess this artifact against the STATED SCOPE of this stage/PR — the Expected Stage
+  Output below and what the artifacts actually claim — NOT against an ideal final system.
+  A capability the artifacts do not claim to provide is OUT-OF-SCOPE, not a defect.
+  The following are OUT-OF-SCOPE BACKLOG unless THIS artifact explicitly claims to provide
+  them: formal approval-binding enforcement; rollback correctness; COMMIT_BOUND/
+  WORKSPACE_BOUND enforcement; JSON Schema validation; CI validation; exact
+  decision-integrity; per-feature decision ledgers; autonomous approval; enabled hooks.
+
+YOUR TASK — answer these five questions using only the evidence in the packet:
+  1. Acceptance criteria: Does the artifact satisfy each of its stated acceptance criteria?
+     Cite evidence for each criterion (or note its absence).
+  2. Claim support: Are universal or strong claims (all, every, never, always, no X) in the
+     artifact supported by evidence in the packet? Any unverifiable strong claim is a candidate
+     finding only if it affects acceptance, scope, safety, decision integrity, or the artifact's
+     stated guarantees.
+  3. Scope drift: Is there any change beyond the stated scope boundary? (Files not in the
+     "What changes" list; behavior changes not in the intent; downstream doctrine modified
+     rather than read.)
+  4. In-scope blockers: Are there facts that, if left in, would make the artifact wrong,
+     unsafe, or internally contradictory?
+  5. Finding classification: Classify every finding you raise as exactly one of the five
+     TRIAGE RULE categories below.
+
+TRIAGE RULE — classify EVERY finding as exactly one of:
+  IN-SCOPE BLOCKER         breaks the stated goal; creates a FALSE CLAIM in this artifact;
+                           weakens the advisory/read-only/human-gated guarantees; prevents
+                           the work from running; or violates an explicit safety constraint.
+  IN-SCOPE NON-BLOCKER     improves it but is not required for this PR.
+  OUT-OF-SCOPE BACKLOG     valid, but belongs to a future feature / stronger guarantee.
+  REJECTED                 conflicts with the stated scope or Codeos philosophy.
+  SELF-REFERENCE /         review records that are stale because of the previous round's
+  REVIEW-BOOKKEEPING       own existence (causal loop); not a real artifact defect.
+  Base the PR decision ONLY on IN-SCOPE BLOCKER findings. An OUT-OF-SCOPE BACKLOG finding
+  must NOT cause DO NOT ADVANCE unless this artifact FALSELY CLAIMS to solve it.
+
+WHAT NOT TO DO
+  - Do not flag style or wording issues as blockers unless the wording creates a false claim,
+    contradiction, parser breakage, or wrong governance instruction.
+  - Do not re-review unchanged full context when the packet is in delta mode.
+  - Do not treat local-only review history as a blocker unless the artifact falsely
+    claims the review artifacts are committed/durable.
+
+INSTRUCTIONS
+  If this is a resumed session, ignore any earlier-session conclusions unless they are
+  re-established by THIS packet; assess only the evidence above, pinned to this commit.
+  Give a focused assessment of this artifact against the stated scope, acceptance criteria,
+  and evidence in this packet. Rank findings by severity. Suggest a better design only when
+  needed to explain a required fix for an IN-SCOPE BLOCKER.
+
+  Limit findings to the top 3 IN-SCOPE BLOCKERS. Additional non-blocking observations may be
+  summarized in one short paragraph only if useful.
+
+  For EACH finding emit:
+    Finding: / Severity: High|Medium|Low / Classification: <one of the TRIAGE RULE labels>
+    Evidence: <file/line> / Why: <short> / Required action: fix now|optional fix|backlog|reject
+    Scope reason: <why it does/does not belong to this PR's scope>
+  Then emit:
+    PR decision: ADVANCE | REQUEST CHANGES | DO NOT ADVANCE   (based ONLY on in-scope blockers)
+    Scope drift warning: yes|no — <is anything pulling this PR beyond its stated scope?>
+  Then on the LAST three lines emit exactly (map ADVANCE->NO OBJECTION,
+  REQUEST CHANGES->CHANGES ADVISED, DO NOT ADVANCE->DO NOT ADVANCE):
+    LOG SUMMARY: <NO OBJECTION | CHANGES ADVISED | DO NOT ADVANCE | UNCLASSIFIED> — <single most important point>
+      (use UNCLASSIFIED if you genuinely cannot classify the artifact safely)
+    EVIDENCE: <A|B|C|D|E>
+    HIGHEST-IMPACT UNCERTAINTY: <one sentence — what single thing, if wrong, most affects this assessment>
+
+  Evidence grade — the grade describes what the assessment rests on, not reviewer confidence:
+    A — Directly verified in the artifact, diff, or output shown in the packet
+    B — Verified with multiple direct pieces of evidence, but coverage is not complete
+    C — Partially verified, partially inferred from structure or context
+    D — Mostly inferred from structure or indirect evidence
+    E — Hypothesis or very limited basis — little to no direct evidence
+
+
+PACKET MANIFEST
+  generated: 2026-07-07T06:29:55Z
+  task_prompt: /home/rimo/projects/Codeos/prompts/codeos-reviewer-task.md (4959 bytes)
+  review_content_bytes: 20903
+  estimated_review_tokens: ~5225
+  budget_status: OK
+  packet_mode: full
+  delta_base: none
+  items:
+    - path: changes/UPG-0038__CHG-20260707-002__review-shim-symlink-resolution.md
+      mode: full_file
+      bytes: 12156
+      sha256: e012aa42ff92e1825298e408c86a19b95c6df6051d92599ff78b08889e99b4b3
+    - path: scripts/codeos-review.sh
+      mode: full_file
+      bytes: 1259
+      sha256: 8ed2f35689063692a65265019f34cb629c1bcbde6b96fca0bd2ac06f47ebfd2f
+    - path: (diff)
+      mode: full_file
+      bytes: 7488
+
+REVIEW CONTEXT
+  Feature:                UPG-0038__CHG-20260707-002
+  Stage:                  selfdev-step-3
+  Branch:                 main
+  Base commit:            (no base pin)
+  Review commit:          c835ea467648bccfc42e2ab03e12f4e70f0811d2 (+ uncommitted workspace changes)
+  Current approved stage: n/a (non-numeric stage)
+  Evidence coverage:      FULL_COVERAGE
+  Workspace dirty:        yes (uncommitted changes at review time)
+
+DBA RULES RELEVANT TO THIS STAGE
+  - Human approval is required for every stage transition; you are advisory only.
+  - Memory is not truth — assess only what is provided, pinned to the review commit.
+  - Implementation must trace to approved artifacts; no behavior beyond intent+contract+schema.
+  - No events outside the approved event schema; no hidden behavior.
+
+STAGE-SPECIFIC CHECKS
+  - (no stage-specific checklist for stage selfdev-step-3)
+
+EXPECTED STAGE OUTPUT
+  (no expected-output template for stage)
+
+ARTIFACTS TO REVIEW
+  --- changes/UPG-0038__CHG-20260707-002__review-shim-symlink-resolution.md (sha256: e012aa42ff92e1825298e408c86a19b95c6df6051d92599ff78b08889e99b4b3, visibility: shown) ---
+    ---
+    change_id: CHG-20260707-002
+    feature_id: UPG-0038
+    slug: review-shim-symlink-resolution
+    triage_class: script-tooling
+    scope_axis: self-dev only
+    review_profile: PROFILE-3
+    review_series: RVS__UPG-0038__CHG-20260707-002__S1
+    review_state: REVIEWED
+    status: IN_PROGRESS
+    loop_step: 3-Implement
+    ---
+    
+    # Change: UPG-0038 / CHG-20260707-002 — Fix codeos-review.sh Binary Resolution for Symlinked Downstream Projects
+    
+    ## TRACE HEADER
+    
+    ```yaml
+    feature_id: UPG-0038
+    primary_feature_id: UPG-0038
+    change_id: CHG-20260707-002
+    slug: review-shim-symlink-resolution
+    state: IN_PROGRESS
+    current_step: 3-Implement
+    implements:
+      - UPG-0038
+    related_features:
+      - UPG-0032
+      - UPG-0037
+    review_series: RVS__UPG-0038__CHG-20260707-002__S1
+    review_profile: PROFILE-3
+    review_state: DRAFT
+    review_history: reviews/review-log.md
+    fixes_findings: []
+    follow_up_of: null
+    ```
+    
+    ---
+    
+    ## Step 1 — Change Intent
+    
+    ### Problem
+    
+    `scripts/codeos-review.sh` resolves `REPO_ROOT` via `git rev-parse --show-toplevel` (line 6),
+    then looks for the reviewer binary at `${REPO_ROOT}/tools/reviewer/target/release/
+    codeos-reviewer`. When invoked from within a downstream project through the `.codeos`
+    symlink (e.g. `.codeos/scripts/codeos-review.sh` run from `/home/rimo/projects/FundFlow`),
+    `git rev-parse --show-toplevel` resolves to the *calling* project's own git root (FundFlow's),
+    not through the symlink to Codeos — so the shim looks for a binary at
+    `FundFlow/tools/reviewer/target/release/codeos-reviewer`, which doesn't exist, and fails.
+    Direct invocation of the compiled binary works correctly against real FundFlow artifacts
+    (confirmed during UPG-0037's Step 3 verification); only the shim wrapper is broken.
+    
+    ### What changes
+    
+    | File | Change |
+    |---|---|
+    | `scripts/codeos-review.sh` | Resolve the binary path from the script's own physical location (following the `.codeos` symlink) instead of the calling repo's git root |
+    | `backlog/UPG-0038-review-shim-symlink-resolution.md` | Feature Thread: CHG-20260707-002 activated (done) |
+    | `backlog/features.md` | Row → IN_PROGRESS (done) |
+    | `status/self-development.md` | Row activated (done) |
+    | `status/roadmap.md` | UPG-0038 → IN_PROGRESS (done) |
+    
+    ### Scope boundary — what stays the same
+    
+    - **No change to the Rust binary itself** — `tools/reviewer/src/` is untouched; this is a
+      pure shell-script fix, matching the backlog's own Scope statement.
+    - **No change to binary discovery precedence beyond path resolution** — the `command -v
+      codeos-reviewer` PATH fallback (for a globally-installed binary) is preserved unchanged;
+      `--provider` CLI flag and `CODEOS_REVIEWER_PROVIDER` env var precedence (both handled
+      entirely inside the Rust binary, never touched by the shim) are unaffected.
+    - **The exec'd binary's own repo-root discovery is untouched.** The Rust binary
+      independently calls its own `discover_repo_root()` (via `git rev-parse --show-toplevel`
+      from whatever directory the *user* invoked the shim from) to find the project being
+      reviewed (e.g. FundFlow's artifacts/diff) — that is a completely separate concern from
+      *locating the binary file*, and this change does not touch it. Only where the shim looks
+      for the compiled executable changes; where the executed binary looks for the project being
+      reviewed does not.
+    
+    ### Design intent
+    
+    Replace the `git rev-parse --show-toplevel`-based `REPO_ROOT` with a `SCRIPT_DIR`-based
+    resolution using the script's own physical location, following symlinks:
+    
+    ```bash
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+    CODEOS_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd -P)"
+    BINARY="${CODEOS_ROOT}/tools/reviewer/target/release/codeos-reviewer"
+    ```
+    
+    `pwd -P` (physical, not logical) is the key detail: when invoked as `.codeos/scripts/
+    codeos-review.sh` from FundFlow's root, `${BASH_SOURCE[0]}` is exactly that unresolved,
+    symlink-relative string; plain `cd .codeos/scripts && pwd` would print the *logical* path
+    `FundFlow/.codeos/scripts` (preserving the symlink name, the same bug in different clothing)
+    — `pwd -P` instead resolves through the symlink to the real path,
+    `/path/to/Codeos/scripts`, so `CODEOS_ROOT` correctly becomes Codeos's own root regardless of
+    which project's directory tree the shim was invoked through.
+    
+    **Single unified resolution, no special-cased fallback branch — a deliberate simplification
+    from the backlog's literal wording, flagged for approval.** The backlog text suggests
+    "falling back to the current `git rev-parse` behavior only for Codeos's own self-development
+    use." That fallback turns out to be unnecessary: for Codeos's own repo (no symlink involved),
+    `SCRIPT_DIR`'s parent directory *is* Codeos's root — physically identical to what `git
+    rev-parse --show-toplevel` would have returned anyway, since there's no symlink to resolve
+    through in that case. One code path serves both usage modes correctly; a second branch would
+    be unneeded complexity. The backlog's "Risk" section calls for "a compatibility check against
+    both usage modes" — read as a *verification* requirement (test both scenarios explicitly),
+    not a requirement for two implementation branches; Step 4 verifies both directly against a
+    real Codeos invocation and a real FundFlow `.codeos`-symlinked invocation.
+    
+    The `command -v codeos-reviewer` PATH-fallback branch and the "binary not found" error
+    message (updated to reference `${CODEOS_ROOT}` instead of `${REPO_ROOT}` for the suggested
+    build command) are otherwise unchanged in structure.
+    
+    ### Triage
+    
+    - Class: `script-tooling`
+    - Scope axis: `self-dev only`
+    - Review profile: `PROFILE-3`
+    - Originating backlog id: `UPG-0038`
+    
+    ---
+    
+    ## Step 2 — Acceptance Criteria
+    
+    ### Functional resolution
+    
+    **AC-1 — Correct resolution: Codeos self-development usage**
+    Invoked from within Codeos's own repo (any subdirectory, any relative/absolute path to the
+    script), the shim resolves `BINARY` to `<Codeos-root>/tools/reviewer/target/release/
+    codeos-reviewer` — the real, existing compiled binary.
+    _Verify in Step 4:_ run the shim from Codeos's repo root and from a subdirectory
+    (`tools/reviewer/`), both via relative and absolute script paths; confirm identical resolved
+    binary path in all cases.
+    
+    **AC-2 — Correct resolution: symlinked downstream usage (the actual bug)**
+    Invoked from within a real downstream project through its `.codeos` symlink (FundFlow), the
+    shim resolves `BINARY` to the exact same real file as AC-1 — Codeos's compiled binary — not a
+    path under the downstream project's own tree.
+    _Verify in Step 4:_ run `.codeos/scripts/codeos-review.sh diagnose` from FundFlow's actual
+    repo root; confirm it succeeds (previously failed with "binary not found") and that the
+    resolved path (confirm via a debug echo or `readlink -f`) is identical to AC-1's.
+    
+    **AC-3 — Resolution independent of caller's current working directory**
+    The resolved binary path does not depend on the directory the user was in when they invoked
+    the shim — only on the shim script's own physical location.
+    _Verify in Step 4:_ invoke the shim (Codeos-internal case) from at least two different
+    caller cwds using a relative path to the script each time; confirm identical resolution.
+    
+    ### No-regression guarantees
+    
+    **AC-4 — PATH fallback preserved**
+    If the script-relative path resolves to a non-existent or non-executable file, the existing
+    `command -v codeos-reviewer` fallback still activates correctly.
+    _Verify in Step 4:_ temporarily rename/hide the compiled binary (or point at a fixture repo
+    with no build), confirm the fallback branch is reached (or the correct error emitted if
+    also absent from PATH).
+    
+    **AC-5 — Error message references the corrected root**
+    When the binary is not found and not on PATH, the emitted build-command suggestion
+    references `${CODEOS_ROOT}` (the script's own resolved root), not the old, broken
+    `${REPO_ROOT}` — so the suggested `cargo build --manifest-path ...` command is actually
+    correct when run from a downstream project.
+    _Verify in Step 4:_ trigger the not-found path from within FundFlow; confirm the printed
+    build command's path is Codeos's real path, not FundFlow's.
+    
+    **AC-6 — The exec'd binary's own project discovery is unaffected**
+    When invoked from FundFlow, the underlying `codeos-reviewer` binary still correctly
+    discovers *FundFlow* as the project being reviewed (its own internal `discover_repo_root()`,
+    using the caller's cwd) — this change only fixes where the shim finds the *executable*, not
+    what project the executable operates on.
+    _Verify in Step 4:_ run `.codeos/scripts/codeos-review.sh diagnose` from FundFlow; confirm
+    the output reflects FundFlow's own state (e.g. FundFlow's `reviewer.toml`/provider config),
+    not Codeos's.
+    
+    **AC-7 — `--provider` flag and env var precedence unchanged**
+    Passing `--provider <name>` or setting `CODEOS_REVIEWER_PROVIDER` through the shim still
+    reaches the binary and takes effect exactly as before this change — the shim's `"$@"`
+    pass-through and environment are untouched.
+    _Verify in Step 4:_ run `diagnose` through the fixed shim with an explicit `--provider`
+    override; confirm the reported provider matches the override.
+    
+    **AC-8 — Script remains valid, idiomatic bash**
+    `bash -n scripts/codeos-review.sh` (syntax check) passes; `set -euo pipefail` is preserved.
+    _Verify in Step 4:_ run `bash -n` against the modified script.
+    
+    ### Cross-reference integrity
+    
+    **AC-9 — No change to the Rust binary**
+    _Verify in Step 4:_ `git diff --stat -- tools/reviewer/` is empty for this change.
+    
+    **AC-10 — No change to binary discovery precedence beyond path resolution**
+    No new flag, environment variable, or config file is introduced by this change; the only
+    behavioral difference from before is which physical path `BINARY` resolves to.
+    _Verify in Step 4:_ diff the script; confirm no new conditional branches beyond the
+    `SCRIPT_DIR`/`CODEOS_ROOT` resolution change itself.
+    
+    ---
+    
+    ## Step 3 — Implement
+    
+    ### What was done
+    
+    | File | Change |
+    |---|---|
+    | `scripts/codeos-review.sh` | Replaced `REPO_ROOT` (`git rev-parse --show-toplevel`) with `SCRIPT_DIR`/`CODEOS_ROOT` (`pwd -P` from the script's own physical location); updated the error message to reference `${CODEOS_ROOT}`; added an explanatory comment. `command -v codeos-reviewer` PATH fallback structure unchanged. |
+    
+    ### Verification (AC-1 through AC-10), all against real invocations, no mocks
+    
+    - **AC-1**: ran from Codeos's repo root and from `tools/reviewer/` via a relative script
+      path — both resolved `repo_root: /home/rimo/projects/Codeos`, identical.
+    - **AC-2 (the actual bug)**: ran `bash .codeos/scripts/codeos-review.sh diagnose` from
+      FundFlow's real repo root — succeeded (previously failed with "binary not found"),
+      `toolkit_root: /home/rimo/projects/Codeos` confirms the binary was correctly located
+      through the `.codeos` symlink.
+    - **AC-3**: the subdirectory invocation in AC-1 doubles as this — resolution was identical
+      regardless of caller cwd.
+    - **AC-4/AC-5**: temporarily moved the compiled binary aside, ran the shim — got `error:
+      binary not found at /home/rimo/projects/Codeos/tools/reviewer/target/release/
+      codeos-reviewer and not on PATH` and the build-command suggestion correctly referencing
+      Codeos's real path, exit code 2; binary restored immediately after.
+    - **AC-6**: FundFlow's real invocation (AC-2) shows `repo_root:
+      /home/rimo/projects/FundFlow` — the exec'd binary independently discovered FundFlow as the
+      project being reviewed, unaffected by this change to binary-location resolution.
+    - **AC-7**: `--provider codex` through the shim reported `provider: codex (source: cli
+      flag)` — override reaches the binary and takes effect correctly.
+    - **AC-8**: `bash -n scripts/codeos-review.sh` — syntax OK.
+    - **AC-9**: `git diff --stat -- tools/reviewer/` → empty.
+    - **AC-10**: diff shows only the `SCRIPT_DIR`/`CODEOS_ROOT` resolution change and the error-
+      message path update — no new flags, env vars, or conditional branches beyond that.
+    
+    ### Scope check
+    
+    `git status --short` shows only `scripts/codeos-review.sh` as content, plus the declared
+    backlog/status bookkeeping — no other file touched.
+    
+    ---
+    
+    ## Step 4 — Reconcile
+    
+    *(to be written after Step 3 approval)*
+
+  --- scripts/codeos-review.sh (sha256: 8ed2f35689063692a65265019f34cb629c1bcbde6b96fca0bd2ac06f47ebfd2f, visibility: shown) ---
+    #!/usr/bin/env bash
+    # codeos-review.sh — thin shim delegating to the compiled Rust binary.
+    # Subcommands: review / decision / diagnose / stage-start  (see: codeos-reviewer --help)
+    # To build: cargo build --release --manifest-path tools/reviewer/Cargo.toml
+    set -euo pipefail
+    # Resolve the binary relative to this script's own physical location (following the
+    # .codeos symlink when invoked from a downstream project), not the calling repo's git
+    # root — git rev-parse --show-toplevel from within a downstream project resolves to that
+    # project's own root, not through .codeos to Codeos, which is where the binary actually
+    # lives. pwd -P (physical) is required, not plain pwd, to resolve through the symlink
+    # rather than preserve its logical name.
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+    CODEOS_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd -P)"
+    BINARY="${CODEOS_ROOT}/tools/reviewer/target/release/codeos-reviewer"
+    if [[ ! -x "${BINARY}" ]]; then
+      command -v codeos-reviewer >/dev/null 2>&1 && BINARY="codeos-reviewer" || {
+        echo "error: binary not found at ${BINARY} and not on PATH" >&2
+        echo "       Build: cargo build --release --manifest-path ${CODEOS_ROOT}/tools/reviewer/Cargo.toml" >&2
+        exit 2
+      }
+    fi
+    exec "${BINARY}" "$@"
+
+DIFF TO REVIEW (base->review, secret/size filtered)
+diff --git a/backlog/UPG-0038-review-shim-symlink-resolution.md b/backlog/UPG-0038-review-shim-symlink-resolution.md
+index 4e066ad..6791d87 100644
+--- a/backlog/UPG-0038-review-shim-symlink-resolution.md
++++ b/backlog/UPG-0038-review-shim-symlink-resolution.md
+@@ -2,7 +2,7 @@
+ feature_id: UPG-0038
+ slug: review-shim-symlink-resolution
+ title: Fix codeos-review.sh Binary Resolution for Symlinked Downstream Projects
+-status: PROPOSED
++status: IN_PROGRESS
+ priority: P1
+ depends_on: [UPG-0032]
+ related_features: [UPG-0037]
+@@ -13,7 +13,7 @@ superseded_by: []
+ # Upgrade: review-shim-symlink-resolution — Fix codeos-review.sh Binary Resolution for Symlinked Downstream Projects
+ 
+ **Priority**: P1
+-**Status**: PROPOSED
++**Status**: IN_PROGRESS
+ **Type**: script-tooling
+ 
+ ## Problem
+@@ -73,6 +73,7 @@ Not applicable — pure tooling fix, no doctrine change.
+ 
+ | Change ID | File | Purpose | State |
+ |---|---|---|---|
++| CHG-20260707-002 | `changes/UPG-0038__CHG-20260707-002__review-shim-symlink-resolution.md` | Fix `scripts/codeos-review.sh` binary resolution for symlinked downstream projects | IN_PROGRESS |
+ 
+ ### Reviews
+ 
+diff --git a/backlog/features.md b/backlog/features.md
+index d2ea04d..0430218 100644
+--- a/backlog/features.md
++++ b/backlog/features.md
+@@ -68,7 +68,7 @@ The goal is to speed up Codeos development without weakening DBA advantages.
+ | UPG-0035 | [UPG-0035-reviewer-sha-only-exit-code.md](UPG-0035-reviewer-sha-only-exit-code.md) | Rust Reviewer: --sha-only missing-path exit code parity (Bash=2, Rust=4) | P3 | COMPLETE |
+ | UPG-0036 | [UPG-0036-stack-manifest-dogfooding.md](UPG-0036-stack-manifest-dogfooding.md) | Stack Manifest & Drift Reconciliation Dogfooding for Codeos Self-Development | P2 | COMPLETE |
+ | UPG-0037 | [UPG-0037-downstream-default-stage-review.md](UPG-0037-downstream-default-stage-review.md) | Default Advisory Review Across the Full Downstream DBA Workflow | P1 | COMPLETE |
+-| UPG-0038 | [UPG-0038-review-shim-symlink-resolution.md](UPG-0038-review-shim-symlink-resolution.md) | Fix codeos-review.sh Binary Resolution for Symlinked Downstream Projects | P1 | PROPOSED |
++| UPG-0038 | [UPG-0038-review-shim-symlink-resolution.md](UPG-0038-review-shim-symlink-resolution.md) | Fix codeos-review.sh Binary Resolution for Symlinked Downstream Projects | P1 | IN_PROGRESS |
+ | UPG-0039 | [UPG-0039-solution-discovery-prefix-rename.md](UPG-0039-solution-discovery-prefix-rename.md) | Resolve the 00b Prompt-Filename Collision (Discovery -> 00a) | P3 | PROPOSED |
+ | UPG-0040 | [UPG-0040-config-test-env-var-race.md](UPG-0040-config-test-env-var-race.md) | Fix Flaky config::tests Race on CODEOS_REVIEWER_PROVIDER Env Var | P2 | PROPOSED |
+ | UPG-0041 | [UPG-0041-feature-registry-schema-drift.md](UPG-0041-feature-registry-schema-drift.md) | Reconcile feature-registry.yaml Schema vs Real-World Drift (FundFlow) | P2 | PROPOSED |
+diff --git a/scripts/codeos-review.sh b/scripts/codeos-review.sh
+index 47a3407..06d36f9 100755
+--- a/scripts/codeos-review.sh
++++ b/scripts/codeos-review.sh
+@@ -3,12 +3,19 @@
+ # Subcommands: review / decision / diagnose / stage-start  (see: codeos-reviewer --help)
+ # To build: cargo build --release --manifest-path tools/reviewer/Cargo.toml
+ set -euo pipefail
+-REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || { echo "error: not inside a git repository" >&2; exit 1; }
+-BINARY="${REPO_ROOT}/tools/reviewer/target/release/codeos-reviewer"
++# Resolve the binary relative to this script's own physical location (following the
++# .codeos symlink when invoked from a downstream project), not the calling repo's git
++# root — git rev-parse --show-toplevel from within a downstream project resolves to that
++# project's own root, not through .codeos to Codeos, which is where the binary actually
++# lives. pwd -P (physical) is required, not plain pwd, to resolve through the symlink
++# rather than preserve its logical name.
++SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
++CODEOS_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd -P)"
++BINARY="${CODEOS_ROOT}/tools/reviewer/target/release/codeos-reviewer"
+ if [[ ! -x "${BINARY}" ]]; then
+   command -v codeos-reviewer >/dev/null 2>&1 && BINARY="codeos-reviewer" || {
+     echo "error: binary not found at ${BINARY} and not on PATH" >&2
+-    echo "       Build: cargo build --release --manifest-path ${REPO_ROOT}/tools/reviewer/Cargo.toml" >&2
++    echo "       Build: cargo build --release --manifest-path ${CODEOS_ROOT}/tools/reviewer/Cargo.toml" >&2
+     exit 2
+   }
+ fi
+diff --git a/status/roadmap.md b/status/roadmap.md
+index aefc4ce..8ddbb69 100644
+--- a/status/roadmap.md
++++ b/status/roadmap.md
+@@ -96,7 +96,7 @@ cheap pilot-adjacent wins early.
+ | UPG-0035 | Rust Reviewer: --sha-only exit-code parity | P3 | UPG-0032 | CHG-20260702-005 | COMPLETE |
+ | UPG-0036 | Stack Manifest & Drift Reconciliation Dogfooding | P2 | UPG-0017 ✓, UPG-0020 ✓ | CHG-20260705-001 | COMPLETE |
+ | UPG-0037 | Default Advisory Review Across the Full Downstream DBA Workflow | P1 | UPG-0003 ✓, UPG-0032 ✓, UPG-0014 ✓, UPG-0015 ✓ | CHG-20260705-002 | COMPLETE |
+-| UPG-0038 | Fix codeos-review.sh Binary Resolution for Symlinked Downstream Projects | P1 | UPG-0032 ✓ | — | PROPOSED |
++| UPG-0038 | Fix codeos-review.sh Binary Resolution for Symlinked Downstream Projects | P1 | UPG-0032 ✓ | CHG-20260707-002 | IN_PROGRESS |
+ | UPG-0039 | Resolve the 00b Prompt-Filename Collision (Discovery -> 00a) | P3 | UPG-0007 ✓ | — | PROPOSED |
+ | UPG-0040 | Fix Flaky config::tests Race on CODEOS_REVIEWER_PROVIDER Env Var | P2 | — | — | PROPOSED |
+ | UPG-0041 | Reconcile feature-registry.yaml Schema vs Real-World Drift (FundFlow) | P2 | UPG-0009 ✓, UPG-0023 | — | PROPOSED |
+diff --git a/status/self-development.md b/status/self-development.md
+index c3c1d1d..2d311ea 100644
+--- a/status/self-development.md
++++ b/status/self-development.md
+@@ -58,6 +58,7 @@
+ | UPG-0024 | CHG-20260706-002 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION; Step 2 NO OBJECTION R2; Step 3 NO OBJECTION; Step 4 NO OBJECTION; all 15 ACs verified; 110 smoke tests) | COMPLETE | — |
+ | UPG-0025 | CHG-20260706-003 | downstream-doctrine | downstream doctrine only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION; Step 2 NO OBJECTION; Step 3 NO OBJECTION; Step 4 NO OBJECTION; all 11 ACs verified; live FundFlow symlink check) | COMPLETE | — |
+ | UPG-0026 | CHG-20260707-001 | documentation | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION; Step 2 NO OBJECTION R2; Step 3 NO OBJECTION; Step 4 NO OBJECTION; all 8 ACs verified) | COMPLETE | — |
++| UPG-0038 | CHG-20260707-002 | script-tooling | self-dev only | 3-Implement | Step 1 NO OBJECTION; Step 2 NO OBJECTION | IN_PROGRESS | — |
+ | UPG-0036 | CHG-20260705-001 | self-dev-governance | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION R3; Step 2 NO OBJECTION R2; Step 3 NO OBJECTION R3; Step 4 NO OBJECTION R1; all 10 ACs verified; real check-drift run) | COMPLETE | — |
+ | UPG-0037 | CHG-20260705-002 | downstream-doctrine | downstream doctrine only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION; Step 2 NO OBJECTION R2; Step 3 accepted at budget R3 (0 blockers, SECRET_REDACTION coverage); Step 4 accepted R1 (0 blockers, same SECRET_REDACTION cause); all 13 ACs verified; 105 tests; real FundFlow dry-runs) | COMPLETE | UPG-0038 |
+ 

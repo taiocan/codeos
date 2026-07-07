@@ -5280,3 +5280,141 @@ Provenance:
   review_commit: d5ebe7cfa16ccf39c3b868078e3e409710bd5b89  [HEAD_MATCH]
   packet_sha256: [MATCH]
   coverage_state: FULL_COVERAGE  [OK]
+
+## 2026-07-07T06:17:39Z REVIEW — UPG-0038__CHG-20260707-002 — Stage selfdev-step-1
+Base: (no base pin)  Review: c835ea467648bccfc42e2ab03e12f4e70f0811d2  Branch: main
+Diff-hash: a9c68c559b6a89988825f42906c1033828a1a180eb7955a3f41d904efccdd564
+Reviewer: codex default-model (session 019f3b39-528d-7d51-8fa0-8bb73c244fda)
+Effort: high   Wall time: 19955ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — Step 1 intent is coherent, scoped to the shim path-resolution problem, and makes no implemented-behavior claim requiring verification yet.
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-07T061739Z-UPG-0038__CHG-20260707-002-stage-selfdev-step-1-c835ea4.md (sha256:68ddd5a0566fa10d192dcecb3a404f91854154c3aad0183cd79fdea546dd397a)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260707T061739Z-UPG-0038__CHG-20260707-002-stage-selfdev-step-1-c835ea4.packet.txt (sha256:3583c5fcafb06b4df8ca4b877e44d503bbef101b421d08e3da44c1f946ee64d8)
+Human decision: (append with: codeos-reviewer decision UPG-0038__CHG-20260707-002 selfdev-step-1 <DECISION> "<reason>")
+
+## 2026-07-07T06:19:48Z HUMAN DECISION — UPG-0038__CHG-20260707-002 — Stage selfdev-step-1
+Commit at decision: c835ea467648bccfc42e2ab03e12f4e70f0811d2
+Decision: APPROVE_STAGE
+Reason/next: Step 1 NO OBJECTION on first round: single unified SCRIPT_DIR/pwd -P resolution accepted over the backlog's suggested dual-path fallback, since the two usage modes resolve identically for Codeos's own repo. Scope confirmed to the shim only, no Rust binary change, no discovery-precedence change.
+Provenance:
+  assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-07T061739Z-UPG-0038__CHG-20260707-002-stage-selfdev-step-1-c835ea4.md
+  review_commit: c835ea467648bccfc42e2ab03e12f4e70f0811d2  [HEAD_MATCH]
+  packet_sha256: [MATCH]
+  coverage_state: FULL_COVERAGE  [OK]
+
+## 2026-07-07T06:21:26Z REVIEW — UPG-0038__CHG-20260707-002 — Stage selfdev-step-2
+Base: (no base pin)  Review: c835ea467648bccfc42e2ab03e12f4e70f0811d2  Branch: main
+Diff-hash: 963b8e445fa582e4cda02596e2132c4519658d5cb48c5aa0a14bdeee9c01f14e
+Reviewer: codex default-model (session 019f3b39-528d-7d51-8fa0-8bb73c244fda)
+Effort: high   Wall time: 29428ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — The Step 2 artifact defines testable acceptance criteria that trace to the approved shim-resolution intent without claiming implementation is complete.
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-07T062126Z-UPG-0038__CHG-20260707-002-stage-selfdev-step-2-c835ea4.md (sha256:dc53fdbd2a58c6eb9484256d3f8aa58737999091033b4e52f7dee2e3825376ab)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260707T062126Z-UPG-0038__CHG-20260707-002-stage-selfdev-step-2-c835ea4.packet.txt (sha256:53653b016b0baefc1e66421fbcfc6e077b1b8c775e7a2f0284528a4c42950e5e)
+Human decision: (append with: codeos-reviewer decision UPG-0038__CHG-20260707-002 selfdev-step-2 <DECISION> "<reason>")
+
+## 2026-07-07T06:28:09Z HUMAN DECISION — UPG-0038__CHG-20260707-002 — Stage selfdev-step-2
+Commit at decision: c835ea467648bccfc42e2ab03e12f4e70f0811d2
+Decision: APPROVE_STAGE
+Reason/next: Step 2 NO OBJECTION on first round: all 10 ACs testable and trace to the approved shim-resolution intent, including real-FundFlow verification for the actual bug scenario and the exec'd binary's own project-discovery independence.
+Provenance:
+  assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-07T062126Z-UPG-0038__CHG-20260707-002-stage-selfdev-step-2-c835ea4.md
+  review_commit: c835ea467648bccfc42e2ab03e12f4e70f0811d2  [HEAD_MATCH]
+  packet_sha256: [MATCH]
+  coverage_state: FULL_COVERAGE  [OK]
+
+## 2026-07-07T06:31:42Z REVIEW — UPG-0038__CHG-20260707-002 — Stage selfdev-step-3
+Base: (no base pin)  Review: c835ea467648bccfc42e2ab03e12f4e70f0811d2  Branch: main
+Diff-hash: ecf87266827719bae60c38089606c87d5377e3fb1863dda9a475cf842e833591
+Reviewer: codex default-model (session 019f3b39-528d-7d51-8fa0-8bb73c244fda)
+Effort: high   Wall time: 107140ms   Reconnects: 0
+Codex concern: DO NOT ADVANCE
+Effective concern: DO NOT ADVANCE
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: DO NOT ADVANCE — AC-10 falsely claims the only behavior change is binary path resolution while the old caller git-root precheck was removed.
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-07T063142Z-UPG-0038__CHG-20260707-002-stage-selfdev-step-3-c835ea4.md (sha256:66a016b3c19a7b711a90a34a1c0a772d7707dba434bc086281df53afd562eb59)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260707T063142Z-UPG-0038__CHG-20260707-002-stage-selfdev-step-3-c835ea4.packet.txt (sha256:f24b2c16c0739b95dfbf115405b442bf2f5f98831a15d61d961541a683717999)
+Human decision: (append with: codeos-reviewer decision UPG-0038__CHG-20260707-002 selfdev-step-3 <DECISION> "<reason>")
+
+## 2026-07-07T06:33:52Z REVIEW — UPG-0038__CHG-20260707-002 — Stage selfdev-step-3
+Base: (no base pin)  Review: c835ea467648bccfc42e2ab03e12f4e70f0811d2  Branch: main
+Diff-hash: d9b7e14d6e98471ea38ffcfb63d7dba6742685632ce22a4db84cbeeaa4d6d7b5
+Reviewer: codex default-model (session 019f3b39-528d-7d51-8fa0-8bb73c244fda)
+Effort: high   Wall time: 25900ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: B
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — The Step 3 revision fixes the prior AC-10 scope issue by restoring the git-repo precondition before script-relative binary resolution.
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-07T063352Z-UPG-0038__CHG-20260707-002-stage-selfdev-step-3-c835ea4.md (sha256:654f60170e60c72202140432319182ca7dd165895b67fb75cdff2b7fd6b904cc)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260707T063352Z-UPG-0038__CHG-20260707-002-stage-selfdev-step-3-c835ea4.packet.txt (sha256:f30a1badd1110bbd0e09085988a9f8b7e9f11d4b975f3691ac566b98b8eedc00)
+Human decision: (append with: codeos-reviewer decision UPG-0038__CHG-20260707-002 selfdev-step-3 <DECISION> "<reason>")
+
+## 2026-07-07T07:38:58Z HUMAN DECISION — UPG-0038__CHG-20260707-002 — Stage selfdev-step-3
+Commit at decision: c835ea467648bccfc42e2ab03e12f4e70f0811d2
+Decision: APPROVE_STAGE
+Reason/next: Step 3 R2 accepted. R1 correctly identified a real behavior regression: the original 'not inside a git repository' precondition check had been silently dropped. Restored as a separate pre-binary-resolution guard, preserving the original exit code and message. Verification covers Codeos self-dev path, real FundFlow symlinked path, and the not-inside-git-repo case matching original behavior. No remaining blockers, no scope drift.
+Provenance:
+  assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-07T063352Z-UPG-0038__CHG-20260707-002-stage-selfdev-step-3-c835ea4.md
+  review_commit: c835ea467648bccfc42e2ab03e12f4e70f0811d2  [HEAD_MATCH]
+  packet_sha256: [MATCH]
+  coverage_state: FULL_COVERAGE  [OK]
+
+## 2026-07-07T09:34:44Z REVIEW — UPG-0038__CHG-20260707-002 — Stage selfdev-step-4
+Base: (no base pin)  Review: c835ea467648bccfc42e2ab03e12f4e70f0811d2  Branch: main
+Diff-hash: 1aba874ab479ef0c957bdc4025fe47ce4ce9dc0e68e68db1240f05fee0fcdcf5
+Reviewer: codex default-model (session 019f3b39-528d-7d51-8fa0-8bb73c244fda)
+Effort: high   Wall time: 52883ms   Reconnects: 0
+Codex concern: DO NOT ADVANCE
+Effective concern: DO NOT ADVANCE
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: DO NOT ADVANCE — `docs/reviewer-pipeline.md` still falsely describes the changed shim as a 15-line no-conditional wrapper.
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-07T093444Z-UPG-0038__CHG-20260707-002-stage-selfdev-step-4-c835ea4.md (sha256:b086e7da23a4d9e6ad419fe1ed6942a4d08ba6e5100cc3889c43d1e698f426c3)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260707T093444Z-UPG-0038__CHG-20260707-002-stage-selfdev-step-4-c835ea4.packet.txt (sha256:67008a99cabff2dffeb67ddf8f33787ee8298a0221294bf20d180e27487bdbe3)
+Human decision: (append with: codeos-reviewer decision UPG-0038__CHG-20260707-002 selfdev-step-4 <DECISION> "<reason>")
+
+## 2026-07-07T09:37:05Z REVIEW — UPG-0038__CHG-20260707-002 — Stage selfdev-step-4
+Base: (no base pin)  Review: c835ea467648bccfc42e2ab03e12f4e70f0811d2  Branch: main
+Diff-hash: 8abdfc4025a86c8a985650b3e2868efc8c0f4cc1f705a5a5ccdf3761a6fe14b0
+Reviewer: codex default-model (session 019f3b39-528d-7d51-8fa0-8bb73c244fda)
+Effort: high   Wall time: 62551ms   Reconnects: 0
+Codex concern: DO NOT ADVANCE
+Effective concern: DO NOT ADVANCE
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: DO NOT ADVANCE — Step 4’s scope check falsely says only `scripts/codeos-review.sh` changed as content while the packet intentionally includes `docs/reviewer-pipeline.md`.
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-07T093705Z-UPG-0038__CHG-20260707-002-stage-selfdev-step-4-c835ea4.md (sha256:3f3a7c91fccd95a7f97c359d771a3d1a34f07def82c6943183b4f2c4e35249bc)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260707T093705Z-UPG-0038__CHG-20260707-002-stage-selfdev-step-4-c835ea4.packet.txt (sha256:4d7d98ba169031668cf4c2d720a8a6b0dc1ec416de857a87ec596d8595c89338)
+Human decision: (append with: codeos-reviewer decision UPG-0038__CHG-20260707-002 selfdev-step-4 <DECISION> "<reason>")
+
+## 2026-07-07T09:38:10Z REVIEW — UPG-0038__CHG-20260707-002 — Stage selfdev-step-4
+Base: (no base pin)  Review: c835ea467648bccfc42e2ab03e12f4e70f0811d2  Branch: main
+Diff-hash: 8abdfc4025a86c8a985650b3e2868efc8c0f4cc1f705a5a5ccdf3761a6fe14b0
+Reviewer: codex default-model (session 019f3b39-528d-7d51-8fa0-8bb73c244fda)
+Effort: high   Wall time: 17472ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: B
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — Step 4 now reconciles the shim fix and related docs without false scope or architecture claims.
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-07T093810Z-UPG-0038__CHG-20260707-002-stage-selfdev-step-4-c835ea4.md (sha256:fccff7bdddb7ab35442e26717029c6665ac2bf910cf55dfb787146475321e2cd)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260707T093810Z-UPG-0038__CHG-20260707-002-stage-selfdev-step-4-c835ea4.packet.txt (sha256:31e87f38e6fcb32a6a4ce9815bbea463c52793963e49dbfb6c537880cd0c5bc5)
+Human decision: (append with: codeos-reviewer decision UPG-0038__CHG-20260707-002 selfdev-step-4 <DECISION> "<reason>")
+
+## 2026-07-07T09:39:03Z HUMAN DECISION — UPG-0038__CHG-20260707-002 — Stage selfdev-step-4
+Commit at decision: c835ea467648bccfc42e2ab03e12f4e70f0811d2
+Decision: APPROVE_STAGE
+Reason/next: Step 4 NO OBJECTION on R3 (R1 caught docs/reviewer-pipeline.md's Sec 10 still describing the pre-fix script - stale line count, false 'no conditional logic' claim, stale code excerpt - fixed while preserving the still-true core claim that reviewer capability lives in the Rust engine; R2 caught my own cross-reference sweep sentence still claiming only one content file after a second was added, fixed). All 10 ACs verified with fresh real-invocation evidence, no scope drift. UPG-0038 / CHG-20260707-002 marked COMPLETE.
+Provenance:
+  assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-07T093810Z-UPG-0038__CHG-20260707-002-stage-selfdev-step-4-c835ea4.md
+  review_commit: c835ea467648bccfc42e2ab03e12f4e70f0811d2  [HEAD_MATCH]
+  packet_sha256: [MATCH]
+  coverage_state: FULL_COVERAGE  [OK]

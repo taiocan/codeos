@@ -2,7 +2,7 @@
 feature_id: UPG-0038
 slug: review-shim-symlink-resolution
 title: Fix codeos-review.sh Binary Resolution for Symlinked Downstream Projects
-status: PROPOSED
+status: COMPLETE
 priority: P1
 depends_on: [UPG-0032]
 related_features: [UPG-0037]
@@ -13,7 +13,7 @@ superseded_by: []
 # Upgrade: review-shim-symlink-resolution — Fix codeos-review.sh Binary Resolution for Symlinked Downstream Projects
 
 **Priority**: P1
-**Status**: PROPOSED
+**Status**: COMPLETE
 **Type**: script-tooling
 
 ## Problem
@@ -73,11 +73,19 @@ Not applicable — pure tooling fix, no doctrine change.
 
 | Change ID | File | Purpose | State |
 |---|---|---|---|
+| CHG-20260707-002 | `changes/UPG-0038__CHG-20260707-002__review-shim-symlink-resolution.md` | Fix `scripts/codeos-review.sh` binary resolution for symlinked downstream projects | COMPLETE |
 
 ### Reviews
 
 | Review ID | Change ID | Step | Round | Verdict |
 |---|---|---|---|---|
+| REV__UPG-0038__CHG-20260707-002__S1__R1 | CHG-20260707-002 | 1-Intent | R1 | NO OBJECTION |
+| REV__UPG-0038__CHG-20260707-002__S2__R1 | CHG-20260707-002 | 2-Acceptance | R1 | NO OBJECTION |
+| REV__UPG-0038__CHG-20260707-002__S3__R1 | CHG-20260707-002 | 3-Implement | R1 | DO NOT ADVANCE (dropped git-repo precondition) |
+| REV__UPG-0038__CHG-20260707-002__S3__R2 | CHG-20260707-002 | 3-Implement | R2 | NO OBJECTION |
+| REV__UPG-0038__CHG-20260707-002__S4__R1 | CHG-20260707-002 | 4-Reconcile | R1 | DO NOT ADVANCE (stale §10 architecture claims) |
+| REV__UPG-0038__CHG-20260707-002__S4__R2 | CHG-20260707-002 | 4-Reconcile | R2 | DO NOT ADVANCE (stale scope-check sentence) |
+| REV__UPG-0038__CHG-20260707-002__S4__R3 | CHG-20260707-002 | 4-Reconcile | R3 | NO OBJECTION |
 
 ### Findings Tracked Inside This Feature
 
