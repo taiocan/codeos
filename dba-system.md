@@ -77,6 +77,17 @@ configured for this project; proceeding without advisory review at `<stage>`. Re
 Non-Negotiable Rule #1** — a waived review still requires the human to explicitly approve the
 stage transition, exactly as if the review had run.
 
+**Verification round-trip.** When a reviewer's assessment names a `HIGHEST-IMPACT
+UNCERTAINTY` that is mechanically checkable — a specific file, command, or repository state
+that can directly confirm or refute it — the acting agent may run `.codeos/prompts/
+verify-only.md`'s read-only verification pass targeting exactly that uncertainty, then attach
+its Verification-Only Report as evidence for the next review round. This is optional and
+judged by the acting agent, not automatic or mandatory — not every uncertainty is
+mechanically checkable, and declining to run it is always a valid choice. Verification
+remains strictly read-only (see `verify-only.md`'s No-Edit Rule); it produces evidence for
+the human's decision, it does not replace it. A verification pass is not itself a review
+round and does not consume the round budget above — only the review round it feeds into does.
+
 **Relationship to the Reviewer Activation Package** (`.codeos/prompts/pipeline-reviewer.md`).
 That prompt remains available as an **optional, supplementary** independent critical-assessor
 pass — a human can paste it into a separate reviewer session for a second opinion that is

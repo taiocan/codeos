@@ -2,7 +2,7 @@
 feature_id: UPG-0025
 slug: reviewer-verification-packet
 title: Verification Packet for Reviewer Agent
-status: PROPOSED
+status: COMPLETE
 priority: P3
 depends_on: []
 related_features: []
@@ -13,7 +13,7 @@ superseded_by: []
 # Upgrade: reviewer-verification-packet — Verification Packet for Reviewer Agent
 
 **Priority**: P3
-**Status**: PROPOSED
+**Status**: COMPLETE
 **Type**: toolkit-upgrade
 **Related**: reviewer-decision-brief, verify-only-mode
 
@@ -73,11 +73,16 @@ the artifact-production / artifact-assessment separation.
 
 | Change ID | File | Purpose | State |
 |---|---|---|---|
+| CHG-20260706-003 | `changes/UPG-0025__CHG-20260706-003__reviewer-verification-packet.md` | Document the verification round-trip connecting the reviewer's uncertainty line to `verify-only.md` | COMPLETE |
 
 ### Reviews
 
 | Review ID | Change ID | Step | Round | Verdict |
 |---|---|---|---|---|
+| REV__UPG-0025__CHG-20260706-003__S1__R1 | CHG-20260706-003 | 1-Intent | R1 | NO OBJECTION |
+| REV__UPG-0025__CHG-20260706-003__S2__R1 | CHG-20260706-003 | 2-Acceptance | R1 | NO OBJECTION |
+| REV__UPG-0025__CHG-20260706-003__S3__R1 | CHG-20260706-003 | 3-Implement | R1 | NO OBJECTION |
+| REV__UPG-0025__CHG-20260706-003__S4__R1 | CHG-20260706-003 | 4-Reconcile | R1 | NO OBJECTION |
 
 ### Findings Tracked Inside This Feature
 

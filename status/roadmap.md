@@ -80,7 +80,7 @@ cheap pilot-adjacent wins early.
 | 5 | UPG-0022 | 00b → ADR Candidate Generator | P3 | UPG-0007 | CHG-20260703-004 | COMPLETE |
 | 5 | UPG-0023 | Human Approval Dashboard | P3 | UPG-0009, UPG-0003 | CHG-20260704-001 | COMPLETE |
 | 5 | UPG-0024 | Pre-Release Evidence Package | P3 | — | CHG-20260706-002 | COMPLETE |
-| 5 | UPG-0025 | Verification Packet for Reviewer Agent | P3 | UPG-0010 | — | PROPOSED |
+| 5 | UPG-0025 | Verification Packet for Reviewer Agent | P3 | UPG-0010 | CHG-20260706-003 | COMPLETE |
 | 5 | UPG-0026 | Optional Branch Creation Helper | P2 | — | — | PROPOSED |
 
 ### Unsequenced (discovery notes / governance follow-ups — not yet waved)
@@ -105,7 +105,7 @@ cheap pilot-adjacent wins early.
 
 ## Immediate next pickups
 
-Waves 1–4 complete. Wave 5: UPG-0018 SUPERSEDED by UPG-0032; UPG-0019 COMPLETE 2026-07-06 (CHG-20260706-001); UPG-0020 COMPLETE 2026-07-03 (CHG-20260703-002); UPG-0021 COMPLETE 2026-07-03 (CHG-20260703-003); UPG-0022 COMPLETE 2026-07-03 (CHG-20260703-004); UPG-0023 COMPLETE 2026-07-06 (CHG-20260704-001); UPG-0024 COMPLETE 2026-07-06 (CHG-20260706-002). Remaining Wave 5 items (UPG-0025, UPG-0026) and unsequenced UPG-0028, UPG-0038, UPG-0039, UPG-0040, UPG-0041 are unblocked with no active change yet.
+Waves 1–4 complete. Wave 5: UPG-0018 SUPERSEDED by UPG-0032; UPG-0019 COMPLETE 2026-07-06 (CHG-20260706-001); UPG-0020 COMPLETE 2026-07-03 (CHG-20260703-002); UPG-0021 COMPLETE 2026-07-03 (CHG-20260703-003); UPG-0022 COMPLETE 2026-07-03 (CHG-20260703-004); UPG-0023 COMPLETE 2026-07-06 (CHG-20260704-001); UPG-0024 COMPLETE 2026-07-06 (CHG-20260706-002); UPG-0025 COMPLETE 2026-07-07 (CHG-20260706-003). Remaining Wave 5 item (UPG-0026) and unsequenced UPG-0028, UPG-0038, UPG-0039, UPG-0040, UPG-0041 are unblocked with no active change yet.
 
 Each is taken as its own self-dev change (a fresh `CHG-*`) via the 4-step loop, with human
 approval at every gate.

@@ -375,6 +375,35 @@ log and proceed; the human-approval gate (Non-Negotiable Rule #1) still applies 
 
 ---
 
+## 13. Verification round-trip
+
+Every review round already ends with a `HIGHEST-IMPACT UNCERTAINTY:` line (mandated by
+`prompts/codeos-reviewer-task.md`'s output format) — one sentence naming the single thing
+that, if wrong, most affects the assessment. Separately, `prompts/verify-only.md` implements
+a full read-only verification mode: a no-edit rule, before/after anti-blur `git status`/`git
+diff --exit-code` checks proving the tree wasn't mutated, and a structured Verification-Only
+Report.
+
+When that uncertainty names something mechanically checkable — a specific file, command, or
+repository state — the acting agent may run a `verify-only.md` pass targeting exactly that
+uncertainty, then feed the resulting report back as evidence for the next review round. This
+session used exactly this pattern more than once: UPG-0019's Step 3 rounds re-ran the review
+with `check_drift.rs` (then `main.rs`) shown directly after the prior round's uncertainty
+named an unverified claim about their behavior; UPG-0024's Step 2 rounds resolved two
+internal-contradiction findings the same way — show more, re-review, resolve.
+
+This is judgment, not automation: the acting agent decides whether an uncertainty is
+checkable and whether running verification is worth the round-trip. It is never mandatory,
+and a verification pass never substitutes for the human's decision at the gate — it only
+adds evidence to it. A verification pass does not itself count against the round-budget table
+in §4d; only the review round that follows it does.
+
+`dba-system.md`'s "Default Advisory Review" section carries the same practice, in the same
+terms, for downstream DBA projects — the two are kept in sync deliberately, not maintained
+independently.
+
+---
+
 ## Appendix A — Inert hook snippets (NOT part of the pilot)
 
 These are provided for a *future* phase only. **Do not add them to `.claude/settings.json`
