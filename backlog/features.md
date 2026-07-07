@@ -59,7 +59,7 @@ The goal is to speed up Codeos development without weakening DBA advantages.
 | UPG-0025 | [UPG-0025-reviewer-verification-packet.md](UPG-0025-reviewer-verification-packet.md) | Verification Packet for Reviewer Agent | P3 | COMPLETE |
 | UPG-0026 | [UPG-0026-branch-helper.md](UPG-0026-branch-helper.md) | Optional Branch Creation Helper | P2 | COMPLETE |
 | UPG-0027 | [UPG-0027-lean-review-runner-packet-architecture](UPG-0027-replacing-review-scripts.md) | Lean Review Runner and Packet Architecture | P0 | COMPLETE |
-| UPG-0028 | [UPG-0028-reviewer-self-reference-recursion.md](UPG-0028-reviewer-self-reference-recursion.md) | Reviewer self-reference recursion (scoping) | P2 | PROPOSED |
+| UPG-0028 | [UPG-0028-reviewer-self-reference-recursion.md](UPG-0028-reviewer-self-reference-recursion.md) | Reviewer self-reference recursion (scoping) | P2 | COMPLETE |
 | UPG-0029 | [UPG-0029-review-naming-and-thread-tooling.md](UPG-0029-review-naming-and-thread-tooling.md) | Review artifact durability + packet naming policy | P2 | COMPLETE |
 | UPG-0030 | [UPG-0030-lean-self-development-review-profiles.md](UPG-0030-lean-self-development-review-profiles.md) | Lean Self-Development Review Profiles | P1 | COMPLETE |
 | UPG-0031 | [UPG-0031-review-delta-mode-fix.md](UPG-0031-review-delta-mode-fix.md) | Review script delta-mode working-tree fix + fail-closed EMPTY_PACKET guard | P1 | COMPLETE |

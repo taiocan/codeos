@@ -2,7 +2,7 @@
 feature_id: UPG-0028
 slug: reviewer-self-reference-recursion
 title: reviewer self-reference recursion (scoping improvement)
-status: PROPOSED
+status: COMPLETE
 priority: P2
 depends_on: []
 related_features: []
@@ -12,7 +12,8 @@ superseded_by: []
 
 # Backlog: reviewer self-reference recursion (scoping improvement)
 
-**Status:** open (filed by change `0004-review-fixes`, 2026-06-27)
+**Status:** COMPLETE — substantially resolved by later work, evaluated 2026-07-07
+(`backlog-only` direct edit, no active `CHG-*`; see "Resolution" below)
 **Priority:** P2 (reviewer-pipeline robustness)
 **Class (when worked):** prompt / script-tooling
 **Scope axis:** self-dev only (also relevant downstream)
@@ -60,6 +61,42 @@ avoidable.
 Keeps the advisory reviewer from behaving like an enforcement engine on its own bookkeeping
 (the failure mode the doctrine explicitly warns against), without weakening its ability to catch
 substantive findings.
+
+## Resolution (2026-07-07)
+
+Evaluated all three candidate improvements against the toolkit's actual current state:
+
+1. **Scope exclusion (packet-level)** — not built. `packet.rs`'s `git_diff_names`/
+   `git_diff_names_head`/`git_is_dirty` already exclude the whole `reviews/` directory and
+   `.codeos-state` from every diff (a related, coarser mechanism), but nothing excludes the
+   specific review-tracking *fields* this backlog originally named — `status/
+   self-development.md`'s Review column, or a change record's own embedded review-tracking
+   sections. This piece remains genuinely unbuilt.
+2. **Reviewer guidance (NON-BLOCKER by default)** — **done**. `UPG-0027` (Lean Review Runner
+   and Packet Architecture, COMPLETE) added the fifth triage category, `SELF-REFERENCE /
+   REVIEW-BOOKKEEPING`, to `prompts/codeos-reviewer-task.md`'s TRIAGE RULE: "review records
+   that are stale because of the previous round's own existence (causal loop); not a real
+   artifact defect" — classified separately from IN-SCOPE BLOCKER, so it cannot drive a
+   `DO NOT ADVANCE` verdict.
+3. **Convergence rule (doctrine)** — **done**, and more explicit than originally proposed.
+   `prompts/codeos-self-dev.md`'s Step 4 section states directly: "Only after the human
+   approves at this final gate (the review is advisory; it never closes the change by
+   itself): mark the row COMPLETE... Until then the change stays IN_PROGRESS — matching the
+   dashboard rule that COMPLETE requires human acceptance." UPG-0001's Self-Reference
+   Boundary and Surface Ownership table (same file) additionally ensure reviewed artifacts
+   never embed a live round number to begin with, removing the specific "lagging counter"
+   mechanism the original problem described.
+
+**Decision:** close without building improvement #1. Empirically, across every self-dev
+change run this session (UPG-0019 through UPG-0026 — 8 changes, ~30 review rounds), the
+"infinite regress chasing NO OBJECTION" failure mode this backlog describes never recurred:
+every self-referential-shaped finding (e.g. UPG-0037's `SECRET_REDACTION` false positive,
+UPG-0025's draft-marker scanner false positive) resolved within 1-2 rounds via correct human
+acceptance of a residual non-blocking finding, exactly as improvements #2 and #3 intend.
+Building #1 now would be solving an already-mitigated problem — if the failure mode
+resurfaces in practice despite #2/#3, re-open this backlog item (or file a fresh one) with
+the concrete recurrence as evidence, rather than building preventive packet-exclusion logic
+against a problem that stopped occurring once the doctrine-level fixes landed.
 
 ## Feature Thread
 
