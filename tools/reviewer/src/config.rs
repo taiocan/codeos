@@ -124,6 +124,15 @@ fn find_toolkit_root(repo_root: &Path) -> PathBuf {
 mod tests {
     use super::*;
     use std::fs;
+    use std::sync::Mutex;
+
+    /// CODEOS_REVIEWER_PROVIDER is process-global, not thread-local, but Rust's default test
+    /// harness runs tests in parallel threads within the same process. Every test in this
+    /// module that reads/mutates this env var acquires this lock first, serializing them
+    /// against each other and eliminating the race (UPG-0040). Recovering from a poisoned
+    /// mutex (via `into_inner()` rather than a bare `.unwrap()`) means one test panicking
+    /// while holding the lock doesn't cascade-block every subsequent test in this module.
+    static ENV_VAR_LOCK: Mutex<()> = Mutex::new(());
 
     fn tmp_repo() -> tempfile::TempDir {
         let dir = tempfile::tempdir().expect("tempdir");
@@ -134,6 +143,7 @@ mod tests {
 
     #[test]
     fn default_provider_is_codex() {
+        let _guard = ENV_VAR_LOCK.lock().unwrap_or_else(|e| e.into_inner());
         let dir = tmp_repo();
         // Remove env var if set
         std::env::remove_var("CODEOS_REVIEWER_PROVIDER");
@@ -144,6 +154,7 @@ mod tests {
 
     #[test]
     fn cli_flag_overrides_env() {
+        let _guard = ENV_VAR_LOCK.lock().unwrap_or_else(|e| e.into_inner());
         let dir = tmp_repo();
         std::env::set_var("CODEOS_REVIEWER_PROVIDER", "opencode");
         let cfg = resolve(Some("codex"), dir.path()).expect("resolve");
@@ -154,6 +165,7 @@ mod tests {
 
     #[test]
     fn env_var_overrides_toml() {
+        let _guard = ENV_VAR_LOCK.lock().unwrap_or_else(|e| e.into_inner());
         let dir = tmp_repo();
         // Write reviewer.toml with gemini
         fs::write(dir.path().join("reviewer.toml"), "provider = \"gemini\"\n").expect("write toml");
@@ -166,6 +178,7 @@ mod tests {
 
     #[test]
     fn toml_overrides_default() {
+        let _guard = ENV_VAR_LOCK.lock().unwrap_or_else(|e| e.into_inner());
         let dir = tmp_repo();
         std::env::remove_var("CODEOS_REVIEWER_PROVIDER");
         fs::write(dir.path().join("reviewer.toml"), "provider = \"opencode\"\n").expect("write toml");
@@ -176,6 +189,7 @@ mod tests {
 
     #[test]
     fn unknown_provider_returns_err() {
+        let _guard = ENV_VAR_LOCK.lock().unwrap_or_else(|e| e.into_inner());
         let dir = tmp_repo();
         std::env::remove_var("CODEOS_REVIEWER_PROVIDER");
         let result = resolve(Some("unknown-ai"), dir.path());

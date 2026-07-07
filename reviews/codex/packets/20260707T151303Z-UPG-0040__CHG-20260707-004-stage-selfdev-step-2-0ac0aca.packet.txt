@@ -1,0 +1,654 @@
+Reviewer task:
+
+SCOPE CONTRACT
+  Assess this artifact against the STATED SCOPE of this stage/PR — the Expected Stage
+  Output below and what the artifacts actually claim — NOT against an ideal final system.
+  A capability the artifacts do not claim to provide is OUT-OF-SCOPE, not a defect.
+  The following are OUT-OF-SCOPE BACKLOG unless THIS artifact explicitly claims to provide
+  them: formal approval-binding enforcement; rollback correctness; COMMIT_BOUND/
+  WORKSPACE_BOUND enforcement; JSON Schema validation; CI validation; exact
+  decision-integrity; per-feature decision ledgers; autonomous approval; enabled hooks.
+
+YOUR TASK — answer these five questions using only the evidence in the packet:
+  1. Acceptance criteria: Does the artifact satisfy each of its stated acceptance criteria?
+     Cite evidence for each criterion (or note its absence).
+  2. Claim support: Are universal or strong claims (all, every, never, always, no X) in the
+     artifact supported by evidence in the packet? Any unverifiable strong claim is a candidate
+     finding only if it affects acceptance, scope, safety, decision integrity, or the artifact's
+     stated guarantees.
+  3. Scope drift: Is there any change beyond the stated scope boundary? (Files not in the
+     "What changes" list; behavior changes not in the intent; downstream doctrine modified
+     rather than read.)
+  4. In-scope blockers: Are there facts that, if left in, would make the artifact wrong,
+     unsafe, or internally contradictory?
+  5. Finding classification: Classify every finding you raise as exactly one of the five
+     TRIAGE RULE categories below.
+
+TRIAGE RULE — classify EVERY finding as exactly one of:
+  IN-SCOPE BLOCKER         breaks the stated goal; creates a FALSE CLAIM in this artifact;
+                           weakens the advisory/read-only/human-gated guarantees; prevents
+                           the work from running; or violates an explicit safety constraint.
+  IN-SCOPE NON-BLOCKER     improves it but is not required for this PR.
+  OUT-OF-SCOPE BACKLOG     valid, but belongs to a future feature / stronger guarantee.
+  REJECTED                 conflicts with the stated scope or Codeos philosophy.
+  SELF-REFERENCE /         review records that are stale because of the previous round's
+  REVIEW-BOOKKEEPING       own existence (causal loop); not a real artifact defect.
+  Base the PR decision ONLY on IN-SCOPE BLOCKER findings. An OUT-OF-SCOPE BACKLOG finding
+  must NOT cause DO NOT ADVANCE unless this artifact FALSELY CLAIMS to solve it.
+
+WHAT NOT TO DO
+  - Do not flag style or wording issues as blockers unless the wording creates a false claim,
+    contradiction, parser breakage, or wrong governance instruction.
+  - Do not re-review unchanged full context when the packet is in delta mode.
+  - Do not treat local-only review history as a blocker unless the artifact falsely
+    claims the review artifacts are committed/durable.
+
+INSTRUCTIONS
+  If this is a resumed session, ignore any earlier-session conclusions unless they are
+  re-established by THIS packet; assess only the evidence above, pinned to this commit.
+  Give a focused assessment of this artifact against the stated scope, acceptance criteria,
+  and evidence in this packet. Rank findings by severity. Suggest a better design only when
+  needed to explain a required fix for an IN-SCOPE BLOCKER.
+
+  Limit findings to the top 3 IN-SCOPE BLOCKERS. Additional non-blocking observations may be
+  summarized in one short paragraph only if useful.
+
+  For EACH finding emit:
+    Finding: / Severity: High|Medium|Low / Classification: <one of the TRIAGE RULE labels>
+    Evidence: <file/line> / Why: <short> / Required action: fix now|optional fix|backlog|reject
+    Scope reason: <why it does/does not belong to this PR's scope>
+  Then emit:
+    PR decision: ADVANCE | REQUEST CHANGES | DO NOT ADVANCE   (based ONLY on in-scope blockers)
+    Scope drift warning: yes|no — <is anything pulling this PR beyond its stated scope?>
+  Then on the LAST three lines emit exactly (map ADVANCE->NO OBJECTION,
+  REQUEST CHANGES->CHANGES ADVISED, DO NOT ADVANCE->DO NOT ADVANCE):
+    LOG SUMMARY: <NO OBJECTION | CHANGES ADVISED | DO NOT ADVANCE | UNCLASSIFIED> — <single most important point>
+      (use UNCLASSIFIED if you genuinely cannot classify the artifact safely)
+    EVIDENCE: <A|B|C|D|E>
+    HIGHEST-IMPACT UNCERTAINTY: <one sentence — what single thing, if wrong, most affects this assessment>
+
+  Evidence grade — the grade describes what the assessment rests on, not reviewer confidence:
+    A — Directly verified in the artifact, diff, or output shown in the packet
+    B — Verified with multiple direct pieces of evidence, but coverage is not complete
+    C — Partially verified, partially inferred from structure or context
+    D — Mostly inferred from structure or indirect evidence
+    E — Hypothesis or very limited basis — little to no direct evidence
+
+
+PACKET MANIFEST
+  generated: 2026-07-07T15:12:44Z
+  task_prompt: /home/rimo/projects/Codeos/prompts/codeos-reviewer-task.md (4959 bytes)
+  review_content_bytes: 22536
+  estimated_review_tokens: ~5634
+  budget_status: OK
+  packet_mode: full
+  delta_base: none
+  items:
+    - path: changes/UPG-0040__CHG-20260707-004__config-test-env-var-race.md
+      mode: full_file
+      bytes: 7824
+      sha256: ff51f0274bdd55279620a63eb5453a154d6e9f0b379779d27e53f1cc7dda9197
+    - path: backlog/UPG-0040-config-test-env-var-race.md
+      mode: full_file
+      bytes: 2832
+      sha256: f6ae472b5c09d3caa96a35796ebf40aa08af51fcf1bb7b6d675f66c5beae5ee9
+    - path: tools/reviewer/src/config.rs
+      mode: full_file
+      bytes: 6562
+      sha256: e365e95714037359658979064c3d849e8b331a9df3dfd1336c817c432cd08795
+    - path: (diff)
+      mode: full_file
+      bytes: 5318
+
+REVIEW CONTEXT
+  Feature:                UPG-0040__CHG-20260707-004
+  Stage:                  selfdev-step-2
+  Branch:                 main
+  Base commit:            (no base pin)
+  Review commit:          0ac0aca40773ae458f90dbb1931c9989625dc70c (+ uncommitted workspace changes)
+  Current approved stage: n/a (non-numeric stage)
+  Evidence coverage:      FULL_COVERAGE
+  Workspace dirty:        yes (uncommitted changes at review time)
+
+DBA RULES RELEVANT TO THIS STAGE
+  - Human approval is required for every stage transition; you are advisory only.
+  - Memory is not truth — assess only what is provided, pinned to the review commit.
+  - Implementation must trace to approved artifacts; no behavior beyond intent+contract+schema.
+  - No events outside the approved event schema; no hidden behavior.
+
+STAGE-SPECIFIC CHECKS
+  - (no stage-specific checklist for stage selfdev-step-2)
+
+EXPECTED STAGE OUTPUT
+  (no expected-output template for stage)
+
+ARTIFACTS TO REVIEW
+  --- changes/UPG-0040__CHG-20260707-004__config-test-env-var-race.md (sha256: ff51f0274bdd55279620a63eb5453a154d6e9f0b379779d27e53f1cc7dda9197, visibility: shown) ---
+    ---
+    change_id: CHG-20260707-004
+    feature_id: UPG-0040
+    slug: config-test-env-var-race
+    triage_class: script-tooling
+    scope_axis: self-dev only
+    review_profile: PROFILE-3
+    review_series: RVS__UPG-0040__CHG-20260707-004__S1
+    review_state: REVIEWED
+    status: IN_PROGRESS
+    loop_step: 2-Acceptance
+    ---
+    
+    # Change: UPG-0040 / CHG-20260707-004 — Fix Flaky config::tests Race on CODEOS_REVIEWER_PROVIDER Env Var
+    
+    ## TRACE HEADER
+    
+    ```yaml
+    feature_id: UPG-0040
+    primary_feature_id: UPG-0040
+    change_id: CHG-20260707-004
+    slug: config-test-env-var-race
+    state: IN_PROGRESS
+    current_step: 2-Acceptance
+    implements:
+      - UPG-0040
+    related_features:
+      - UPG-0023
+    review_series: RVS__UPG-0040__CHG-20260707-004__S1
+    review_profile: PROFILE-3
+    review_state: DRAFT
+    review_history: reviews/review-log.md
+    fixes_findings: []
+    follow_up_of: null
+    ```
+    
+    ---
+    
+    ## Step 1 — Change Intent
+    
+    ### Problem
+    
+    `tools/reviewer/src/config.rs`'s `#[cfg(test)] mod tests` has 5 tests
+    (`default_provider_is_codex`, `cli_flag_overrides_env`, `env_var_overrides_toml`,
+    `toml_overrides_default`, `unknown_provider_returns_err`) — **all five** call
+    `std::env::remove_var("CODEOS_REVIEWER_PROVIDER")` and/or `std::env::set_var(...)` directly
+    (confirmed by reading the file fresh before drafting this Step 1, not just trusting the
+    backlog's claim). Rust's default test harness runs tests in parallel threads within the same
+    process; environment variables are process-global, not thread-local, so any two of these
+    tests running concurrently race on the same variable. Discovered during UPG-0023's Step 4
+    verification: default `cargo test` intermittently failed `toml_overrides_default`, while
+    `cargo test -- --test-threads=1` passed all 120 tests deterministically.
+    
+    ### What changes
+    
+    | File | Change |
+    |---|---|
+    | `tools/reviewer/src/config.rs` | `#[cfg(test)] mod tests` gains a process-wide `static Mutex<()>`; each of the 5 tests acquires it before touching the env var |
+    | `backlog/UPG-0040-config-test-env-var-race.md` | Feature Thread: CHG-20260707-004 activated (done) |
+    | `backlog/features.md` | Row → IN_PROGRESS (done) |
+    | `status/self-development.md` | Row activated (done) |
+    | `status/roadmap.md` | UPG-0040 → IN_PROGRESS (done) |
+    
+    ### Scope boundary — what stays the same
+    
+    - **No production code changes.** `resolve()` and `resolve_provider()` (lines 1-121, outside
+      `#[cfg(test)]`) are untouched — same signatures, same precedence logic (CLI flag > env var
+      > `reviewer.toml` > compiled-in default). Matches the backlog's Guardrail exactly.
+    - **No test assertions weakened or removed.** All 5 tests keep their exact existing
+      assertions; the only addition is a lock-acquisition line at the top of each.
+    - **No new dependency.** `std::sync::Mutex` is standard library — no `Cargo.toml` change.
+    - **No other test file touched.** `grep -rln "CODEOS_REVIEWER_PROVIDER" tools/reviewer/src/
+      tools/reviewer/tests/` returns only `config.rs` — confirmed fresh, not assumed — so
+      `tests/smoke.rs` and every other `#[cfg(test)]` module in the crate genuinely cannot race
+      on this specific variable; a mutex scoped to `config.rs`'s own test module is sufficient.
+    
+    ### Design intent
+    
+    Chose the backlog's first candidate approach (a process-wide mutex guarding env-var mutation
+    in tests) over the second (restructuring `resolve()` to accept an injected value) because the
+    mutex is a **pure test-only change** — it doesn't touch `resolve()`/`resolve_provider()`'s
+    signatures at all, matching the backlog's own Scope statement ("`config.rs`'s test module
+    only. No production-code behavior change") more literally than the injection alternative
+    would (which requires adding a parameter to production-code function signatures, even if the
+    precedence *logic* itself stays identical).
+    
+    ```rust
+    static ENV_VAR_LOCK: Mutex<()> = Mutex::new(());
+    ```
+    
+    Each test acquires the lock first, recovering from a poisoned mutex rather than propagating a
+    panic into unrelated tests if an earlier test in the module fails while holding it:
+    
+    ```rust
+    let _guard = ENV_VAR_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+    ```
+    
+    The guard is held for the test's full body (RAII, released at function end via `Drop`),
+    serializing every env-var-touching test in this module against every other one — eliminating
+    the race without changing what any individual test verifies.
+    
+    ### Triage
+    
+    - Class: `script-tooling`
+    - Scope axis: `self-dev only`
+    - Review profile: `PROFILE-3`
+    - Originating backlog id: `UPG-0040`
+    
+    ---
+    
+    ## Step 2 — Acceptance Criteria
+    
+    ### Race eliminated
+    
+    **AC-1 — Default (parallel) `cargo test` passes reliably across repeated runs**
+    `cargo test` (default parallel threading, the mode that previously failed intermittently)
+    passes with zero failures across at least 20 consecutive runs.
+    _Verify in Step 4:_ a shell loop running `cargo test` 20+ times, confirming 0 failures.
+    
+    **AC-2 — Single-threaded baseline still passes**
+    `cargo test -- --test-threads=1` (the pre-existing deterministic workaround) continues to
+    pass in full — the fix must not regress the mode that already worked.
+    _Verify in Step 4:_ run it once; confirm 0 failures, same test count as before this change.
+    
+    ### No production-code change
+    
+    **AC-3 — Diff confined to the test module**
+    Every changed line in `config.rs` is inside `#[cfg(test)] mod tests` (starting at the
+    existing `#[cfg(test)]` attribute); zero lines outside it change.
+    _Verify in Step 4:_ `git diff` line-range inspection confirming all hunks fall after the
+    `#[cfg(test)]` marker.
+    
+    **AC-4 — `resolve()`/`resolve_provider()` signatures and precedence logic byte-identical**
+    Both functions' signatures and bodies (lines 30-91, per the current file) are unchanged.
+    _Verify in Step 4:_ diff those specific line ranges; confirm empty.
+    
+    **AC-5 — All 5 existing test assertions unchanged**
+    Every `assert_eq!`/`assert!` in the 5 tests is textually identical to before this change —
+    the only addition is a lock-acquisition line per test.
+    _Verify in Step 4:_ diff each test function; confirm only an added line, no assertion text
+    changed.
+    
+    ### Design correctness
+    
+    **AC-6 — Poisoned-mutex recovery, not propagation**
+    The lock-acquisition pattern uses `.unwrap_or_else(|e| e.into_inner())`, not a bare
+    `.unwrap()` — so one test panicking while holding the lock doesn't cascade-poison every
+    subsequent test in the module.
+    _Verify in Step 4:_ grep the actual pattern used in the diff.
+    
+    **AC-7 — No new dependency**
+    `std::sync::Mutex` is standard library; `Cargo.toml`/`Cargo.lock` are unchanged.
+    _Verify in Step 4:_ `git diff --stat -- tools/reviewer/Cargo.toml tools/reviewer/Cargo.lock`
+    is empty.
+    
+    ### Cross-reference integrity
+    
+    **AC-8 — Full suite unaffected in count or outcome, both threading modes**
+    The complete test suite (unit tests in `config.rs` and elsewhere, plus `tests/smoke.rs`)
+    has the identical number of `#[test]` functions before and after this change — the fix adds
+    only lock-acquisition lines inside existing test bodies, never a new or removed `#[test]`
+    function — and passes fully in both default-parallel and single-threaded modes. (No specific
+    total count is hardcoded here, since it drifts as unrelated changes land elsewhere in the
+    crate; what matters is that *this* change doesn't alter it. No `git stash` or other
+    working-tree mutation is used to verify this, to avoid disturbing unrelated uncommitted work
+    in a workspace that may not be clean.)
+    _Verify in Step 4:_ `git diff -- tools/reviewer/src/config.rs` — count added/removed
+    `#[test]` occurrences (expect 0 added, 0 removed); run `cargo test -- --test-threads=1`
+    (note: harness flags go after `--`) and confirm 0 failures; separately run default `cargo
+    test` (parallel) and confirm 0 failures.
+    
+    ---
+    
+    ## Step 3 — Implement
+    
+    *(to be written after Step 2 approval)*
+    
+    ---
+    
+    ## Step 4 — Reconcile
+    
+    *(to be written after Step 3 approval)*
+
+  --- backlog/UPG-0040-config-test-env-var-race.md (sha256: f6ae472b5c09d3caa96a35796ebf40aa08af51fcf1bb7b6d675f66c5beae5ee9, visibility: shown) ---
+    ---
+    feature_id: UPG-0040
+    slug: config-test-env-var-race
+    title: Fix Flaky config::tests Race on CODEOS_REVIEWER_PROVIDER Env Var
+    status: IN_PROGRESS
+    priority: P2
+    depends_on: []
+    related_features: [UPG-0023]
+    supersedes: []
+    superseded_by: []
+    ---
+    
+    # Upgrade: config-test-env-var-race — Fix Flaky config::tests Race on CODEOS_REVIEWER_PROVIDER Env Var
+    
+    **Priority**: P2
+    **Status**: IN_PROGRESS
+    **Type**: script-tooling
+    
+    ## Problem
+    
+    `tools/reviewer/src/config.rs`'s unit tests (`toml_overrides_default` and likely others in the
+    same `#[cfg(test)] mod tests`) call `std::env::remove_var("CODEOS_REVIEWER_PROVIDER")` directly.
+    Rust's default test harness runs tests in parallel threads within the same process, and
+    environment variables are process-global, not thread-local — so any test that reads/removes
+    this env var races against other tests doing the same thing concurrently.
+    
+    Discovered during UPG-0023's Step 4 verification (2026-07-06): `cargo test` (default,
+    parallel) intermittently failed `config::tests::toml_overrides_default`, while `cargo test --
+    --test-threads=1` passed all 120 tests (26 unit + 94 smoke) deterministically. `config.rs` is
+    untouched by UPG-0023 — this is a pre-existing flakiness bug, not a regression, filed as an
+    out-of-scope-for-UPG-0023 follow-up.
+    
+    ## Upgrade
+    
+    Make `config.rs`'s env-var-dependent tests immune to parallel execution — e.g. a
+    process-wide mutex guarding env-var mutation in tests, or restructuring `resolve()`'s tests
+    to inject the env var value directly (as a parameter) rather than mutating the real process
+    environment.
+    
+    ## Scope
+    
+    `tools/reviewer/src/config.rs`'s test module only. No production-code behavior change.
+    
+    ## Value
+    
+    Medium. Flaky tests erode trust in `cargo test`'s green/red signal and can mask a real
+    regression appearing at the same time as an unrelated race.
+    
+    ## Risk
+    
+    Low. Test-only change.
+    
+    ## Guardrail
+    
+    No production code path changes — `config::resolve()`'s actual precedence logic (CLI flag >
+    env var > reviewer.toml > default) must remain unchanged.
+    
+    ## DBA-philosophy note
+    
+    Not applicable — pure test-infrastructure fix, no doctrine change.
+    
+    ## Feature Thread
+    
+    > Canonical thread rollup for this feature. Compact links/IDs only; full detail lives in the
+    > change records and review files. May be maintained manually.
+    
+    ### Changes
+    
+    | Change ID | File | Purpose | State |
+    |---|---|---|---|
+    | CHG-20260707-004 | `changes/UPG-0040__CHG-20260707-004__config-test-env-var-race.md` | Serialize `config.rs`'s env-var-mutating tests with a test-only mutex | IN_PROGRESS |
+    
+    ### Reviews
+    
+    | Review ID | Change ID | Step | Round | Verdict |
+    |---|---|---|---|---|
+    
+    ### Findings Tracked Inside This Feature
+    
+    | Finding ID | Review ID | Classification | Resolution |
+    |---|---|---|---|
+    
+    ### Follow-up Features
+    
+    | Feature ID | Reason | Source finding |
+    |---|---|---|
+
+  --- tools/reviewer/src/config.rs (sha256: e365e95714037359658979064c3d849e8b331a9df3dfd1336c817c432cd08795, visibility: shown) ---
+    use anyhow::{Context, Result};
+    use serde::Deserialize;
+    use std::path::{Path, PathBuf};
+    
+    #[derive(Debug, Clone)]
+    pub struct Config {
+        pub provider_name: String,
+        pub provider_source: &'static str,
+        pub reasoning_effort: String,
+        pub repo_root: PathBuf,
+        pub toolkit_root: PathBuf,
+        pub review_log: PathBuf,
+        pub codex_dir: PathBuf,
+        pub state_dir: PathBuf,
+        pub sessions_dir: PathBuf,
+        pub stage_start_dir: PathBuf,
+    }
+    
+    #[derive(Debug, Deserialize, Default)]
+    struct ReviewerToml {
+        provider: Option<String>,
+        reasoning_effort: Option<String>,
+    }
+    
+    /// Resolve config. Precedence (highest to lowest):
+    ///   1. `cli_provider` argument (--provider flag)
+    ///   2. `CODEOS_REVIEWER_PROVIDER` environment variable
+    ///   3. `reviewer.toml` in .codeos/ (downstream) or toolkit root (self-dev)
+    ///   4. Compiled-in default: "codex"
+    pub fn resolve(cli_provider: Option<&str>, repo_root: &Path) -> Result<Config> {
+        let (provider_name, provider_source) = resolve_provider(cli_provider, repo_root)?;
+        let reasoning_effort = std::env::var("CODEOS_REASONING_EFFORT")
+            .unwrap_or_else(|_| "high".to_string());
+    
+        let toolkit_root = find_toolkit_root(repo_root);
+        let state_dir = repo_root.join(".codeos-state");
+    
+        Ok(Config {
+            provider_name,
+            provider_source,
+            reasoning_effort,
+            review_log: repo_root.join("reviews/review-log.md"),
+            codex_dir: repo_root.join("reviews/codex"),
+            state_dir: state_dir.clone(),
+            sessions_dir: state_dir.join("codex-sessions"),
+            stage_start_dir: state_dir.join("stage-start"),
+            toolkit_root: toolkit_root.clone(),
+            repo_root: repo_root.to_path_buf(),
+        })
+    }
+    
+    fn resolve_provider(cli_provider: Option<&str>, repo_root: &Path) -> Result<(String, &'static str)> {
+        // Priority 1: CLI flag
+        if let Some(p) = cli_provider {
+            validate_provider_name(p)?;
+            return Ok((p.to_string(), "cli flag"));
+        }
+        // Priority 2: environment variable
+        if let Ok(p) = std::env::var("CODEOS_REVIEWER_PROVIDER") {
+            if !p.is_empty() {
+                validate_provider_name(&p)?;
+                return Ok((p, "env CODEOS_REVIEWER_PROVIDER"));
+            }
+        }
+        // Priority 3: reviewer.toml
+        let toml_path = find_reviewer_toml(repo_root);
+        if let Some(path) = toml_path {
+            let content = std::fs::read_to_string(&path)
+                .with_context(|| format!("could not read {}", path.display()))?;
+            let parsed: ReviewerToml = toml::from_str(&content)
+                .with_context(|| format!("malformed reviewer.toml at {}", path.display()))?;
+            if let Some(p) = parsed.provider {
+                if !p.is_empty() {
+                    validate_provider_name(&p)?;
+                    return Ok((p, "reviewer.toml"));
+                }
+            }
+        }
+        // Priority 4: default
+        Ok(("codex".to_string(), "compiled-in default"))
+    }
+    
+    fn validate_provider_name(name: &str) -> Result<()> {
+        match name {
+            "codex" | "opencode" | "gemini" | "kimi" => Ok(()),
+            other => anyhow::bail!(
+                "unknown provider '{}'; supported: codex, opencode, gemini, kimi",
+                other
+            ),
+        }
+    }
+    
+    fn find_reviewer_toml(repo_root: &Path) -> Option<PathBuf> {
+        // Project root takes priority (.codeos/ is a symlink to a shared toolkit, not project-local)
+        let at_root = repo_root.join("reviewer.toml");
+        if at_root.exists() {
+            return Some(at_root);
+        }
+        // Toolkit fallback: .codeos/reviewer.toml resolves into the toolkit for downstream projects,
+        // or stays at repo root for self-dev. Only used if no project-root file exists.
+        let codeos = repo_root.join(".codeos/reviewer.toml");
+        if codeos.exists() && !codeos.is_symlink() {
+            return Some(codeos);
+        }
+        None
+    }
+    
+    fn find_toolkit_root(repo_root: &Path) -> PathBuf {
+        // Downstream: .codeos/ symlink points to toolkit
+        let codeos = repo_root.join(".codeos");
+        if codeos.is_symlink() {
+            if let Ok(target) = std::fs::read_link(&codeos) {
+                if target.is_absolute() {
+                    return target;
+                }
+                return repo_root.join(target);
+            }
+        }
+        // Self-dev: repo_root is the toolkit root
+        repo_root.to_path_buf()
+    }
+    
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+        use std::fs;
+    
+        fn tmp_repo() -> tempfile::TempDir {
+            let dir = tempfile::tempdir().expect("tempdir");
+            // Create a minimal git repo structure
+            fs::create_dir_all(dir.path().join(".git")).expect("create .git");
+            dir
+        }
+    
+        #[test]
+        fn default_provider_is_codex() {
+            let dir = tmp_repo();
+            // Remove env var if set
+            std::env::remove_var("CODEOS_REVIEWER_PROVIDER");
+            let cfg = resolve(None, dir.path()).expect("resolve");
+            assert_eq!(cfg.provider_name, "codex");
+            assert_eq!(cfg.provider_source, "compiled-in default");
+        }
+    
+        #[test]
+        fn cli_flag_overrides_env() {
+            let dir = tmp_repo();
+            std::env::set_var("CODEOS_REVIEWER_PROVIDER", "opencode");
+            let cfg = resolve(Some("codex"), dir.path()).expect("resolve");
+            assert_eq!(cfg.provider_name, "codex");
+            assert_eq!(cfg.provider_source, "cli flag");
+            std::env::remove_var("CODEOS_REVIEWER_PROVIDER");
+        }
+    
+        #[test]
+        fn env_var_overrides_toml() {
+            let dir = tmp_repo();
+            // Write reviewer.toml with gemini
+            fs::write(dir.path().join("reviewer.toml"), "provider = \"gemini\"\n").expect("write toml");
+            std::env::set_var("CODEOS_REVIEWER_PROVIDER", "opencode");
+            let cfg = resolve(None, dir.path()).expect("resolve");
+            assert_eq!(cfg.provider_name, "opencode");
+            assert_eq!(cfg.provider_source, "env CODEOS_REVIEWER_PROVIDER");
+            std::env::remove_var("CODEOS_REVIEWER_PROVIDER");
+        }
+    
+        #[test]
+        fn toml_overrides_default() {
+            let dir = tmp_repo();
+            std::env::remove_var("CODEOS_REVIEWER_PROVIDER");
+            fs::write(dir.path().join("reviewer.toml"), "provider = \"opencode\"\n").expect("write toml");
+            let cfg = resolve(None, dir.path()).expect("resolve");
+            assert_eq!(cfg.provider_name, "opencode");
+            assert_eq!(cfg.provider_source, "reviewer.toml");
+        }
+    
+        #[test]
+        fn unknown_provider_returns_err() {
+            let dir = tmp_repo();
+            std::env::remove_var("CODEOS_REVIEWER_PROVIDER");
+            let result = resolve(Some("unknown-ai"), dir.path());
+            assert!(result.is_err());
+            let msg = result.unwrap_err().to_string();
+            assert!(msg.contains("unknown provider"));
+        }
+    }
+
+DIFF TO REVIEW (base->review, secret/size filtered)
+diff --git a/backlog/UPG-0040-config-test-env-var-race.md b/backlog/UPG-0040-config-test-env-var-race.md
+index b2727a5..a974b50 100644
+--- a/backlog/UPG-0040-config-test-env-var-race.md
++++ b/backlog/UPG-0040-config-test-env-var-race.md
+@@ -2,7 +2,7 @@
+ feature_id: UPG-0040
+ slug: config-test-env-var-race
+ title: Fix Flaky config::tests Race on CODEOS_REVIEWER_PROVIDER Env Var
+-status: PROPOSED
++status: IN_PROGRESS
+ priority: P2
+ depends_on: []
+ related_features: [UPG-0023]
+@@ -13,7 +13,7 @@ superseded_by: []
+ # Upgrade: config-test-env-var-race — Fix Flaky config::tests Race on CODEOS_REVIEWER_PROVIDER Env Var
+ 
+ **Priority**: P2
+-**Status**: PROPOSED
++**Status**: IN_PROGRESS
+ **Type**: script-tooling
+ 
+ ## Problem
+@@ -68,6 +68,7 @@ Not applicable — pure test-infrastructure fix, no doctrine change.
+ 
+ | Change ID | File | Purpose | State |
+ |---|---|---|---|
++| CHG-20260707-004 | `changes/UPG-0040__CHG-20260707-004__config-test-env-var-race.md` | Serialize `config.rs`'s env-var-mutating tests with a test-only mutex | IN_PROGRESS |
+ 
+ ### Reviews
+ 
+diff --git a/backlog/features.md b/backlog/features.md
+index a05bdbf..554b8c8 100644
+--- a/backlog/features.md
++++ b/backlog/features.md
+@@ -70,7 +70,7 @@ The goal is to speed up Codeos development without weakening DBA advantages.
+ | UPG-0037 | [UPG-0037-downstream-default-stage-review.md](UPG-0037-downstream-default-stage-review.md) | Default Advisory Review Across the Full Downstream DBA Workflow | P1 | COMPLETE |
+ | UPG-0038 | [UPG-0038-review-shim-symlink-resolution.md](UPG-0038-review-shim-symlink-resolution.md) | Fix codeos-review.sh Binary Resolution for Symlinked Downstream Projects | P1 | COMPLETE |
+ | UPG-0039 | [UPG-0039-solution-discovery-prefix-rename.md](UPG-0039-solution-discovery-prefix-rename.md) | Resolve the 00b Prompt-Filename Collision (Discovery -> 00a) | P3 | COMPLETE |
+-| UPG-0040 | [UPG-0040-config-test-env-var-race.md](UPG-0040-config-test-env-var-race.md) | Fix Flaky config::tests Race on CODEOS_REVIEWER_PROVIDER Env Var | P2 | PROPOSED |
++| UPG-0040 | [UPG-0040-config-test-env-var-race.md](UPG-0040-config-test-env-var-race.md) | Fix Flaky config::tests Race on CODEOS_REVIEWER_PROVIDER Env Var | P2 | IN_PROGRESS |
+ | UPG-0041 | [UPG-0041-feature-registry-schema-drift.md](UPG-0041-feature-registry-schema-drift.md) | Reconcile feature-registry.yaml Schema vs Real-World Drift (FundFlow) | P2 | PROPOSED |
+ 
+ > Priority `—` = no formal P-rank (a completed cleanup, or a discovery note). Feature IDs are
+diff --git a/status/roadmap.md b/status/roadmap.md
+index b8cc00b..1ac8c17 100644
+--- a/status/roadmap.md
++++ b/status/roadmap.md
+@@ -98,7 +98,7 @@ cheap pilot-adjacent wins early.
+ | UPG-0037 | Default Advisory Review Across the Full Downstream DBA Workflow | P1 | UPG-0003 ✓, UPG-0032 ✓, UPG-0014 ✓, UPG-0015 ✓ | CHG-20260705-002 | COMPLETE |
+ | UPG-0038 | Fix codeos-review.sh Binary Resolution for Symlinked Downstream Projects | P1 | UPG-0032 ✓ | CHG-20260707-002 | COMPLETE |
+ | UPG-0039 | Resolve the 00b Prompt-Filename Collision (Discovery -> 00a) | P3 | UPG-0007 ✓ | CHG-20260707-003 | COMPLETE |
+-| UPG-0040 | Fix Flaky config::tests Race on CODEOS_REVIEWER_PROVIDER Env Var | P2 | — | — | PROPOSED |
++| UPG-0040 | Fix Flaky config::tests Race on CODEOS_REVIEWER_PROVIDER Env Var | P2 | — | CHG-20260707-004 | IN_PROGRESS |
+ | UPG-0041 | Reconcile feature-registry.yaml Schema vs Real-World Drift (FundFlow) | P2 | UPG-0009 ✓, UPG-0023 | — | PROPOSED |
+ 
+ ---
+diff --git a/status/self-development.md b/status/self-development.md
+index 1647383..1e2b09b 100644
+--- a/status/self-development.md
++++ b/status/self-development.md
+@@ -60,6 +60,7 @@
+ | UPG-0026 | CHG-20260707-001 | documentation | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION; Step 2 NO OBJECTION R2; Step 3 NO OBJECTION; Step 4 NO OBJECTION; all 8 ACs verified) | COMPLETE | — |
+ | UPG-0038 | CHG-20260707-002 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION; Step 2 NO OBJECTION; Step 3 NO OBJECTION R2; Step 4 NO OBJECTION R3; all 10 ACs verified; real FundFlow invocation) | COMPLETE | — |
+ | UPG-0039 | CHG-20260707-003 | downstream-doctrine | downstream doctrine only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION; Step 2 NO OBJECTION R2; Step 3 accepted R2, Step 4 accepted R1 — both SECRET_REDACTION coverage, same known benign trigger; all 11 ACs verified; live FundFlow check) | COMPLETE | — |
++| UPG-0040 | CHG-20260707-004 | script-tooling | self-dev only | 2-Acceptance | Step 1 NO OBJECTION R2 | IN_PROGRESS | — |
+ | UPG-0036 | CHG-20260705-001 | self-dev-governance | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION R3; Step 2 NO OBJECTION R2; Step 3 NO OBJECTION R3; Step 4 NO OBJECTION R1; all 10 ACs verified; real check-drift run) | COMPLETE | — |
+ | UPG-0037 | CHG-20260705-002 | downstream-doctrine | downstream doctrine only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION; Step 2 NO OBJECTION R2; Step 3 accepted at budget R3 (0 blockers, SECRET_REDACTION coverage); Step 4 accepted R1 (0 blockers, same SECRET_REDACTION cause); all 13 ACs verified; 105 tests; real FundFlow dry-runs) | COMPLETE | UPG-0038 |
+ 

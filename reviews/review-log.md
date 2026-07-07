@@ -5545,3 +5545,155 @@ Provenance:
   review_commit: d0e0437ae9387c00eeca41697a2331e857c9b340  [HEAD_MATCH]
   packet_sha256: [MATCH]
   coverage_state: SECRET_REDACTION  [OK]
+
+## 2026-07-07T15:05:24Z REVIEW — UPG-0040__CHG-20260707-004 — Stage selfdev-step-1
+Base: (no base pin)  Review: 0ac0aca40773ae458f90dbb1931c9989625dc70c  Branch: main
+Diff-hash: 267ac3ebc525d30906e3a7c91faa4c9fb00f07c18107932d9284e8e848dfcb0b
+Reviewer: codex default-model (session 019f3d1c-744e-75d0-9d4d-61482e3e17be)
+Effort: high   Wall time: 23121ms   Reconnects: 0
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: CHANGES ADVISED — Step 1 is mostly supported, but the repo-wide env-var exclusivity claim needs evidence or narrowing before approval.
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-07T150524Z-UPG-0040__CHG-20260707-004-stage-selfdev-step-1-0ac0aca.md (sha256:fcc9cbcf377f7800be95a2b5a586b008e1538347e179ab24e0dfabcf6cf6bdc2)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260707T150524Z-UPG-0040__CHG-20260707-004-stage-selfdev-step-1-0ac0aca.packet.txt (sha256:95d4758c013e39955070091e9a7bba80dbcc62d9376815c2d6a5a143d9d2743a)
+Human decision: (append with: codeos-reviewer decision UPG-0040__CHG-20260707-004 selfdev-step-1 <DECISION> "<reason>")
+
+## 2026-07-07T15:06:30Z REVIEW — UPG-0040__CHG-20260707-004 — Stage selfdev-step-1
+Base: (no base pin)  Review: 0ac0aca40773ae458f90dbb1931c9989625dc70c  Branch: main
+Diff-hash: 267ac3ebc525d30906e3a7c91faa4c9fb00f07c18107932d9284e8e848dfcb0b
+Reviewer: codex default-model (session 019f3d1c-744e-75d0-9d4d-61482e3e17be)
+Effort: high   Wall time: 26207ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: B
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — Step 1 intent is internally consistent and supported by the shown code, diff, and stated search evidence.
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-07T150630Z-UPG-0040__CHG-20260707-004-stage-selfdev-step-1-0ac0aca.md (sha256:a479214237c4cb23a33d3e0e69ddcd857cb8f81e2fc72fa21601888af2a07f42)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260707T150630Z-UPG-0040__CHG-20260707-004-stage-selfdev-step-1-0ac0aca.packet.txt (sha256:863a949701faf4bf8879074f43e68cf4a4b7092625d326eeebde20966c7559ec)
+Human decision: (append with: codeos-reviewer decision UPG-0040__CHG-20260707-004 selfdev-step-1 <DECISION> "<reason>")
+
+## 2026-07-07T15:08:25Z HUMAN DECISION — UPG-0040__CHG-20260707-004 — Stage selfdev-step-1
+Commit at decision: 0ac0aca40773ae458f90dbb1931c9989625dc70c
+Decision: APPROVE_STAGE
+Reason/next: Step 1 NO OBJECTION on R2 (R1 flagged an unsupported repo-wide exclusivity claim, fixed by backing it with fresh grep evidence). Mutex design accepted over the injection alternative since it touches zero production-code signatures, matching the backlog's test-module-only scope.
+Provenance:
+  assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-07T150630Z-UPG-0040__CHG-20260707-004-stage-selfdev-step-1-0ac0aca.md
+  review_commit: 0ac0aca40773ae458f90dbb1931c9989625dc70c  [HEAD_MATCH]
+  packet_sha256: [MATCH]
+  coverage_state: FULL_COVERAGE  [OK]
+
+## 2026-07-07T15:10:10Z REVIEW — UPG-0040__CHG-20260707-004 — Stage selfdev-step-2
+Base: (no base pin)  Review: 0ac0aca40773ae458f90dbb1931c9989625dc70c  Branch: main
+Diff-hash: 5f0a5406b799374271bb349e472140bca08a9503db1f057cddd83936b80e1008
+Reviewer: codex default-model (session 019f3d1c-744e-75d0-9d4d-61482e3e17be)
+Effort: high   Wall time: 51603ms   Reconnects: 0
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: CHANGES ADVISED — AC-8 needs a supported baseline or removal of the hard-coded 136-test claim.
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-07T151010Z-UPG-0040__CHG-20260707-004-stage-selfdev-step-2-0ac0aca.md (sha256:c897f65f944c2a2f5fe9de8cfb0063713da305c82a0ac9526fd435440be8ca98)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260707T151010Z-UPG-0040__CHG-20260707-004-stage-selfdev-step-2-0ac0aca.packet.txt (sha256:dfef364ce3a2f236fe0968bf019824e6df8ee229ebc7efabf2ff3c8e458ce5b1)
+Human decision: (append with: codeos-reviewer decision UPG-0040__CHG-20260707-004 selfdev-step-2 <DECISION> "<reason>")
+
+## 2026-07-07T15:11:45Z REVIEW — UPG-0040__CHG-20260707-004 — Stage selfdev-step-2
+Base: (no base pin)  Review: 0ac0aca40773ae458f90dbb1931c9989625dc70c  Branch: main
+Diff-hash: 5f0a5406b799374271bb349e472140bca08a9503db1f057cddd83936b80e1008
+Reviewer: codex default-model (session 019f3d1c-744e-75d0-9d4d-61482e3e17be)
+Effort: high   Wall time: 33021ms   Reconnects: 0
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: CHANGES ADVISED — AC-8 needs a runnable, workspace-safe verification procedure.
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-07T151145Z-UPG-0040__CHG-20260707-004-stage-selfdev-step-2-0ac0aca.md (sha256:3af3545da78a39f3e4892dfa85029989cb9a495b42e0c0051c1b1dc19ba9d842)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260707T151145Z-UPG-0040__CHG-20260707-004-stage-selfdev-step-2-0ac0aca.packet.txt (sha256:a55b9b5b7e83a562e7184dae3fdcfc652e44aa641e442e1af1fed808cb48e1ad)
+Human decision: (append with: codeos-reviewer decision UPG-0040__CHG-20260707-004 selfdev-step-2 <DECISION> "<reason>")
+
+## 2026-07-07T15:13:03Z REVIEW — UPG-0040__CHG-20260707-004 — Stage selfdev-step-2
+Base: (no base pin)  Review: 0ac0aca40773ae458f90dbb1931c9989625dc70c  Branch: main
+Diff-hash: 5f0a5406b799374271bb349e472140bca08a9503db1f057cddd83936b80e1008
+Reviewer: codex default-model (session 019f3d1c-744e-75d0-9d4d-61482e3e17be)
+Effort: high   Wall time: 18990ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: B
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — Step 2 acceptance criteria are scoped, runnable, and aligned with the intended test-only fix.
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-07T151303Z-UPG-0040__CHG-20260707-004-stage-selfdev-step-2-0ac0aca.md (sha256:e4db42f2e3914ca9aa6869cea4835054e078c5660ee84aebe3050d8f181042b7)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260707T151303Z-UPG-0040__CHG-20260707-004-stage-selfdev-step-2-0ac0aca.packet.txt (sha256:5b40adc76587579e099b17e7e00a653f8968d8bcd5b8df01b0114a7c8044a9f9)
+Human decision: (append with: codeos-reviewer decision UPG-0040__CHG-20260707-004 selfdev-step-2 <DECISION> "<reason>")
+
+## 2026-07-07T15:14:28Z HUMAN DECISION — UPG-0040__CHG-20260707-004 — Stage selfdev-step-2
+Commit at decision: 0ac0aca40773ae458f90dbb1931c9989625dc70c
+Decision: APPROVE_STAGE
+Reason/next: Step 2 NO OBJECTION on R3 (R1 hardcoded an unsupported test-count number sourced from outside the packet; R2 had a command-syntax typo missing -- before --test-threads=1 and an unsafe git stash procedure in a workspace that's actually dirty; all fixed - AC-8 redesigned to avoid stash entirely). All 8 ACs scoped, runnable, aligned with the test-only fix.
+Provenance:
+  assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-07T151303Z-UPG-0040__CHG-20260707-004-stage-selfdev-step-2-0ac0aca.md
+  review_commit: 0ac0aca40773ae458f90dbb1931c9989625dc70c  [HEAD_MATCH]
+  packet_sha256: [MATCH]
+  coverage_state: FULL_COVERAGE  [OK]
+
+## 2026-07-07T15:17:29Z REVIEW — UPG-0040__CHG-20260707-004 — Stage selfdev-step-3
+Base: (no base pin)  Review: 0ac0aca40773ae458f90dbb1931c9989625dc70c  Branch: main
+Diff-hash: 59bdc7c82690cd94364775f42396502d97068a4d9f01f8d4442efe7a9e99ef9d
+Reviewer: codex default-model (session 019f3d1c-744e-75d0-9d4d-61482e3e17be)
+Effort: high   Wall time: 29672ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: B
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — The Step 3 implementation satisfies the accepted test-only mutex design with no production-code diff.
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-07T151729Z-UPG-0040__CHG-20260707-004-stage-selfdev-step-3-0ac0aca.md (sha256:4927000908296138e362e3e491d81d11b870d080a536145d17a4761be1561f03)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260707T151729Z-UPG-0040__CHG-20260707-004-stage-selfdev-step-3-0ac0aca.packet.txt (sha256:cc7734125b9daeda3bcd4d6ac91bdffa1002d4c49d18bf8d83b38e0b349a5ad3)
+Human decision: (append with: codeos-reviewer decision UPG-0040__CHG-20260707-004 selfdev-step-3 <DECISION> "<reason>")
+
+## 2026-07-07T15:18:46Z HUMAN DECISION — UPG-0040__CHG-20260707-004 — Stage selfdev-step-3
+Commit at decision: 0ac0aca40773ae458f90dbb1931c9989625dc70c
+Decision: APPROVE_STAGE
+Reason/next: Step 3 NO OBJECTION on R1: test-only mutex design implemented cleanly, zero production-code diff. Race confirmed fixed: 0 failures across 20 consecutive default-parallel cargo test runs (previously intermittent), single-threaded baseline unchanged.
+Provenance:
+  assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-07T151729Z-UPG-0040__CHG-20260707-004-stage-selfdev-step-3-0ac0aca.md
+  review_commit: 0ac0aca40773ae458f90dbb1931c9989625dc70c  [HEAD_MATCH]
+  packet_sha256: [MATCH]
+  coverage_state: FULL_COVERAGE  [OK]
+
+## 2026-07-07T15:20:43Z REVIEW — UPG-0040__CHG-20260707-004 — Stage selfdev-step-4
+Base: (no base pin)  Review: 0ac0aca40773ae458f90dbb1931c9989625dc70c  Branch: main
+Diff-hash: 291d52d970b95b77be8d496fe5cf10d186526403a3a296a9da616e0d20f2b3e7
+Reviewer: codex default-model (session 019f3d1c-744e-75d0-9d4d-61482e3e17be)
+Effort: high   Wall time: 38171ms   Reconnects: 0
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: CHANGES ADVISED — AC-5 needs to scope its diff command to `tools/reviewer/src/config.rs` or restate the evidence accurately.
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-07T152043Z-UPG-0040__CHG-20260707-004-stage-selfdev-step-4-0ac0aca.md (sha256:d85468b7dd28a307099ff548efe3d0e39fceac5f2cee72dbd7958d18407d341f)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260707T152043Z-UPG-0040__CHG-20260707-004-stage-selfdev-step-4-0ac0aca.packet.txt (sha256:e00b7044de3136ff9e4f9909e1e835aab9346f4addaa16b10283c42a713e1368)
+Human decision: (append with: codeos-reviewer decision UPG-0040__CHG-20260707-004 selfdev-step-4 <DECISION> "<reason>")
+
+## 2026-07-07T15:22:04Z REVIEW — UPG-0040__CHG-20260707-004 — Stage selfdev-step-4
+Base: (no base pin)  Review: 0ac0aca40773ae458f90dbb1931c9989625dc70c  Branch: main
+Diff-hash: 291d52d970b95b77be8d496fe5cf10d186526403a3a296a9da616e0d20f2b3e7
+Reviewer: codex default-model (session 019f3d1c-744e-75d0-9d4d-61482e3e17be)
+Effort: high   Wall time: 17942ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: B
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — Step 4 reconciliation supports all ACs, and the implementation remains test-only.
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-07T152204Z-UPG-0040__CHG-20260707-004-stage-selfdev-step-4-0ac0aca.md (sha256:3246c5b516b24d53ec5e6ec91051a1df4f4a391449ddcc526f7d5b08eeed92a2)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260707T152204Z-UPG-0040__CHG-20260707-004-stage-selfdev-step-4-0ac0aca.packet.txt (sha256:a9adb3ace780ee017ee0ecb507ac207d9aa7578cd9f83bf8ee296c9df4524750)
+Human decision: (append with: codeos-reviewer decision UPG-0040__CHG-20260707-004 selfdev-step-4 <DECISION> "<reason>")
+
+## 2026-07-07T15:24:11Z HUMAN DECISION — UPG-0040__CHG-20260707-004 — Stage selfdev-step-4
+Commit at decision: 0ac0aca40773ae458f90dbb1931c9989625dc70c
+Decision: APPROVE_STAGE
+Reason/next: Step 4 R2 NO OBJECTION: all 8 ACs verified with fresh evidence, no scope drift, zero production-code diff. UPG-0040 / CHG-20260707-004 marked COMPLETE.
+Provenance:
+  assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-07T152204Z-UPG-0040__CHG-20260707-004-stage-selfdev-step-4-0ac0aca.md
+  review_commit: 0ac0aca40773ae458f90dbb1931c9989625dc70c  [HEAD_MATCH]
+  packet_sha256: [MATCH]
+  coverage_state: FULL_COVERAGE  [OK]

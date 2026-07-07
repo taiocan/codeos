@@ -2,7 +2,7 @@
 feature_id: UPG-0040
 slug: config-test-env-var-race
 title: Fix Flaky config::tests Race on CODEOS_REVIEWER_PROVIDER Env Var
-status: PROPOSED
+status: COMPLETE
 priority: P2
 depends_on: []
 related_features: [UPG-0023]
@@ -13,7 +13,7 @@ superseded_by: []
 # Upgrade: config-test-env-var-race — Fix Flaky config::tests Race on CODEOS_REVIEWER_PROVIDER Env Var
 
 **Priority**: P2
-**Status**: PROPOSED
+**Status**: COMPLETE
 **Type**: script-tooling
 
 ## Problem
@@ -68,11 +68,20 @@ Not applicable — pure test-infrastructure fix, no doctrine change.
 
 | Change ID | File | Purpose | State |
 |---|---|---|---|
+| CHG-20260707-004 | `changes/UPG-0040__CHG-20260707-004__config-test-env-var-race.md` | Serialize `config.rs`'s env-var-mutating tests with a test-only mutex | COMPLETE |
 
 ### Reviews
 
 | Review ID | Change ID | Step | Round | Verdict |
 |---|---|---|---|---|
+| REV__UPG-0040__CHG-20260707-004__S1__R1 | CHG-20260707-004 | 1-Intent | R1 | REQUEST CHANGES (unsupported exclusivity claim) |
+| REV__UPG-0040__CHG-20260707-004__S1__R2 | CHG-20260707-004 | 1-Intent | R2 | NO OBJECTION |
+| REV__UPG-0040__CHG-20260707-004__S2__R1 | CHG-20260707-004 | 2-Acceptance | R1 | REQUEST CHANGES (unsupported test-count) |
+| REV__UPG-0040__CHG-20260707-004__S2__R2 | CHG-20260707-004 | 2-Acceptance | R2 | REQUEST CHANGES (syntax + unsafe stash) |
+| REV__UPG-0040__CHG-20260707-004__S2__R3 | CHG-20260707-004 | 2-Acceptance | R3 | NO OBJECTION |
+| REV__UPG-0040__CHG-20260707-004__S3__R1 | CHG-20260707-004 | 3-Implement | R1 | NO OBJECTION |
+| REV__UPG-0040__CHG-20260707-004__S4__R1 | CHG-20260707-004 | 4-Reconcile | R1 | REQUEST CHANGES (unscoped verification command) |
+| REV__UPG-0040__CHG-20260707-004__S4__R2 | CHG-20260707-004 | 4-Reconcile | R2 | NO OBJECTION |
 
 ### Findings Tracked Inside This Feature
 
