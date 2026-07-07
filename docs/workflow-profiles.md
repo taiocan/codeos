@@ -60,12 +60,12 @@ lets a reviewer diff from any approved gate forward.
 
 Split the feature into up to four sequential PRs, each merged before the next opens.
 
-| PR | What it contains | Merge gate |
-|---|---|---|
-| PR 1 — Artifacts | Intent, contract, event schema (Stages 1–3) | Stages 1–3 approved |
-| PR 2 — Implementation | Code, behavioral tests, telemetry tests (Stages 4–6) | Stages 4–6 approved + CI green |
-| PR 3 — Runtime evidence | Sanitized fixtures, replay tests, reconciliation reports (Stages 7–8) | Stages 7–8 approved |
-| PR 4 — Refinement | Only if Stage 9 required a substantive change | Stage 9 approved |
+| PR | What it contains | Merge gate | Branch |
+|---|---|---|---|
+| PR 1 — Artifacts | Intent, contract, event schema (Stages 1–3) | Stages 1–3 approved | `feature/<feature_id>-artifacts` |
+| PR 2 — Implementation | Code, behavioral tests, telemetry tests (Stages 4–6) | Stages 4–6 approved + CI green | `feature/<feature_id>-implementation` |
+| PR 3 — Runtime evidence | Sanitized fixtures, replay tests, reconciliation reports (Stages 7–8) | Stages 7–8 approved | `feature/<feature_id>-runtime-replay` |
+| PR 4 — Refinement | Only if Stage 9 required a substantive change | Stage 9 approved | `feature/<feature_id>-refinement` |
 
 **Notes:**
 - Not all four PRs are always needed. A feature with no replay evidence skips PR 3.
@@ -73,6 +73,10 @@ Split the feature into up to four sequential PRs, each merged before the next op
   PR only, not the full feature history.
 - If PR 2 reveals a design issue, go back to PR 1 (already merged) via a follow-up
   change, not by amending the merged branch.
+
+**What Profile C Does Not Require:**
+- Automated branch creation — create each branch manually with `git checkout -b`, same as
+  Profile B. No script or helper tool is introduced by naming these branches.
 
 ---
 

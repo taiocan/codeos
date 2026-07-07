@@ -2,7 +2,7 @@
 feature_id: UPG-0026
 slug: branch-helper
 title: Optional Branch Creation Helper
-status: PROPOSED
+status: COMPLETE
 priority: P2
 depends_on: []
 related_features: []
@@ -13,7 +13,7 @@ superseded_by: []
 # Upgrade: branch-helper — Optional Branch Creation Helper
 
 **Priority**: P2
-**Status**: PROPOSED
+**Status**: COMPLETE
 **Type**: toolkit-upgrade
 **Related**: workflow-profiles, stage-4-activation-card, feature-registry
 
@@ -75,11 +75,17 @@ No rule touched. Pure convenience tooling; doc-first to avoid premature automati
 
 | Change ID | File | Purpose | State |
 |---|---|---|---|
+| CHG-20260707-001 | `changes/UPG-0026__CHG-20260707-001__branch-helper.md` | Document Profile C's split-mode branch-naming convention in `docs/workflow-profiles.md` | COMPLETE |
 
 ### Reviews
 
 | Review ID | Change ID | Step | Round | Verdict |
 |---|---|---|---|---|
+| REV__UPG-0026__CHG-20260707-001__S1__R1 | CHG-20260707-001 | 1-Intent | R1 | NO OBJECTION |
+| REV__UPG-0026__CHG-20260707-001__S2__R1 | CHG-20260707-001 | 2-Acceptance | R1 | DO NOT ADVANCE (AC-5 self-contradiction) |
+| REV__UPG-0026__CHG-20260707-001__S2__R2 | CHG-20260707-001 | 2-Acceptance | R2 | NO OBJECTION |
+| REV__UPG-0026__CHG-20260707-001__S3__R1 | CHG-20260707-001 | 3-Implement | R1 | NO OBJECTION |
+| REV__UPG-0026__CHG-20260707-001__S4__R1 | CHG-20260707-001 | 4-Reconcile | R1 | NO OBJECTION |
 
 ### Findings Tracked Inside This Feature
 
