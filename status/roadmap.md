@@ -97,7 +97,7 @@ cheap pilot-adjacent wins early.
 | UPG-0036 | Stack Manifest & Drift Reconciliation Dogfooding | P2 | UPG-0017 ✓, UPG-0020 ✓ | CHG-20260705-001 | COMPLETE |
 | UPG-0037 | Default Advisory Review Across the Full Downstream DBA Workflow | P1 | UPG-0003 ✓, UPG-0032 ✓, UPG-0014 ✓, UPG-0015 ✓ | CHG-20260705-002 | COMPLETE |
 | UPG-0038 | Fix codeos-review.sh Binary Resolution for Symlinked Downstream Projects | P1 | UPG-0032 ✓ | CHG-20260707-002 | COMPLETE |
-| UPG-0039 | Resolve the 00b Prompt-Filename Collision (Discovery -> 00a) | P3 | UPG-0007 ✓ | — | PROPOSED |
+| UPG-0039 | Resolve the 00b Prompt-Filename Collision (Discovery -> 00a) | P3 | UPG-0007 ✓ | CHG-20260707-003 | COMPLETE |
 | UPG-0040 | Fix Flaky config::tests Race on CODEOS_REVIEWER_PROVIDER Env Var | P2 | — | — | PROPOSED |
 | UPG-0041 | Reconcile feature-registry.yaml Schema vs Real-World Drift (FundFlow) | P2 | UPG-0009 ✓, UPG-0023 | — | PROPOSED |
 
@@ -105,7 +105,7 @@ cheap pilot-adjacent wins early.
 
 ## Immediate next pickups
 
-Waves 1–5 complete. Wave 5: UPG-0018 SUPERSEDED by UPG-0032; UPG-0019 COMPLETE 2026-07-06 (CHG-20260706-001); UPG-0020 COMPLETE 2026-07-03 (CHG-20260703-002); UPG-0021 COMPLETE 2026-07-03 (CHG-20260703-003); UPG-0022 COMPLETE 2026-07-03 (CHG-20260703-004); UPG-0023 COMPLETE 2026-07-06 (CHG-20260704-001); UPG-0024 COMPLETE 2026-07-06 (CHG-20260706-002); UPG-0025 COMPLETE 2026-07-07 (CHG-20260706-003); UPG-0026 COMPLETE 2026-07-07 (CHG-20260707-001). UPG-0028 COMPLETE 2026-07-07 (backlog-only, closed as substantially resolved by UPG-0027/UPG-0001, no CHG). UPG-0038 COMPLETE 2026-07-07 (CHG-20260707-002). Unsequenced UPG-0039, UPG-0040, UPG-0041 remain, unblocked with no active change yet.
+Waves 1–5 complete. Wave 5: UPG-0018 SUPERSEDED by UPG-0032; UPG-0019 COMPLETE 2026-07-06 (CHG-20260706-001); UPG-0020 COMPLETE 2026-07-03 (CHG-20260703-002); UPG-0021 COMPLETE 2026-07-03 (CHG-20260703-003); UPG-0022 COMPLETE 2026-07-03 (CHG-20260703-004); UPG-0023 COMPLETE 2026-07-06 (CHG-20260704-001); UPG-0024 COMPLETE 2026-07-06 (CHG-20260706-002); UPG-0025 COMPLETE 2026-07-07 (CHG-20260706-003); UPG-0026 COMPLETE 2026-07-07 (CHG-20260707-001). UPG-0028 COMPLETE 2026-07-07 (backlog-only, closed as substantially resolved by UPG-0027/UPG-0001, no CHG). UPG-0038 COMPLETE 2026-07-07 (CHG-20260707-002). UPG-0039 COMPLETE 2026-07-07 (CHG-20260707-003). Unsequenced UPG-0040, UPG-0041 remain, unblocked with no active change yet.
 
 Each is taken as its own self-dev change (a fresh `CHG-*`) via the 4-step loop, with human
 approval at every gate.

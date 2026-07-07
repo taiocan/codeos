@@ -111,7 +111,7 @@ Output: `HYPOTHESIZED_INTENT` draft briefs in `backlog/` and draft intents in `i
 **E — Solution Discovery** *(optional, advisory)*
 Use when: exploring a new problem domain before writing individual Feature Briefs — to map candidate feature families, shared vocabulary, event hypotheses, configuration needs, and architectural risks.
 This session type is **optional and non-gating**. Features may enter Stage 1 (Intent Capture) without a prior Solution Discovery session. The standard DBA path — Intent → Contract → Schema → Implement → Tests → Runtime → Reconcile → Replay → Refinement — is unchanged.
-Prompt to load: `.codeos/prompts/00b-solution-discovery.md`
+Prompt to load: `.codeos/prompts/00a-solution-discovery.md`
 Output: non-authoritative planning material only. No output from Session Type E is an approved DBA artifact. Findings outside the session's stated scope are recorded as backlog candidates, not automatically incorporated.
 
 ---

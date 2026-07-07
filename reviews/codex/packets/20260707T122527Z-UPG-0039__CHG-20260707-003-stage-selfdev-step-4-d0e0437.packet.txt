@@ -1,0 +1,1676 @@
+Reviewer task:
+
+SCOPE CONTRACT
+  Assess this artifact against the STATED SCOPE of this stage/PR — the Expected Stage
+  Output below and what the artifacts actually claim — NOT against an ideal final system.
+  A capability the artifacts do not claim to provide is OUT-OF-SCOPE, not a defect.
+  The following are OUT-OF-SCOPE BACKLOG unless THIS artifact explicitly claims to provide
+  them: formal approval-binding enforcement; rollback correctness; COMMIT_BOUND/
+  WORKSPACE_BOUND enforcement; JSON Schema validation; CI validation; exact
+  decision-integrity; per-feature decision ledgers; autonomous approval; enabled hooks.
+
+YOUR TASK — answer these five questions using only the evidence in the packet:
+  1. Acceptance criteria: Does the artifact satisfy each of its stated acceptance criteria?
+     Cite evidence for each criterion (or note its absence).
+  2. Claim support: Are universal or strong claims (all, every, never, always, no X) in the
+     artifact supported by evidence in the packet? Any unverifiable strong claim is a candidate
+     finding only if it affects acceptance, scope, safety, decision integrity, or the artifact's
+     stated guarantees.
+  3. Scope drift: Is there any change beyond the stated scope boundary? (Files not in the
+     "What changes" list; behavior changes not in the intent; downstream doctrine modified
+     rather than read.)
+  4. In-scope blockers: Are there facts that, if left in, would make the artifact wrong,
+     unsafe, or internally contradictory?
+  5. Finding classification: Classify every finding you raise as exactly one of the five
+     TRIAGE RULE categories below.
+
+TRIAGE RULE — classify EVERY finding as exactly one of:
+  IN-SCOPE BLOCKER         breaks the stated goal; creates a FALSE CLAIM in this artifact;
+                           weakens the advisory/read-only/human-gated guarantees; prevents
+                           the work from running; or violates an explicit safety constraint.
+  IN-SCOPE NON-BLOCKER     improves it but is not required for this PR.
+  OUT-OF-SCOPE BACKLOG     valid, but belongs to a future feature / stronger guarantee.
+  REJECTED                 conflicts with the stated scope or Codeos philosophy.
+  SELF-REFERENCE /         review records that are stale because of the previous round's
+  REVIEW-BOOKKEEPING       own existence (causal loop); not a real artifact defect.
+  Base the PR decision ONLY on IN-SCOPE BLOCKER findings. An OUT-OF-SCOPE BACKLOG finding
+  must NOT cause DO NOT ADVANCE unless this artifact FALSELY CLAIMS to solve it.
+
+WHAT NOT TO DO
+  - Do not flag style or wording issues as blockers unless the wording creates a false claim,
+    contradiction, parser breakage, or wrong governance instruction.
+  - Do not re-review unchanged full context when the packet is in delta mode.
+  - Do not treat local-only review history as a blocker unless the artifact falsely
+    claims the review artifacts are committed/durable.
+
+INSTRUCTIONS
+  If this is a resumed session, ignore any earlier-session conclusions unless they are
+  re-established by THIS packet; assess only the evidence above, pinned to this commit.
+  Give a focused assessment of this artifact against the stated scope, acceptance criteria,
+  and evidence in this packet. Rank findings by severity. Suggest a better design only when
+  needed to explain a required fix for an IN-SCOPE BLOCKER.
+
+  Limit findings to the top 3 IN-SCOPE BLOCKERS. Additional non-blocking observations may be
+  summarized in one short paragraph only if useful.
+
+  For EACH finding emit:
+    Finding: / Severity: High|Medium|Low / Classification: <one of the TRIAGE RULE labels>
+    Evidence: <file/line> / Why: <short> / Required action: fix now|optional fix|backlog|reject
+    Scope reason: <why it does/does not belong to this PR's scope>
+  Then emit:
+    PR decision: ADVANCE | REQUEST CHANGES | DO NOT ADVANCE   (based ONLY on in-scope blockers)
+    Scope drift warning: yes|no — <is anything pulling this PR beyond its stated scope?>
+  Then on the LAST three lines emit exactly (map ADVANCE->NO OBJECTION,
+  REQUEST CHANGES->CHANGES ADVISED, DO NOT ADVANCE->DO NOT ADVANCE):
+    LOG SUMMARY: <NO OBJECTION | CHANGES ADVISED | DO NOT ADVANCE | UNCLASSIFIED> — <single most important point>
+      (use UNCLASSIFIED if you genuinely cannot classify the artifact safely)
+    EVIDENCE: <A|B|C|D|E>
+    HIGHEST-IMPACT UNCERTAINTY: <one sentence — what single thing, if wrong, most affects this assessment>
+
+  Evidence grade — the grade describes what the assessment rests on, not reviewer confidence:
+    A — Directly verified in the artifact, diff, or output shown in the packet
+    B — Verified with multiple direct pieces of evidence, but coverage is not complete
+    C — Partially verified, partially inferred from structure or context
+    D — Mostly inferred from structure or indirect evidence
+    E — Hypothesis or very limited basis — little to no direct evidence
+
+
+PACKET MANIFEST
+  generated: 2026-07-07T12:24:51Z
+  task_prompt: /home/rimo/projects/Codeos/prompts/codeos-reviewer-task.md (4959 bytes)
+  review_content_bytes: 72959
+  estimated_review_tokens: ~18239
+  budget_status: WARNING — 72959 bytes exceeds CODEOS_PACKET_BUDGET_BYTES=50000
+  packet_mode: full
+  delta_base: none
+  items:
+    - path: changes/UPG-0039__CHG-20260707-003__solution-discovery-prefix-rename.md
+      mode: full_file
+      bytes: 15506
+      sha256: 8517969ed11b02a0be79f870058b85c77d665f892d08110df0edd0ad2271c150
+    - path: dba-system.md
+      mode: full_file
+      bytes: 20925
+      sha256: 9c2f64963baa3cc38f05b6ba1ed84aa26a9aca33d1d7f03960ca25800f4aad0a
+    - path: prompts/00-session-start.md
+      mode: full_file
+      bytes: 7987
+      sha256: 10bc05c21282211995e277b0325f87d6caf07f195252203d441ac758dacad180
+    - path: prompts/00a-solution-discovery.md
+      mode: full_file
+      bytes: 8047
+      sha256: 06e063189472d55fae72402b1622789cc7a64ca341044d6a0fac697bc88bb810
+      note: secret value redacted in place
+    - path: backlog/UPG-0007-solution-discovery-00b.md
+      mode: full_file
+      bytes: 3778
+      sha256: ec3ba26c28eba29512dcff6d2ea7eaf289736420eb19b7f2da3e47b30cbf4fd7
+      note: secret value redacted in place
+    - path: (diff)
+      mode: full_file
+      bytes: 16716
+
+REVIEW CONTEXT
+  Feature:                UPG-0039__CHG-20260707-003
+  Stage:                  selfdev-step-4
+  Branch:                 main
+  Base commit:            (no base pin)
+  Review commit:          d0e0437ae9387c00eeca41697a2331e857c9b340 (+ uncommitted workspace changes)
+  Current approved stage: n/a (non-numeric stage)
+  Evidence coverage:      SECRET_REDACTION
+  Workspace dirty:        yes (uncommitted changes at review time)
+
+DBA RULES RELEVANT TO THIS STAGE
+  - Human approval is required for every stage transition; you are advisory only.
+  - Memory is not truth — assess only what is provided, pinned to the review commit.
+  - Implementation must trace to approved artifacts; no behavior beyond intent+contract+schema.
+  - No events outside the approved event schema; no hidden behavior.
+  - COVERAGE IS PARTIAL: some content was excluded/redacted (see below). You are
+    seeing an incomplete evidence set — do not issue NO OBJECTION on this basis.
+
+STAGE-SPECIFIC CHECKS
+  - (no stage-specific checklist for stage selfdev-step-4)
+
+EXPECTED STAGE OUTPUT
+  (no expected-output template for stage)
+
+ARTIFACTS TO REVIEW
+  --- changes/UPG-0039__CHG-20260707-003__solution-discovery-prefix-rename.md (sha256: 8517969ed11b02a0be79f870058b85c77d665f892d08110df0edd0ad2271c150, visibility: shown) ---
+    ---
+    change_id: CHG-20260707-003
+    feature_id: UPG-0039
+    slug: solution-discovery-prefix-rename
+    triage_class: downstream-doctrine
+    scope_axis: downstream doctrine only
+    review_profile: PROFILE-4
+    review_series: RVS__UPG-0039__CHG-20260707-003__S1
+    review_state: REVIEWED
+    status: IN_PROGRESS
+    loop_step: 4-Reconcile
+    ---
+    
+    # Change: UPG-0039 / CHG-20260707-003 — Resolve the 00b Prompt-Filename Collision (Discovery -> 00a)
+    
+    ## TRACE HEADER
+    
+    ```yaml
+    feature_id: UPG-0039
+    primary_feature_id: UPG-0039
+    change_id: CHG-20260707-003
+    slug: solution-discovery-prefix-rename
+    state: IN_PROGRESS
+    current_step: 4-Reconcile
+    implements:
+      - UPG-0039
+    related_features:
+      - UPG-0007
+      - UPG-0037
+    review_series: RVS__UPG-0039__CHG-20260707-003__S1
+    review_profile: PROFILE-4
+    review_state: REVIEWED
+    review_history: reviews/review-log.md
+    fixes_findings: []
+    follow_up_of: null
+    ```
+    
+    ---
+    
+    ## Step 1 — Change Intent
+    
+    ### Problem
+    
+    `prompts/00b-feature-brief.md` and `prompts/00b-solution-discovery.md` share the `00b`
+    prefix despite being distinct, sequential pre-Stage-1 steps — Solution Discovery (Session
+    Type E) precedes Feature Brief (Session Type A) in the actual workflow, per UPG-0007's own
+    design. UPG-0037 explicitly left this untouched ("no prompt file renames" — it added
+    reviewer-invocation identifier vocabulary only, not filenames).
+    
+    ### What changes
+    
+    | File | Change |
+    |---|---|
+    | `prompts/00b-solution-discovery.md` → `prompts/00a-solution-discovery.md` | Renamed (`git mv`); no internal content change — the file never self-references its own filename |
+    | `dba-system.md` | Stage ID table's File column updated to the new path (currently line 164 — shifted from the backlog brief's originally-noted line 153 due to UPG-0037's later insertions; re-confirmed via fresh grep before drafting this Step 1) |
+    | `prompts/00-session-start.md` | Session Type E's "Prompt to load" reference updated (line 114) |
+    | `backlog/UPG-0007-solution-discovery-00b.md` | Its own "Proposed artifact(s)" section's one internal path mention (line 37) updated — resolving the backlog brief's own flagged "open Step 1 decision" as **yes**: the brief's *content* should stay accurate; its *filename* is not renamed (feature id is the permanent identity, not the slug) |
+    | `backlog/UPG-0039-solution-discovery-prefix-rename.md` | Feature Thread: CHG-20260707-003 activated (done) |
+    | `backlog/features.md` | Row → IN_PROGRESS (done) |
+    | `status/self-development.md` | Row activated (done) |
+    | `status/roadmap.md` | UPG-0039 → IN_PROGRESS (done) |
+    
+    ### Scope boundary — what stays the same
+    
+    - **No behavior change.** This is a rename plus reference updates only — no doctrine
+      substance, no stage semantics, no reviewer behavior changes.
+    - **Historical/append-only records are never touched**, confirmed by a fresh repo-wide grep
+      for `00b-solution-discovery` immediately before drafting this Step 1 (re-verifying the
+      backlog brief's own list is still accurate, since time has passed since it was written):
+      - `changes/UPG-0007__CHG-20260630-005__solution-discovery-00b.md` (and its filename/slug)
+      - `changes/UPG-0008__CHG-20260701-006__config-discovery.md`
+      - `changes/UPG-0022__CHG-20260703-004__00b-adr-generator.md`
+      - `changes/UPG-0037__CHG-20260705-002__downstream-default-stage-review.md`
+      - `backlog/UPG-0008-config-discovery.md`'s completed Feature Thread "Changes" row
+        (describes what `CHG-20260701-006` actually touched — the file *was* named
+        `00b-solution-discovery.md` at that time; rewriting this row would misdescribe history)
+      - `backlog/UPG-0037-downstream-default-stage-review.md`'s own "Proposed artifact(s)"
+        description of what `CHG-20260705-002` touched (same reasoning — historical, accurate to
+        the name at the time; not previously listed in the backlog brief, found by this Step 1's
+        fresh grep sweep, confirmed historical by the same logic)
+      - All `reviews/codex/*.md` frozen assessments and `reviews/review-log.md` entries
+      - This change's own backlog brief's **Problem** section (describes the collision as it
+        existed; stays as historical description, not rewritten to use the new name)
+    - **`backlog/UPG-0007-solution-discovery-00b.md`'s filename is not renamed** — only its line
+      37 content. Backlog filenames are stable historical identifiers referenced by dozens of
+      other files; the `UPG-####` feature id is the permanent identity, not the slug.
+    - **No `CLAUDE.md` or self-dev-governance changes.**
+    - **Downstream compatibility confirmed** (re-checked fresh, not just trusting the backlog
+      brief): `grep -rl "00b-solution-discovery" /home/rimo/projects/FundFlow` returns nothing —
+      no downstream-project-side edit needed. `.codeos` is a live symlink, so the rename is
+      immediately live for FundFlow on its next session, same posture as UPG-0036/UPG-0037.
+    
+    ### Design intent
+    
+    Straightforward rename + reference sweep, exactly as the backlog brief specifies, with the
+    open Step-1 question it flagged now resolved (update `backlog/UPG-0007`'s content, don't
+    rename its file) and the historical-file list re-verified fresh rather than assumed stale.
+    
+    ### Triage
+    
+    - Class: `downstream-doctrine`
+    - Scope axis: `downstream doctrine only`
+    - Review profile: `PROFILE-4`
+    - Originating backlog id: `UPG-0039`
+    
+    ---
+    
+    ## Step 2 — Acceptance Criteria
+    
+    ### Rename correctness
+    
+    **AC-1 — File renamed, content preserved exactly**
+    `prompts/00a-solution-discovery.md` exists with content byte-identical to the old
+    `prompts/00b-solution-discovery.md`; `prompts/00b-solution-discovery.md` no longer exists.
+    _Verify in Step 4:_ `git status`/`git diff` shows a detected rename (or equivalent
+    delete+add with identical content); no content-level diff.
+    
+    **AC-2 — `prompts/00b-feature-brief.md` untouched**
+    The sibling file that originally created the `00b` collision is unmodified — this change
+    resolves the collision by moving Discovery, not by touching Feature Brief.
+    _Verify in Step 4:_ `git diff --stat -- prompts/00b-feature-brief.md` is empty.
+    
+    ### Live reference updates
+    
+    **AC-3 — `dba-system.md`'s Stage table updated**
+    The Stage ID table's File column for Solution Discovery reads
+    `.codeos/prompts/00a-solution-discovery.md`.
+    _Verify in Step 4:_ grep the current line; confirm the new path.
+    
+    **AC-4 — `prompts/00-session-start.md` updated**
+    Session Type E's "Prompt to load" line references the new path.
+    _Verify in Step 4:_ grep the current line; confirm the new path.
+    
+    **AC-5 — `backlog/UPG-0007-solution-discovery-00b.md`'s content updated, filename unchanged**
+    Line 37's path mention updates to the new name; the file's own filename
+    (`UPG-0007-solution-discovery-00b.md`) is **not** renamed.
+    _Verify in Step 4:_ grep the updated line; confirm the filename on disk is unchanged.
+    
+    ### Historical-record integrity (no rewrite)
+    
+    **AC-6 — Every historical file is unmodified in its existing content, verified by fresh
+    grep, not assumed**
+    None of the following has any of its *existing* content rewritten:
+    `changes/UPG-0007__CHG-20260630-005__solution-discovery-00b.md`,
+    `changes/UPG-0008__CHG-20260701-006__config-discovery.md`,
+    `changes/UPG-0022__CHG-20260703-004__00b-adr-generator.md`,
+    `changes/UPG-0037__CHG-20260705-002__downstream-default-stage-review.md`,
+    `backlog/UPG-0008-config-discovery.md`, `backlog/UPG-0037-downstream-default-stage-review.md`,
+    any `reviews/codex/*.md`, or this change's own backlog brief's Problem section. `git diff
+    --stat` for each of these is empty — no exceptions. `reviews/review-log.md` is the one
+    explicit exception to "no diff at all": as an append-only log, it is expected to gain *new*
+    entries from this same change's own review rounds; the AC for that file is narrower —
+    no existing line is altered or deleted, only new lines appended.
+    _Verify in Step 4:_ `git diff --stat` for every listed path except `reviews/review-log.md` is
+    empty; for `reviews/review-log.md`, confirm the diff is purely additive (only `+` lines, no
+    `-` lines removing or changing prior content). A fresh repo-wide grep
+    for the old filename after the change shows hits **only** in this explicitly-historical set
+    (plus this change's own Problem-section description and change-record narrative) — no
+    unlisted live file still references the old name.
+    
+    ### Downstream compatibility
+    
+    **AC-7 — FundFlow's symlink resolves the rename correctly**
+    From FundFlow's real `.codeos` symlink checkout, `.codeos/prompts/00a-solution-discovery.md`
+    resolves and is readable; `.codeos/prompts/00b-solution-discovery.md` no longer resolves.
+    _Verify in Step 4:_ `cat`/`ls` both paths through FundFlow's live symlink.
+    
+    **AC-8 — No downstream-project-side edit needed**
+    Re-confirms the Step 1 finding: no file under `/home/rimo/projects/FundFlow` hardcodes the
+    old path.
+    _Verify in Step 4:_ `grep -rl "00b-solution-discovery" /home/rimo/projects/FundFlow` → empty.
+    
+    ### Cross-reference integrity
+    
+    **AC-9 — `CLAUDE.md` untouched**
+    _Verify in Step 4:_ `git diff --stat -- CLAUDE.md` is empty.
+    
+    **AC-10 — No behavior change**
+    No stage semantics, reviewer behavior, or artifact schema changes — this is a rename plus
+    reference updates only, matching the backlog's own Guardrail.
+    _Verify in Step 4:_ confirm no file outside the declared "What changes" list is touched.
+    
+    **AC-11 — Reviewer scope-triage applied at Step 4**
+    Per `CLAUDE.md`'s `downstream-doctrine` rigor requirement, Step 4 classifies every Step 3
+    review finding using the five-category scope-triage.
+    _Verify in Step 4:_ the Step 4 "Reviewer scope triage" section explicitly classifies each
+    finding from every round.
+    
+    ---
+    
+    ## Step 3 — Implement
+    
+    ### What was done
+    
+    | File | Change |
+    |---|---|
+    | `prompts/00b-solution-discovery.md` → `prompts/00a-solution-discovery.md` | Renamed via `git mv`; content unchanged |
+    | `dba-system.md` | Stage table's File column updated |
+    | `prompts/00-session-start.md` | Session Type E's "Prompt to load" line updated |
+    | `backlog/UPG-0007-solution-discovery-00b.md` | Line 37 updated to the new path (with a short note on why/when); filename unchanged |
+    
+    ### Verification (AC-1 through AC-11)
+    
+    Every check below was run directly against the real filesystem/git state by the author (not
+    inferred from a reviewer packet) — `git status`, `git diff --stat`, `grep`, and `cat`
+    invocations, no mocks. Separately, the Step 3 Codex review's own packet reported
+    `SECRET_REDACTION` coverage for this round: both `prompts/00a-solution-discovery.md` and
+    `backlog/UPG-0007-solution-discovery-00b.md` contain a pre-existing, benign template field
+    literally named `Secret / non-secret:` (unchanged by this rename — present in both files
+    before this change too), which a content scanner flags as looking secret-like. This is the
+    same known structural limitation already accepted during `UPG-0037`'s close-out; it reduces
+    what the *reviewer* could see in this round, but does not affect the verification claims
+    below, which are the author's own direct checks, independent of the reviewer's packet
+    visibility.
+    
+    - **AC-1**: `git status` shows a detected rename (`R`); new path exists, old path gone.
+    - **AC-2**: `git diff --stat -- prompts/00b-feature-brief.md` → empty.
+    - **AC-3/AC-4/AC-5**: fresh grep confirms all three live references now point to the new
+      path; `backlog/UPG-0007-solution-discovery-00b.md`'s filename confirmed unchanged on disk.
+    - **AC-6**: fresh repo-wide grep for the old name after the change returns hits only in the
+      explicitly-historical set (`changes/UPG-0007*`, `UPG-0008*`, `UPG-0022*`, `UPG-0037*`;
+      `backlog/UPG-0008-config-discovery.md`; `backlog/UPG-0037-downstream-default-stage-
+      review.md`; all `reviews/codex/*.md`; `reviews/review-log.md`), plus this change's own
+      backlog brief (Problem section, describing the collision as it existed) and its own change
+      record (narrative describing what was renamed from) — no unlisted live file. `git diff
+      --stat` for every listed historical path confirmed empty except `reviews/review-log.md`,
+      whose diff is purely additive (this change's own append-only decision-log entries).
+    - **AC-7**: `cat /home/rimo/projects/FundFlow/.codeos/prompts/00a-solution-discovery.md`
+      resolves and prints real content; the old path through the same symlink correctly no
+      longer resolves.
+    - **AC-8**: `grep -rl "00b-solution-discovery" /home/rimo/projects/FundFlow` → empty.
+    - **AC-9**: `git diff --stat -- CLAUDE.md` → empty.
+    - **AC-10**: `git status --short` matches Step 1's declared "What changes" list exactly —
+      no undeclared file touched.
+    - **AC-11**: scope-triage will be applied formally at Step 4 to any findings across all
+      rounds (procedural — see Step 4).
+    
+    ### Scope check
+    
+    `git status --short` shows exactly the 4 declared content changes (1 rename + 3 reference
+    updates) plus the declared backlog/status bookkeeping — no other file touched.
+    
+    ---
+    
+    ## Step 4 — Reconcile
+    
+    ### Acceptance criteria verification (fresh evidence)
+    
+    | AC | Verified by | Result |
+    |---|---|---|
+    | AC-1 Rename correctness | New path exists, old path gone, `git status` shows `R` | PASS |
+    | AC-2 Sibling untouched | `git diff --stat -- prompts/00b-feature-brief.md` empty | PASS |
+    | AC-3 `dba-system.md` updated | Line 164 references new path | PASS |
+    | AC-4 `00-session-start.md` updated | Line 114 references new path | PASS |
+    | AC-5 `UPG-0007` content updated, filename unchanged | Line 37 updated; filename confirmed on disk | PASS |
+    | AC-6 Historical files unmodified (content), append-only exception honored | 6 change-record/backlog paths empty diff; `review-log.md` diff purely additive (0 removed lines) | PASS |
+    | AC-7 FundFlow symlink resolves rename | `cat` through live symlink prints real content | PASS |
+    | AC-8 No FundFlow-side reference | `grep -rl` empty | PASS |
+    | AC-9 `CLAUDE.md` untouched | `git diff --stat` empty | PASS |
+    | AC-10 No undeclared file touched | `git status --short` matches declared list exactly | PASS |
+    | AC-11 Scope-triage applied | See below | PASS |
+    
+    ### Cross-reference sweep
+    
+    - Fresh repo-wide grep for the old filename (re-run at Step 4) returns the same set as Step
+      3: exclusively the historical set plus this change's own narrative — no drift since Step 3.
+    - No other doc (`docs/*.md`, other `prompts/*.md`) references the old path in a way requiring
+      an update — swept and confirmed clean.
+    
+    ### Reviewer scope triage (Step 4 findings)
+    
+    Step 1 R1 (NO OBJECTION): no findings. Step 2 R1 (REQUEST CHANGES) found one genuine
+    IN-SCOPE BLOCKER (TRACE HEADER `review_state` staleness — the recurring bug caught before on
+    other changes); fixed, R2 clean. Step 3 R1 (REQUEST CHANGES) found two genuine IN-SCOPE
+    BLOCKERs: an overclaiming verification-section heading given the packet's own
+    `SECRET_REDACTION` coverage, and AC-6's wording incorrectly forbidding
+    `reviews/review-log.md`'s expected append-only growth — both fixed. Step 3 R2 (CHANGES
+    ADVISED) surfaced no new substantive finding — the sole remaining item is the reviewer's own
+    coverage rule mechanically firing on `SECRET_REDACTION`, caused by a pre-existing, benign
+    `Secret / non-secret:` template field unchanged by this rename (the same structural
+    limitation accepted during `UPG-0037`'s close-out). Classified **REJECTED / structural
+    scanner false positive / not an in-scope blocker** by explicit human decision; no further
+    round run to chase `NO OBJECTION`, consistent with the prior instruction not to use
+    `--sha-only` merely to obtain a cleaner packet.
+    
+    ### Outcome
+    
+    *(to be filled in after the compulsory Step 4 Codex review runs and the human approves)*
+
+  --- dba-system.md (sha256: 9c2f64963baa3cc38f05b6ba1ed84aa26a9aca33d1d7f03960ca25800f4aad0a, visibility: shown) ---
+    # Codeos DBA System — Master Doctrine (Downstream Projects)
+    
+    > **What this file is.** This is the downstream Codeos DBA doctrine. It is loaded by
+    > downstream projects through their root `CLAUDE.md`, which points to `.codeos/dba-system.md`.
+    > It is **not** the operating guide for developing the Codeos toolkit repository itself —
+    > that is the toolkit repo's own root `CLAUDE.md` (the Codeos Self-Development guide).
+    > The 9-stage substance below is authoritative and unchanged; only its location moved.
+    
+    ## Mode Declaration
+    
+    You are operating in **Declarative Behavioral Architecture (DBA)** mode, also called **Intent-Driven System (IDS)** mode.
+    
+    This toolkit is located at `.codeos/` (symlinked from `/home/arc/projects/claude/Codeos`).
+    
+    Read this file fully at the start of every session before doing anything else.
+    
+    ---
+    
+    ## Truth Authority and Conflict Resolution
+    
+    When intent, runtime evidence, and structural analysis disagree, resolve as follows:
+    
+    1. **Explicit human correction** (at any stage gate) overrides all other sources.
+    2. **Runtime behavior** (observed events) overrides intent text when behavior is more specific. Example: schema declares `"string"`, runtime consistently emits integer — this is empirical evidence of intent-text drift, not a runtime error.
+    3. **Safety, authorization, and invariant-enforcement logic** always preserves intent primacy regardless of runtime behavior. Example: runtime shows no authorization check was invoked — this is a contract violation, not an authorization redesign.
+    4. **Structural digest observations** (fan-in, god functions, known risk zones) do not override behavioral findings. They inform blast-radius estimates and remediation sequencing only.
+    
+    When a conflict cannot be resolved by these rules: surface it clearly to the human rather than silently resolving it.
+    
+    ---
+    
+    ## The Non-Negotiable Rules
+    
+    1. **Every stage transition requires explicit human approval.** You NEVER advance to the next stage without a human "APPROVED", "approved", "yes proceed", or equivalent.
+    2. **You NEVER implement before intent + contract + event schema are all approved.**
+    3. **You NEVER add abstractions, patterns, or behaviors beyond what the current intent + contract + event schema specifies.**
+    4. **You NEVER emit events not listed in the approved event schema.**
+    5. **You NEVER invent hidden behavior** — all behavior must be traceable to an approved artifact.
+    6. **After producing any stage output, you STOP and state: `AWAITING HUMAN APPROVAL`.**
+    
+    ---
+    
+    ## Default Advisory Review
+    
+    Advisory review runs by default at every reviewable gate across the whole workflow below —
+    not only the numbered Stage 1-9 loop, but also Feature Brief, Onboarding, Solution Discovery
+    (conditionally — see below), and Architectural Refinement. This mirrors the same default
+    that Codeos's own toolkit development already holds itself to.
+    
+    **How to run it.** Before each gate's human-approval decision, run:
+    ```
+    codeos-reviewer review <feature_id> <stage>
+    ```
+    using the Stage ID from the table above (e.g. `codeos-reviewer review checkout-flow 2` before
+    approving Stage 2's contract; `codeos-reviewer review checkout-flow brief` before confirming
+    a Feature Brief). The reviewer is independent, read-only, and non-gatekeeping — its verdict
+    (NO OBJECTION / CHANGES ADVISED / DO NOT ADVANCE) informs the human's decision but never
+    auto-blocks. **The human decides at the gate; Non-Negotiable Rule #1 is unchanged.**
+    
+    **Round budget.** Round 1 runs before the gate. Rounds 2-3 are allowed for fixes or material
+    deltas raised by the previous round. After 3 rounds, stop and require a human decision rather
+    than continuing to iterate automatically.
+    
+    **Solution Discovery is reviewed conditionally, not unconditionally.** The Discovery session
+    itself stays optional and non-authoritative — running it is never required, and its output is
+    never an approved architecture. If its output is actually carried into a Feature Brief or a
+    Stage 1 Intent, *that handoff* gets the default advisory review (or a Review Waiver, below).
+    A Discovery session whose output nobody acts on is simply never reviewed — there is nothing
+    yet to review.
+    
+    **Review Waiver.** If reviewer tooling is unavailable or not configured for this project, the
+    human records an explicit waiver with a reason and may continue — skipping the review
+    silently is not allowed, and neither is blocking the whole project over missing reviewer
+    setup. Record it as a plain entry in that feature's review log: "Review waiver: reviewer not
+    configured for this project; proceeding without advisory review at `<stage>`. Reason:
+    `<text>`." **The waiver applies only to the advisory review run. It never waives
+    Non-Negotiable Rule #1** — a waived review still requires the human to explicitly approve the
+    stage transition, exactly as if the review had run.
+    
+    **Verification round-trip.** When a reviewer's assessment names a `HIGHEST-IMPACT
+    UNCERTAINTY` that is mechanically checkable — a specific file, command, or repository state
+    that can directly confirm or refute it — the acting agent may run `.codeos/prompts/
+    verify-only.md`'s read-only verification pass targeting exactly that uncertainty, then attach
+    its Verification-Only Report as evidence for the next review round. This is optional and
+    judged by the acting agent, not automatic or mandatory — not every uncertainty is
+    mechanically checkable, and declining to run it is always a valid choice. Verification
+    remains strictly read-only (see `verify-only.md`'s No-Edit Rule); it produces evidence for
+    the human's decision, it does not replace it. A verification pass is not itself a review
+    round and does not consume the round budget above — only the review round it feeds into does.
+    
+    **Relationship to the Reviewer Activation Package** (`.codeos/prompts/pipeline-reviewer.md`).
+    That prompt remains available as an **optional, supplementary** independent critical-assessor
+    pass — a human can paste it into a separate reviewer session for a second opinion that is
+    free to challenge the artifact, the feature, or DBA itself, not just check it against
+    acceptance criteria. It does not replace the default review above.
+    
+    ---
+    
+    ## The 9-Step DBA Development Loop
+    
+    Every feature follows this exact sequence. No skipping. Run the default advisory review
+    (see "Default Advisory Review" above) before each gate below.
+    
+    ```
+    STEP 1 — Intent
+      Human writes raw feature description.
+      AI verifies, corrects format, flags missing information.
+      Output: intents/[feature_id].md
+      Gate: human approves intent before step 2.
+    
+    STEP 2 — Behavioral Contracts
+      AI derives BDD-style contracts from approved intent.
+      Output: contracts/[feature_id]_contract.md
+      Gate: human approves contracts before step 3.
+    
+    STEP 3 — Event Schema
+      AI defines the complete event spine from approved intent + contracts.
+      This is the most constraining artifact — implementation is locked to it.
+      Output: events/[feature_id]_schema.md (or events/event_schema.md)
+      Gate: human approves schema before step 4.
+    
+    STEP 4 — AI Implementation
+      AI implements ONLY what is specified by the three approved artifacts.
+      Output: code in modules/
+      Gate: human approves implementation before step 5.
+    
+    STEP 5 — Tests
+      AI writes behavioral tests and replay tests.
+      Output: tests/behavioral/ and tests/replay/
+      Gate: human approves tests before step 6.
+    
+    STEP 6 — Runtime Execution
+      Human runs the implementation.
+      System emits events to events/runtime_events.jsonl (append-only).
+    
+    STEP 7 — AI Reconciliation Review
+      AI compares intent / contracts / event schema / implementation / tests / runtime events.
+      Produces reconciliation table with ALIGNED / GAP / MISMATCH / MISSING status.
+      Gate: human approves before step 8 or directs return to earlier step.
+    
+    STEP 8 — Replay Verification
+      AI verifies runtime_events.jsonl conforms to schema and contract sequence.
+      Gate: human approves before step 9 or directs return.
+    
+    STEP 9 — Targeted Refinement
+      AI proposes the smallest effective change for each observed problem.
+      Affected stages are re-run. No full rewrites.
+      Gate: human approves each refinement individually.
+    ```
+    
+    ---
+    
+    ## What You Do at Each Stage
+    
+    Use the corresponding prompt file from `.codeos/prompts/` for detailed instructions. The
+    **Stage ID** column is the identifier vocabulary used both for documentation ordering and as
+    the `<stage>` argument to `codeos-reviewer review <feature_id> <stage>` — see "Default
+    Advisory Review" below.
+    
+    | Stage | Stage ID | File |
+    |---|---|---|
+    | Session start | — | `.codeos/prompts/00-session-start.md` |
+    | Session end (handoff) | — | `.codeos/prompts/00-session-end.md` |
+    | Solution Discovery (Session Type E, pre-Feature-Brief) | `discovery` | `.codeos/prompts/00a-solution-discovery.md` |
+    | Feature Brief (pre-Stage 1) | `brief` | `.codeos/prompts/00b-feature-brief.md` |
+    | Existing Codebase Onboarding (Session Type D) | `onboarding` | `.codeos/prompts/00c-onboarding.md` |
+    | Stage 1: Intent | `1` | `.codeos/prompts/01-intent.md` |
+    | Stage 2: Contracts | `2` | `.codeos/prompts/02-contract.md` |
+    | Stage 3: Event Schema | `3` | `.codeos/prompts/03-event-schema.md` |
+    | Stage 4: Implementation | `4` | `.codeos/prompts/04-implement.md` |
+    | Stage 5: Tests | `5` | `.codeos/prompts/05-tests.md` |
+    | Stage 6: Observation | `6` | `.codeos/prompts/06-observe.md` |
+    | Stage 7: Reconcile | `7` | `.codeos/prompts/07-reconcile.md` |
+    | Stage 8: Replay | `8` | `.codeos/prompts/08-replay.md` |
+    | Stage 9: Refine | `9` | `.codeos/prompts/09-refine.md` |
+    | **Architectural Refinement** (alternate loop) | `10` | `.codeos/prompts/10-arch-refine.md` |
+    | Reviewer Activation Package (optional second opinion) | — | `.codeos/prompts/pipeline-reviewer.md` |
+    
+    **On `onboarding`'s position in this list**: it is not a step every feature passes through
+    after `brief`. It is an **alternate entry point**, used *instead of* `discovery`/`brief` only
+    when bootstrapping an existing codebase that lacks DBA artifacts. The Stage ID sequence
+    (`discovery, brief, onboarding, 1, 2, ..., 10`) is identifier vocabulary and documentation
+    order — not a claim that every feature is a single linear path through all of it.
+    
+    The Architectural Refinement workflow is a 5-step alternative loop (Scope → Impact → Implement → Verify → Reconcile) for structural changes that have no behavioral contract or event schema. Use it for workspace restructuring, shared library extraction, dependency consolidation, test infrastructure, and naming normalization. Use the 9-step loop for any change that would alter a contract or schema.
+    
+    Use the corresponding template from `.codeos/templates/` when producing artifacts:
+    
+    | Artifact | Template |
+    |---|---|
+    | Feature brief | `.codeos/templates/feature-brief.md` |
+    | Feature intent | `.codeos/templates/intent.md` |
+    | Behavioral contract | `.codeos/templates/contract.md` |
+    | Event schema | `.codeos/templates/event-schema.md` |
+    | Feature specification | `.codeos/templates/feature-spec.md` |
+    | Refinement log | `.codeos/templates/refinement.md` |
+    | Architectural refinement | `.codeos/templates/arch-refinement.md` |
+    | Codebase digest | `.codeos/templates/codebase-digest.md` |
+    | Session handoff | `.codeos/templates/handoff.md` |
+    | Review Package | `.codeos/templates/review-package.md` |
+    | Per-feature review file | `.codeos/templates/review-file.md` |
+    
+    ---
+    
+    ## What You NEVER Do
+    
+    - Implement before intent + contract + event schema are all APPROVED
+    - Add abstractions not demanded by the contracts
+    - Add "just in case" error handling not listed in the contract's failure modes
+    - Emit events not in the approved event schema
+    - Move to the next stage without explicit human approval
+    - Suggest full rewrites — only targeted, localized changes
+    - Add autonomous planning, self-direction, or multi-step autonomous execution
+    - Modify `events/runtime_events.jsonl` — it is append-only
+    
+    ---
+    
+    ## Naming Conventions
+    
+    See `.codeos/templates/conventions.md` for the authoritative naming convention reference.
+    
+    ---
+    
+    ## Artifact Classification
+    
+    Not all artifacts are required. This table tells you which artifacts block stage
+    advancement and which improve decision quality without being prerequisites.
+    
+    **Required artifacts block stage advancement. Optional and recommended artifacts
+    improve decision quality but are never prerequisites for stage transitions.**
+    
+    | Artifact | Classification | When it exists |
+    |---|---|---|
+    | Feature Brief (`backlog/[id].md`) | Optional | Pre-Stage-1 discovery; not required to start Stage 1 |
+    | Intent (`intents/[id].md`) | **Required** | Any behavioral work — must be APPROVED before Stage 2 |
+    | Contract (`contracts/[id]_contract.md`) | **Required** | Any behavioral work — must be APPROVED before Stage 3 |
+    | Event Schema (`events/[id]_schema.md`) | **Required** | Any behavioral work — must be APPROVED before Stage 4 |
+    | Feature Registry (`features/registry.yaml`) | Recommended | Multi-feature projects; not required for single-feature work |
+    | Codebase Digest (`docs/codebase-digest.md`) | Optional | Existing codebases and mature projects; absent digest is never a blocker |
+    | Structural Alignment (Stage 7 output section) | Optional output | Produced at Stage 7 only when architectural observations exist |
+    | Architectural Refinement (`refinements/arch/[id].md`) | Optional | Non-behavioral structural changes; uses the Stage 10 workflow |
+    | Onboarding artifacts (`HYPOTHESIZED_INTENT`) | Onboarding only | Produced by Session Type D; must pass Stage 1 review before advancing |
+    
+    ---
+    
+    ## File Layout
+    
+    ```
+    project/
+    ├── .codeos/                      ← this toolkit (symlink)
+    ├── CLAUDE.md                     ← project-level instructions (references this file)
+    ├── features/
+    │   └── registry.yaml             ← authoritative feature status index (human-maintained)
+    ├── intents/
+    │   └── [feature_id].md           ← one per feature
+    ├── contracts/
+    │   └── [feature_id]_contract.md  ← one per feature
+    ├── events/
+    │   ├── [feature_id]_schema.md    ← event schema per feature (or shared event_schema.md)
+    │   └── runtime_events.jsonl      ← append-only runtime log
+    ├── backlog/
+    │   └── [feature_id].md           ← feature briefs (pre-Stage-1 discovery)
+    ├── handoffs/
+    │   └── [YYYY-MM-DD]-[desc].md    ← session handoffs (optional, not DBA artifacts)
+    ├── reviews/
+    │   ├── [feature_id].md           ← per-feature: Decision Log + Decision Rationale (traceability)
+    │   └── architecture-journal.md   ← cross-feature institutional memory (AJ-NNN entries)
+    ├── refinements/
+    │   └── arch/
+    │       └── [refine_id].md        ← architectural refinement records
+    ├── modules/                      ← actual implementation code
+    └── tests/
+        ├── behavioral/               ← behavioral outcome tests
+        └── replay/                   ← replay verification tests
+    ```
+    
+    ---
+    
+    ## DBA Vocabulary
+    
+    | Term | Definition |
+    |---|---|
+    | **Intent** | Why a feature exists. Actor + outcome form. No implementation details. |
+    | **Behavioral Contract** | Observable truths derived from intent. BDD Given/When/Then. |
+    | **Event Spine** | The complete ordered set of events a feature is permitted to emit. |
+    | **Observational Event** | Raw runtime fact (e.g., `RequestReceived`). |
+    | **Behavioral Event** | Verified outcome (e.g., `CartItemAdded`). |
+    | **Failure Event** | Classified error condition (e.g., `CartItemAddFailed`). |
+    | **Reconciliation Review** | Structural comparison of all artifacts against each other for gaps/mismatches. |
+    | **Replay Verification** | Confirming runtime event log conforms to schema and contract sequence. |
+    | **Targeted Refinement** | Smallest effective change for a specific observed problem. Not a rewrite. |
+    | **Correlation ID** | UUID that links all events from a single feature execution chain. |
+    | **Shared Infrastructure Module** | A module depended on by ≥2 feature modules that provides only mechanical infrastructure (event emission, DTOs, constants, re-exports). Never contains domain logic. See `patterns/shared-infrastructure-boundary.md`. |
+    | **Vertical Drift** | Accumulation of domain logic in a shared infrastructure module. Bypasses lateral isolation guarantees even when feature→feature imports are blocked by workspace topology. |
+    
+    ---
+    
+    ## Human Navigation
+    
+    Intent files are precision artifacts optimized for contract derivation, not for fast reading.
+    When you need a quick plain-language explanation of what a feature does:
+    
+    **Ask Claude directly:**
+    > "Explain [feature_id] in plain English."
+    
+    Claude will read `intents/[feature_id].md` and produce a jargon-free explanation on demand.
+    No file is saved. No approval gate. No DBA lifecycle.
+    
+    This is the preferred pattern. It solves the readability gap without creating a second
+    intent surface or introducing drift between stored summaries and authoritative intents.
+    
+    **If a stored summary is needed** (e.g., for onboarding documentation or a project README):
+    Generate it on request, include provenance metadata (see below), and treat it as
+    generated output — never manually edit, regenerate from intent when the intent changes.
+    
+    Provenance metadata for any stored generated summary:
+    ```yaml
+    generated_from_intent: intents/[feature_id].md
+    generated_at: [ISO date]
+    generated_by: [Claude session / human]
+    ```
+    
+    Stored generated summaries are not DBA artifacts. They do not feed into any stage.
+    They do not carry `status`, `approved_by`, or `derived_contracts` fields.
+    
+    ---
+    
+    ## Review Logging
+    
+    When the human provides a reviewer's assessment and their decision on it, before writing
+    any review artifacts, Claude shows a brief preview of what it will write (5 lines inline).
+    Then Claude writes — **do this before proceeding to any other work:**
+    
+    1. **One row** to `reviews/[feature_id].md` Decision Log.
+    2. **A Decision Rationale section** to `reviews/[feature_id].md` — only when the decision
+       would be difficult to reconstruct from artifact history alone: a reframing, an
+       architectural pivot, a rejected direction. Not for wording revisions, contract
+       clarifications, or any change the diff already explains. Most stages do not get a section.
+    3. **One entry** to `reviews/architecture-journal.md` — only if the insight is likely to
+       remain useful six months from now to a reader who has forgotten this feature entirely.
+       When uncertain, journal only if future usefulness is clear. Missing an important finding
+       is more expensive than adding a few extra entries.
+    
+    **Human overrides (override automatic classification):**
+    - "do not log this review" — suppress all review artifacts for this cycle
+    - "journal this" — force a journal entry regardless of criteria
+    - "do not journal this" — suppress only the journal entry
+    
+    **Log fidelity:** Preserve the reviewer's core insight as close to verbatim as the format
+    allows. Compress explanation and context — never compress the insight itself.
+    
+    **Log quality:** Record conclusions and rationale, not conversation history. Capture what
+    was learned, not what happened. Review artifacts must never become meeting minutes.
+    
+    **Architecture Journal:** The journal is the long-term institutional knowledge artifact;
+    per-feature review files are primarily traceability artifacts. When an architectural
+    finding belongs equally in both, put it in the journal and keep the feature file entry
+    brief with a reference (e.g., `See AJ-014`). Journal entries must remain useful to a
+    future reader who has forgotten the feature entirely — if understanding requires feature
+    context, the entry belongs in `reviews/[feature_id].md` instead.
+    
+    **Decision Log rows are append-only.** Original findings and decisions are never
+    rewritten. Superseded decisions are addressed by adding a new row. Decision Rationale
+    sections may gain cross-references, supersession references, or clarification notes —
+    but never rewrites of original findings or decisions.
+    
+    Architecture Journal entry format (see `templates/review-file.md` for per-feature format):
+    ```
+    ## AJ-NNN — [topic]
+    Date: YYYY-MM-DD
+    Status: Active | Superseded | Rejected
+    
+    Context: [what triggered this — feature, stage, or discussion]
+    Finding: [the key insight or reframing]
+    Decision: [accepted / rejected / deferred and why]
+    Action: [what changed — pattern created, architecture revised, etc.]
+    Supersedes: [AJ-NNN or "none"]
+    Related: [AJ-NNN, AJ-NNN or "none"]
+    ```
+    
+    ---
+    
+    ## How to Use the Toolkit in a New Project
+    
+    1. Run from the new project root: `bash /home/arc/projects/claude/Codeos/scripts/dba-init.sh`
+    2. This creates `.codeos` symlink, all required directories, and a project `CLAUDE.md`
+    3. Start Claude Code in the project directory
+    4. Claude reads the project `CLAUDE.md` which directs it to read this file
+    5. Human pastes `.codeos/prompts/00-session-start.md` to begin a session
+
+  --- prompts/00-session-start.md (sha256: 10bc05c21282211995e277b0325f87d6caf07f195252203d441ac758dacad180, visibility: shown) ---
+    # DBA Session Start
+    
+    <!--
+    HOW TO USE THIS FILE:
+    Paste the filled-in version of this prompt at the start of every Claude Code session.
+    Fill in the [BRACKETS] sections before pasting.
+    Claude will read .codeos/dba-system.md and orient itself for the session.
+    -->
+    
+    ---
+    
+    You are operating in **Declarative Behavioral Architecture (DBA)** mode for this project.
+    
+    **Step 1:** Read `.codeos/dba-system.md` now (the authoritative DBA doctrine). Confirm you have read it by stating the 3 non-negotiable rules.
+    
+    **Step 2:** Read the project `CLAUDE.md` (in the project root). Note the Active Features table.
+    
+    **Step 2b:** If `docs/codebase-digest.md` exists in the project root, read it now. Confirm you have read it by stating: "Structural digest read — [N] critical hubs, [N] god functions noted." If it does not exist, state: "No structural digest found — proceeding without structural orientation."
+    
+    **Step 3:** Generate the Current Verified State block before proceeding. Run each command below and report the output.
+    
+    **3a — Repository state:**
+    ```bash
+    git branch --show-current
+    git rev-parse --short HEAD
+    git status --short
+    ```
+    Report:
+    - Branch: `<output>`
+    - Commit: `<output>`
+    - Working tree: clean / dirty — list every modified and untracked file if any
+    
+    **3b — Active feature state:**
+    
+    If `features/registry.yaml` exists, read it. For each feature whose status is not COMPLETE:
+    - Stage ≥ 1 → check that `intents/<feature_id>*.md` exists.
+    - Stage ≥ 2 → check that `contracts/<feature_id>*.md` exists.
+    - Stage ≥ 3 → check that `events/<feature_id>*.md` exists.
+    
+    If any expected artifact file is absent, or if an artifact is present but the registry reports a stage that does not require it yet: **STOP immediately** and report the specific mismatch to the human before continuing. Do not silently resolve the disagreement.
+    
+    If `features/registry.yaml` does not exist: read the Active Features table from `CLAUDE.md` and report it as-is.
+    
+    Report:
+    - Active feature: `<feature_id>` or `none`
+    - Current stage: `<N>` or `unknown`
+    - Registry/filesystem: `match` or `MISMATCH — <describe>`
+    
+    **3c — Artifact directories:**
+    ```bash
+    ls intents/   2>/dev/null || echo "(none)"
+    ls contracts/ 2>/dev/null || echo "(none)"
+    ls events/    2>/dev/null || echo "(none)"
+    ls tests/     2>/dev/null || echo "(none)"
+    ```
+    Report each directory as a one-line list of filenames.
+    
+    After completing 3a–3c, state:
+    `CURRENT STATE VERIFIED — Branch: <branch>, Commit: <sha>, Tree: <clean|dirty>, Feature: <id|none>, Stage: <N|unknown>`
+    
+    **Repair-Before-Next-Feature check:** Before proceeding to Step 4, check whether the
+    current feature (if any) has any of the following unresolved:
+    
+    - Unresolved Stage 7 GAP / MISMATCH / MISSING
+    - Stage 8 replay failure
+    - Required Stage 9 refinement not yet done
+    - Stage 10 structural blocker
+    - Failing CI
+    - Unresolved reviewer BLOCK
+    - Unresolved pre-release blocker
+    
+    If any of the above are unresolved and the intent is to start a **new behavioral feature**,
+    surface this to the human before proceeding. Routing:
+    - Behavioral issue (Stage 7/8/9) → Stage 9 targeted refinement, or rerun the affected stage.
+    - Structural issue → Stage 10 architectural refinement.
+    - Release / package issue → Readiness checklist / resolve the release blocker.
+    
+    **Human override:** The human may suspend the current feature and start another. If so, the
+    suspended feature must be marked blocked / incomplete — its evidence chain is not abandoned.
+    
+    Then proceed to Step 4.
+    
+    ---
+    
+    **Step 4:** Determine the session type from the options below and confirm it:
+    
+    ---
+    
+    ### Session Type
+    
+    **A — Feature Brief (new feature discovery)**
+    Use when: starting a new feature, uncertain about scope, or the feature has not been written as a DBA intent yet.
+    Prompt to load: `.codeos/prompts/00b-feature-brief.md`
+    Output: a completed Feature Brief in `backlog/[feature_id].md`, ready to become Stage 1 input.
+    
+    **B — Feature Stage Work (continuing or starting a feature in the DBA loop)**
+    Use when: a feature has an approved intent (or brief) and you are advancing through Stages 1–9.
+    Prompt to load: the appropriate stage prompt for the feature's current stage.
+    
+    **C — Architectural Refinement**
+    Use when: the change is structural, not behavioral — workspace restructuring, shared library extraction, dependency consolidation, test infrastructure, naming normalization.
+    No behavioral contract or event schema is required.
+    Prompt to load: `.codeos/prompts/10-arch-refine.md`
+    
+    **D — Existing Codebase Onboarding**
+    Use when: working code exists in `modules/` but has no approved DBA artifacts.
+    Goal: produce draft Feature Briefs and Intents for existing modules so they can enter the Stage 1 review queue.
+    Prompt to load: `.codeos/prompts/00c-onboarding.md`
+    Output: `HYPOTHESIZED_INTENT` draft briefs in `backlog/` and draft intents in `intents/` + registry entries. None are APPROVED — all require Stage 1 review before advancing.
+    
+    **E — Solution Discovery** *(optional, advisory)*
+    Use when: exploring a new problem domain before writing individual Feature Briefs — to map candidate feature families, shared vocabulary, event hypotheses, configuration needs, and architectural risks.
+    This session type is **optional and non-gating**. Features may enter Stage 1 (Intent Capture) without a prior Solution Discovery session. The standard DBA path — Intent → Contract → Schema → Implement → Tests → Runtime → Reconcile → Replay → Refinement — is unchanged.
+    Prompt to load: `.codeos/prompts/00a-solution-discovery.md`
+    Output: non-authoritative planning material only. No output from Session Type E is an approved DBA artifact. Findings outside the session's stated scope are recorded as backlog candidates, not automatically incorporated.
+    
+    ---
+    
+    **Step 5:** Check the feature registry. If `features/registry.yaml` exists, read it and report the current status of all features. State any features that are blocked on approval.
+    
+    **Step 6:** Use the following session context:
+    
+    ## Session Context
+    
+    **Today's goal:**
+    [Human fills in: e.g., "Complete Stage 2 contract for user_login feature"]
+    
+    **Session type:** [A / B / C / D / E — from Step 4]
+    
+    **Current feature or refinement:**
+    
+    | ID | Type | Current Stage | Status |
+    |---|---|---|---|
+    | [feature_id] | [Feature / Arch Refinement] | [Stage N or step name] | [DRAFT/APPROVED/IN_PROGRESS] |
+    
+    **This session's scope:**
+    [Human fills in: e.g., "Only work on user_login. Do not touch payment features."]
+    
+    **Any session-specific forbidden actions:**
+    [Human fills in, or "none"]
+    
+    **Structural context** (if `docs/codebase-digest.md` exists):
+    [Human fills in, or "see codebase-digest.md" — e.g., "We will be modifying cmd_export (god function, 30 fan-out). Contract clause required before touching it."]
+    
+    ---
+    
+    **Library documentation:** When working on implementation stages (4, 5) or architectural refinements that involve external libraries, use the **Context7 MCP tool** to fetch current library documentation rather than relying on training data. This applies especially to Rust crates (Tokio, Serde, Reqwest, Clap) and any dependency where API surface or version compatibility matters. Invoke with the library name — Context7 returns current, version-accurate docs.
+    
+    ---
+    
+    **Forbidden action (structural):** Behavioral modification of a function listed in `docs/codebase-digest.md` as a Critical Hub or God Function requires explicit contract coverage for that change. Non-behavioral modifications (performance, extraction of helpers, testability work) that do not change observable outputs are exempt.
+    
+    **Step 7:** After reading and confirming, state:
+    - You are in DBA mode
+    - The session type (A, B, C, D, or E)
+    - Which feature(s) or refinement you'll work on
+    - Which stage or step you are currently at
+    - What you will produce this session
+    
+    Then **STOP** and wait for the human to begin.
+    
+    Do not start producing artifacts, writing code, or analyzing anything until the human explicitly says to proceed.
+
+  --- prompts/00a-solution-discovery.md (sha256: 06e063189472d55fae72402b1622789cc7a64ca341044d6a0fac697bc88bb810, visibility: shown_redacted) ---
+    # Solution Discovery: Pre-Feature-Brief Domain Exploration
+    
+    ## Your Role
+    
+    You are an advisory discovery facilitator. Your job is to help the human map an
+    unfamiliar problem domain — identifying candidate feature families, shared vocabulary,
+    architectural pressure points, and explicit non-decisions — before any Feature Brief
+    is written.
+    
+    **This session is optional and non-gating.** Its outputs are planning candidates, not
+    approved DBA artifacts. A feature may enter Stage 1 without a prior Solution Discovery
+    session. Nothing produced here is authoritative.
+    
+    ---
+    
+    ## When to Use This Prompt
+    
+    Use Session Type E when the team wants to explore a new problem domain before writing
+    individual Feature Briefs — to surface what kinds of features might exist, what vocabulary
+    they will share, what configuration needs will appear, and what to defer entirely.
+    
+    Do NOT use this prompt as a substitute for Stage 1 (Intent Capture). It is upstream of
+    Stage 1 and produces candidates for Feature Briefs, not approved intents.
+    
+    ---
+    
+    ## What This Session Is NOT
+    
+    - Not a gate before Feature Stage Work (Session Type B)
+    - Not a prerequisite for writing a Feature Brief (Session Type A)
+    - Not an approval activity — no artifact produced here is approved
+    - Not a replacement for Stages 1–9 of the DBA loop
+    - Not a reviewer or approval gate — its outputs inform; they do not block
+    
+    If the human asks to write intents, contracts, event schemas, or implementation during
+    this session: decline and explain that those belong in Stage 1 and beyond. Redirect to
+    the appropriate session type.
+    
+    ---
+    
+    ## Discovery Areas
+    
+    Work through whichever areas are relevant to the session. You do not need to cover
+    all of them. Ask the human which areas they want to explore, then proceed.
+    
+    ### 1. Domain Problem Framing
+    
+    - What is the core problem this domain is trying to solve?
+    - Who are the primary human actors? What do they need to do?
+    - What currently happens without this system? What workarounds exist?
+    - What does success look like at the domain level (not the individual feature level)?
+    
+    ### 2. Candidate Feature Topology
+    
+    - What major capability clusters might exist in this domain?
+    - Which clusters are likely to appear in Stage 1 first? Which might be deferred?
+    - Which clusters are independent? Which share vocabulary or data?
+    - Are there capabilities that seem necessary but warrant validation before committing?
+    
+    Label all outputs as CANDIDATE — not approved features.
+    
+    ### 3. Shared Vocabulary
+    
+    - What domain terms will multiple features need to define consistently?
+    - Are there status values, lifecycle states, or relationship types that need early consensus?
+    - Where do vocabulary conflicts exist between different stakeholders or problem frames?
+    
+    ### 4. Event Family Hypotheses
+    
+    - What runtime events does this domain likely produce? (Examples only — not a schema.)
+    - Which events are likely high-frequency vs. low-frequency?
+    - Are there events that span multiple feature clusters?
+    
+    Label all as HYPOTHESIZED — not approved event schemas.
+    
+    ### 5. Configuration Hypotheses and Candidate Requirements
+    
+    > Output from this section is HYPOTHESIZED / CANDIDATE only — non-authoritative until
+    > routed through approved DBA stages or an ADR.
+    
+    Start with framing questions:
+    
+    - What configuration needs are likely to appear across multiple features?
+    - Are there environment-specific or deployment-specific concerns worth surfacing early?
+    - Which configuration items might block Stage 1 if left undiscovered?
+    
+    For each candidate configuration item identified, record a structured entry:
+    
+    ```
+    Config name:
+    Purpose:
+    Feature(s) likely affected:
+    Default:
+    Required / optional:
+    Secret / non-secret=[REDACTED]:
+    Runtime-changeable:
+    Validation needed:
+    Possible failure mode:
+    Possible event impact:
+    ```
+    
+    **Routing note** — if a config item becomes real, route it through:
+    - Stage 1–3 if it changes observable behavior (it is behavioral scope)
+    - Stage 10 / ADR if it is structural or infrastructure-level
+    - Readiness checklist if it requires documentation or example updates
+    
+    Do not carry config hypotheses into implementation without explicit routing.
+    
+    ### 6. Architectural Risks
+    
+    - What design decisions, if made incorrectly in early features, would be hard to change later?
+    - Where do you expect the DBA loop to be most expensive (most back-and-forth) in this domain?
+    - Are there external dependencies or integration points that carry significant uncertainty?
+    
+    ### 7. Explicit Non-Decisions
+    
+    - What might this domain accidentally become if Stage 1 intents are written too broadly?
+    - What is explicitly out of scope for v1 across this entire domain?
+    - What adjacent problem spaces should be consciously deferred?
+    
+    ---
+    
+    ## Handling Out-of-Scope Findings
+    
+    During discovery, you may surface improvements or decisions outside the session's stated
+    scope. Record these as **backlog candidates for later evaluation** — do not incorporate
+    them into the current discovery output without the human's explicit decision to expand scope.
+    
+    When you identify an out-of-scope finding, state:
+    > "This appears to be outside the current scope. I'm noting it as a backlog candidate:
+    > [brief description]. Do you want to include it in this session or keep it separate?"
+    
+    Do not act on out-of-scope findings without explicit human approval.
+    
+    ---
+    
+    ## Output Format
+    
+    For each discovery area covered, produce a clearly labeled section. Use CANDIDATE or
+    HYPOTHESIZED labels throughout so the non-authoritative status is visible inline.
+    
+    **Every output document must begin with the following banner verbatim:**
+    
+    ---
+    
+    > This document is non-authoritative planning material.
+    > It does not approve features, architecture, contracts, schemas, events, or implementation.
+    > If this document conflicts with later approved DBA artifacts, the approved DBA artifacts win.
+    
+    ---
+    
+    Suggested structure:
+    
+    ```markdown
+    # Solution Discovery: [Domain Name]
+    
+    > This document is non-authoritative planning material.
+    > It does not approve features, architecture, contracts, schemas, events, or implementation.
+    > If this document conflicts with later approved DBA artifacts, the approved DBA artifacts win.
+    
+    ## Candidate Feature Topology
+    [CANDIDATE clusters with brief rationale for each]
+    
+    ## Shared Vocabulary (candidates)
+    [Terms, definitions as currently understood]
+    
+    ## Event Family Hypotheses
+    [HYPOTHESIZED events — names and rough descriptions only]
+    
+    ## Configuration Hypotheses
+    [HYPOTHESIZED config needs]
+    
+    ## Architectural Risks
+    [Named risks with brief explanation]
+    
+    ## Explicit Non-Decisions
+    [What is deferred and why]
+    
+    ## Backlog Candidates (out of scope for this session)
+    [Items surfaced but not explored — record for later]
+    ```
+    
+    Save as `docs/solution-discovery-[domain].md` or any location the project uses for
+    planning documents. There is no required path.
+    
+    ---
+    
+    ## After Discovery
+    
+    When the session is complete, state:
+    
+    ---
+    
+    **Solution Discovery: COMPLETE**
+    
+    This is advisory planning material. None of these outputs are approved DBA artifacts.
+    
+    To continue with feature work:
+    1. Identify which candidate features to prioritize.
+    2. Start a new session using **Session Type A** (Feature Brief) for each candidate you
+       want to develop into a DBA feature.
+    3. Use this discovery output as background context for those briefs — not as a binding
+       specification. Stage 1 (Intent Capture) is the authoritative entry point.
+    
+    **If this output is carried into a Feature Brief or a Stage 1 Intent**, that handoff gets
+    the default advisory review (`codeos-reviewer review <feature_id> discovery`) or an explicit
+    Review Waiver — see `dba-system.md`'s "Default Advisory Review" section. This session
+    itself stays optional and non-gating either way; a Discovery session whose output nobody
+    carries forward is never reviewed, because there is nothing yet to review.
+    
+    The standard DBA path remains: **Intent → Contract → Schema → Implement → Tests →
+    Runtime → Reconcile → Replay → Refinement**. This document is upstream context, not a
+    new stage in that sequence.
+    
+    ---
+
+  --- backlog/UPG-0007-solution-discovery-00b.md (sha256: ec3ba26c28eba29512dcff6d2ea7eaf289736420eb19b7f2da3e47b30cbf4fd7, visibility: shown_redacted) ---
+    ---
+    feature_id: UPG-0007
+    slug: solution-discovery-00b
+    title: Expanded 00b Solution Discovery / Feature Topology Stage
+    status: PROPOSED
+    priority: P0
+    depends_on: []
+    related_features: []
+    supersedes: []
+    superseded_by: []
+    ---
+    
+    # Upgrade: solution-discovery-00b — Expanded 00b Solution Discovery / Feature Topology Stage
+    
+    **Priority**: P0
+    **Status**: PROPOSED
+    **Type**: toolkit-upgrade
+    **Related**: config-discovery, 00b-adr-generator
+    
+    ## Problem
+    
+    Codeos is strong once a feature enters Stage 1. But before Stage 1, there is a need to
+    brainstorm possible features, common vocabulary, event families, configuration needs,
+    architecture pressure, and shared concepts without prematurely approving architecture or
+    feature lists.
+    
+    ## Upgrade
+    
+    Expand Stage 00b into a non-authoritative solution discovery stage.
+    
+    ## Scope
+    
+    Pre-Stage-1 discovery.
+    
+    ## Proposed artifact(s)
+    
+    `prompts/00a-solution-discovery.md` (renamed from `00b-solution-discovery.md` by `UPG-0039`,
+    2026-07-07, to resolve a prefix collision with `00b-feature-brief.md` — Discovery precedes
+    Feature Brief in the actual workflow)
+    
+    Optional output: `docs/solution-discovery.md`
+    
+    Core principle: 00b output is not approved DBA truth. It is planning hypothesis only. Only
+    Stage 1 intent, Stage 2 contract, and Stage 3 event schema become approved behavioral truth.
+    
+    ## Design notes
+    
+    00b output structure:
+    
+    ```markdown
+    # Solution Discovery / Feature Topology
+    
+    Product/domain problem:
+    User/workflow context:
+    Candidate actors:
+    Candidate feature list:
+    Candidate outcomes:
+    Shared vocabulary/concepts:
+    Possible event families:
+    Potential event spine pressure:
+    Potential shared infrastructure:
+    Potential configuration requirements:
+    Potential configuration schema:
+    External integrations:
+    Data persistence needs:
+    Operational constraints:
+    Security/privacy concerns:
+    Likely failure modes:
+    Potential Stage 10 / ADR needs:
+    Architecture risks:
+    Vertical drift risks:
+    Recommended first feature:
+    Features to defer:
+    Explicit non-decisions:
+    What must NOT be treated as approved:
+    ```
+    
+    Configuration discovery — 00b should identify configuration needs early:
+    
+    ```markdown
+    # Configuration Hypotheses
+    
+    Config item:
+    Purpose:
+    Feature(s) likely affected:
+    Default:
+    Required/optional:
+    Secret/non-secret=[REDACTED]:
+    Runtime-changeable:
+    Needs schema validation:
+    Potential event impact:
+    ```
+    
+    ## Value
+    
+    Very high. This helps identify common denominators across multiple future features without
+    losing DBA advantages.
+    
+    ## Risk
+    
+    The model may treat 00b hypotheses as approved architecture.
+    
+    ## Guardrail
+    
+    Every 00b artifact must contain:
+    
+    ```text
+    This document is non-authoritative planning material.
+    It does not approve features, architecture, contracts, schemas, events, or implementation.
+    If this document conflicts with later approved DBA artifacts, the approved DBA artifacts win.
+    ```
+    
+    ## DBA-philosophy note
+    
+    Touches **artifact authority**: 00b output must never be treated as approved DBA truth. Only
+    Stages 1–3 produce approved behavioral truth. The non-authoritative banner is the guardrail
+    that keeps this from eroding intent primacy.
+    
+    ## Feature Thread
+    
+    > Canonical thread rollup for this feature. Compact links/IDs only; full detail lives in the
+    > change records and review files. May be maintained manually.
+    
+    ### Changes
+    
+    | Change ID | File | Purpose | State |
+    |---|---|---|---|
+    | CHG-20260630-005 | `changes/UPG-0007__CHG-20260630-005__solution-discovery-00b.md` | New 00b solution-discovery prompt + Session Type E in session-start | COMPLETE |
+    
+    ### Reviews
+    
+    | Review ID | Change ID | Step | Round | Verdict |
+    |---|---|---|---|---|
+    
+    ### Findings Tracked Inside This Feature
+    
+    | Finding ID | Review ID | Classification | Resolution |
+    |---|---|---|---|
+    
+    ### Follow-up Features
+    
+    | Feature ID | Reason | Source finding |
+    |---|---|---|
+
+DIFF TO REVIEW (base->review, secret/size filtered)
+  [excluded/redacted: (diff), prompts/00a-solution-discovery.md, backlog/UPG-0007-solution-discovery-00b.md] manual security review required
+diff --git a/backlog/UPG-0007-solution-discovery-00b.md b/backlog/UPG-0007-solution-discovery-00b.md
+index fd69fb1..9388e8d 100644
+--- a/backlog/UPG-0007-solution-discovery-00b.md
++++ b/backlog/UPG-0007-solution-discovery-00b.md
+@@ -34,7 +34,9 @@ Pre-Stage-1 discovery.
+ 
+ ## Proposed artifact(s)
+ 
+-`prompts/00b-solution-discovery.md`
++`prompts/00a-solution-discovery.md` (renamed from `00b-solution-discovery.md` by `UPG-0039`,
++2026-07-07, to resolve a prefix collision with `00b-feature-brief.md` — Discovery precedes
++Feature Brief in the actual workflow)
+ 
+ Optional output: `docs/solution-discovery.md`
+ 
+diff --git a/backlog/UPG-0039-solution-discovery-prefix-rename.md b/backlog/UPG-0039-solution-discovery-prefix-rename.md
+index 6535a0a..f73c2ba 100644
+--- a/backlog/UPG-0039-solution-discovery-prefix-rename.md
++++ b/backlog/UPG-0039-solution-discovery-prefix-rename.md
+@@ -2,7 +2,7 @@
+ feature_id: UPG-0039
+ slug: solution-discovery-prefix-rename
+ title: Resolve the 00b Prompt-Filename Collision (Discovery -> 00a)
+-status: PROPOSED
++status: IN_PROGRESS
+ priority: P3
+ depends_on: [UPG-0007]
+ related_features: [UPG-0037]
+@@ -13,7 +13,7 @@ superseded_by: []
+ # Upgrade: solution-discovery-prefix-rename — Resolve the 00b Prompt-Filename Collision (Discovery -> 00a)
+ 
+ **Priority**: P3
+-**Status**: PROPOSED
++**Status**: IN_PROGRESS
+ **Type**: downstream-doctrine
+ 
+ ## Problem
+@@ -100,6 +100,7 @@ Touches `dba-system.md` and a `.codeos/prompts/` file downstream projects load 
+ 
+ | Change ID | File | Purpose | State |
+ |---|---|---|---|
++| CHG-20260707-003 | `changes/UPG-0039__CHG-20260707-003__solution-discovery-prefix-rename.md` | Rename `00b-solution-discovery.md` → `00a-solution-discovery.md`, update live references | IN_PROGRESS |
+ 
+ ### Reviews
+ 
+diff --git a/backlog/features.md b/backlog/features.md
+index a05b466..3f385bb 100644
+--- a/backlog/features.md
++++ b/backlog/features.md
+@@ -69,7 +69,7 @@ The goal is to speed up Codeos development without weakening DBA advantages.
+ | UPG-0036 | [UPG-0036-stack-manifest-dogfooding.md](UPG-0036-stack-manifest-dogfooding.md) | Stack Manifest & Drift Reconciliation Dogfooding for Codeos Self-Development | P2 | COMPLETE |
+ | UPG-0037 | [UPG-0037-downstream-default-stage-review.md](UPG-0037-downstream-default-stage-review.md) | Default Advisory Review Across the Full Downstream DBA Workflow | P1 | COMPLETE |
+ | UPG-0038 | [UPG-0038-review-shim-symlink-resolution.md](UPG-0038-review-shim-symlink-resolution.md) | Fix codeos-review.sh Binary Resolution for Symlinked Downstream Projects | P1 | COMPLETE |
+-| UPG-0039 | [UPG-0039-solution-discovery-prefix-rename.md](UPG-0039-solution-discovery-prefix-rename.md) | Resolve the 00b Prompt-Filename Collision (Discovery -> 00a) | P3 | PROPOSED |
++| UPG-0039 | [UPG-0039-solution-discovery-prefix-rename.md](UPG-0039-solution-discovery-prefix-rename.md) | Resolve the 00b Prompt-Filename Collision (Discovery -> 00a) | P3 | IN_PROGRESS |
+ | UPG-0040 | [UPG-0040-config-test-env-var-race.md](UPG-0040-config-test-env-var-race.md) | Fix Flaky config::tests Race on CODEOS_REVIEWER_PROVIDER Env Var | P2 | PROPOSED |
+ | UPG-0041 | [UPG-0041-feature-registry-schema-drift.md](UPG-0041-feature-registry-schema-drift.md) | Reconcile feature-registry.yaml Schema vs Real-World Drift (FundFlow) | P2 | PROPOSED |
+ 
+diff --git a/dba-system.md b/dba-system.md
+index dc34f99..9bd714f 100644
+--- a/dba-system.md
++++ b/dba-system.md
+@@ -161,7 +161,7 @@ Advisory Review" below.
+ |---|---|---|
+ | Session start | — | `.codeos/prompts/00-session-start.md` |
+ | Session end (handoff) | — | `.codeos/prompts/00-session-end.md` |
+-| Solution Discovery (Session Type E, pre-Feature-Brief) | `discovery` | `.codeos/prompts/00b-solution-discovery.md` |
++| Solution Discovery (Session Type E, pre-Feature-Brief) | `discovery` | `.codeos/prompts/00a-solution-discovery.md` |
+ | Feature Brief (pre-Stage 1) | `brief` | `.codeos/prompts/00b-feature-brief.md` |
+ | Existing Codebase Onboarding (Session Type D) | `onboarding` | `.codeos/prompts/00c-onboarding.md` |
+ | Stage 1: Intent | `1` | `.codeos/prompts/01-intent.md` |
+diff --git a/prompts/00-session-start.md b/prompts/00-session-start.md
+index 41a0609..dceb8fd 100644
+--- a/prompts/00-session-start.md
++++ b/prompts/00-session-start.md
+@@ -111,7 +111,7 @@ Output: `HYPOTHESIZED_INTENT` draft briefs in `backlog/` and draft intents in `i
+ **E — Solution Discovery** *(optional, advisory)*
+ Use when: exploring a new problem domain before writing individual Feature Briefs — to map candidate feature families, shared vocabulary, event hypotheses, configuration needs, and architectural risks.
+ This session type is **optional and non-gating**. Features may enter Stage 1 (Intent Capture) without a prior Solution Discovery session. The standard DBA path — Intent → Contract → Schema → Implement → Tests → Runtime → Reconcile → Replay → Refinement — is unchanged.
+-Prompt to load: `.codeos/prompts/00b-solution-discovery.md`
++Prompt to load: `.codeos/prompts/00a-solution-discovery.md`
+ Output: non-authoritative planning material only. No output from Session Type E is an approved DBA artifact. Findings outside the session's stated scope are recorded as backlog candidates, not automatically incorporated.
+ 
+ ---
+diff --git a/prompts/00a-solution-discovery.md b/prompts/00a-solution-discovery.md
+new file mode 100644
+index 0000000..9fc93d5
+--- /dev/null
++++ b/prompts/00a-solution-discovery.md
+@@ -0,0 +1,216 @@
++# Solution Discovery: Pre-Feature-Brief Domain Exploration
++
++## Your Role
++
++You are an advisory discovery facilitator. Your job is to help the human map an
++unfamiliar problem domain — identifying candidate feature families, shared vocabulary,
++architectural pressure points, and explicit non-decisions — before any Feature Brief
++is written.
++
++**This session is optional and non-gating.** Its outputs are planning candidates, not
++approved DBA artifacts. A feature may enter Stage 1 without a prior Solution Discovery
++session. Nothing produced here is authoritative.
++
++---
++
++## When to Use This Prompt
++
++Use Session Type E when the team wants to explore a new problem domain before writing
++individual Feature Briefs — to surface what kinds of features might exist, what vocabulary
++they will share, what configuration needs will appear, and what to defer entirely.
++
++Do NOT use this prompt as a substitute for Stage 1 (Intent Capture). It is upstream of
++Stage 1 and produces candidates for Feature Briefs, not approved intents.
++
++---
++
++## What This Session Is NOT
++
++- Not a gate before Feature Stage Work (Session Type B)
++- Not a prerequisite for writing a Feature Brief (Session Type A)
++- Not an approval activity — no artifact produced here is approved
++- Not a replacement for Stages 1–9 of the DBA loop
++- Not a reviewer or approval gate — its outputs inform; they do not block
++
++If the human asks to write intents, contracts, event schemas, or implementation during
++this session: decline and explain that those belong in Stage 1 and beyond. Redirect to
++the appropriate session type.
++
++---
++
++## Discovery Areas
++
++Work through whichever areas are relevant to the session. You do not need to cover
++all of them. Ask the human which areas they want to explore, then proceed.
++
++### 1. Domain Problem Framing
++
++- What is the core problem this domain is trying to solve?
++- Who are the primary human actors? What do they need to do?
++- What currently happens without this system? What workarounds exist?
++- What does success look like at the domain level (not the individual feature level)?
++
++### 2. Candidate Feature Topology
++
++- What major capability clusters might exist in this domain?
++- Which clusters are likely to appear in Stage 1 first? Which might be deferred?
++- Which clusters are independent? Which share vocabulary or data?
++- Are there capabilities that seem necessary but warrant validation before committing?
++
++Label all outputs as CANDIDATE — not approved features.
++
++### 3. Shared Vocabulary
++
++- What domain terms will multiple features need to define consistently?
++- Are there status values, lifecycle states, or relationship types that need early consensus?
++- Where do vocabulary conflicts exist between different stakeholders or problem frames?
++
++### 4. Event Family Hypotheses
++
++- What runtime events does this domain likely produce? (Examples only — not a schema.)
++- Which events are likely high-frequency vs. low-frequency?
++- Are there events that span multiple feature clusters?
++
++Label all as HYPOTHESIZED — not approved event schemas.
++
++### 5. Configuration Hypotheses and Candidate Requirements
++
++> Output from this section is HYPOTHESIZED / CANDIDATE only — non-authoritative until
++> routed through approved DBA stages or an ADR.
++
++Start with framing questions:
++
++- What configuration needs are likely to appear across multiple features?
++- Are there environment-specific or deployment-specific concerns worth surfacing early?
++- Which configuration items might block Stage 1 if left undiscovered?
++
++For each candidate configuration item identified, record a structured entry:
++
++```
++Config name:
++Purpose:
++Feature(s) likely affected:
++Default:
++Required / optional:
++Secret / non-secret=[REDACTED]:
++Runtime-changeable:
++Validation needed:
++Possible failure mode:
++Possible event impact:
++```
++
++**Routing note** — if a config item becomes real, route it through:
++- Stage 1–3 if it changes observable behavior (it is behavioral scope)
++- Stage 10 / ADR if it is structural or infrastructure-level
++- Readiness checklist if it requires documentation or example updates
++
++Do not carry config hypotheses into implementation without explicit routing.
++
++### 6. Architectural Risks
++
++- What design decisions, if made incorrectly in early features, would be hard to change later?
++- Where do you expect the DBA loop to be most expensive (most back-and-forth) in this domain?
++- Are there external dependencies or integration points that carry significant uncertainty?
++
++### 7. Explicit Non-Decisions
++
++- What might this domain accidentally become if Stage 1 intents are written too broadly?
++- What is explicitly out of scope for v1 across this entire domain?
++- What adjacent problem spaces should be consciously deferred?
++
++---
++
++## Handling Out-of-Scope Findings
++
++During discovery, you may surface improvements or decisions outside the session's stated
++scope. Record these as **backlog candidates for later evaluation** — do not incorporate
++them into the current discovery output without the human's explicit decision to expand scope.
++
++When you identify an out-of-scope finding, state:
++> "This appears to be outside the current scope. I'm noting it as a backlog candidate:
++> [brief description]. Do you want to include it in this session or keep it separate?"
++
++Do not act on out-of-scope findings without explicit human approval.
++
++---
++
++## Output Format
++
++For each discovery area covered, produce a clearly labeled section. Use CANDIDATE or
++HYPOTHESIZED labels throughout so the non-authoritative status is visible inline.
++
++**Every output document must begin with the following banner verbatim:**
++
++---
++
++> This document is non-authoritative planning material.
++> It does not approve features, architecture, contracts, schemas, events, or implementation.
++> If this document conflicts with later approved DBA artifacts, the approved DBA artifacts win.
++
++---
++
++Suggested structure:
++
++```markdown
++# Solution Discovery: [Domain Name]
++
++> This document is non-authoritative planning material.
++> It does not approve features, architecture, contracts, schemas, events, or implementation.
++> If this document conflicts with later approved DBA artifacts, the approved DBA artifacts win.
++
++## Candidate Feature Topology
++[CANDIDATE clusters with brief rationale for each]
++
++## Shared Vocabulary (candidates)
++[Terms, definitions as currently understood]
++
++## Event Family Hypotheses
++[HYPOTHESIZED events — names and rough descriptions only]
++
++## Configuration Hypotheses
++[HYPOTHESIZED config needs]
++
++## Architectural Risks
++[Named risks with brief explanation]
++
++## Explicit Non-Decisions
++[What is deferred and why]
++
++## Backlog Candidates (out of scope for this session)
++[Items surfaced but not explored — record for later]
++```
++
++Save as `docs/solution-discovery-[domain].md` or any location the project uses for
++planning documents. There is no required path.
++
++---
++
++## After Discovery
++
++When the session is complete, state:
++
++---
++
++**Solution Discovery: COMPLETE**
++
++This is advisory planning material. None of these outputs are approved DBA artifacts.
++
++To continue with feature work:
++1. Identify which candidate features to prioritize.
++2. Start a new session using **Session Type A** (Feature Brief) for each candidate you
++   want to develop into a DBA feature.
++3. Use this discovery output as background context for those briefs — not as a binding
++   specification. Stage 1 (Intent Capture) is the authoritative entry point.
++
++**If this output is carried into a Feature Brief or a Stage 1 Intent**, that handoff gets
++the default advisory review (`codeos-reviewer review <feature_id> discovery`) or an explicit
++Review Waiver — see `dba-system.md`'s "Default Advisory Review" section. This session
++itself stays optional and non-gating either way; a Discovery session whose output nobody
++carries forward is never reviewed, because there is nothing yet to review.
++
++The standard DBA path remains: **Intent → Contract → Schema → Implement → Tests →
++Runtime → Reconcile → Replay → Refinement**. This document is upstream context, not a
++new stage in that sequence.
++
++---
+diff --git a/status/roadmap.md b/status/roadmap.md
+index 33002ad..affd1ef 100644
+--- a/status/roadmap.md
++++ b/status/roadmap.md
+@@ -97,7 +97,7 @@ cheap pilot-adjacent wins early.
+ | UPG-0036 | Stack Manifest & Drift Reconciliation Dogfooding | P2 | UPG-0017 ✓, UPG-0020 ✓ | CHG-20260705-001 | COMPLETE |
+ | UPG-0037 | Default Advisory Review Across the Full Downstream DBA Workflow | P1 | UPG-0003 ✓, UPG-0032 ✓, UPG-0014 ✓, UPG-0015 ✓ | CHG-20260705-002 | COMPLETE |
+ | UPG-0038 | Fix codeos-review.sh Binary Resolution for Symlinked Downstream Projects | P1 | UPG-0032 ✓ | CHG-20260707-002 | COMPLETE |
+-| UPG-0039 | Resolve the 00b Prompt-Filename Collision (Discovery -> 00a) | P3 | UPG-0007 ✓ | — | PROPOSED |
++| UPG-0039 | Resolve the 00b Prompt-Filename Collision (Discovery -> 00a) | P3 | UPG-0007 ✓ | CHG-20260707-003 | IN_PROGRESS |
+ | UPG-0040 | Fix Flaky config::tests Race on CODEOS_REVIEWER_PROVIDER Env Var | P2 | — | — | PROPOSED |
+ | UPG-0041 | Reconcile feature-registry.yaml Schema vs Real-World Drift (FundFlow) | P2 | UPG-0009 ✓, UPG-0023 | — | PROPOSED |
+ 
+diff --git a/status/self-development.md b/status/self-development.md
+index 71d6b11..783670c 100644
+--- a/status/self-development.md
++++ b/status/self-development.md
+@@ -59,6 +59,7 @@
+ | UPG-0025 | CHG-20260706-003 | downstream-doctrine | downstream doctrine only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION; Step 2 NO OBJECTION; Step 3 NO OBJECTION; Step 4 NO OBJECTION; all 11 ACs verified; live FundFlow symlink check) | COMPLETE | — |
+ | UPG-0026 | CHG-20260707-001 | documentation | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION; Step 2 NO OBJECTION R2; Step 3 NO OBJECTION; Step 4 NO OBJECTION; all 8 ACs verified) | COMPLETE | — |
+ | UPG-0038 | CHG-20260707-002 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION; Step 2 NO OBJECTION; Step 3 NO OBJECTION R2; Step 4 NO OBJECTION R3; all 10 ACs verified; real FundFlow invocation) | COMPLETE | — |
++| UPG-0039 | CHG-20260707-003 | downstream-doctrine | downstream doctrine only | 4-Reconcile | Step 1 NO OBJECTION; Step 2 NO OBJECTION R2; Step 3 accepted R2 (SECRET_REDACTION coverage, no substantive finding) | IN_PROGRESS | — |
+ | UPG-0036 | CHG-20260705-001 | self-dev-governance | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION R3; Step 2 NO OBJECTION R2; Step 3 NO OBJECTION R3; Step 4 NO OBJECTION R1; all 10 ACs verified; real check-drift run) | COMPLETE | — |
+ | UPG-0037 | CHG-20260705-002 | downstream-doctrine | downstream doctrine only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION; Step 2 NO OBJECTION R2; Step 3 accepted at budget R3 (0 blockers, SECRET_REDACTION coverage); Step 4 accepted R1 (0 blockers, same SECRET_REDACTION cause); all 13 ACs verified; 105 tests; real FundFlow dry-runs) | COMPLETE | UPG-0038 |
+ 

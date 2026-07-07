@@ -1,0 +1,504 @@
+Reviewer task:
+
+SCOPE CONTRACT
+  Assess this artifact against the STATED SCOPE of this stage/PR — the Expected Stage
+  Output below and what the artifacts actually claim — NOT against an ideal final system.
+  A capability the artifacts do not claim to provide is OUT-OF-SCOPE, not a defect.
+  The following are OUT-OF-SCOPE BACKLOG unless THIS artifact explicitly claims to provide
+  them: formal approval-binding enforcement; rollback correctness; COMMIT_BOUND/
+  WORKSPACE_BOUND enforcement; JSON Schema validation; CI validation; exact
+  decision-integrity; per-feature decision ledgers; autonomous approval; enabled hooks.
+
+YOUR TASK — answer these five questions using only the evidence in the packet:
+  1. Acceptance criteria: Does the artifact satisfy each of its stated acceptance criteria?
+     Cite evidence for each criterion (or note its absence).
+  2. Claim support: Are universal or strong claims (all, every, never, always, no X) in the
+     artifact supported by evidence in the packet? Any unverifiable strong claim is a candidate
+     finding only if it affects acceptance, scope, safety, decision integrity, or the artifact's
+     stated guarantees.
+  3. Scope drift: Is there any change beyond the stated scope boundary? (Files not in the
+     "What changes" list; behavior changes not in the intent; downstream doctrine modified
+     rather than read.)
+  4. In-scope blockers: Are there facts that, if left in, would make the artifact wrong,
+     unsafe, or internally contradictory?
+  5. Finding classification: Classify every finding you raise as exactly one of the five
+     TRIAGE RULE categories below.
+
+TRIAGE RULE — classify EVERY finding as exactly one of:
+  IN-SCOPE BLOCKER         breaks the stated goal; creates a FALSE CLAIM in this artifact;
+                           weakens the advisory/read-only/human-gated guarantees; prevents
+                           the work from running; or violates an explicit safety constraint.
+  IN-SCOPE NON-BLOCKER     improves it but is not required for this PR.
+  OUT-OF-SCOPE BACKLOG     valid, but belongs to a future feature / stronger guarantee.
+  REJECTED                 conflicts with the stated scope or Codeos philosophy.
+  SELF-REFERENCE /         review records that are stale because of the previous round's
+  REVIEW-BOOKKEEPING       own existence (causal loop); not a real artifact defect.
+  Base the PR decision ONLY on IN-SCOPE BLOCKER findings. An OUT-OF-SCOPE BACKLOG finding
+  must NOT cause DO NOT ADVANCE unless this artifact FALSELY CLAIMS to solve it.
+
+WHAT NOT TO DO
+  - Do not flag style or wording issues as blockers unless the wording creates a false claim,
+    contradiction, parser breakage, or wrong governance instruction.
+  - Do not re-review unchanged full context when the packet is in delta mode.
+  - Do not treat local-only review history as a blocker unless the artifact falsely
+    claims the review artifacts are committed/durable.
+
+INSTRUCTIONS
+  If this is a resumed session, ignore any earlier-session conclusions unless they are
+  re-established by THIS packet; assess only the evidence above, pinned to this commit.
+  Give a focused assessment of this artifact against the stated scope, acceptance criteria,
+  and evidence in this packet. Rank findings by severity. Suggest a better design only when
+  needed to explain a required fix for an IN-SCOPE BLOCKER.
+
+  Limit findings to the top 3 IN-SCOPE BLOCKERS. Additional non-blocking observations may be
+  summarized in one short paragraph only if useful.
+
+  For EACH finding emit:
+    Finding: / Severity: High|Medium|Low / Classification: <one of the TRIAGE RULE labels>
+    Evidence: <file/line> / Why: <short> / Required action: fix now|optional fix|backlog|reject
+    Scope reason: <why it does/does not belong to this PR's scope>
+  Then emit:
+    PR decision: ADVANCE | REQUEST CHANGES | DO NOT ADVANCE   (based ONLY on in-scope blockers)
+    Scope drift warning: yes|no — <is anything pulling this PR beyond its stated scope?>
+  Then on the LAST three lines emit exactly (map ADVANCE->NO OBJECTION,
+  REQUEST CHANGES->CHANGES ADVISED, DO NOT ADVANCE->DO NOT ADVANCE):
+    LOG SUMMARY: <NO OBJECTION | CHANGES ADVISED | DO NOT ADVANCE | UNCLASSIFIED> — <single most important point>
+      (use UNCLASSIFIED if you genuinely cannot classify the artifact safely)
+    EVIDENCE: <A|B|C|D|E>
+    HIGHEST-IMPACT UNCERTAINTY: <one sentence — what single thing, if wrong, most affects this assessment>
+
+  Evidence grade — the grade describes what the assessment rests on, not reviewer confidence:
+    A — Directly verified in the artifact, diff, or output shown in the packet
+    B — Verified with multiple direct pieces of evidence, but coverage is not complete
+    C — Partially verified, partially inferred from structure or context
+    D — Mostly inferred from structure or indirect evidence
+    E — Hypothesis or very limited basis — little to no direct evidence
+
+
+PACKET MANIFEST
+  generated: 2026-07-07T11:14:07Z
+  task_prompt: /home/rimo/projects/Codeos/prompts/codeos-reviewer-task.md (4959 bytes)
+  review_content_bytes: 19563
+  estimated_review_tokens: ~4890
+  budget_status: OK
+  packet_mode: full
+  delta_base: none
+  items:
+    - path: changes/UPG-0039__CHG-20260707-003__solution-discovery-prefix-rename.md
+      mode: full_file
+      bytes: 9139
+      sha256: 2fa62717e95d2677a937071f83de4766c831692c8b478b85f1d6dea33e0410e9
+    - path: backlog/UPG-0039-solution-discovery-prefix-rename.md
+      mode: full_file
+      bytes: 4832
+      sha256: 0fe261870076b7d39f87077592a1942ec89046f23f2d71cf1d79fc0bdd3581c3
+    - path: (diff)
+      mode: full_file
+      bytes: 5592
+
+REVIEW CONTEXT
+  Feature:                UPG-0039__CHG-20260707-003
+  Stage:                  selfdev-step-2
+  Branch:                 main
+  Base commit:            (no base pin)
+  Review commit:          d0e0437ae9387c00eeca41697a2331e857c9b340 (+ uncommitted workspace changes)
+  Current approved stage: n/a (non-numeric stage)
+  Evidence coverage:      FULL_COVERAGE
+  Workspace dirty:        yes (uncommitted changes at review time)
+
+DBA RULES RELEVANT TO THIS STAGE
+  - Human approval is required for every stage transition; you are advisory only.
+  - Memory is not truth — assess only what is provided, pinned to the review commit.
+  - Implementation must trace to approved artifacts; no behavior beyond intent+contract+schema.
+  - No events outside the approved event schema; no hidden behavior.
+
+STAGE-SPECIFIC CHECKS
+  - (no stage-specific checklist for stage selfdev-step-2)
+
+EXPECTED STAGE OUTPUT
+  (no expected-output template for stage)
+
+ARTIFACTS TO REVIEW
+  --- changes/UPG-0039__CHG-20260707-003__solution-discovery-prefix-rename.md (sha256: 2fa62717e95d2677a937071f83de4766c831692c8b478b85f1d6dea33e0410e9, visibility: shown) ---
+    ---
+    change_id: CHG-20260707-003
+    feature_id: UPG-0039
+    slug: solution-discovery-prefix-rename
+    triage_class: downstream-doctrine
+    scope_axis: downstream doctrine only
+    review_profile: PROFILE-4
+    review_series: RVS__UPG-0039__CHG-20260707-003__S1
+    review_state: REVIEWED
+    status: IN_PROGRESS
+    loop_step: 2-Acceptance
+    ---
+    
+    # Change: UPG-0039 / CHG-20260707-003 — Resolve the 00b Prompt-Filename Collision (Discovery -> 00a)
+    
+    ## TRACE HEADER
+    
+    ```yaml
+    feature_id: UPG-0039
+    primary_feature_id: UPG-0039
+    change_id: CHG-20260707-003
+    slug: solution-discovery-prefix-rename
+    state: IN_PROGRESS
+    current_step: 2-Acceptance
+    implements:
+      - UPG-0039
+    related_features:
+      - UPG-0007
+      - UPG-0037
+    review_series: RVS__UPG-0039__CHG-20260707-003__S1
+    review_profile: PROFILE-4
+    review_state: DRAFT
+    review_history: reviews/review-log.md
+    fixes_findings: []
+    follow_up_of: null
+    ```
+    
+    ---
+    
+    ## Step 1 — Change Intent
+    
+    ### Problem
+    
+    `prompts/00b-feature-brief.md` and `prompts/00b-solution-discovery.md` share the `00b`
+    prefix despite being distinct, sequential pre-Stage-1 steps — Solution Discovery (Session
+    Type E) precedes Feature Brief (Session Type A) in the actual workflow, per UPG-0007's own
+    design. UPG-0037 explicitly left this untouched ("no prompt file renames" — it added
+    reviewer-invocation identifier vocabulary only, not filenames).
+    
+    ### What changes
+    
+    | File | Change |
+    |---|---|
+    | `prompts/00b-solution-discovery.md` → `prompts/00a-solution-discovery.md` | Renamed (`git mv`); no internal content change — the file never self-references its own filename |
+    | `dba-system.md` | Stage ID table's File column updated to the new path (currently line 164 — shifted from the backlog brief's originally-noted line 153 due to UPG-0037's later insertions; re-confirmed via fresh grep before drafting this Step 1) |
+    | `prompts/00-session-start.md` | Session Type E's "Prompt to load" reference updated (line 114) |
+    | `backlog/UPG-0007-solution-discovery-00b.md` | Its own "Proposed artifact(s)" section's one internal path mention (line 37) updated — resolving the backlog brief's own flagged "open Step 1 decision" as **yes**: the brief's *content* should stay accurate; its *filename* is not renamed (feature id is the permanent identity, not the slug) |
+    | `backlog/UPG-0039-solution-discovery-prefix-rename.md` | Feature Thread: CHG-20260707-003 activated (done) |
+    | `backlog/features.md` | Row → IN_PROGRESS (done) |
+    | `status/self-development.md` | Row activated (done) |
+    | `status/roadmap.md` | UPG-0039 → IN_PROGRESS (done) |
+    
+    ### Scope boundary — what stays the same
+    
+    - **No behavior change.** This is a rename plus reference updates only — no doctrine
+      substance, no stage semantics, no reviewer behavior changes.
+    - **Historical/append-only records are never touched**, confirmed by a fresh repo-wide grep
+      for `00b-solution-discovery` immediately before drafting this Step 1 (re-verifying the
+      backlog brief's own list is still accurate, since time has passed since it was written):
+      - `changes/UPG-0007__CHG-20260630-005__solution-discovery-00b.md` (and its filename/slug)
+      - `changes/UPG-0008__CHG-20260701-006__config-discovery.md`
+      - `changes/UPG-0022__CHG-20260703-004__00b-adr-generator.md`
+      - `changes/UPG-0037__CHG-20260705-002__downstream-default-stage-review.md`
+      - `backlog/UPG-0008-config-discovery.md`'s completed Feature Thread "Changes" row
+        (describes what `CHG-20260701-006` actually touched — the file *was* named
+        `00b-solution-discovery.md` at that time; rewriting this row would misdescribe history)
+      - `backlog/UPG-0037-downstream-default-stage-review.md`'s own "Proposed artifact(s)"
+        description of what `CHG-20260705-002` touched (same reasoning — historical, accurate to
+        the name at the time; not previously listed in the backlog brief, found by this Step 1's
+        fresh grep sweep, confirmed historical by the same logic)
+      - All `reviews/codex/*.md` frozen assessments and `reviews/review-log.md` entries
+      - This change's own backlog brief's **Problem** section (describes the collision as it
+        existed; stays as historical description, not rewritten to use the new name)
+    - **`backlog/UPG-0007-solution-discovery-00b.md`'s filename is not renamed** — only its line
+      37 content. Backlog filenames are stable historical identifiers referenced by dozens of
+      other files; the `UPG-####` feature id is the permanent identity, not the slug.
+    - **No `CLAUDE.md` or self-dev-governance changes.**
+    - **Downstream compatibility confirmed** (re-checked fresh, not just trusting the backlog
+      brief): `grep -rl "00b-solution-discovery" /home/rimo/projects/FundFlow` returns nothing —
+      no downstream-project-side edit needed. `.codeos` is a live symlink, so the rename is
+      immediately live for FundFlow on its next session, same posture as UPG-0036/UPG-0037.
+    
+    ### Design intent
+    
+    Straightforward rename + reference sweep, exactly as the backlog brief specifies, with the
+    open Step-1 question it flagged now resolved (update `backlog/UPG-0007`'s content, don't
+    rename its file) and the historical-file list re-verified fresh rather than assumed stale.
+    
+    ### Triage
+    
+    - Class: `downstream-doctrine`
+    - Scope axis: `downstream doctrine only`
+    - Review profile: `PROFILE-4`
+    - Originating backlog id: `UPG-0039`
+    
+    ---
+    
+    ## Step 2 — Acceptance Criteria
+    
+    ### Rename correctness
+    
+    **AC-1 — File renamed, content preserved exactly**
+    `prompts/00a-solution-discovery.md` exists with content byte-identical to the old
+    `prompts/00b-solution-discovery.md`; `prompts/00b-solution-discovery.md` no longer exists.
+    _Verify in Step 4:_ `git status`/`git diff` shows a detected rename (or equivalent
+    delete+add with identical content); no content-level diff.
+    
+    **AC-2 — `prompts/00b-feature-brief.md` untouched**
+    The sibling file that originally created the `00b` collision is unmodified — this change
+    resolves the collision by moving Discovery, not by touching Feature Brief.
+    _Verify in Step 4:_ `git diff --stat -- prompts/00b-feature-brief.md` is empty.
+    
+    ### Live reference updates
+    
+    **AC-3 — `dba-system.md`'s Stage table updated**
+    The Stage ID table's File column for Solution Discovery reads
+    `.codeos/prompts/00a-solution-discovery.md`.
+    _Verify in Step 4:_ grep the current line; confirm the new path.
+    
+    **AC-4 — `prompts/00-session-start.md` updated**
+    Session Type E's "Prompt to load" line references the new path.
+    _Verify in Step 4:_ grep the current line; confirm the new path.
+    
+    **AC-5 — `backlog/UPG-0007-solution-discovery-00b.md`'s content updated, filename unchanged**
+    Line 37's path mention updates to the new name; the file's own filename
+    (`UPG-0007-solution-discovery-00b.md`) is **not** renamed.
+    _Verify in Step 4:_ grep the updated line; confirm the filename on disk is unchanged.
+    
+    ### Historical-record integrity (no rewrite)
+    
+    **AC-6 — Every historical file is untouched, verified by fresh grep, not assumed**
+    None of the following change: `changes/UPG-0007__CHG-20260630-005__solution-discovery-00b.md`,
+    `changes/UPG-0008__CHG-20260701-006__config-discovery.md`,
+    `changes/UPG-0022__CHG-20260703-004__00b-adr-generator.md`,
+    `changes/UPG-0037__CHG-20260705-002__downstream-default-stage-review.md`,
+    `backlog/UPG-0008-config-discovery.md`, `backlog/UPG-0037-downstream-default-stage-review.md`,
+    any `reviews/codex/*.md`, `reviews/review-log.md`, or this change's own backlog brief's
+    Problem section.
+    _Verify in Step 4:_ `git diff --stat` for each listed path is empty; a fresh repo-wide grep
+    for the old filename after the change shows hits **only** in this explicitly-historical set
+    (plus this change's own Problem-section description and change-record narrative) — no
+    unlisted live file still references the old name.
+    
+    ### Downstream compatibility
+    
+    **AC-7 — FundFlow's symlink resolves the rename correctly**
+    From FundFlow's real `.codeos` symlink checkout, `.codeos/prompts/00a-solution-discovery.md`
+    resolves and is readable; `.codeos/prompts/00b-solution-discovery.md` no longer resolves.
+    _Verify in Step 4:_ `cat`/`ls` both paths through FundFlow's live symlink.
+    
+    **AC-8 — No downstream-project-side edit needed**
+    Re-confirms the Step 1 finding: no file under `/home/rimo/projects/FundFlow` hardcodes the
+    old path.
+    _Verify in Step 4:_ `grep -rl "00b-solution-discovery" /home/rimo/projects/FundFlow` → empty.
+    
+    ### Cross-reference integrity
+    
+    **AC-9 — `CLAUDE.md` untouched**
+    _Verify in Step 4:_ `git diff --stat -- CLAUDE.md` is empty.
+    
+    **AC-10 — No behavior change**
+    No stage semantics, reviewer behavior, or artifact schema changes — this is a rename plus
+    reference updates only, matching the backlog's own Guardrail.
+    _Verify in Step 4:_ confirm no file outside the declared "What changes" list is touched.
+    
+    **AC-11 — Reviewer scope-triage applied at Step 4**
+    Per `CLAUDE.md`'s `downstream-doctrine` rigor requirement, Step 4 classifies every Step 3
+    review finding using the five-category scope-triage.
+    _Verify in Step 4:_ the Step 4 "Reviewer scope triage" section explicitly classifies each
+    finding from every round.
+    
+    ---
+    
+    ## Step 3 — Implement
+    
+    *(to be written after Step 2 approval)*
+    
+    ---
+    
+    ## Step 4 — Reconcile
+    
+    *(to be written after Step 3 approval)*
+
+  --- backlog/UPG-0039-solution-discovery-prefix-rename.md (sha256: 0fe261870076b7d39f87077592a1942ec89046f23f2d71cf1d79fc0bdd3581c3, visibility: shown) ---
+    ---
+    feature_id: UPG-0039
+    slug: solution-discovery-prefix-rename
+    title: Resolve the 00b Prompt-Filename Collision (Discovery -> 00a)
+    status: IN_PROGRESS
+    priority: P3
+    depends_on: [UPG-0007]
+    related_features: [UPG-0037]
+    supersedes: []
+    superseded_by: []
+    ---
+    
+    # Upgrade: solution-discovery-prefix-rename — Resolve the 00b Prompt-Filename Collision (Discovery -> 00a)
+    
+    **Priority**: P3
+    **Status**: IN_PROGRESS
+    **Type**: downstream-doctrine
+    
+    ## Problem
+    
+    `prompts/00b-feature-brief.md` and `prompts/00b-solution-discovery.md` both use the `00b`
+    prefix, even though they are distinct, sequential pre-Stage-1 steps — Solution Discovery
+    (Session Type E) is upstream of Feature Brief (Session Type A), per UPG-0007's own design.
+    This collision predates UPG-0037 and was explicitly left untouched there (UPG-0037's scope
+    boundary stated "no prompt file renames" — it added a separate `discovery`/`brief`/
+    `onboarding`/`1`-`10` identifier vocabulary for reviewer invocation, but did not touch
+    filenames). Discovered via direct question during UPG-0037's close-out review.
+    
+    ## Upgrade
+    
+    Rename `prompts/00b-solution-discovery.md` to `prompts/00a-solution-discovery.md`, since it
+    precedes Feature Brief in the actual workflow. Update the small number of live files that
+    reference the old path.
+    
+    ## Scope
+    
+    The prompt filename itself, plus every **live** (non-historical) file that names it.
+    Historical/append-only records (completed change records, review-log entries, frozen Codex
+    assessments) are explicitly **not** touched — they correctly describe the filename that
+    existed at the time.
+    
+    ## Proposed artifact(s)
+    
+    - `prompts/00a-solution-discovery.md` (renamed from `00b-solution-discovery.md`; no internal
+      content change needed — the file doesn't self-reference its own filename).
+    - Updated `dba-system.md`: the Stage ID table's File column (`dba-system.md:153`).
+    - Updated `prompts/00-session-start.md`: Session Type E's "Prompt to load" reference
+      (`prompts/00-session-start.md:114`).
+    
+    ## Design notes
+    
+    **Files confirmed to need updating** (grepped directly, live references only):
+    1. `dba-system.md:153` — `| Solution Discovery ... | discovery | .codeos/prompts/00b-solution-discovery.md |`
+    2. `prompts/00-session-start.md:114` — `Prompt to load: .codeos/prompts/00b-solution-discovery.md`
+    
+    **Open Step 1 decision, not resolved by this brief**: whether to also update
+    `backlog/UPG-0007-solution-discovery-00b.md:37`'s one internal path mention (in its own
+    "Proposed artifact(s)" section). Leaning toward yes, since that backlog brief's own content
+    should stay accurate — but its *filename* (`UPG-0007-solution-discovery-00b.md`) should
+    **not** be renamed regardless, since backlog filenames are stable historical identifiers
+    referenced by dozens of other files (feature ID is the permanent identity, not the slug).
+    
+    **Explicitly not touched** (historical, must not be rewritten):
+    - `changes/UPG-0007__CHG-20260630-005__solution-discovery-00b.md` (and its filename/slug)
+    - `backlog/UPG-0008-config-discovery.md`'s completed Feature Thread row
+    - All `reviews/codex/*.md` frozen assessments and `reviews/review-log.md` entries
+    - UPG-0022's and UPG-0037's own completed change records
+    
+    **Compatibility**: checked `/home/rimo/projects/FundFlow` (the real downstream adopter) for
+    any hardcoded reference to the old path — none found, so no downstream-project-side edit is
+    needed. `.codeos` being a symlink means the rename is live immediately; this is the same
+    compatibility posture as UPG-0036/UPG-0037.
+    
+    ## Value
+    
+    Low-medium. Purely a naming-consistency fix — removes a real but cosmetic collision. No
+    behavior change.
+    
+    ## Risk
+    
+    Very low. A single file rename plus two live-reference updates. Main risk is an incomplete
+    grep sweep leaving a stale reference somewhere.
+    
+    ## Guardrail
+    
+    No behavior change — this is a rename plus reference updates only. Historical/append-only
+    records are never rewritten.
+    
+    ## DBA-philosophy note
+    
+    Touches `dba-system.md` and a `.codeos/prompts/` file downstream projects load — classified
+    `downstream-doctrine`, same rigor tier as UPG-0007 and UPG-0037.
+    
+    ## Feature Thread
+    
+    > Canonical thread rollup for this feature. Compact links/IDs only; full detail lives in the
+    > change records and review files. May be maintained manually.
+    
+    ### Changes
+    
+    | Change ID | File | Purpose | State |
+    |---|---|---|---|
+    | CHG-20260707-003 | `changes/UPG-0039__CHG-20260707-003__solution-discovery-prefix-rename.md` | Rename `00b-solution-discovery.md` → `00a-solution-discovery.md`, update live references | IN_PROGRESS |
+    
+    ### Reviews
+    
+    | Review ID | Change ID | Step | Round | Verdict |
+    |---|---|---|---|---|
+    
+    ### Findings Tracked Inside This Feature
+    
+    | Finding ID | Review ID | Classification | Resolution |
+    |---|---|---|---|
+    
+    ### Follow-up Features
+    
+    | Feature ID | Reason | Source finding |
+    |---|---|---|
+
+DIFF TO REVIEW (base->review, secret/size filtered)
+diff --git a/backlog/UPG-0039-solution-discovery-prefix-rename.md b/backlog/UPG-0039-solution-discovery-prefix-rename.md
+index 6535a0a..f73c2ba 100644
+--- a/backlog/UPG-0039-solution-discovery-prefix-rename.md
++++ b/backlog/UPG-0039-solution-discovery-prefix-rename.md
+@@ -2,7 +2,7 @@
+ feature_id: UPG-0039
+ slug: solution-discovery-prefix-rename
+ title: Resolve the 00b Prompt-Filename Collision (Discovery -> 00a)
+-status: PROPOSED
++status: IN_PROGRESS
+ priority: P3
+ depends_on: [UPG-0007]
+ related_features: [UPG-0037]
+@@ -13,7 +13,7 @@ superseded_by: []
+ # Upgrade: solution-discovery-prefix-rename — Resolve the 00b Prompt-Filename Collision (Discovery -> 00a)
+ 
+ **Priority**: P3
+-**Status**: PROPOSED
++**Status**: IN_PROGRESS
+ **Type**: downstream-doctrine
+ 
+ ## Problem
+@@ -100,6 +100,7 @@ Touches `dba-system.md` and a `.codeos/prompts/` file downstream projects load 
+ 
+ | Change ID | File | Purpose | State |
+ |---|---|---|---|
++| CHG-20260707-003 | `changes/UPG-0039__CHG-20260707-003__solution-discovery-prefix-rename.md` | Rename `00b-solution-discovery.md` → `00a-solution-discovery.md`, update live references | IN_PROGRESS |
+ 
+ ### Reviews
+ 
+diff --git a/backlog/features.md b/backlog/features.md
+index a05b466..3f385bb 100644
+--- a/backlog/features.md
++++ b/backlog/features.md
+@@ -69,7 +69,7 @@ The goal is to speed up Codeos development without weakening DBA advantages.
+ | UPG-0036 | [UPG-0036-stack-manifest-dogfooding.md](UPG-0036-stack-manifest-dogfooding.md) | Stack Manifest & Drift Reconciliation Dogfooding for Codeos Self-Development | P2 | COMPLETE |
+ | UPG-0037 | [UPG-0037-downstream-default-stage-review.md](UPG-0037-downstream-default-stage-review.md) | Default Advisory Review Across the Full Downstream DBA Workflow | P1 | COMPLETE |
+ | UPG-0038 | [UPG-0038-review-shim-symlink-resolution.md](UPG-0038-review-shim-symlink-resolution.md) | Fix codeos-review.sh Binary Resolution for Symlinked Downstream Projects | P1 | COMPLETE |
+-| UPG-0039 | [UPG-0039-solution-discovery-prefix-rename.md](UPG-0039-solution-discovery-prefix-rename.md) | Resolve the 00b Prompt-Filename Collision (Discovery -> 00a) | P3 | PROPOSED |
++| UPG-0039 | [UPG-0039-solution-discovery-prefix-rename.md](UPG-0039-solution-discovery-prefix-rename.md) | Resolve the 00b Prompt-Filename Collision (Discovery -> 00a) | P3 | IN_PROGRESS |
+ | UPG-0040 | [UPG-0040-config-test-env-var-race.md](UPG-0040-config-test-env-var-race.md) | Fix Flaky config::tests Race on CODEOS_REVIEWER_PROVIDER Env Var | P2 | PROPOSED |
+ | UPG-0041 | [UPG-0041-feature-registry-schema-drift.md](UPG-0041-feature-registry-schema-drift.md) | Reconcile feature-registry.yaml Schema vs Real-World Drift (FundFlow) | P2 | PROPOSED |
+ 
+diff --git a/status/roadmap.md b/status/roadmap.md
+index 33002ad..affd1ef 100644
+--- a/status/roadmap.md
++++ b/status/roadmap.md
+@@ -97,7 +97,7 @@ cheap pilot-adjacent wins early.
+ | UPG-0036 | Stack Manifest & Drift Reconciliation Dogfooding | P2 | UPG-0017 ✓, UPG-0020 ✓ | CHG-20260705-001 | COMPLETE |
+ | UPG-0037 | Default Advisory Review Across the Full Downstream DBA Workflow | P1 | UPG-0003 ✓, UPG-0032 ✓, UPG-0014 ✓, UPG-0015 ✓ | CHG-20260705-002 | COMPLETE |
+ | UPG-0038 | Fix codeos-review.sh Binary Resolution for Symlinked Downstream Projects | P1 | UPG-0032 ✓ | CHG-20260707-002 | COMPLETE |
+-| UPG-0039 | Resolve the 00b Prompt-Filename Collision (Discovery -> 00a) | P3 | UPG-0007 ✓ | — | PROPOSED |
++| UPG-0039 | Resolve the 00b Prompt-Filename Collision (Discovery -> 00a) | P3 | UPG-0007 ✓ | CHG-20260707-003 | IN_PROGRESS |
+ | UPG-0040 | Fix Flaky config::tests Race on CODEOS_REVIEWER_PROVIDER Env Var | P2 | — | — | PROPOSED |
+ | UPG-0041 | Reconcile feature-registry.yaml Schema vs Real-World Drift (FundFlow) | P2 | UPG-0009 ✓, UPG-0023 | — | PROPOSED |
+ 
+diff --git a/status/self-development.md b/status/self-development.md
+index 71d6b11..5b86924 100644
+--- a/status/self-development.md
++++ b/status/self-development.md
+@@ -59,6 +59,7 @@
+ | UPG-0025 | CHG-20260706-003 | downstream-doctrine | downstream doctrine only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION; Step 2 NO OBJECTION; Step 3 NO OBJECTION; Step 4 NO OBJECTION; all 11 ACs verified; live FundFlow symlink check) | COMPLETE | — |
+ | UPG-0026 | CHG-20260707-001 | documentation | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION; Step 2 NO OBJECTION R2; Step 3 NO OBJECTION; Step 4 NO OBJECTION; all 8 ACs verified) | COMPLETE | — |
+ | UPG-0038 | CHG-20260707-002 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION; Step 2 NO OBJECTION; Step 3 NO OBJECTION R2; Step 4 NO OBJECTION R3; all 10 ACs verified; real FundFlow invocation) | COMPLETE | — |
++| UPG-0039 | CHG-20260707-003 | downstream-doctrine | downstream doctrine only | 2-Acceptance | Step 1 NO OBJECTION | IN_PROGRESS | — |
+ | UPG-0036 | CHG-20260705-001 | self-dev-governance | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION R3; Step 2 NO OBJECTION R2; Step 3 NO OBJECTION R3; Step 4 NO OBJECTION R1; all 10 ACs verified; real check-drift run) | COMPLETE | — |
+ | UPG-0037 | CHG-20260705-002 | downstream-doctrine | downstream doctrine only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION; Step 2 NO OBJECTION R2; Step 3 accepted at budget R3 (0 blockers, SECRET_REDACTION coverage); Step 4 accepted R1 (0 blockers, same SECRET_REDACTION cause); all 13 ACs verified; 105 tests; real FundFlow dry-runs) | COMPLETE | UPG-0038 |
+ 

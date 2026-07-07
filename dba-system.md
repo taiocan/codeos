@@ -161,7 +161,7 @@ Advisory Review" below.
 |---|---|---|
 | Session start | — | `.codeos/prompts/00-session-start.md` |
 | Session end (handoff) | — | `.codeos/prompts/00-session-end.md` |
-| Solution Discovery (Session Type E, pre-Feature-Brief) | `discovery` | `.codeos/prompts/00b-solution-discovery.md` |
+| Solution Discovery (Session Type E, pre-Feature-Brief) | `discovery` | `.codeos/prompts/00a-solution-discovery.md` |
 | Feature Brief (pre-Stage 1) | `brief` | `.codeos/prompts/00b-feature-brief.md` |
 | Existing Codebase Onboarding (Session Type D) | `onboarding` | `.codeos/prompts/00c-onboarding.md` |
 | Stage 1: Intent | `1` | `.codeos/prompts/01-intent.md` |

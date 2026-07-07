@@ -2,7 +2,7 @@
 feature_id: UPG-0039
 slug: solution-discovery-prefix-rename
 title: Resolve the 00b Prompt-Filename Collision (Discovery -> 00a)
-status: PROPOSED
+status: COMPLETE
 priority: P3
 depends_on: [UPG-0007]
 related_features: [UPG-0037]
@@ -13,7 +13,7 @@ superseded_by: []
 # Upgrade: solution-discovery-prefix-rename — Resolve the 00b Prompt-Filename Collision (Discovery -> 00a)
 
 **Priority**: P3
-**Status**: PROPOSED
+**Status**: COMPLETE
 **Type**: downstream-doctrine
 
 ## Problem
@@ -100,11 +100,18 @@ Touches `dba-system.md` and a `.codeos/prompts/` file downstream projects load �
 
 | Change ID | File | Purpose | State |
 |---|---|---|---|
+| CHG-20260707-003 | `changes/UPG-0039__CHG-20260707-003__solution-discovery-prefix-rename.md` | Rename `00b-solution-discovery.md` → `00a-solution-discovery.md`, update live references | COMPLETE |
 
 ### Reviews
 
 | Review ID | Change ID | Step | Round | Verdict |
 |---|---|---|---|---|
+| REV__UPG-0039__CHG-20260707-003__S1__R1 | CHG-20260707-003 | 1-Intent | R1 | NO OBJECTION |
+| REV__UPG-0039__CHG-20260707-003__S2__R1 | CHG-20260707-003 | 2-Acceptance | R1 | REQUEST CHANGES (TRACE HEADER staleness) |
+| REV__UPG-0039__CHG-20260707-003__S2__R2 | CHG-20260707-003 | 2-Acceptance | R2 | NO OBJECTION |
+| REV__UPG-0039__CHG-20260707-003__S3__R1 | CHG-20260707-003 | 3-Implement | R1 | REQUEST CHANGES (overclaim + AC-6 wording) |
+| REV__UPG-0039__CHG-20260707-003__S3__R2 | CHG-20260707-003 | 3-Implement | R2 | CHANGES ADVISED (accepted — SECRET_REDACTION coverage only, no substantive finding) |
+| REV__UPG-0039__CHG-20260707-003__S4__R1 | CHG-20260707-003 | 4-Reconcile | R1 | CHANGES ADVISED (accepted — same SECRET_REDACTION coverage) |
 
 ### Findings Tracked Inside This Feature
 

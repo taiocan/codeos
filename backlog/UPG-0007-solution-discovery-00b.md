@@ -34,7 +34,9 @@ Pre-Stage-1 discovery.
 
 ## Proposed artifact(s)
 
-`prompts/00b-solution-discovery.md`
+`prompts/00a-solution-discovery.md` (renamed from `00b-solution-discovery.md` by `UPG-0039`,
+2026-07-07, to resolve a prefix collision with `00b-feature-brief.md` — Discovery precedes
+Feature Brief in the actual workflow)
 
 Optional output: `docs/solution-discovery.md`
 
