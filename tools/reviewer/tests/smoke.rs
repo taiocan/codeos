@@ -1905,7 +1905,8 @@ fn smoke_dashboard_full_vs_minimal_schema_identical_output() {
     let full = p.join("full.yaml");
     std::fs::write(
         &full,
-        r#"features:
+        r#"schema_version: 2
+features:
   - feature_id: UPG-1001
     slug: sample-feature
     description: "A feature with every field populated"
@@ -1921,6 +1922,7 @@ fn smoke_dashboard_full_vs_minimal_schema_identical_output() {
     reconciliation_status: pending
     replay_status: na
     blockers: []
+    notes: ""
 "#,
     )
     .expect("write fixture");
@@ -1928,12 +1930,14 @@ fn smoke_dashboard_full_vs_minimal_schema_identical_output() {
     let minimal = p.join("minimal.yaml");
     std::fs::write(
         &minimal,
-        r#"features:
+        r#"schema_version: 2
+features:
   - feature_id: UPG-1001
     slug: sample-feature
     status: active
     current_stage: 4
     blockers: []
+    notes: ""
 "#,
     )
     .expect("write fixture");
@@ -1955,32 +1959,38 @@ fn smoke_dashboard_only_active_features_in_registry_order() {
     let registry = p.join("registry.yaml");
     std::fs::write(
         &registry,
-        r#"features:
+        r#"schema_version: 2
+features:
   - feature_id: UPG-2001
     slug: first-active
     status: active
     current_stage: 1
     blockers: []
+    notes: ""
   - feature_id: UPG-2002
     slug: suspended-one
     status: suspended
     current_stage: 2
     blockers: []
+    notes: ""
   - feature_id: UPG-2003
     slug: second-active
     status: active
     current_stage: 3
     blockers: []
+    notes: ""
   - feature_id: UPG-2004
     slug: complete-one
     status: complete
     current_stage: 9
     blockers: []
+    notes: ""
   - feature_id: UPG-2005
     slug: blocked-one
     status: blocked
     current_stage: 4
     blockers: []
+    notes: ""
 "#,
     )
     .expect("write fixture");
@@ -2007,7 +2017,8 @@ fn smoke_dashboard_output_structure() {
     let registry = p.join("registry.yaml");
     std::fs::write(
         &registry,
-        r#"features:
+        r#"schema_version: 2
+features:
   - feature_id: UPG-3001
     slug: alpha
     status: active
@@ -2063,7 +2074,8 @@ fn smoke_dashboard_inferred_edge_cases() {
     let registry = p.join("registry.yaml");
     std::fs::write(
         &registry,
-        r#"features:
+        r#"schema_version: 2
+features:
   - feature_id: UPG-4001
     slug: with-stage-and-blockers
     status: active
@@ -2097,7 +2109,8 @@ fn smoke_dashboard_fill_fields_always_present() {
     let registry = p.join("registry.yaml");
     std::fs::write(
         &registry,
-        r#"features:
+        r#"schema_version: 2
+features:
   - feature_id: UPG-5001
     slug: sample
     status: active
@@ -2124,7 +2137,7 @@ fn smoke_dashboard_preamble_present() {
     let registry = p.join("registry.yaml");
     std::fs::write(
         &registry,
-        "features:\n  - feature_id: UPG-6001\n    slug: sample\n    status: active\n    current_stage: 1\n    blockers: []\n",
+        "schema_version: 2\nfeatures:\n  - feature_id: UPG-6001\n    slug: sample\n    status: active\n    current_stage: 1\n    blockers: []\n    notes: \"\"\n",
     )
     .expect("write fixture");
 
@@ -2146,7 +2159,7 @@ fn smoke_dashboard_no_active_features_only_non_active() {
     let registry = p.join("registry.yaml");
     std::fs::write(
         &registry,
-        "features:\n  - feature_id: UPG-7001\n    slug: done\n    status: complete\n    current_stage: 9\n    blockers: []\n",
+        "schema_version: 2\nfeatures:\n  - feature_id: UPG-7001\n    slug: done\n    status: complete\n    current_stage: 9\n    blockers: []\n    notes: \"\"\n",
     )
     .expect("write fixture");
 
@@ -2154,7 +2167,7 @@ fn smoke_dashboard_no_active_features_only_non_active() {
         run_in_dir(p, &["generate-approval-dashboard", "--registry", registry.to_str().unwrap()]);
     assert_eq!(code, 0, "stderr: {}", stderr);
     assert!(stdout.is_empty(), "stdout must be empty; got: {}", stdout);
-    assert!(stderr.contains("no active features found"), "stderr: {}", stderr);
+    assert!(stderr.contains("no active or hypothesized features found"), "stderr: {}", stderr);
     assert!(stderr.contains(registry.to_str().unwrap()), "stderr must name the path; got: {}", stderr);
 }
 
@@ -2164,13 +2177,13 @@ fn smoke_dashboard_no_active_features_empty_list() {
     let (dir, _sha) = setup_temp_git_repo();
     let p = dir.path();
     let registry = p.join("registry.yaml");
-    std::fs::write(&registry, "features: []\n").expect("write fixture");
+    std::fs::write(&registry, "schema_version: 2\nfeatures: []\n").expect("write fixture");
 
     let (code, stdout, stderr) =
         run_in_dir(p, &["generate-approval-dashboard", "--registry", registry.to_str().unwrap()]);
     assert_eq!(code, 0, "stderr: {}", stderr);
     assert!(stdout.is_empty(), "stdout must be empty; got: {}", stdout);
-    assert!(stderr.contains("no active features found"), "stderr: {}", stderr);
+    assert!(stderr.contains("no active or hypothesized features found"), "stderr: {}", stderr);
 }
 
 #[test]
@@ -2208,7 +2221,7 @@ fn smoke_dashboard_wrong_shape_yaml() {
     let (dir, _sha) = setup_temp_git_repo();
     let p = dir.path();
     let registry = p.join("wrong-shape.yaml");
-    std::fs::write(&registry, "features: \"not a list\"\n").expect("write fixture");
+    std::fs::write(&registry, "schema_version: 2\nfeatures: \"not a list\"\n").expect("write fixture");
 
     let (code, stdout, stderr) =
         run_in_dir(p, &["generate-approval-dashboard", "--registry", registry.to_str().unwrap()]);
@@ -2235,7 +2248,7 @@ fn smoke_dashboard_stdout_only() {
     let registry = p.join("registry.yaml");
     std::fs::write(
         &registry,
-        "features:\n  - feature_id: UPG-8001\n    slug: sample\n    status: active\n    current_stage: 1\n    blockers: []\n",
+        "schema_version: 2\nfeatures:\n  - feature_id: UPG-8001\n    slug: sample\n    status: active\n    current_stage: 1\n    blockers: []\n    notes: \"\"\n",
     )
     .expect("write fixture");
 
@@ -2245,7 +2258,7 @@ fn smoke_dashboard_stdout_only() {
     assert!(stderr.is_empty(), "successful run must have empty stderr; got: {}", stderr);
 
     let empty_registry = p.join("empty.yaml");
-    std::fs::write(&empty_registry, "features: []\n").expect("write fixture");
+    std::fs::write(&empty_registry, "schema_version: 2\nfeatures: []\n").expect("write fixture");
     let (_, stdout, _) =
         run_in_dir(p, &["generate-approval-dashboard", "--registry", empty_registry.to_str().unwrap()]);
     assert!(stdout.is_empty(), "AC-7 case must have empty stdout; got: {}", stdout);
@@ -2269,7 +2282,7 @@ fn smoke_dashboard_exit_zero_on_success() {
     let registry = p.join("registry.yaml");
     std::fs::write(
         &registry,
-        "features:\n  - feature_id: UPG-9001\n    slug: sample\n    status: active\n    current_stage: 1\n    blockers: []\n",
+        "schema_version: 2\nfeatures:\n  - feature_id: UPG-9001\n    slug: sample\n    status: active\n    current_stage: 1\n    blockers: []\n    notes: \"\"\n",
     )
     .expect("write fixture");
 
@@ -2286,7 +2299,7 @@ fn smoke_dashboard_no_provider_config_required() {
     let registry = p.join("registry.yaml");
     std::fs::write(
         &registry,
-        "features:\n  - feature_id: UPG-9101\n    slug: sample\n    status: active\n    current_stage: 1\n    blockers: []\n",
+        "schema_version: 2\nfeatures:\n  - feature_id: UPG-9101\n    slug: sample\n    status: active\n    current_stage: 1\n    blockers: []\n    notes: \"\"\n",
     )
     .expect("write fixture");
 
@@ -2303,7 +2316,8 @@ fn smoke_dashboard_deterministic_output() {
     let registry = p.join("registry.yaml");
     std::fs::write(
         &registry,
-        r#"features:
+        r#"schema_version: 2
+features:
   - feature_id: UPG-9201
     slug: alpha
     status: active
@@ -2335,7 +2349,8 @@ fn smoke_dashboard_architectural_refinements_never_treated_as_feature() {
     let registry = p.join("registry.yaml");
     std::fs::write(
         &registry,
-        r#"features:
+        r#"schema_version: 2
+features:
   - feature_id: UPG-9301
     slug: real-feature
     status: active
@@ -2452,7 +2467,8 @@ fn smoke_release_evidence_registry_enrichment_per_field_independent() {
     let registry = p.join("registry.yaml");
     std::fs::write(
         &registry,
-        r#"features:
+        r#"schema_version: 2
+features:
   - feature_id: UPG-9404
     slug: partial-feature
     status: active
@@ -2487,7 +2503,8 @@ fn smoke_release_evidence_always_fill_fields() {
     let registry = p.join("registry.yaml");
     std::fs::write(
         &registry,
-        r#"features:
+        r#"schema_version: 2
+features:
   - feature_id: UPG-9405
     slug: full-feature
     status: active
@@ -2587,7 +2604,8 @@ fn smoke_release_evidence_feature_not_found_degrades_gracefully() {
     let registry = p.join("registry.yaml");
     std::fs::write(
         &registry,
-        r#"features:
+        r#"schema_version: 2
+features:
   - feature_id: UPG-0000
     slug: unrelated-feature
     status: active
@@ -2670,7 +2688,8 @@ fn smoke_release_evidence_exit_zero_across_registry_states() {
     let registry = p.join("registry.yaml");
     std::fs::write(
         &registry,
-        r#"features:
+        r#"schema_version: 2
+features:
   - feature_id: UPG-9412
     slug: exit-code-feature
     status: active
@@ -2719,7 +2738,8 @@ fn smoke_release_evidence_deterministic_output() {
     let registry = p.join("registry.yaml");
     std::fs::write(
         &registry,
-        r#"features:
+        r#"schema_version: 2
+features:
   - feature_id: UPG-9414
     slug: determinism-feature
     status: active
@@ -2757,7 +2777,8 @@ fn smoke_release_evidence_architectural_refinements_never_treated_as_feature() {
     let registry = p.join("registry.yaml");
     std::fs::write(
         &registry,
-        r#"features:
+        r#"schema_version: 2
+features:
   - feature_id: UPG-9415
     slug: real-feature
     status: active
@@ -2786,4 +2807,311 @@ architectural_refinements:
     // The refinement is not a feature entry, so it must not match — fields fall back to [FILL].
     assert!(stdout.contains("PR: [FILL]"), "stdout: {}", stdout);
     assert!(stderr.contains("UPG-9416-sneaky"), "stderr: {}", stderr);
+}
+
+// --- UPG-0041: registry schema v2 (schema_version, hypothesized status, notes field) ---
+
+#[test]
+fn smoke_dashboard_v2_missing_schema_version_diagnostic() {
+    // AC-8: Missing schema_version triggers specific migration diagnostic
+    let (dir, _sha) = setup_temp_git_repo();
+    let p = dir.path();
+    let registry = p.join("registry.yaml");
+    std::fs::write(
+        &registry,
+        r#"features:
+  - feature_id: UPG-9500
+    slug: legacy-feature
+    status: active
+    current_stage: 1
+    blockers: []
+    notes: ""
+"#,
+    )
+    .expect("write fixture");
+
+    let (code, _stdout, stderr) = run_in_dir(
+        p,
+        &["generate-approval-dashboard", "--registry", registry.to_str().unwrap()],
+    );
+    assert_ne!(code, 0, "should exit non-zero for missing schema_version");
+    assert!(stderr.contains("schema_version: 2"), "stderr: {}", stderr);
+    assert!(stderr.contains("missing") || stderr.contains("found: 0"), "stderr: {}", stderr);
+    assert!(stderr.contains("registry-v2-migration.md"), "stderr: {}", stderr);
+}
+
+#[test]
+fn smoke_dashboard_v2_wrong_schema_version_diagnostic() {
+    // AC-8: Non-2 schema_version triggers specific diagnostic
+    let (dir, _sha) = setup_temp_git_repo();
+    let p = dir.path();
+    let registry = p.join("registry.yaml");
+    std::fs::write(
+        &registry,
+        r#"schema_version: 1
+features:
+  - feature_id: UPG-9501
+    slug: v1-feature
+    status: active
+    current_stage: 1
+    blockers: []
+"#,
+    )
+    .expect("write fixture");
+
+    let (code, _stdout, stderr) = run_in_dir(
+        p,
+        &["generate-approval-dashboard", "--registry", registry.to_str().unwrap()],
+    );
+    assert_ne!(code, 0, "should exit non-zero for wrong schema_version");
+    assert!(stderr.contains("schema_version: 2"), "stderr: {}", stderr);
+    assert!(stderr.contains("found: 1"), "stderr: {}", stderr);
+}
+
+#[test]
+fn smoke_dashboard_v2_non_numeric_schema_version_diagnostic() {
+    // AC-8 blocker fix: Non-numeric schema_version should be reported as such, not as "missing"
+    let (dir, _sha) = setup_temp_git_repo();
+    let p = dir.path();
+    let registry = p.join("registry.yaml");
+    std::fs::write(
+        &registry,
+        r#"schema_version: "1"
+features:
+  - feature_id: UPG-9502
+    slug: string-version-feature
+    status: active
+    current_stage: 1
+    blockers: []
+"#,
+    )
+    .expect("write fixture");
+
+    let (code, _stdout, stderr) = run_in_dir(
+        p,
+        &["generate-approval-dashboard", "--registry", registry.to_str().unwrap()],
+    );
+    assert_ne!(code, 0, "should exit non-zero for non-numeric schema_version");
+    assert!(stderr.contains("schema_version: 2"), "stderr: {}", stderr);
+    // Should show the actual value (a string), not "missing"
+    assert!(!stderr.contains("found: missing"), "should not report as missing: {}", stderr);
+    assert!(stderr.contains("not a number") || stderr.contains("\"1\""), "stderr: {}", stderr);
+}
+
+#[test]
+fn smoke_dashboard_v2_schema_version_probe_wins_over_missing_field() {
+    // AC-9: schema_version pre-probe prevents generic "missing field `slug`" error
+    let (dir, _sha) = setup_temp_git_repo();
+    let p = dir.path();
+    let registry = p.join("registry.yaml");
+    std::fs::write(
+        &registry,
+        r#"features:
+  - feature_id: UPG-9502
+    status: active
+    current_stage: 1
+    blockers: []
+"#,
+    )
+    .expect("write fixture");
+
+    let (code, _stdout, stderr) = run_in_dir(
+        p,
+        &["generate-approval-dashboard", "--registry", registry.to_str().unwrap()],
+    );
+    assert_ne!(code, 0, "should exit non-zero");
+    // Should get the schema_version diagnostic, not a generic "missing field `slug`" error
+    assert!(stderr.contains("schema_version"), "stderr: {}", stderr);
+    assert!(!stderr.contains("missing field"), "stderr should not contain generic serde error: {}", stderr);
+}
+
+#[test]
+fn smoke_dashboard_v2_invalid_status_value_diagnostic() {
+    // AC-10: Invalid status value produces specific diagnostic
+    let (dir, _sha) = setup_temp_git_repo();
+    let p = dir.path();
+    let registry = p.join("registry.yaml");
+    std::fs::write(
+        &registry,
+        r#"schema_version: 2
+features:
+  - feature_id: UPG-9503
+    slug: invalid-status-feature
+    status: stage1
+    current_stage: 1
+    blockers: []
+    notes: ""
+"#,
+    )
+    .expect("write fixture");
+
+    let (code, _stdout, stderr) = run_in_dir(
+        p,
+        &["generate-approval-dashboard", "--registry", registry.to_str().unwrap()],
+    );
+    assert_ne!(code, 0, "should exit non-zero for invalid status");
+    assert!(stderr.contains("UPG-9503"), "stderr: {}", stderr);
+    assert!(stderr.contains("stage1") || stderr.contains("invalid status"), "stderr: {}", stderr);
+    assert!(stderr.contains("hypothesized") && stderr.contains("active"), "stderr should list valid values: {}", stderr);
+}
+
+#[test]
+fn smoke_dashboard_v2_hypothesized_and_active_both_appear() {
+    // AC-11: Both active and hypothesized features appear, hypothesized visually flagged
+    let (dir, _sha) = setup_temp_git_repo();
+    let p = dir.path();
+    let registry = p.join("registry.yaml");
+    std::fs::write(
+        &registry,
+        r#"schema_version: 2
+features:
+  - feature_id: UPG-9504
+    slug: active-feature
+    status: active
+    current_stage: 3
+    blockers: []
+    notes: ""
+  - feature_id: UPG-9505
+    slug: hypothesized-feature
+    status: hypothesized
+    current_stage: 0
+    blockers: []
+    notes: ""
+  - feature_id: UPG-9506
+    slug: suspended-feature
+    status: suspended
+    current_stage: 2
+    blockers: []
+    notes: ""
+"#,
+    )
+    .expect("write fixture");
+
+    let (code, stdout, stderr) = run_in_dir(
+        p,
+        &["generate-approval-dashboard", "--registry", registry.to_str().unwrap()],
+    );
+    assert_eq!(code, 0, "stderr: {}", stderr);
+    assert!(stdout.contains("UPG-9504: active-feature"), "active feature should appear: {}", stdout);
+    assert!(stdout.contains("UPG-9505: hypothesized-feature"), "hypothesized feature should appear: {}", stdout);
+    assert!(!stdout.contains("UPG-9506"), "suspended feature should not appear: {}", stdout);
+
+    // Hypothesized feature should have visual flag
+    let hyp_section = stdout.split("UPG-9505").nth(1).expect("hypothesized section present");
+    assert!(
+        hyp_section.contains("HYPOTHESIZED") || hyp_section.contains("Stage 1 review"),
+        "hypothesized feature should be visually flagged: {}",
+        hyp_section
+    );
+
+    // Active feature should NOT have the flag
+    let active_section = stdout.split("UPG-9504").nth(1).and_then(|s| s.split("UPG-9505").next()).expect("active section");
+    assert!(
+        !active_section.contains("HYPOTHESIZED"),
+        "active feature should not have hypothesized flag: {}",
+        active_section
+    );
+}
+
+#[test]
+fn smoke_dashboard_v2_all_active_registry_unchanged_behavior() {
+    // AC-12: v2 registry with only active features produces expected output (no regression)
+    let (dir, _sha) = setup_temp_git_repo();
+    let p = dir.path();
+    let registry = p.join("registry.yaml");
+    std::fs::write(
+        &registry,
+        r#"schema_version: 2
+features:
+  - feature_id: UPG-9507
+    slug: normal-active
+    status: active
+    current_stage: 2
+    blockers: []
+    notes: ""
+"#,
+    )
+    .expect("write fixture");
+
+    let (code, stdout, stderr) = run_in_dir(
+        p,
+        &["generate-approval-dashboard", "--registry", registry.to_str().unwrap()],
+    );
+    assert_eq!(code, 0, "stderr: {}", stderr);
+    assert!(stdout.contains("UPG-9507: normal-active"), "stdout: {}", stdout);
+    assert!(stdout.contains("Current stage: 2 [INFERRED]"), "stdout: {}", stdout);
+    assert!(stdout.contains("Open blockers: (none) [INFERRED]"), "stdout: {}", stdout);
+    assert!(!stdout.contains("HYPOTHESIZED"), "should not have hypothesized flag: {}", stdout);
+}
+
+#[test]
+fn smoke_release_evidence_v2_missing_schema_version_warning() {
+    // AC-13: generate-release-evidence warns specifically about missing schema_version
+    let (dir, _sha) = setup_temp_git_repo();
+    let p = dir.path();
+    checkout_branch(p, "feature/test-v2");
+
+    let registry = p.join("registry.yaml");
+    std::fs::write(
+        &registry,
+        r#"features:
+  - feature_id: UPG-9508
+    slug: legacy-feature
+    status: active
+    pr: "https://example.test/pr/1"
+    intent: intents/UPG-9508.md
+    contract: contracts/UPG-9508.md
+    event_schema: null
+"#,
+    )
+    .expect("write fixture");
+
+    let (code, stdout, stderr) = run_in_dir(
+        p,
+        &["generate-release-evidence", "--feature", "UPG-9508", "--registry", registry.to_str().unwrap()],
+    );
+    assert_eq!(code, 0, "should exit 0 (graceful degradation)");
+    assert!(stderr.contains("schema_version: 2"), "stderr: {}", stderr);
+    assert!(stderr.contains("missing"), "stderr: {}", stderr);
+    assert!(stderr.contains("registry-v2-migration.md"), "stderr: {}", stderr);
+    // Fields should fall back to [FILL]
+    assert!(stdout.contains("[FILL]"), "stdout: {}", stdout);
+}
+
+#[test]
+fn smoke_release_evidence_v2_field_set_unchanged() {
+    // AC-14: generate-release-evidence's FeatureEntry still reads only pr/intent/contract/event_schema
+    // (status/current_stage/blockers/notes were never read and still aren't)
+    let (dir, _sha) = setup_temp_git_repo();
+    let p = dir.path();
+    checkout_branch(p, "feature/test-v2-fields");
+
+    let registry = p.join("registry.yaml");
+    std::fs::write(
+        &registry,
+        r#"schema_version: 2
+features:
+  - feature_id: UPG-9509
+    slug: v2-feature
+    status: hypothesized
+    current_stage: 0
+    pr: "https://example.test/pr/99"
+    intent: intents/UPG-9509.md
+    contract: null
+    event_schema: events/UPG-9509.json
+    blockers: ["blocker-1", "blocker-2"]
+    notes: "some notes"
+"#,
+    )
+    .expect("write fixture");
+
+    let (code, stdout, stderr) = run_in_dir(
+        p,
+        &["generate-release-evidence", "--feature", "UPG-9509", "--registry", registry.to_str().unwrap()],
+    );
+    assert_eq!(code, 0, "stderr: {}", stderr);
+    // Only pr/intent/contract/event_schema should be read; status/current_stage/blockers/notes ignored
+    assert!(stdout.contains("https://example.test/pr/99"), "stdout: {}", stdout);
+    assert!(stdout.contains("intents/UPG-9509.md"), "stdout: {}", stdout);
+    assert!(stdout.contains("events/UPG-9509.json"), "stdout: {}", stdout);
 }

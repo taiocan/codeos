@@ -2,7 +2,7 @@
 feature_id: UPG-0041
 slug: feature-registry-schema-drift
 title: Reconcile feature-registry.yaml Schema vs Real-World Drift (FundFlow)
-status: PROPOSED
+status: COMPLETE
 priority: P2
 depends_on: [UPG-0009, UPG-0023]
 related_features: [UPG-0037]
@@ -13,7 +13,7 @@ superseded_by: []
 # Upgrade: feature-registry-schema-drift — Reconcile feature-registry.yaml Schema vs Real-World Drift (FundFlow)
 
 **Priority**: P2
-**Status**: PROPOSED
+**Status**: IN_PROGRESS
 **Type**: downstream-doctrine
 
 ## Problem
@@ -96,6 +96,7 @@ UPG-0037.
 
 | Change ID | File | Purpose | State |
 |---|---|---|---|
+| CHG-20260707-005 | `changes/UPG-0041__CHG-20260707-005__feature-registry-schema-drift.md` | Define canonical registry v2 schema (status: hypothesized, notes, schema_version), update dashboard/release-evidence tooling, write migration guide | IN_PROGRESS |
 
 ### Reviews
 

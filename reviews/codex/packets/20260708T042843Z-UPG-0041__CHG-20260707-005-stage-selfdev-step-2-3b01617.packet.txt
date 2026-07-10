@@ -1,0 +1,654 @@
+Reviewer task:
+
+SCOPE CONTRACT
+  Assess this artifact against the STATED SCOPE of this stage/PR — the Expected Stage
+  Output below and what the artifacts actually claim — NOT against an ideal final system.
+  A capability the artifacts do not claim to provide is OUT-OF-SCOPE, not a defect.
+  The following are OUT-OF-SCOPE BACKLOG unless THIS artifact explicitly claims to provide
+  them: formal approval-binding enforcement; rollback correctness; COMMIT_BOUND/
+  WORKSPACE_BOUND enforcement; JSON Schema validation; CI validation; exact
+  decision-integrity; per-feature decision ledgers; autonomous approval; enabled hooks.
+
+YOUR TASK — answer these five questions using only the evidence in the packet:
+  1. Acceptance criteria: Does the artifact satisfy each of its stated acceptance criteria?
+     Cite evidence for each criterion (or note its absence).
+  2. Claim support: Are universal or strong claims (all, every, never, always, no X) in the
+     artifact supported by evidence in the packet? Any unverifiable strong claim is a candidate
+     finding only if it affects acceptance, scope, safety, decision integrity, or the artifact's
+     stated guarantees.
+  3. Scope drift: Is there any change beyond the stated scope boundary? (Files not in the
+     "What changes" list; behavior changes not in the intent; downstream doctrine modified
+     rather than read.)
+  4. In-scope blockers: Are there facts that, if left in, would make the artifact wrong,
+     unsafe, or internally contradictory?
+  5. Finding classification: Classify every finding you raise as exactly one of the five
+     TRIAGE RULE categories below.
+
+TRIAGE RULE — classify EVERY finding as exactly one of:
+  IN-SCOPE BLOCKER         breaks the stated goal; creates a FALSE CLAIM in this artifact;
+                           weakens the advisory/read-only/human-gated guarantees; prevents
+                           the work from running; or violates an explicit safety constraint.
+  IN-SCOPE NON-BLOCKER     improves it but is not required for this PR.
+  OUT-OF-SCOPE BACKLOG     valid, but belongs to a future feature / stronger guarantee.
+  REJECTED                 conflicts with the stated scope or Codeos philosophy.
+  SELF-REFERENCE /         review records that are stale because of the previous round's
+  REVIEW-BOOKKEEPING       own existence (causal loop); not a real artifact defect.
+  Base the PR decision ONLY on IN-SCOPE BLOCKER findings. An OUT-OF-SCOPE BACKLOG finding
+  must NOT cause DO NOT ADVANCE unless this artifact FALSELY CLAIMS to solve it.
+
+WHAT NOT TO DO
+  - Do not flag style or wording issues as blockers unless the wording creates a false claim,
+    contradiction, parser breakage, or wrong governance instruction.
+  - Do not re-review unchanged full context when the packet is in delta mode.
+  - Do not treat local-only review history as a blocker unless the artifact falsely
+    claims the review artifacts are committed/durable.
+
+INSTRUCTIONS
+  If this is a resumed session, ignore any earlier-session conclusions unless they are
+  re-established by THIS packet; assess only the evidence above, pinned to this commit.
+  Give a focused assessment of this artifact against the stated scope, acceptance criteria,
+  and evidence in this packet. Rank findings by severity. Suggest a better design only when
+  needed to explain a required fix for an IN-SCOPE BLOCKER.
+
+  Limit findings to the top 3 IN-SCOPE BLOCKERS. Additional non-blocking observations may be
+  summarized in one short paragraph only if useful.
+
+  For EACH finding emit:
+    Finding: / Severity: High|Medium|Low / Classification: <one of the TRIAGE RULE labels>
+    Evidence: <file/line> / Why: <short> / Required action: fix now|optional fix|backlog|reject
+    Scope reason: <why it does/does not belong to this PR's scope>
+  Then emit:
+    PR decision: ADVANCE | REQUEST CHANGES | DO NOT ADVANCE   (based ONLY on in-scope blockers)
+    Scope drift warning: yes|no — <is anything pulling this PR beyond its stated scope?>
+  Then on the LAST three lines emit exactly (map ADVANCE->NO OBJECTION,
+  REQUEST CHANGES->CHANGES ADVISED, DO NOT ADVANCE->DO NOT ADVANCE):
+    LOG SUMMARY: <NO OBJECTION | CHANGES ADVISED | DO NOT ADVANCE | UNCLASSIFIED> — <single most important point>
+      (use UNCLASSIFIED if you genuinely cannot classify the artifact safely)
+    EVIDENCE: <A|B|C|D|E>
+    HIGHEST-IMPACT UNCERTAINTY: <one sentence — what single thing, if wrong, most affects this assessment>
+
+  Evidence grade — the grade describes what the assessment rests on, not reviewer confidence:
+    A — Directly verified in the artifact, diff, or output shown in the packet
+    B — Verified with multiple direct pieces of evidence, but coverage is not complete
+    C — Partially verified, partially inferred from structure or context
+    D — Mostly inferred from structure or indirect evidence
+    E — Hypothesis or very limited basis — little to no direct evidence
+
+
+PACKET MANIFEST
+  generated: 2026-07-08T04:27:18Z
+  task_prompt: /home/rimo/projects/Codeos/prompts/codeos-reviewer-task.md (4959 bytes)
+  review_content_bytes: 27715
+  estimated_review_tokens: ~6928
+  budget_status: OK
+  packet_mode: full
+  delta_base: none
+  items:
+    - path: changes/UPG-0041__CHG-20260707-005__feature-registry-schema-drift.md
+      mode: full_file
+      bytes: 15412
+      sha256: 16803ced2ecc1023f4ede46ffe2c359359f0762c87ebeb12efffaf25252574d6
+    - path: backlog/UPG-0041-feature-registry-schema-drift.md
+      mode: full_file
+      bytes: 4683
+      sha256: e8c8f70f454175d7b1436d7c2254fb28519570d3576120bbba8ce3024d5c66cb
+    - path: templates/feature-registry.yaml
+      mode: full_file
+      bytes: 2360
+      sha256: c3a6e52d1361366f708336db52728fcee157f8b0490a9658c87bc8238d736718
+    - path: (diff)
+      mode: full_file
+      bytes: 5260
+
+REVIEW CONTEXT
+  Feature:                UPG-0041__CHG-20260707-005
+  Stage:                  selfdev-step-2
+  Branch:                 main
+  Base commit:            (no base pin)
+  Review commit:          3b01617aca482c60d3aced6d18c6e38e60169457 (+ uncommitted workspace changes)
+  Current approved stage: n/a (non-numeric stage)
+  Evidence coverage:      FULL_COVERAGE
+  Workspace dirty:        yes (uncommitted changes at review time)
+
+DBA RULES RELEVANT TO THIS STAGE
+  - Human approval is required for every stage transition; you are advisory only.
+  - Memory is not truth — assess only what is provided, pinned to the review commit.
+  - Implementation must trace to approved artifacts; no behavior beyond intent+contract+schema.
+  - No events outside the approved event schema; no hidden behavior.
+
+STAGE-SPECIFIC CHECKS
+  - (no stage-specific checklist for stage selfdev-step-2)
+
+EXPECTED STAGE OUTPUT
+  (no expected-output template for stage)
+
+ARTIFACTS TO REVIEW
+  --- changes/UPG-0041__CHG-20260707-005__feature-registry-schema-drift.md (sha256: 16803ced2ecc1023f4ede46ffe2c359359f0762c87ebeb12efffaf25252574d6, visibility: shown) ---
+    ---
+    change_id: CHG-20260707-005
+    feature_id: UPG-0041
+    slug: feature-registry-schema-drift
+    triage_class: downstream-doctrine
+    scope_axis: downstream doctrine only
+    review_profile: PROFILE-4
+    review_series: RVS__UPG-0041__CHG-20260707-005__S1
+    review_state: REVIEWED
+    status: IN_PROGRESS
+    loop_step: 2-Acceptance
+    ---
+    
+    # Change: UPG-0041 / CHG-20260707-005 — Reconcile feature-registry.yaml Schema vs Real-World Drift (FundFlow)
+    
+    ## TRACE HEADER
+    
+    ```yaml
+    feature_id: UPG-0041
+    primary_feature_id: UPG-0041
+    change_id: CHG-20260707-005
+    slug: feature-registry-schema-drift
+    state: IN_PROGRESS
+    current_step: 2-Acceptance
+    implements:
+      - UPG-0041
+    related_features:
+      - UPG-0009
+      - UPG-0023
+      - UPG-0037
+    review_series: RVS__UPG-0041__CHG-20260707-005__S1
+    review_profile: PROFILE-4
+    review_state: DRAFT
+    review_history: reviews/review-log.md
+    fixes_findings: []
+    follow_up_of: null
+    ```
+    
+    ---
+    
+    ## Step 1 — Change Intent
+    
+    ### Problem
+    
+    `generate-approval-dashboard` (UPG-0023) works correctly against `templates/feature-
+    registry.yaml`'s canonical schema but fails against `/home/rimo/projects/FundFlow/features/
+    registry.yaml`, a real downstream project's actual registry — discovered 2026-07-06.
+    Neither existing schema is doctrine-authoritative. `dba-system.md` defines no registry
+    status vocabulary at all — grepped fresh before drafting this Step 1
+    (`grep -n "status\|active\|suspended\|blocked\|complete\|hypothesized" dba-system.md`): the
+    only hit resembling a status enum is line 371, `Status: Active | Superseded | Rejected`,
+    which is the **Architecture Journal entry format** (`## AJ-NNN`), unrelated to
+    feature-registry entries. No other line in the file defines a feature-registry status
+    vocabulary. So the canonical template's `active`/`suspended`/`complete`/`blocked` and
+    FundFlow's `stage0`…`stage9`/`stage0-hypothesized` are both downstream-invented conventions,
+    neither more "authoritative" than the other by doctrine. The concept `dba-system.md` *does*
+    define — `HYPOTHESIZED_INTENT`, produced by Onboarding (Session Type D), "must pass Stage 1
+    review before advancing" (Artifact Classification
+    table) — is represented cleanly by neither schema.
+    
+    ### What changes
+    
+    | File | Change |
+    |---|---|
+    | `templates/feature-registry.yaml` | Canonical schema v2: adds `schema_version: 2` marker, `hypothesized` status value, `notes` field (mirroring the existing `architectural_refinements` entries' `notes` field); clarifies `current_stage`'s independence from `status` in comments |
+    | `docs/registry-v2-migration.md` | New: explains v1→v2 differences and how to migrate a legacy registry |
+    | `tools/reviewer/src/cmd/generate_approval_dashboard.rs` | Schema-version-aware parsing: a lenient pre-probe detects a missing/non-2 `schema_version` and emits a specific migration diagnostic (not a generic serde error); status-enum validation with a specific diagnostic naming invalid values; dashboard now surfaces both `active` and `hypothesized` features, visually flagging hypothesized ones as needing Stage 1 review |
+    | `tools/reviewer/src/cmd/generate_release_evidence.rs` | Same schema-version pre-probe added to its existing graceful-degradation warning path — registry-derived fields still fall back to `[FILL]` exactly as before, but the warning now names a `schema_version` mismatch specifically when that's the cause |
+    | `tools/reviewer/tests/smoke.rs` | New/updated tests for both tools reflecting the v2 schema and the new diagnostics |
+    | `backlog/UPG-0041-feature-registry-schema-drift.md` | Feature Thread: CHG-20260707-005 activated (done) |
+    | `backlog/features.md` | Row → IN_PROGRESS (done) |
+    | `status/self-development.md` | Row activated (done) |
+    | `status/roadmap.md` | UPG-0041 → IN_PROGRESS (done) |
+    
+    ### Scope boundary — what stays the same
+    
+    - **`dba-system.md` is not touched.** It defines no registry status vocabulary today (grep-
+      confirmed) and this change doesn't add any — `HYPOTHESIZED_INTENT` already exists there;
+      this change only makes the *template* represent that existing concept more precisely. The
+      registry schema remains a template-level convention, not promoted into doctrine.
+    - **`CLAUDE.md` — not touched.**
+    - **FundFlow's actual `features/registry.yaml` is not edited by this change.** It is a
+      separate repository outside Codeos's direct control. This change defines the v2 schema,
+      updates Codeos's own tooling, and writes a migration guide FundFlow's maintainer (or a
+      separate, explicit follow-up session working in FundFlow's own repo) can use — actually
+      applying that migration to FundFlow's live file is called out as a distinct next step, not
+      performed here.
+    - **No silent legacy tolerance.** Per the explicit direction for this change: a pre-v2
+      registry gets a specific, actionable diagnostic (not a guess-based partial parse, not a
+      silently-degraded dashboard) — `generate-approval-dashboard` requires `schema_version: 2`
+      to proceed at all; `generate-release-evidence`'s existing optional/graceful-degradation
+      design (established at UPG-0024, not reopened here) keeps falling back to `[FILL]`, but
+      now names the specific reason when it's a schema-version mismatch.
+    - **No new subcommand.** This modifies the schema plus the two existing registry-consuming
+      subcommands.
+    
+    ### Design intent
+    
+    **Schema v2** (`templates/feature-registry.yaml`):
+    ```yaml
+    schema_version: 2
+    
+    # Status values (lifecycle / decision state — never encodes stage; see current_stage
+    # for workflow position):
+    #   hypothesized — produced by Onboarding (Session Type D); HYPOTHESIZED_INTENT, not yet
+    #                  approved as Stage 1 Intent; must pass Stage 1 review to advance
+    #   active       — currently progressing through the DBA stage loop
+    #   suspended    — work paused; evidence chain preserved
+    #   blocked      — blocked by an unresolved dependency or finding
+    #   complete     — all required stages approved, no open refinements
+    #
+    # current_stage values (DBA workflow position — independent of status above):
+    #   0    — brief / pre-Stage-1
+    #   1-10 — current DBA stage
+    #   null — not yet placed in the normal stage flow
+    
+    features:
+      - feature_id: UPG-0000
+        slug: example-feature         # required — feature_id is identity, slug is the readable label
+        ...
+        status: active                # hypothesized | active | suspended | blocked | complete
+        current_stage: 1              # 0 | 1-10 | null
+        ...
+        blockers: []                  # structured; does not replace notes
+        notes: ""                     # free-form context; does not replace blockers
+    ```
+    `status: hypothesized` + `current_stage: 0` (or `null`) represents an Onboarding-originated
+    feature — deliberately **not** a combined `stage0-hypothesized` value, keeping the two
+    dimensions (lifecycle state vs. workflow position) separate.
+    
+    **`generate-approval-dashboard`**: a lenient `serde_yaml::Value` pre-probe checks
+    `schema_version` before attempting the strict v2 struct parse — this ordering matters,
+    because `slug` stays a required (non-`Option`) field in the v2 struct, so a legacy registry
+    missing `slug` would otherwise fail with a generic "missing field" error before the
+    pre-probe's specific "not v2, see migration guide" diagnostic ever ran. After a successful
+    v2 parse, `status` values are validated against the 5-value enum with a specific diagnostic
+    naming which entries are invalid, if any. The active-features filter becomes
+    `status == "active" || status == "hypothesized"` — both need human attention (hypothesized
+    ones specifically need Stage 1 review) — with hypothesized entries visually flagged in the
+    output.
+    
+    **`generate-release-evidence`**: same `schema_version` pre-probe added ahead of its existing
+    parse-failure branch, purely to make the existing graceful-degradation warning name the
+    specific cause when it's a v1/v2 mismatch. Its own field set (`pr`/`intent`/`contract`/
+    `event_schema`) is unaffected by the v2 schema changes — `status`/`current_stage`/`blockers`/
+    `notes` were never read there and still aren't.
+    
+    ### Downstream compatibility
+    
+    - No artifact path or filename changes.
+    - A v1-shaped registry (including the current canonical template's *own* example, until this
+      change updates it) will no longer silently parse — this is an intentional breaking change
+      for `generate-approval-dashboard`, mitigated by the specific migration diagnostic. This
+      claim is not yet verified — Step 4 will run the updated tool against FundFlow's real
+      (still-legacy, unedited by this change) registry to confirm the new diagnostic actually
+      fires there, as planned acceptance verification, not completed work.
+    
+    ### Triage
+    
+    - Class: `downstream-doctrine`
+    - Scope axis: `downstream doctrine only`
+    - Review profile: `PROFILE-4`
+    - Originating backlog id: `UPG-0041`
+    
+    ---
+    
+    ## Step 2 — Acceptance Criteria
+    
+    ### Schema v2
+    
+    **AC-1 — `schema_version: 2` present**
+    `templates/feature-registry.yaml` has a top-level `schema_version: 2` field.
+    _Verify in Step 4:_ grep/read the file; confirm present.
+    
+    **AC-2 — `status` enum documented with exactly 5 values, no combined stage-status string**
+    Comments document `hypothesized`/`active`/`suspended`/`blocked`/`complete`; no
+    `stage0-hypothesized`-style combined value appears anywhere in the template.
+    _Verify in Step 4:_ read the comments; confirm the 5 values and absence of any combined form.
+    
+    **AC-3 — `current_stage` documented as independent of `status`**
+    Comments clarify `current_stage` values (`0`, `1`-`10`, `null`) and that it's a separate
+    dimension from `status`.
+    _Verify in Step 4:_ read the comments.
+    
+    **AC-4 — `notes` added alongside `blockers`, neither replaces the other**
+    The example `features` entry has both a `blockers: []` list field and a `notes: ""`
+    free-form field.
+    _Verify in Step 4:_ confirm both present in the same entry.
+    
+    **AC-5 — `slug` remains required**
+    No comment or structural change marks `slug` as optional; it stays a plain required field,
+    matching the explicit direction to keep it required.
+    _Verify in Step 4:_ confirm `slug`'s line has no "optional"/fallback language.
+    
+    **AC-6 — `architectural_refinements` section unchanged**
+    That section already had its own `notes` field before this change; it requires no
+    modification.
+    _Verify in Step 4:_ diff confirms no change to that section.
+    
+    ### Migration guide
+    
+    **AC-7 — `docs/registry-v2-migration.md` covers every v1→v2 difference with concrete steps**
+    Covers: the new `schema_version: 2` marker, the status vocabulary change (`hypothesized`
+    added, no combined stage-status form), `current_stage` staying separate, `slug` staying
+    required, the new `notes` field — with concrete before/after YAML snippets, not just prose.
+    _Verify in Step 4:_ read the doc; confirm all 5 differences covered with examples.
+    
+    ### `generate-approval-dashboard`
+    
+    **AC-8 — Missing/non-2 `schema_version` triggers a specific migration diagnostic**
+    A registry without `schema_version: 2` produces a message naming the actual declared value
+    (or its absence) and pointing at `docs/registry-v2-migration.md` — not a generic serde parse
+    error. Exit code matches the tool's existing usage-error convention (`EXIT_USAGE`).
+    _Verify in Step 4:_ fixture registry with no `schema_version`; confirm the specific message
+    and exit code.
+    
+    **AC-9 — The `schema_version` pre-probe wins over a generic "missing field" error**
+    A registry that is *both* missing `schema_version: 2` *and* missing other v2-required fields
+    (e.g. `slug`) still produces the specific migration diagnostic from AC-8, not a generic
+    "missing field `slug`" error — this is the exact fix for FundFlow's real registry shape.
+    _Verify in Step 4:_ fixture registry missing both `schema_version` and `slug`; confirm the
+    AC-8 message fires, not a raw serde error.
+    
+    **AC-10 — Invalid `status` value produces a specific diagnostic**
+    A v2-schema-declared registry with a `status` value outside the 5-value enum produces a
+    message naming the offending `feature_id` and its invalid value, plus the valid value list —
+    not a silent pass-through or generic error.
+    _Verify in Step 4:_ fixture with `status: bogus`; confirm the specific message.
+    
+    **AC-11 — Dashboard surfaces both `active` and `hypothesized` features, flagged distinctly**
+    The active-features filter becomes `status == "active" || status == "hypothesized"`;
+    hypothesized entries are visually distinguished in the output (e.g. a note indicating Stage 1
+    review is needed) rather than looking identical to active ones.
+    _Verify in Step 4:_ fixture with one of each status; confirm both appear, hypothesized one
+    visibly flagged.
+    
+    **AC-12 — Existing all-active-registry behavior is a strict superset, not changed**
+    A fully v2-valid registry with no `hypothesized` entries produces the same dashboard content
+    as before this change (modulo the `schema_version` field's presence) — no regression to
+    UPG-0023's original behavior for the common case.
+    _Verify in Step 4:_ re-run UPG-0023's existing smoke-test fixtures (updated to declare
+    `schema_version: 2`); confirm unchanged output shape.
+    
+    ### `generate-release-evidence`
+    
+    **AC-13 — `schema_version` pre-probe added to the existing graceful-degradation path**
+    When `--registry` is given and the file lacks `schema_version: 2`, the existing "cannot
+    parse" warning becomes specific about the `schema_version` mismatch; registry-derived fields
+    still fall back to `[FILL]` exactly as before (UPG-0024's established behavior), full report
+    still emitted, exit 0 — no change to that tool's exit-code or output-shape contract.
+    _Verify in Step 4:_ fixture registry with no `schema_version`; confirm the more specific
+    warning text, same exit/output behavior otherwise.
+    
+    **AC-14 — Its own field set is unaffected by v2**
+    `generate-release-evidence`'s `FeatureEntry` struct still reads only `pr`/`intent`/
+    `contract`/`event_schema`; no new required field is added there — the v2 schema changes
+    (`status`/`current_stage`/`blockers`/`notes`) were never read by this tool and still aren't.
+    _Verify in Step 4:_ diff confirms `FeatureEntry`'s field list in this file is unchanged.
+    
+    ### Downstream verification & cross-reference integrity
+    
+    **AC-15 — The real fix, verified against FundFlow's actual (unedited) registry**
+    Running the updated `generate-approval-dashboard` against
+    `/home/rimo/projects/FundFlow/features/registry.yaml` (still legacy-shaped, not touched by
+    this change) now produces the AC-8/AC-9 specific migration diagnostic, not the old generic
+    "missing field `slug`" error.
+    _Verify in Step 4:_ run it for real; compare the error message to the one observed during
+    this feature's original discovery (2026-07-06).
+    
+    **AC-16 — FundFlow's actual registry file is not edited**
+    _Verify in Step 4:_ `git status`/`git diff` inside `/home/rimo/projects/FundFlow` shows no
+    change to `features/registry.yaml` (or confirm no write access was used at all).
+    
+    **AC-17 — `dba-system.md` and `CLAUDE.md` untouched**
+    _Verify in Step 4:_ `git diff --stat` for both is empty.
+    
+    **AC-18 — Reviewer scope-triage applied at Step 4**
+    Per `CLAUDE.md`'s `downstream-doctrine` rigor requirement, Step 4 classifies every Step 3
+    review finding using the five-category scope-triage.
+    _Verify in Step 4:_ the Step 4 "Reviewer scope triage" section explicitly classifies each
+    finding from every round.
+    
+    ---
+    
+    ## Step 3 — Implement
+    
+    *(to be written after Step 2 approval)*
+    
+    ---
+    
+    ## Step 4 — Reconcile
+    
+    *(to be written after Step 3 approval)*
+
+  --- backlog/UPG-0041-feature-registry-schema-drift.md (sha256: e8c8f70f454175d7b1436d7c2254fb28519570d3576120bbba8ce3024d5c66cb, visibility: shown) ---
+    ---
+    feature_id: UPG-0041
+    slug: feature-registry-schema-drift
+    title: Reconcile feature-registry.yaml Schema vs Real-World Drift (FundFlow)
+    status: IN_PROGRESS
+    priority: P2
+    depends_on: [UPG-0009, UPG-0023]
+    related_features: [UPG-0037]
+    supersedes: []
+    superseded_by: []
+    ---
+    
+    # Upgrade: feature-registry-schema-drift — Reconcile feature-registry.yaml Schema vs Real-World Drift (FundFlow)
+    
+    **Priority**: P2
+    **Status**: IN_PROGRESS
+    **Type**: downstream-doctrine
+    
+    ## Problem
+    
+    `generate-approval-dashboard` (UPG-0023) works correctly against `templates/feature-
+    registry.yaml`'s canonical schema, but fails to parse `/home/rimo/projects/FundFlow/features/
+    registry.yaml` — a real, live downstream project's actual registry. Discovered 2026-07-06
+    while demonstrating the dashboard tool.
+    
+    The drift, field by field:
+    
+    | Field | Canonical template (UPG-0009) | FundFlow's actual registry |
+    |---|---|---|
+    | `slug` | required | absent entirely |
+    | `status` | `active` / `suspended` / `complete` / `blocked` | `stage0` … `stage9` / `complete` / `stage0-hypothesized` (stage baked into the status string) |
+    | `current_stage` | separate field, `0`-`10` or `null` | absent — no separate stage field |
+    | `blockers` | list field | absent — uses free-form `notes` instead |
+    
+    Notably, FundFlow's `stage0-hypothesized` status value maps more precisely onto
+    `dba-system.md`'s own Onboarding (Session Type D) vocabulary than the canonical template
+    does — this may indicate the *template* is what's behind, not FundFlow's registry.
+    
+    ## Upgrade
+    
+    Not decided by this brief — six questions for whoever picks this up to resolve deliberately,
+    not patch quickly:
+    
+    1. Should canonical UPG-0009 evolve to include stage-aware status values like
+       `stage0-hypothesized`, matching `dba-system.md`'s actual vocabulary more closely?
+    2. Should `current_stage` remain a separate field, or be derived from a `stageN`-shaped
+       status string?
+    3. Is `slug` truly required, or should it fall back to `feature_id` when absent?
+    4. Must `blockers` stay a structured list, or can free-form `notes` remain valid (with the
+       dashboard tool reading whichever is present)?
+    5. Does FundFlow's `features/registry.yaml` need an actual migration to the reconciled
+       schema, once one is settled?
+    6. Should dashboard/reviewer tooling that encounters an unrecognized registry shape fail
+       with a clear schema-drift diagnostic (naming the specific missing/mismatched fields)
+       rather than a generic parse error — even before this reconciliation is designed?
+    
+    ## Scope
+    
+    `templates/feature-registry.yaml`'s schema, `tools/reviewer/src/cmd/
+    generate_approval_dashboard.rs`'s parsing tolerance (if the reconciliation decides to widen
+    it), and possibly `/home/rimo/projects/FundFlow/features/registry.yaml` (a FundFlow-side
+    migration, not a Codeos repo file — out of this repo's direct control, coordinate with
+    whoever maintains that project).
+    
+    ## Value
+    
+    Medium-high. Without this, `generate-approval-dashboard` — built specifically so humans can
+    navigate in-flight feature state — cannot actually be used on the one real downstream project
+    that exists today.
+    
+    ## Risk
+    
+    Deciding hastily (e.g., "just make slug optional") risks papering over a deeper doctrine
+    question: whether the canonical registry schema itself needs updating to reflect how
+    Onboarding-originated projects actually track stage-hypothesized features. Do not patch
+    without first answering the six questions above.
+    
+    ## Guardrail
+    
+    No blind FundFlow rewrite and no silent dashboard-tool tolerance patch until the underlying
+    schema question is deliberately decided — this is itself the first acceptance criterion for
+    whatever change picks this up.
+    
+    ## DBA-philosophy note
+    
+    Touches the canonical `templates/feature-registry.yaml` schema (a `.codeos/templates/` file
+    downstream projects use) — classified `downstream-doctrine`, same rigor tier as UPG-0009,
+    UPG-0037.
+    
+    ## Feature Thread
+    
+    > Canonical thread rollup for this feature. Compact links/IDs only; full detail lives in the
+    > change records and review files. May be maintained manually.
+    
+    ### Changes
+    
+    | Change ID | File | Purpose | State |
+    |---|---|---|---|
+    | CHG-20260707-005 | `changes/UPG-0041__CHG-20260707-005__feature-registry-schema-drift.md` | Define canonical registry v2 schema (status: hypothesized, notes, schema_version), update dashboard/release-evidence tooling, write migration guide | IN_PROGRESS |
+    
+    ### Reviews
+    
+    | Review ID | Change ID | Step | Round | Verdict |
+    |---|---|---|---|---|
+    
+    ### Findings Tracked Inside This Feature
+    
+    | Finding ID | Review ID | Classification | Resolution |
+    |---|---|---|---|
+    
+    ### Follow-up Features
+    
+    | Feature ID | Reason | Source finding |
+    |---|---|---|
+
+  --- templates/feature-registry.yaml (sha256: c3a6e52d1361366f708336db52728fcee157f8b0490a9658c87bc8238d736718, visibility: shown) ---
+    # Feature Registry
+    #
+    # This file is an index, not a truth source. Filesystem, git state, and approved
+    # DBA artifacts take precedence over any entry here. If this registry disagrees
+    # with actual state, correct the registry — do not use registry entries to override
+    # actual artifacts.
+    #
+    # Human-maintained. Update whenever a feature advances a stage or changes status.
+    #
+    # Recommended downstream instance path: features/registry.yaml
+    # (Copy this template to features/registry.yaml in your downstream project.)
+    #
+    # Status values:
+    #   active      — feature is in progress
+    #   suspended   — work paused; evidence chain preserved
+    #   complete    — all stages approved, no open refinements
+    #   blocked     — blocked by an unresolved dependency or finding
+    #
+    # reconciliation_status / replay_status values:
+    #   pending — not yet run
+    #   passed  — last run passed
+    #   failed  — last run failed (requires resolution before advancing)
+    #   na      — not applicable at the current stage
+    
+    features:
+      - feature_id: UPG-0000         # stable feature identifier (e.g., UPG-0042)
+        slug: example-feature         # short human-readable name
+        description: "Brief description of what this feature does"
+        type: F                       # F (feature) | R (refinement of an existing feature)
+        status: active                # active | suspended | complete | blocked
+        branch: feature/example       # git branch tracking this feature
+        current_stage: 1              # approved DBA stage: 0–10, or null if not started
+        intent: null                  # path to approved intent artifact, or null
+        contract: null                # path to approved contract artifact, or null
+        event_schema: null            # path to approved event schema artifact, or null
+        pr: null                      # pull request URL or null
+        last_commit: null             # last known commit SHA or null
+        reconciliation_status: na     # pending | passed | failed | na
+        replay_status: na             # pending | passed | failed | na
+        blockers: []                  # list of blocking issues; empty if none
+    
+    architectural_refinements:
+      - refine_id: example_refine
+        description: "Brief description of the structural change"
+        status: step2  # step1 | step2 | step3 | step4 | step5 | complete
+        artifact: refinements/arch/example_refine.md
+        notes: ""
+
+DIFF TO REVIEW (base->review, secret/size filtered)
+diff --git a/backlog/UPG-0041-feature-registry-schema-drift.md b/backlog/UPG-0041-feature-registry-schema-drift.md
+index 47fa114..b4ac4c7 100644
+--- a/backlog/UPG-0041-feature-registry-schema-drift.md
++++ b/backlog/UPG-0041-feature-registry-schema-drift.md
+@@ -2,7 +2,7 @@
+ feature_id: UPG-0041
+ slug: feature-registry-schema-drift
+ title: Reconcile feature-registry.yaml Schema vs Real-World Drift (FundFlow)
+-status: PROPOSED
++status: IN_PROGRESS
+ priority: P2
+ depends_on: [UPG-0009, UPG-0023]
+ related_features: [UPG-0037]
+@@ -13,7 +13,7 @@ superseded_by: []
+ # Upgrade: feature-registry-schema-drift — Reconcile feature-registry.yaml Schema vs Real-World Drift (FundFlow)
+ 
+ **Priority**: P2
+-**Status**: PROPOSED
++**Status**: IN_PROGRESS
+ **Type**: downstream-doctrine
+ 
+ ## Problem
+@@ -96,6 +96,7 @@ UPG-0037.
+ 
+ | Change ID | File | Purpose | State |
+ |---|---|---|---|
++| CHG-20260707-005 | `changes/UPG-0041__CHG-20260707-005__feature-registry-schema-drift.md` | Define canonical registry v2 schema (status: hypothesized, notes, schema_version), update dashboard/release-evidence tooling, write migration guide | IN_PROGRESS |
+ 
+ ### Reviews
+ 
+diff --git a/backlog/features.md b/backlog/features.md
+index bba3df3..4c641c8 100644
+--- a/backlog/features.md
++++ b/backlog/features.md
+@@ -71,7 +71,7 @@ The goal is to speed up Codeos development without weakening DBA advantages.
+ | UPG-0038 | [UPG-0038-review-shim-symlink-resolution.md](UPG-0038-review-shim-symlink-resolution.md) | Fix codeos-review.sh Binary Resolution for Symlinked Downstream Projects | P1 | COMPLETE |
+ | UPG-0039 | [UPG-0039-solution-discovery-prefix-rename.md](UPG-0039-solution-discovery-prefix-rename.md) | Resolve the 00b Prompt-Filename Collision (Discovery -> 00a) | P3 | COMPLETE |
+ | UPG-0040 | [UPG-0040-config-test-env-var-race.md](UPG-0040-config-test-env-var-race.md) | Fix Flaky config::tests Race on CODEOS_REVIEWER_PROVIDER Env Var | P2 | COMPLETE |
+-| UPG-0041 | [UPG-0041-feature-registry-schema-drift.md](UPG-0041-feature-registry-schema-drift.md) | Reconcile feature-registry.yaml Schema vs Real-World Drift (FundFlow) | P2 | PROPOSED |
++| UPG-0041 | [UPG-0041-feature-registry-schema-drift.md](UPG-0041-feature-registry-schema-drift.md) | Reconcile feature-registry.yaml Schema vs Real-World Drift (FundFlow) | P2 | IN_PROGRESS |
+ 
+ > Priority `—` = no formal P-rank (a completed cleanup, or a discovery note). Feature IDs are
+ > assigned once and never reused. `UPG-0002` and `UPG-0003` are historical/piloted work given IDs
+diff --git a/status/roadmap.md b/status/roadmap.md
+index 60d792f..08b7c9d 100644
+--- a/status/roadmap.md
++++ b/status/roadmap.md
+@@ -99,7 +99,7 @@ cheap pilot-adjacent wins early.
+ | UPG-0038 | Fix codeos-review.sh Binary Resolution for Symlinked Downstream Projects | P1 | UPG-0032 ✓ | CHG-20260707-002 | COMPLETE |
+ | UPG-0039 | Resolve the 00b Prompt-Filename Collision (Discovery -> 00a) | P3 | UPG-0007 ✓ | CHG-20260707-003 | COMPLETE |
+ | UPG-0040 | Fix Flaky config::tests Race on CODEOS_REVIEWER_PROVIDER Env Var | P2 | — | CHG-20260707-004 | COMPLETE |
+-| UPG-0041 | Reconcile feature-registry.yaml Schema vs Real-World Drift (FundFlow) | P2 | UPG-0009 ✓, UPG-0023 | — | PROPOSED |
++| UPG-0041 | Reconcile feature-registry.yaml Schema vs Real-World Drift (FundFlow) | P2 | UPG-0009 ✓, UPG-0023 ✓ | CHG-20260707-005 | IN_PROGRESS |
+ 
+ ---
+ 
+diff --git a/status/self-development.md b/status/self-development.md
+index 5a5dba7..54202f4 100644
+--- a/status/self-development.md
++++ b/status/self-development.md
+@@ -61,6 +61,7 @@
+ | UPG-0038 | CHG-20260707-002 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION; Step 2 NO OBJECTION; Step 3 NO OBJECTION R2; Step 4 NO OBJECTION R3; all 10 ACs verified; real FundFlow invocation) | COMPLETE | — |
+ | UPG-0039 | CHG-20260707-003 | downstream-doctrine | downstream doctrine only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION; Step 2 NO OBJECTION R2; Step 3 accepted R2, Step 4 accepted R1 — both SECRET_REDACTION coverage, same known benign trigger; all 11 ACs verified; live FundFlow check) | COMPLETE | — |
+ | UPG-0040 | CHG-20260707-004 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION R2; Step 2 NO OBJECTION R3; Step 3 NO OBJECTION; Step 4 NO OBJECTION R2; all 8 ACs verified; 2× 20-run stress test, 0 failures) | COMPLETE | — |
++| UPG-0041 | CHG-20260707-005 | downstream-doctrine | downstream doctrine only | 2-Acceptance | Step 1 NO OBJECTION R2 | IN_PROGRESS | — |
+ | UPG-0036 | CHG-20260705-001 | self-dev-governance | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION R3; Step 2 NO OBJECTION R2; Step 3 NO OBJECTION R3; Step 4 NO OBJECTION R1; all 10 ACs verified; real check-drift run) | COMPLETE | — |
+ | UPG-0037 | CHG-20260705-002 | downstream-doctrine | downstream doctrine only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION; Step 2 NO OBJECTION R2; Step 3 accepted at budget R3 (0 blockers, SECRET_REDACTION coverage); Step 4 accepted R1 (0 blockers, same SECRET_REDACTION cause); all 13 ACs verified; 105 tests; real FundFlow dry-runs) | COMPLETE | UPG-0038 |
+ 

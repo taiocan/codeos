@@ -71,7 +71,7 @@ The goal is to speed up Codeos development without weakening DBA advantages.
 | UPG-0038 | [UPG-0038-review-shim-symlink-resolution.md](UPG-0038-review-shim-symlink-resolution.md) | Fix codeos-review.sh Binary Resolution for Symlinked Downstream Projects | P1 | COMPLETE |
 | UPG-0039 | [UPG-0039-solution-discovery-prefix-rename.md](UPG-0039-solution-discovery-prefix-rename.md) | Resolve the 00b Prompt-Filename Collision (Discovery -> 00a) | P3 | COMPLETE |
 | UPG-0040 | [UPG-0040-config-test-env-var-race.md](UPG-0040-config-test-env-var-race.md) | Fix Flaky config::tests Race on CODEOS_REVIEWER_PROVIDER Env Var | P2 | COMPLETE |
-| UPG-0041 | [UPG-0041-feature-registry-schema-drift.md](UPG-0041-feature-registry-schema-drift.md) | Reconcile feature-registry.yaml Schema vs Real-World Drift (FundFlow) | P2 | PROPOSED |
+| UPG-0041 | [UPG-0041-feature-registry-schema-drift.md](UPG-0041-feature-registry-schema-drift.md) | Reconcile feature-registry.yaml Schema vs Real-World Drift (FundFlow) | P2 | COMPLETE |
 
 > Priority `—` = no formal P-rank (a completed cleanup, or a discovery note). Feature IDs are
 > assigned once and never reused. `UPG-0002` and `UPG-0003` are historical/piloted work given IDs

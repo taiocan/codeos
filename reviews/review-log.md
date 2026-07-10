@@ -5697,3 +5697,141 @@ Provenance:
   review_commit: 0ac0aca40773ae458f90dbb1931c9989625dc70c  [HEAD_MATCH]
   packet_sha256: [MATCH]
   coverage_state: FULL_COVERAGE  [OK]
+
+## 2026-07-07T15:39:39Z REVIEW — UPG-0041__CHG-20260707-005 — Stage selfdev-step-1
+Base: (no base pin)  Review: 3b01617aca482c60d3aced6d18c6e38e60169457  Branch: main
+Diff-hash: 2dc2328e7c6c3ff511dd30d1bcb7bd5bfc09002100b7dd1e050c9f15cdcb04ea
+Reviewer: codex default-model (session 019f3d3a-b861-7270-863c-2eeb24500786)
+Effort: high   Wall time: 94536ms   Reconnects: 0
+Codex concern: DO NOT ADVANCE
+Effective concern: DO NOT ADVANCE
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: DO NOT ADVANCE — The Step 1 artifact contains a false past-tense Step 4 verification claim and relies on an unevidenced doctrine-status assertion for its scope boundary.
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-07T153939Z-UPG-0041__CHG-20260707-005-stage-selfdev-step-1-3b01617.md (sha256:6724109dfcec7380fc7dc0f3b2542e6bd900917ca5308832fe2085f6b0dddc06)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260707T153939Z-UPG-0041__CHG-20260707-005-stage-selfdev-step-1-3b01617.packet.txt (sha256:2675506e6c95db21f4a54d3b51466321810219e92c4f74c521587a63472a2b1c)
+Human decision: (append with: codeos-reviewer decision UPG-0041__CHG-20260707-005 selfdev-step-1 <DECISION> "<reason>")
+
+## 2026-07-08T04:24:17Z REVIEW — UPG-0041__CHG-20260707-005 — Stage selfdev-step-1
+Base: (no base pin)  Review: 3b01617aca482c60d3aced6d18c6e38e60169457  Branch: main
+Diff-hash: 2dc2328e7c6c3ff511dd30d1bcb7bd5bfc09002100b7dd1e050c9f15cdcb04ea
+Reviewer: codex default-model (session 019f3d3a-b861-7270-863c-2eeb24500786)
+Effort: high   Wall time: 59482ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: B
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — Step 1 now states a coherent v2 intent, keeps FundFlow migration out of scope, and defers unverified implementation evidence to Step 4.
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-08T042417Z-UPG-0041__CHG-20260707-005-stage-selfdev-step-1-3b01617.md (sha256:ee646b7013b355c6438908cc46a957fd79767a65a1111f588b6a4ceaa79950ca)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260708T042417Z-UPG-0041__CHG-20260707-005-stage-selfdev-step-1-3b01617.packet.txt (sha256:6e4b3f8c147b57d9f3e2824cbf9feeeac2284a83619675d0e4816b47bf1dad99)
+Human decision: (append with: codeos-reviewer decision UPG-0041__CHG-20260707-005 selfdev-step-1 <DECISION> "<reason>")
+
+## 2026-07-08T04:26:08Z HUMAN DECISION — UPG-0041__CHG-20260707-005 — Stage selfdev-step-1
+Commit at decision: 3b01617aca482c60d3aced6d18c6e38e60169457
+Decision: APPROVE_STAGE
+Reason/next: Step 1 NO OBJECTION on R2 (R1 caught a forward-claim tense error - 'Verified in Step 4' written before Step 4 existed - and an unbacked doctrine claim about dba-system.md's status vocabulary; both fixed, dba-system.md shown as evidence with the exact grep result quoted). Settled v2 design accepted: schema_version marker, status: hypothesized as an enum value not a combined string, current_stage stays separate, slug stays required, notes added alongside blockers, both tools get a schema-version pre-probe, FundFlow's actual file untouched by this change.
+Provenance:
+  assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-08T042417Z-UPG-0041__CHG-20260707-005-stage-selfdev-step-1-3b01617.md
+  review_commit: 3b01617aca482c60d3aced6d18c6e38e60169457  [HEAD_MATCH]
+  packet_sha256: [MATCH]
+  coverage_state: FULL_COVERAGE  [OK]
+
+## 2026-07-08T04:28:43Z REVIEW — UPG-0041__CHG-20260707-005 — Stage selfdev-step-2
+Base: (no base pin)  Review: 3b01617aca482c60d3aced6d18c6e38e60169457  Branch: main
+Diff-hash: 6affc04ab0831dfcab49c227bdd7fd4c9493558f58e768432391d6f20a34d552
+Reviewer: codex default-model (session 019f3d3a-b861-7270-863c-2eeb24500786)
+Effort: high   Wall time: 84508ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: B
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — Step 2 provides concrete, scoped, Step-4-verifiable acceptance criteria for the intended registry v2 and tooling changes.
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-08T042843Z-UPG-0041__CHG-20260707-005-stage-selfdev-step-2-3b01617.md (sha256:cf0730ab9b76bf4e0f236d7da09c5987535c7580b41fb4f88060b169dab3391a)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260708T042843Z-UPG-0041__CHG-20260707-005-stage-selfdev-step-2-3b01617.packet.txt (sha256:4fd0a99ce2b3e4553fa0824af8c7620d0ef05e7ca2f278166b4a7c3d8c3731fc)
+Human decision: (append with: codeos-reviewer decision UPG-0041__CHG-20260707-005 selfdev-step-2 <DECISION> "<reason>")
+
+## 2026-07-08T04:30:05Z HUMAN DECISION — UPG-0041__CHG-20260707-005 — Stage selfdev-step-2
+Commit at decision: 3b01617aca482c60d3aced6d18c6e38e60169457
+Decision: APPROVE_STAGE
+Reason/next: Step 2 NO OBJECTION on first round: all 18 ACs concrete, scoped, Step-4-verifiable for the registry v2 schema and both tooling updates, including a real-FundFlow verification criterion for the actual bug this change fixes.
+Provenance:
+  assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-08T042843Z-UPG-0041__CHG-20260707-005-stage-selfdev-step-2-3b01617.md
+  review_commit: 3b01617aca482c60d3aced6d18c6e38e60169457  [HEAD_MATCH]
+  packet_sha256: [MATCH]
+  coverage_state: FULL_COVERAGE  [OK]
+
+## 2026-07-10T12:04:35Z REVIEW — UPG-0041__CHG-20260707-005 — Stage selfdev-step-3
+Base: (no base pin)  Review: 3b01617aca482c60d3aced6d18c6e38e60169457  Branch: main
+Diff-hash: c88bca441330849ccdc33fb57b40101d9b6d7772b3f894b3c2322cdd881a5cc8
+Reviewer: codex default-model (session 019f3d3a-b861-7270-863c-2eeb24500786)
+Effort: high   Wall time: 91550ms   Reconnects: 0
+Codex concern: DO NOT ADVANCE
+Effective concern: DO NOT ADVANCE
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: DO NOT ADVANCE — AC-8’s promised schema-version diagnostic can misreport declared non-numeric versions as missing.
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-10T120435Z-UPG-0041__CHG-20260707-005-stage-selfdev-step-3-3b01617.md (sha256:1049fbcad52ba757765a9b5a8d1a76396972c5d212f92e257b6eed2bf6fdf37f)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260710T120435Z-UPG-0041__CHG-20260707-005-stage-selfdev-step-3-3b01617.packet.txt (sha256:25bd6970426c84d7c46790f857547d10b5be111c0e07060c1ca4f0883a3fe874)
+Human decision: (append with: codeos-reviewer decision UPG-0041__CHG-20260707-005 selfdev-step-3 <DECISION> "<reason>")
+
+## 2026-07-10T12:06:46Z REVIEW — UPG-0041__CHG-20260707-005 — Stage selfdev-step-3
+Base: (no base pin)  Review: 3b01617aca482c60d3aced6d18c6e38e60169457  Branch: main
+Diff-hash: c03826e44a1e36ea3cab82d59b9a22cc83169cf8a0e4dee20c4c4152f40c3bd5
+Reviewer: codex default-model (session 019f3d3a-b861-7270-863c-2eeb24500786)
+Effort: high   Wall time: 51861ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: B
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — The AC-8 diagnostic blocker is fixed, and the Step 3 implementation matches the stated v2 schema/tooling scope.
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-10T120646Z-UPG-0041__CHG-20260707-005-stage-selfdev-step-3-3b01617.md (sha256:b5623320ff4c60b85a4730d6d9b5e91faa9670b97eaa424f1abfa7c5108047ce)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260710T120646Z-UPG-0041__CHG-20260707-005-stage-selfdev-step-3-3b01617.packet.txt (sha256:b84d07d265ed9f36f4c9cd18d4491b6ffaf0a5d8944e4f7265e0df6d085bbb6e)
+Human decision: (append with: codeos-reviewer decision UPG-0041__CHG-20260707-005 selfdev-step-3 <DECISION> "<reason>")
+
+## 2026-07-10T12:15:49Z HUMAN DECISION — UPG-0041__CHG-20260707-005 — Stage selfdev-step-3
+Commit at decision: 3b01617aca482c60d3aced6d18c6e38e60169457
+Decision: APPROVE_STAGE
+Reason/next: Step 3 R2 NO OBJECTION: AC-8 blocker resolved (both tools now distinguish missing, numeric, and non-numeric schema_version values). All AC-1 through AC-14 satisfied, no scope drift. Reviewer note about test-pass claim not evidenced in packet is informational only - ACs independently verified from code. Proceeding to Step 4.
+Provenance:
+  assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-10T120646Z-UPG-0041__CHG-20260707-005-stage-selfdev-step-3-3b01617.md
+  review_commit: 3b01617aca482c60d3aced6d18c6e38e60169457  [HEAD_MATCH]
+  packet_sha256: [MATCH]
+  coverage_state: FULL_COVERAGE  [OK]
+
+## 2026-07-10T12:20:39Z REVIEW — UPG-0041__CHG-20260707-005 — Stage selfdev-step-4
+Base: (no base pin)  Review: 3b01617aca482c60d3aced6d18c6e38e60169457  Branch: main
+Diff-hash: c03826e44a1e36ea3cab82d59b9a22cc83169cf8a0e4dee20c4c4152f40c3bd5
+Reviewer: codex default-model (session 019f3d3a-b861-7270-863c-2eeb24500786)
+Effort: high   Wall time: 149513ms   Reconnects: 0
+Codex concern: DO NOT ADVANCE
+Effective concern: DO NOT ADVANCE
+Evidence: B
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: DO NOT ADVANCE — Step 4 completion depends on external AC-15 through AC-18 evidence that is asserted but not included in the packet.
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-10T122039Z-UPG-0041__CHG-20260707-005-stage-selfdev-step-4-3b01617.md (sha256:814d1579a46e5665c188ba9208c3bb1c2efeb0fa6cb2be24f779d273a1686d3f)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260710T122039Z-UPG-0041__CHG-20260707-005-stage-selfdev-step-4-3b01617.packet.txt (sha256:f811f5079496a0c32ee8c274b310dc4d7a5bfea09efac1235ad5dde93211ab63)
+Human decision: (append with: codeos-reviewer decision UPG-0041__CHG-20260707-005 selfdev-step-4 <DECISION> "<reason>")
+
+## 2026-07-10T12:23:05Z REVIEW — UPG-0041__CHG-20260707-005 — Stage selfdev-step-4
+Base: (no base pin)  Review: 3b01617aca482c60d3aced6d18c6e38e60169457  Branch: main
+Diff-hash: c03826e44a1e36ea3cab82d59b9a22cc83169cf8a0e4dee20c4c4152f40c3bd5
+Reviewer: codex default-model (session 019f3d3a-b861-7270-863c-2eeb24500786)
+Effort: high   Wall time: 97779ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — All stated acceptance criteria are supported by direct packet evidence.
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-10T122305Z-UPG-0041__CHG-20260707-005-stage-selfdev-step-4-3b01617.md (sha256:0de5d12cfea70b39f7228c4afb63d46cf2c812d25042d7eea45f07b72ad133f9)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260710T122305Z-UPG-0041__CHG-20260707-005-stage-selfdev-step-4-3b01617.packet.txt (sha256:cb64374c6ce11ff5e73ee959b48b1607ae4c2ec6a83bb779af19f32ee920b1a8)
+Human decision: (append with: codeos-reviewer decision UPG-0041__CHG-20260707-005 selfdev-step-4 <DECISION> "<reason>")
+
+## 2026-07-10T12:55:03Z HUMAN DECISION — UPG-0041__CHG-20260707-005 — Stage selfdev-step-4
+Commit at decision: 3b01617aca482c60d3aced6d18c6e38e60169457
+Decision: APPROVE_STAGE
+Reason/next: Step 4 R2 NO OBJECTION (Evidence: A): All 18 ACs verified with direct packet evidence. Blockers resolved: AC-15–18 now include command outputs, trace header corrected. Test suite: 119/119 passed. Real FundFlow diagnostic confirmed. No scope drift. UPG-0041 / CHG-20260707-005 marked COMPLETE.
+Provenance:
+  assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-10T122305Z-UPG-0041__CHG-20260707-005-stage-selfdev-step-4-3b01617.md
+  review_commit: 3b01617aca482c60d3aced6d18c6e38e60169457  [HEAD_MATCH]
+  packet_sha256: [MATCH]
+  coverage_state: FULL_COVERAGE  [OK]

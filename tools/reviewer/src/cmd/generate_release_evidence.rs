@@ -98,6 +98,37 @@ fn resolve_registry_fields(args: &GenerateReleaseEvidenceArgs) -> (String, Strin
         }
     };
 
+    // Schema version pre-probe for more specific diagnostic
+    let pre_probe: serde_yaml::Value = match serde_yaml::from_str(&content) {
+        Ok(v) => v,
+        Err(e) => {
+            eprintln!(
+                "warning: cannot parse registry file '{}': {}; registry-derived fields left as [FILL]",
+                path, e
+            );
+            return all_fill;
+        }
+    };
+
+    let schema_version_value = pre_probe.get("schema_version");
+    let schema_version_u64 = schema_version_value.and_then(|v| v.as_u64());
+
+    if schema_version_u64 != Some(2) {
+        let version_display = match schema_version_value {
+            None => "missing".to_string(),
+            Some(v) => match v.as_u64() {
+                Some(n) => n.to_string(),
+                None => format!("{:?} (not a number)", v),
+            },
+        };
+        eprintln!(
+            "warning: registry '{}' does not declare schema_version: 2 (found: {}); registry-derived fields left as [FILL]",
+            path, version_display
+        );
+        eprintln!("         See docs/registry-v2-migration.md for migration instructions.");
+        return all_fill;
+    }
+
     let registry: Registry = match serde_yaml::from_str(&content) {
         Ok(r) => r,
         Err(e) => {
