@@ -87,6 +87,8 @@ cheap pilot-adjacent wins early.
 | Feature ID | Title | Priority | Depends on | Planned/active change | State |
 |---|---|---|---|---|---|
 | UPG-0027 | Lean Review Runner and Packet Architecture | P0 | — | CHG-20260629-002…005 | COMPLETE |
+| UPG-0042 | Reduce Reviewer Packet Bloat for Large Stable Files | P2 | UPG-0027 ✓, UPG-0032 ✓ | — | PROPOSED |
+| UPG-0043 | Split Monolithic Smoke Test File by Tool Area | P3 | — | — | PROPOSED |
 | UPG-0028 | Reviewer self-reference recursion (scoping) | P2 | — | — | COMPLETE (backlog-only, no CHG — see backlog note) |
 | UPG-0029 | Review artifact durability + packet naming policy | P2 | UPG-0001 | CHG-20260629-001 | COMPLETE |
 | UPG-0030 | Lean Self-Development Review Profiles | P1 | — | CHG-20260629-001 | COMPLETE |
