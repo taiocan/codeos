@@ -5835,3 +5835,31 @@ Provenance:
   review_commit: 3b01617aca482c60d3aced6d18c6e38e60169457  [HEAD_MATCH]
   packet_sha256: [MATCH]
   coverage_state: FULL_COVERAGE  [OK]
+
+## 2026-07-11T03:41:21Z REVIEW — UPG-0042 — Stage design-review
+Base: (no base pin)  Review: 2d1580c0d99e360622dc8234eb337ab26f5c7285  Branch: main
+Diff-hash: 860a6b3cf02297eabcef08021358f5c6bc2fc294f55024021ce41c78981d6b34
+Reviewer: codex default-model (session 019f4f43-6d55-72f1-9cf2-6a2871adbc2d)
+Effort: high   Wall time: 35029ms   Reconnects: 0
+Codex concern: DO NOT ADVANCE
+Effective concern: DO NOT ADVANCE
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: DO NOT ADVANCE — Artifact claims approval without evidence and includes unrelated UPG-0043 scope drift.
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-11T034121Z-UPG-0042-stage-design-review-2d1580c.md (sha256:eae798db2001a661622535f0a582c3f89a1e8e28d8cf2ba1423dc49aa83eb317)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260711T034121Z-UPG-0042-stage-design-review-2d1580c.packet.txt (sha256:0c095b66e9a7eac20294d1d7e754e30e22b13cc7eb994c59ccfb0c6e61c0d45d)
+Human decision: (append with: codeos-reviewer decision UPG-0042 design-review <DECISION> "<reason>")
+
+## 2026-07-11T03:45:14Z REVIEW — UPG-0042 — Stage design-review
+Base: (no base pin)  Review: 96c67b2ead24923f44907b84b07e919b3acd1aa8  Branch: main
+Diff-hash: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+Reviewer: codex default-model (session 019f4f43-6d55-72f1-9cf2-6a2871adbc2d)
+Effort: high   Wall time: 21552ms   Reconnects: 0
+Codex concern: DO NOT ADVANCE
+Effective concern: DO NOT ADVANCE
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: DO NOT ADVANCE — Success criteria are checkmarked as complete without implementation, test, or manual-verification evidence.
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-11T034514Z-UPG-0042-stage-design-review-96c67b2.md (sha256:544de8550e115a2ec991d6bc26cd6705d0cf83a3760d5c6c5cb1c6d272c2d466)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260711T034514Z-UPG-0042-stage-design-review-96c67b2.packet.txt (sha256:82cb02e3806fa715e256dd013ecbd9566fb26b15c18ccb5143f95e8d732a44a0)
+Human decision: (append with: codeos-reviewer decision UPG-0042 design-review <DECISION> "<reason>")
