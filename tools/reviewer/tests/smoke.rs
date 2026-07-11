@@ -3115,3 +3115,141 @@ features:
     assert!(stdout.contains("intents/UPG-9509.md"), "stdout: {}", stdout);
     assert!(stdout.contains("events/UPG-9509.json"), "stdout: {}", stdout);
 }
+
+// ===== UPG-0042: Reviewer Packet Efficiency =====
+
+#[test]
+fn smoke_review_oversized_packet_warning() {
+    // Verify warning appears on stderr when packet > 50KB
+    let (dir, _base_sha) = setup_temp_git_repo();
+    let p = dir.path();
+
+    // Create a large artifact to trigger oversized warning (>50KB)
+    let large_content = "x".repeat(60_000);
+    std::fs::write(p.join("large.md"), large_content).expect("write large file");
+    Command::new("git").args(["add", "large.md"]).current_dir(p).output().expect("git add");
+    Command::new("git").args(["commit", "-m", "add large"]).current_dir(p).output().expect("git commit");
+
+    let (_code, _stdout, stderr) = run_in_dir(
+        p,
+        &["review", "UPG-9999", "test-stage", "--print-packet", "large.md"],
+    );
+
+    // Check for enhanced warning format
+    assert!(stderr.contains("warning: packet is"), "stderr should contain warning header: {}", stderr);
+    assert!(stderr.contains("KB"), "stderr should show size in KB: {}", stderr);
+    assert!(stderr.contains("over") && stderr.contains("KB budget"), "stderr should mention budget: {}", stderr);
+    assert!(stderr.contains("largest inputs:"), "stderr should show top contributors: {}", stderr);
+    assert!(stderr.contains("suggest for R2+:"), "stderr should suggest delta mode: {}", stderr);
+    assert!(stderr.contains("--mode delta --base"), "stderr should show delta command: {}", stderr);
+    assert!(stderr.contains("optional:"), "stderr should show optional note: {}", stderr);
+    assert!(stderr.contains("--sha-only") && stderr.contains("reduces review evidence"),
+        "stderr should warn about sha-only: {}", stderr);
+}
+
+#[test]
+fn smoke_review_warning_goes_to_stderr_not_packet() {
+    // Verify warning goes to stderr, not packet content
+    let (dir, _base_sha) = setup_temp_git_repo();
+    let p = dir.path();
+
+    // Create oversized artifact
+    let large_content = "y".repeat(60_000);
+    std::fs::write(p.join("large2.md"), large_content).expect("write large file");
+    Command::new("git").args(["add", "large2.md"]).current_dir(p).output().expect("git add");
+    Command::new("git").args(["commit", "-m", "add large2"]).current_dir(p).output().expect("git commit");
+
+    let (_code, stdout, stderr) = run_in_dir(
+        p,
+        &["review", "UPG-9998", "test-stage", "--print-packet", "large2.md"],
+    );
+
+    // Warning should be in stderr
+    assert!(stderr.contains("warning: packet is"), "warning should be in stderr");
+
+    // Warning text should NOT be in packet stdout
+    assert!(!stdout.contains("warning: packet is"), "warning should not appear in packet stdout");
+    assert!(!stdout.contains("largest inputs:"), "contributor list should not be in packet");
+}
+
+#[test]
+fn smoke_review_delta_mode_tracked_files_only() {
+    // Verify delta mode errors on untracked files
+    let (dir, base_sha) = setup_temp_git_repo();
+    let p = dir.path();
+
+    // Create untracked artifact
+    std::fs::write(p.join("untracked.md"), "# untracked\n").expect("write untracked");
+
+    let (code, _stdout, stderr) = run_in_dir(
+        p,
+        &["review", "UPG-9997", "test-stage", "--print-packet",
+          "--mode", "delta", "--base", &base_sha, "untracked.md"],
+    );
+
+    // Should fail with clear diagnostic
+    assert_ne!(code, 0, "delta mode should fail on untracked files");
+    assert!(stderr.contains("untracked"), "stderr should mention untracked: {}", stderr);
+    assert!(stderr.contains("delta") || stderr.contains("compare"),
+        "stderr should mention delta mode issue: {}", stderr);
+}
+
+#[test]
+fn smoke_review_sha_only_reduces_packet_size() {
+    // Verify --sha-only excludes content from packet
+    // Use Cargo.toml (stable file) to avoid issues with unstaged working tree changes
+    let cargo_toml = "tools/reviewer/Cargo.toml";
+    let readme = "README.md";
+
+    // Review without sha-only
+    let (code1, stdout1, _stderr1) = run(&[
+        "review", "UPG-SMOKE-SHA", "test-stage",
+        "--print-packet", "--skip-prechecks",
+        cargo_toml, readme,
+    ]);
+    assert_eq!(code1, 0, "review without sha-only should succeed");
+
+    // Review with sha-only for Cargo.toml
+    let (code2, stdout2, _stderr2) = run(&[
+        "review", "UPG-SMOKE-SHA", "test-stage",
+        "--print-packet", "--skip-prechecks",
+        "--sha-only", cargo_toml,
+        readme,
+    ]);
+    assert_eq!(code2, 0, "review with sha-only should succeed");
+
+    // SHA-only packet should be smaller
+    assert!(stdout2.len() < stdout1.len(),
+        "sha-only packet should be smaller: {} vs {}", stdout2.len(), stdout1.len());
+
+    // SHA-only should show path_sha_only visibility
+    assert!(stdout2.contains("path_sha_only"), "sha-only should mark visibility");
+    assert!(stdout2.contains("Cargo.toml"), "sha-only manifest should include path");
+
+    // Full packet should contain Cargo.toml content (package name)
+    assert!(stdout1.contains("name = \"codeos-reviewer\""),
+        "full packet should include Cargo.toml content");
+
+    // SHA-only packet should NOT contain Cargo.toml content
+    assert!(!stdout2.contains("name = \"codeos-reviewer\""),
+        "sha-only packet should not include Cargo.toml content");
+}
+
+#[test]
+fn smoke_review_help_mentions_evidence_modes() {
+    // Verify help text regression prevention
+    let (_code, stdout, _stderr) = run(&["review", "--help"]);
+
+    // Check for evidence mode documentation
+    assert!(stdout.contains("--mode delta"), "help should mention --mode delta: {}", stdout);
+    assert!(stdout.contains("--base"), "help should mention --base: {}", stdout);
+    assert!(stdout.contains("tracked files"), "help should mention tracked files requirement: {}", stdout);
+    assert!(stdout.contains("--sha-only"), "help should mention --sha-only: {}", stdout);
+    assert!(stdout.contains("reduces review evidence") || stdout.contains("reduces evidence"),
+        "help should warn about evidence reduction: {}", stdout);
+    assert!(stdout.contains("--print-packet"), "help should mention --print-packet: {}", stdout);
+
+    // Check for examples
+    assert!(stdout.contains("Examples:") || stdout.contains("# Round 1") || stdout.contains("# Round 2"),
+        "help should include usage examples: {}", stdout);
+}

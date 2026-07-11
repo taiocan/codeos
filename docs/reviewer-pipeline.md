@@ -407,6 +407,69 @@ independently.
 
 ---
 
+## 14. Evidence Modes
+
+The reviewer supports three evidence modes to control packet size and review focus. These modes affect what evidence is included in the review packet; they do not change the reviewer's advisory role or the human approval gate.
+
+### Full Mode — default
+
+Includes full artifact content where allowed by packet size and redaction rules.
+
+**Use when:**
+- Running Round 1 of a review
+- Reviewing the primary artifact under active change
+- The reviewer needs full context to assess the artifact
+
+**Command:**
+```bash
+codeos-reviewer review <feature> <stage> <artifact-paths>
+```
+
+### Delta Mode
+
+Includes only changes since a base commit. Unchanged artifacts are represented by path and hash only.
+
+**Use when:**
+- Running Round 2 or later after fixing reviewer findings
+- The packet exceeds the size budget and most artifacts are unchanged
+- The review should focus on what changed since the previous round
+
+**Command:**
+```bash
+codeos-reviewer review <feature> <stage> --mode delta --base <commit-sha> <artifact-paths>
+```
+
+**Guardrail:** Delta mode requires artifact paths to be tracked by git. Untracked files cannot be compared to the base commit and will error.
+
+### SHA-Only Mode
+
+Includes only the file path and hash, not file content. **This reduces packet size but also reduces review evidence.**
+
+**Use only for:**
+- Large unchanged context files
+- Files needed for packet completeness but not for substantive review
+- Files that are not the primary artifact under review
+
+**Command:**
+```bash
+codeos-reviewer review <feature> <stage> --sha-only <context-file> <other-artifacts>
+```
+
+**Guardrail:** Do not use SHA-only for files whose changed behavior, wording, or structure the reviewer must assess. Changed behavior must remain reviewable as full content or diff.
+
+### Combining Modes
+
+Delta mode and SHA-only can be combined. When both apply, SHA-only paths are included as path/hash references rather than full content or diff.
+
+```bash
+codeos-reviewer review UPG-0042 selfdev-step-3 \
+  --mode delta --base abc123 \
+  --sha-only docs/large-reference.md \
+  changes/UPG-0042__CHG-*.md src/packet.rs
+```
+
+---
+
 ## Appendix A — Inert hook snippets (NOT part of the pilot)
 
 These are provided for a *future* phase only. **Do not add them to `.claude/settings.json`

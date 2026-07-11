@@ -64,6 +64,7 @@
 | UPG-0041 | CHG-20260707-005 | downstream-doctrine | downstream doctrine only | 4-Reconcile | Step 3 R2 NO OBJECTION, Step 4 R2 NO OBJECTION (Evidence: A) | COMPLETE | — |
 | UPG-0036 | CHG-20260705-001 | self-dev-governance | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION R3; Step 2 NO OBJECTION R2; Step 3 NO OBJECTION R3; Step 4 NO OBJECTION R1; all 10 ACs verified; real check-drift run) | COMPLETE | — |
 | UPG-0037 | CHG-20260705-002 | downstream-doctrine | downstream doctrine only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION; Step 2 NO OBJECTION R2; Step 3 accepted at budget R3 (0 blockers, SECRET_REDACTION coverage); Step 4 accepted R1 (0 blockers, same SECRET_REDACTION cause); all 13 ACs verified; 105 tests; real FundFlow dry-runs) | COMPLETE | UPG-0038 |
+| UPG-0042 | CHG-20260711-001 | script-tooling | self-dev only | 4-Reconcile | REVIEWED (series RVS__…__S4; R2 NO OBJECTION; all 10 ACs verified; 124 tests pass) | COMPLETE | — |
 
 <!--
 Identity   : Feature ID = UPG-#### (stable). Change ID = CHG-YYYYMMDD-NNN (one execution), or a

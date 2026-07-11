@@ -33,10 +33,32 @@ struct Cli {
 #[derive(Subcommand)]
 enum Commands {
     /// Build packet, invoke reviewer, save assessment, append log
+    ///
+    /// Artifact paths and options:
+    ///   <paths>               Files to include in packet
+    ///   --mode delta          Include only diff since base; requires --base and tracked files
+    ///   --base <commit-sha>   Base commit for delta mode
+    ///   --sha-only <path>     Include path/hash only; reduces review evidence
+    ///   --print-packet        Print packet to stdout instead of invoking reviewer
+    ///   --fresh               Force fresh session
+    ///
+    /// Examples:
+    ///   # Round 1: full review
+    ///   codeos-reviewer review UPG-0042 selfdev-step-1 \
+    ///     changes/UPG-0042__CHG-*.md src/packet.rs
+    ///
+    ///   # Round 2+: delta review after fixes
+    ///   codeos-reviewer review UPG-0042 selfdev-step-1 \
+    ///     --mode delta --base abc123 \
+    ///     changes/UPG-0042__CHG-*.md src/packet.rs
+    ///
+    ///   # Large unchanged context file; reduces evidence for that path
+    ///   codeos-reviewer review UPG-0042 selfdev-step-3 \
+    ///     --sha-only tests/smoke.rs \
+    ///     changes/UPG-0042__CHG-*.md src/packet.rs
     Review {
         feature: String,
         stage: String,
-        /// All remaining args: artifact paths, --sha-only, --fresh, --mode, --base, etc.
         #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
         rest: Vec<String>,
     },

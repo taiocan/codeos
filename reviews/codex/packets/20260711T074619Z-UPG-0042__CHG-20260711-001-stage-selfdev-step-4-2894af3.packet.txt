@@ -1,0 +1,630 @@
+Reviewer task:
+
+SCOPE CONTRACT
+  Assess this artifact against the STATED SCOPE of this stage/PR — the Expected Stage
+  Output below and what the artifacts actually claim — NOT against an ideal final system.
+  A capability the artifacts do not claim to provide is OUT-OF-SCOPE, not a defect.
+  The following are OUT-OF-SCOPE BACKLOG unless THIS artifact explicitly claims to provide
+  them: formal approval-binding enforcement; rollback correctness; COMMIT_BOUND/
+  WORKSPACE_BOUND enforcement; JSON Schema validation; CI validation; exact
+  decision-integrity; per-feature decision ledgers; autonomous approval; enabled hooks.
+
+YOUR TASK — answer these five questions using only the evidence in the packet:
+  1. Acceptance criteria: Does the artifact satisfy each of its stated acceptance criteria?
+     Cite evidence for each criterion (or note its absence).
+  2. Claim support: Are universal or strong claims (all, every, never, always, no X) in the
+     artifact supported by evidence in the packet? Any unverifiable strong claim is a candidate
+     finding only if it affects acceptance, scope, safety, decision integrity, or the artifact's
+     stated guarantees.
+  3. Scope drift: Is there any change beyond the stated scope boundary? (Files not in the
+     "What changes" list; behavior changes not in the intent; downstream doctrine modified
+     rather than read.)
+  4. In-scope blockers: Are there facts that, if left in, would make the artifact wrong,
+     unsafe, or internally contradictory?
+  5. Finding classification: Classify every finding you raise as exactly one of the five
+     TRIAGE RULE categories below.
+
+TRIAGE RULE — classify EVERY finding as exactly one of:
+  IN-SCOPE BLOCKER         breaks the stated goal; creates a FALSE CLAIM in this artifact;
+                           weakens the advisory/read-only/human-gated guarantees; prevents
+                           the work from running; or violates an explicit safety constraint.
+  IN-SCOPE NON-BLOCKER     improves it but is not required for this PR.
+  OUT-OF-SCOPE BACKLOG     valid, but belongs to a future feature / stronger guarantee.
+  REJECTED                 conflicts with the stated scope or Codeos philosophy.
+  SELF-REFERENCE /         review records that are stale because of the previous round's
+  REVIEW-BOOKKEEPING       own existence (causal loop); not a real artifact defect.
+  Base the PR decision ONLY on IN-SCOPE BLOCKER findings. An OUT-OF-SCOPE BACKLOG finding
+  must NOT cause DO NOT ADVANCE unless this artifact FALSELY CLAIMS to solve it.
+
+WHAT NOT TO DO
+  - Do not flag style or wording issues as blockers unless the wording creates a false claim,
+    contradiction, parser breakage, or wrong governance instruction.
+  - Do not re-review unchanged full context when the packet is in delta mode.
+  - Do not treat local-only review history as a blocker unless the artifact falsely
+    claims the review artifacts are committed/durable.
+
+INSTRUCTIONS
+  If this is a resumed session, ignore any earlier-session conclusions unless they are
+  re-established by THIS packet; assess only the evidence above, pinned to this commit.
+  Give a focused assessment of this artifact against the stated scope, acceptance criteria,
+  and evidence in this packet. Rank findings by severity. Suggest a better design only when
+  needed to explain a required fix for an IN-SCOPE BLOCKER.
+
+  Limit findings to the top 3 IN-SCOPE BLOCKERS. Additional non-blocking observations may be
+  summarized in one short paragraph only if useful.
+
+  For EACH finding emit:
+    Finding: / Severity: High|Medium|Low / Classification: <one of the TRIAGE RULE labels>
+    Evidence: <file/line> / Why: <short> / Required action: fix now|optional fix|backlog|reject
+    Scope reason: <why it does/does not belong to this PR's scope>
+  Then emit:
+    PR decision: ADVANCE | REQUEST CHANGES | DO NOT ADVANCE   (based ONLY on in-scope blockers)
+    Scope drift warning: yes|no — <is anything pulling this PR beyond its stated scope?>
+  Then on the LAST three lines emit exactly (map ADVANCE->NO OBJECTION,
+  REQUEST CHANGES->CHANGES ADVISED, DO NOT ADVANCE->DO NOT ADVANCE):
+    LOG SUMMARY: <NO OBJECTION | CHANGES ADVISED | DO NOT ADVANCE | UNCLASSIFIED> — <single most important point>
+      (use UNCLASSIFIED if you genuinely cannot classify the artifact safely)
+    EVIDENCE: <A|B|C|D|E>
+    HIGHEST-IMPACT UNCERTAINTY: <one sentence — what single thing, if wrong, most affects this assessment>
+
+  Evidence grade — the grade describes what the assessment rests on, not reviewer confidence:
+    A — Directly verified in the artifact, diff, or output shown in the packet
+    B — Verified with multiple direct pieces of evidence, but coverage is not complete
+    C — Partially verified, partially inferred from structure or context
+    D — Mostly inferred from structure or indirect evidence
+    E — Hypothesis or very limited basis — little to no direct evidence
+
+
+PACKET MANIFEST
+  generated: 2026-07-11T07:45:46Z
+  task_prompt: /home/rimo/projects/Codeos/prompts/codeos-reviewer-task.md (4959 bytes)
+  review_content_bytes: 26490
+  estimated_review_tokens: ~6622
+  budget_status: OK
+  packet_mode: full
+  delta_base: none
+  items:
+    - path: changes/UPG-0042__CHG-20260711-001__reviewer-packet-efficiency.md
+      mode: full_file
+      bytes: 11209
+      sha256: 2d49a5ee3f7023a7861c2b672e2da5105622e70c0ad3f7d09dd2e9ab0bea9bff
+    - path: (diff)
+      mode: full_file
+      bytes: 15281
+
+REVIEW CONTEXT
+  Feature:                UPG-0042__CHG-20260711-001
+  Stage:                  selfdev-step-4
+  Branch:                 main
+  Base commit:            (no base pin)
+  Review commit:          2894af3fa8945947c03ae73c2c6ab44d312df161 (+ uncommitted workspace changes)
+  Current approved stage: n/a (non-numeric stage)
+  Evidence coverage:      FULL_COVERAGE
+  Workspace dirty:        yes (uncommitted changes at review time)
+
+DBA RULES RELEVANT TO THIS STAGE
+  - Human approval is required for every stage transition; you are advisory only.
+  - Memory is not truth — assess only what is provided, pinned to the review commit.
+  - Implementation must trace to approved artifacts; no behavior beyond intent+contract+schema.
+  - No events outside the approved event schema; no hidden behavior.
+
+STAGE-SPECIFIC CHECKS
+  - (no stage-specific checklist for stage selfdev-step-4)
+
+EXPECTED STAGE OUTPUT
+  (no expected-output template for stage)
+
+ARTIFACTS TO REVIEW
+  --- changes/UPG-0042__CHG-20260711-001__reviewer-packet-efficiency.md (sha256: 2d49a5ee3f7023a7861c2b672e2da5105622e70c0ad3f7d09dd2e9ab0bea9bff, visibility: shown) ---
+    # Self-Development Change: UPG-0042__CHG-20260711-001 — Reviewer Packet Efficiency
+    
+    <!--
+    PURPOSE: Per-change source of truth for a non-trivial change to the Codeos toolkit
+    itself (prompts, templates, docs, patterns, scripts).
+    
+    This is NOT a downstream DBA feature. It has no behavioral contract, no event schema,
+    and no replay. Trivial changes do not get a record.
+    
+    Workflow: prompts/codeos-self-dev.md (4-step loop)
+    Each step requires explicit human approval; Codex review cadence is governed by the assigned review profile (see prompts/codeos-self-dev.md Step 0a).
+    The live status row lives in status/self-development.md, not here.
+    
+    FILENAME CONVENTION (Feature Thread model — see backlog/UPG-0001-feature-thread-traceability.md):
+      changes/UPG-0042__CHG-20260711-001__reviewer-packet-efficiency.md
+      - UPG-0042 = the PRIMARY feature this change implements (visible grouping).
+      - CHG-20260711-001 = the unique change id (execution).
+      - slug describes the concrete change, not the whole roadmap.
+    -->
+    
+    <!-- TRACE HEADER (canonical) -->
+    ```yaml
+    feature_id: UPG-0042
+    primary_feature_id: UPG-0042
+    change_id: CHG-20260711-001
+    slug: reviewer-packet-efficiency
+    state: IN_PROGRESS
+    current_step: 4-Reconcile
+    implements:
+      - UPG-0042
+    related_features: []
+    review_series: RVS__UPG-0042__CHG-20260711-001__S4
+    review_profile: PROFILE-3
+    review_state: DRAFT
+    review_history: reviews/review-log.md
+    fixes_findings: []
+    follow_up_of: null
+    ```
+    
+    <!-- SELF-REFERENCE BOUNDARY: this artifact is itself reviewed, so it must NOT embed the current
+    review round (which does not exist until after the packet is built). Reference the stable review
+    SERIES (review_series) + review_state; exact rounds live only in reviews/review-log.md and
+    reviews/codex/*. See prompts/codeos-self-dev.md → "Feature Thread & IDs" / "Self-Reference Boundary". -->
+    
+    
+    ## Change Intent
+    
+    **Why (problem in the toolkit):**
+    
+    Reviewer packets repeatedly include large stable files in full, even when only small portions changed. During UPG-0041, every review round included the full 121 KB `smoke.rs` file, causing:
+    
+    - Packet bloat: 192-202 KB packets vs. 50 KB budget (4× overage)
+    - Token waste: ~50-60k tokens per round × 8 rounds = 400k+ tokens
+    - Review noise: reviewer processes full stable content instead of targeted evidence
+    - Context pressure: large packets consume space for deeper analysis
+    - Human inspectability: 200KB packet files are hard to inspect
+    
+    The issue is **packet evidence design**: delta mode (`--mode delta`) and SHA-only mode (`--sha-only`) already exist in the reviewer but are **undiscovered** — not in help text, not in docs, warnings don't explain what to do. Users don't know these modes exist, so large files are included in full across all rounds.
+    
+    This change makes the existing evidence modes **discoverable and actionable** through enhanced warnings and documentation.
+    
+    **What changes:**
+    
+    Files to be modified:
+    - `tools/reviewer/src/packet.rs` — add enhanced oversized-packet warning to stderr
+    - `tools/reviewer/src/main.rs` — update `Review` command help text with evidence mode examples
+    - `docs/reviewer-pipeline.md` — add new §X Evidence Modes section (full / delta / sha-only)
+    - `tools/reviewer/tests/smoke.rs` — add 5 new smoke tests for warning output and evidence modes
+    
+    Files to be created:
+    - (none — all changes are modifications to existing files)
+    
+    **Scope boundary — what stays the same:**
+    
+    What will NOT change:
+    - No automatic evidence mode selection (explicit mode selection only)
+    - No persistent state (no `.codeos-review/` tracking or review-commit history)
+    - No new packet format or schema changes (warnings go to stderr, not packet content)
+    - No exit code changes (oversized packets remain advisory, not fatal)
+    - No changes to the reviewer's advisory role or human approval gates
+    - No changes to downstream DBA doctrine (`dba-system.md`)
+    - No changes to the self-development workflow itself (`CLAUDE.md`, `prompts/codeos-self-dev.md`)
+    
+    **Class:** script-tooling  
+    **Scope axis:** self-dev only  
+    **Backlog item:** backlog/UPG-0042-reviewer-packet-efficiency.md
+    
+    ---
+    
+    ## Acceptance Criteria
+    
+    <!-- The consistency contracts this change must satisfy. Each must be checkable in Reconcile. -->
+    
+    | # | Criterion | How it will be verified |
+    |---|---|---|
+    | AC-1 | Existing delta and sha-only modes remain semantically unchanged (this CHG only improves discoverability, not behavior) | Grep packet.rs/main.rs for changes to PacketBuildOptions, delta_mode logic, sha_only_paths logic; verify changes are warning/help-text only, not mode semantics |
+    | AC-2 | Oversized packets (>50KB) emit actionable warning to stderr with top 3 file contributors and delta suggestion | Manual test: create oversized packet, verify warning appears on stderr with file list and suggested command |
+    | AC-3 | Warning text does not appear in packet content and does not affect packet hash | Manual test: run review twice with same args, verify packet hash unchanged and warning text absent from packet file |
+    | AC-4 | Warning does not change exit code (oversized remains advisory) | Manual test: create oversized packet, verify exit code 0 (or existing non-zero if other error) |
+    | AC-5 | Help text (`codeos-reviewer review --help`) documents delta mode, sha-only, and includes examples | Run `codeos-reviewer review --help`, grep for `--mode delta`, `--sha-only`, `reduces review evidence`, example commands |
+    | AC-6 | Documentation (`docs/reviewer-pipeline.md`) includes Evidence Modes section explaining full/delta/sha-only with use-when guidance | Read reviewer-pipeline.md, verify §X Evidence Modes section exists with all three modes documented |
+    | AC-7 | Documentation clearly labels sha-only as "reduces review evidence" | Grep reviewer-pipeline.md and help text for "reduces review evidence" or equivalent warning |
+    | AC-8 | All 5 new smoke tests pass: oversized warning, warning-to-stderr-not-packet, delta-tracked-files-only, sha-only-reduces-size, help-mentions-modes | Run `cargo test --test smoke` and verify 5 new tests pass (grep test output for new test names) |
+    | AC-9 | No changes to packet format, schema, or manifest structure beyond warning output | Diff review of packet.rs changes; verify PacketManifest struct, visibility enum, and packet serialization unchanged |
+    | AC-10 | Warning non-interference: oversized-packet warning emitted to stderr only, absent from packet content, does not alter packet manifest structure, artifact visibility, or review evidence content | Manual test: inspect packet content/stdout for warning text absence; verify packet schema/manifest format unchanged via diff review |
+    
+    <!-- For downstream-doctrine or both: include downstream-compatibility criteria. -->
+    <!-- For script-tooling: include I/O behavior, exit-code / fail-closed cases, idempotency. -->
+    
+    ---
+    
+    ## Implementation Notes
+    
+    <!-- Filled during Step 3. Summary only — the git diff is the source of truth.
+    Note decisions, discoveries, and anything deferred (and re-triaged as its own change). -->
+    
+    **Files modified:**
+    1. `tools/reviewer/src/packet.rs` (enhanced warning output)
+       - Added `file_contributors` Vec to track (path, bytes) during packet build
+       - Replaced simple warning with enhanced format showing: overage multiple, budget in KB, top 3 contributors with percentages, delta suggestion, sha-only note
+       - Warning emitted to stderr only after budget check
+    
+    2. `tools/reviewer/src/main.rs` (help text documentation)
+       - Enhanced `Review` command doc comment with detailed option descriptions
+       - Added 3 usage examples: R1 full review, R2+ delta review, sha-only for context files
+       - Labeled `--sha-only` as "reduces review evidence"
+    
+    3. `docs/reviewer-pipeline.md` (Evidence Modes documentation)
+       - Added new § 14. Evidence Modes section before Appendix A
+       - Documented Full Mode (default), Delta Mode, SHA-Only Mode with use-when guidance and guardrails
+       - Included combining modes example
+    
+    4. `tools/reviewer/tests/smoke.rs` (5 new smoke tests)
+       - `smoke_review_oversized_packet_warning`: verifies enhanced warning format on stderr
+       - `smoke_review_warning_goes_to_stderr_not_packet`: confirms warning excluded from packet content
+       - `smoke_review_delta_mode_tracked_files_only`: verifies delta mode fails on untracked files
+       - `smoke_review_sha_only_reduces_packet_size`: confirms sha-only excludes content (uses Cargo.toml to avoid working-tree diff issues)
+       - `smoke_review_help_mentions_evidence_modes`: regression test for help text content
+    
+    **All tests pass:** 124 total (119 existing + 5 new)
+    
+    **Cross-references:** All documentation references updated in the same change.
+    
+    **No scope creep:** All changes confined to approved scope (warnings, docs, tests). No changes to delta/sha-only semantics (AC-1), no automatic mode selection, no exit code changes, no packet schema changes.
+    
+    ---
+    
+    ## Reconciliation
+    
+    **Acceptance verification:**
+    
+    | # | Criterion | Result | Evidence |
+    |---|---|---|---|
+    | AC-1 | Delta/sha-only modes unchanged (discoverability only) | PASS | `git diff` shows no semantic changes to PacketBuildOptions, delta_mode, or sha_only_paths logic; only file_contributors tracking and warning output added |
+    | AC-2 | Oversized packets emit actionable warning with top contributors | PASS | Manual test: 155 KB packet shows "warning: packet is 155 KB (4× over 48 KB budget)" with top 3 files (smoke.rs 80%, README.md 9%, diff 9%), delta suggestion, and sha-only note |
+    | AC-3 | Warning text not in packet content | PASS | Manual test: warning "packet is 139 KB..." appears in stderr only; exact warning text NOT in stdout packet (only the eprintln code in diff) |
+    | AC-4 | Warning doesn't change exit code | PASS | Manual test: oversized packet exits 0 (advisory, not fatal) |
+    | AC-5 | Help text documents evidence modes with examples | PASS | `codeos-reviewer review --help` shows --mode delta, --sha-only, --base, and 3 examples (R1 full, R2+ delta, sha-only context) |
+    | AC-6 | Documentation includes Evidence Modes section | PASS | `docs/reviewer-pipeline.md` § 14 documents Full Mode, Delta Mode, SHA-Only Mode with use-when guidance and guardrails |
+    | AC-7 | Documentation labels sha-only as evidence-reducing | PASS | "reduces review evidence" appears in both reviewer-pipeline.md and main.rs help text |
+    | AC-8 | All 5 new smoke tests pass | PASS | `cargo test --test smoke`: 124 passed (119 + 5 new: oversized_warning, stderr_not_packet, delta_tracked_only, sha_only_reduces_size, help_mentions_modes) |
+    | AC-9 | No packet format/schema/manifest changes | PASS | PacketManifestEntry and ReviewPacket structs unchanged; only warning logic and file tracking added |
+    | AC-10 | Warning non-interference | PASS | Manual test confirms warning to stderr only, absent from packet stdout, no schema/manifest/evidence structure changes |
+    
+    **Consistency sweep (grep):**
+    - ✓ No orphaned references to removed/renamed items
+    - ✓ Cross-references between help text and docs consistent
+    - ✓ No unresolved TODO/FIXME in implementation code
+    - ✓ Profile PROFILE-3 correctly set in change record
+    - ✓ All touched files exist and cross-reference correctly
+    
+    **Findings scope-triage:**
+    
+    No reviewer findings to triage (Step 4 review pending).
+    
+    ---
+
+DIFF TO REVIEW (base->review, secret/size filtered)
+diff --git a/docs/reviewer-pipeline.md b/docs/reviewer-pipeline.md
+index 4d314d1..4dedd46 100644
+--- a/docs/reviewer-pipeline.md
++++ b/docs/reviewer-pipeline.md
+@@ -407,6 +407,69 @@ independently.
+ 
+ ---
+ 
++## 14. Evidence Modes
++
++The reviewer supports three evidence modes to control packet size and review focus. These modes affect what evidence is included in the review packet; they do not change the reviewer's advisory role or the human approval gate.
++
++### Full Mode — default
++
++Includes full artifact content where allowed by packet size and redaction rules.
++
++**Use when:**
++- Running Round 1 of a review
++- Reviewing the primary artifact under active change
++- The reviewer needs full context to assess the artifact
++
++**Command:**
++```bash
++codeos-reviewer review <feature> <stage> <artifact-paths>
++```
++
++### Delta Mode
++
++Includes only changes since a base commit. Unchanged artifacts are represented by path and hash only.
++
++**Use when:**
++- Running Round 2 or later after fixing reviewer findings
++- The packet exceeds the size budget and most artifacts are unchanged
++- The review should focus on what changed since the previous round
++
++**Command:**
++```bash
++codeos-reviewer review <feature> <stage> --mode delta --base <commit-sha> <artifact-paths>
++```
++
++**Guardrail:** Delta mode requires artifact paths to be tracked by git. Untracked files cannot be compared to the base commit and will error.
++
++### SHA-Only Mode
++
++Includes only the file path and hash, not file content. **This reduces packet size but also reduces review evidence.**
++
++**Use only for:**
++- Large unchanged context files
++- Files needed for packet completeness but not for substantive review
++- Files that are not the primary artifact under review
++
++**Command:**
++```bash
++codeos-reviewer review <feature> <stage> --sha-only <context-file> <other-artifacts>
++```
++
++**Guardrail:** Do not use SHA-only for files whose changed behavior, wording, or structure the reviewer must assess. Changed behavior must remain reviewable as full content or diff.
++
++### Combining Modes
++
++Delta mode and SHA-only can be combined. When both apply, SHA-only paths are included as path/hash references rather than full content or diff.
++
++```bash
++codeos-reviewer review UPG-0042 selfdev-step-3 \
++  --mode delta --base abc123 \
++  --sha-only docs/large-reference.md \
++  changes/UPG-0042__CHG-*.md src/packet.rs
++```
++
++---
++
+ ## Appendix A — Inert hook snippets (NOT part of the pilot)
+ 
+ These are provided for a *future* phase only. **Do not add them to `.claude/settings.json`
+diff --git a/status/self-development.md b/status/self-development.md
+index a8b8dd2..311faca 100644
+--- a/status/self-development.md
++++ b/status/self-development.md
+@@ -64,6 +64,7 @@
+ | UPG-0041 | CHG-20260707-005 | downstream-doctrine | downstream doctrine only | 4-Reconcile | Step 3 R2 NO OBJECTION, Step 4 R2 NO OBJECTION (Evidence: A) | COMPLETE | — |
+ | UPG-0036 | CHG-20260705-001 | self-dev-governance | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION R3; Step 2 NO OBJECTION R2; Step 3 NO OBJECTION R3; Step 4 NO OBJECTION R1; all 10 ACs verified; real check-drift run) | COMPLETE | — |
+ | UPG-0037 | CHG-20260705-002 | downstream-doctrine | downstream doctrine only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION; Step 2 NO OBJECTION R2; Step 3 accepted at budget R3 (0 blockers, SECRET_REDACTION coverage); Step 4 accepted R1 (0 blockers, same SECRET_REDACTION cause); all 13 ACs verified; 105 tests; real FundFlow dry-runs) | COMPLETE | UPG-0038 |
++| UPG-0042 | CHG-20260711-001 | script-tooling | self-dev only | 4-Reconcile | DRAFT | IN_PROGRESS | — |
+ 
+ <!--
+ Identity   : Feature ID = UPG-#### (stable). Change ID = CHG-YYYYMMDD-NNN (one execution), or a
+diff --git a/tools/reviewer/src/main.rs b/tools/reviewer/src/main.rs
+index 2aae796..db80d07 100644
+--- a/tools/reviewer/src/main.rs
++++ b/tools/reviewer/src/main.rs
+@@ -33,10 +33,32 @@ struct Cli {
+ #[derive(Subcommand)]
+ enum Commands {
+     /// Build packet, invoke reviewer, save assessment, append log
++    ///
++    /// Artifact paths and options:
++    ///   <paths>               Files to include in packet
++    ///   --mode delta          Include only diff since base; requires --base and tracked files
++    ///   --base <commit-sha>   Base commit for delta mode
++    ///   --sha-only <path>     Include path/hash only; reduces review evidence
++    ///   --print-packet        Print packet to stdout instead of invoking reviewer
++    ///   --fresh               Force fresh session
++    ///
++    /// Examples:
++    ///   # Round 1: full review
++    ///   codeos-reviewer review UPG-0042 selfdev-step-1 \
++    ///     changes/UPG-0042__CHG-*.md src/packet.rs
++    ///
++    ///   # Round 2+: delta review after fixes
++    ///   codeos-reviewer review UPG-0042 selfdev-step-1 \
++    ///     --mode delta --base abc123 \
++    ///     changes/UPG-0042__CHG-*.md src/packet.rs
++    ///
++    ///   # Large unchanged context file; reduces evidence for that path
++    ///   codeos-reviewer review UPG-0042 selfdev-step-3 \
++    ///     --sha-only tests/smoke.rs \
++    ///     changes/UPG-0042__CHG-*.md src/packet.rs
+     Review {
+         feature: String,
+         stage: String,
+-        /// All remaining args: artifact paths, --sha-only, --fresh, --mode, --base, etc.
+         #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
+         rest: Vec<String>,
+     },
+diff --git a/tools/reviewer/src/packet.rs b/tools/reviewer/src/packet.rs
+index c44802a..20b8242 100644
+--- a/tools/reviewer/src/packet.rs
++++ b/tools/reviewer/src/packet.rs
+@@ -169,6 +169,7 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
+     let mut shown_count = 0usize;
+     let mut delta_diff_count = 0usize;
+     let mut review_content_bytes: u64 = 0;
++    let mut file_contributors: Vec<(String, u64)> = Vec::new(); // Track (path, bytes) for warning
+ 
+     // sha_only artifacts first
+     for so in &opts.sha_only_paths {
+@@ -257,11 +258,15 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
+             ));
+             artifacts.push(ArtifactEntry { path: a.clone(), sha256: sha, visibility: vis.to_string() });
+             review_content_bytes += bytes;
++            file_contributors.push((a.clone(), bytes));
+             shown_count += 1;
+         }
+     }
+ 
+     review_content_bytes += diff_bytes;
++    if diff_bytes > 0 {
++        file_contributors.push(("(diff)".to_string(), diff_bytes));
++    }
+ 
+     // Coverage state (most severe wins)
+     let coverage_state = if (opts.delta_mode && delta_diff_count == 0 && redacted_diff.trim().is_empty())
+@@ -285,10 +290,31 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
+     let budget = std::env::var("CODEOS_PACKET_BUDGET_BYTES")
+         .ok().and_then(|v| v.parse::<u64>().ok()).unwrap_or(50_000);
+     if review_content_bytes > budget {
+-        eprintln!(
+-            "warning: review content is {} bytes, exceeds budget of {} bytes (CODEOS_PACKET_BUDGET_BYTES)",
+-            review_content_bytes, budget
+-        );
++        // Enhanced warning: show overage, top contributors, and actionable suggestions
++        let overage_multiple = (review_content_bytes as f64 / budget as f64).ceil() as u64;
++        let budget_kb = budget / 1024;
++        let packet_kb = review_content_bytes / 1024;
++
++        eprintln!("warning: packet is {} KB ({}× over {} KB budget)", packet_kb, overage_multiple, budget_kb);
++
++        // Sort contributors by size (descending) and show top 3
++        let mut sorted_contributors = file_contributors.clone();
++        sorted_contributors.sort_by(|a, b| b.1.cmp(&a.1));
++        let top_n = sorted_contributors.iter().take(3).collect::<Vec<_>>();
++
++        if !top_n.is_empty() {
++            eprintln!("  largest inputs:");
++            for (path, bytes) in &top_n {
++                let kb = bytes / 1024;
++                let pct = (*bytes as f64 / review_content_bytes as f64 * 100.0) as u64;
++                eprintln!("    {}: {} KB ({}%)", path, kb, pct);
++            }
++        }
++
++        eprintln!("  suggest for R2+:");
++        eprintln!("    codeos-reviewer review {} {} --mode delta --base <last-review-commit> <artifacts>", opts.feature, opts.stage);
++        eprintln!("  optional:");
++        eprintln!("    use --sha-only <path> only for large unchanged context files that are not the primary artifact under review; this reduces review evidence");
+     }
+ 
+     // Stage-specific checks
+diff --git a/tools/reviewer/tests/smoke.rs b/tools/reviewer/tests/smoke.rs
+index 91557bd..c44b6e4 100644
+--- a/tools/reviewer/tests/smoke.rs
++++ b/tools/reviewer/tests/smoke.rs
+@@ -3115,3 +3115,141 @@ features:
+     assert!(stdout.contains("intents/UPG-9509.md"), "stdout: {}", stdout);
+     assert!(stdout.contains("events/UPG-9509.json"), "stdout: {}", stdout);
+ }
++
++// ===== UPG-0042: Reviewer Packet Efficiency =====
++
++#[test]
++fn smoke_review_oversized_packet_warning() {
++    // Verify warning appears on stderr when packet > 50KB
++    let (dir, _base_sha) = setup_temp_git_repo();
++    let p = dir.path();
++
++    // Create a large artifact to trigger oversized warning (>50KB)
++    let large_content = "x".repeat(60_000);
++    std::fs::write(p.join("large.md"), large_content).expect("write large file");
++    Command::new("git").args(["add", "large.md"]).current_dir(p).output().expect("git add");
++    Command::new("git").args(["commit", "-m", "add large"]).current_dir(p).output().expect("git commit");
++
++    let (_code, _stdout, stderr) = run_in_dir(
++        p,
++        &["review", "UPG-9999", "test-stage", "--print-packet", "large.md"],
++    );
++
++    // Check for enhanced warning format
++    assert!(stderr.contains("warning: packet is"), "stderr should contain warning header: {}", stderr);
++    assert!(stderr.contains("KB"), "stderr should show size in KB: {}", stderr);
++    assert!(stderr.contains("over") && stderr.contains("KB budget"), "stderr should mention budget: {}", stderr);
++    assert!(stderr.contains("largest inputs:"), "stderr should show top contributors: {}", stderr);
++    assert!(stderr.contains("suggest for R2+:"), "stderr should suggest delta mode: {}", stderr);
++    assert!(stderr.contains("--mode delta --base"), "stderr should show delta command: {}", stderr);
++    assert!(stderr.contains("optional:"), "stderr should show optional note: {}", stderr);
++    assert!(stderr.contains("--sha-only") && stderr.contains("reduces review evidence"),
++        "stderr should warn about sha-only: {}", stderr);
++}
++
++#[test]
++fn smoke_review_warning_goes_to_stderr_not_packet() {
++    // Verify warning goes to stderr, not packet content
++    let (dir, _base_sha) = setup_temp_git_repo();
++    let p = dir.path();
++
++    // Create oversized artifact
++    let large_content = "y".repeat(60_000);
++    std::fs::write(p.join("large2.md"), large_content).expect("write large file");
++    Command::new("git").args(["add", "large2.md"]).current_dir(p).output().expect("git add");
++    Command::new("git").args(["commit", "-m", "add large2"]).current_dir(p).output().expect("git commit");
++
++    let (_code, stdout, stderr) = run_in_dir(
++        p,
++        &["review", "UPG-9998", "test-stage", "--print-packet", "large2.md"],
++    );
++
++    // Warning should be in stderr
++    assert!(stderr.contains("warning: packet is"), "warning should be in stderr");
++
++    // Warning text should NOT be in packet stdout
++    assert!(!stdout.contains("warning: packet is"), "warning should not appear in packet stdout");
++    assert!(!stdout.contains("largest inputs:"), "contributor list should not be in packet");
++}
++
++#[test]
++fn smoke_review_delta_mode_tracked_files_only() {
++    // Verify delta mode errors on untracked files
++    let (dir, base_sha) = setup_temp_git_repo();
++    let p = dir.path();
++
++    // Create untracked artifact
++    std::fs::write(p.join("untracked.md"), "# untracked\n").expect("write untracked");
++
++    let (code, _stdout, stderr) = run_in_dir(
++        p,
++        &["review", "UPG-9997", "test-stage", "--print-packet",
++          "--mode", "delta", "--base", &base_sha, "untracked.md"],
++    );
++
++    // Should fail with clear diagnostic
++    assert_ne!(code, 0, "delta mode should fail on untracked files");
++    assert!(stderr.contains("untracked"), "stderr should mention untracked: {}", stderr);
++    assert!(stderr.contains("delta") || stderr.contains("compare"),
++        "stderr should mention delta mode issue: {}", stderr);
++}
++
++#[test]
++fn smoke_review_sha_only_reduces_packet_size() {
++    // Verify --sha-only excludes content from packet
++    // Use Cargo.toml (stable file) to avoid issues with unstaged working tree changes
++    let cargo_toml = "tools/reviewer/Cargo.toml";
++    let readme = "README.md";
++
++    // Review without sha-only
++    let (code1, stdout1, _stderr1) = run(&[
++        "review", "UPG-SMOKE-SHA", "test-stage",
++        "--print-packet", "--skip-prechecks",
++        cargo_toml, readme,
++    ]);
++    assert_eq!(code1, 0, "review without sha-only should succeed");
++
++    // Review with sha-only for Cargo.toml
++    let (code2, stdout2, _stderr2) = run(&[
++        "review", "UPG-SMOKE-SHA", "test-stage",
++        "--print-packet", "--skip-prechecks",
++        "--sha-only", cargo_toml,
++        readme,
++    ]);
++    assert_eq!(code2, 0, "review with sha-only should succeed");
++
++    // SHA-only packet should be smaller
++    assert!(stdout2.len() < stdout1.len(),
++        "sha-only packet should be smaller: {} vs {}", stdout2.len(), stdout1.len());
++
++    // SHA-only should show path_sha_only visibility
++    assert!(stdout2.contains("path_sha_only"), "sha-only should mark visibility");
++    assert!(stdout2.contains("Cargo.toml"), "sha-only manifest should include path");
++
++    // Full packet should contain Cargo.toml content (package name)
++    assert!(stdout1.contains("name = \"codeos-reviewer\""),
++        "full packet should include Cargo.toml content");
++
++    // SHA-only packet should NOT contain Cargo.toml content
++    assert!(!stdout2.contains("name = \"codeos-reviewer\""),
++        "sha-only packet should not include Cargo.toml content");
++}
++
++#[test]
++fn smoke_review_help_mentions_evidence_modes() {
++    // Verify help text regression prevention
++    let (_code, stdout, _stderr) = run(&["review", "--help"]);
++
++    // Check for evidence mode documentation
++    assert!(stdout.contains("--mode delta"), "help should mention --mode delta: {}", stdout);
++    assert!(stdout.contains("--base"), "help should mention --base: {}", stdout);
++    assert!(stdout.contains("tracked files"), "help should mention tracked files requirement: {}", stdout);
++    assert!(stdout.contains("--sha-only"), "help should mention --sha-only: {}", stdout);
++    assert!(stdout.contains("reduces review evidence") || stdout.contains("reduces evidence"),
++        "help should warn about evidence reduction: {}", stdout);
++    assert!(stdout.contains("--print-packet"), "help should mention --print-packet: {}", stdout);
++
++    // Check for examples
++    assert!(stdout.contains("Examples:") || stdout.contains("# Round 1") || stdout.contains("# Round 2"),
++        "help should include usage examples: {}", stdout);
++}

@@ -169,6 +169,7 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
     let mut shown_count = 0usize;
     let mut delta_diff_count = 0usize;
     let mut review_content_bytes: u64 = 0;
+    let mut file_contributors: Vec<(String, u64)> = Vec::new(); // Track (path, bytes) for warning
 
     // sha_only artifacts first
     for so in &opts.sha_only_paths {
@@ -257,11 +258,15 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
             ));
             artifacts.push(ArtifactEntry { path: a.clone(), sha256: sha, visibility: vis.to_string() });
             review_content_bytes += bytes;
+            file_contributors.push((a.clone(), bytes));
             shown_count += 1;
         }
     }
 
     review_content_bytes += diff_bytes;
+    if diff_bytes > 0 {
+        file_contributors.push(("(diff)".to_string(), diff_bytes));
+    }
 
     // Coverage state (most severe wins)
     let coverage_state = if (opts.delta_mode && delta_diff_count == 0 && redacted_diff.trim().is_empty())
@@ -285,10 +290,31 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
     let budget = std::env::var("CODEOS_PACKET_BUDGET_BYTES")
         .ok().and_then(|v| v.parse::<u64>().ok()).unwrap_or(50_000);
     if review_content_bytes > budget {
-        eprintln!(
-            "warning: review content is {} bytes, exceeds budget of {} bytes (CODEOS_PACKET_BUDGET_BYTES)",
-            review_content_bytes, budget
-        );
+        // Enhanced warning: show overage, top contributors, and actionable suggestions
+        let overage_multiple = (review_content_bytes as f64 / budget as f64).ceil() as u64;
+        let budget_kb = budget / 1024;
+        let packet_kb = review_content_bytes / 1024;
+
+        eprintln!("warning: packet is {} KB ({}× over {} KB budget)", packet_kb, overage_multiple, budget_kb);
+
+        // Sort contributors by size (descending) and show top 3
+        let mut sorted_contributors = file_contributors.clone();
+        sorted_contributors.sort_by(|a, b| b.1.cmp(&a.1));
+        let top_n = sorted_contributors.iter().take(3).collect::<Vec<_>>();
+
+        if !top_n.is_empty() {
+            eprintln!("  largest inputs:");
+            for (path, bytes) in &top_n {
+                let kb = bytes / 1024;
+                let pct = (*bytes as f64 / review_content_bytes as f64 * 100.0) as u64;
+                eprintln!("    {}: {} KB ({}%)", path, kb, pct);
+            }
+        }
+
+        eprintln!("  suggest for R2+:");
+        eprintln!("    codeos-reviewer review {} {} --mode delta --base <last-review-commit> <artifacts>", opts.feature, opts.stage);
+        eprintln!("  optional:");
+        eprintln!("    use --sha-only <path> only for large unchanged context files that are not the primary artifact under review; this reduces review evidence");
     }
 
     // Stage-specific checks
