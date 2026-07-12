@@ -23,6 +23,45 @@ guarantees: advisory logging only — NOT approval-integrity or rollback (deferr
 
 ---
 
+## 0. Architecture at a Glance
+
+**The core rule:** Codex produces advisory evidence; the human gate decides. This is true at
+every step, every profile, and every cadence below — nothing in this document changes it.
+
+The system separates into four layers:
+
+1. **Human gate** — approves, rejects, or waives advisory review at each step (self-dev) or
+   stage (downstream) transition. The only layer with actual authority (§1, §6).
+2. **Workflow doctrine** — which loop is running: the self-dev 4-step loop (`CLAUDE.md` +
+   `prompts/codeos-self-dev.md`) or the downstream 9-stage DBA doctrine (`dba-system.md`).
+   Each has its own review cadence — see "Two cadences" below and §12.
+3. **Review engine** — builds the packet, applies an evidence mode, calls Codex, records the
+   raw result (§2, §4b, §14).
+4. **Durable records** — change record, backlog feature thread, status dashboard, review log,
+   raw Codex output — each with a distinct owner; see §4e for the split.
+
+```mermaid
+flowchart TD
+    H[Human gate] --> C[Claude / practitioner<br/>edits artifacts]
+    C --> RQ["codeos-reviewer review<br/>(scripts/codeos-review.sh)"]
+    RQ --> PB[Packet builder<br/>evidence mode + filters]
+    PB --> PM[Packet manifest<br/>coverage_state, hashes, size]
+    PM -->|coverage state allows| LLM[Codex — advisory only]
+    PM -->|EMPTY_PACKET| FG[Fail-closed guard<br/>no Codex call]
+    LLM --> RA[reviews/codex/*.md<br/>full assessment]
+    RA --> RL[reviews/review-log.md<br/>append-only]
+    RL --> T[Finding triage<br/>§4c / codeos-self-dev.md Step 4]
+    T --> H
+    H -->|APPROVE / decision| NEXT[Next step or stage]
+```
+
+**Two cadences, not one.** Self-dev toolkit changes use the `PROFILE-0..5` round-budget table
+(§4d), assigned per `prompts/codeos-self-dev.md`'s Step 0a; downstream DBA projects use the
+flat rule in `dba-system.md`'s "Default Advisory Review" section (round 1 before the gate,
+rounds 2–3 for fixes, stop and escalate after 3), established by
+`changes/UPG-0037__CHG-20260705-002__downstream-default-stage-review.md`. These are
+deliberately separate — see §12 for why they are not unified.
+
 ## 1. Roles
 
 - **Claude Code** runs the DBA development loop (Stages 1–9) and STOPs at
@@ -218,10 +257,77 @@ blockers that would otherwise cost a full review round.
 SELF-REFERENCE / REVIEW-BOOKKEEPING findings found at budget exhaustion are always resolved by
 human decision without further review.
 
+## 4e. Durable record ownership at a glance
+
+Ownership is deliberately split across five artifact families — this is the Self-Reference
+Boundary from `backlog/UPG-0001-feature-thread-traceability.md`: reviewed artifacts carry a
+stable `review_series` + `review_state`, never a live round number, because the exact round
+only exists after the packet is built.
+
+```mermaid
+flowchart TD
+    CHG["changes/UPG-####__CHG-*.md<br/>current step, review_series"] --> H
+    BACKLOG["backlog/UPG-####-*.md<br/>Feature Thread rollup"] --> H
+    STATUS["status/self-development.md<br/>operational state (self-dev)"] --> H
+
+    RAW["reviews/codex/*.md<br/>raw assessment"] --> LOG["reviews/review-log.md<br/>append-only rounds + decisions"]
+    LOG --> H[Human decision]
+```
+
+| Record | Owns |
+|---|---|
+| `changes/UPG-####__CHG-*.md` | Current step, trace header, stable `review_series` (never a live round) |
+| `backlog/UPG-####-*.md` | Feature Thread rollup — compact links, not full detail |
+| `status/self-development.md` | Operational state dashboard (self-dev only; downstream projects have no equivalent file) |
+| `reviews/review-log.md` | Exact `REV__…__R<N>` rounds, verdicts, packet hashes, human decisions (append-only, §4) |
+| `reviews/codex/*.md` + `packets/*` | Raw reviewer output and the exact bytes reviewed (§4) |
+
+## 4f. Future direction — not implemented
+
+No `ReviewRun` record, event ledger, or control-plane component was found by a repo-wide
+search of tracked files as of this change
+(`grep -rn "ReviewRun\|control-plane\|event ledger" --include="*.md" .`). The only matches are
+this paragraph itself (naming the terms in order to say they are absent) and this change's own
+new backlog/change/review files (`backlog/UPG-0044-*.md`, `changes/UPG-0044__*.md`,
+`reviews/codex/*UPG-0044*.md`) — this section exists only to
+say so explicitly, not to describe a planned design. The deferred, stronger-guarantee work that
+such a component would
+eventually need to satisfy is already tracked, narrowly, in
+`backlog/UPG-0015-reviewer-decision-integrity.md`: binding a human approval to a reproducible
+reviewed state (commit + diff hash + workspace snapshot), decision-time reverification, and
+rollback semantics. That backlog item is the authoritative pointer for this direction; treat
+anything beyond it (a named `ReviewRun` schema, an event ledger, an automated control plane) as
+unapproved and undesigned until a Step 1 change intent says otherwise.
+
 ## 5. Coverage and effective concern
 
 Defined normatively in [`reviewer-artifact-schemas.md`](reviewer-artifact-schemas.md) (coverage
-rules). In summary: two filtering layers run before anything reaches Codex — **path exclusion**
+rules); this section is a walkthrough, not a second normative source. The five
+`coverage_state` values, worst-to-best, are `EMPTY_PACKET` > `CRITICAL_OMISSION` >
+`SECRET_REDACTION` > `PARTIAL_COVERAGE` > `FULL_COVERAGE`. `EMPTY_PACKET` is **fail-closed**:
+the script exits before any Codex invocation (see §4b's untracked-artifact guard and
+`backlog/UPG-0031-review-delta-mode-fix.md`, which fixed delta mode comparing only to `HEAD`
+— missing uncommitted fixes — by comparing the base commit to the working tree instead, and
+added this fail-closed guard so an empty diff can never silently reach Codex as reviewable
+content).
+
+```mermaid
+flowchart LR
+    MODE{Evidence mode<br/>§14} -->|full| F[Full artifact content]
+    MODE -->|delta| D[Diff vs. base,<br/>working tree]
+    MODE -->|sha-only| S[Path + sha256 only]
+    F --> FIL[Path exclusion +<br/>content redaction]
+    D --> FIL
+    S --> FIL
+    FIL --> CS{coverage_state}
+    CS --> FC[FULL_COVERAGE<br/>floor: none]
+    CS --> PC[PARTIAL_COVERAGE<br/>floor: CHANGES ADVISED]
+    CS --> SR[SECRET_REDACTION<br/>floor: CHANGES ADVISED]
+    CS --> CO[CRITICAL_OMISSION<br/>floor: high attention]
+    CS --> EP[EMPTY_PACKET<br/>fail-closed — no Codex call]
+```
+
+In summary: two filtering layers run before anything reaches Codex — **path exclusion**
 (`.env*`, `*.pem`, `secrets/*`, size limit, …) applies to the **diff and incidental files only**,
 and **content redaction** blanks secret-like values in place in both the diff and requested
 artifacts. A requested artifact is therefore never silently dropped — it is `shown`,
@@ -410,6 +516,21 @@ independently.
 ## 14. Evidence Modes
 
 The reviewer supports three evidence modes to control packet size and review focus. These modes affect what evidence is included in the review packet; they do not change the reviewer's advisory role or the human approval gate.
+
+**At a glance:**
+
+| Mode | Best use | Main risk |
+|---|---|---|
+| `full` | Round 1 of a review; small/primary artifacts | Packet bloat on large stable files |
+| `delta` | Round 2+ after fixes | Wrong/stale `--base`; untracked artifacts error (§4b guardrail) |
+| `sha-only` | Large unchanged context files, not the primary artifact | Reduced review evidence — reviewer cannot inspect content |
+
+```mermaid
+flowchart LR
+    F[full] -->|best evidence,<br/>largest packets| R[Codex reviewer]
+    D[delta] -->|changed lines only,<br/>best for R2+| R
+    S[sha-only] -->|lowest evidence,<br/>stable context only| R
+```
 
 ### Full Mode — default
 

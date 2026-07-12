@@ -1,0 +1,410 @@
+Reviewer task:
+
+SCOPE CONTRACT
+  Assess this artifact against the STATED SCOPE of this stage/PR — the Expected Stage
+  Output below and what the artifacts actually claim — NOT against an ideal final system.
+  A capability the artifacts do not claim to provide is OUT-OF-SCOPE, not a defect.
+  The following are OUT-OF-SCOPE BACKLOG unless THIS artifact explicitly claims to provide
+  them: formal approval-binding enforcement; rollback correctness; COMMIT_BOUND/
+  WORKSPACE_BOUND enforcement; JSON Schema validation; CI validation; exact
+  decision-integrity; per-feature decision ledgers; autonomous approval; enabled hooks.
+
+YOUR TASK — answer these five questions using only the evidence in the packet:
+  1. Acceptance criteria: Does the artifact satisfy each of its stated acceptance criteria?
+     Cite evidence for each criterion (or note its absence).
+  2. Claim support: Are universal or strong claims (all, every, never, always, no X) in the
+     artifact supported by evidence in the packet? Any unverifiable strong claim is a candidate
+     finding only if it affects acceptance, scope, safety, decision integrity, or the artifact's
+     stated guarantees.
+  3. Scope drift: Is there any change beyond the stated scope boundary? (Files not in the
+     "What changes" list; behavior changes not in the intent; downstream doctrine modified
+     rather than read.)
+  4. In-scope blockers: Are there facts that, if left in, would make the artifact wrong,
+     unsafe, or internally contradictory?
+  5. Finding classification: Classify every finding you raise as exactly one of the five
+     TRIAGE RULE categories below.
+
+TRIAGE RULE — classify EVERY finding as exactly one of:
+  IN-SCOPE BLOCKER         breaks the stated goal; creates a FALSE CLAIM in this artifact;
+                           weakens the advisory/read-only/human-gated guarantees; prevents
+                           the work from running; or violates an explicit safety constraint.
+  IN-SCOPE NON-BLOCKER     improves it but is not required for this PR.
+  OUT-OF-SCOPE BACKLOG     valid, but belongs to a future feature / stronger guarantee.
+  REJECTED                 conflicts with the stated scope or Codeos philosophy.
+  SELF-REFERENCE /         review records that are stale because of the previous round's
+  REVIEW-BOOKKEEPING       own existence (causal loop); not a real artifact defect.
+  Base the PR decision ONLY on IN-SCOPE BLOCKER findings. An OUT-OF-SCOPE BACKLOG finding
+  must NOT cause DO NOT ADVANCE unless this artifact FALSELY CLAIMS to solve it.
+
+WHAT NOT TO DO
+  - Do not flag style or wording issues as blockers unless the wording creates a false claim,
+    contradiction, parser breakage, or wrong governance instruction.
+  - Do not re-review unchanged full context when the packet is in delta mode.
+  - Do not treat local-only review history as a blocker unless the artifact falsely
+    claims the review artifacts are committed/durable.
+
+INSTRUCTIONS
+  If this is a resumed session, ignore any earlier-session conclusions unless they are
+  re-established by THIS packet; assess only the evidence above, pinned to this commit.
+  Give a focused assessment of this artifact against the stated scope, acceptance criteria,
+  and evidence in this packet. Rank findings by severity. Suggest a better design only when
+  needed to explain a required fix for an IN-SCOPE BLOCKER.
+
+  Limit findings to the top 3 IN-SCOPE BLOCKERS. Additional non-blocking observations may be
+  summarized in one short paragraph only if useful.
+
+  For EACH finding emit:
+    Finding: / Severity: High|Medium|Low / Classification: <one of the TRIAGE RULE labels>
+    Evidence: <file/line> / Why: <short> / Required action: fix now|optional fix|backlog|reject
+    Scope reason: <why it does/does not belong to this PR's scope>
+  Then emit:
+    PR decision: ADVANCE | REQUEST CHANGES | DO NOT ADVANCE   (based ONLY on in-scope blockers)
+    Scope drift warning: yes|no — <is anything pulling this PR beyond its stated scope?>
+  Then on the LAST three lines emit exactly (map ADVANCE->NO OBJECTION,
+  REQUEST CHANGES->CHANGES ADVISED, DO NOT ADVANCE->DO NOT ADVANCE):
+    LOG SUMMARY: <NO OBJECTION | CHANGES ADVISED | DO NOT ADVANCE | UNCLASSIFIED> — <single most important point>
+      (use UNCLASSIFIED if you genuinely cannot classify the artifact safely)
+    EVIDENCE: <A|B|C|D|E>
+    HIGHEST-IMPACT UNCERTAINTY: <one sentence — what single thing, if wrong, most affects this assessment>
+
+  Evidence grade — the grade describes what the assessment rests on, not reviewer confidence:
+    A — Directly verified in the artifact, diff, or output shown in the packet
+    B — Verified with multiple direct pieces of evidence, but coverage is not complete
+    C — Partially verified, partially inferred from structure or context
+    D — Mostly inferred from structure or indirect evidence
+    E — Hypothesis or very limited basis — little to no direct evidence
+
+
+PACKET MANIFEST
+  generated: 2026-07-12T14:44:55Z
+  task_prompt: /home/rimo/projects/Codeos/prompts/codeos-reviewer-task.md (4959 bytes)
+  review_content_bytes: 14953
+  estimated_review_tokens: ~3738
+  budget_status: OK
+  packet_mode: full
+  delta_base: none
+  items:
+    - path: changes/UPG-0044__CHG-20260712-001__reviewer-pipeline-architecture-refresh.md
+      mode: full_file
+      bytes: 4942
+      sha256: cafcafce1f18d487083ea4b50b97599b2d43576c635fc4f9a2ba547526b3edc8
+    - path: backlog/UPG-0044-reviewer-pipeline-architecture-refresh.md
+      mode: full_file
+      bytes: 7645
+      sha256: 2953a7627959b11fb2b3afe77384e97fa6ca9a18d40b7763cd3f23fe8026f911
+    - path: (diff)
+      mode: full_file
+      bytes: 2366
+
+REVIEW CONTEXT
+  Feature:                UPG-0044__CHG-20260712-001
+  Stage:                  selfdev-step-1
+  Branch:                 main
+  Base commit:            (no base pin)
+  Review commit:          9143bc52d9e54b37789e23f45e5ab438f0870aeb (+ uncommitted workspace changes)
+  Current approved stage: n/a (non-numeric stage)
+  Evidence coverage:      FULL_COVERAGE
+  Workspace dirty:        yes (uncommitted changes at review time)
+
+DBA RULES RELEVANT TO THIS STAGE
+  - Human approval is required for every stage transition; you are advisory only.
+  - Memory is not truth — assess only what is provided, pinned to the review commit.
+  - Implementation must trace to approved artifacts; no behavior beyond intent+contract+schema.
+  - No events outside the approved event schema; no hidden behavior.
+
+STAGE-SPECIFIC CHECKS
+  - (no stage-specific checklist for stage selfdev-step-1)
+
+EXPECTED STAGE OUTPUT
+  (no expected-output template for stage)
+
+ARTIFACTS TO REVIEW
+  --- changes/UPG-0044__CHG-20260712-001__reviewer-pipeline-architecture-refresh.md (sha256: cafcafce1f18d487083ea4b50b97599b2d43576c635fc4f9a2ba547526b3edc8, visibility: shown) ---
+    # Self-Development Change: UPG-0044__CHG-20260712-001 — reviewer-pipeline-architecture-refresh
+    
+    <!-- TRACE HEADER (canonical) -->
+    ```yaml
+    feature_id: UPG-0044
+    primary_feature_id: UPG-0044
+    change_id: CHG-20260712-001
+    slug: reviewer-pipeline-architecture-refresh
+    state: IN_PROGRESS
+    current_step: 1-Intent
+    implements:
+      - UPG-0044
+    related_features: [UPG-0042, UPG-0037, UPG-0027, UPG-0001]
+    review_series: null
+    review_profile: PROFILE-2
+    review_state: DRAFT
+    review_history: reviews/review-log.md
+    fixes_findings: []
+    follow_up_of: null
+    ```
+    
+    ## Change Intent
+    
+    **Why (problem in the toolkit):**
+    
+    `docs/reviewer-pipeline.md` (520 lines, still headed `status: PILOT`) documents the reviewer
+    system roughly as it stood around UPG-0003/UPG-0006. Since then the system grew a layered
+    architecture — self-dev `PROFILE-0..5` vs. downstream flat R1/R2/R3 cadence (UPG-0037),
+    evidence/packet modes full/delta/sha-only refined across UPG-0027's sub-changes, UPG-0031
+    (delta-mode base-vs-working-tree fix), and UPG-0042 (oversized-packet warnings) — but the doc
+    narrates these as scattered sections (§4b/§4c/§14) rather than as one coherent model. A human
+    review of the reviewer system (this session) independently reconstructed a five-layer
+    architecture (human gate → workflow doctrine → review engine → packet building → durable
+    records) from first principles because no single section states it. That reconstruction is
+    worth capturing once, in the doc, instead of being re-derived by every future session that
+    needs the whole picture.
+    
+    **What changes:**
+    
+    - `docs/reviewer-pipeline.md` — restructured/extended in place:
+      - Add an architecture-level framing section (four/five-layer model: human gate / workflow
+        doctrine / review engine / durable records) near the top, stating the core rule —
+        Codex produces advisory evidence, the human gate decides — once, clearly.
+      - Add or consolidate a section naming self-dev `PROFILE-0..5` vs. downstream flat
+        R1/R2/R3 as two distinct, intentionally non-unified cadences, cross-referencing
+        `prompts/codeos-self-dev.md` Step 0a and the UPG-0037 change record rather than
+        re-describing their design.
+      - Consolidate the existing full/delta/sha-only evidence-mode material (currently in §14
+        per UPG-0042) with a use-when / main-risk table; extend rather than duplicate.
+      - State the `EMPTY_PACKET` fail-closed behavior and the delta-mode base-vs-working-tree
+        fix (UPG-0031) as one coverage-state model (`FULL` / `PARTIAL` / `EMPTY_PACKET` /
+        `SECRET_REDACTION`).
+      - Add Mermaid diagrams for: the high-level flow, the packet-building/coverage-state flow,
+        and the durable-record-ownership split (change record / backlog feature thread / status
+        dashboard / review log / raw Codex output — the Self-Reference Boundary from UPG-0001).
+      - Explicitly label any "ReviewRun" / control-plane-lite / event-ledger material as
+        **future direction, not implemented behavior**, visually and textually separated from
+        current-state sections.
+      - Revisit the `status: PILOT` badge only if it is factually stale in light of what this
+        change documents — flag, don't resolve, if that classification itself looks wrong (out
+        of scope for this change; would need its own triage).
+    - No other files are planned to change. If cross-references elsewhere turn out to need
+      updates (e.g., a stale section-number reference in `prompts/codeos-self-dev.md`), that
+      will be caught by the Step 4 grep sweep and either fixed in-scope (pure cross-reference
+      repair) or re-triaged as its own change if it's more than that.
+    
+    **Scope boundary — what stays the same:**
+    
+    - No new code: no changes to `scripts/codeos-review.sh`, `tools/reviewer/*`, or any binary.
+    - No new `ReviewRun` records, no event ledger, no generated `reviews/review-log.md` changes.
+    - No changes to `CLAUDE.md` or `dba-system.md` — this doc is self-dev only (verified: it is
+      referenced only from `prompts/codeos-self-dev.md` and `prompts/reviewer-automated.md`, not
+      from `dba-system.md`).
+    - No re-litigation or redesign of self-dev `PROFILE-0..5` or downstream R1/R2/R3 cadence —
+      cite the existing decisions, don't reopen them.
+    - No new standalone `docs/reviewer-architecture.md` file — content lands in the existing
+      `docs/reviewer-pipeline.md` to avoid two files describing the same system.
+    - No behavioral claims are added or removed — every existing normative statement (I/O
+      behavior, exit codes, fail-closed guarantees) is preserved; this is a reframing and
+      consolidation of existing accurate content plus new diagrams, not a rewrite of what the
+      system does.
+    
+    **Class:** documentation
+    **Scope axis:** self-dev only
+    **Backlog item:** backlog/UPG-0044-reviewer-pipeline-architecture-refresh.md
+    
+    ---
+    
+    ## Acceptance Criteria
+    
+    *(Step 2 — not yet produced)*
+    
+    ---
+    
+    ## Implementation Notes
+    
+    *(Step 3 — not yet produced)*
+    
+    ---
+    
+    ## Reconciliation
+    
+    *(Step 4 — not yet produced)*
+
+  --- backlog/UPG-0044-reviewer-pipeline-architecture-refresh.md (sha256: 2953a7627959b11fb2b3afe77384e97fa6ca9a18d40b7763cd3f23fe8026f911, visibility: shown) ---
+    ---
+    feature_id: UPG-0044
+    slug: reviewer-pipeline-architecture-refresh
+    title: Refresh Reviewer Pipeline Architecture Documentation
+    status: PROPOSED
+    priority: P3
+    depends_on: []
+    related_features: [UPG-0042, UPG-0037, UPG-0027]
+    supersedes: []
+    superseded_by: []
+    ---
+    
+    # Upgrade: reviewer-pipeline-architecture-refresh — Refresh Reviewer Pipeline Architecture Documentation
+    
+    **Priority**: P3
+    **Status**: PROPOSED
+    **Type**: documentation
+    
+    ## Problem
+    
+    `docs/reviewer-pipeline.md` (520 lines, still headed `status: PILOT`) documents the reviewer
+    system as it stood around UPG-0003/UPG-0006. Since then the system has grown a layered
+    architecture that the doc does not narrate as a whole:
+    
+    - **Two review domains** with different cadences: self-dev `PROFILE-0..5` (`prompts/codeos-self-dev.md`
+      Step 0a) vs. downstream DBA's flat R1/R2/R3 cadence pinned by UPG-0037.
+    - **Evidence/packet modes** — full, delta, sha-only — added incrementally by UPG-0027's
+      sub-changes and refined by UPG-0031 (delta-mode base-vs-working-tree fix) and UPG-0042
+      (oversized-packet warnings, evidence-mode guidance).
+    - **Fail-closed packet coverage states** — `EMPTY_PACKET`, `SECRET_REDACTION`, `FULL`/`PARTIAL` —
+      scattered across §4b/§4c/§14 rather than presented as one coverage model.
+    - **Record ownership split** across `changes/`, `backlog/`, `status/self-development.md`,
+      `reviews/review-log.md`, and `reviews/codex/*` (the Self-Reference Boundary from UPG-0001),
+      which is easy to re-derive wrong without a single picture.
+    
+    A reader (including future Claude sessions) has to reconstruct the whole-system model by
+    reading `docs/reviewer-pipeline.md` plus `prompts/codeos-self-dev.md` plus several
+    `changes/UPG-0027__*` and `UPG-0042`/`UPG-0037` records. There is no single place that shows
+    how governance, packet-building, evidence modes, and durable records fit together.
+    
+    ## Upgrade
+    
+    Refresh `docs/reviewer-pipeline.md` in place (no new standalone doc — avoids a second file
+    describing the same system) to add an architecture-level framing on top of the existing
+    how-to content:
+    
+    - A four/five-layer model: human gate → workflow doctrine (self-dev loop vs. downstream
+      DBA stages) → review engine (packet builder, evidence modes, Codex call) → durable
+      records (change record, backlog feature thread, status dashboard, review log, raw
+      Codex output).
+    - Human authority vs. advisory reviewer stated as the core rule up front (Codex produces
+      advisory evidence; the human gate decides — already true today, currently implicit
+      across several sections rather than stated once, clearly, near the top).
+    - Self-dev `PROFILE-0..5` vs. downstream flat R1/R2/R3 cadence, named as two distinct,
+      intentionally non-unified cadences (cross-reference `prompts/codeos-self-dev.md` Step 0a
+      and the UPG-0037 change record — do not re-litigate either).
+    - Packet/evidence modes (full / delta / sha-only) consolidated with a use-when / main-risk
+      table, matching what UPG-0042 already added in §14 (extend, don't duplicate).
+    - `EMPTY_PACKET` fail-closed behavior and the delta-mode base-vs-working-tree fix (UPG-0031)
+      stated as one coverage-state model.
+    - Diagrams (Mermaid, since this is a `.md` file rendered on GitHub/most viewers) for at
+      least: the high-level flow, the packet-building/coverage-state flow, and the
+      record-ownership split.
+    - Any "ReviewRun" / control-plane-lite / event-ledger framing is documented explicitly as
+      **future direction, not implemented behavior** — clearly separated from the current-state
+      sections so it cannot be read as describing shipped functionality.
+    - Drop or rewrite the `status: PILOT` framing where it is now stale, without re-litigating
+      whether the Bash reviewer wrapper is still a "pilot" (that classification is out of scope
+      here — flag it as a finding for a separate change if it looks wrong, don't resolve it in
+      this change).
+    
+    ## Scope
+    
+    `docs/reviewer-pipeline.md` — restructured/extended in place. Documentation only.
+    
+    Out of scope:
+    - No new code (no changes to `scripts/codeos-review.sh`, `tools/reviewer/*`, or any binary).
+    - No new `ReviewRun` records, no event ledger, no generated review-log changes.
+    - No changes to `CLAUDE.md` or `dba-system.md` unless Step 1 explicitly reclassifies scope
+      (not expected — this doc is self-dev only, see Related).
+    - No re-litigation of self-dev `PROFILE-0..5` or downstream R1/R2/R3 cadence design — cite,
+      don't redesign.
+    - No new standalone `docs/reviewer-architecture.md` file — content lands in the existing doc.
+    
+    ## Value
+    
+    Low-to-medium, cumulative. Benefits:
+    - Reduces re-derivation cost: a future session (self-dev or downstream) can read one section
+      instead of reconstructing the layered model from `prompts/codeos-self-dev.md` + several
+      change records.
+    - Makes the human-authority/advisory-reviewer rule and the two-cadence split explicit rather
+      than implicit, reducing risk of someone conflating self-dev profiles with downstream
+      cadence (or vice versa).
+    - Gives the packet/evidence-mode and coverage-state material a single narrative home instead
+      of three partially-overlapping sections.
+    
+    Trade-offs:
+    - Doc-only change; no functional benefit, no test coverage change.
+    - Risk of the doc drifting stale again if a future packet/cadence change forgets to update it
+      (same risk that motivated this refresh in the first place — not newly introduced).
+    
+    ## Risk
+    
+    Deciding hastily risks:
+    - Documenting the "ReviewRun"/control-plane-lite direction ambiguously, so a future reader
+      mistakes aspirational architecture for current behavior.
+    - Duplicating rather than replacing existing §4b/§4c/§14 content, leaving the doc longer
+      without being clearer.
+    - Silently expanding scope into `prompts/codeos-self-dev.md` or `CLAUDE.md` under the guise
+      of "just adding a cross-reference."
+    
+    ## Guardrail
+    
+    The refresh must:
+    - Keep `docs/reviewer-pipeline.md` as the single home for this content (no parallel doc).
+    - Clearly separate current-state sections from future-direction sections (label future
+      direction explicitly, e.g. "Future direction — not implemented").
+    - Preserve every existing normative statement (I/O behavior, exit codes, fail-closed
+      guarantees) — this is a reframing/consolidation, not a rewrite of behavior claims.
+    - Leave `CLAUDE.md` and `dba-system.md` untouched unless Step 1 explicitly says otherwise.
+    
+    ## Related
+    
+    - **UPG-0042**: Reviewer packet efficiency — added the §14 evidence-mode material this
+      change consolidates and extends.
+    - **UPG-0037**: Downstream default stage review — source of the downstream flat R1/R2/R3
+      cadence this doc must describe accurately without re-litigating.
+    - **UPG-0027**: Replacing review scripts — source of the packet manifest / delta-mode /
+      `EMPTY_PACKET` behavior this doc narrates.
+    - **UPG-0001**: Feature Thread Traceability — source of the Self-Reference Boundary /
+      record-ownership split this doc's diagram must match.
+    
+    ## Feature Thread
+    
+    > Canonical thread rollup for this feature. Compact links/IDs only; full detail lives in the
+    > change records and review files. May be maintained manually.
+    
+    ### Changes
+    
+    | Change ID | File | Purpose | State |
+    |---|---|---|---|
+    | CHG-20260712-001 | changes/UPG-0044__CHG-20260712-001__reviewer-pipeline-architecture-refresh.md | Refresh docs/reviewer-pipeline.md architecture framing | IN_PROGRESS |
+    
+    ### Reviews
+    
+    | Review ID | Change ID | Step | Round | Verdict |
+    |---|---|---|---|---|
+    
+    ### Findings Tracked Inside This Feature
+    
+    | Finding ID | Review ID | Classification | Resolution |
+    |---|---|---|---|
+    
+    ### Follow-up Features
+    
+    | Feature ID | Reason | Source finding |
+    |---|---|---|
+
+DIFF TO REVIEW (base->review, secret/size filtered)
+diff --git a/backlog/features.md b/backlog/features.md
+index 0ed1d30..48018eb 100644
+--- a/backlog/features.md
++++ b/backlog/features.md
+@@ -74,6 +74,7 @@ The goal is to speed up Codeos development without weakening DBA advantages.
+ | UPG-0041 | [UPG-0041-feature-registry-schema-drift.md](UPG-0041-feature-registry-schema-drift.md) | Reconcile feature-registry.yaml Schema vs Real-World Drift (FundFlow) | P2 | COMPLETE |
+ | UPG-0042 | [UPG-0042-reviewer-packet-efficiency.md](UPG-0042-reviewer-packet-efficiency.md) | Reduce Reviewer Packet Bloat for Large Stable Files | P2 | PROPOSED |
+ | UPG-0043 | [UPG-0043-smoke-test-modularity.md](UPG-0043-smoke-test-modularity.md) | Split Monolithic Smoke Test File by Tool Area | P3 | PROPOSED |
++| UPG-0044 | [UPG-0044-reviewer-pipeline-architecture-refresh.md](UPG-0044-reviewer-pipeline-architecture-refresh.md) | Refresh Reviewer Pipeline Architecture Documentation | P3 | PROPOSED |
+ 
+ > Priority `—` = no formal P-rank (a completed cleanup, or a discovery note). Feature IDs are
+ > assigned once and never reused. `UPG-0002` and `UPG-0003` are historical/piloted work given IDs
+diff --git a/status/self-development.md b/status/self-development.md
+index 452ebba..f1608b6 100644
+--- a/status/self-development.md
++++ b/status/self-development.md
+@@ -66,6 +66,7 @@
+ | UPG-0037 | CHG-20260705-002 | downstream-doctrine | downstream doctrine only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION; Step 2 NO OBJECTION R2; Step 3 accepted at budget R3 (0 blockers, SECRET_REDACTION coverage); Step 4 accepted R1 (0 blockers, same SECRET_REDACTION cause); all 13 ACs verified; 105 tests; real FundFlow dry-runs) | COMPLETE | UPG-0038 |
+ | UPG-0042 | CHG-20260711-001 | script-tooling | self-dev only | 4-Reconcile | REVIEWED (series RVS__…__S4; R2 NO OBJECTION; all 10 ACs verified; 124 tests pass) | COMPLETE | — |
+ | UPG-0043 | CHG-20260711-002 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S4; R3 budget exhausted; inline doc fix accepted by human; all 5 final verifications pass; 124 tests across 8 files) | COMPLETE | — |
++| UPG-0044 | CHG-20260712-001 | documentation | self-dev only | 1-Intent | DRAFT (PROFILE-2, review not yet run) | IN_PROGRESS | — |
+ 
+ <!--
+ Identity   : Feature ID = UPG-#### (stable). Change ID = CHG-YYYYMMDD-NNN (one execution), or a

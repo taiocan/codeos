@@ -74,6 +74,7 @@ The goal is to speed up Codeos development without weakening DBA advantages.
 | UPG-0041 | [UPG-0041-feature-registry-schema-drift.md](UPG-0041-feature-registry-schema-drift.md) | Reconcile feature-registry.yaml Schema vs Real-World Drift (FundFlow) | P2 | COMPLETE |
 | UPG-0042 | [UPG-0042-reviewer-packet-efficiency.md](UPG-0042-reviewer-packet-efficiency.md) | Reduce Reviewer Packet Bloat for Large Stable Files | P2 | PROPOSED |
 | UPG-0043 | [UPG-0043-smoke-test-modularity.md](UPG-0043-smoke-test-modularity.md) | Split Monolithic Smoke Test File by Tool Area | P3 | PROPOSED |
+| UPG-0044 | [UPG-0044-reviewer-pipeline-architecture-refresh.md](UPG-0044-reviewer-pipeline-architecture-refresh.md) | Refresh Reviewer Pipeline Architecture Documentation | P3 | PROPOSED |
 
 > Priority `—` = no formal P-rank (a completed cleanup, or a discovery note). Feature IDs are
 > assigned once and never reused. `UPG-0002` and `UPG-0003` are historical/piloted work given IDs

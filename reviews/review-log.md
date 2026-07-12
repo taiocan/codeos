@@ -6108,3 +6108,129 @@ Human decision: (append with: codeos-reviewer decision UPG-0043__CHG-20260711-00
 - tests/common/mod.rs: shared helpers
 
 **Pattern identified:** Surface-level fixes for structural issues burn review rounds without resolution. R1 findings F1 (file scope) and F2 (verification evidence) were addressed with doc comment updates and wording changes → correctly re-blocked at R2. When a reviewer identifies that a file violates its stated scope or that verification evidence is insufficient, the fix must be structural (split the file, provide systematic verification), not cosmetic (update the doc comment, revise the wording). See AJ-010 for cross-session pattern documentation.
+
+## 2026-07-12T14:45:58Z REVIEW — UPG-0044__CHG-20260712-001 — Stage selfdev-step-1
+Base: (no base pin)  Review: 9143bc52d9e54b37789e23f45e5ab438f0870aeb  Branch: main
+Diff-hash: 9aeb150bc092dab574e7b7c26b47bef75cd9152d1c02772ef7b192472ad492f6
+Reviewer: codex default-model (session 019f56c9-d6b4-7e00-bbd6-7ff09b98f7dd)
+Effort: high   Wall time: 62892ms   Reconnects: 0
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: CHANGES ADVISED — Scope claims need to match the packet evidence before this intent artifact advances.
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-12T144558Z-UPG-0044__CHG-20260712-001-stage-selfdev-step-1-9143bc5.md (sha256:371788ea09d406b3cd96988ebcdeed13b9e206af89bb77ec96c1bc4e39eb1248)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260712T144558Z-UPG-0044__CHG-20260712-001-stage-selfdev-step-1-9143bc5.packet.txt (sha256:d52cfc86643aae4b5f1a07a0150945180f67d6acb6eba84e0b0ab9a156d7c1cc)
+Human decision: (append with: codeos-reviewer decision UPG-0044__CHG-20260712-001 selfdev-step-1 <DECISION> "<reason>")
+
+## 2026-07-12T14:47:09Z REVIEW — UPG-0044__CHG-20260712-001 — Stage selfdev-step-1
+Base: (no base pin)  Review: 9143bc52d9e54b37789e23f45e5ab438f0870aeb  Branch: main
+Diff-hash: 9aeb150bc092dab574e7b7c26b47bef75cd9152d1c02772ef7b192472ad492f6
+Reviewer: codex default-model (session 019f56c9-d6b4-7e00-bbd6-7ff09b98f7dd)
+Effort: high   Wall time: 35317ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — No in-scope blocker is supported by the packet.
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-12T144709Z-UPG-0044__CHG-20260712-001-stage-selfdev-step-1-9143bc5.md (sha256:d7a0d1f75181686518193a2fe90cb7c13bcdb55baf2959ae4f3b07e34014eb9c)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260712T144709Z-UPG-0044__CHG-20260712-001-stage-selfdev-step-1-9143bc5.packet.txt (sha256:143911098fb280a8f59868d8cd505a45564ac6fd5a513dc0a6ad95bb623c2830)
+Human decision: (append with: codeos-reviewer decision UPG-0044__CHG-20260712-001 selfdev-step-1 <DECISION> "<reason>")
+
+## 2026-07-12T14:51:41Z REVIEW — UPG-0044__CHG-20260712-001 — Stage selfdev-step-2
+Base: (no base pin)  Review: 9143bc52d9e54b37789e23f45e5ab438f0870aeb  Branch: main
+Diff-hash: 27c211b3d802e94da23ca2c67afb8379ea25341148d4f8ad2e769f250c7a7176
+Reviewer: codex default-model (session 019f56c9-d6b4-7e00-bbd6-7ff09b98f7dd)
+Effort: high   Wall time: 49587ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — Step 2 adds coherent, in-scope acceptance criteria for the documentation refresh.
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-12T145141Z-UPG-0044__CHG-20260712-001-stage-selfdev-step-2-9143bc5.md (sha256:bfa8624c2cef7fc08ed4ee75e7f246e2a453c61ffc13d04213141ddf387efe42)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260712T145141Z-UPG-0044__CHG-20260712-001-stage-selfdev-step-2-9143bc5.packet.txt (sha256:601e37162c348c77e63400dc6926e33534fc01ea118508cbfe62cc66cea1101b)
+Human decision: (append with: codeos-reviewer decision UPG-0044__CHG-20260712-001 selfdev-step-2 <DECISION> "<reason>")
+
+## 2026-07-12T14:56:37Z REVIEW — UPG-0044__CHG-20260712-001 — Stage selfdev-step-3
+Base: (no base pin)  Review: 9143bc52d9e54b37789e23f45e5ab438f0870aeb  Branch: main
+Diff-hash: 4af417fce696b85ca1e829329bbc17fa42105d8a85b50cbb4fab2d3fcd2ffa19
+Reviewer: codex default-model (session 019f56c9-d6b4-7e00-bbd6-7ff09b98f7dd)
+Effort: high   Wall time: 77316ms   Reconnects: 0
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: CHANGES ADVISED — AC2 and AC12 are not fully satisfied, and §4f needs evidence or narrower wording.
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-12T145637Z-UPG-0044__CHG-20260712-001-stage-selfdev-step-3-9143bc5.md (sha256:f90c8c48fc79627cd70fbb76f15a152e0192b515721736bdb97ce24d3bd3ce54)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260712T145637Z-UPG-0044__CHG-20260712-001-stage-selfdev-step-3-9143bc5.packet.txt (sha256:8521b10fcdcf3e6855cff689b6c99bc9d5e3ca6d34b583168f676f9d8bbe6621)
+Human decision: (append with: codeos-reviewer decision UPG-0044__CHG-20260712-001 selfdev-step-3 <DECISION> "<reason>")
+
+## 2026-07-12T14:58:02Z REVIEW — UPG-0044__CHG-20260712-001 — Stage selfdev-step-3
+Base: (no base pin)  Review: 9143bc52d9e54b37789e23f45e5ab438f0870aeb  Branch: main
+Diff-hash: b6e5b9a09106a08922bfc2956832806b43ab28098de03c04bd69b9e072c689c9
+Reviewer: codex default-model (session 019f56c9-d6b4-7e00-bbd6-7ff09b98f7dd)
+Effort: high   Wall time: 40551ms   Reconnects: 0
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: CHANGES ADVISED — AC6 still needs search evidence that covers `event ledger` or narrower wording.
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-12T145802Z-UPG-0044__CHG-20260712-001-stage-selfdev-step-3-9143bc5.md (sha256:aaf79bbd8ae541da5eac03d19aa0dc576a1e4f58bae4fc453dcf121a81c48830)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260712T145802Z-UPG-0044__CHG-20260712-001-stage-selfdev-step-3-9143bc5.packet.txt (sha256:16bd1eb90d9aa9b7598d873c98f2b4e5f9ad496c69db77c531b3d73f2c7fce88)
+Human decision: (append with: codeos-reviewer decision UPG-0044__CHG-20260712-001 selfdev-step-3 <DECISION> "<reason>")
+
+**R2 budget exhausted.** Human escalation per PROFILE-2 max-rounds constraint (2 rounds/step).
+
+**Round summary:** R1 raised 3 in-scope blockers (scope statement didn't cross-reference `prompts/codeos-self-dev.md` Step 0a / UPG-0037 by name; AC12 sweep claimed in Implementation Notes before Reconciliation existed; §4f absence claim unsupported) — all fixed inline. R2 raised 1 low-severity in-scope blocker: the §4f grep command cited (`"ReviewRun\|control-plane"`) omitted `event ledger`, one of the three terms the claim covered.
+
+**Inline fix applied (post-R2, unverified by a further Codex round per budget):** `docs/reviewer-pipeline.md` §4f's cited command now reads `grep -rn "ReviewRun\|control-plane\|event ledger" --include="*.md" .`, matching all three terms the sentence claims are absent; re-run manually, confirms zero matches outside this change's own new `backlog/UPG-0044-*.md` / `changes/UPG-0044__*.md` / `reviews/codex/*UPG-0044*.md` files.
+
+## 2026-07-12T15:04:26Z REVIEW — UPG-0044__CHG-20260712-001 — Stage selfdev-step-4
+Base: (no base pin)  Review: 9143bc52d9e54b37789e23f45e5ab438f0870aeb  Branch: main
+Diff-hash: edcd68accd91eff4a0e27bfa463be898cba6a0479e835025df611eb77ee9a8b2
+Reviewer: codex default-model (session 019f56c9-d6b4-7e00-bbd6-7ff09b98f7dd)
+Effort: high   Wall time: 51589ms   Reconnects: 0
+Codex concern: CHANGES ADVISED
+Effective concern: CHANGES ADVISED
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: CHANGES ADVISED — AC6’s grep evidence must include the allowed `docs/reviewer-pipeline.md` §4f self-hit or narrow the claim.
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-12T150426Z-UPG-0044__CHG-20260712-001-stage-selfdev-step-4-9143bc5.md (sha256:a22da66db1fcbdd75edda379388dd11d2bdac3f12c5107835c062a79671f0386)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260712T150426Z-UPG-0044__CHG-20260712-001-stage-selfdev-step-4-9143bc5.packet.txt (sha256:b6815b3d4cb42fcb40f40e0c7eeb1f2ee949c256014a6b64e97db125800760af)
+Human decision: (append with: codeos-reviewer decision UPG-0044__CHG-20260712-001 selfdev-step-4 <DECISION> "<reason>")
+
+## 2026-07-12T15:05:18Z REVIEW — UPG-0044__CHG-20260712-001 — Stage selfdev-step-4
+Base: (no base pin)  Review: 9143bc52d9e54b37789e23f45e5ab438f0870aeb  Branch: main
+Diff-hash: a82960232dda9ba690769ff65f85ad78696b4b2a91ac67f128980af04f37cf22
+Reviewer: codex default-model (session 019f56c9-d6b4-7e00-bbd6-7ff09b98f7dd)
+Effort: high   Wall time: 22522ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — All stated acceptance criteria are reconciled with no in-scope blockers.
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-12T150518Z-UPG-0044__CHG-20260712-001-stage-selfdev-step-4-9143bc5.md (sha256:7d2cb76e835c282628a5011eb66c7271fde7dd6f7c76cc1070e411b09b52cd80)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260712T150518Z-UPG-0044__CHG-20260712-001-stage-selfdev-step-4-9143bc5.packet.txt (sha256:b7fb4c538b754dc86e8a72564ec20dd417d9590d98b06c1e11185f51b3e4ee1a)
+Human decision: (append with: codeos-reviewer decision UPG-0044__CHG-20260712-001 selfdev-step-4 <DECISION> "<reason>")
+
+## 2026-07-12 REVIEW — UPG-0044 / CHG-20260712-001 — Steps 1-4 (ACCEPTED, COMPLETE)
+
+**Review series:** RVS__UPG-0044__CHG-20260712-001__S1 through S4
+**Profile:** PROFILE-2 (max 2 rounds/step)
+**Change:** Refresh Reviewer Pipeline Architecture Documentation — restructured `docs/reviewer-pipeline.md` in place with a `§0` layer-model overview, a consolidated `§5` coverage-state model, an evidence-mode recap in `§14`, and new `§4e`/`§4f` (record-ownership diagram, honest "no ReviewRun/control-plane exists" future-direction note). No code, no `CLAUDE.md`/`dba-system.md`, no new files.
+
+### Step 1 — Intent (R1 CHANGES ADVISED → R2 NO OBJECTION)
+R1: scope statement "no other files change" was contradicted by standard Feature Thread bookkeeping edits (`backlog/features.md`, `status/self-development.md`); a "verified" claim about `dba-system.md` non-reference lacked shown grep evidence. Both fixed inline.
+
+### Step 2 — Acceptance Criteria (R1 NO OBJECTION)
+12 concrete, independently verifiable ACs stated on the first round.
+
+### Step 3 — Implement (R1 CHANGES ADVISED, 3 findings → R2 CHANGES ADVISED, 1 finding, budget exhausted)
+R1: cadence paragraph didn't name `prompts/codeos-self-dev.md` Step 0a / `UPG-0037` explicitly; AC12 sweep was claimed complete in Implementation Notes while Reconciliation didn't exist yet; the `§4f` absence claim was unsupported. All fixed. R2: the R1 fix's own grep command omitted `event ledger`, one of the three terms its claim covered. PROFILE-2's 2-round/step budget was exhausted — fixed inline per the §4d budget-exceeded procedure (not re-verified by a further automatic round) and escalated to the human, who approved proceeding to Step 4.
+
+### Step 4 — Reconcile (R1 CHANGES ADVISED → R2 NO OBJECTION)
+R1: the `§4f` grep-evidence claim (and the change record's mirrored Reconciliation-table claim) both failed to list `docs/reviewer-pipeline.md`'s own `§4f` text as an expected match for its own search terms — a self-referential false-exclusion claim. Fixed. R2: all 12 ACs verified PASS with evidence; toolkit-wide sweep clean (no section renumbered, no orphaned links, only historical cross-references elsewhere).
+
+**Reviewer insight (verbatim pattern, recurring across Steps 1/3/4):** strong claims — "no other files change," "verified," "zero matches outside X" — must be pinned to evidence actually shown in the packet, not asserted from memory of having run a check. Every instance Codex caught was a small, mechanically fixable evidence gap (a missing citation, an incomplete grep, a self-referential exclusion list), never a design defect in the doc content itself.
+
+**Human decision:** APPROVED — close out, mark `COMPLETE`, commit and push.
