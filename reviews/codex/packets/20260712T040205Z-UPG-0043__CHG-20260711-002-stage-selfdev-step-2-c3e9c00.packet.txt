@@ -1,0 +1,253 @@
+Reviewer task:
+
+SCOPE CONTRACT
+  Assess this artifact against the STATED SCOPE of this stage/PR — the Expected Stage
+  Output below and what the artifacts actually claim — NOT against an ideal final system.
+  A capability the artifacts do not claim to provide is OUT-OF-SCOPE, not a defect.
+  The following are OUT-OF-SCOPE BACKLOG unless THIS artifact explicitly claims to provide
+  them: formal approval-binding enforcement; rollback correctness; COMMIT_BOUND/
+  WORKSPACE_BOUND enforcement; JSON Schema validation; CI validation; exact
+  decision-integrity; per-feature decision ledgers; autonomous approval; enabled hooks.
+
+YOUR TASK — answer these five questions using only the evidence in the packet:
+  1. Acceptance criteria: Does the artifact satisfy each of its stated acceptance criteria?
+     Cite evidence for each criterion (or note its absence).
+  2. Claim support: Are universal or strong claims (all, every, never, always, no X) in the
+     artifact supported by evidence in the packet? Any unverifiable strong claim is a candidate
+     finding only if it affects acceptance, scope, safety, decision integrity, or the artifact's
+     stated guarantees.
+  3. Scope drift: Is there any change beyond the stated scope boundary? (Files not in the
+     "What changes" list; behavior changes not in the intent; downstream doctrine modified
+     rather than read.)
+  4. In-scope blockers: Are there facts that, if left in, would make the artifact wrong,
+     unsafe, or internally contradictory?
+  5. Finding classification: Classify every finding you raise as exactly one of the five
+     TRIAGE RULE categories below.
+
+TRIAGE RULE — classify EVERY finding as exactly one of:
+  IN-SCOPE BLOCKER         breaks the stated goal; creates a FALSE CLAIM in this artifact;
+                           weakens the advisory/read-only/human-gated guarantees; prevents
+                           the work from running; or violates an explicit safety constraint.
+  IN-SCOPE NON-BLOCKER     improves it but is not required for this PR.
+  OUT-OF-SCOPE BACKLOG     valid, but belongs to a future feature / stronger guarantee.
+  REJECTED                 conflicts with the stated scope or Codeos philosophy.
+  SELF-REFERENCE /         review records that are stale because of the previous round's
+  REVIEW-BOOKKEEPING       own existence (causal loop); not a real artifact defect.
+  Base the PR decision ONLY on IN-SCOPE BLOCKER findings. An OUT-OF-SCOPE BACKLOG finding
+  must NOT cause DO NOT ADVANCE unless this artifact FALSELY CLAIMS to solve it.
+
+WHAT NOT TO DO
+  - Do not flag style or wording issues as blockers unless the wording creates a false claim,
+    contradiction, parser breakage, or wrong governance instruction.
+  - Do not re-review unchanged full context when the packet is in delta mode.
+  - Do not treat local-only review history as a blocker unless the artifact falsely
+    claims the review artifacts are committed/durable.
+
+INSTRUCTIONS
+  If this is a resumed session, ignore any earlier-session conclusions unless they are
+  re-established by THIS packet; assess only the evidence above, pinned to this commit.
+  Give a focused assessment of this artifact against the stated scope, acceptance criteria,
+  and evidence in this packet. Rank findings by severity. Suggest a better design only when
+  needed to explain a required fix for an IN-SCOPE BLOCKER.
+
+  Limit findings to the top 3 IN-SCOPE BLOCKERS. Additional non-blocking observations may be
+  summarized in one short paragraph only if useful.
+
+  For EACH finding emit:
+    Finding: / Severity: High|Medium|Low / Classification: <one of the TRIAGE RULE labels>
+    Evidence: <file/line> / Why: <short> / Required action: fix now|optional fix|backlog|reject
+    Scope reason: <why it does/does not belong to this PR's scope>
+  Then emit:
+    PR decision: ADVANCE | REQUEST CHANGES | DO NOT ADVANCE   (based ONLY on in-scope blockers)
+    Scope drift warning: yes|no — <is anything pulling this PR beyond its stated scope?>
+  Then on the LAST three lines emit exactly (map ADVANCE->NO OBJECTION,
+  REQUEST CHANGES->CHANGES ADVISED, DO NOT ADVANCE->DO NOT ADVANCE):
+    LOG SUMMARY: <NO OBJECTION | CHANGES ADVISED | DO NOT ADVANCE | UNCLASSIFIED> — <single most important point>
+      (use UNCLASSIFIED if you genuinely cannot classify the artifact safely)
+    EVIDENCE: <A|B|C|D|E>
+    HIGHEST-IMPACT UNCERTAINTY: <one sentence — what single thing, if wrong, most affects this assessment>
+
+  Evidence grade — the grade describes what the assessment rests on, not reviewer confidence:
+    A — Directly verified in the artifact, diff, or output shown in the packet
+    B — Verified with multiple direct pieces of evidence, but coverage is not complete
+    C — Partially verified, partially inferred from structure or context
+    D — Mostly inferred from structure or indirect evidence
+    E — Hypothesis or very limited basis — little to no direct evidence
+
+
+PACKET MANIFEST
+  generated: 2026-07-12T04:01:23Z
+  task_prompt: /home/rimo/projects/Codeos/prompts/codeos-reviewer-task.md (4959 bytes)
+  review_content_bytes: 6630
+  estimated_review_tokens: ~1657
+  budget_status: OK
+  packet_mode: full
+  delta_base: none
+  items:
+    - path: changes/UPG-0043__CHG-20260711-002__smoke-test-modularity.md
+      mode: full_file
+      bytes: 5391
+      sha256: f96feb271a08dc920e9920aaebc714612990c545531f9824668f822eb4e5d119
+    - path: (diff)
+      mode: full_file
+      bytes: 1239
+
+REVIEW CONTEXT
+  Feature:                UPG-0043__CHG-20260711-002
+  Stage:                  selfdev-step-2
+  Branch:                 main
+  Base commit:            (no base pin)
+  Review commit:          c3e9c00872412245f2e64b582c07fffc820344a0 (+ uncommitted workspace changes)
+  Current approved stage: n/a (non-numeric stage)
+  Evidence coverage:      FULL_COVERAGE
+  Workspace dirty:        yes (uncommitted changes at review time)
+
+DBA RULES RELEVANT TO THIS STAGE
+  - Human approval is required for every stage transition; you are advisory only.
+  - Memory is not truth — assess only what is provided, pinned to the review commit.
+  - Implementation must trace to approved artifacts; no behavior beyond intent+contract+schema.
+  - No events outside the approved event schema; no hidden behavior.
+
+STAGE-SPECIFIC CHECKS
+  - (no stage-specific checklist for stage selfdev-step-2)
+
+EXPECTED STAGE OUTPUT
+  (no expected-output template for stage)
+
+ARTIFACTS TO REVIEW
+  --- changes/UPG-0043__CHG-20260711-002__smoke-test-modularity.md (sha256: f96feb271a08dc920e9920aaebc714612990c545531f9824668f822eb4e5d119, visibility: shown) ---
+    # Self-Development Change: UPG-0043__CHG-20260711-002 — Smoke Test Modularity
+    
+    <!--
+    PURPOSE: Per-change source of truth for a non-trivial change to the Codeos toolkit
+    itself (prompts, templates, docs, patterns, scripts).
+    
+    Workflow: prompts/codeos-self-dev.md (4-step loop)
+    Each step requires explicit human approval; Codex review cadence is governed by the assigned review profile.
+    -->
+    
+    <!-- TRACE HEADER (canonical) -->
+    ```yaml
+    feature_id: UPG-0043
+    primary_feature_id: UPG-0043
+    change_id: CHG-20260711-002
+    slug: smoke-test-modularity
+    state: IN_PROGRESS
+    current_step: 2-Acceptance
+    implements:
+      - UPG-0043
+    related_features: [UPG-0042]
+    review_series: RVS__UPG-0043__CHG-20260711-002__S2
+    review_profile: PROFILE-3
+    review_state: DRAFT
+    review_history: reviews/review-log.md
+    fixes_findings: []
+    follow_up_of: null
+    ```
+    
+    ## Change Intent
+    
+    **Why (problem in the toolkit):**
+    
+    `tools/reviewer/tests/smoke.rs` is a monolithic 125 KB file (3,256 lines, 124 tests after UPG-0042) covering all reviewer tool functionality. This causes:
+    
+    - **Review inefficiency**: Every review packet includes the full 125 KB file, even when changes affect only one tool area (demonstrated in UPG-0041 and UPG-0042)
+    - **Cognitive load**: 3,256 lines in one file makes it harder to find relevant tests
+    - **Merge conflicts**: Higher risk as the file grows and multiple changes touch it
+    - **Slow test discovery**: IDEs and grep must scan the entire file
+    
+    This refactor splits smoke.rs by **tool area** to improve review efficiency, maintainability, and test discoverability.
+    
+    **What changes:**
+    
+    Files to be created:
+    - `tools/reviewer/tests/common/mod.rs` — shared test helpers (setup_temp_git_repo, binary(), run(), run_in_dir())
+    - `tools/reviewer/tests/review_command.rs` — review command tests (packet building, evidence modes, warnings)
+    - `tools/reviewer/tests/decision_command.rs` — decision command tests
+    - `tools/reviewer/tests/check_drift.rs` — check-drift command tests
+    - `tools/reviewer/tests/generate_dashboard.rs` — generate-approval-dashboard tests
+    - `tools/reviewer/tests/generate_release_evidence.rs` — generate-release-evidence tests
+    
+    Files to be modified:
+    - `tools/reviewer/tests/smoke.rs` — substantially reduced or removed (compatibility shell initially, then empty/remove once coverage preserved)
+    
+    Files potentially modified (if needed):
+    - `Cargo.toml` — only if test file organization requires changes
+    - Documentation referencing smoke tests — only if structure references need updates
+    
+    **Scope boundary — what stays the same:**
+    
+    What will NOT change:
+    - No reviewer behavior changes (packet format, evidence modes, CLI behavior)
+    - No test assertion logic changes (except path/module name updates where mechanically required)
+    - No production code changes in src/ (unless strictly required for test visibility, preferably none)
+    - Test count: 124 tests before → 124 tests after (preservation verified)
+    - All tests continue to pass
+    - Fixture data and test behavior unchanged
+    - Test names preserved where practical (traceability for review history and failure diagnostics)
+    
+    **Class:** script-tooling  
+    **Scope axis:** self-dev only  
+    **Backlog item:** backlog/UPG-0043-smoke-test-modularity.md
+    
+    ---
+    
+    ## Acceptance Criteria
+    
+    <!-- The consistency contracts this change must satisfy. Each must be checkable in Reconcile. -->
+    
+    | # | Criterion | How it will be verified |
+    |---|---|---|---|
+    | AC-1 | Test count preserved: 124 tests before → 124 tests after | Run `cargo test --test '*'` before and after, compare test count in output |
+    | AC-2 | All tests pass after refactor | Run `cargo test` in tools/reviewer/; exit code 0, no failures |
+    | AC-3 | Production code unchanged (src/) unless explicitly justified | `git diff` shows no changes under `tools/reviewer/src/` except where mechanically required for test visibility (document any exceptions) |
+    | AC-4 | smoke.rs substantially reduced or removed | `wc -l tools/reviewer/tests/smoke.rs` shows <500 lines or file deleted; verify reduction percentage |
+    | AC-5 | Each new test file has clear tool-area responsibility | Read each new test file; verify file comment documents tool area, verify tests are cohesive to that area |
+    | AC-6 | Shared helpers extracted only when genuinely reused | Grep `tests/common/mod.rs` functions; verify each helper used in 2+ test files |
+    | AC-7 | No behavior or assertion weakening during move | Diff each moved test against original; verify assertions unchanged (except path/module name updates) |
+    | AC-8 | Git-dependent fixtures remain generated/temp-based | Grep new test files for `setup_temp_git_repo` and temp file creation; verify no hardcoded git state or brittle fixtures |
+    | AC-9 | Test names preserved where practical for traceability | Compare test function names before/after; document any renamed tests with rationale |
+    | AC-10 | Cargo.toml changes justified if present | If Cargo.toml modified, document reason (e.g., test file visibility); otherwise verify unchanged |
+    
+    ---
+    
+    ## Implementation Notes
+    
+    <!-- Filled during Step 3. -->
+    
+    (Step 3)
+    
+    ---
+    
+    ## Reconciliation
+    
+    **Acceptance verification:**
+    
+    | # | Criterion | Result | Evidence |
+    |---|---|---|---|
+    | (Step 4) | (criterion) | PASS / FAIL | (command output / file ref) |
+    
+    **Consistency sweep (grep):**
+    (Step 4)
+    
+    **Findings scope-triage:**
+    
+    | Finding | Triage | Action |
+    |---|---|---|
+    | (Step 4) | (classification) | (action taken) |
+    
+    ---
+
+DIFF TO REVIEW (base->review, secret/size filtered)
+diff --git a/status/self-development.md b/status/self-development.md
+index 6028566..1b28697 100644
+--- a/status/self-development.md
++++ b/status/self-development.md
+@@ -65,6 +65,7 @@
+ | UPG-0036 | CHG-20260705-001 | self-dev-governance | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION R3; Step 2 NO OBJECTION R2; Step 3 NO OBJECTION R3; Step 4 NO OBJECTION R1; all 10 ACs verified; real check-drift run) | COMPLETE | — |
+ | UPG-0037 | CHG-20260705-002 | downstream-doctrine | downstream doctrine only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION; Step 2 NO OBJECTION R2; Step 3 accepted at budget R3 (0 blockers, SECRET_REDACTION coverage); Step 4 accepted R1 (0 blockers, same SECRET_REDACTION cause); all 13 ACs verified; 105 tests; real FundFlow dry-runs) | COMPLETE | UPG-0038 |
+ | UPG-0042 | CHG-20260711-001 | script-tooling | self-dev only | 4-Reconcile | REVIEWED (series RVS__…__S4; R2 NO OBJECTION; all 10 ACs verified; 124 tests pass) | COMPLETE | — |
++| UPG-0043 | CHG-20260711-002 | script-tooling | self-dev only | 2-Acceptance | DRAFT | IN_PROGRESS | — |
+ 
+ <!--
+ Identity   : Feature ID = UPG-#### (stable). Change ID = CHG-YYYYMMDD-NNN (one execution), or a

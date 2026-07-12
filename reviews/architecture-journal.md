@@ -293,3 +293,24 @@ evidence in the packet. A claim about the artifact's own state is trivially fals
 the reviewer (it can just read the frontmatter), so this class of error reliably costs a full
 extra review round — cheap to avoid, easy to keep tripping over under time pressure to "just
 finish the change record" while the gate is still open.
+
+---
+
+## AJ-010 — Surface-level fixes for structural issues burn review rounds
+
+*Origin: UPG-0043 / CHG-20260711-002 (smoke-test-modularity), Step 4 review R1→R2→R3.*
+
+When a reviewer identifies a **structural issue** — file scope violation, insufficient verification, architecture contradiction — the fix must be **structural**, not cosmetic. Updating doc comments, revising evidence wording, or adjusting narrative does not resolve the underlying problem and will be correctly re-blocked in subsequent rounds.
+
+**Concrete case:** R1 found generate_dashboard.rs violated AC-5 "clear tool-area responsibility" by containing tests for 3 separate commands (generate-report, generate-adr-candidates, generate-approval-dashboard). Initial fix: updated the file's doc comment to say "all generate-approval-dashboard output modes." R2: correctly re-blocked — the commands are separate subcommands, not output modes; file scope still violated. Structural fix: split the file into 3 command-specific files. This resolved F1.
+
+Similarly, R1 found AC-7 evidence contradicted implementation notes. Initial fix: revised evidence wording. R2: correctly re-blocked — wording revision doesn't provide systematic verification. R3: still blocked on documentation contradiction. Structural fix: updated implementation notes to accurately describe the method used (sed line-range extraction), not the method attempted (compilation-driven).
+
+**Lesson / how to apply:** In Step 4 reconcile, if the reviewer identifies:
+- **File scope violation** → split or reorganize the file, don't redefine its purpose in a comment
+- **Insufficient verification** → provide systematic evidence (full diff, exhaustive check), don't spot-check and claim completeness
+- **Documentation contradiction** → update the documentation to match reality, don't paper over it with revised wording
+
+Surface-level fixes are **procrastination** — they defer the real work and burn review rounds. When a reviewer says "this file contains X when it should contain Y," the answer is to change what the file contains, not to change how you describe it. PROFILE-3 max-rounds budget exists to prevent endless cycling; use it by fixing structurally the first time.
+
+**Related:** [[AJ-002]] on reproducible acceptance criteria, [[AJ-001]] on reconciling originating briefs.
