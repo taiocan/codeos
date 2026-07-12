@@ -74,7 +74,12 @@ The goal is to speed up Codeos development without weakening DBA advantages.
 | UPG-0041 | [UPG-0041-feature-registry-schema-drift.md](UPG-0041-feature-registry-schema-drift.md) | Reconcile feature-registry.yaml Schema vs Real-World Drift (FundFlow) | P2 | COMPLETE |
 | UPG-0042 | [UPG-0042-reviewer-packet-efficiency.md](UPG-0042-reviewer-packet-efficiency.md) | Reduce Reviewer Packet Bloat for Large Stable Files | P2 | PROPOSED |
 | UPG-0043 | [UPG-0043-smoke-test-modularity.md](UPG-0043-smoke-test-modularity.md) | Split Monolithic Smoke Test File by Tool Area | P3 | PROPOSED |
-| UPG-0044 | [UPG-0044-reviewer-pipeline-architecture-refresh.md](UPG-0044-reviewer-pipeline-architecture-refresh.md) | Refresh Reviewer Pipeline Architecture Documentation | P3 | PROPOSED |
+| UPG-0044 | [UPG-0044-reviewer-pipeline-architecture-refresh.md](UPG-0044-reviewer-pipeline-architecture-refresh.md) | Refresh Reviewer Pipeline Architecture Documentation | P3 | COMPLETE |
+| UPG-0045 | [UPG-0045-review-plan-preview.md](UPG-0045-review-plan-preview.md) | Review Plan Preview — `codeos-reviewer plan` | P2 | PROPOSED |
+| UPG-0046 | [UPG-0046-reviewrun-structured-records.md](UPG-0046-reviewrun-structured-records.md) | ReviewRun Structured Records | P2 | PROPOSED |
+| UPG-0047 | [UPG-0047-structured-finding-lifecycle.md](UPG-0047-structured-finding-lifecycle.md) | Structured Finding Lifecycle | P2 | PROPOSED |
+| UPG-0048 | [UPG-0048-review-ledger-event-sourcing.md](UPG-0048-review-ledger-event-sourcing.md) | Review Ledger Event Sourcing (Speculative — Long-Term) | P3 | PROPOSED |
+| UPG-0049 | [UPG-0049-external-review-policy-registry.md](UPG-0049-external-review-policy-registry.md) | External Review Policy Registry | P3 | PROPOSED |
 
 > Priority `—` = no formal P-rank (a completed cleanup, or a discovery note). Feature IDs are
 > assigned once and never reused. `UPG-0002` and `UPG-0003` are historical/piloted work given IDs

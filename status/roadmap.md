@@ -89,6 +89,12 @@ cheap pilot-adjacent wins early.
 | UPG-0027 | Lean Review Runner and Packet Architecture | P0 | — | CHG-20260629-002…005 | COMPLETE |
 | UPG-0042 | Reduce Reviewer Packet Bloat for Large Stable Files | P2 | UPG-0027 ✓, UPG-0032 ✓ | — | PROPOSED |
 | UPG-0043 | Split Monolithic Smoke Test File by Tool Area | P3 | — | — | PROPOSED |
+| UPG-0044 | Refresh Reviewer Pipeline Architecture Documentation | P3 | — | CHG-20260712-001 | COMPLETE |
+| UPG-0045 | Review Plan Preview — `codeos-reviewer plan` | P2 | — | — | PROPOSED |
+| UPG-0046 | ReviewRun Structured Records | P2 | — | — | PROPOSED |
+| UPG-0047 | Structured Finding Lifecycle | P2 | UPG-0046 | — | PROPOSED |
+| UPG-0048 | Review Ledger Event Sourcing (Speculative — Long-Term) | P3 | UPG-0046, UPG-0047 | — | PROPOSED |
+| UPG-0049 | External Review Policy Registry | P3 | — | — | PROPOSED |
 | UPG-0028 | Reviewer self-reference recursion (scoping) | P2 | — | — | COMPLETE (backlog-only, no CHG — see backlog note) |
 | UPG-0029 | Review artifact durability + packet naming policy | P2 | UPG-0001 | CHG-20260629-001 | COMPLETE |
 | UPG-0030 | Lean Self-Development Review Profiles | P1 | — | CHG-20260629-001 | COMPLETE |
