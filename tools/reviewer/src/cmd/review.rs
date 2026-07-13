@@ -164,6 +164,17 @@ pub fn run(args: ReviewArgs, cfg: &Config, provider_name: &str) -> Result<i32> {
         return Ok(crate::EXIT_PACKET);
     }
 
+    // Compute review_id before any Codex invocation (AC-10: fail closed on an unreadable log,
+    // never guess a round). A missing log or zero prior matches both correctly yield round 1.
+    let round = match review_log::compute_review_round(&review_log_path, &args.feature, &args.stage) {
+        Ok(r) => r,
+        Err(e) => {
+            eprintln!("error: could not determine review round: {}", e);
+            return Ok(crate::EXIT_WRITE);
+        }
+    };
+    let review_id = review_log::format_review_id(&args.feature, &args.stage, round);
+
     // Resolve provider and invoke
     let prov = match provider::resolve_provider(provider_name) {
         Ok(p) => p,
@@ -261,7 +272,7 @@ pub fn run(args: ReviewArgs, cfg: &Config, provider_name: &str) -> Result<i32> {
 
     // Write assessment
     let (assessment_file, assessment_hash) = match assessment::write_assessment(
-        &review_packet, &raw, &parsed, &outdir, &packet_saved, &packet_hash
+        &review_id, &review_packet, &raw, &parsed, &outdir, &packet_saved, &packet_hash
     ) {
         Ok(r) => r,
         Err(e) => {
@@ -274,7 +285,7 @@ pub fn run(args: ReviewArgs, cfg: &Config, provider_name: &str) -> Result<i32> {
 
     // Append to log
     if let Err(e) = review_log::append_review(
-        &review_log_path, &review_packet, &raw, &parsed,
+        &review_log_path, &review_id, &review_packet, &raw, &parsed,
         &assessment_file, &assessment_hash, &packet_saved, &packet_hash,
     ) {
         eprintln!("error: log append failed: {}", e);
@@ -286,6 +297,7 @@ pub fn run(args: ReviewArgs, cfg: &Config, provider_name: &str) -> Result<i32> {
 
     // Print summary (matches Bash script stdout format)
     println!("review logged: {}", review_log_path.display());
+    println!("  review_id: {}", review_id);
     println!("  codex concern: {}   effective concern: {}   evidence: {}",
         parsed.codex_concern, parsed.effective_concern, parsed.evidence);
     println!("  effort: {}   elapsed: {}ms   reconnects: {}",

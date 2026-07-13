@@ -349,3 +349,61 @@ not just against the final struct's public shape.
 **Related:** [[AJ-010]] on structural vs. cosmetic fixes — this is a specific, subtler instance:
 the fix here *was* structural (a new shared field), but the bug it fixed looked, at first
 glance, like it should already have been prevented by "just reuse the function."
+
+---
+
+## AJ-012 — `Path::exists()` cannot distinguish "absent" from "inaccessible"
+
+*Origin: UPG-0046 / CHG-20260713-001 (reviewrun-structured-records), Step 4 review R1.*
+
+`tools/reviewer/src/log.rs::compute_review_round` was written with the common pattern:
+
+```rust
+if !log_path.exists() { return Ok(1); }
+let content = std::fs::read_to_string(log_path)?;
+```
+
+The stated contract (`AC-10`) was explicit: a missing log is fine (round 1, not an error), but a
+log that exists and cannot be read must fail closed — never silently guess a round. The code
+above does not do that. `Path::exists()` is implemented as `fs::metadata(path).is_ok()` — it
+collapses **every** reason `metadata` can fail into the same `false`, not just "not found." A
+permission error on a containing directory (unsearchable parent, common on locked-down
+filesystems or misconfigured CI) also makes `exists()` return `false`, which this code silently
+treated as "no log yet" and returned `Ok(1)` — precisely the guessed-round-on-error case the
+acceptance criterion forbids.
+
+The existing test at the time (`round_fails_closed_when_log_path_is_unreadable`) did not catch
+this: it put a *directory* at the log path, which `exists()` correctly reports as `true` (a
+directory is a valid `metadata()` result), so the code fell through to `read_to_string`, which
+then failed for an unrelated reason (`IsADirectory`) and was correctly propagated. That test
+passed for the wrong reason — it validated a different failure mode than the one the contract
+actually needed to cover.
+
+**Fix:** read directly, no `exists()` pre-check, and match the error kind:
+
+```rust
+match std::fs::read_to_string(log_path) {
+    Ok(c) => c,
+    Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(1),
+    Err(e) => return Err(e).with_context(|| ...),
+}
+```
+
+The new test that catches this reproduces the *specific* scenario — an unsearchable parent
+directory (`chmod 000` on the containing dir, not the file) — not just "some error occurs."
+
+**Lesson / how to apply:** Whenever a fail-closed contract distinguishes "the thing legitimately
+doesn't exist" from "something went wrong trying to find out," `exists()`/`is_ok()`-style
+pre-checks are the wrong tool — they discard the *reason* a check failed. Read/stat directly and
+match `io::ErrorKind` (or the equivalent typed error) specifically. This applies to any future
+Codeos Rust tooling that reads optional-but-sometimes-required files under a fail-closed
+contract — `UPG-0047`'s `findings.yaml`, `UPG-0049`'s policy registry files, and any other
+"missing is fine, broken is not" read path are the next places this exact bug shape can recur.
+Also a testing lesson in its own right: a test that passes for a different reason than the one
+the contract cares about (here: `IsADirectory` instead of `PermissionDenied`) gives false
+confidence — reproduce the *specific* failure mode the contract names, not just any failure.
+
+**Related:** [[AJ-011]] — both are cases where a seemingly-safe local pattern (reusing a shared
+function; checking `exists()` before acting) didn't actually deliver the guarantee it looked
+like it delivered, and both were caught only because Codex review checked the acceptance
+criterion's exact wording against the code, not just its general shape.

@@ -16,6 +16,15 @@ superseded_by: []
 > implemented and completed by UPG-0029 / CHG-20260629-001. Issues #2–#5 (naming convention,
 > migration, tooling) remain deferred; they are explicitly optional until the manual convention
 > proves insufficient (per UPG-0001's non-goals). The problem/upgrade text below is historical.
+>
+> **Status note (added `UPG-0046` / `CHG-20260713-001`):** the manual convention proved
+> insufficient (see that change's Step 1 rationale — round numbers were being hand-counted from
+> `reviews/review-log.md` and drifted at least once in `UPG-0044`). Issue #2 (teach the reviewer
+> to derive and emit the `REV__…__R<N>` id, in-packet/in-log) is now implemented, **narrower than
+> originally scoped here**: the id's stage segment is the raw `--stage` string, not `S<N>`
+> (`UPG-0001`'s `S<N>` had no defined mapping for downstream stage ids), and existing
+> `reviews/codex/*` filenames are deliberately **not** renamed (issue #3 — migration — remains
+> deferred, unchanged). Issues #4–#5 remain deferred.
 
 **Priority**: P2
 **Status**: COMPLETE

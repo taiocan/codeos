@@ -6368,3 +6368,144 @@ correctly reused, but the consumer still silently diverged one layer up.
 
 **Human decision:** APPROVED at every gate — Step 3 R2 explicitly confirmed "fixed structurally,"
 Step 4 approved to close out.
+
+## 2026-07-13T15:29:41Z REVIEW — UPG-0046__CHG-20260713-001 — Stage selfdev-step-1
+Base: (no base pin)  Review: 904b48794349639f797d5e92d728ae48ceca6539  Branch: main
+Diff-hash: af93f3bab246e9f6716ba1a20fc10098de8fd8751ddaa5c67ccf62d35ebeffc7
+Reviewer: codex default-model (session 019f5c18-dbea-7ea0-8019-997e11f83792)
+Effort: high   Wall time: 22190ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — No in-scope blocker found for this Step 1 intent artifact.
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-13T152941Z-UPG-0046__CHG-20260713-001-stage-selfdev-step-1-904b487.md (sha256:9b921379c463b0f0a9ab044e4f8cbd1f51532b5b97dfaef6d72b2e4b5b451031)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260713T152941Z-UPG-0046__CHG-20260713-001-stage-selfdev-step-1-904b487.packet.txt (sha256:d12a0220279f002f1de4ea649391c0da0c47f6410235cff0f08e44493f470f39)
+Human decision: (append with: codeos-reviewer decision UPG-0046__CHG-20260713-001 selfdev-step-1 <DECISION> "<reason>")
+
+## 2026-07-13T15:33:55Z REVIEW — UPG-0046__CHG-20260713-001 — Stage selfdev-step-2
+Base: (no base pin)  Review: 904b48794349639f797d5e92d728ae48ceca6539  Branch: main
+Diff-hash: 1b03cee52f9bae2493b2c1e8ba405ba15f70a59270678ba0af72b9721bd34c27
+Reviewer: codex default-model (session 019f5c18-dbea-7ea0-8019-997e11f83792)
+Effort: high   Wall time: 40309ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — Step 2 defines prospective ACs without introducing an in-scope blocker.
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-13T153355Z-UPG-0046__CHG-20260713-001-stage-selfdev-step-2-904b487.md (sha256:a86fcd09fdbae457c9d1eb90cbd4b4e5229b9d9d922637229bf027538ce8fdf6)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260713T153355Z-UPG-0046__CHG-20260713-001-stage-selfdev-step-2-904b487.packet.txt (sha256:4acacd5be6127bcced303b6ead3dcb803694fbf764fb92e96e0475e6323bce1a)
+Human decision: (append with: codeos-reviewer decision UPG-0046__CHG-20260713-001 selfdev-step-2 <DECISION> "<reason>")
+
+## 2026-07-13T17:59:28Z REVIEW — UPG-0046__CHG-20260713-001 — Stage selfdev-step-3
+Review ID: REV__UPG-0046__CHG-20260713-001__selfdev-step-3__R1
+Base: (no base pin)  Review: 904b48794349639f797d5e92d728ae48ceca6539  Branch: main
+Diff-hash: ceea1d098b46b0b002c0612e28e3d3a6109bbb0a3d30f8bdd58522bef483f34e
+Reviewer: codex default-model (session 019f5c18-dbea-7ea0-8019-997e11f83792)
+Effort: high   Wall time: 32424ms   Reconnects: 0
+Codex concern: DO NOT ADVANCE
+Effective concern: DO NOT ADVANCE
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: DO NOT ADVANCE — Stated AC test coverage is incomplete for end-to-end round increment and filename preservation.
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-13T175928Z-UPG-0046__CHG-20260713-001-stage-selfdev-step-3-904b487.md (sha256:2f49bb30594a7ed360667e1668d5fbb57fb674b81a5d004721596f40c7fad381)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260713T175928Z-UPG-0046__CHG-20260713-001-stage-selfdev-step-3-904b487.packet.txt (sha256:3d14d50d1de191c42fb78dc17d1b2073df02e5a437e60f919e9265326dfcafd8)
+Human decision: (append with: codeos-reviewer decision UPG-0046__CHG-20260713-001 selfdev-step-3 <DECISION> "<reason>")
+
+## 2026-07-13T18:02:18Z REVIEW — UPG-0046__CHG-20260713-001 — Stage selfdev-step-3
+Review ID: REV__UPG-0046__CHG-20260713-001__selfdev-step-3__R2
+Base: (no base pin)  Review: 904b48794349639f797d5e92d728ae48ceca6539  Branch: main
+Diff-hash: 1b70a0d2b494e853699d273170d676c9e6f36c4a0293d01008ca0022eea2d0b8
+Reviewer: codex default-model (session 019f5c18-dbea-7ea0-8019-997e11f83792)
+Effort: high   Wall time: 41806ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — The stated review-id behavior and prior test-coverage gaps are supported by the shown code and tests.
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-13T180218Z-UPG-0046__CHG-20260713-001-stage-selfdev-step-3-904b487.md (sha256:745ccd8fd5453e604559ae99e35daf6852cc0c5570e975941739ad1cec6a46be)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260713T180218Z-UPG-0046__CHG-20260713-001-stage-selfdev-step-3-904b487.packet.txt (sha256:af627797148267a8498c45e22485a0e3bfe3dfdf21d04fc06396ff309b295385)
+Human decision: (append with: codeos-reviewer decision UPG-0046__CHG-20260713-001 selfdev-step-3 <DECISION> "<reason>")
+
+## 2026-07-13T18:08:09Z REVIEW — UPG-0046__CHG-20260713-001 — Stage selfdev-step-4
+Review ID: REV__UPG-0046__CHG-20260713-001__selfdev-step-4__R1
+Base: (no base pin)  Review: 904b48794349639f797d5e92d728ae48ceca6539  Branch: main
+Diff-hash: 9042a82510ba1dcce4b4c293a1c9dca9207ff5ead80a07afa78f3163daa62c06
+Reviewer: codex default-model (session 019f5c18-dbea-7ea0-8019-997e11f83792)
+Effort: high   Wall time: 61170ms   Reconnects: 0
+Codex concern: DO NOT ADVANCE
+Effective concern: DO NOT ADVANCE
+Evidence: C
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: DO NOT ADVANCE — AC-10’s fail-closed guarantee is not fully met because `exists()` can mask log access errors as a missing log.
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-13T180809Z-UPG-0046__CHG-20260713-001-stage-selfdev-step-4-904b487.md (sha256:fc02ea7be488c48e0f6277d24253eb06b1552b42a5ce4225f69ba816910f68a8)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260713T180809Z-UPG-0046__CHG-20260713-001-stage-selfdev-step-4-904b487.packet.txt (sha256:900e285c54d2d55ea0e074b075aa7ad3a8c3df415e27022683143d38cb7e5f91)
+Human decision: (append with: codeos-reviewer decision UPG-0046__CHG-20260713-001 selfdev-step-4 <DECISION> "<reason>")
+
+## 2026-07-13T18:10:34Z REVIEW — UPG-0046__CHG-20260713-001 — Stage selfdev-step-4
+Review ID: REV__UPG-0046__CHG-20260713-001__selfdev-step-4__R2
+Base: (no base pin)  Review: 904b48794349639f797d5e92d728ae48ceca6539  Branch: main
+Diff-hash: 227db312291bff5e4d7aab5c0f7fce360c12ee44c033dfb33d82c090a3a0e002
+Reviewer: codex default-model (session 019f5c18-dbea-7ea0-8019-997e11f83792)
+Effort: high   Wall time: 21441ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: B
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — AC-10’s fail-closed round-counting guarantee is now supported by direct NotFound-only handling and a targeted permission-error test.
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-13T181034Z-UPG-0046__CHG-20260713-001-stage-selfdev-step-4-904b487.md (sha256:997619243fd261bfb5b700fa4353dfbd0775ea2cc40c36f5e5cfc13cea920379)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260713T181034Z-UPG-0046__CHG-20260713-001-stage-selfdev-step-4-904b487.packet.txt (sha256:7a85d34eefb7780f59121d923c7024c9ab8da57a4eb4568962799d9e88e6f4fd)
+Human decision: (append with: codeos-reviewer decision UPG-0046__CHG-20260713-001 selfdev-step-4 <DECISION> "<reason>")
+
+## 2026-07-13 REVIEW — UPG-0046 / CHG-20260713-001 — Steps 1-4 (ACCEPTED, COMPLETE)
+
+**Review series:** RVS__UPG-0046__CHG-20260713-001__S1 through S4
+**Profile:** PROFILE-3 (max 3 rounds/step)
+**Change:** ReviewRun Structured Records — taught `codeos-reviewer` to mechanically derive and
+emit `REV__<feature>__<stage>__R<N>` into the assessment frontmatter and the log entry, closing
+a gap `UPG-0001` and `UPG-0029` explicitly left as a "documented manual convention only," on the
+philosophy of not building tooling until the manual convention proved insufficient. This
+session's own `UPG-0044` change (a transcription drift Codex caught) was that proof.
+
+### Step 1 — Intent (R1 NO OBJECTION)
+Investigated the actual gap before proposing scope: `round`/`review_id` did not exist anywhere in
+the tooling — every past "R1"/"R2" was a human counting log entries by eye. Chose the backlog
+brief's own permitted smaller outcome (mechanically stamp an id into existing artifacts) over the
+larger `reviews/runs/` new-file-format sketch. Two deviations flagged and approved: raw stage
+string instead of `S<N>` (undefined for downstream stages), and no filename renaming.
+
+### Step 2 — Acceptance Criteria (R1 NO OBJECTION)
+11 ACs, including a precisely-specified round-counting rule (exact, newline-bounded suffix
+matching, so `Stage 1` can never collide with `Stage 10`) and an explicit three-way fail-closed
+contract for AC-10 (no log → R1; log with no matches → R1; log unreadable → abort before any
+Codex call) — the human's own flagged concern about round-counting from a Markdown log.
+
+### Step 3 — Implement (R1 DO NOT ADVANCE, 2 findings → R2 NO OBJECTION)
+Discovered mid-implementation that this crate has no `[lib]` target, so integration tests under
+`tests/` cannot call internal functions directly — round-counting could only be unit-tested
+inside `src/log.rs`/`src/assessment.rs` themselves. R1 findings: AC-9 had no test asserting "no
+filename changes" (fixed — filename assertions added); AC-2 referenced test names
+(`smoke_review_id_*`) that were never actually written once the no-`[lib]`-target constraint was
+found (fixed — wording corrected and a real two-cycle compute→append test added, stronger than
+originally planned).
+
+### Step 4 — Reconcile (R1 DO NOT ADVANCE, 1 finding → R2 NO OBJECTION)
+R1 caught a real bug: `compute_review_round`'s `if !log_path.exists() { return Ok(1) }` pre-check
+— `Path::exists()` collapses "genuinely not found" and "cannot access due to a permission error"
+into the same `false`, which would have silently stamped a guessed round instead of failing
+closed on a real access error, directly contradicting AC-10's own stated guarantee. Fixed by
+reading directly and matching `io::ErrorKind::NotFound` specifically. New test reproduces the
+exact scenario (an unsearchable parent directory, not merely a directory-shaped log path) and
+would have failed against the pre-fix code. All 11 ACs verified PASS at R2. 171 tests total,
+zero regressions. This change reviewed itself using its own new feature throughout — every round
+above is recorded with a real `review_id` in this very log, `R1`→`R2` correctly incrementing at
+Steps 3 and 4.
+
+**Reviewer insight (verbatim pattern):** `Path::exists()` is not a safe substitute for handling
+the actual I/O result — it silently discards *why* a path check failed, conflating "absent" with
+"present but inaccessible." Any fail-closed contract that says "missing X is fine, but an error
+reading X must abort" needs to read/stat directly and match the specific error kind, never
+pre-check with `exists()`/`is_ok()` and branch on that alone.
+
+**Human decision:** APPROVED at every gate — Step 3 R2 and Step 4 R2 both confirmed fixed;
+approved to close out.

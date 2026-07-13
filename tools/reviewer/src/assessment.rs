@@ -107,6 +107,7 @@ fn rank_to_concern(r: u8) -> String {
 
 /// Write the assessment file and return (assessment_path, assessment_sha256).
 pub fn write_assessment(
+    review_id: &str,
     packet: &ReviewPacket,
     raw: &RawAssessment,
     parsed: &ParsedReview,
@@ -124,6 +125,7 @@ pub fn write_assessment(
 
     let mut content = String::new();
     content.push_str("---\n");
+    content.push_str(&format!("review_id: {}\n", review_id));
     content.push_str("reviewed:\n");
     content.push_str(&format!("  feature: {}\n", packet.feature));
     content.push_str(&format!("  stage: {}\n", packet.stage));
@@ -271,5 +273,60 @@ mod tests {
         let parsed = parse_review_output(text, &CoverageState::FullCoverage);
         assert_eq!(parsed.codex_concern, "UNCLASSIFIED");
         assert!(parsed.summary_line.contains("UNCLASSIFIED"));
+    }
+
+    #[test]
+    fn write_assessment_includes_review_id_in_frontmatter() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let repo_root = dir.path();
+        std::process::Command::new("git").args(["init"]).current_dir(repo_root).output().expect("git init");
+        std::process::Command::new("git").args(["config", "user.email", "t@t.test"]).current_dir(repo_root).output().ok();
+        std::process::Command::new("git").args(["config", "user.name", "T"]).current_dir(repo_root).output().ok();
+        std::fs::write(repo_root.join("tracked.md"), "# tracked\n").expect("write");
+        std::process::Command::new("git").args(["add", "tracked.md"]).current_dir(repo_root).output().expect("git add");
+        std::process::Command::new("git").args(["commit", "-m", "init"]).current_dir(repo_root).output().expect("git commit");
+
+        let mut toolkit_root = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        toolkit_root.pop(); toolkit_root.pop(); // tools/reviewer -> Codeos/
+
+        let opts = crate::packet::PacketBuildOptions {
+            feature: "UPG-TEST".to_string(),
+            stage: "selfdev-step-1".to_string(),
+            artifacts: vec!["tracked.md".to_string()],
+            sha_only_paths: vec![],
+            delta_mode: false,
+            delta_base: None,
+            fresh_session: false,
+            repo_root: repo_root.to_string_lossy().into_owned(),
+            toolkit_root: toolkit_root.to_string_lossy().into_owned(),
+        };
+        let packet = crate::packet::build(&opts).expect("build packet");
+        let raw = make_raw("LOG SUMMARY: NO OBJECTION — ok\nEVIDENCE: A\nHIGHEST-IMPACT UNCERTAINTY: none\n");
+        let parsed = parse_review_output(&raw.text, &packet.coverage_state);
+
+        let outdir = dir.path().join("codex-out");
+        let review_id = "REV__UPG-TEST__selfdev-step-1__R1";
+        let (assessment_file, _hash) = write_assessment(
+            review_id, &packet, &raw, &parsed, &outdir, Path::new("packet.txt"), "cafefeed",
+        ).expect("write_assessment");
+
+        let content = std::fs::read_to_string(&assessment_file).expect("read assessment");
+        assert!(
+            content.starts_with(&format!("---\nreview_id: {}\n", review_id)),
+            "review_id must be the first frontmatter field: {}", content
+        );
+
+        // AC-5: review_id is a content field only — the filename keeps its pre-existing
+        // <ts>-<feature>-stage-<stage>-<sha>.md shape, never a REV__... shape.
+        let filename = assessment_file.file_name().and_then(|n| n.to_str()).unwrap_or("");
+        assert!(
+            !filename.starts_with("REV__"),
+            "assessment filename must not be renamed to the REV__ shape: {}", filename
+        );
+        assert!(
+            filename.contains("-UPG-TEST-stage-selfdev-step-1-"),
+            "assessment filename must keep the legacy <ts>-<feature>-stage-<stage>-<sha> shape: {}",
+            filename
+        );
     }
 }

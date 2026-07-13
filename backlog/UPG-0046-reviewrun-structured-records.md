@@ -2,7 +2,7 @@
 feature_id: UPG-0046
 slug: reviewrun-structured-records
 title: ReviewRun Structured Records
-status: PROPOSED
+status: COMPLETE
 priority: P2
 depends_on: []
 related_features: [UPG-0045, UPG-0047, UPG-0048, UPG-0001, UPG-0029]
@@ -153,12 +153,16 @@ The structured record must:
 
 | Change ID | File | Purpose | State |
 |---|---|---|---|
-| (none yet) | — | — | PROPOSED |
+| CHG-20260713-001 | changes/UPG-0046__CHG-20260713-001__reviewrun-structured-records.md | Derive/emit REV__…__R<N> mechanically (closes UPG-0001/UPG-0029 deferred gap) | COMPLETE |
 
 ### Reviews
 
 | Review ID | Change ID | Step | Round | Verdict |
 |---|---|---|---|---|
+| RVS__UPG-0046__CHG-20260713-001__S1 | CHG-20260713-001 | 1-Intent | R1 | NO OBJECTION |
+| RVS__UPG-0046__CHG-20260713-001__S2 | CHG-20260713-001 | 2-Acceptance | R1 | NO OBJECTION |
+| RVS__UPG-0046__CHG-20260713-001__S3 | CHG-20260713-001 | 3-Implement | R1→R2 | DO NOT ADVANCE → NO OBJECTION |
+| RVS__UPG-0046__CHG-20260713-001__S4 | CHG-20260713-001 | 4-Reconcile | R1→R2 | DO NOT ADVANCE → NO OBJECTION |
 
 ### Findings Tracked Inside This Feature
 

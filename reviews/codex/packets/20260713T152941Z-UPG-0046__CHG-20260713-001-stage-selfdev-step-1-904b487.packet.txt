@@ -1,0 +1,470 @@
+Reviewer task:
+
+SCOPE CONTRACT
+  Assess this artifact against the STATED SCOPE of this stage/PR — the Expected Stage
+  Output below and what the artifacts actually claim — NOT against an ideal final system.
+  A capability the artifacts do not claim to provide is OUT-OF-SCOPE, not a defect.
+  The following are OUT-OF-SCOPE BACKLOG unless THIS artifact explicitly claims to provide
+  them: formal approval-binding enforcement; rollback correctness; COMMIT_BOUND/
+  WORKSPACE_BOUND enforcement; JSON Schema validation; CI validation; exact
+  decision-integrity; per-feature decision ledgers; autonomous approval; enabled hooks.
+
+YOUR TASK — answer these five questions using only the evidence in the packet:
+  1. Acceptance criteria: Does the artifact satisfy each of its stated acceptance criteria?
+     Cite evidence for each criterion (or note its absence).
+  2. Claim support: Are universal or strong claims (all, every, never, always, no X) in the
+     artifact supported by evidence in the packet? Any unverifiable strong claim is a candidate
+     finding only if it affects acceptance, scope, safety, decision integrity, or the artifact's
+     stated guarantees.
+  3. Scope drift: Is there any change beyond the stated scope boundary? (Files not in the
+     "What changes" list; behavior changes not in the intent; downstream doctrine modified
+     rather than read.)
+  4. In-scope blockers: Are there facts that, if left in, would make the artifact wrong,
+     unsafe, or internally contradictory?
+  5. Finding classification: Classify every finding you raise as exactly one of the five
+     TRIAGE RULE categories below.
+
+TRIAGE RULE — classify EVERY finding as exactly one of:
+  IN-SCOPE BLOCKER         breaks the stated goal; creates a FALSE CLAIM in this artifact;
+                           weakens the advisory/read-only/human-gated guarantees; prevents
+                           the work from running; or violates an explicit safety constraint.
+  IN-SCOPE NON-BLOCKER     improves it but is not required for this PR.
+  OUT-OF-SCOPE BACKLOG     valid, but belongs to a future feature / stronger guarantee.
+  REJECTED                 conflicts with the stated scope or Codeos philosophy.
+  SELF-REFERENCE /         review records that are stale because of the previous round's
+  REVIEW-BOOKKEEPING       own existence (causal loop); not a real artifact defect.
+  Base the PR decision ONLY on IN-SCOPE BLOCKER findings. An OUT-OF-SCOPE BACKLOG finding
+  must NOT cause DO NOT ADVANCE unless this artifact FALSELY CLAIMS to solve it.
+
+WHAT NOT TO DO
+  - Do not flag style or wording issues as blockers unless the wording creates a false claim,
+    contradiction, parser breakage, or wrong governance instruction.
+  - Do not re-review unchanged full context when the packet is in delta mode.
+  - Do not treat local-only review history as a blocker unless the artifact falsely
+    claims the review artifacts are committed/durable.
+
+INSTRUCTIONS
+  If this is a resumed session, ignore any earlier-session conclusions unless they are
+  re-established by THIS packet; assess only the evidence above, pinned to this commit.
+  Give a focused assessment of this artifact against the stated scope, acceptance criteria,
+  and evidence in this packet. Rank findings by severity. Suggest a better design only when
+  needed to explain a required fix for an IN-SCOPE BLOCKER.
+
+  Limit findings to the top 3 IN-SCOPE BLOCKERS. Additional non-blocking observations may be
+  summarized in one short paragraph only if useful.
+
+  For EACH finding emit:
+    Finding: / Severity: High|Medium|Low / Classification: <one of the TRIAGE RULE labels>
+    Evidence: <file/line> / Why: <short> / Required action: fix now|optional fix|backlog|reject
+    Scope reason: <why it does/does not belong to this PR's scope>
+  Then emit:
+    PR decision: ADVANCE | REQUEST CHANGES | DO NOT ADVANCE   (based ONLY on in-scope blockers)
+    Scope drift warning: yes|no — <is anything pulling this PR beyond its stated scope?>
+  Then on the LAST three lines emit exactly (map ADVANCE->NO OBJECTION,
+  REQUEST CHANGES->CHANGES ADVISED, DO NOT ADVANCE->DO NOT ADVANCE):
+    LOG SUMMARY: <NO OBJECTION | CHANGES ADVISED | DO NOT ADVANCE | UNCLASSIFIED> — <single most important point>
+      (use UNCLASSIFIED if you genuinely cannot classify the artifact safely)
+    EVIDENCE: <A|B|C|D|E>
+    HIGHEST-IMPACT UNCERTAINTY: <one sentence — what single thing, if wrong, most affects this assessment>
+
+  Evidence grade — the grade describes what the assessment rests on, not reviewer confidence:
+    A — Directly verified in the artifact, diff, or output shown in the packet
+    B — Verified with multiple direct pieces of evidence, but coverage is not complete
+    C — Partially verified, partially inferred from structure or context
+    D — Mostly inferred from structure or indirect evidence
+    E — Hypothesis or very limited basis — little to no direct evidence
+
+
+PACKET MANIFEST
+  generated: 2026-07-13T15:29:19Z
+  task_prompt: /home/rimo/projects/Codeos/prompts/codeos-reviewer-task.md (4959 bytes)
+  review_content_bytes: 18292
+  estimated_review_tokens: ~4573
+  budget_status: OK
+  packet_mode: full
+  delta_base: none
+  items:
+    - path: changes/UPG-0046__CHG-20260713-001__reviewrun-structured-records.md
+      mode: full_file
+      bytes: 7959
+      sha256: cbf7628ce45578bd71d844db4f3826c08411d17a486dca18bd9e469dfc300166
+    - path: backlog/UPG-0046-reviewrun-structured-records.md
+      mode: full_file
+      bytes: 8418
+      sha256: bb2c5f2d9f076a1d942c0e40190ba27d5ed35fa470cef336ce93375e5ea0be7a
+    - path: (diff)
+      mode: full_file
+      bytes: 1915
+
+REVIEW CONTEXT
+  Feature:                UPG-0046__CHG-20260713-001
+  Stage:                  selfdev-step-1
+  Branch:                 main
+  Base commit:            (no base pin)
+  Review commit:          904b48794349639f797d5e92d728ae48ceca6539 (+ uncommitted workspace changes)
+  Current approved stage: n/a (non-numeric stage)
+  Evidence coverage:      FULL_COVERAGE
+  Workspace dirty:        yes (uncommitted changes at review time)
+
+DBA RULES RELEVANT TO THIS STAGE
+  - Human approval is required for every stage transition; you are advisory only.
+  - Memory is not truth — assess only what is provided, pinned to the review commit.
+  - Implementation must trace to approved artifacts; no behavior beyond intent+contract+schema.
+  - No events outside the approved event schema; no hidden behavior.
+
+STAGE-SPECIFIC CHECKS
+  - (no stage-specific checklist for stage selfdev-step-1)
+
+EXPECTED STAGE OUTPUT
+  (no expected-output template for stage)
+
+ARTIFACTS TO REVIEW
+  --- changes/UPG-0046__CHG-20260713-001__reviewrun-structured-records.md (sha256: cbf7628ce45578bd71d844db4f3826c08411d17a486dca18bd9e469dfc300166, visibility: shown) ---
+    # Self-Development Change: UPG-0046__CHG-20260713-001 — reviewrun-structured-records
+    
+    <!-- TRACE HEADER (canonical) -->
+    ```yaml
+    feature_id: UPG-0046
+    primary_feature_id: UPG-0046
+    change_id: CHG-20260713-001
+    slug: reviewrun-structured-records
+    state: IN_PROGRESS
+    current_step: 1-Intent
+    implements:
+      - UPG-0046
+    related_features: [UPG-0001, UPG-0029, UPG-0045, UPG-0047]
+    review_series: null
+    review_profile: PROFILE-3
+    review_state: DRAFT
+    review_history: reviews/review-log.md
+    fixes_findings: []
+    follow_up_of: null
+    ```
+    
+    ## Change Intent
+    
+    **Why (problem in the toolkit):**
+    
+    `backlog/UPG-0046-reviewrun-structured-records.md` frames this as "what a `ReviewRun` actually
+    is" — a new structured record — with three open questions left for the implementer. Having read
+    `tools/reviewer/src/log.rs` and `src/assessment.rs`, plus the actual history behind the
+    `REV__…__S<N>__R<N>` id, the real shape of this change is narrower and more concrete than "design
+    a new record type":
+    
+    - **`round` and `review_id` do not exist anywhere in the tooling today.** Grepping
+      `tools/reviewer/src/*.rs` for `round`/`REV__`/`review_id` returns nothing. Every REVIEW entry
+      in `reviews/review-log.md` is just `## <timestamp> REVIEW — <feature> — Stage <stage>` — no
+      round number, no stable id. Every "R1"/"R2"/"R3" in this session's own change records
+      (`UPG-0044`, `UPG-0045`) was a **human count**, done by eye, of matching log entries. That is
+      exactly the reconstruction-by-hand problem this backlog item names.
+    - **This is a known, explicitly deferred gap, not a new idea.** `backlog/UPG-0001-feature-thread-traceability.md`
+      established `REV__UPG-####__CHG-…__S<N>__R<N>` as a **documented manual convention only**
+      (line 138, with the explicit note it "does not rename review files and does not change
+      `scripts/codeos-review.sh` behavior"). `backlog/UPG-0029-review-naming-and-thread-tooling.md`
+      then filed teaching the reviewer to *derive and emit* that id as an explicitly optional,
+      deferred follow-up — "intentionally left manual until the convention proves itself... do not
+      add mandatory tooling unless the manual convention proves insufficient." This session's own
+      `UPG-0044` change is concrete evidence it has: three separate sections of that change record
+      independently transcribed "what R1 found, R2 found" by hand, and one of those transcriptions
+      drifted before being caught by Codex review.
+    - Given that, **Q3 of this backlog brief's own framing applies directly**: "If the existing
+      artifacts already satisfy addressability once given a name, this upgrade may reduce to 'assign
+      and cross-reference `REV__…__R<N>` ids consistently' rather than a new file format — that's a
+      legitimate, smaller outcome." This change takes exactly that smaller outcome, not the
+      `reviews/runs/<id>/` new-file-format sketch.
+    
+    **What changes:**
+    
+    - `tools/reviewer/src/log.rs` — new `compute_review_round(log_path, feature, stage) -> Result<u32>`:
+      counts existing `## ... REVIEW — {feature} — Stage {stage}` entries in
+      `reviews/review-log.md` matching this exact feature+stage, returns count + 1. No new storage;
+      derived entirely from the existing append-only log. `append_review()` gains a `review_id: &str`
+      parameter and writes a new `Review ID: {review_id}\n` line into the REVIEW entry (placed after
+      the `## ... REVIEW —` header line).
+    - `tools/reviewer/src/assessment.rs` — `write_assessment()` gains a `review_id: &str` parameter,
+      adds `review_id: {review_id}` as a new top-level YAML frontmatter field (additive to the
+      existing schema).
+    - `tools/reviewer/src/cmd/review.rs` — computes `review_id` **once**, before either write (it
+      currently calls `write_assessment` then `append_review` in sequence — both must see the same
+      id, computed from the log state *before* this round's entry is appended, to avoid a round
+      counting itself).
+    - `docs/reviewer-artifact-schemas.md` — add `review_id` to the v0 normative assessment-frontmatter
+      schema and the REVIEW log-entry schema (additive fields, same file both are already defined in).
+    - `docs/reviewer-pipeline.md` — update the "manual convention only" language (from `UPG-0001`/
+      `UPG-0029`, currently unchanged since those) to state the id is now mechanically derived and
+      emitted, closing the gap those two features explicitly deferred.
+    - `tools/reviewer/tests/review_id.rs` (new) — round=1 on a feature+stage's first review; round
+      increments correctly across repeated reviews of the same feature+stage; round counting is
+      scoped per feature+stage (a different stage or feature starts back at R1); `review_id` is
+      present and consistent between the assessment frontmatter and the log entry for the same round.
+    
+    **Two design decisions, flagged for approval rather than assumed:**
+    
+    1. **The `S<N>` step-number shorthand is dropped; the raw `--stage` argument is used verbatim.**
+       `UPG-0001`'s `S<N>` grammar (`REV__UPG-0000__CHG-20260627-001__S4__R2`) was written for
+       self-dev steps 1–4 specifically and has **no defined mapping** for downstream DBA stage ids
+       (`discovery`, `brief`, `onboarding`, `1`..`10` — `UPG-0001` explicitly excluded
+       "downstream-doctrine changes" from its own scope). Rather than inventing an unreviewed mapping
+       now, `review_id` uses the literal stage string the caller already passes:
+       `REV__UPG-0045__CHG-20260712-002__selfdev-step-3__R2` instead of
+       `REV__UPG-0045__CHG-20260712-002__S3__R2`. This is unambiguous, needs no new mapping table,
+       and works identically for self-dev and downstream out of the box. **This is a deliberate
+       deviation from the brief's illustrative sketch and from `UPG-0001`'s literal grammar string —
+       flagging for explicit approval, not assuming it.**
+    2. **Filenames are not renamed.** `reviews/codex/<ts>-<feature>-stage-<stage>-<sha>.md`/`.packet.txt`
+       keep their current timestamped shape. `review_id` becomes a *content* field (frontmatter line
+       + log line), not a filename convention change. `UPG-0029` explicitly scoped file renaming as
+       its own, separate, "non-destructive where practical" migration step — conflating it with id
+       assignment here would add real risk (chronological sortability loss, potential collision
+       handling) for no addressability gain, since the id is already discoverable inside each file.
+       Renaming remains available as an explicitly separate future change if ever wanted.
+    
+    **Scope boundary — what stays the same:**
+    
+    - No new file format, no `reviews/runs/` directory — per Q3's explicitly-permitted smaller
+      outcome.
+    - No structured findings (`findings.yaml` or equivalent) — that is `UPG-0047`, which depends on
+      this change existing first (a finding needs a stable `review_id` to attach to; after this
+      change, one exists).
+    - No event-sourcing, no `reviews/review-events.jsonl` — that is `UPG-0048`, explicitly out of
+      scope and not a prerequisite either direction.
+    - No change to the append-only guarantee, the committed/durable-vs-scratch classification
+      (`UPG-0029`), or the Self-Reference Boundary (`UPG-0001`: change records still carry a stable
+      `review_series` + `review_state`, never a live round — this change makes the *live round itself*
+      mechanically identifiable for the first time, inside `reviews/`, without touching how change
+      records reference it).
+    - No rename of any existing `reviews/codex/*` file (see design decision 2 above).
+    - No change to `scripts/codeos-review.sh` expected — the static locator shim passes arguments
+      through verbatim (`docs/reviewer-pipeline.md` §10); will be confirmed, not assumed, at Step 4.
+    - No change to `CLAUDE.md` or `dba-system.md`.
+    
+    **Class:** script-tooling
+    **Scope axis:** self-dev only
+    **Backlog item:** backlog/UPG-0046-reviewrun-structured-records.md
+    
+    ---
+    
+    ## Acceptance Criteria
+    
+    *(Step 2 — not yet produced)*
+    
+    ---
+    
+    ## Implementation Notes
+    
+    *(Step 3 — not yet produced)*
+    
+    ---
+    
+    ## Reconciliation
+    
+    *(Step 4 — not yet produced)*
+
+  --- backlog/UPG-0046-reviewrun-structured-records.md (sha256: bb2c5f2d9f076a1d942c0e40190ba27d5ed35fa470cef336ce93375e5ea0be7a, visibility: shown) ---
+    ---
+    feature_id: UPG-0046
+    slug: reviewrun-structured-records
+    title: ReviewRun Structured Records
+    status: IN_PROGRESS
+    priority: P2
+    depends_on: []
+    related_features: [UPG-0045, UPG-0047, UPG-0048, UPG-0001, UPG-0029]
+    supersedes: []
+    superseded_by: []
+    ---
+    
+    # Upgrade: reviewrun-structured-records — ReviewRun Structured Records
+    
+    **Priority**: P2
+    **Status**: PROPOSED
+    **Type**: script-tooling
+    
+    ## Problem
+    
+    A single review round today is reconstructable only by reading four things together: the
+    `## <timestamp> REVIEW —` block in `reviews/review-log.md`, the raw assessment under
+    `reviews/codex/<ts>-...md`, the packet under `reviews/codex/packets/<ts>-...packet.txt`, and the
+    change record's own prose summary of "what R1 found, what R2 found." Nothing ties these four
+    together as one addressable unit — the mapping is by matching timestamps and filenames, done by
+    eye. `docs/reviewer-pipeline.md` §4e (added by `UPG-0044`) documents this five-way ownership
+    split explicitly, which makes clear how much reconstruction a reader has to do.
+    
+    This is workable at the current review volume but was already a source of friction in this
+    session's own `UPG-0044` change: three separate change-record sections (Implementation Notes,
+    Reconciliation table, and the final `review-log.md` rollup) each had to independently restate
+    "what R1 found, what got fixed, what R2 said" — the same facts, transcribed three times by hand,
+    with real risk of the transcriptions drifting from each other (and, per that same change's own
+    review findings, they did drift at least once before being caught).
+    
+    ## Upgrade
+    
+    Not decided by this brief — questions for implementer to resolve:
+    
+    ### 1. What a `ReviewRun` actually is
+    
+    A structured record (see illustrative sketch below — **not a final schema**) uniquely identified
+    by the existing `REV__…__R<N>` naming convention (`backlog/UPG-0001-feature-thread-traceability.md`),
+    one per round, holding: the review's inputs (feature/change/stage/round/artifacts/mode/base),
+    the packet's coverage state and hashes (already recorded in `reviews/review-log.md` today), the
+    reviewer's raw verdict, and — critically — a place for the round's findings to live in a form
+    another process (or the next round's `plan`, if `UPG-0045` is built) can read back mechanically
+    rather than by re-parsing prose.
+    
+    ```yaml
+    # ILLUSTRATIVE ONLY — not an approved schema
+    review_id: REV__UPG-0043__CHG-20260711-002__S3__R1
+    feature_id: UPG-0043
+    change_id: CHG-20260711-002
+    stage: selfdev-step-3
+    round: 1
+    artifacts: [...]
+    evidence: {mode: full, coverage_state: FULL_COVERAGE, review_content_bytes: 42871}
+    verdict: {codex_concern: NO_OBJECTION, effective_concern: NO_OBJECTION, evidence_grade: B}
+    human_decision: {decision: APPROVED, rationale: null, decided_at: null}
+    ```
+    
+    ### 2. Where it lives and what's authoritative
+    
+    Whether this is a new file per round under `reviews/runs/<review_id>/`, or an additional
+    machine-readable sidecar next to the existing `reviews/codex/<ts>-...md` assessment (same
+    directory, `.yaml` alongside the `.md`), or a restructuring of `reviews/review-log.md` itself
+    into a more structured (but still append-only, still human-readable) format. The existing
+    append-only guarantee on `reviews/review-log.md` (`docs/reviewer-pipeline.md` §4) and the
+    Self-Reference Boundary (`UPG-0001`) must both be preserved regardless of the chosen shape.
+    
+    ### 3. Relationship to existing artifacts
+    
+    This must **not** duplicate what `reviews/review-log.md` and `reviews/codex/*.md` already record
+    faithfully today (feature/stage/branch/hashes/coverage/verdict — see
+    `docs/reviewer-artifact-schemas.md`). The value-add is specifically: (a) one addressable id per
+    round instead of matching timestamps by eye, and (b) a place for findings to be structured
+    (deferred to `UPG-0047`, not this brief) rather than prose-only. If the existing artifacts
+    already satisfy (a) well enough once given a name, this upgrade may reduce to "assign and cross-
+    reference `REV__…__R<N>` ids consistently" rather than a new file format — that's a legitimate,
+    smaller outcome the implementer should consider before building new storage.
+    
+    ## Scope
+    
+    Likely touches: `tools/reviewer/src/log.rs` (or a new module) to emit/read the structured record;
+    possibly a new `reviews/runs/` directory (or sidecar files next to existing `reviews/codex/`
+    artifacts) — implementer's choice per the open questions above. Must preserve every existing
+    guarantee in `docs/reviewer-pipeline.md` §4/§4a (append-only, committed/durable vs. scratch
+    classification) and §4e (record-ownership split) for whichever artifacts already exist.
+    
+    Out of scope for this brief:
+    - Structured findings themselves (`findings.yaml` or equivalent) — that's `UPG-0047`, which
+      depends on this one existing first.
+    - Any event-sourcing / `reviews/review-events.jsonl` source-of-truth migration — that is the far
+      larger, higher-risk `UPG-0048`, deliberately kept separate and not a prerequisite for this
+      smaller upgrade.
+    - Any change to the advisory/human-gated review philosophy itself.
+    
+    ## Value
+    
+    High, if `UPG-0047` (structured findings) is also built — the two together are what the human's
+    proposal called "Review Control Plane Lite." Alone, this upgrade mainly buys addressability and
+    removes cross-file transcription risk; most of the compounding value comes once findings are
+    structured on top of it.
+    
+    Trade-offs: another artifact format to keep in sync with `docs/reviewer-artifact-schemas.md`'s
+    existing normative schemas; risk of two competing "sources of truth" (the new structured record
+    vs. the existing prose log) if the migration is partial.
+    
+    ## Risk
+    
+    Deciding hastily risks:
+    - Building parallel bookkeeping that duplicates rather than replaces the current
+      `reviews/review-log.md` + `reviews/codex/*.md` pair, doubling maintenance without buying
+      addressability.
+    - Silently changing what counts as the durable/authoritative record without updating
+      `docs/reviewer-pipeline.md` §4a's committed/durable vs. scratch policy to match.
+    
+    ## Guardrail
+    
+    The structured record must:
+    - Never become authoritative *instead of* human approval — it stores evidence of a decision, it
+      does not make one (same rule as everything else in this pipeline).
+    - Preserve the append-only guarantee wherever it touches or replaces `reviews/review-log.md`.
+    - Preserve the Self-Reference Boundary (`UPG-0001`): a change record still references a stable
+      `review_series` + `review_state`, never a live round, regardless of how the round itself is
+      stored.
+    - Be introduced incrementally — do not require rewriting all historical `reviews/codex/*.md`
+      entries into the new shape as a precondition; new format applies going forward.
+    
+    ## Related
+    
+    - **UPG-0001**: Feature Thread Traceability — the `REV__…__R<N>` naming convention and
+      Self-Reference Boundary this upgrade must preserve.
+    - **UPG-0029**: Review artifact durability + packet naming policy — the existing
+      committed/durable vs. scratch classification (`docs/reviewer-pipeline.md` §4a) this upgrade's
+      new artifact type must be classified under.
+    - **UPG-0045**: Review Plan Preview — a natural producer/consumer relationship if `plan` output
+      is persisted anywhere.
+    - **UPG-0047**: Structured Findings — depends on this upgrade existing first (findings need a
+      `ReviewRun` to attach to).
+    - **UPG-0048**: Review Ledger Event Sourcing — a much larger, separate upgrade that this one is
+      *not* a required step toward, though it would build on it if ever pursued.
+    - Proposed by the human during a 2026-07-12 review-architecture discussion (see
+      `reviews/review-log.md` and `changes/UPG-0044__CHG-20260712-001__reviewer-pipeline-architecture-refresh.md`).
+    
+    ## Feature Thread
+    
+    > Canonical thread rollup for this feature. Compact links/IDs only; full detail lives in the
+    > change records and review files. May be maintained manually.
+    
+    ### Changes
+    
+    | Change ID | File | Purpose | State |
+    |---|---|---|---|
+    | CHG-20260713-001 | changes/UPG-0046__CHG-20260713-001__reviewrun-structured-records.md | Derive/emit REV__…__R<N> mechanically (closes UPG-0001/UPG-0029 deferred gap) | IN_PROGRESS |
+    
+    ### Reviews
+    
+    | Review ID | Change ID | Step | Round | Verdict |
+    |---|---|---|---|---|
+    
+    ### Findings Tracked Inside This Feature
+    
+    | Finding ID | Review ID | Classification | Resolution |
+    |---|---|---|---|
+    
+    ### Follow-up Features
+    
+    | Feature ID | Reason | Source finding |
+    |---|---|---|
+
+DIFF TO REVIEW (base->review, secret/size filtered)
+diff --git a/backlog/UPG-0046-reviewrun-structured-records.md b/backlog/UPG-0046-reviewrun-structured-records.md
+index d22b99b..0f23e14 100644
+--- a/backlog/UPG-0046-reviewrun-structured-records.md
++++ b/backlog/UPG-0046-reviewrun-structured-records.md
+@@ -2,7 +2,7 @@
+ feature_id: UPG-0046
+ slug: reviewrun-structured-records
+ title: ReviewRun Structured Records
+-status: PROPOSED
++status: IN_PROGRESS
+ priority: P2
+ depends_on: []
+ related_features: [UPG-0045, UPG-0047, UPG-0048, UPG-0001, UPG-0029]
+@@ -153,7 +153,7 @@ The structured record must:
+ 
+ | Change ID | File | Purpose | State |
+ |---|---|---|---|
+-| (none yet) | — | — | PROPOSED |
++| CHG-20260713-001 | changes/UPG-0046__CHG-20260713-001__reviewrun-structured-records.md | Derive/emit REV__…__R<N> mechanically (closes UPG-0001/UPG-0029 deferred gap) | IN_PROGRESS |
+ 
+ ### Reviews
+ 
+diff --git a/status/self-development.md b/status/self-development.md
+index c004f5d..f7124c2 100644
+--- a/status/self-development.md
++++ b/status/self-development.md
+@@ -68,6 +68,7 @@
+ | UPG-0043 | CHG-20260711-002 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S4; R3 budget exhausted; inline doc fix accepted by human; all 5 final verifications pass; 124 tests across 8 files) | COMPLETE | — |
+ | UPG-0044 | CHG-20260712-001 | documentation | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S4; R1 CHANGES ADVISED — 1 finding fixed; R2 NO OBJECTION; all 12 ACs verified) | COMPLETE | — |
+ | UPG-0045 | CHG-20260712-002 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S4; R1 NO OBJECTION; all 12 ACs verified; 159 tests pass) | COMPLETE | — |
++| UPG-0046 | CHG-20260713-001 | script-tooling | self-dev only | 1-Intent | DRAFT (PROFILE-3, review not yet run) | IN_PROGRESS | — |
+ 
+ <!--
+ Identity   : Feature ID = UPG-#### (stable). Change ID = CHG-YYYYMMDD-NNN (one execution), or a

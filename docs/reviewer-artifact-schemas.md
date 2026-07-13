@@ -85,6 +85,7 @@ File `reviews/codex/<ts>-<feature>-stage-<N>-<sha>.md`, opening with a `---` YAM
 
 | Key | Type | Notes |
 |---|---|---|
+| `review_id` | string | `REV__<feature>__<stage>__R<N>` — mechanically derived (`UPG-0046`) by counting prior `REVIEW` entries for this exact feature+stage in `reviews/review-log.md`; `<stage>` is the raw `--stage` value verbatim, no `S<N>` conversion. First frontmatter key. Not yet part of the Lightweight validation (v0) required-field list below. |
 | `feature` | string | |
 | `stage` | integer | |
 | `branch` | string | |
@@ -117,6 +118,7 @@ but lacks `session_id` is **malformed → fail-closed**.
 
 ```
 ## <ISO ts> REVIEW — <feature> — Stage <N>
+Review ID: <review_id>
 Base: <sha|(no base pin)>  Review: <sha>  Branch: <branch>
 Diff-hash: <sha256>
 Reviewer: codex <model> (session <uuid>)

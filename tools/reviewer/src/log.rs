@@ -40,9 +40,51 @@ fn ensure_log_exists(log_path: &Path) -> Result<()> {
     Ok(())
 }
 
+/// Compute the round number for the next review of `feature`+`stage`, by counting existing
+/// `## ... REVIEW — {feature} — Stage {stage}` entries already in `log_path` and adding 1.
+///
+/// No new storage: derived entirely from the existing append-only log. A log that does not yet
+/// exist, or exists with zero matching entries, both correctly yield round 1 — that is not an
+/// error case. A log that exists but cannot be **read** (a distinct failure from "not found") is
+/// a hard error: the caller must abort before any Codex invocation rather than silently
+/// stamping a guessed round.
+///
+/// Matching is done by exact, `—`/newline-bounded suffix (`content.lines()` strips the trailing
+/// newline, so `line.ends_with(" REVIEW — {feature} — Stage {stage}")` cannot confuse
+/// `Stage 1` with `Stage 10`, or a feature id with a longer id sharing its prefix).
+pub fn compute_review_round(log_path: &Path, feature: &str, stage: &str) -> Result<u32> {
+    // Read directly rather than pre-checking `exists()`: `Path::exists()` collapses genuine
+    // absence and other metadata-access failures (e.g. a permission error) into the same
+    // `false` result, which would silently mask a real error as "no log yet" — exactly the
+    // fail-closed violation AC-10 forbids. Matching `io::ErrorKind::NotFound` specifically is
+    // the only way to distinguish "round 1, no error" from "cannot determine, must abort."
+    let content = match std::fs::read_to_string(log_path) {
+        Ok(c) => c,
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(1),
+        Err(e) => {
+            return Err(e).with_context(|| {
+                format!("could not read review log to compute round: {}", log_path.display())
+            });
+        }
+    };
+    let suffix = format!(" REVIEW — {} — Stage {}", feature, stage);
+    let count = content.lines()
+        .filter(|line| line.starts_with("## ") && line.ends_with(&suffix))
+        .count();
+    Ok(count as u32 + 1)
+}
+
+/// Format the `REV__<feature>__<stage>__R<N>` review id. The stage is used verbatim — no
+/// numeric-stage-to-`S<N>` conversion — because `S<N>` (from `UPG-0001`) was defined only for
+/// self-dev steps 1-4 and has no mapping for downstream DBA stage ids.
+pub fn format_review_id(feature: &str, stage: &str, round: u32) -> String {
+    format!("REV__{}__{}__R{}", feature, stage, round)
+}
+
 /// Append a REVIEW entry to the log. Uses a temp-file + rename for atomicity.
 pub fn append_review(
     log_path: &Path,
+    review_id: &str,
     packet: &ReviewPacket,
     raw: &RawAssessment,
     parsed: &ParsedReview,
@@ -64,6 +106,7 @@ pub fn append_review(
     let mut entry = String::new();
     entry.push('\n');
     entry.push_str(&format!("## {} REVIEW — {} — Stage {}\n", ts, packet.feature, packet.stage));
+    entry.push_str(&format!("Review ID: {}\n", review_id));
     entry.push_str(&format!("Base: {}  Review: {}  Branch: {}\n",
         packet.base_sha, packet.review_sha, packet.branch));
     entry.push_str(&format!("Diff-hash: {}\n", packet.diff_hash));
@@ -426,4 +469,259 @@ fn verify_artifacts(feature: &str, stage: &str, codex_dir: &Path) -> (Option<Str
     }
 
     (Some(latest.display().to_string()), verify_lines, changed)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn write_log(dir: &std::path::Path, entries: &[&str]) -> std::path::PathBuf {
+        let log_path = dir.join("review-log.md");
+        let mut content = LOG_HEADER.to_string();
+        for e in entries {
+            content.push('\n');
+            content.push_str(e);
+        }
+        std::fs::write(&log_path, content).expect("write test log");
+        log_path
+    }
+
+    /// A minimal, correctly-shaped REVIEW header line, exactly as `append_review` emits it
+    /// (timestamp value is irrelevant to matching — only the trailing suffix is checked).
+    fn review_header(feature: &str, stage: &str) -> String {
+        format!("## 2026-01-01T00:00:00Z REVIEW — {} — Stage {}\n", feature, stage)
+    }
+
+    #[test]
+    fn round_one_when_log_missing() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let missing = dir.path().join("does-not-exist.md");
+        assert_eq!(compute_review_round(&missing, "UPG-0046", "selfdev-step-1").unwrap(), 1);
+    }
+
+    #[test]
+    fn round_one_when_log_exists_with_no_matches() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let log_path = write_log(dir.path(), &[]);
+        assert_eq!(compute_review_round(&log_path, "UPG-0046", "selfdev-step-1").unwrap(), 1);
+    }
+
+    #[test]
+    fn round_increments_across_matching_entries() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let e1 = review_header("UPG-0046", "selfdev-step-1");
+        let e2 = review_header("UPG-0046", "selfdev-step-1");
+        let log_path = write_log(dir.path(), &[&e1, &e2]);
+        assert_eq!(compute_review_round(&log_path, "UPG-0046", "selfdev-step-1").unwrap(), 3);
+    }
+
+    #[test]
+    fn round_does_not_collide_across_similarly_named_stages() {
+        // "Stage 1" must not be counted when computing the round for "Stage 10", or vice versa —
+        // the exact scenario the human flagged as a danger of substring-based log parsing.
+        let dir = tempfile::tempdir().expect("tempdir");
+        let e1 = review_header("FEAT", "10");
+        let log_path = write_log(dir.path(), &[&e1]);
+        assert_eq!(
+            compute_review_round(&log_path, "FEAT", "1").unwrap(), 1,
+            "an entry for Stage 10 must not be counted toward Stage 1's round"
+        );
+        assert_eq!(compute_review_round(&log_path, "FEAT", "10").unwrap(), 2);
+    }
+
+    #[test]
+    fn round_does_not_collide_across_features_sharing_a_prefix() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let e1 = review_header("UPG-0046", "selfdev-step-1");
+        let log_path = write_log(dir.path(), &[&e1]);
+        assert_eq!(
+            compute_review_round(&log_path, "UPG-004", "selfdev-step-1").unwrap(), 1,
+            "an entry for UPG-0046 must not be counted toward UPG-004's round"
+        );
+    }
+
+    #[test]
+    fn round_is_scoped_to_the_given_log_path_scratch_vs_durable() {
+        // Mirrors the existing scratch/durable log separation in review.rs: compute_review_round
+        // simply reads whichever path it's given, so a scratch log and a durable log for the
+        // same feature+stage are independent by construction.
+        let dir = tempfile::tempdir().expect("tempdir");
+        let e1 = review_header("UPG-0046", "selfdev-step-1");
+        let durable = write_log(dir.path(), &[&e1]);
+        let scratch = dir.path().join("scratch-review-log.md");
+        std::fs::write(&scratch, LOG_HEADER).expect("write scratch log");
+        assert_eq!(compute_review_round(&durable, "UPG-0046", "selfdev-step-1").unwrap(), 2);
+        assert_eq!(compute_review_round(&scratch, "UPG-0046", "selfdev-step-1").unwrap(), 1);
+    }
+
+    #[test]
+    fn round_fails_closed_when_log_path_is_unreadable() {
+        // A path that exists but is a directory, not a file — read_to_string must error, and
+        // that error must propagate rather than being silently treated as "no matches".
+        let dir = tempfile::tempdir().expect("tempdir");
+        let not_a_file = dir.path().join("review-log.md");
+        std::fs::create_dir(&not_a_file).expect("create dir standing in for the log path");
+        assert!(compute_review_round(&not_a_file, "UPG-0046", "selfdev-step-1").is_err());
+    }
+
+    #[test]
+    #[cfg(unix)]
+    fn round_fails_closed_on_permission_error_not_silently_treated_as_missing() {
+        // The specific bug a naive `if !log_path.exists() { return Ok(1) }` pre-check has:
+        // `Path::exists()` collapses "genuinely not found" and "cannot access due to a
+        // permission error" into the same `false` result. Reproduced here by making the
+        // *containing directory* unsearchable (mode 000), so `fs::metadata`/`exists()` on the
+        // log path inside it fails with `PermissionDenied`, not `NotFound`. This must be
+        // reported as an error, never silently treated as "round 1."
+        use std::os::unix::fs::PermissionsExt;
+
+        let dir = tempfile::tempdir().expect("tempdir");
+        let locked_subdir = dir.path().join("locked");
+        std::fs::create_dir(&locked_subdir).expect("create subdir");
+        let log_path = locked_subdir.join("review-log.md");
+        std::fs::write(&log_path, LOG_HEADER).expect("write log before locking");
+
+        std::fs::set_permissions(&locked_subdir, std::fs::Permissions::from_mode(0o000))
+            .expect("lock subdir permissions");
+
+        let result = compute_review_round(&log_path, "UPG-0046", "selfdev-step-1");
+
+        // Restore permissions immediately so the tempdir can clean itself up, regardless of
+        // the assertion outcome below.
+        std::fs::set_permissions(&locked_subdir, std::fs::Permissions::from_mode(0o755))
+            .expect("restore subdir permissions for cleanup");
+
+        // Root runs bypass Unix permission checks entirely — skip in that environment rather
+        // than asserting a false failure.
+        if unsafe { libc_geteuid_is_zero() } {
+            return;
+        }
+
+        assert!(
+            result.is_err(),
+            "a permission error must never be silently treated as round 1: {:?}", result
+        );
+    }
+
+    /// Minimal, dependency-free euid check (avoids adding a `libc` dependency for one test).
+    #[cfg(unix)]
+    unsafe fn libc_geteuid_is_zero() -> bool {
+        extern "C" { fn geteuid() -> u32; }
+        geteuid() == 0
+    }
+
+    #[test]
+    fn format_review_id_uses_raw_stage_verbatim() {
+        // No S<N> conversion — the raw --stage argument is used exactly as passed, for both
+        // self-dev step strings and downstream stage ids.
+        assert_eq!(
+            format_review_id("UPG-0046__CHG-20260713-001", "selfdev-step-1", 1),
+            "REV__UPG-0046__CHG-20260713-001__selfdev-step-1__R1"
+        );
+        assert_eq!(format_review_id("checkout-flow", "brief", 2), "REV__checkout-flow__brief__R2");
+        assert_eq!(format_review_id("checkout-flow", "7", 1), "REV__checkout-flow__7__R1");
+    }
+
+    /// Set up a temp git repo and build a real `ReviewPacket` against it (needs the real
+    /// Codeos repo as `toolkit_root` to find `prompts/codeos-reviewer-task.md`). Shared by the
+    /// tests below that need an actual packet, not just a hand-seeded log file.
+    fn build_test_packet(repo_root: &std::path::Path, feature: &str, stage: &str) -> ReviewPacket {
+        std::process::Command::new("git").args(["init"]).current_dir(repo_root).output().expect("git init");
+        std::process::Command::new("git").args(["config", "user.email", "t@t.test"]).current_dir(repo_root).output().ok();
+        std::process::Command::new("git").args(["config", "user.name", "T"]).current_dir(repo_root).output().ok();
+        std::fs::write(repo_root.join("tracked.md"), "# tracked\n").expect("write");
+        std::process::Command::new("git").args(["add", "tracked.md"]).current_dir(repo_root).output().expect("git add");
+        std::process::Command::new("git").args(["commit", "-m", "init"]).current_dir(repo_root).output().expect("git commit");
+
+        let mut toolkit_root = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        toolkit_root.pop(); toolkit_root.pop(); // tools/reviewer -> Codeos/
+
+        let opts = crate::packet::PacketBuildOptions {
+            feature: feature.to_string(),
+            stage: stage.to_string(),
+            artifacts: vec!["tracked.md".to_string()],
+            sha_only_paths: vec![],
+            delta_mode: false,
+            delta_base: None,
+            fresh_session: false,
+            repo_root: repo_root.to_string_lossy().into_owned(),
+            toolkit_root: toolkit_root.to_string_lossy().into_owned(),
+        };
+        crate::packet::build(&opts).expect("build packet")
+    }
+
+    fn test_raw() -> crate::provider::RawAssessment {
+        crate::provider::RawAssessment {
+            text: "LOG SUMMARY: NO OBJECTION — ok\nEVIDENCE: A\nHIGHEST-IMPACT UNCERTAINTY: none\n".to_string(),
+            session_id: "test-session".to_string(),
+            elapsed_ms: 1,
+            reconnect_count: 0,
+            effort: "high".to_string(),
+        }
+    }
+
+    #[test]
+    fn append_review_writes_review_id_line() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let repo_root = dir.path();
+        let packet = build_test_packet(repo_root, "UPG-TEST", "selfdev-step-1");
+        let raw = test_raw();
+        let parsed = crate::assessment::parse_review_output(&raw.text, &packet.coverage_state);
+
+        let log_path = repo_root.join("review-log.md");
+        let review_id = format_review_id(&packet.feature, &packet.stage, 1);
+        append_review(
+            &log_path, &review_id, &packet, &raw, &parsed,
+            Path::new("assessment.md"), "deadbeef", Path::new("packet.txt"), "cafefeed",
+        ).expect("append_review");
+
+        let content = std::fs::read_to_string(&log_path).expect("read log");
+        assert!(
+            content.contains(&format!("Review ID: {}\n", review_id)),
+            "log entry must contain the Review ID line: {}", content
+        );
+    }
+
+    #[test]
+    fn two_sequential_review_cycles_increment_the_round() {
+        // Simulates exactly what review.rs::run() does, twice in a row: compute the round,
+        // format the id, append the entry — then repeat. This is AC-2's actual acceptance
+        // contract (round increments across real, sequential invocations), tested without
+        // requiring a live Codex call by driving the same compute-then-append sequence
+        // review.rs itself uses.
+        let dir = tempfile::tempdir().expect("tempdir");
+        let repo_root = dir.path();
+        let packet = build_test_packet(repo_root, "UPG-TEST", "selfdev-step-1");
+        let raw = test_raw();
+        let parsed = crate::assessment::parse_review_output(&raw.text, &packet.coverage_state);
+        let log_path = repo_root.join("review-log.md");
+
+        // Round 1 (log does not exist yet).
+        let round1 = compute_review_round(&log_path, &packet.feature, &packet.stage).unwrap();
+        assert_eq!(round1, 1);
+        let review_id1 = format_review_id(&packet.feature, &packet.stage, round1);
+        assert!(review_id1.ends_with("__R1"));
+        append_review(
+            &log_path, &review_id1, &packet, &raw, &parsed,
+            Path::new("assessment1.md"), "deadbeef1", Path::new("packet1.txt"), "cafefeed1",
+        ).expect("append_review round 1");
+
+        // Round 2 (log now has exactly one matching entry from round 1).
+        let round2 = compute_review_round(&log_path, &packet.feature, &packet.stage).unwrap();
+        assert_eq!(round2, 2, "round must increment after a real append_review call");
+        let review_id2 = format_review_id(&packet.feature, &packet.stage, round2);
+        assert!(review_id2.ends_with("__R2"));
+        append_review(
+            &log_path, &review_id2, &packet, &raw, &parsed,
+            Path::new("assessment2.md"), "deadbeef2", Path::new("packet2.txt"), "cafefeed2",
+        ).expect("append_review round 2");
+
+        let content = std::fs::read_to_string(&log_path).expect("read log");
+        assert!(content.contains(&format!("Review ID: {}\n", review_id1)));
+        assert!(content.contains(&format!("Review ID: {}\n", review_id2)));
+
+        // A third read must now report round 3, proving the cycle keeps advancing correctly.
+        let round3 = compute_review_round(&log_path, &packet.feature, &packet.stage).unwrap();
+        assert_eq!(round3, 3);
+    }
 }
