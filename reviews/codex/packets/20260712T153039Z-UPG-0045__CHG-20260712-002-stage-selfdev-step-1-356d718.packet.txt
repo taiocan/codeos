@@ -1,0 +1,438 @@
+Reviewer task:
+
+SCOPE CONTRACT
+  Assess this artifact against the STATED SCOPE of this stage/PR — the Expected Stage
+  Output below and what the artifacts actually claim — NOT against an ideal final system.
+  A capability the artifacts do not claim to provide is OUT-OF-SCOPE, not a defect.
+  The following are OUT-OF-SCOPE BACKLOG unless THIS artifact explicitly claims to provide
+  them: formal approval-binding enforcement; rollback correctness; COMMIT_BOUND/
+  WORKSPACE_BOUND enforcement; JSON Schema validation; CI validation; exact
+  decision-integrity; per-feature decision ledgers; autonomous approval; enabled hooks.
+
+YOUR TASK — answer these five questions using only the evidence in the packet:
+  1. Acceptance criteria: Does the artifact satisfy each of its stated acceptance criteria?
+     Cite evidence for each criterion (or note its absence).
+  2. Claim support: Are universal or strong claims (all, every, never, always, no X) in the
+     artifact supported by evidence in the packet? Any unverifiable strong claim is a candidate
+     finding only if it affects acceptance, scope, safety, decision integrity, or the artifact's
+     stated guarantees.
+  3. Scope drift: Is there any change beyond the stated scope boundary? (Files not in the
+     "What changes" list; behavior changes not in the intent; downstream doctrine modified
+     rather than read.)
+  4. In-scope blockers: Are there facts that, if left in, would make the artifact wrong,
+     unsafe, or internally contradictory?
+  5. Finding classification: Classify every finding you raise as exactly one of the five
+     TRIAGE RULE categories below.
+
+TRIAGE RULE — classify EVERY finding as exactly one of:
+  IN-SCOPE BLOCKER         breaks the stated goal; creates a FALSE CLAIM in this artifact;
+                           weakens the advisory/read-only/human-gated guarantees; prevents
+                           the work from running; or violates an explicit safety constraint.
+  IN-SCOPE NON-BLOCKER     improves it but is not required for this PR.
+  OUT-OF-SCOPE BACKLOG     valid, but belongs to a future feature / stronger guarantee.
+  REJECTED                 conflicts with the stated scope or Codeos philosophy.
+  SELF-REFERENCE /         review records that are stale because of the previous round's
+  REVIEW-BOOKKEEPING       own existence (causal loop); not a real artifact defect.
+  Base the PR decision ONLY on IN-SCOPE BLOCKER findings. An OUT-OF-SCOPE BACKLOG finding
+  must NOT cause DO NOT ADVANCE unless this artifact FALSELY CLAIMS to solve it.
+
+WHAT NOT TO DO
+  - Do not flag style or wording issues as blockers unless the wording creates a false claim,
+    contradiction, parser breakage, or wrong governance instruction.
+  - Do not re-review unchanged full context when the packet is in delta mode.
+  - Do not treat local-only review history as a blocker unless the artifact falsely
+    claims the review artifacts are committed/durable.
+
+INSTRUCTIONS
+  If this is a resumed session, ignore any earlier-session conclusions unless they are
+  re-established by THIS packet; assess only the evidence above, pinned to this commit.
+  Give a focused assessment of this artifact against the stated scope, acceptance criteria,
+  and evidence in this packet. Rank findings by severity. Suggest a better design only when
+  needed to explain a required fix for an IN-SCOPE BLOCKER.
+
+  Limit findings to the top 3 IN-SCOPE BLOCKERS. Additional non-blocking observations may be
+  summarized in one short paragraph only if useful.
+
+  For EACH finding emit:
+    Finding: / Severity: High|Medium|Low / Classification: <one of the TRIAGE RULE labels>
+    Evidence: <file/line> / Why: <short> / Required action: fix now|optional fix|backlog|reject
+    Scope reason: <why it does/does not belong to this PR's scope>
+  Then emit:
+    PR decision: ADVANCE | REQUEST CHANGES | DO NOT ADVANCE   (based ONLY on in-scope blockers)
+    Scope drift warning: yes|no — <is anything pulling this PR beyond its stated scope?>
+  Then on the LAST three lines emit exactly (map ADVANCE->NO OBJECTION,
+  REQUEST CHANGES->CHANGES ADVISED, DO NOT ADVANCE->DO NOT ADVANCE):
+    LOG SUMMARY: <NO OBJECTION | CHANGES ADVISED | DO NOT ADVANCE | UNCLASSIFIED> — <single most important point>
+      (use UNCLASSIFIED if you genuinely cannot classify the artifact safely)
+    EVIDENCE: <A|B|C|D|E>
+    HIGHEST-IMPACT UNCERTAINTY: <one sentence — what single thing, if wrong, most affects this assessment>
+
+  Evidence grade — the grade describes what the assessment rests on, not reviewer confidence:
+    A — Directly verified in the artifact, diff, or output shown in the packet
+    B — Verified with multiple direct pieces of evidence, but coverage is not complete
+    C — Partially verified, partially inferred from structure or context
+    D — Mostly inferred from structure or indirect evidence
+    E — Hypothesis or very limited basis — little to no direct evidence
+
+
+PACKET MANIFEST
+  generated: 2026-07-12T15:30:18Z
+  task_prompt: /home/rimo/projects/Codeos/prompts/codeos-reviewer-task.md (4959 bytes)
+  review_content_bytes: 16401
+  estimated_review_tokens: ~4100
+  budget_status: OK
+  packet_mode: full
+  delta_base: none
+  items:
+    - path: changes/UPG-0045__CHG-20260712-002__review-plan-preview.md
+      mode: full_file
+      bytes: 7403
+      sha256: aa6495590781c64496be7be1483479991ae1ad1b5581a9799c5d859bb8e4de90
+    - path: backlog/UPG-0045-review-plan-preview.md
+      mode: full_file
+      bytes: 7165
+      sha256: dc459a8ed5c6d0e7f1aea05e4981bc4a64a6e2fd1d38d2c165728a267411c5ac
+    - path: (diff)
+      mode: full_file
+      bytes: 1833
+
+REVIEW CONTEXT
+  Feature:                UPG-0045__CHG-20260712-002
+  Stage:                  selfdev-step-1
+  Branch:                 main
+  Base commit:            (no base pin)
+  Review commit:          356d718f3769f23a7374a735d8ed19d066473128 (+ uncommitted workspace changes)
+  Current approved stage: n/a (non-numeric stage)
+  Evidence coverage:      FULL_COVERAGE
+  Workspace dirty:        yes (uncommitted changes at review time)
+
+DBA RULES RELEVANT TO THIS STAGE
+  - Human approval is required for every stage transition; you are advisory only.
+  - Memory is not truth — assess only what is provided, pinned to the review commit.
+  - Implementation must trace to approved artifacts; no behavior beyond intent+contract+schema.
+  - No events outside the approved event schema; no hidden behavior.
+
+STAGE-SPECIFIC CHECKS
+  - (no stage-specific checklist for stage selfdev-step-1)
+
+EXPECTED STAGE OUTPUT
+  (no expected-output template for stage)
+
+ARTIFACTS TO REVIEW
+  --- changes/UPG-0045__CHG-20260712-002__review-plan-preview.md (sha256: aa6495590781c64496be7be1483479991ae1ad1b5581a9799c5d859bb8e4de90, visibility: shown) ---
+    # Self-Development Change: UPG-0045__CHG-20260712-002 — review-plan-preview
+    
+    <!-- TRACE HEADER (canonical) -->
+    ```yaml
+    feature_id: UPG-0045
+    primary_feature_id: UPG-0045
+    change_id: CHG-20260712-002
+    slug: review-plan-preview
+    state: IN_PROGRESS
+    current_step: 1-Intent
+    implements:
+      - UPG-0045
+    related_features: [UPG-0042, UPG-0031, UPG-0027]
+    review_series: null
+    review_profile: PROFILE-3
+    review_state: DRAFT
+    review_history: reviews/review-log.md
+    fixes_findings: []
+    follow_up_of: null
+    ```
+    
+    ## Change Intent
+    
+    **Why (problem in the toolkit):**
+    
+    Before every `codeos-reviewer review <feature> <stage> <artifacts…>` call, the human/Claude has
+    to manually reconstruct what artifacts matter, which evidence mode is right for this round, and
+    roughly how big the packet will be — with no feedback until *after* Codex is already invoked
+    (see `docs/reviewer-pipeline.md` §14, §4b; `backlog/UPG-0042-reviewer-packet-efficiency.md`;
+    `backlog/UPG-0031-review-delta-mode-fix.md`'s `EMPTY_PACKET` fail-closed guard, which only fires
+    post-hoc). `backlog/UPG-0045-review-plan-preview.md` proposes a `plan` preview to close this gap,
+    leaving three implementation questions open for whoever picks it up. Having read the code, I can
+    now resolve all three concretely:
+    
+    - **Q1 (what plan computes):** the brief's own cheaper option — "echo back what's passed,
+      annotated with size/mode guidance" — turns out to already be *almost entirely computed* by
+      `tools/reviewer/src/packet.rs::build()`. `review --print-packet` already builds the exact same
+      packet Codex would see and prints it raw; the per-file bytes/mode, `review_content_bytes`,
+      `estimated_review_tokens`, and `budget_status` values are all computed inside `build()` today
+      but only ever baked into the packet's text body — never returned as struct fields. So the real
+      gap isn't "no data exists," it's "the data exists but only as an opaque string." No new
+      artifact-resolution machinery is needed; `UPG-0049`'s policy registry remains unnecessary here.
+    - **Q2 (command shape):** mirror `review`'s argument shape exactly, by reusing
+      `cmd::review::parse_rest()` unmodified — `plan` accepts the identical
+      `<feature> <stage> <artifacts…> [--mode delta --base <sha>] [--sha-only <path>]…` syntax `review`
+      does, so there is zero syntax drift between planning a review and running one.
+      `--fresh`/`--scratch`/`--print-packet`/`--skip-prechecks` parse the same way but are inert for
+      `plan` (never invokes a provider or writes state, so "fresh session" and "scratch" have nothing
+      to apply to).
+    - **Q3 (relationship to `--print-packet`):** `plan` calls the exact same `packet::build()`
+      function `--print-packet` already calls (verified: `packet::build()` has no side effects — no
+      `fs::write`, no `fs::create_dir`, confirmed by grep) — so `plan` cannot drift from what a real
+      review would see, by construction. The only new code is (a) exposing the manifest data
+      `build()` already computes as public struct fields instead of only string-formatting it, and
+      (b) a summary printer that reads those fields instead of dumping the full packet text.
+    
+    **What changes:**
+    
+    - `tools/reviewer/src/packet.rs` — **additive only**, no change to existing behavior or to the
+      `content()` string output:
+      - Add public fields to `ReviewPacket`: `review_content_bytes: u64`, `estimated_review_tokens: u64`,
+        `budget_bytes: u64`, `over_budget: bool` (mirrors the existing `budget_status` text already
+        computed at line ~332, exposed as data instead of only as a formatted string).
+      - Add a `bytes: u64` field to `ArtifactEntry` (currently `path`/`sha256`/`visibility` only),
+        populated from the same `std::fs::metadata(...).len()` calls the function already makes for
+        every artifact/sha-only path — no new I/O.
+      - No change to `PacketBuildOptions`, no change to any existing field, no change to `content()`'s
+        returned string.
+    - `tools/reviewer/src/cmd/plan.rs` (new file) — a `run()` function taking the same `ReviewArgs`
+      shape `review::run()` takes (reused type, not duplicated): runs the identical missing-artifact
+      and precheck validations `review::run()` runs today (same `precheck` module calls — so `plan`
+      accurately reports "this artifact would fail prechecks" before a round is spent), calls
+      `packet::build()`, then prints a compact summary to stdout: resolved artifacts with
+      path/mode/bytes, `review_content_bytes` vs. budget with a percentage, `estimated_review_tokens`,
+      `coverage_state`, and one static reminder line pointing at
+      `--mode delta --base <sha>` for R2+ (exact text already documented in
+      `docs/reviewer-pipeline.md` §4b/§14 — not a new recommendation engine, just a fixed pointer).
+      **Never invokes a provider, never writes to `reviews/` or any tracked file** — `packet::build()`
+      is read-only and `plan` performs no writes of its own.
+    - `tools/reviewer/src/main.rs` — new `Commands::Plan { feature, stage, rest }` variant (mirrors
+      `Commands::Review`'s shape) and a dispatch arm that calls `cmd::review::parse_rest(&rest)`
+      (reused, not duplicated) then `cmd::plan::run(...)`.
+    - `tools/reviewer/src/cmd/mod.rs` — add `pub mod plan;`.
+    - `tools/reviewer/tests/plan_command.rs` (new file, following the `UPG-0043` per-tool-area smoke
+      test split convention) — covers: basic plan output for a simple full-mode artifact set,
+      `EMPTY_PACKET` reporting, delta mode, sha-only mode, a missing-artifact/precheck-failure case,
+      and an explicit assertion that running `plan` leaves `reviews/` and the git working tree
+      unchanged (no new file under `reviews/codex/`, no `reviews/review-log.md` append).
+    - `docs/reviewer-pipeline.md` — one small new subsection (near §11 "Usage" or as part of §14,
+      final placement decided at Step 3) documenting `codeos-reviewer plan` with a usage example and
+      the same "never calls Codex, never mutates state" guarantee stated above.
+    
+    **Scope boundary — what stays the same:**
+    
+    - No change to `scripts/codeos-review.sh` — it is a static locator shim (`docs/reviewer-pipeline.md`
+      §10) that passes all arguments through verbatim; `plan` works through it automatically once the
+      Rust binary supports the subcommand. This will be confirmed, not assumed, in Step 4.
+      `.codeos/scripts/codeos-review.sh` in downstream projects inherits this for free the same way.
+    - No change to `review`'s existing behavior, output format, or exit codes — `packet::build()`'s
+      signature, `PacketBuildOptions`, and the `content()` string are unchanged; only new fields are
+      added to `ReviewPacket`/`ArtifactEntry`.
+    - No auto-selection or auto-downgrade of evidence mode — `plan` only recommends via fixed
+      reference text; the human/Claude still chooses `--mode` explicitly on the real `review` call,
+      per the guardrail in `backlog/UPG-0045-review-plan-preview.md`.
+    - No new artifact-resolution/policy-registry machinery (`UPG-0049` remains untouched, unstarted).
+    - No change to `CLAUDE.md`, `dba-system.md`, or any downstream doctrine.
+    - No change to any existing test in `tools/reviewer/tests/` (new coverage is additive, in a new
+      file).
+    
+    **Class:** script-tooling
+    **Scope axis:** self-dev only
+    **Backlog item:** backlog/UPG-0045-review-plan-preview.md
+    
+    ---
+    
+    ## Acceptance Criteria
+    
+    *(Step 2 — not yet produced)*
+    
+    ---
+    
+    ## Implementation Notes
+    
+    *(Step 3 — not yet produced)*
+    
+    ---
+    
+    ## Reconciliation
+    
+    *(Step 4 — not yet produced)*
+
+  --- backlog/UPG-0045-review-plan-preview.md (sha256: dc459a8ed5c6d0e7f1aea05e4981bc4a64a6e2fd1d38d2c165728a267411c5ac, visibility: shown) ---
+    ---
+    feature_id: UPG-0045
+    slug: review-plan-preview
+    title: Review Plan Preview — codeos-reviewer plan
+    status: IN_PROGRESS
+    priority: P2
+    depends_on: []
+    related_features: [UPG-0046, UPG-0049, UPG-0042, UPG-0027]
+    supersedes: []
+    superseded_by: []
+    ---
+    
+    # Upgrade: review-plan-preview — Review Plan Preview (`codeos-reviewer plan`)
+    
+    **Priority**: P2
+    **Status**: PROPOSED
+    **Type**: script-tooling
+    
+    ## Problem
+    
+    Before every `codeos-reviewer review <feature> <stage> <artifacts…>` call, the human/Claude has
+    to manually reconstruct: which artifacts matter for this stage, whether context files should be
+    `--sha-only`, whether this round should be `full` or `--mode delta --base <sha>`, and roughly how
+    big the resulting packet will be. This reconstruction is undocumented tribal knowledge, re-derived
+    every round from `docs/reviewer-pipeline.md` §14 and the change record's own scope section.
+    
+    Concretely observed failure modes this causes (see `docs/reviewer-pipeline.md` §4b, §14, and
+    `backlog/UPG-0031-review-delta-mode-fix.md`): forgetting to pass a required artifact,
+    accidentally including an unrelated large file that blows the packet budget
+    (`backlog/UPG-0042-reviewer-packet-efficiency.md`), and choosing `full` when `delta` was clearly
+    correct for an R2+ round (or vice versa). None of these are enforced or even previewed today —
+    the first the human/Claude finds out is when the packet manifest or a budget warning prints
+    *after* the (already-executed) Codex call.
+    
+    ## Upgrade
+    
+    Not decided by this brief — questions for implementer to resolve:
+    
+    ### 1. What "plan" computes
+    
+    A read-only, no-Codex-call preview of what a subsequent `review` invocation would send:
+    resolved artifact list, evidence-mode recommendation per artifact (full / delta / sha-only),
+    estimated `review_content_bytes` against `CODEOS_PACKET_BUDGET_BYTES`, and (if resolvable) the
+    stage's expected-output/checklist text from the reviewer task packet. Whether "resolved artifact
+    list" requires a new artifact-resolution source (see UPG-0049's policy registry) or can start as
+    "echo back exactly what the human/Claude passes, annotated with size/mode guidance" is an open
+    implementation question — the latter is far cheaper and may deliver most of the value alone.
+    
+    ### 2. Command shape
+    
+    E.g. `codeos-reviewer plan <feature> <stage> <artifacts…> [--mode …] [--base …]` mirroring
+    `review`'s argument shape, or a distinct subcommand with its own flags. Must not require Codex
+    network access or read/write any review-run state — pure local computation from the same inputs
+    `review` would use.
+    
+    ### 3. Relationship to `--print-packet`
+    
+    `scripts/codeos-review.sh` / the Rust engine already supports a packet-inspection path (see
+    `docs/reviewer-pipeline.md` §11, "Local prechecks"). Determine whether `plan` is a new, higher-level
+    view on top of the existing packet-building code path, or whether `--print-packet` already
+    covers this need well enough that `plan` should only add the size/mode *recommendation* layer
+    (not re-build packet-preview machinery that already exists).
+    
+    ## Scope
+    
+    New `codeos-reviewer plan` subcommand (or equivalent flag) in `tools/reviewer/src/`, reusing the
+    existing packet-building code path from the `review` subcommand rather than duplicating it.
+    Advisory output only — never writes files, never calls Codex, never changes review-run state.
+    
+    Out of scope for this brief:
+    - Auto-selecting or auto-downgrading evidence mode (§14 of `docs/reviewer-pipeline.md` is explicit
+      that mode selection stays human/practitioner-controlled — this upgrade previews, never decides).
+    - Any structured `ReviewRun` record (`UPG-0046`) — `plan` output may or may not need to persist
+      anywhere; if it does, that's `UPG-0046`'s concern, not this one's.
+    - Any change to `dba-system.md` or downstream stage doctrine.
+    
+    ## Value
+    
+    Medium-high. Directly reduces the failure modes that motivated `UPG-0042` (packet bloat) and
+    the `EMPTY_PACKET` fail-closed guard added by `UPG-0031` — both are downstream symptoms of not
+    knowing, in advance, what a review call will actually send. A cheap preview step catches most of
+    these before a Codex round is spent on a malformed or oversized packet.
+    
+    Trade-offs: another subcommand to maintain in lockstep with `review`'s own artifact/mode
+    handling; risk of the preview drifting from what `review` actually sends if the two code paths
+    aren't shared carefully (see "Relationship to `--print-packet`" above — this is the main design
+    risk to resolve before implementing).
+    
+    ## Risk
+    
+    Deciding hastily risks:
+    - Building a second, subtly different packet-construction code path that drifts from the real one
+      `review` uses, making the preview actively misleading.
+    - Making `plan` feel like a required step (contradicts the "advisory, never a gate" philosophy) —
+      it must stay optional, exactly like the existing `--print-packet` inspection path.
+    
+    ## Guardrail
+    
+    The plan preview must:
+    - Never call Codex, never write to `reviews/`, never mutate any tracked file.
+    - Share the actual packet-construction logic `review` uses (not reimplement it), so the preview
+      cannot drift from reality.
+    - Remain optional — `review` must keep working exactly as today without ever requiring a prior
+      `plan` call.
+    - Never auto-select or auto-downgrade an evidence mode; only recommend, per `docs/reviewer-pipeline.md`
+      §14's existing guardrail language.
+    
+    ## Related
+    
+    - **UPG-0042**: Reviewer packet efficiency — the packet-bloat problem this upgrade helps prevent
+      earlier in the workflow.
+    - **UPG-0031**: Review script delta-mode fix + fail-closed `EMPTY_PACKET` guard — the failure mode
+      this upgrade helps catch *before* a Codex call is spent, not just fail closed after.
+    - **UPG-0044**: Reviewer Pipeline Architecture Refresh — `docs/reviewer-pipeline.md` §14 (evidence
+      modes) and §5 (coverage states) are the doctrine this preview must stay consistent with.
+    - **UPG-0046**: ReviewRun Structured Records — a natural (but not required) place to persist a
+      plan if `plan`'s output needs to be referenced by a later `review` call.
+    - **UPG-0049**: External Review Policy Registry — if built, would let `plan` resolve required
+      artifacts from policy instead of only echoing back what was typed.
+    - Proposed by the human during a 2026-07-12 review-architecture discussion (see
+      `reviews/review-log.md` and `changes/UPG-0044__CHG-20260712-001__reviewer-pipeline-architecture-refresh.md`
+      for the discussion this backlog batch originated from).
+    
+    ## Feature Thread
+    
+    > Canonical thread rollup for this feature. Compact links/IDs only; full detail lives in the
+    > change records and review files. May be maintained manually.
+    
+    ### Changes
+    
+    | Change ID | File | Purpose | State |
+    |---|---|---|---|
+    | CHG-20260712-002 | changes/UPG-0045__CHG-20260712-002__review-plan-preview.md | Add `codeos-reviewer plan` reusing packet::build() | IN_PROGRESS |
+    
+    ### Reviews
+    
+    | Review ID | Change ID | Step | Round | Verdict |
+    |---|---|---|---|---|
+    
+    ### Findings Tracked Inside This Feature
+    
+    | Finding ID | Review ID | Classification | Resolution |
+    |---|---|---|---|
+    
+    ### Follow-up Features
+    
+    | Feature ID | Reason | Source finding |
+    |---|---|---|
+
+DIFF TO REVIEW (base->review, secret/size filtered)
+diff --git a/backlog/UPG-0045-review-plan-preview.md b/backlog/UPG-0045-review-plan-preview.md
+index 7d91e8b..460a7bc 100644
+--- a/backlog/UPG-0045-review-plan-preview.md
++++ b/backlog/UPG-0045-review-plan-preview.md
+@@ -2,7 +2,7 @@
+ feature_id: UPG-0045
+ slug: review-plan-preview
+ title: Review Plan Preview — codeos-reviewer plan
+-status: PROPOSED
++status: IN_PROGRESS
+ priority: P2
+ depends_on: []
+ related_features: [UPG-0046, UPG-0049, UPG-0042, UPG-0027]
+@@ -130,7 +130,7 @@ The plan preview must:
+ 
+ | Change ID | File | Purpose | State |
+ |---|---|---|---|
+-| (none yet) | — | — | PROPOSED |
++| CHG-20260712-002 | changes/UPG-0045__CHG-20260712-002__review-plan-preview.md | Add `codeos-reviewer plan` reusing packet::build() | IN_PROGRESS |
+ 
+ ### Reviews
+ 
+diff --git a/status/self-development.md b/status/self-development.md
+index 8773422..6d0cc10 100644
+--- a/status/self-development.md
++++ b/status/self-development.md
+@@ -67,6 +67,7 @@
+ | UPG-0042 | CHG-20260711-001 | script-tooling | self-dev only | 4-Reconcile | REVIEWED (series RVS__…__S4; R2 NO OBJECTION; all 10 ACs verified; 124 tests pass) | COMPLETE | — |
+ | UPG-0043 | CHG-20260711-002 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S4; R3 budget exhausted; inline doc fix accepted by human; all 5 final verifications pass; 124 tests across 8 files) | COMPLETE | — |
+ | UPG-0044 | CHG-20260712-001 | documentation | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S4; R1 CHANGES ADVISED — 1 finding fixed; R2 NO OBJECTION; all 12 ACs verified) | COMPLETE | — |
++| UPG-0045 | CHG-20260712-002 | script-tooling | self-dev only | 1-Intent | DRAFT (PROFILE-3, review not yet run) | IN_PROGRESS | — |
+ 
+ <!--
+ Identity   : Feature ID = UPG-#### (stable). Change ID = CHG-YYYYMMDD-NNN (one execution), or a

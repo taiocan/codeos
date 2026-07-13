@@ -47,6 +47,9 @@ pub struct ArtifactEntry {
     pub path: String,
     pub sha256: String,
     pub visibility: String,
+    /// Size in bytes as reported by `fs::metadata` at build time. `0` for `missing` artifacts
+    /// (no file to stat).
+    pub bytes: u64,
 }
 
 pub struct PacketManifestEntry {
@@ -70,6 +73,26 @@ pub struct ReviewPacket {
     pub secret_flag: bool,
     pub artifacts: Vec<ArtifactEntry>,
     pub excluded_paths: Vec<(String, String, String)>, // (path, reason, section)
+    /// Total bytes counted toward the packet budget (full-mode artifact bytes + diff bytes;
+    /// mirrors the same accumulation `build()` already performs for the budget warning).
+    pub review_content_bytes: u64,
+    /// `review_content_bytes / 4`, the same rough token estimate already shown in the packet's
+    /// `PACKET MANIFEST` section.
+    pub estimated_review_tokens: u64,
+    /// `CODEOS_PACKET_BUDGET_BYTES` (or its default) resolved at build time.
+    pub budget_bytes: u64,
+    /// `review_content_bytes > budget_bytes`.
+    pub over_budget: bool,
+    /// Bytes of the secret/size-filtered diff section, already counted into
+    /// `review_content_bytes`. `0` when there is no diff content.
+    pub diff_bytes: u64,
+    /// Exactly the (path, bytes) pairs that actually count toward `review_content_bytes` —
+    /// full-mode artifact content plus `(diff)` when non-empty. Deliberately excludes
+    /// `sha-only` and delta-mode entries, which are never counted into the budget even though
+    /// `ArtifactEntry.bytes` reports their on-disk size. This is the same list `build()`'s own
+    /// oversized-packet warning ranks, exposed so callers can reproduce that exact ranking
+    /// instead of (incorrectly) ranking all of `artifacts` by raw file size.
+    pub budget_contributors: Vec<(String, u64)>,
     content: String,
 }
 
@@ -179,6 +202,7 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
             path: so.clone(),
             sha256: sha.clone(),
             visibility: "path_sha_only".to_string(),
+            bytes,
         });
         manifest_sha_only.push_str(&format!(
             "    - path: {}\n      mode: path_sha_only\n      bytes: {}\n      sha256: {}\n",
@@ -190,7 +214,7 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
     for a in &opts.artifacts {
         if !Path::new(a).exists() {
             artifacts_block.push_str(&format!("  --- {} (visibility: missing — not shown) ---\n\n", a));
-            artifacts.push(ArtifactEntry { path: a.clone(), sha256: String::new(), visibility: "missing".to_string() });
+            artifacts.push(ArtifactEntry { path: a.clone(), sha256: String::new(), visibility: "missing".to_string(), bytes: 0 });
             manifest_full.push_str(&format!(
                 "    - path: {}\n      mode: omitted_with_reason\n      reason: requested artifact missing\n", a
             ));
@@ -202,7 +226,7 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
         let bytes = std::fs::metadata(a).map(|m| m.len()).unwrap_or(0);
         if bytes > SIZE_LIMIT_BYTES {
             artifacts_block.push_str(&format!("  --- {} (visibility: oversize_omitted — over size limit, not shown) ---\n\n", a));
-            artifacts.push(ArtifactEntry { path: a.clone(), sha256: String::new(), visibility: "oversize_omitted".to_string() });
+            artifacts.push(ArtifactEntry { path: a.clone(), sha256: String::new(), visibility: "oversize_omitted".to_string(), bytes });
             manifest_full.push_str(&format!(
                 "    - path: {}\n      mode: omitted_with_reason\n      reason: over size limit\n", a
             ));
@@ -227,7 +251,7 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
             artifacts_block.push_str(&format!(
                 "  --- {} (mode: {}, sha256: {}, bytes: {}) ---\n\n", a, vis, sha, bytes
             ));
-            artifacts.push(ArtifactEntry { path: a.clone(), sha256: sha.clone(), visibility: vis.to_string() });
+            artifacts.push(ArtifactEntry { path: a.clone(), sha256: sha.clone(), visibility: vis.to_string(), bytes });
             manifest_full.push_str(&format!(
                 "    - path: {}\n      mode: {}\n      bytes: {}\n      sha256: {}\n", a, vis, bytes, sha
             ));
@@ -256,7 +280,7 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
             artifacts_block.push_str(&format!(
                 "  --- {} (sha256: {}, visibility: {}) ---\n{}\n", a, sha, vis, indented
             ));
-            artifacts.push(ArtifactEntry { path: a.clone(), sha256: sha, visibility: vis.to_string() });
+            artifacts.push(ArtifactEntry { path: a.clone(), sha256: sha, visibility: vis.to_string(), bytes });
             review_content_bytes += bytes;
             file_contributors.push((a.clone(), bytes));
             shown_count += 1;
@@ -455,6 +479,12 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
         secret_flag,
         artifacts,
         excluded_paths,
+        review_content_bytes,
+        estimated_review_tokens: estimated_tokens,
+        budget_bytes: budget,
+        over_budget: review_content_bytes > budget,
+        diff_bytes,
+        budget_contributors: file_contributors,
         content,
     })
 }

@@ -314,3 +314,38 @@ Similarly, R1 found AC-7 evidence contradicted implementation notes. Initial fix
 Surface-level fixes are **procrastination** — they defer the real work and burn review rounds. When a reviewer says "this file contains X when it should contain Y," the answer is to change what the file contains, not to change how you describe it. PROFILE-3 max-rounds budget exists to prevent endless cycling; use it by fixing structurally the first time.
 
 **Related:** [[AJ-002]] on reproducible acceptance criteria, [[AJ-001]] on reconciling originating briefs.
+
+---
+
+## AJ-011 — Reusing a shared function doesn't stop its callers from re-deriving divergent views
+
+*Origin: UPG-0045 / CHG-20260712-002 (review-plan-preview), Step 3 review R1.*
+
+The Step 1 design constraint for `codeos-reviewer plan` was explicit and correct: it must call
+the exact same `packet::build()` function `review`/`--print-packet` use, so it can never
+describe a packet `review` wouldn't actually build. That constraint was honored — `plan` really
+does call the one shared `build()` function, verified by grep (`pub fn build` appears once).
+
+It still shipped a real bug. `packet::build()`'s own oversized-packet warning ranks contributors
+from an internal list (`file_contributors`) that deliberately excludes `sha-only` and delta-mode
+entries, because those bytes are never counted toward the budget. `plan`'s first implementation,
+reading only the *public, final* `ReviewPacket.artifacts` field (which includes every entry,
+budget-relevant or not), re-derived its own "largest inputs" ranking from that broader set. The
+shared function was reused correctly; a *downstream summary built from its output* silently
+recomputed something adjacent-but-different, because the public struct exposed the final answer
+but not the specific intermediate the original warning actually used.
+
+**Lesson / how to apply:** "Call the same function" is a necessary but not sufficient guardrail
+against parallel-logic drift. When a change adds a *second consumer* of a function that already
+does some ranking/filtering/aggregation internally, check whether the second consumer needs the
+exact same intermediate the first consumer's diagnostic uses — not just the same top-level
+result. If so, expose that intermediate as its own field (as this change did with
+`budget_contributors`) rather than letting the second consumer reconstruct a plausible-looking
+approximation from whatever public fields already exist. This applies directly to the future
+`UPG-0046`/`UPG-0047` (ReviewRun/structured-findings) work: any new surface that summarizes or
+re-presents review data must be checked against what the *original* formatter actually consumed,
+not just against the final struct's public shape.
+
+**Related:** [[AJ-010]] on structural vs. cosmetic fixes — this is a specific, subtler instance:
+the fix here *was* structural (a new shared field), but the bug it fixed looked, at first
+glance, like it should already have been prevented by "just reuse the function."

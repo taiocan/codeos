@@ -62,6 +62,19 @@ enum Commands {
         #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
         rest: Vec<String>,
     },
+    /// Preview what `review` would send — resolved artifacts, evidence mode, packet size vs.
+    /// budget — without invoking Codex or writing anything. Accepts the exact same arguments as
+    /// `review`.
+    ///
+    /// Examples:
+    ///   codeos-reviewer plan UPG-0042 selfdev-step-1 changes/UPG-0042__CHG-*.md src/packet.rs
+    ///   codeos-reviewer plan UPG-0042 selfdev-step-1 --mode delta --base abc123 changes/UPG-0042__CHG-*.md
+    Plan {
+        feature: String,
+        stage: String,
+        #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
+        rest: Vec<String>,
+    },
     /// Append a human decision entry to the log
     Decision {
         feature: String,
@@ -229,6 +242,31 @@ fn run() -> i32 {
             };
 
             match cmd::review::run(args, &cfg, &cfg.provider_name) {
+                Ok(code) => code,
+                Err(e) => {
+                    eprintln!("internal error: {}", e);
+                    EXIT_WRITE
+                }
+            }
+        }
+
+        Commands::Plan { feature, stage, rest } => {
+            let parsed = match cmd::review::parse_rest(&rest) {
+                Ok(p) => p,
+                Err(e) => {
+                    eprintln!("{}", e);
+                    return EXIT_USAGE;
+                }
+            };
+            let (artifacts, sha_only, guard_clean, fresh, scratch, print_only,
+                 skip_prechecks, delta_mode, delta_base) = parsed;
+
+            let args = cmd::review::ReviewArgs {
+                feature, stage, artifacts, sha_only, guard_clean,
+                fresh, scratch, print_only, skip_prechecks, delta_mode, delta_base,
+            };
+
+            match cmd::plan::run(args, &cfg) {
                 Ok(code) => code,
                 Err(e) => {
                     eprintln!("internal error: {}", e);

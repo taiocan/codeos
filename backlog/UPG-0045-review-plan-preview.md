@@ -2,7 +2,7 @@
 feature_id: UPG-0045
 slug: review-plan-preview
 title: Review Plan Preview — codeos-reviewer plan
-status: PROPOSED
+status: COMPLETE
 priority: P2
 depends_on: []
 related_features: [UPG-0046, UPG-0049, UPG-0042, UPG-0027]
@@ -130,12 +130,16 @@ The plan preview must:
 
 | Change ID | File | Purpose | State |
 |---|---|---|---|
-| (none yet) | — | — | PROPOSED |
+| CHG-20260712-002 | changes/UPG-0045__CHG-20260712-002__review-plan-preview.md | Add `codeos-reviewer plan` reusing packet::build() | COMPLETE |
 
 ### Reviews
 
 | Review ID | Change ID | Step | Round | Verdict |
 |---|---|---|---|---|
+| RVS__UPG-0045__CHG-20260712-002__S1 | CHG-20260712-002 | 1-Intent | R1 | NO OBJECTION |
+| RVS__UPG-0045__CHG-20260712-002__S2 | CHG-20260712-002 | 2-Acceptance | R1→R2 | DO NOT ADVANCE → NO OBJECTION |
+| RVS__UPG-0045__CHG-20260712-002__S3 | CHG-20260712-002 | 3-Implement | R1→R2 | DO NOT ADVANCE → NO OBJECTION |
+| RVS__UPG-0045__CHG-20260712-002__S4 | CHG-20260712-002 | 4-Reconcile | R1 | NO OBJECTION |
 
 ### Findings Tracked Inside This Feature
 

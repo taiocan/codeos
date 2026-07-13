@@ -6234,3 +6234,137 @@ R1: the `§4f` grep-evidence claim (and the change record's mirrored Reconciliat
 **Reviewer insight (verbatim pattern, recurring across Steps 1/3/4):** strong claims — "no other files change," "verified," "zero matches outside X" — must be pinned to evidence actually shown in the packet, not asserted from memory of having run a check. Every instance Codex caught was a small, mechanically fixable evidence gap (a missing citation, an incomplete grep, a self-referential exclusion list), never a design defect in the doc content itself.
 
 **Human decision:** APPROVED — close out, mark `COMPLETE`, commit and push.
+
+## 2026-07-12T15:30:39Z REVIEW — UPG-0045__CHG-20260712-002 — Stage selfdev-step-1
+Base: (no base pin)  Review: 356d718f3769f23a7374a735d8ed19d066473128  Branch: main
+Diff-hash: 5fe22855ef8c1146133bd6155eb2bdfbbdc326e90681552e77df6605a4a9f371
+Reviewer: codex default-model (session 019f56f3-63df-76f1-91da-62270290faa9)
+Effort: high   Wall time: 20469ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — No in-scope blocker; acceptance criteria are not yet defined for this Step 1 intent artifact.  
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-12T153039Z-UPG-0045__CHG-20260712-002-stage-selfdev-step-1-356d718.md (sha256:4612f3374f28282886e55c3da989ddb02c5dc292effa97aa431ddc2790b71c87)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260712T153039Z-UPG-0045__CHG-20260712-002-stage-selfdev-step-1-356d718.packet.txt (sha256:6a87e2afb4ba4d0d292ae043d165d5e04b24f155ec7015d7fc1a309d5385228e)
+Human decision: (append with: codeos-reviewer decision UPG-0045__CHG-20260712-002 selfdev-step-1 <DECISION> "<reason>")
+
+## 2026-07-12T15:43:42Z REVIEW — UPG-0045__CHG-20260712-002 — Stage selfdev-step-2
+Base: (no base pin)  Review: 356d718f3769f23a7374a735d8ed19d066473128  Branch: main
+Diff-hash: f2f033c89458a36438885efd769c43b1a821c3a5864a2f32beda09c69b6206b4
+Reviewer: codex default-model (session 019f56f3-63df-76f1-91da-62270290faa9)
+Effort: high   Wall time: 62911ms   Reconnects: 0
+Codex concern: DO NOT ADVANCE
+Effective concern: DO NOT ADVANCE
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: DO NOT ADVANCE — AC-1 contradicts the intended parser wiring and AC-6 under-verifies the stated read-only guarantee.  
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-12T154342Z-UPG-0045__CHG-20260712-002-stage-selfdev-step-2-356d718.md (sha256:a0299cd4e367535ed0f9a3c9a19f026afff3f03387f56e4f4f5c8653e8d54b13)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260712T154342Z-UPG-0045__CHG-20260712-002-stage-selfdev-step-2-356d718.packet.txt (sha256:c5ae178764e636680214912db80230c151d7ffff2fea5d4bac18967229927f89)
+Human decision: (append with: codeos-reviewer decision UPG-0045__CHG-20260712-002 selfdev-step-2 <DECISION> "<reason>")
+
+## 2026-07-12T15:44:59Z REVIEW — UPG-0045__CHG-20260712-002 — Stage selfdev-step-2
+Base: (no base pin)  Review: 356d718f3769f23a7374a735d8ed19d066473128  Branch: main
+Diff-hash: f2f033c89458a36438885efd769c43b1a821c3a5864a2f32beda09c69b6206b4
+Reviewer: codex default-model (session 019f56f3-63df-76f1-91da-62270290faa9)
+Effort: high   Wall time: 36567ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — Step 2 now defines acceptance criteria that align with the stated advisory/read-only `plan` scope.  
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-12T154459Z-UPG-0045__CHG-20260712-002-stage-selfdev-step-2-356d718.md (sha256:c96d12250c8c042f5a70099794499f1c40d1f1ab283c12c39762d6430777005f)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260712T154459Z-UPG-0045__CHG-20260712-002-stage-selfdev-step-2-356d718.packet.txt (sha256:80a78fb51ae9c1a2eb9a7ec5c24aa35621b03d7b932769c50b7b30c44919179d)
+Human decision: (append with: codeos-reviewer decision UPG-0045__CHG-20260712-002 selfdev-step-2 <DECISION> "<reason>")
+
+## 2026-07-13T05:02:35Z REVIEW — UPG-0045__CHG-20260712-002 — Stage selfdev-step-3
+Base: (no base pin)  Review: 356d718f3769f23a7374a735d8ed19d066473128  Branch: main
+Diff-hash: b569def2d00c0ffc89d9d16ebfaff0fc083519e057673ecb90ee5aeefe28c7fa
+Reviewer: codex default-model (session 019f56f3-63df-76f1-91da-62270290faa9)
+Effort: high   Wall time: 87232ms   Reconnects: 0
+Codex concern: DO NOT ADVANCE
+Effective concern: DO NOT ADVANCE
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: DO NOT ADVANCE — `plan` can misreport oversized-packet contributors versus `review`, and stated parity/idempotency coverage is incomplete.  
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-13T050235Z-UPG-0045__CHG-20260712-002-stage-selfdev-step-3-356d718.md (sha256:1670e99bfc9b782c6bcf1183e90a69d1b4cfe0a9f82d28efb399bcf01ba00d5f)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260713T050235Z-UPG-0045__CHG-20260712-002-stage-selfdev-step-3-356d718.packet.txt (sha256:335ca1912c1a6158271e29fccec704b76f45fdcd0839296c648795a3300f236c)
+Human decision: (append with: codeos-reviewer decision UPG-0045__CHG-20260712-002 selfdev-step-3 <DECISION> "<reason>")
+
+## 2026-07-13T05:06:23Z REVIEW — UPG-0045__CHG-20260712-002 — Stage selfdev-step-3
+Base: (no base pin)  Review: 356d718f3769f23a7374a735d8ed19d066473128  Branch: main
+Diff-hash: 6bff361b55967e6a73f460cf0dcdf6cebcd349d3fd8200b2d845079eb56b6e1e
+Reviewer: codex default-model (session 019f56f3-63df-76f1-91da-62270290faa9)
+Effort: high   Wall time: 34416ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: B
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — The prior budget-contributor mismatch and parity/idempotency test gaps are addressed in the shown artifacts.  
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-13T050623Z-UPG-0045__CHG-20260712-002-stage-selfdev-step-3-356d718.md (sha256:02964c49e4d351aed334f3c4fbf6170c5760ff28d4d9e27fe284cb69aa0d69d1)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260713T050623Z-UPG-0045__CHG-20260712-002-stage-selfdev-step-3-356d718.packet.txt (sha256:7e20b003dafad6765223b5f4a538546bd28488c14bde78f1417d4198be945868)
+Human decision: (append with: codeos-reviewer decision UPG-0045__CHG-20260712-002 selfdev-step-3 <DECISION> "<reason>")
+
+## 2026-07-13T05:10:34Z REVIEW — UPG-0045__CHG-20260712-002 — Stage selfdev-step-4
+Base: (no base pin)  Review: 356d718f3769f23a7374a735d8ed19d066473128  Branch: main
+Diff-hash: ef75906e508d45bf2832c8be3c0b3d29ed2d4b7268581d0b8adaf631b9839e49
+Reviewer: codex default-model (session 019f56f3-63df-76f1-91da-62270290faa9)
+Effort: high   Wall time: 31146ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: B
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — Reconciliation shows all stated ACs satisfied and prior in-scope blockers resolved.  
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-13T051034Z-UPG-0045__CHG-20260712-002-stage-selfdev-step-4-356d718.md (sha256:18de85b3ed56c90a595426280114774f4a8ca8ac9f6aa6c5924ed3bbe61512ec)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260713T051034Z-UPG-0045__CHG-20260712-002-stage-selfdev-step-4-356d718.packet.txt (sha256:7de18f68ff26ece2aaa09eab5582700a987047e3d96f44bd86a960cbbc3d5001)
+Human decision: (append with: codeos-reviewer decision UPG-0045__CHG-20260712-002 selfdev-step-4 <DECISION> "<reason>")
+
+## 2026-07-13 REVIEW — UPG-0045 / CHG-20260712-002 — Steps 1-4 (ACCEPTED, COMPLETE)
+
+**Review series:** RVS__UPG-0045__CHG-20260712-002__S1 through S4
+**Profile:** PROFILE-3 (max 3 rounds/step)
+**Change:** Review Plan Preview — added `codeos-reviewer plan`, previewing resolved artifacts,
+evidence mode, and packet size vs. budget without invoking Codex or writing anything. Reuses
+`packet::build()` (the same function `review`/`--print-packet` call) rather than a second
+packet-construction path — the human's own Step 1 approval called this out as "the key design
+choice."
+
+### Step 1 — Intent (R1 NO OBJECTION)
+Resolved the backlog brief's three open design questions concretely by reading the code first:
+`plan` needed no new artifact-resolution machinery (the manifest data `build()` already computes
+just wasn't exposed as struct fields), reuses `review`'s exact argument parser, and calls the
+identical `packet::build()` function `--print-packet` already uses.
+
+### Step 2 — Acceptance Criteria (R1 DO NOT ADVANCE, 2 findings → R2 NO OBJECTION)
+Both findings were real contradictions, not wording: AC-1's verification text said `plan.rs`
+itself would call `parse_rest()`, contradicting Step 1's actual `main.rs`-dispatch design; AC-6
+promised "never writes to `reviews/` **or any tracked file**" but its verification only checked
+`reviews/`. Fixed by aligning AC-1 to the real wiring and broadening AC-6 to a whole-working-tree
+`git status` comparison (reusing the existing `UPG-0034` read-only-invariant pattern).
+
+### Step 3 — Implement (R1 DO NOT ADVANCE, 2 findings → R2 NO OBJECTION)
+Both findings were real bugs. (1) **AC-8 violation:** the first implementation ranked `plan`'s
+oversized-packet "largest inputs" warning from *all* artifacts by raw file size, including
+`sha-only`/delta entries that contribute zero bytes to the actual budget — a large `--sha-only`
+context file could top the list while being irrelevant to the real overage. This is notable
+because it happened *despite* the Step 1 architectural constraint of reusing `packet::build()` —
+reusing the core function wasn't sufficient on its own; the downstream summary logic had quietly
+re-derived from the wrong intermediate (`ReviewPacket.artifacts`, the full set) instead of the
+one `build()`'s own warning actually uses internally (`file_contributors`, the budget-relevant
+subset). Fixed by exposing that exact internal list as a new `budget_contributors` field, making
+`plan`'s ranking identical to `review`'s by construction. (2) Test-coverage gap on AC-5/AC-12
+also surfaced a real precision bug: per-artifact output used lossy `{:.1} KB`, rounding small
+files to "0.0 KB" and making byte-level parity untestable — fixed to exact byte counts.
+
+### Step 4 — Reconcile (R1 NO OBJECTION)
+All 12 ACs verified PASS with evidence. 9 tests in `plan_command.rs`, 159 total across the suite,
+zero failures, zero regressions. `scripts/codeos-review.sh` needs no change (static shim).
+
+**Reviewer insight (verbatim pattern):** "Reuse the shared function" is necessary but not
+sufficient — every *downstream* summary or diagnostic built from that function's output must
+also reuse its exact intermediate data, not re-derive a parallel view from the final struct's
+public fields. The `budget_contributors` bug is the concrete instance: `packet::build()` was
+correctly reused, but the consumer still silently diverged one layer up.
+
+**Human decision:** APPROVED at every gate — Step 3 R2 explicitly confirmed "fixed structurally,"
+Step 4 approved to close out.

@@ -589,6 +589,25 @@ codeos-reviewer review UPG-0042 selfdev-step-3 \
   changes/UPG-0042__CHG-*.md src/packet.rs
 ```
 
+### Preview a plan before reviewing
+
+`codeos-reviewer plan` accepts the exact same arguments as `review` (feature, stage,
+artifacts, `--mode`/`--base`, `--sha-only`) and reports what a `review` call with those
+arguments would send — resolved artifacts with their mode and byte size, `review_content_bytes`
+vs. the packet budget, `estimated_review_tokens`, coverage state, and (when over budget) the
+same size/contributor/delta-suggestion warning `review` itself prints. `plan` calls the exact
+same `packet::build()` function `review`/`--print-packet` use, so it cannot describe a packet
+`review` wouldn't actually build.
+
+```bash
+codeos-reviewer plan UPG-0042 selfdev-step-1 changes/UPG-0042__CHG-*.md src/packet.rs
+```
+
+`plan` never resolves or invokes a provider and never writes to `reviews/` or any other tracked
+file — it only builds and reports the packet plan. Unlike `--print-packet`, which prints the
+full packet text Codex would receive, `plan` prints a compact summary; use `--print-packet` when
+you need to inspect the packet's exact byte-for-byte content.
+
 ---
 
 ## Appendix A — Inert hook snippets (NOT part of the pilot)
