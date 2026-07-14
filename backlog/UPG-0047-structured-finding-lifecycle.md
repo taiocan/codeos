@@ -2,7 +2,7 @@
 feature_id: UPG-0047
 slug: structured-finding-lifecycle
 title: Structured Finding Lifecycle
-status: PROPOSED
+status: COMPLETE
 priority: P2
 depends_on: [UPG-0046]
 related_features: [UPG-0045, UPG-0048]
@@ -145,12 +145,16 @@ The structured finding lifecycle must:
 
 | Change ID | File | Purpose | State |
 |---|---|---|---|
-| (none yet) | — | — | PROPOSED |
+| CHG-20260713-002 | changes/UPG-0047__CHG-20260713-002__structured-finding-lifecycle.md | Parse findings into assessment frontmatter; resolution via existing fixes_findings field | COMPLETE |
 
 ### Reviews
 
 | Review ID | Change ID | Step | Round | Verdict |
 |---|---|---|---|---|
+| RVS__UPG-0047__CHG-20260713-002__S1 | CHG-20260713-002 | 1-Intent | R1 | NO OBJECTION |
+| RVS__UPG-0047__CHG-20260713-002__S2 | CHG-20260713-002 | 2-Acceptance | R1→R2 | DO NOT ADVANCE → NO OBJECTION |
+| RVS__UPG-0047__CHG-20260713-002__S3 | CHG-20260713-002 | 3-Implement | R1→R2 | DO NOT ADVANCE → NO OBJECTION |
+| RVS__UPG-0047__CHG-20260713-002__S4 | CHG-20260713-002 | 4-Reconcile | R1 | NO OBJECTION |
 
 ### Findings Tracked Inside This Feature
 

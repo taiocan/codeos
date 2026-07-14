@@ -407,3 +407,43 @@ confidence — reproduce the *specific* failure mode the contract names, not jus
 function; checking `exists()` before acting) didn't actually deliver the guarantee it looked
 like it delivered, and both were caught only because Codex review checked the acceptance
 criterion's exact wording against the code, not just its general shape.
+
+---
+
+## AJ-013 — A one-off grep is a hypothesis; only a permanent corpus test is evidence
+
+*Origin: UPG-0047 / CHG-20260713-002 (structured-finding-lifecycle), Step 1 → Step 3.*
+
+Before proposing the parsing approach for structured findings, Step 1 ran a manual, one-off
+validation: `grep -c "^Finding:" reviews/codex/*.md` → 631 blocks across 302 files, and a
+blank-line check that found "zero gaps." This read as strong evidence that the reviewer's
+`Finding:`/`Evidence:`/`Why:`/`Required action:` output shape was mechanically reliable, and the
+Step 1 Codex review accepted it (with a caveat — evidence grade C, "claims not shown directly").
+
+It was wrong in two independent ways, both only discovered once Step 3 built an actual **unit
+test** that parsed every real file and asserted an invariant, rather than eyeballing grep output:
+
+1. **The count itself was inflated.** Every assessment file contains a duplicate transcript echo
+   (CLI banner + prompt replay + a second copy of the real answer). A naive whole-file grep counts
+   real findings twice. The real, deduplicated count was 317, not 631.
+2. **The "zero gaps" conclusion was wrong outside the small sample actually eyeballed.** Codex
+   does not reliably follow the prompt's "combine `Evidence`/`Why`/`Required action` onto one
+   line" instruction. A single-shape parser failed on 112 of those 317 real findings — and this
+   was not old, resolved history: the exact separate-line shape appeared in this same session's
+   own `UPG-0045` review, generated hours earlier.
+
+**Lesson / how to apply:** a manual grep or spot-check against "the corpus" is a *hypothesis*
+about the corpus's shape, not evidence of it — especially for text a non-deterministic system
+(an LLM) generated, where "the prompt says to do X" does not mean "X is what always happens."
+The only thing that counts as evidence is a **permanent, re-runnable test** that actually parses
+every real file and asserts the invariant that matters (here: every `Finding:` line is either
+parsed or explicitly counted, never silently lost) — not a fixed count, which drifts as the
+corpus grows, but a structural invariant plus a bounded-tolerance ceiling for known, understood
+residual variance. Build that test *before* trusting a corpus claim enough to design against it,
+not after a reviewer asks for "direct evidence." This applies to any future Codeos work that
+claims to parse, migrate, or validate real historical or generated text — `UPG-0048`'s eventual
+event-log migration and `UPG-0049`'s policy-file parsing are the next obvious candidates.
+
+**Related:** [[AJ-012]] — both are cases where the actual first step (build a test that touches
+real data) would have caught the gap immediately, but the natural first move (reason from the
+spec, or check a plausible-looking pre-check) did not.

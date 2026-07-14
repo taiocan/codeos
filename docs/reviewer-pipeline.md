@@ -299,6 +299,30 @@ rollback semantics. That backlog item is the authoritative pointer for this dire
 anything beyond it (a named `ReviewRun` schema, an event ledger, an automated control plane) as
 unapproved and undesigned until a Step 1 change intent says otherwise.
 
+## 4g. Structured findings
+
+Each review round's `Finding:`/`Evidence:`/`Why:`/`Required action:` blocks (§7's TRIAGE RULE
+output shape) are mechanically parsed (`UPG-0047`) into a `findings:` list in the **same**
+assessment frontmatter `review_id` lives in — no new artifact, no new storage. Each entry gets a
+deterministic `finding_id` (`FND__<review_id>__NN`) and carries only
+`severity`/`classification`/`summary`/`acceptance_criterion`/`required_action`; the full
+`Evidence:`/`Why:`/`Scope reason:` prose stays exactly where it already was, in the body, not
+duplicated into YAML.
+
+There is **no `status` or `resolved_by` field**. An assessment is an immutable, committed
+snapshot of what the reviewer said at that moment — "resolved" is not a fact that exists yet
+when the file is written, so storing it there would either be permanently wrong (`open`
+forever) or require mutating an already-committed file, breaking the durability guarantee (§4a).
+Resolution is instead answered by a query over durable records that already exist: a finding is
+resolved when a **later, accepted** change record's `fixes_findings` trace-header field names
+its `finding_id` — self-reported by whoever fixes it, at fix time, exactly matching current
+practice. No lookup tool for this exists yet; building one is optional future work.
+
+The parser accepts multiple real `Evidence:`/`Why:`/`Required action:` layouts — Codex does not
+reliably combine them onto one line even though the prompt asks for that — and never silently
+drops a `Finding:` line it cannot parse; `unparsed_findings_count` records the count instead,
+advisory only, never blocking the review.
+
 ## 5. Coverage and effective concern
 
 Defined normatively in [`reviewer-artifact-schemas.md`](reviewer-artifact-schemas.md) (coverage

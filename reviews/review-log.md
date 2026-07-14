@@ -6509,3 +6509,150 @@ pre-check with `exists()`/`is_ok()` and branch on that alone.
 
 **Human decision:** APPROVED at every gate — Step 3 R2 and Step 4 R2 both confirmed fixed;
 approved to close out.
+
+## 2026-07-13T20:39:46Z REVIEW — UPG-0047__CHG-20260713-002 — Stage selfdev-step-1
+Review ID: REV__UPG-0047__CHG-20260713-002__selfdev-step-1__R1
+Base: (no base pin)  Review: 0ab9eb68b7abfd4973f17dc00c8ad26fe46c1e61  Branch: main
+Diff-hash: a9a590035b1129856d9dc02e0f62f41ac0da0523135423287a4c050ce9bfe003
+Reviewer: codex default-model (session 019f5d34-c282-7f20-9861-ed8aef375150)
+Effort: high   Wall time: 20872ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: C
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — No in-scope blocker is established for this Step 1 intent artifact.
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-13T203946Z-UPG-0047__CHG-20260713-002-stage-selfdev-step-1-0ab9eb6.md (sha256:2453a0515965ab8abe58ce6a03adb13b1308cf360df51a664e17b91e9ea29f02)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260713T203946Z-UPG-0047__CHG-20260713-002-stage-selfdev-step-1-0ab9eb6.packet.txt (sha256:74eaccb5d98dc369db4304665c7bfa81194328f5b861fee5119f5f9f0a58c6d0)
+Human decision: (append with: codeos-reviewer decision UPG-0047__CHG-20260713-002 selfdev-step-1 <DECISION> "<reason>")
+
+## 2026-07-14T00:39:22Z REVIEW — UPG-0047__CHG-20260713-002 — Stage selfdev-step-2
+Review ID: REV__UPG-0047__CHG-20260713-002__selfdev-step-2__R1
+Base: (no base pin)  Review: 0ab9eb68b7abfd4973f17dc00c8ad26fe46c1e61  Branch: main
+Diff-hash: 564ff084cc09efd8331a16afe748df1028e0aa39fcde0e5d83a60c63d58b7a3a
+Reviewer: codex default-model (session 019f5d34-c282-7f20-9861-ed8aef375150)
+Effort: high   Wall time: 39870ms   Reconnects: 0
+Codex concern: DO NOT ADVANCE
+Effective concern: DO NOT ADVANCE
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: DO NOT ADVANCE — The Step 2 schema must be made internally consistent before implementation.
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-14T003922Z-UPG-0047__CHG-20260713-002-stage-selfdev-step-2-0ab9eb6.md (sha256:feff249e72294d3bc8710eb7685dfd2326d03db81eede2f37593357144ddb2a7)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260714T003922Z-UPG-0047__CHG-20260713-002-stage-selfdev-step-2-0ab9eb6.packet.txt (sha256:b05a23cc7dc47571e2e72552da23a2d4a4daae51deff0c2093ccddbef14d298f)
+Human decision: (append with: codeos-reviewer decision UPG-0047__CHG-20260713-002 selfdev-step-2 <DECISION> "<reason>")
+
+## 2026-07-14T00:40:26Z REVIEW — UPG-0047__CHG-20260713-002 — Stage selfdev-step-2
+Review ID: REV__UPG-0047__CHG-20260713-002__selfdev-step-2__R2
+Base: (no base pin)  Review: 0ab9eb68b7abfd4973f17dc00c8ad26fe46c1e61  Branch: main
+Diff-hash: 564ff084cc09efd8331a16afe748df1028e0aa39fcde0e5d83a60c63d58b7a3a
+Reviewer: codex default-model (session 019f5d34-c282-7f20-9861-ed8aef375150)
+Effort: high   Wall time: 29277ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: B
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — The Step 2 acceptance contract is internally consistent and ready for implementation.
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-14T004026Z-UPG-0047__CHG-20260713-002-stage-selfdev-step-2-0ab9eb6.md (sha256:1ef4daaf1baed6f0488f72ff645c6d4635f9950db358db541d90211d0a0ffe91)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260714T004026Z-UPG-0047__CHG-20260713-002-stage-selfdev-step-2-0ab9eb6.packet.txt (sha256:bc054437671e0ac72eb34d46c0753606f49077ee5b00c40ceadef246c9264548)
+Human decision: (append with: codeos-reviewer decision UPG-0047__CHG-20260713-002 selfdev-step-2 <DECISION> "<reason>")
+
+## 2026-07-14T01:18:32Z REVIEW — UPG-0047__CHG-20260713-002 — Stage selfdev-step-3
+Review ID: REV__UPG-0047__CHG-20260713-002__selfdev-step-3__R1
+Base: (no base pin)  Review: 0ab9eb68b7abfd4973f17dc00c8ad26fe46c1e61  Branch: main
+Diff-hash: 49d48d9a49442f5efcae29ac94a7fe81d7f1b17d7f8df54f4bdaf9143c08e240
+Reviewer: codex default-model (session 019f5d34-c282-7f20-9861-ed8aef375150)
+Effort: high   Wall time: 62278ms   Reconnects: 0
+Codex concern: DO NOT ADVANCE
+Effective concern: DO NOT ADVANCE
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: DO NOT ADVANCE — AC-2 is contradicted by the parser accepting arbitrary classification labels.
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-14T011832Z-UPG-0047__CHG-20260713-002-stage-selfdev-step-3-0ab9eb6.md (sha256:7db9140470e32d482965049b4feaea7234ae6e647949ef5f71aab61d049d03f4)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260714T011832Z-UPG-0047__CHG-20260713-002-stage-selfdev-step-3-0ab9eb6.packet.txt (sha256:2b56997079fae3c0f93ab122f73eeab7c69e7fe4fef156a26aeeb84d46329904)
+Human decision: (append with: codeos-reviewer decision UPG-0047__CHG-20260713-002 selfdev-step-3 <DECISION> "<reason>")
+
+## 2026-07-14T01:21:55Z REVIEW — UPG-0047__CHG-20260713-002 — Stage selfdev-step-3
+Review ID: REV__UPG-0047__CHG-20260713-002__selfdev-step-3__R2
+Base: (no base pin)  Review: 0ab9eb68b7abfd4973f17dc00c8ad26fe46c1e61  Branch: main
+Diff-hash: 80e341dceca6600640473742b4e9cadb9372bfd1ce23d9fbc8aa181cd8f9b3fc
+Reviewer: codex default-model (session 019f5d34-c282-7f20-9861-ed8aef375150)
+Effort: high   Wall time: 59286ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: B
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — The R1 blocker fixes are directly reflected in code and artifact text.
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-14T012155Z-UPG-0047__CHG-20260713-002-stage-selfdev-step-3-0ab9eb6.md (sha256:0d77dfc446c2a93bf86e9be11d50d519cf3656b2dffbb90bc9a57d09740e8921)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260714T012155Z-UPG-0047__CHG-20260713-002-stage-selfdev-step-3-0ab9eb6.packet.txt (sha256:d3267abcf85afe28230ef2b10b02cbf86ecbf5790cac5235e53b413384cef661)
+Human decision: (append with: codeos-reviewer decision UPG-0047__CHG-20260713-002 selfdev-step-3 <DECISION> "<reason>")
+
+## 2026-07-14T02:33:05Z REVIEW — UPG-0047__CHG-20260713-002 — Stage selfdev-step-4
+Review ID: REV__UPG-0047__CHG-20260713-002__selfdev-step-4__R1
+Base: (no base pin)  Review: 0ab9eb68b7abfd4973f17dc00c8ad26fe46c1e61  Branch: main
+Diff-hash: 802fc651d1c2950a7cb5867986d307cc0ba165efd78388c1d4d8e3a4f44cc8aa
+Reviewer: codex default-model (session 019f5d34-c282-7f20-9861-ed8aef375150)
+Effort: high   Wall time: 46664ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: B
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — Reconciliation resolves the prior blockers and stays within scope.
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-14T023305Z-UPG-0047__CHG-20260713-002-stage-selfdev-step-4-0ab9eb6.md (sha256:09394892b4ddabd102226a150d44db724d986e69b2fb0731adcd0b8d9c6b9a95)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260714T023305Z-UPG-0047__CHG-20260713-002-stage-selfdev-step-4-0ab9eb6.packet.txt (sha256:9c12365a8f017cda57c8b2c3dc4b57e9807d56dbb043fb54228002796cef6a10)
+Human decision: (append with: codeos-reviewer decision UPG-0047__CHG-20260713-002 selfdev-step-4 <DECISION> "<reason>")
+
+## 2026-07-14 REVIEW — UPG-0047 / CHG-20260713-002 — Steps 1-4 (ACCEPTED, COMPLETE)
+
+**Review series:** RVS__UPG-0047__CHG-20260713-002__S1 through S4
+**Profile:** PROFILE-3 (max 3 rounds/step)
+**Change:** Structured Finding Lifecycle — parses reviewer `Finding:`/`Evidence:`/`Why:`/
+`Required action:` blocks into a compact `findings:` list in the same assessment frontmatter
+`review_id` (`UPG-0046`) already lives in. Deliberately no `status`/`resolved_by` field —
+resolution is derived later from an accepted change record's `fixes_findings` list naming the
+`finding_id`, reusing a trace-header field that has existed since `UPG-0001` but sat unpopulated.
+
+### Step 1 — Intent (R1 NO OBJECTION, evidence C)
+Validated the parsing approach against the real corpus before proposing scope: an initial
+whole-file `grep -c "^Finding:"` showed 631 blocks across 302 files with "zero gaps." This
+number was later found to be wrong (see Step 3) — it double-counted a duplicate CLI-transcript
+echo every assessment file contains. The qualitative conclusion (existing output is regular
+enough to parse mechanically) held; the specific figure did not.
+
+### Step 2 — Acceptance Criteria (R1 DO NOT ADVANCE → R2 NO OBJECTION)
+The human's two guardrails (compact YAML — no duplicated Evidence/Why/Scope-reason prose;
+deterministic 2-digit `finding_id` matching `UPG-0001`'s own grammar) were encoded precisely. R1
+caught a real contradiction: Step 1 still described the `Finding` struct as if
+`evidence`/`why`/`scope_reason` were serialized, after Step 2 had just resolved that they
+wouldn't be. Fixed by clarifying the internal-parse-struct vs. serialized-YAML-subset split.
+
+### Step 3 — Implement (R1 DO NOT ADVANCE → R2 NO OBJECTION)
+**Significant discovery, not assumed from spec:** building the corpus-regression test AC-11
+required (rather than a synthetic-fixture-only suite) immediately falsified Step 1's single-shape
+assumption — 112/317 real finding lines failed to parse. Investigation showed Codex does not
+reliably follow the "combine onto one line" prompt instruction, and — critically — this recurs
+in *current* output, not just old sessions: the exact separate-line shape appears in this
+session's own `UPG-0045` Step 3 R1 review. Extended the parser to three real, permanently
+supported shapes (not one current + legacy), converging 112 → 74 → 23 unparsed (of 317, 7.3%
+residual, traced to the project's earliest bootstrap sessions and individually non-recurring
+anomalies — a documented, bounded long tail, not chased further). R1 review then caught two more
+real bugs: no classification allow-list (AC-2 — an invented sixth label would have been silently
+accepted; fixed with a `CANONICAL_CLASSIFICATIONS` constant), and a fresh internal contradiction
+between Step 1's original and Implementation Notes' corrected corpus figures (fixed by marking
+the original explicitly superseded, not silently replaced).
+
+### Step 4 — Reconcile (R1 NO OBJECTION)
+All 11 ACs verified PASS. Headline claim stated precisely, per the human's own guidance: "the
+parser supports all canonical finding blocks plus the three recurring real-world variants... 294/317
+findings parsed; 23/317 remain documented unsupported historical long-tail cases" — not "all
+historical findings parse." 182 tests total, zero regressions.
+
+**Reviewer insight (verbatim pattern):** a corpus-validation claim asserted from a one-off manual
+grep is not evidence — it is a hypothesis. The only thing that counts as evidence is a permanent,
+re-runnable regression test against the real corpus, because LLM output does not reliably follow
+even explicit formatting instructions, and initial spot-checks (this session checked ~10 recent
+files in Step 1) can miss both formatting variance elsewhere in the corpus *and* whole-file
+duplication artifacts that inflate naive counts. "Validated against 3 files" and "validated
+against all 305 files with a test that runs every time" are different claims wearing the same
+words.
+
+**Human decision:** APPROVED at every gate — Step 3 R2 and Step 4 R1 both confirmed fixed;
+approved to close out with the precise (not overclaiming) headline wording.

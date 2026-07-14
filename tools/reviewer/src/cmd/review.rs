@@ -228,6 +228,7 @@ pub fn run(args: ReviewArgs, cfg: &Config, provider_name: &str) -> Result<i32> {
 
     // Parse review output
     let parsed = assessment::parse_review_output(&raw.text, &review_packet.coverage_state);
+    let (findings, unparsed_findings_count) = assessment::parse_findings(&raw.text, &review_id);
 
     // Save packet
     let outdir = if args.scratch { cfg.codex_dir.join("_scratch") } else { cfg.codex_dir.clone() };
@@ -272,7 +273,8 @@ pub fn run(args: ReviewArgs, cfg: &Config, provider_name: &str) -> Result<i32> {
 
     // Write assessment
     let (assessment_file, assessment_hash) = match assessment::write_assessment(
-        &review_id, &review_packet, &raw, &parsed, &outdir, &packet_saved, &packet_hash
+        &review_id, &findings, unparsed_findings_count,
+        &review_packet, &raw, &parsed, &outdir, &packet_saved, &packet_hash
     ) {
         Ok(r) => r,
         Err(e) => {

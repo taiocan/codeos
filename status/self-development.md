@@ -69,6 +69,7 @@
 | UPG-0044 | CHG-20260712-001 | documentation | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S4; R1 CHANGES ADVISED — 1 finding fixed; R2 NO OBJECTION; all 12 ACs verified) | COMPLETE | — |
 | UPG-0045 | CHG-20260712-002 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S4; R1 NO OBJECTION; all 12 ACs verified; 159 tests pass) | COMPLETE | — |
 | UPG-0046 | CHG-20260713-001 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S4; R1 DO NOT ADVANCE — real fail-closed bug fixed; R2 NO OBJECTION; all 11 ACs verified; 171 tests pass) | COMPLETE | — |
+| UPG-0047 | CHG-20260713-002 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S4; R1 NO OBJECTION; all 11 ACs verified; 182 tests pass; 294/317 findings parse, 23 documented long-tail) | COMPLETE | — |
 
 <!--
 Identity   : Feature ID = UPG-#### (stable). Change ID = CHG-YYYYMMDD-NNN (one execution), or a

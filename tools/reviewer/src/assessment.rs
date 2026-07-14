@@ -1,6 +1,7 @@
 use crate::packet::{CoverageState, ReviewPacket};
 use crate::provider::RawAssessment;
 use anyhow::{Context, Result};
+use regex::Regex;
 use std::path::{Path, PathBuf};
 
 pub struct ParsedReview {
@@ -10,6 +11,204 @@ pub struct ParsedReview {
     pub summary_line: String,
     pub coverage_note: String,
     pub highest_impact_uncertainty: String,
+}
+
+/// The exact five TRIAGE RULE labels (`prompts/codeos-reviewer-task.md`, `docs/reviewer-pipeline.md`
+/// §7) — the only values `parse_findings` accepts as a valid `Classification:`. A `Finding:` line
+/// with any other value is treated as malformed (AC-2), not silently accepted.
+const CANONICAL_CLASSIFICATIONS: [&str; 5] = [
+    "IN-SCOPE BLOCKER",
+    "IN-SCOPE NON-BLOCKER",
+    "OUT-OF-SCOPE BACKLOG",
+    "REJECTED",
+    "SELF-REFERENCE / REVIEW-BOOKKEEPING",
+];
+
+/// A parsed finding block. `evidence`/`why`/`scope_reason` are parsed for the malformed-block
+/// diagnostic and for verifying the body is left untouched (AC-4) — they are **not** serialized
+/// to the assessment frontmatter (UPG-0047's compact-schema guardrail); only the fields covered
+/// by `to_yaml_entry` are.
+pub struct Finding {
+    pub finding_id: String,
+    pub severity: String,
+    pub classification: String,
+    pub summary: String,
+    pub acceptance_criterion: Option<String>,
+    pub required_action: String,
+    pub evidence: String,
+    pub why: String,
+    pub scope_reason: Option<String>,
+}
+
+impl Finding {
+    /// The compact YAML subset actually written to the assessment frontmatter — deliberately
+    /// excludes `evidence`/`why`/`scope_reason` (full prose stays in the body, unduplicated).
+    fn to_yaml_entry(&self) -> String {
+        let mut s = String::new();
+        s.push_str(&format!("    - finding_id: {}\n", self.finding_id));
+        s.push_str(&format!("      severity: {}\n", self.severity));
+        s.push_str(&format!("      classification: {}\n", self.classification));
+        s.push_str(&format!("      summary: \"{}\"\n", yaml_escape(&self.summary)));
+        if let Some(ac) = &self.acceptance_criterion {
+            s.push_str(&format!("      acceptance_criterion: {}\n", ac));
+        }
+        s.push_str(&format!("      required_action: {}\n", self.required_action));
+        s
+    }
+}
+
+/// Minimal YAML double-quoted-string escaping (backslash and double-quote only — finding
+/// summaries are reviewer prose, not attacker-controlled, but escaping is cheap and correct).
+fn yaml_escape(s: &str) -> String {
+    s.replace('\\', "\\\\").replace('"', "\\\"")
+}
+
+/// Parse `Finding: / Severity: / Classification:` blocks from a reviewer's raw response text
+/// into structured `Finding`s, plus a count of `Finding:` lines that did not match the full
+/// expected shape (never silently dropped).
+///
+/// Only the region **before the first line-anchored `LOG SUMMARY:`** is scanned. This is not
+/// an arbitrary truncation: `raw_text` is the full CLI transcript, which — after the real
+/// answer — goes on to echo the packaged reviewer-task prompt (containing a *literal,
+/// indented* `LOG SUMMARY: <NO OBJECTION | ...>` placeholder line) and then, in this codebase's
+/// observed CLI output, a second verbatim echo of the real answer itself. Scanning the whole
+/// text would double-count every real finding once for the answer and once for its echo, and
+/// risks matching the placeholder instructional text. `parse_review_output` above sidesteps the
+/// same issue for `LOG SUMMARY:` itself by taking the *last* match; findings are collectively a
+/// list rather than one scalar, so the correct equivalent is to only scan the first, real
+/// occurrence of the answer — i.e. everything before the first line-anchored `LOG SUMMARY:`,
+/// which the required output format (`prompts/codeos-reviewer-task.md`) always places after
+/// every finding.
+///
+/// The `Evidence:`/`Why:`/`Required action:` block is accepted in **either** of two real,
+/// currently-coexisting shapes — confirmed against this repo's own corpus (not assumed):
+/// `prompts/codeos-reviewer-task.md` asks for them combined on one line
+/// (`Evidence: X / Why: Y / Required action: Z`), but Codex does not reliably follow that —
+/// the three-separate-line form (`Evidence: X` / `Why: Y` / `Required action: Z`, each its own
+/// line) appears throughout the corpus's *entire* date range, including this repo's own
+/// `UPG-0045`/`UPG-0046` review rounds from this same session. This is ongoing model output
+/// variance, not a resolved historical format version — both shapes are permanently supported,
+/// not one treated as legacy.
+pub fn parse_findings(raw_text: &str, review_id: &str) -> (Vec<Finding>, usize) {
+    let real_region = raw_text.split("\nLOG SUMMARY:").next().unwrap_or(raw_text);
+    let lines: Vec<&str> = real_region.lines().collect();
+
+    let finding_re = Regex::new(r"^Finding: (.+?) / Severity: (High|Medium|Low) / Classification: (.+?)\s*$")
+        .expect("valid regex");
+    let combined_re = Regex::new(r"^Evidence: (.+?) / Why: (.+?) / Required action: (fix now|optional fix|backlog|reject)\s*$")
+        .expect("valid regex");
+    // A third real, historical shape: Evidence/Why/Required action/Scope reason all combined
+    // onto one line (earliest corpus era, e.g. 2026-06-30/2026-07-01 rounds).
+    let combined_with_scope_re = Regex::new(r"^Evidence: (.+?) / Why: (.+?) / Required action: (fix now|optional fix|backlog|reject) / Scope reason: (.+)$")
+        .expect("valid regex");
+    let evidence_only_re = Regex::new(r"^Evidence: (.+?)\s*$").expect("valid regex");
+    let why_only_re = Regex::new(r"^Why: (.+?)\s*$").expect("valid regex");
+    let action_only_re = Regex::new(r"^Required action: (fix now|optional fix|backlog|reject)\s*$").expect("valid regex");
+    let scope_re = Regex::new(r"^Scope reason: (.+)$").expect("valid regex");
+    let ac_re = Regex::new(r"AC-\d+").expect("valid regex");
+
+    let mut findings = Vec::new();
+    let mut unparsed_count = 0usize;
+    let mut seq = 0u32;
+    let mut i = 0;
+
+    while i < lines.len() {
+        let line = lines[i];
+        if !line.starts_with("Finding:") {
+            i += 1;
+            continue;
+        }
+
+        let Some(fcaps) = finding_re.captures(line) else {
+            unparsed_count += 1;
+            eprintln!("warning: malformed finding block (Finding/Severity/Classification line did not match the expected shape): {}", line);
+            i += 1;
+            continue;
+        };
+
+        let classification = fcaps[3].trim().to_string();
+        if !CANONICAL_CLASSIFICATIONS.contains(&classification.as_str()) {
+            unparsed_count += 1;
+            eprintln!(
+                "warning: malformed finding block (Classification '{}' is not one of the five canonical TRIAGE RULE labels): {}",
+                classification, line
+            );
+            i += 1;
+            continue;
+        }
+
+        // Scan forward for Evidence/Why/Required action (either shape) and an optional Scope
+        // reason, stopping at a blank line or the next Finding:/PR decision: boundary.
+        let mut evidence: Option<String> = None;
+        let mut why: Option<String> = None;
+        let mut required_action: Option<String> = None;
+        let mut scope_reason: Option<String> = None;
+        let mut k = i + 1;
+        let window_end = (i + 1 + 6).min(lines.len());
+        while k < window_end {
+            let l = lines[k];
+            if l.trim().is_empty() || l.starts_with("Finding:") || l.starts_with("PR decision:") {
+                break;
+            }
+            if evidence.is_none() && why.is_none() && required_action.is_none() && scope_reason.is_none() {
+                if let Some(c) = combined_with_scope_re.captures(l) {
+                    evidence = Some(c[1].trim().to_string());
+                    why = Some(c[2].trim().to_string());
+                    required_action = Some(c[3].to_string());
+                    scope_reason = Some(c[4].trim().to_string());
+                    k += 1;
+                    continue;
+                }
+            }
+            if evidence.is_none() && why.is_none() && required_action.is_none() {
+                if let Some(c) = combined_re.captures(l) {
+                    evidence = Some(c[1].trim().to_string());
+                    why = Some(c[2].trim().to_string());
+                    required_action = Some(c[3].to_string());
+                    k += 1;
+                    continue;
+                }
+            }
+            if evidence.is_none() {
+                if let Some(c) = evidence_only_re.captures(l) { evidence = Some(c[1].trim().to_string()); k += 1; continue; }
+            }
+            if why.is_none() {
+                if let Some(c) = why_only_re.captures(l) { why = Some(c[1].trim().to_string()); k += 1; continue; }
+            }
+            if required_action.is_none() {
+                if let Some(c) = action_only_re.captures(l) { required_action = Some(c[1].to_string()); k += 1; continue; }
+            }
+            if scope_reason.is_none() {
+                if let Some(c) = scope_re.captures(l) { scope_reason = Some(c[1].trim().to_string()); k += 1; continue; }
+            }
+            break;
+        }
+
+        let (Some(evidence), Some(why), Some(required_action)) = (evidence, why, required_action) else {
+            unparsed_count += 1;
+            eprintln!("warning: malformed finding block (Evidence/Why/Required action not all found in either supported shape) near: {}", line);
+            i += 1;
+            continue;
+        };
+
+        seq += 1;
+        let summary = fcaps[1].trim().to_string();
+        let acceptance_criterion = ac_re.find(&summary).map(|m| m.as_str().to_string());
+        findings.push(Finding {
+            finding_id: format!("FND__{}__{:02}", review_id, seq),
+            severity: fcaps[2].to_string(),
+            classification,
+            summary,
+            acceptance_criterion,
+            required_action,
+            evidence,
+            why,
+            scope_reason,
+        });
+        i = k;
+    }
+
+    (findings, unparsed_count)
 }
 
 /// Parse LOG SUMMARY, EVIDENCE, HIGHEST-IMPACT UNCERTAINTY from reviewer output.
@@ -108,6 +307,8 @@ fn rank_to_concern(r: u8) -> String {
 /// Write the assessment file and return (assessment_path, assessment_sha256).
 pub fn write_assessment(
     review_id: &str,
+    findings: &[Finding],
+    unparsed_findings_count: usize,
     packet: &ReviewPacket,
     raw: &RawAssessment,
     parsed: &ParsedReview,
@@ -126,6 +327,15 @@ pub fn write_assessment(
     let mut content = String::new();
     content.push_str("---\n");
     content.push_str(&format!("review_id: {}\n", review_id));
+    if findings.is_empty() {
+        content.push_str("findings: []\n");
+    } else {
+        content.push_str("findings:\n");
+        for f in findings {
+            content.push_str(&f.to_yaml_entry());
+        }
+    }
+    content.push_str(&format!("unparsed_findings_count: {}\n", unparsed_findings_count));
     content.push_str("reviewed:\n");
     content.push_str(&format!("  feature: {}\n", packet.feature));
     content.push_str(&format!("  stage: {}\n", packet.stage));
@@ -307,7 +517,7 @@ mod tests {
         let outdir = dir.path().join("codex-out");
         let review_id = "REV__UPG-TEST__selfdev-step-1__R1";
         let (assessment_file, _hash) = write_assessment(
-            review_id, &packet, &raw, &parsed, &outdir, Path::new("packet.txt"), "cafefeed",
+            review_id, &[], 0, &packet, &raw, &parsed, &outdir, Path::new("packet.txt"), "cafefeed",
         ).expect("write_assessment");
 
         let content = std::fs::read_to_string(&assessment_file).expect("read assessment");
@@ -327,6 +537,206 @@ mod tests {
             filename.contains("-UPG-TEST-stage-selfdev-step-1-"),
             "assessment filename must keep the legacy <ts>-<feature>-stage-<stage>-<sha> shape: {}",
             filename
+        );
+    }
+
+    const RID: &str = "REV__UPG-TEST__selfdev-step-3__R1";
+
+    #[test]
+    fn parse_findings_single_finding() {
+        let text = "Finding: Test names not preserved / Severity: High / Classification: IN-SCOPE BLOCKER  \nEvidence: diff shows renamed tests / Why: breaks traceability / Required action: fix now  \nScope reason: directly affects AC-7.\n\nPR decision: DO NOT ADVANCE\nLOG SUMMARY: DO NOT ADVANCE — test names not preserved\nEVIDENCE: A\nHIGHEST-IMPACT UNCERTAINTY: none\n";
+        let (findings, unparsed) = parse_findings(text, RID);
+        assert_eq!(unparsed, 0);
+        assert_eq!(findings.len(), 1);
+        let f = &findings[0];
+        assert_eq!(f.finding_id, format!("FND__{}__01", RID));
+        assert_eq!(f.severity, "High");
+        assert_eq!(f.classification, "IN-SCOPE BLOCKER");
+        assert_eq!(f.summary, "Test names not preserved");
+        assert_eq!(f.required_action, "fix now");
+        assert_eq!(f.evidence, "diff shows renamed tests");
+        assert_eq!(f.why, "breaks traceability");
+        assert_eq!(f.scope_reason.as_deref(), Some("directly affects AC-7."));
+    }
+
+    #[test]
+    fn parse_findings_multiple_findings_get_stable_ordered_ids() {
+        let text = "Finding: First issue / Severity: Medium / Classification: IN-SCOPE BLOCKER  \nEvidence: e1 / Why: w1 / Required action: fix now  \nScope reason: s1\n\nFinding: Second issue / Severity: Low / Classification: IN-SCOPE NON-BLOCKER  \nEvidence: e2 / Why: w2 / Required action: optional fix  \nScope reason: s2\n\nPR decision: REQUEST CHANGES\nLOG SUMMARY: CHANGES ADVISED — two issues\nEVIDENCE: B\nHIGHEST-IMPACT UNCERTAINTY: none\n";
+        let (findings, unparsed) = parse_findings(text, RID);
+        assert_eq!(unparsed, 0);
+        assert_eq!(findings.len(), 2);
+        assert_eq!(findings[0].finding_id, format!("FND__{}__01", RID));
+        assert_eq!(findings[1].finding_id, format!("FND__{}__02", RID));
+        assert_eq!(findings[0].summary, "First issue");
+        assert_eq!(findings[1].summary, "Second issue");
+    }
+
+    #[test]
+    fn parse_findings_accepts_all_five_canonical_classifications() {
+        let labels = [
+            "IN-SCOPE BLOCKER",
+            "IN-SCOPE NON-BLOCKER",
+            "OUT-OF-SCOPE BACKLOG",
+            "REJECTED",
+            "SELF-REFERENCE / REVIEW-BOOKKEEPING",
+        ];
+        for label in labels {
+            let text = format!(
+                "Finding: x / Severity: Low / Classification: {}  \nEvidence: e / Why: w / Required action: backlog  \n\nLOG SUMMARY: CHANGES ADVISED — x\nEVIDENCE: A\nHIGHEST-IMPACT UNCERTAINTY: none\n",
+                label
+            );
+            let (findings, unparsed) = parse_findings(&text, RID);
+            assert_eq!(unparsed, 0, "label {} should parse cleanly", label);
+            assert_eq!(findings.len(), 1, "label {} should produce exactly one finding", label);
+            assert_eq!(
+                findings[0].classification, label,
+                "compound label must parse as one classification value, not split on its own '/'"
+            );
+        }
+    }
+
+    #[test]
+    fn parse_findings_rejects_non_canonical_classification() {
+        // AC-2: only the five canonical TRIAGE RULE labels are accepted. An invented sixth
+        // label must be treated as malformed (counted unparsed), never silently accepted.
+        let text = "Finding: x / Severity: Low / Classification: MAYBE-BLOCKER  \nEvidence: e / Why: w / Required action: backlog  \n\nLOG SUMMARY: CHANGES ADVISED — x\nEVIDENCE: A\nHIGHEST-IMPACT UNCERTAINTY: none\n";
+        let (findings, unparsed) = parse_findings(text, RID);
+        assert!(findings.is_empty(), "a non-canonical classification must not produce a finding");
+        assert_eq!(unparsed, 1, "a non-canonical classification must be counted as unparsed, not silently dropped or accepted");
+    }
+
+    #[test]
+    fn parse_findings_no_findings_produces_empty_list() {
+        let text = "No issues found.\n\nPR decision: ADVANCE\nLOG SUMMARY: NO OBJECTION — all good\nEVIDENCE: A\nHIGHEST-IMPACT UNCERTAINTY: none\n";
+        let (findings, unparsed) = parse_findings(text, RID);
+        assert_eq!(unparsed, 0);
+        assert!(findings.is_empty());
+    }
+
+    #[test]
+    fn parse_findings_malformed_block_counts_unparsed_never_drops_silently() {
+        // Missing "Classification:" entirely — the Finding line still starts with "Finding:"
+        // but does not match the full expected shape.
+        let text = "Finding: something is wrong / Severity: High\nEvidence: e / Why: w / Required action: fix now  \n\nLOG SUMMARY: CHANGES ADVISED — malformed\nEVIDENCE: C\nHIGHEST-IMPACT UNCERTAINTY: none\n";
+        let (findings, unparsed) = parse_findings(text, RID);
+        assert_eq!(findings.len(), 0);
+        assert_eq!(unparsed, 1, "a malformed Finding line must be counted, not silently dropped");
+    }
+
+    #[test]
+    fn parse_findings_summary_containing_slash_still_parses_correctly() {
+        // Regression guard for keyword-anchored (not naive " / "-split) parsing: this is a real
+        // shape seen in this repo's own history (UPG-0046 Step 3 R1).
+        let text = "Finding: AC-2's end-to-end round increment verification is not provided as stated / Severity: Low / Classification: IN-SCOPE BLOCKER  \nEvidence: AC-2 specifies `smoke_review_id_first_round_is_r1` / `smoke_review_id_increments_across_rounds` that “run `review` twice” / Why: partially supported / Required action: fix now  \nScope reason: part of the PR's own acceptance contract.\n\nLOG SUMMARY: DO NOT ADVANCE — x\nEVIDENCE: A\nHIGHEST-IMPACT UNCERTAINTY: none\n";
+        let (findings, unparsed) = parse_findings(text, RID);
+        assert_eq!(unparsed, 0);
+        assert_eq!(findings.len(), 1);
+        assert_eq!(findings[0].severity, "Low");
+        assert_eq!(findings[0].classification, "IN-SCOPE BLOCKER");
+        assert_eq!(findings[0].required_action, "fix now");
+        assert!(findings[0].evidence.contains("smoke_review_id_first_round_is_r1"));
+        assert_eq!(findings[0].acceptance_criterion.as_deref(), Some("AC-2"));
+    }
+
+    #[test]
+    fn parse_findings_ignores_duplicate_transcript_echo_after_log_summary() {
+        // Simulates this codebase's own observed CLI behavior: the real answer is followed by
+        // a banner and a second, verbatim echo of the same findings later in the same text.
+        // Only the first (real) occurrence, before the first line-anchored LOG SUMMARY:, must
+        // be counted.
+        let real_answer = "Finding: Real finding / Severity: High / Classification: IN-SCOPE BLOCKER  \nEvidence: e / Why: w / Required action: fix now  \n\nLOG SUMMARY: DO NOT ADVANCE — real\nEVIDENCE: A\nHIGHEST-IMPACT UNCERTAINTY: none\n";
+        let echoed_transcript = "OpenAI Codex v0.142.5\n--------\nuser\nFinding: Real finding / Severity: High / Classification: IN-SCOPE BLOCKER  \nEvidence: e / Why: w / Required action: fix now  \n\nLOG SUMMARY: DO NOT ADVANCE — real\n";
+        let text = format!("{}{}", real_answer, echoed_transcript);
+        let (findings, unparsed) = parse_findings(&text, RID);
+        assert_eq!(unparsed, 0);
+        assert_eq!(findings.len(), 1, "the echoed transcript must not double-count the same finding");
+    }
+
+    #[test]
+    fn parse_findings_deterministic_across_repeated_parses() {
+        let text = "Finding: A / Severity: Low / Classification: IN-SCOPE NON-BLOCKER  \nEvidence: e / Why: w / Required action: optional fix  \n\nLOG SUMMARY: CHANGES ADVISED — a\nEVIDENCE: A\nHIGHEST-IMPACT UNCERTAINTY: none\n";
+        let (f1, u1) = parse_findings(text, RID);
+        let (f2, u2) = parse_findings(text, RID);
+        assert_eq!(u1, u2);
+        assert_eq!(f1.len(), f2.len());
+        assert_eq!(f1[0].finding_id, f2[0].finding_id);
+    }
+
+    #[test]
+    fn finding_yaml_entry_omits_evidence_why_scope_reason() {
+        let text = "Finding: X / Severity: Medium / Classification: IN-SCOPE BLOCKER  \nEvidence: some evidence text / Why: some why text / Required action: fix now  \nScope reason: some scope text\n\nLOG SUMMARY: CHANGES ADVISED — x\nEVIDENCE: A\nHIGHEST-IMPACT UNCERTAINTY: none\n";
+        let (findings, _) = parse_findings(text, RID);
+        let yaml = findings[0].to_yaml_entry();
+        assert!(yaml.contains("finding_id:"));
+        assert!(yaml.contains("severity: Medium"));
+        assert!(yaml.contains("classification: IN-SCOPE BLOCKER"));
+        assert!(yaml.contains("required_action: fix now"));
+        assert!(!yaml.contains("some evidence text"), "evidence must not be serialized");
+        assert!(!yaml.contains("some why text"), "why must not be serialized");
+        assert!(!yaml.contains("some scope text"), "scope_reason must not be serialized");
+    }
+
+    #[test]
+    fn parse_findings_corpus_regression_check() {
+        // Runs the parser against every real historical assessment file in this repo's own
+        // reviews/codex/ — not a synthetic fixture. Deliberately avoids a hardcoded exact
+        // finding count (the corpus grows with every review round, including this test's own
+        // future runs); instead it asserts the invariant that actually matters: every
+        // `Finding:` line in the real (pre-echo) region is accounted for as either parsed or
+        // explicitly counted unparsed (never silently lost).
+        //
+        // This parser supports three real, currently-recurring `Evidence:`/`Why:`/
+        // `Required action:`/`Scope reason:` shapes (see `parse_findings`'s own doc comment).
+        // After adding all three, a residual ~7% of the corpus (23/317 real finding lines at
+        // the time this test was written) remains unparseable — traced to one-off formatting
+        // from the project's earliest sessions (e.g. a 4-label triage era, before the current
+        // 5-category rule existed) and a small number of individually distinct anomalies that
+        // do not share a common recurring shape. Chasing each one individually would be
+        // unbounded scope creep for diminishing, non-recurring value; the fail-closed guardrail
+        // (flag as unparseable, never silently drop) is what actually matters, and it holds.
+        // The 15% ceiling below catches a *future* regression (a new systematic shape emerging
+        // and going unsupported) without being brittle to this already-understood residual.
+        let mut repo_root = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        repo_root.pop(); repo_root.pop(); // tools/reviewer -> Codeos/
+        let codex_dir = repo_root.join("reviews/codex");
+
+        let mut total_finding_lines = 0usize;
+        let mut total_parsed = 0usize;
+        let mut total_unparsed = 0usize;
+        let mut files_checked = 0usize;
+
+        for entry in std::fs::read_dir(&codex_dir).expect("read reviews/codex") {
+            let path = entry.expect("dir entry").path();
+            if path.extension().and_then(|e| e.to_str()) != Some("md") {
+                continue;
+            }
+            let content = std::fs::read_to_string(&path).expect("read assessment");
+            let body = content.splitn(2, "---\n\n").nth(1)
+                .or_else(|| content.splitn(3, "---\n").nth(2))
+                .unwrap_or(content.as_str());
+            let real_region = body.split("\nLOG SUMMARY:").next().unwrap_or(body);
+            total_finding_lines += real_region.lines().filter(|l| l.starts_with("Finding:")).count();
+
+            let (findings, unparsed) = parse_findings(body, "REV__CORPUS-CHECK__x__R1");
+            total_parsed += findings.len();
+            total_unparsed += unparsed;
+            files_checked += 1;
+        }
+
+        assert!(files_checked > 0, "expected to find historical assessment files under reviews/codex/");
+        assert!(total_finding_lines > 0, "expected at least some real Finding: lines in the corpus");
+        assert_eq!(
+            total_parsed + total_unparsed, total_finding_lines,
+            "every Finding: line in the real (pre-echo) region must be either parsed or counted unparsed \
+             (parsed={}, unparsed={}, finding_lines={}, files={})",
+            total_parsed, total_unparsed, total_finding_lines, files_checked
+        );
+        let unparsed_pct = (total_unparsed as f64 / total_finding_lines as f64) * 100.0;
+        assert!(
+            unparsed_pct <= 15.0,
+            "unparsed rate {:.1}% ({}/{} findings across {} files) exceeds the known-residual \
+             ceiling — investigate whether a new systematic (recurring) format shape appeared",
+            unparsed_pct, total_unparsed, total_finding_lines, files_checked
         );
     }
 }

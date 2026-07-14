@@ -86,6 +86,8 @@ File `reviews/codex/<ts>-<feature>-stage-<N>-<sha>.md`, opening with a `---` YAM
 | Key | Type | Notes |
 |---|---|---|
 | `review_id` | string | `REV__<feature>__<stage>__R<N>` — mechanically derived (`UPG-0046`) by counting prior `REVIEW` entries for this exact feature+stage in `reviews/review-log.md`; `<stage>` is the raw `--stage` value verbatim, no `S<N>` conversion. First frontmatter key. Not yet part of the Lightweight validation (v0) required-field list below. |
+| `findings` | list of `{finding_id, severity, classification, summary, acceptance_criterion?, required_action}` | mechanically parsed (`UPG-0047`) from the raw response's `Finding:`/`Evidence:`/`Why:`/`Required action:` blocks (before the response body, verbatim, below the frontmatter). `finding_id` is `FND__<review_id>__NN` (2-digit, deterministic). `classification` is one of the five TRIAGE RULE labels verbatim. **Deliberately excludes `evidence`/`why`/`scope_reason`** — that full prose stays only in the body, not duplicated into frontmatter. `[]` when the round raised no findings. No `status`/`resolved_by` field — an assessment is an immutable snapshot; resolution is derived later from an accepted change record's `fixes_findings` list naming this `finding_id`, never by editing this file. |
+| `unparsed_findings_count` | integer | count of `Finding:` lines that did not match any of the three currently-supported `Evidence:`/`Why:`/`Required action:` shapes — never silently dropped, always counted. `0` in the overwhelming common case; a nonzero value is advisory only and never blocks the review. |
 | `feature` | string | |
 | `stage` | integer | |
 | `branch` | string | |
