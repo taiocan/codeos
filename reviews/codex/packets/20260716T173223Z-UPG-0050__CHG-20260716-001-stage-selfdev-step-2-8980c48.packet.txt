@@ -1,0 +1,427 @@
+Reviewer task:
+
+SCOPE CONTRACT
+  Assess this artifact against the STATED SCOPE of this stage/PR — the Expected Stage
+  Output below and what the artifacts actually claim — NOT against an ideal final system.
+  A capability the artifacts do not claim to provide is OUT-OF-SCOPE, not a defect.
+  The following are OUT-OF-SCOPE BACKLOG unless THIS artifact explicitly claims to provide
+  them: formal approval-binding enforcement; rollback correctness; COMMIT_BOUND/
+  WORKSPACE_BOUND enforcement; JSON Schema validation; CI validation; exact
+  decision-integrity; per-feature decision ledgers; autonomous approval; enabled hooks.
+
+YOUR TASK — answer these five questions using only the evidence in the packet:
+  1. Acceptance criteria: Does the artifact satisfy each of its stated acceptance criteria?
+     Cite evidence for each criterion (or note its absence).
+  2. Claim support: Are universal or strong claims (all, every, never, always, no X) in the
+     artifact supported by evidence in the packet? Any unverifiable strong claim is a candidate
+     finding only if it affects acceptance, scope, safety, decision integrity, or the artifact's
+     stated guarantees.
+  3. Scope drift: Is there any change beyond the stated scope boundary? (Files not in the
+     "What changes" list; behavior changes not in the intent; downstream doctrine modified
+     rather than read.)
+  4. In-scope blockers: Are there facts that, if left in, would make the artifact wrong,
+     unsafe, or internally contradictory?
+  5. Finding classification: Classify every finding you raise as exactly one of the five
+     TRIAGE RULE categories below.
+
+TRIAGE RULE — classify EVERY finding as exactly one of:
+  IN-SCOPE BLOCKER         breaks the stated goal; creates a FALSE CLAIM in this artifact;
+                           weakens the advisory/read-only/human-gated guarantees; prevents
+                           the work from running; or violates an explicit safety constraint.
+  IN-SCOPE NON-BLOCKER     improves it but is not required for this PR.
+  OUT-OF-SCOPE BACKLOG     valid, but belongs to a future feature / stronger guarantee.
+  REJECTED                 conflicts with the stated scope or Codeos philosophy.
+  SELF-REFERENCE /         review records that are stale because of the previous round's
+  REVIEW-BOOKKEEPING       own existence (causal loop); not a real artifact defect.
+  Base the PR decision ONLY on IN-SCOPE BLOCKER findings. An OUT-OF-SCOPE BACKLOG finding
+  must NOT cause DO NOT ADVANCE unless this artifact FALSELY CLAIMS to solve it.
+
+WHAT NOT TO DO
+  - Do not flag style or wording issues as blockers unless the wording creates a false claim,
+    contradiction, parser breakage, or wrong governance instruction.
+  - Do not re-review unchanged full context when the packet is in delta mode.
+  - Do not treat local-only review history as a blocker unless the artifact falsely
+    claims the review artifacts are committed/durable.
+
+INSTRUCTIONS
+  If this is a resumed session, ignore any earlier-session conclusions unless they are
+  re-established by THIS packet; assess only the evidence above, pinned to this commit.
+  Give a focused assessment of this artifact against the stated scope, acceptance criteria,
+  and evidence in this packet. Rank findings by severity. Suggest a better design only when
+  needed to explain a required fix for an IN-SCOPE BLOCKER.
+
+  Limit findings to the top 3 IN-SCOPE BLOCKERS. Additional non-blocking observations may be
+  summarized in one short paragraph only if useful.
+
+  For EACH finding emit:
+    Finding: / Severity: High|Medium|Low / Classification: <one of the TRIAGE RULE labels>
+    Evidence: <file/line> / Why: <short> / Required action: fix now|optional fix|backlog|reject
+    Scope reason: <why it does/does not belong to this PR's scope>
+  Then emit:
+    PR decision: ADVANCE | REQUEST CHANGES | DO NOT ADVANCE   (based ONLY on in-scope blockers)
+    Scope drift warning: yes|no — <is anything pulling this PR beyond its stated scope?>
+  Then on the LAST three lines emit exactly (map ADVANCE->NO OBJECTION,
+  REQUEST CHANGES->CHANGES ADVISED, DO NOT ADVANCE->DO NOT ADVANCE):
+    LOG SUMMARY: <NO OBJECTION | CHANGES ADVISED | DO NOT ADVANCE | UNCLASSIFIED> — <single most important point>
+      (use UNCLASSIFIED if you genuinely cannot classify the artifact safely)
+    EVIDENCE: <A|B|C|D|E>
+    HIGHEST-IMPACT UNCERTAINTY: <one sentence — what single thing, if wrong, most affects this assessment>
+
+  Evidence grade — the grade describes what the assessment rests on, not reviewer confidence:
+    A — Directly verified in the artifact, diff, or output shown in the packet
+    B — Verified with multiple direct pieces of evidence, but coverage is not complete
+    C — Partially verified, partially inferred from structure or context
+    D — Mostly inferred from structure or indirect evidence
+    E — Hypothesis or very limited basis — little to no direct evidence
+
+
+PACKET MANIFEST
+  generated: 2026-07-16T17:31:50Z
+  task_prompt: /home/rimo/projects/Codeos/prompts/codeos-reviewer-task.md (4959 bytes)
+  review_content_bytes: 19248
+  estimated_review_tokens: ~4812
+  budget_status: OK
+  packet_mode: full
+  delta_base: none
+  items:
+    - path: changes/UPG-0050__CHG-20260716-001__downstream-feature-id-scheme.md
+      mode: full_file
+      bytes: 9916
+      sha256: 4c15f559c6246b038689ddb880e9bf7a4fb86824db617413b0fb872e77a5d911
+    - path: backlog/UPG-0050-downstream-feature-id-scheme.md
+      mode: full_file
+      bytes: 7119
+      sha256: 0e2ae15e9f95164157d40b53c25cceb3b7ab581f4d4bc095e5fec327bba1609a
+    - path: (diff)
+      mode: full_file
+      bytes: 2213
+
+REVIEW CONTEXT
+  Feature:                UPG-0050__CHG-20260716-001
+  Stage:                  selfdev-step-2
+  Branch:                 main
+  Base commit:            (no base pin)
+  Review commit:          8980c48208910fcdd93b0323f3f9d2576bb02c51 (+ uncommitted workspace changes)
+  Current approved stage: n/a (non-numeric stage)
+  Evidence coverage:      FULL_COVERAGE
+  Workspace dirty:        yes (uncommitted changes at review time)
+
+DBA RULES RELEVANT TO THIS STAGE
+  - Human approval is required for every stage transition; you are advisory only.
+  - Memory is not truth — assess only what is provided, pinned to the review commit.
+  - Implementation must trace to approved artifacts; no behavior beyond intent+contract+schema.
+  - No events outside the approved event schema; no hidden behavior.
+
+STAGE-SPECIFIC CHECKS
+  - (no stage-specific checklist for stage selfdev-step-2)
+
+EXPECTED STAGE OUTPUT
+  (no expected-output template for stage)
+
+ARTIFACTS TO REVIEW
+  --- changes/UPG-0050__CHG-20260716-001__downstream-feature-id-scheme.md (sha256: 4c15f559c6246b038689ddb880e9bf7a4fb86824db617413b0fb872e77a5d911, visibility: shown) ---
+    # Self-Development Change: UPG-0050__CHG-20260716-001 — downstream-feature-id-scheme
+    
+    <!-- TRACE HEADER (canonical) -->
+    ```yaml
+    feature_id: UPG-0050
+    primary_feature_id: UPG-0050
+    change_id: CHG-20260716-001
+    slug: downstream-feature-id-scheme
+    state: IN_PROGRESS      # DRAFT | IN_REVIEW | IN_PROGRESS | BLOCKED | COMPLETE | ABANDONED | SUPERSEDED
+    current_step: 2-Acceptance  # 1-Intent | 2-Acceptance | 3-Implement | 4-Reconcile
+    implements:
+      - UPG-0050
+    related_features: [UPG-0001, UPG-0041]
+    review_series: null     # Step 1 series RVS__UPG-0050__CHG-20260716-001__S1 (ACCEPTED — see review-log.md); reset for Step 2
+    review_profile: PROFILE-4  # downstream-doctrine
+    review_state: DRAFT     # DRAFT | IN_REVIEW | REVIEWED | ACCEPTED  (operational; NOT a round)
+    review_history: reviews/review-log.md   # exact per-round REV__…__R<N> verdicts + human decisions live here, never in this artifact
+    fixes_findings: []
+    follow_up_of: null
+    ```
+    
+    <!-- SELF-REFERENCE BOUNDARY: this artifact is itself reviewed, so it must NOT embed the current
+    review round (which does not exist until after the packet is built). Reference the stable review
+    SERIES (review_series) + review_state; exact rounds live only in reviews/review-log.md and
+    reviews/codex/*. See prompts/codeos-self-dev.md → "Feature Thread & IDs" / "Self-Reference Boundary". -->
+    
+    
+    ## Change Intent
+    
+    **Why (problem in the toolkit):**
+    The DBA Feature Brief step (`prompts/00b-feature-brief.md`, Stage `brief`) saves briefs to
+    `backlog/[feature_id]-[name].md`, but `[feature_id]` has never had a defined format —
+    `templates/conventions.md`'s "Feature IDs" section only specifies `lowercase_underscore`
+    (e.g. `add_item_to_cart`), a free-text slug with no counter, no sequencing, and no guaranteed
+    uniqueness. Separately, `templates/feature-registry.yaml` already declares a structured
+    `feature_id:` field whose example value is `UPG-0000` — it silently borrowed the
+    **self-dev-only** `UPG-####` scheme (reserved for this toolkit repo's own backlog, per
+    `backlog/features.md:87`) without a formalized downstream equivalent ever being defined. Two
+    downstream-facing artifacts currently imply two different, incompatible feature-id
+    conventions, and neither is actually specified as a durable identity scheme.
+    
+    **What changes:**
+    - `templates/conventions.md` — replace the "Feature IDs: `lowercase_underscore`" section with
+      the `F-####` format (4-digit, zero-padded, sequential, permanent, never reused) and an
+      id/slug split explanation with example filenames.
+    - `templates/feature-registry.yaml` — fix the `feature_id: UPG-0000` example (line 39) to
+      `feature_id: F-0001`; update the inline comment to point at `conventions.md`'s Feature IDs
+      section instead of implying the self-dev scheme.
+    - `prompts/00b-feature-brief.md` — add explicit id-assignment instructions to the Synthesis
+      step (Step 1 of "Synthesis and Completion Check"): scan `features/registry.yaml` (if
+      present) + `backlog/F-####-*.md` filenames for the current max, assign next for F-type,
+      reuse the parent's id for R-type (no new id minted for refinements). Update the "Brief
+      Lifecycle" and "Output Format" sections' `backlog/[feature_id]-[name].md` references to show
+      a concrete `F-####` example.
+    - `templates/feature-brief.md` — update the H1 (`# Feature Brief: [feature_id] — [short
+      name]`) and the `**Refines**` field guidance to reference the `F-####` format; add a short
+      inline comment noting the id is assigned at Synthesis, not chosen freely by the human.
+    - `dba-system.md` — File Layout block, Artifact Classification table, and Stage table entries
+      that reference `[feature_id]` get one clarifying line each pointing at the `F-####` format
+      now defined in `conventions.md`. No change to stage names, gate rules, or 9-stage substance.
+    
+    **Scope boundary — what stays the same:**
+    - `scripts/dba-init.sh` — no code change (it already copies `templates/feature-registry.yaml`
+      verbatim; the corrected example flows through automatically).
+    - Feature Brief and Feature Registry remain **Optional** artifacts per `dba-system.md`'s
+      Artifact Classification table — this change does not make either required.
+    - No downstream equivalent of the self-dev `CHG-YYYYMMDD-NNN` change-id layer is introduced —
+      this only formalizes the feature-identity layer (`F-####`), not a change-execution layer.
+    - No retroactive rename of any existing downstream project's already-assigned slug-style
+      `feature_id`s — this is a forward-looking convention, not a migration mandate.
+    - No change to the self-dev `UPG-####` scheme itself or to `backlog/features.md`'s own
+      numbering/sequencing logic. This change *does* touch two self-dev bookkeeping files as
+      required by `prompts/codeos-self-dev.md`'s "Feature Thread first" rule: one new row is
+      added to `backlog/features.md`'s Feature-ID Map (registering this change's own `UPG-0050`)
+      and one row is activated in `status/self-development.md` (this change's own dashboard row).
+      These are the standard per-change bookkeeping edits every self-dev change makes to register
+      itself, not a substantive change to self-dev doctrine, and are distinct from the five
+      downstream-doctrine files under "What changes" above.
+    - The 9-stage loop's stage names, gates, `[feature_id]` placeholder *positions*, and file-layout
+      *structure* are unchanged — only the definition of what `[feature_id]` itself must look like.
+    
+    **Class:** downstream-doctrine
+    **Scope axis:** downstream doctrine only
+    **Backlog item:** backlog/UPG-0050-downstream-feature-id-scheme.md
+    
+    ---
+    
+    ## Acceptance Criteria
+    
+    <!-- The consistency contracts this change must satisfy. Each must be checkable in Reconcile. -->
+    
+    | # | Criterion | How it will be verified |
+    |---|---|---|
+    | 1 | `templates/conventions.md`'s "Feature IDs" section documents the `F-####` format (4-digit, zero-padded, sequential, permanent, never reused) and the id/slug split, replacing the `lowercase_underscore`-only spec. | Read-through; `grep -n "F-####" templates/conventions.md` hits; `grep -n "lowercase_underscore" templates/conventions.md` no longer describes Feature IDs as slug-only. |
+    | 2 | `templates/feature-registry.yaml`'s `feature_id` example is `F-0001` (not `UPG-0000`), and its inline comment points at `conventions.md`'s Feature IDs section instead of implying the self-dev scheme. | `grep -n "feature_id:" templates/feature-registry.yaml` shows `F-0001`; `grep -n "UPG-0000" templates/feature-registry.yaml` returns no hits. |
+    | 3 | `prompts/00b-feature-brief.md`'s Synthesis step contains explicit id-assignment instructions: scan `features/registry.yaml` + `backlog/F-####-*.md` for the current max, assign next for F-type, reuse the parent's id for R-type (no new id minted for refinements). | Read-through of "Synthesis and Completion Check"; `grep -n "F-####" prompts/00b-feature-brief.md` hits inside that section. |
+    | 4 | `prompts/00b-feature-brief.md`'s "Brief Lifecycle" and "Output Format" sections show a concrete `F-####` example in the `backlog/[feature_id]-[name].md` reference. | `grep -n "backlog/F-" prompts/00b-feature-brief.md` hits. |
+    | 5 | `templates/feature-brief.md`'s H1 and `**Refines**` field guidance reference the `F-####` format, with a comment noting the id is assigned at Synthesis, not chosen freely by the human. | Read-through of lines 1 and 27-28 (current); `grep -n "F-####" templates/feature-brief.md` hits. |
+    | 6 | `dba-system.md`'s File Layout block, Artifact Classification table, and Stage table entries referencing `[feature_id]` each carry one clarifying pointer to the `F-####` format in `conventions.md`, without altering stage names, gate wording, or 9-stage substance. | `grep -n "F-####\|feature_id" dba-system.md` shows the new pointer text; diff confirms no stage-table row content, gate text, or stage count changed from the pre-change version. |
+    | 7 | **Downstream compatibility**: a project freshly scaffolded via `scripts/dba-init.sh` still produces a valid `features/registry.yaml` from the corrected template, and the generated project's `CLAUDE.md` still loads `.codeos/dba-system.md` unchanged. | Run `scripts/dba-init.sh` against a scratch directory; confirm `features/registry.yaml`'s `feature_id` example reads `F-0001`; confirm the generated `CLAUDE.md` still references `.codeos/dba-system.md`. |
+    | 8 | **No internal contradiction**: no remaining reference to the old `UPG-0000` example or the `lowercase_underscore`-only Feature ID spec exists in any of the five touched files. | `grep -rn "UPG-0000" templates/conventions.md templates/feature-registry.yaml prompts/00b-feature-brief.md templates/feature-brief.md dba-system.md` returns no hits. |
+    | 9 | **9-stage substance preserved**: `dba-system.md`'s Artifact Classification table still lists Feature Brief and Feature Registry as **Optional**/**Recommended** (unchanged from before this change) — the `F-####` convention is layered on top, not a new hard requirement. | Read-through of the Artifact Classification table; confirm classification column values for those two rows are unchanged from the pre-change version. |
+    
+    <!-- For downstream-doctrine or both: include downstream-compatibility criteria. -->
+    <!-- For script-tooling: include I/O behavior, exit-code / fail-closed cases, idempotency. -->
+    
+    ---
+    
+    ## Implementation Notes
+    
+    <!-- Filled during Step 3. Summary only — the git diff is the source of truth.
+    Note decisions, discoveries, and anything deferred (and re-triaged as its own change). -->
+    
+    [Summary of edits made. Confirm all cross-references updated. Note any out-of-scope items filed to backlog.]
+    
+    ---
+    
+    ## Reconciliation
+    
+    **Acceptance verification:**
+    
+    | # | Criterion | Result | Evidence |
+    |---|---|---|---|
+    
+    **Consistency sweep (grep):**
+    [Stale references / orphaned links / stage-table ↔ prompt-file drift — clean, or gaps fixed/filed]
+    
+    **Findings scope-triage:**
+    
+    | Finding | Triage | Action |
+    |---|---|---|
+    
+    ---
+
+  --- backlog/UPG-0050-downstream-feature-id-scheme.md (sha256: 0e2ae15e9f95164157d40b53c25cceb3b7ab581f4d4bc095e5fec327bba1609a, visibility: shown) ---
+    ---
+    feature_id: UPG-0050
+    slug: downstream-feature-id-scheme
+    title: Downstream Feature-ID Scheme (F-####)
+    status: PROPOSED
+    priority: P2
+    depends_on: []
+    related_features: [UPG-0001, UPG-0041]
+    supersedes: []
+    superseded_by: []
+    ---
+    
+    # Upgrade: downstream-feature-id-scheme — Downstream Feature-ID Scheme (F-####)
+    
+    **Priority**: P2
+    **Status**: PROPOSED
+    **Type**: downstream-doctrine
+    
+    ## Problem
+    
+    The DBA Feature Brief step (`prompts/00b-feature-brief.md`, Stage `brief`) saves briefs to
+    `backlog/[feature_id]-[name].md`, but `[feature_id]` has never had a defined format.
+    `templates/conventions.md`'s "Feature IDs" section only specifies `lowercase_underscore`
+    (e.g. `add_item_to_cart`) — a free-text slug with no counter, no sequencing, and no guaranteed
+    uniqueness across a project's lifetime.
+    
+    Separately, `templates/feature-registry.yaml` (the downstream feature registry template)
+    already declares a structured `feature_id:` field whose example value is `UPG-0000` — i.e. it
+    silently borrowed the **self-dev-only** `UPG-####` scheme (reserved for this toolkit repo's
+    own backlog, per `backlog/features.md:87`, "UPG-0000 reserved for documentation examples")
+    without ever formalizing an equivalent scheme for downstream projects. This is a live
+    inconsistency: two downstream-facing artifacts imply two different, incompatible feature-id
+    conventions, and neither is actually specified as a durable identity scheme.
+    
+    ## Upgrade
+    
+    Introduce `F-####` as the downstream feature-id format — same spirit as `UPG-####`
+    (sequential, zero-padded, permanent, never reused) but with a distinct prefix so the two
+    namespaces never collide:
+    
+    - **Format**: `F-####`, 4-digit zero-padded (matches `UPG-####` width for visual/parsing
+      consistency). Identity (`F-####`) and human-readable label (`slug`) are separate, exactly as
+      `templates/feature-registry.yaml`'s existing `feature_id`/`slug` split already models —
+      only the example value needs correcting. Filenames combine both:
+      `backlog/F-0001-add-item-to-cart.md`, `intents/F-0001.md`, `contracts/F-0001_contract.md`,
+      `events/F-0001_schema.md`.
+    - **R-type briefs reuse the parent id** — a refinement of an existing feature does not mint a
+      new `F-####`; it stays under the original feature's id via the brief's existing
+      `**Refines**: [feature_id being refined]` field. Mirrors how Stage 9 (Targeted Refinement)
+      keeps refinements inside the same feature rather than spawning a new one.
+    - **ID minting**: no new required file. At Synthesis in `prompts/00b-feature-brief.md`, the AI
+      scans `features/registry.yaml` (if present) and `backlog/F-####-*.md` filenames for the
+      current max, assigns next for F-type. Same eyeball-the-existing-set mechanism this toolkit
+      already uses for its own `UPG-####` assignment — no counter file, no new required artifact.
+    
+    ## Scope
+    
+    Files touched:
+    - `templates/conventions.md` — replace the "Feature IDs: `lowercase_underscore`" section with
+      the `F-####` format and the id/slug split.
+    - `templates/feature-registry.yaml` — fix the `feature_id: UPG-0000` example (line 39) to
+      `feature_id: F-0001`; correct the inline comment.
+    - `prompts/00b-feature-brief.md` — add explicit id-assignment instructions to Synthesis;
+      update `backlog/[feature_id]-[name].md` references to a concrete `F-####` example.
+    - `templates/feature-brief.md` — update the H1 and `**Refines**` guidance to the `F-####`
+      format; note where the id comes from.
+    - `dba-system.md` — one clarifying line per `[feature_id]` placeholder location (File Layout,
+      Artifact Classification, Stage table) pointing at the format now defined in
+      `conventions.md`. No change to stage names, gates, or 9-stage substance.
+    
+    Out of scope:
+    - No change to `scripts/dba-init.sh` code (it already copies the template verbatim; the
+      corrected example flows through automatically).
+    - No new required artifact — Feature Brief and Feature Registry remain **Optional** per
+      `dba-system.md`'s Artifact Classification table.
+    - No downstream equivalent of the self-dev `CHG-YYYYMMDD-NNN` change-id layer — this upgrade
+      only formalizes the feature-identity layer, not a change-execution layer.
+    - No retroactive rename of any existing downstream project's already-assigned slug-style
+      `feature_id`s — this is a forward convention, not a migration mandate.
+    - No change to the self-dev `UPG-####` scheme or `backlog/features.md`'s own numbering.
+    
+    ## Value
+    
+    Gives downstream DBA projects the same "one id, sequential, never reused" discipline this
+    toolkit already applies to itself, closes the `UPG-0000`-example inconsistency between
+    `feature-registry.yaml` and `conventions.md`, and makes `[feature_id]` in `dba-system.md`'s
+    file layout an unambiguous, checkable format instead of an undefined placeholder.
+    
+    Trade-offs: doc/template/prompt-only change, no tooling automation for id assignment (the AI
+    derives the next id by inspection each time, same as self-dev does today) — acceptable given
+    Feature Brief/Registry are both optional, low-frequency artifacts.
+    
+    ## Risk
+    
+    Deciding hastily risks:
+    - Conflating this with the self-dev `UPG-####`/`CHG-*` layered model and accidentally
+      proposing a downstream change-id system nobody asked for (explicitly out of scope above).
+    - Making the id format mandatory in a way that contradicts the Optional classification of
+      Feature Brief / Feature Registry in `dba-system.md`.
+    - Leaving stale `UPG-0000` or `lowercase_underscore` references behind in any of the five
+      touched files, recreating the exact inconsistency this change fixes.
+    
+    ## Guardrail
+    
+    - Preserve the 9-stage loop, stage names, and gate rules in `dba-system.md` untouched —
+      this is a format clarification for one placeholder, not a doctrine rewrite.
+    - Feature Brief and Feature Registry stay Optional artifacts; the `F-####` format is a
+      convention layered on top, not a new hard requirement.
+    - `F-` prefix must never collide with or be confused for `UPG-####` — cross-reference check
+      in Reconcile verifies no remaining `UPG-0000` example leakage.
+    
+    ## Related
+    
+    - **UPG-0001**: Feature Thread Traceability — source of the stable-id / never-reused
+      discipline this upgrade extends to the downstream side.
+    - **UPG-0041**: Feature registry schema v2 — the `features/registry.yaml` structure whose
+      `feature_id` example this upgrade corrects.
+    
+    ## Feature Thread
+    
+    > Canonical thread rollup for this feature. Compact links/IDs only; full detail lives in the
+    > change records and review files. May be maintained manually.
+    
+    ### Changes
+    
+    | Change ID | File | Purpose | State |
+    |---|---|---|---|
+    | CHG-20260716-001 | changes/UPG-0050__CHG-20260716-001__downstream-feature-id-scheme.md | Introduce F-#### downstream feature-id scheme | IN_PROGRESS |
+    
+    ### Reviews
+    
+    | Review ID | Change ID | Step | Round | Verdict |
+    |---|---|---|---|---|
+    | RVS__UPG-0050__CHG-20260716-001__S1 | CHG-20260716-001 | 1-Intent | R1→R2 | DO NOT ADVANCE → NO OBJECTION |
+    
+    ### Findings Tracked Inside This Feature
+    
+    | Finding ID | Review ID | Classification | Resolution |
+    |---|---|---|---|
+    
+    ### Follow-up Features
+    
+    | Feature ID | Reason | Source finding |
+    |---|---|---|
+
+DIFF TO REVIEW (base->review, secret/size filtered)
+diff --git a/backlog/features.md b/backlog/features.md
+index e687c83..dd4e57b 100644
+--- a/backlog/features.md
++++ b/backlog/features.md
+@@ -80,6 +80,7 @@ The goal is to speed up Codeos development without weakening DBA advantages.
+ | UPG-0047 | [UPG-0047-structured-finding-lifecycle.md](UPG-0047-structured-finding-lifecycle.md) | Structured Finding Lifecycle | P2 | PROPOSED |
+ | UPG-0048 | [UPG-0048-review-ledger-event-sourcing.md](UPG-0048-review-ledger-event-sourcing.md) | Review Ledger Event Sourcing (Speculative — Long-Term) | P3 | PROPOSED |
+ | UPG-0049 | [UPG-0049-external-review-policy-registry.md](UPG-0049-external-review-policy-registry.md) | External Review Policy Registry | P3 | PROPOSED |
++| UPG-0050 | [UPG-0050-downstream-feature-id-scheme.md](UPG-0050-downstream-feature-id-scheme.md) | Downstream Feature-ID Scheme (F-####) | P2 | PROPOSED |
+ 
+ > Priority `—` = no formal P-rank (a completed cleanup, or a discovery note). Feature IDs are
+ > assigned once and never reused. `UPG-0002` and `UPG-0003` are historical/piloted work given IDs
+diff --git a/status/self-development.md b/status/self-development.md
+index dd568f7..62eba49 100644
+--- a/status/self-development.md
++++ b/status/self-development.md
+@@ -70,6 +70,7 @@
+ | UPG-0045 | CHG-20260712-002 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S4; R1 NO OBJECTION; all 12 ACs verified; 159 tests pass) | COMPLETE | — |
+ | UPG-0046 | CHG-20260713-001 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S4; R1 DO NOT ADVANCE — real fail-closed bug fixed; R2 NO OBJECTION; all 11 ACs verified; 171 tests pass) | COMPLETE | — |
+ | UPG-0047 | CHG-20260713-002 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S4; R1 NO OBJECTION; all 11 ACs verified; 182 tests pass; 294/317 findings parse, 23 documented long-tail) | COMPLETE | — |
++| UPG-0050 | CHG-20260716-001 | downstream-doctrine | downstream doctrine only | 2-Acceptance | DRAFT (Step 1 ACCEPTED — series RVS__…__S1; R1 DO NOT ADVANCE → R2 NO OBJECTION) | IN_PROGRESS | — |
+ 
+ <!--
+ Identity   : Feature ID = UPG-#### (stable). Change ID = CHG-YYYYMMDD-NNN (one execution), or a

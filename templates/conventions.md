@@ -37,13 +37,24 @@ Examples:
 
 ## Feature IDs
 
-Format: `lowercase_underscore`
+Format: `F-####` — 4-digit, zero-padded, sequential, permanent, never reused.
+
+The feature id is the stable identity; pair it with a separate human-readable slug for
+the label (`features/registry.yaml`'s `feature_id` / `slug` fields already model this
+split). Assigned at the Feature Brief Synthesis step
+(`.codeos/prompts/00b-feature-brief.md`): scan `features/registry.yaml` (if present) and
+`backlog/F-####-*.md` filenames for the current max, then assign next. A refinement
+(R-type) brief reuses its parent feature's id — it does not mint a new one.
 
 Examples:
-- `add_item_to_cart`
-- `user_login`
-- `process_payment`
-- `search_listings`
+- `F-0001` — first feature assigned in a project
+- `F-0002`, `F-0003`, … — subsequent features, in assignment order
+
+Filenames combine id + slug:
+- `backlog/F-0001-add-item-to-cart.md`
+- `intents/F-0001.md`
+- `contracts/F-0001_contract.md`
+- `events/F-0001_schema.md`
 
 ## Correlation IDs
 

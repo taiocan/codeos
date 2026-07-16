@@ -1,4 +1,4 @@
-# Feature Brief: [feature_id] — [short name]
+# Feature Brief: [F-####] — [short name]
 
 <!--
 PURPOSE OF THIS FILE:
@@ -17,6 +17,12 @@ TYPE:
   F-type = new feature
   R-type = refinement to an existing feature (must name the feature being refined)
 
+FEATURE ID:
+  Format: F-#### (4-digit, zero-padded, sequential, never reused).
+  Assigned by the interviewer at Synthesis, not chosen by the human — F-type gets the
+  next available id; R-type reuses the parent feature's id. See
+  .codeos/templates/conventions.md -> Feature IDs.
+
 HOW LONG: 10-15 minutes. If you are writing more than one screen per section,
 stop — Stage 1 handles the detail.
 
@@ -25,7 +31,7 @@ Remove comment blocks before saving.
 -->
 
 **Type**: F-type | R-type ← delete one  
-**Refines** *(R-type only)*: [feature_id being refined]  
+**Refines** *(R-type only)*: [F-#### being refined]  
 **Tier** *(rough guess, or "unknown")*: [e.g., "3 — Analytics"]  
 **Status**: BRIEF-DRAFT
 

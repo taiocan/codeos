@@ -173,8 +173,17 @@ them voluntarily. Never ask them as mandatory discovery questions:
 
 After all rounds (or fast-track pass) are complete:
 
-**Step 1 — Draft the brief.**
-Fill in `.codeos/templates/feature-brief.md` using only what the human has told you.
+**Step 1 — Assign the feature id, then draft the brief.**
+
+Assign `feature_id` (format: `F-####`, see `.codeos/templates/conventions.md` → Feature IDs):
+- **F-type**: scan `features/registry.yaml` (if present) and `backlog/F-####-*.md`
+  filenames for the highest existing `F-####`. Assign the next sequential number,
+  4-digit zero-padded (e.g. current max `F-0004` → assign `F-0005`). If neither source
+  has any `F-####` entries yet, assign `F-0001`.
+- **R-type**: reuse the parent feature's existing `F-####` — do not mint a new id. The
+  `**Refines**` field already names the parent.
+
+Then fill in `.codeos/templates/feature-brief.md` using only what the human has told you.
 Do not invent or infer beyond what was stated.
 For any section not resolved by the interview, write:
 `[unknown — to be determined in Stage 1]`
@@ -220,7 +229,8 @@ Any corrections before I mark it ready?"
 
 ## Brief Lifecycle
 
-The completed brief lives in `project/backlog/[feature_id]-[name].md` permanently.
+The completed brief lives in `project/backlog/[feature_id]-[name].md` permanently
+(e.g. `backlog/F-0001-add-item-to-cart.md`).
 It is the pre-DBA problem statement and historical record of why this feature was created.
 
 Once `stage1_started` is filled in, the brief is frozen.
@@ -232,7 +242,7 @@ No further updates to the brief are required or expected.
 ## Output Format
 
 Present the completed brief as a fenced markdown block, ready to save as
-`backlog/[feature_id]-[name].md`.
+`backlog/[feature_id]-[name].md` (e.g. `backlog/F-0001-add-item-to-cart.md`).
 
 Then state exactly:
 

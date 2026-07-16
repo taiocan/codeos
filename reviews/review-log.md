@@ -6656,3 +6656,133 @@ words.
 
 **Human decision:** APPROVED at every gate — Step 3 R2 and Step 4 R1 both confirmed fixed;
 approved to close out with the precise (not overclaiming) headline wording.
+
+## 2026-07-16T17:26:51Z REVIEW — UPG-0050__CHG-20260716-001 — Stage selfdev-step-1
+Review ID: REV__UPG-0050__CHG-20260716-001__selfdev-step-1__R1
+Base: (no base pin)  Review: 8980c48208910fcdd93b0323f3f9d2576bb02c51  Branch: main
+Diff-hash: fe58f8fdcaa54ef0f8fefbbd98ea024f996ece70b621c47565c4f183e6fe2e16
+Reviewer: codex default-model (session 019f6bf7-2594-7292-b289-93abb726d19b)
+Effort: high   Wall time: 26552ms   Reconnects: 0
+Codex concern: DO NOT ADVANCE
+Effective concern: DO NOT ADVANCE
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: DO NOT ADVANCE — Scope boundary is contradicted by the diff, and the artifact has no stated acceptance criteria.  
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-16T172651Z-UPG-0050__CHG-20260716-001-stage-selfdev-step-1-8980c48.md (sha256:83dffe1a4e1713f280c2c9c205661a5595be180d5c0743ecb35000db7a188ee3)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260716T172651Z-UPG-0050__CHG-20260716-001-stage-selfdev-step-1-8980c48.packet.txt (sha256:20e38be7e9d82fbcd634bdc9ff0ff4bc0c9f7e3618d56466d1c01e4109f35322)
+Human decision: (append with: codeos-reviewer decision UPG-0050__CHG-20260716-001 selfdev-step-1 <DECISION> "<reason>")
+
+## 2026-07-16T17:28:33Z REVIEW — UPG-0050__CHG-20260716-001 — Stage selfdev-step-1
+Review ID: REV__UPG-0050__CHG-20260716-001__selfdev-step-1__R2
+Base: (no base pin)  Review: 8980c48208910fcdd93b0323f3f9d2576bb02c51  Branch: main
+Diff-hash: fe58f8fdcaa54ef0f8fefbbd98ea024f996ece70b621c47565c4f183e6fe2e16
+Reviewer: codex default-model (session 019f6bf7-2594-7292-b289-93abb726d19b)
+Effort: high   Wall time: 33242ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — No in-scope blocker remains; only a minor non-blocking file-count mismatch is present.  
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-16T172833Z-UPG-0050__CHG-20260716-001-stage-selfdev-step-1-8980c48.md (sha256:bd1cb15139a22bdc8c3841ab7080caab09149599cbfdb1052d69314b963b3407)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260716T172833Z-UPG-0050__CHG-20260716-001-stage-selfdev-step-1-8980c48.packet.txt (sha256:f9121a6ca5cc3f96f0e699686c264b2e9a817959aade13d2477c1e6a5b2db98a)
+Human decision: (append with: codeos-reviewer decision UPG-0050__CHG-20260716-001 selfdev-step-1 <DECISION> "<reason>")
+
+## 2026-07-16T17:30:48Z HUMAN DECISION — UPG-0050__CHG-20260716-001 — Stage selfdev-step-1
+Commit at decision: 8980c48208910fcdd93b0323f3f9d2576bb02c51
+Decision: APPROVE_STAGE
+Reason/next: Step 1 Change Intent accepted. Advisory review converged R1 DO NOT ADVANCE -> R2 NO OBJECTION after disclosing the two required self-dev bookkeeping edits (backlog/features.md row, status/self-development.md row) in the scope boundary. Proceed to Step 2.
+Provenance:
+  assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-16T172833Z-UPG-0050__CHG-20260716-001-stage-selfdev-step-1-8980c48.md
+  review_commit: 8980c48208910fcdd93b0323f3f9d2576bb02c51  [HEAD_MATCH]
+  packet_sha256: [MATCH]
+  coverage_state: FULL_COVERAGE  [OK]
+
+## 2026-07-16T17:32:23Z REVIEW — UPG-0050__CHG-20260716-001 — Stage selfdev-step-2
+Review ID: REV__UPG-0050__CHG-20260716-001__selfdev-step-2__R1
+Base: (no base pin)  Review: 8980c48208910fcdd93b0323f3f9d2576bb02c51  Branch: main
+Diff-hash: 554020282994ec98fa0d89d781db4f2f7d18e49da72fbad744f7fe098a7f3f09
+Reviewer: codex default-model (session 019f6bf7-2594-7292-b289-93abb726d19b)
+Effort: high   Wall time: 33639ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — Step 2 now provides checkable acceptance criteria with no in-scope blocker.  
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-16T173223Z-UPG-0050__CHG-20260716-001-stage-selfdev-step-2-8980c48.md (sha256:0f903a327d151a9a9e3a06173a1f718c7e86af5f0aa7b78e5b5514449f1566fe)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260716T173223Z-UPG-0050__CHG-20260716-001-stage-selfdev-step-2-8980c48.packet.txt (sha256:43665a0d0c313b271e532e6d331420476f04980913c2fab5e37da28d4f3d00d5)
+Human decision: (append with: codeos-reviewer decision UPG-0050__CHG-20260716-001 selfdev-step-2 <DECISION> "<reason>")
+
+## 2026-07-16T17:33:14Z HUMAN DECISION — UPG-0050__CHG-20260716-001 — Stage selfdev-step-2
+Commit at decision: 8980c48208910fcdd93b0323f3f9d2576bb02c51
+Decision: APPROVE_STAGE
+Reason/next: Step 2 Acceptance Criteria accepted. R1 NO OBJECTION, 0 blockers. Proceed to Step 3.
+Provenance:
+  assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-16T173223Z-UPG-0050__CHG-20260716-001-stage-selfdev-step-2-8980c48.md
+  review_commit: 8980c48208910fcdd93b0323f3f9d2576bb02c51  [HEAD_MATCH]
+  packet_sha256: [MATCH]
+  coverage_state: FULL_COVERAGE  [OK]
+
+## 2026-07-16T17:37:13Z REVIEW — UPG-0050__CHG-20260716-001 — Stage selfdev-step-3
+Review ID: REV__UPG-0050__CHG-20260716-001__selfdev-step-3__R1
+Base: (no base pin)  Review: 8980c48208910fcdd93b0323f3f9d2576bb02c51  Branch: main
+Diff-hash: 9c4961bd5bc2542f780461e9f6f6b14f45eed41f216c726e3cc830767d36daa4
+Reviewer: codex default-model (session 019f6bf7-2594-7292-b289-93abb726d19b)
+Effort: high   Wall time: 53294ms   Reconnects: 0
+Codex concern: DO NOT ADVANCE
+Effective concern: DO NOT ADVANCE
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: DO NOT ADVANCE — Two stated acceptance criteria are not satisfied or evidenced: the Feature Brief H1 update and scaffold compatibility verification.  
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-16T173713Z-UPG-0050__CHG-20260716-001-stage-selfdev-step-3-8980c48.md (sha256:51e88ae3c578796f66c5464dfe713ad3af8470b15ca18cc438466b62eb98ab50)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260716T173713Z-UPG-0050__CHG-20260716-001-stage-selfdev-step-3-8980c48.packet.txt (sha256:3fd2256cd62c7c314323edfdb95bfef252e5f70e441017347bd352590dfc9d9f)
+Human decision: (append with: codeos-reviewer decision UPG-0050__CHG-20260716-001 selfdev-step-3 <DECISION> "<reason>")
+
+## 2026-07-16T17:39:02Z REVIEW — UPG-0050__CHG-20260716-001 — Stage selfdev-step-3
+Review ID: REV__UPG-0050__CHG-20260716-001__selfdev-step-3__R2
+Base: (no base pin)  Review: 8980c48208910fcdd93b0323f3f9d2576bb02c51  Branch: main
+Diff-hash: f5c81c712f09cf9d3a20840c934c66f60383acfd8ea6d4ae689d57bf9668138c
+Reviewer: codex default-model (session 019f6bf7-2594-7292-b289-93abb726d19b)
+Effort: high   Wall time: 60206ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: B
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — The prior implementation gaps are fixed or evidenced, with no in-scope blocker remaining.  
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-16T173902Z-UPG-0050__CHG-20260716-001-stage-selfdev-step-3-8980c48.md (sha256:35c6ec63c60f39b13c649a1f8ab467991d9d4c62c9887fd39368914799f851b5)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260716T173902Z-UPG-0050__CHG-20260716-001-stage-selfdev-step-3-8980c48.packet.txt (sha256:3f59c20e9f06bd2ea6a9e92cd242a2732045c3bceef0bfddf7fc1a3d1e09f27d)
+Human decision: (append with: codeos-reviewer decision UPG-0050__CHG-20260716-001 selfdev-step-3 <DECISION> "<reason>")
+
+## 2026-07-16T17:39:51Z HUMAN DECISION — UPG-0050__CHG-20260716-001 — Stage selfdev-step-3
+Commit at decision: 8980c48208910fcdd93b0323f3f9d2576bb02c51
+Decision: APPROVE_STAGE
+Reason/next: Step 3 Implementation accepted. R1 DO NOT ADVANCE (AC-5 H1 gap, AC-7 unevidenced) -> both fixed -> R2 NO OBJECTION, all 9 ACs satisfied. Proceed to Step 4.
+Provenance:
+  assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-16T173902Z-UPG-0050__CHG-20260716-001-stage-selfdev-step-3-8980c48.md
+  review_commit: 8980c48208910fcdd93b0323f3f9d2576bb02c51  [HEAD_MATCH]
+  packet_sha256: [MATCH]
+  coverage_state: FULL_COVERAGE  [OK]
+
+## 2026-07-16T17:41:40Z REVIEW — UPG-0050__CHG-20260716-001 — Stage selfdev-step-4
+Review ID: REV__UPG-0050__CHG-20260716-001__selfdev-step-4__R1
+Base: (no base pin)  Review: 8980c48208910fcdd93b0323f3f9d2576bb02c51  Branch: main
+Diff-hash: e75c3dce1991c29c1241fa6b91d66173fad255fa665d524e00a35b8b7881619a
+Reviewer: codex default-model (session 019f6bf7-2594-7292-b289-93abb726d19b)
+Effort: high   Wall time: 38730ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: B
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — All stated acceptance criteria are recorded as passing, with no in-scope blocker or scope drift found.  
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-16T174140Z-UPG-0050__CHG-20260716-001-stage-selfdev-step-4-8980c48.md (sha256:c767db55858fc261ac61ce9972036c80ea41e5397e3ce4c747dccbc9457a8577)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260716T174140Z-UPG-0050__CHG-20260716-001-stage-selfdev-step-4-8980c48.packet.txt (sha256:1f6a0967fb4f8800eab55fcce87da18912e2c6990723e4508335609161703cdf)
+Human decision: (append with: codeos-reviewer decision UPG-0050__CHG-20260716-001 selfdev-step-4 <DECISION> "<reason>")
+
+## 2026-07-16T17:43:00Z HUMAN DECISION — UPG-0050__CHG-20260716-001 — Stage selfdev-step-4
+Commit at decision: 8980c48208910fcdd93b0323f3f9d2576bb02c51
+Decision: APPROVE_STAGE
+Reason/next: Step 4 Reconciliation accepted. R1 NO OBJECTION, 0 findings, all 9 ACs verified PASS. Change UPG-0050__CHG-20260716-001 COMPLETE — human approved final gate.
+Provenance:
+  assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-16T174140Z-UPG-0050__CHG-20260716-001-stage-selfdev-step-4-8980c48.md
+  review_commit: 8980c48208910fcdd93b0323f3f9d2576bb02c51  [HEAD_MATCH]
+  packet_sha256: [MATCH]
+  coverage_state: FULL_COVERAGE  [OK]

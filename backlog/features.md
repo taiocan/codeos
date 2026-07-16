@@ -80,6 +80,7 @@ The goal is to speed up Codeos development without weakening DBA advantages.
 | UPG-0047 | [UPG-0047-structured-finding-lifecycle.md](UPG-0047-structured-finding-lifecycle.md) | Structured Finding Lifecycle | P2 | PROPOSED |
 | UPG-0048 | [UPG-0048-review-ledger-event-sourcing.md](UPG-0048-review-ledger-event-sourcing.md) | Review Ledger Event Sourcing (Speculative — Long-Term) | P3 | PROPOSED |
 | UPG-0049 | [UPG-0049-external-review-policy-registry.md](UPG-0049-external-review-policy-registry.md) | External Review Policy Registry | P3 | PROPOSED |
+| UPG-0050 | [UPG-0050-downstream-feature-id-scheme.md](UPG-0050-downstream-feature-id-scheme.md) | Downstream Feature-ID Scheme (F-####) | P2 | COMPLETE |
 
 > Priority `—` = no formal P-rank (a completed cleanup, or a discovery note). Feature IDs are
 > assigned once and never reused. `UPG-0002` and `UPG-0003` are historical/piloted work given IDs

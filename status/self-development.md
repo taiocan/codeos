@@ -70,6 +70,7 @@
 | UPG-0045 | CHG-20260712-002 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S4; R1 NO OBJECTION; all 12 ACs verified; 159 tests pass) | COMPLETE | — |
 | UPG-0046 | CHG-20260713-001 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S4; R1 DO NOT ADVANCE — real fail-closed bug fixed; R2 NO OBJECTION; all 11 ACs verified; 171 tests pass) | COMPLETE | — |
 | UPG-0047 | CHG-20260713-002 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S4; R1 NO OBJECTION; all 11 ACs verified; 182 tests pass; 294/317 findings parse, 23 documented long-tail) | COMPLETE | — |
+| UPG-0050 | CHG-20260716-001 | downstream-doctrine | downstream doctrine only | 4-Reconcile | ACCEPTED (series RVS__…__S4; Step 1 R1 DO NOT ADVANCE → R2 NO OBJECTION; Step 2 R1 NO OBJECTION; Step 3 R1 DO NOT ADVANCE → R2 NO OBJECTION; Step 4 R1 NO OBJECTION; all 9 ACs verified; live dba-init.sh scratch run) | COMPLETE | — |
 
 <!--
 Identity   : Feature ID = UPG-#### (stable). Change ID = CHG-YYYYMMDD-NNN (one execution), or a

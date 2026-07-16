@@ -101,6 +101,9 @@ acceptance criteria. It does not replace the default review above.
 Every feature follows this exact sequence. No skipping. Run the default advisory review
 (see "Default Advisory Review" above) before each gate below.
 
+`[feature_id]` below follows the `F-####` format defined in
+`.codeos/templates/conventions.md` → Feature IDs.
+
 ```
 STEP 1 — Intent
   Human writes raw feature description.
@@ -229,6 +232,9 @@ advancement and which improve decision quality without being prerequisites.
 **Required artifacts block stage advancement. Optional and recommended artifacts
 improve decision quality but are never prerequisites for stage transitions.**
 
+`[id]` below is shorthand for `[feature_id]`, which follows the `F-####` format defined
+in `.codeos/templates/conventions.md` → Feature IDs.
+
 | Artifact | Classification | When it exists |
 |---|---|---|
 | Feature Brief (`backlog/[id].md`) | Optional | Pre-Stage-1 discovery; not required to start Stage 1 |
@@ -244,6 +250,9 @@ improve decision quality but are never prerequisites for stage transitions.**
 ---
 
 ## File Layout
+
+`[feature_id]` below follows the `F-####` format defined in
+`.codeos/templates/conventions.md` → Feature IDs.
 
 ```
 project/

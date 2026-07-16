@@ -447,3 +447,31 @@ event-log migration and `UPG-0049`'s policy-file parsing are the next obvious ca
 **Related:** [[AJ-012]] — both are cases where the actual first step (build a test that touches
 real data) would have caught the gap immediately, but the natural first move (reason from the
 spec, or check a plausible-looking pre-check) did not.
+
+---
+
+## AJ-014 — Step 1's mandatory Feature-Thread bookkeeping must be disclosed in the scope boundary up front
+
+*Origin: UPG-0050 / CHG-20260716-001 (downstream-feature-id-scheme), Step 1 R1 (DO NOT ADVANCE).*
+
+Every non-trivial self-dev change's Step 1 necessarily edits two files that are *not* the
+change's actual subject matter: it adds a row to `backlog/features.md`'s Feature-ID Map and
+activates a row in `status/self-development.md` — required by `prompts/codeos-self-dev.md`'s
+"Feature Thread first" rule. If the Step 1 Change Intent's scope boundary states something like
+"no change to any self-dev-only file" without carving out these two rows, the reviewer will
+correctly flag it: the stated boundary is directly contradicted by the diff it's reviewed
+against. This happened on UPG-0050's first Step 1 round and cost a full review cycle to fix.
+
+**Rule:** when drafting a Step 1 scope boundary, explicitly name the two Feature-Thread
+bookkeeping edits as expected self-registration (not scope drift) from the start — don't write
+a blanket "no self-dev-only file changes" claim and then discover the contradiction via a
+DO NOT ADVANCE round.
+
+A second, smaller pattern from the same change: Step 1's Acceptance Criteria table is
+*supposed* to be empty (Acceptance Criteria is Step 2's deliverable per the 4-step loop), but
+the reviewer's `selfdev-step-1` packet has no stage-aware "expected output" template and can
+flag the empty table as a blocker anyway. This is a structural non-issue, not a defect — reject
+the finding with that reasoning rather than prematurely drafting Acceptance Criteria in Step 1
+to appease it. In this change, R2 did not re-raise it once the actual scope-boundary blocker was
+fixed, suggesting it may not recur consistently, but the reasoning for rejecting it if it does is
+worth keeping.

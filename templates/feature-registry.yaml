@@ -36,7 +36,7 @@
 schema_version: 2
 
 features:
-  - feature_id: UPG-0000         # stable feature identifier (e.g., UPG-0042)
+  - feature_id: F-0001           # stable feature identifier — F-#### format, see .codeos/templates/conventions.md → Feature IDs
     slug: example-feature         # required — feature_id is stable identity, slug is the readable label
     description: "Brief description of what this feature does"
     type: F                       # F (feature) | R (refinement of an existing feature)
