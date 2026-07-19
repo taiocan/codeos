@@ -2,7 +2,7 @@
 feature_id: UPG-0053
 slug: implementation-profile-scaffolding-dba-init
 title: Implementation-Profile Scaffolding in dba-init.sh
-status: PROPOSED
+status: COMPLETE
 priority: P3
 depends_on: [UPG-0052]
 related_features: []
@@ -13,7 +13,7 @@ superseded_by: []
 # Upgrade: implementation-profile-scaffolding-dba-init — Implementation-Profile Scaffolding in dba-init.sh
 
 **Priority**: P3
-**Status**: PROPOSED
+**Status**: COMPLETE
 **Type**: script-tooling
 
 ## Problem
@@ -96,19 +96,26 @@ human-edited profile file), and a sequencing risk if this ships before `UPG-0052
 
 | Change ID | File | Purpose | State |
 |---|---|---|---|
-| (none yet) | — | — | PROPOSED |
+| CHG-20260719-003 | `changes/UPG-0053__CHG-20260719-003__implementation-profile-scaffolding-dba-init.md` | Scaffold `architecture/implementation-profile.yaml` in `dba-init.sh` | COMPLETE |
 
 ### Reviews
 
 | Review ID | Change ID | Step | Round | Verdict |
 |---|---|---|---|---|
+| RVS__UPG-0053__CHG-20260719-003__S1 | CHG-20260719-003 | 1-Intent | R1 | NO OBJECTION |
+| RVS__UPG-0053__CHG-20260719-003__S2 | CHG-20260719-003 | 2-Acceptance | R1→R2 | R1 DO NOT ADVANCE → R2 NO OBJECTION |
+| RVS__UPG-0053__CHG-20260719-003__S3 | CHG-20260719-003 | 3-Implement | R1 | NO OBJECTION |
+| RVS__UPG-0053__CHG-20260719-003__S4 | CHG-20260719-003 | 4-Reconcile | R1 | NO OBJECTION — ACCEPTED |
 
 ### Findings Tracked Inside This Feature
 
 | Finding ID | Review ID | Classification | Resolution |
 |---|---|---|---|
+| (Step 2) false claim that `cp` is atomic/interruption-safe | RVS__…__S2 | IN-SCOPE BLOCKER | Fixed — AC7 reworded to the actual fail-closed guarantee |
+| (Step 2) AC6 ("no other line changed") contradicted AC8's intentional Next-steps addition | RVS__…__S2 | IN-SCOPE BLOCKER | Fixed — AC6 scoped to exclude the one intentional addition |
 
 ### Follow-up Features
 
 | Feature ID | Reason | Source finding |
 |---|---|---|
+| — | None spun out — all findings resolved inside this change | — |

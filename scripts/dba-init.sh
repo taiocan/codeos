@@ -122,7 +122,21 @@ else
     echo "[ok]   docs/codebase-digest.md (template — complete after first implementation)"
 fi
 
-# ── 8. Git init ─────────────────────────────────────────────────────────────
+# ── 8. Implementation Profile ────────────────────────────────────────────────
+
+ARCH_DIR="$PROJECT_DIR/architecture"
+PROFILE="$ARCH_DIR/implementation-profile.yaml"
+PROFILE_TEMPLATE="$CODEOS_PATH/templates/implementation-profile.yaml"
+
+if [ -f "$PROFILE" ]; then
+    echo "[skip] architecture/implementation-profile.yaml already exists"
+else
+    mkdir -p "$ARCH_DIR"
+    cp "$PROFILE_TEMPLATE" "$PROFILE"
+    echo "[ok]   architecture/implementation-profile.yaml (from template — status: proposed, non-binding)"
+fi
+
+# ── 9. Git init ─────────────────────────────────────────────────────────────
 
 if [ -d "$PROJECT_DIR/.git" ]; then
     echo "[skip] git repo already exists"
@@ -131,7 +145,7 @@ else
     echo "[ok]   git init (branch: main)"
 fi
 
-# ── 9. Git remote ────────────────────────────────────────────────────────────
+# ── 10. Git remote ───────────────────────────────────────────────────────────
 
 if [ -n "$REMOTE_URL" ]; then
     if git -C "$PROJECT_DIR" remote get-url origin &>/dev/null; then
@@ -142,7 +156,7 @@ if [ -n "$REMOTE_URL" ]; then
     fi
 fi
 
-# ── 10. Reviewer config ─────────────────────────────────────────────────────
+# ── 11. Reviewer config ──────────────────────────────────────────────────────
 
 REVIEWER_TOML="$PROJECT_DIR/reviewer.toml"
 REVIEWER_TEMPLATE="$CODEOS_PATH/templates/reviewer.toml"
@@ -156,7 +170,7 @@ else
     echo "[warn] reviewer.toml template not found at $REVIEWER_TEMPLATE — skipping"
 fi
 
-# ── 11. Done ────────────────────────────────────────────────────────────────
+# ── 12. Done ─────────────────────────────────────────────────────────────────
 
 echo ""
 echo "Done. Project initialized."
@@ -182,4 +196,9 @@ echo "Optional — Codebase Digest (structural orientation for Claude):"
 echo "  Complete docs/codebase-digest.md after your first implementation is in place."
 echo "  Claude will read it at session start (Step 2b). Generate from openlore,"
 echo "  static analysis, or manual inspection. See templates/codebase-digest.md."
+echo ""
+echo "Implementation Profile (architecture/implementation-profile.yaml):"
+echo "  Scaffolded as a non-binding proposal (status: proposed, primary_language: rust)."
+echo "  Edit it, or leave it as-is, then have a human explicitly approve it before"
+echo "  Stage 4 relies on it. See .codeos/dba-system.md → 'Implementation Profile'."
 echo ""

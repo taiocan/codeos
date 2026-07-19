@@ -1,0 +1,539 @@
+Reviewer task:
+
+SCOPE CONTRACT
+  Assess this artifact against the STATED SCOPE of this stage/PR — the Expected Stage
+  Output below and what the artifacts actually claim — NOT against an ideal final system.
+  A capability the artifacts do not claim to provide is OUT-OF-SCOPE, not a defect.
+  The following are OUT-OF-SCOPE BACKLOG unless THIS artifact explicitly claims to provide
+  them: formal approval-binding enforcement; rollback correctness; COMMIT_BOUND/
+  WORKSPACE_BOUND enforcement; JSON Schema validation; CI validation; exact
+  decision-integrity; per-feature decision ledgers; autonomous approval; enabled hooks.
+
+YOUR TASK — answer these five questions using only the evidence in the packet:
+  1. Acceptance criteria: Does the artifact satisfy each of its stated acceptance criteria?
+     Cite evidence for each criterion (or note its absence).
+  2. Claim support: Are universal or strong claims (all, every, never, always, no X) in the
+     artifact supported by evidence in the packet? Any unverifiable strong claim is a candidate
+     finding only if it affects acceptance, scope, safety, decision integrity, or the artifact's
+     stated guarantees.
+  3. Scope drift: Is there any change beyond the stated scope boundary? (Files not in the
+     "What changes" list; behavior changes not in the intent; downstream doctrine modified
+     rather than read.)
+  4. In-scope blockers: Are there facts that, if left in, would make the artifact wrong,
+     unsafe, or internally contradictory?
+  5. Finding classification: Classify every finding you raise as exactly one of the five
+     TRIAGE RULE categories below.
+
+TRIAGE RULE — classify EVERY finding as exactly one of:
+  IN-SCOPE BLOCKER         breaks the stated goal; creates a FALSE CLAIM in this artifact;
+                           weakens the advisory/read-only/human-gated guarantees; prevents
+                           the work from running; or violates an explicit safety constraint.
+  IN-SCOPE NON-BLOCKER     improves it but is not required for this PR.
+  OUT-OF-SCOPE BACKLOG     valid, but belongs to a future feature / stronger guarantee.
+  REJECTED                 conflicts with the stated scope or Codeos philosophy.
+  SELF-REFERENCE /         review records that are stale because of the previous round's
+  REVIEW-BOOKKEEPING       own existence (causal loop); not a real artifact defect.
+  Base the PR decision ONLY on IN-SCOPE BLOCKER findings. An OUT-OF-SCOPE BACKLOG finding
+  must NOT cause DO NOT ADVANCE unless this artifact FALSELY CLAIMS to solve it.
+
+WHAT NOT TO DO
+  - Do not flag style or wording issues as blockers unless the wording creates a false claim,
+    contradiction, parser breakage, or wrong governance instruction.
+  - Do not re-review unchanged full context when the packet is in delta mode.
+  - Do not treat local-only review history as a blocker unless the artifact falsely
+    claims the review artifacts are committed/durable.
+
+INSTRUCTIONS
+  If this is a resumed session, ignore any earlier-session conclusions unless they are
+  re-established by THIS packet; assess only the evidence above, pinned to this commit.
+  Give a focused assessment of this artifact against the stated scope, acceptance criteria,
+  and evidence in this packet. Rank findings by severity. Suggest a better design only when
+  needed to explain a required fix for an IN-SCOPE BLOCKER.
+
+  Limit findings to the top 3 IN-SCOPE BLOCKERS. Additional non-blocking observations may be
+  summarized in one short paragraph only if useful.
+
+  For EACH finding emit:
+    Finding: / Severity: High|Medium|Low / Classification: <one of the TRIAGE RULE labels>
+    Evidence: <file/line> / Why: <short> / Required action: fix now|optional fix|backlog|reject
+    Scope reason: <why it does/does not belong to this PR's scope>
+  Then emit:
+    PR decision: ADVANCE | REQUEST CHANGES | DO NOT ADVANCE   (based ONLY on in-scope blockers)
+    Scope drift warning: yes|no — <is anything pulling this PR beyond its stated scope?>
+  Then on the LAST three lines emit exactly (map ADVANCE->NO OBJECTION,
+  REQUEST CHANGES->CHANGES ADVISED, DO NOT ADVANCE->DO NOT ADVANCE):
+    LOG SUMMARY: <NO OBJECTION | CHANGES ADVISED | DO NOT ADVANCE | UNCLASSIFIED> — <single most important point>
+      (use UNCLASSIFIED if you genuinely cannot classify the artifact safely)
+    EVIDENCE: <A|B|C|D|E>
+    HIGHEST-IMPACT UNCERTAINTY: <one sentence — what single thing, if wrong, most affects this assessment>
+
+  Evidence grade — the grade describes what the assessment rests on, not reviewer confidence:
+    A — Directly verified in the artifact, diff, or output shown in the packet
+    B — Verified with multiple direct pieces of evidence, but coverage is not complete
+    C — Partially verified, partially inferred from structure or context
+    D — Mostly inferred from structure or indirect evidence
+    E — Hypothesis or very limited basis — little to no direct evidence
+
+
+PACKET MANIFEST
+  generated: 2026-07-19T16:48:05Z
+  task_prompt: /home/rimo/projects/Codeos/prompts/codeos-reviewer-task.md (4959 bytes)
+  review_content_bytes: 22717
+  estimated_review_tokens: ~5679
+  budget_status: OK
+  packet_mode: full
+  delta_base: none
+  items:
+    - path: changes/UPG-0053__CHG-20260719-003__implementation-profile-scaffolding-dba-init.md
+      mode: full_file
+      bytes: 8937
+      sha256: fe457d17d323138c8fc645d7d62cb52d6ad5800a213907b36b2b79c2eb66f6af
+    - path: scripts/dba-init.sh
+      mode: full_file
+      bytes: 8288
+      sha256: 04bf0d4112dfd36cbdf3b8c0d98270dabe45c2b4200deb29aa6d5e55288ce9d0
+    - path: (diff)
+      mode: full_file
+      bytes: 5492
+
+REVIEW CONTEXT
+  Feature:                UPG-0053__CHG-20260719-003
+  Stage:                  selfdev-step-3
+  Branch:                 main
+  Base commit:            (no base pin)
+  Review commit:          798d233482e585674e8786a53922c976fafe9c18 (+ uncommitted workspace changes)
+  Current approved stage: n/a (non-numeric stage)
+  Evidence coverage:      FULL_COVERAGE
+  Workspace dirty:        yes (uncommitted changes at review time)
+
+DBA RULES RELEVANT TO THIS STAGE
+  - Human approval is required for every stage transition; you are advisory only.
+  - Memory is not truth — assess only what is provided, pinned to the review commit.
+  - Implementation must trace to approved artifacts; no behavior beyond intent+contract+schema.
+  - No events outside the approved event schema; no hidden behavior.
+
+STAGE-SPECIFIC CHECKS
+  - (no stage-specific checklist for stage selfdev-step-3)
+
+EXPECTED STAGE OUTPUT
+  (no expected-output template for stage)
+
+ARTIFACTS TO REVIEW
+  --- changes/UPG-0053__CHG-20260719-003__implementation-profile-scaffolding-dba-init.md (sha256: fe457d17d323138c8fc645d7d62cb52d6ad5800a213907b36b2b79c2eb66f6af, visibility: shown) ---
+    # Self-Development Change: UPG-0053__CHG-20260719-003 — implementation-profile-scaffolding-dba-init
+    
+    <!--
+    PURPOSE: Per-change source of truth for a non-trivial change to the Codeos toolkit
+    itself (prompts, templates, docs, patterns, scripts).
+    
+    This is NOT a downstream DBA feature. It has no behavioral contract, no event schema,
+    and no replay. Trivial changes do not get a record.
+    
+    Workflow: prompts/codeos-self-dev.md (4-step loop)
+    Each step requires explicit human approval; Codex review cadence is governed by the assigned review profile (see prompts/codeos-self-dev.md Step 0a).
+    The live status row lives in status/self-development.md, not here.
+    -->
+    
+    <!-- TRACE HEADER (canonical) -->
+    ```yaml
+    feature_id: UPG-0053
+    primary_feature_id: UPG-0053
+    change_id: CHG-20260719-003
+    slug: implementation-profile-scaffolding-dba-init
+    state: IN_PROGRESS
+    current_step: 3-Implement
+    implements:
+      - UPG-0053
+    related_features: [UPG-0052]
+    review_series: RVS__UPG-0053__CHG-20260719-003__S3
+    review_profile: PROFILE-3
+    review_state: DRAFT
+    review_history: reviews/review-log.md
+    fixes_findings: []
+    follow_up_of: null
+    ```
+    
+    <!-- SELF-REFERENCE BOUNDARY: this artifact is itself reviewed, so it must NOT embed the current
+    review round (which does not exist until after the packet is built). Reference the stable review
+    SERIES (review_series) + review_state; exact rounds live only in reviews/review-log.md and
+    reviews/codex/*. See prompts/codeos-self-dev.md → "Feature Thread & IDs" / "Self-Reference Boundary". -->
+    
+    
+    ## Change Intent
+    
+    **Why (problem in the toolkit):**
+    
+    `scripts/dba-init.sh` has no knowledge of the Implementation Profile artifact `UPG-0052`
+    introduced (`architecture/implementation-profile.yaml`, template at
+    `templates/implementation-profile.yaml`). Without scaffolding, every new downstream project needs
+    this file created by hand before it means anything (per `UPG-0052`'s session-start/onboarding
+    awareness, now shipped in `CHG-20260719-002`). There is also a real risk of `dba-init.sh` instead
+    over-reaching — auto-generating Cargo/workspace structure before an Architecture Synthesis Gate
+    (`UPG-0051`) has approved any crate topology, locking in structure before evidence exists — which
+    this change must explicitly not do.
+    
+    **What changes:**
+    
+    1. `scripts/dba-init.sh` — add a new numbered step, **"8. Implementation Profile"**, inserted
+       after the existing step 7 (Codebase digest placeholder) and before the existing step 8 (Git
+       init). This renumbers the four subsequent steps: old 8 (Git init) → 9, old 9 (Git remote) → 10,
+       old 10 (Reviewer config) → 11, old 11 (Done) → 12. The new step:
+       - Creates `architecture/` (via `mkdir -p`) if it doesn't exist — the directory itself is
+         optional/independently-created per `UPG-0051`/`UPG-0052`'s doctrine, this is simply where
+         `dba-init.sh` first needs it.
+       - If `architecture/implementation-profile.yaml` already exists, **skip** (idempotent — matches
+         every other step's existing `[skip]`-if-present pattern in this script, e.g. steps 3, 5, 6,
+         7, 10).
+       - Otherwise, copy `templates/implementation-profile.yaml` verbatim to
+         `architecture/implementation-profile.yaml` — **no `sed` substitution needed**, unlike
+         `CLAUDE.md`/the codebase digest, since the template's defaults (`status: proposed`,
+         `primary_language: rust`) already are the correct scaffolded state; there is no
+         `[PROJECT_NAME]`-style placeholder in this template to fill in.
+       - Prints an `[ok]`/`[skip]` line matching the script's existing convention.
+       - The "Done" step's closing "Next steps" text gains one line mentioning the scaffolded profile
+         file, consistent with how the registry/digest/reviewer-config files are already mentioned
+         there.
+    
+    **Scope boundary — what stays the same:**
+    
+    - No Cargo/workspace generation logic is added anywhere in this script — confirmed by reading the
+      full current script: it contains no such logic today, and this change does not introduce any.
+    - No `dba-system.md` (or any other doctrine/prompt/template) text is touched — `UPG-0052` already
+      shipped the doctrine and the profile template this change consumes; this change only wires the
+      init script to use them.
+    - No explicit init CLI modes (e.g. `--implementation-profile none|rust-first`) — the backlog brief
+      explicitly flags this as an open, non-essential design question, not committed for v1.
+    - No change to any of the script's other 11 existing steps beyond renumbering their comment
+      headers (8→9, 9→10, 10→11, 11→12) to make room for the new step 8 — their logic is untouched.
+    - Verification is a **live scratch run** of the script (as `UPG-0050`'s prior `dba-init.sh`-touching
+      change did — confirmed no dedicated automated test harness exists for this script), not a new
+      permanent test file; "smoke-test coverage" in the backlog brief's Scope refers to this.
+    
+    **Class:** script-tooling
+    **Scope axis:** self-dev only
+    **Backlog item:** backlog/UPG-0053-implementation-profile-scaffolding-dba-init.md
+    
+    ---
+    
+    ## Acceptance Criteria
+    
+    | # | Criterion | How it will be verified |
+    |---|---|---|
+    | 1 | Fresh scratch project: `architecture/implementation-profile.yaml` is created, byte-identical to `templates/implementation-profile.yaml` (`status: proposed`, `primary_language: rust`, no substitution needed). | Live scratch run; `diff` the generated file against the template. |
+    | 2 | Missing parent directory: if `architecture/` does not exist, it is created (`mkdir -p` semantics — no error if it already exists as a directory). | Scratch run against a project with no pre-existing `architecture/`; confirm the directory and file both exist afterward. |
+    | 3 | Idempotency — existing file never overwritten: re-running `dba-init.sh` after hand-editing `architecture/implementation-profile.yaml` (e.g. changing `primary_language` or `status: approved`) leaves the file byte-identical to the hand-edited version. | Scratch run: init once, edit the file, init again, `diff` before/after the second run — must be empty. |
+    | 4 | The scaffolded file never has `status: approved` — it is always written as the template's own default (`proposed`), never pre-approved by the script. | Read the generated file after a fresh scratch run; confirm `status: proposed`. |
+    | 5 | No Cargo/workspace files are created anywhere by this change. | Scratch run: `find` the scratch project for `Cargo.toml`/`Cargo.lock` before and after running `dba-init.sh` — both empty. |
+    | 6 | Existing steps' behavior is unchanged beyond (a) comment-header renumbering (8→9, 9→10, 10→11, 11→12) and (b) the one intentional addition to the final "Next steps" echo block (AC8) — no other logic in any other step is altered. | `git diff -- scripts/dba-init.sh` shows only the new step's block added, renumbered comment headers, and the one added "Next steps" line; no other line changed. |
+    | 7 | The new step introduces no new error-suppression: it relies on the script's existing `set -euo pipefail` (already in effect for every step) rather than adding its own `\|\| true` or ignored exit code, so a failure in `mkdir -p` or `cp` aborts the whole script the same way a failure in any other step already does. This is a fail-closed guarantee, not a claim that `cp` is atomic or interruption-safe — a `cp` killed mid-copy can leave a partial destination file, exactly as it can for any other file this script writes (e.g. the existing `CLAUDE.md`/registry/digest copies), and this change does not change that pre-existing property. | Read-through of the new step's code confirms no `\|\|`, no `2>/dev/null`-style suppression, no subshell that would swallow a non-zero exit; a scratch run's exit code is `0` on a normal, uninterrupted run. |
+    | 8 | The "Next steps" closing text mentions the scaffolded profile file, consistent with how the registry/digest/reviewer-config files are already mentioned there. | Read-through of the script's final echo block. |
+    
+    ---
+    
+    ## Implementation Notes
+    
+    <!-- Summary only — the git diff is the source of truth. -->
+    
+    Single file touched: `scripts/dba-init.sh`. `git diff` confirms exactly the planned change: the
+    new "8. Implementation Profile" step block, the four renumbered comment headers (8→9, 9→10,
+    10→11, 11→12 for Git init/Git remote/Reviewer config/Done), and the one added "Next steps" block
+    — no other line in the script changed.
+    
+    The new step follows the file's existing `[skip]`-if-present idiom exactly (same shape as steps
+    3, 5, 6, 7, 11): `mkdir -p` before `cp` so a missing `architecture/` is created transparently, no
+    `sed` substitution (unlike `CLAUDE.md`/digest, since the template's own defaults are already the
+    correct scaffolded state), and no new error-suppression added — relies on the script's existing
+    `set -euo pipefail`.
+    
+    **Nothing was deferred or discovered out-of-scope during implementation.**
+    
+    ---
+    
+    ## Reconciliation
+    
+    <!-- Filled in Step 4. -->
+    
+    ---
+
+  --- scripts/dba-init.sh (sha256: 04bf0d4112dfd36cbdf3b8c0d98270dabe45c2b4200deb29aa6d5e55288ce9d0, visibility: shown) ---
+    #!/usr/bin/env bash
+    # dba-init.sh — Initialize a new DBA/IDS project
+    #
+    # Usage (from new project root):
+    #   bash /home/arc/projects/claude/Codeos/scripts/dba-init.sh [project-name] [remote-url]
+    #
+    # What it does:
+    #   1. Creates .codeos symlink → Codeos toolkit
+    #   2. Creates project directory structure
+    #   3. Generates CLAUDE.md from template
+    #   4. Generates docs/conventions.md
+    #   5. Initializes git repo (if not already one)
+    #   6. Adds git remote (if remote URL provided)
+    
+    set -euo pipefail
+    
+    # Resolve paths
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    CODEOS_PATH="$(cd "$SCRIPT_DIR/.." && pwd)"
+    PROJECT_DIR="$PWD"
+    PROJECT_NAME="${1:-$(basename "$PROJECT_DIR")}"
+    REMOTE_URL="${2:-}"
+    
+    echo ""
+    echo "DBA Project Init"
+    echo "================"
+    echo "Project name : $PROJECT_NAME"
+    echo "Project dir  : $PROJECT_DIR"
+    echo "Toolkit path : $CODEOS_PATH"
+    if [ -n "$REMOTE_URL" ]; then
+    echo "Remote URL   : $REMOTE_URL"
+    fi
+    echo ""
+    
+    # ── 1. Symlink ─────────────────────────────────────────────────────────────
+    
+    if [ -L "$PROJECT_DIR/.codeos" ]; then
+        echo "[skip] .codeos symlink already exists"
+    elif [ -e "$PROJECT_DIR/.codeos" ]; then
+        echo "[warn] .codeos exists but is not a symlink — skipping"
+    else
+        ln -s "$CODEOS_PATH" "$PROJECT_DIR/.codeos"
+        echo "[ok]   .codeos → $CODEOS_PATH"
+    fi
+    
+    # ── 2. Directory structure ──────────────────────────────────────────────────
+    
+    DIRS=(
+        "intents"
+        "contracts"
+        "events"
+        "modules"
+        "tests/behavioral"
+        "tests/replay"
+        "docs"
+        "features"
+        "backlog"
+        "refinements/arch"
+    )
+    
+    for dir in "${DIRS[@]}"; do
+        if [ -d "$PROJECT_DIR/$dir" ]; then
+            echo "[skip] $dir/ already exists"
+        else
+            mkdir -p "$PROJECT_DIR/$dir"
+            echo "[ok]   $dir/"
+        fi
+    done
+    
+    # ── 3. Feature registry ────────────────────────────────────────────────────
+    
+    REGISTRY="$PROJECT_DIR/features/registry.yaml"
+    REGISTRY_TEMPLATE="$CODEOS_PATH/templates/feature-registry.yaml"
+    
+    if [ -f "$REGISTRY" ]; then
+        echo "[skip] features/registry.yaml already exists"
+    else
+        cp "$REGISTRY_TEMPLATE" "$REGISTRY"
+        echo "[ok]   features/registry.yaml (from template — edit to replace example entries)"
+    fi
+    
+    # ── 4. Runtime event log ────────────────────────────────────────────────────
+    
+    EVENTS_LOG="$PROJECT_DIR/events/runtime_events.jsonl"
+    if [ -f "$EVENTS_LOG" ]; then
+        echo "[skip] events/runtime_events.jsonl already exists"
+    else
+        touch "$EVENTS_LOG"
+        echo "[ok]   events/runtime_events.jsonl"
+    fi
+    
+    # ── 5. Project CLAUDE.md ────────────────────────────────────────────────────
+    
+    PROJECT_CLAUDE="$PROJECT_DIR/CLAUDE.md"
+    TEMPLATE="$CODEOS_PATH/templates/project-CLAUDE.md"
+    
+    if [ -f "$PROJECT_CLAUDE" ]; then
+        echo "[skip] CLAUDE.md already exists"
+    else
+        sed "s/\[PROJECT_NAME\]/$PROJECT_NAME/g" "$TEMPLATE" > "$PROJECT_CLAUDE"
+        echo "[ok]   CLAUDE.md (from template)"
+    fi
+    
+    # ── 6. Naming conventions ───────────────────────────────────────────────────
+    
+    CONVENTIONS="$PROJECT_DIR/docs/conventions.md"
+    if [ -f "$CONVENTIONS" ]; then
+        echo "[skip] docs/conventions.md already exists"
+    else
+        cp "$CODEOS_PATH/templates/conventions.md" "$CONVENTIONS"
+        echo "[ok]   docs/conventions.md (from template)"
+    fi
+    
+    # ── 7. Codebase digest placeholder ─────────────────────────────────────────
+    
+    DIGEST="$PROJECT_DIR/docs/codebase-digest.md"
+    if [ -f "$DIGEST" ]; then
+        echo "[skip] docs/codebase-digest.md already exists"
+    else
+        cp "$CODEOS_PATH/templates/codebase-digest.md" "$DIGEST"
+        sed -i "s/\[PROJECT_NAME\]/$PROJECT_NAME/g" "$DIGEST"
+        echo "[ok]   docs/codebase-digest.md (template — complete after first implementation)"
+    fi
+    
+    # ── 8. Implementation Profile ────────────────────────────────────────────────
+    
+    ARCH_DIR="$PROJECT_DIR/architecture"
+    PROFILE="$ARCH_DIR/implementation-profile.yaml"
+    PROFILE_TEMPLATE="$CODEOS_PATH/templates/implementation-profile.yaml"
+    
+    if [ -f "$PROFILE" ]; then
+        echo "[skip] architecture/implementation-profile.yaml already exists"
+    else
+        mkdir -p "$ARCH_DIR"
+        cp "$PROFILE_TEMPLATE" "$PROFILE"
+        echo "[ok]   architecture/implementation-profile.yaml (from template — status: proposed, non-binding)"
+    fi
+    
+    # ── 9. Git init ─────────────────────────────────────────────────────────────
+    
+    if [ -d "$PROJECT_DIR/.git" ]; then
+        echo "[skip] git repo already exists"
+    else
+        git -C "$PROJECT_DIR" init -b main
+        echo "[ok]   git init (branch: main)"
+    fi
+    
+    # ── 10. Git remote ───────────────────────────────────────────────────────────
+    
+    if [ -n "$REMOTE_URL" ]; then
+        if git -C "$PROJECT_DIR" remote get-url origin &>/dev/null; then
+            echo "[skip] git remote 'origin' already set"
+        else
+            git -C "$PROJECT_DIR" remote add origin "$REMOTE_URL"
+            echo "[ok]   git remote origin → $REMOTE_URL"
+        fi
+    fi
+    
+    # ── 11. Reviewer config ──────────────────────────────────────────────────────
+    
+    REVIEWER_TOML="$PROJECT_DIR/reviewer.toml"
+    REVIEWER_TEMPLATE="$CODEOS_PATH/templates/reviewer.toml"
+    
+    if [ -f "$REVIEWER_TOML" ]; then
+        echo "[skip] reviewer.toml already exists"
+    elif [ -f "$REVIEWER_TEMPLATE" ]; then
+        cp "$REVIEWER_TEMPLATE" "$REVIEWER_TOML"
+        echo "[ok]   reviewer.toml (from template — edit to change provider)"
+    else
+        echo "[warn] reviewer.toml template not found at $REVIEWER_TEMPLATE — skipping"
+    fi
+    
+    # ── 12. Done ─────────────────────────────────────────────────────────────────
+    
+    echo ""
+    echo "Done. Project initialized."
+    echo ""
+    echo "Next steps:"
+    echo "  1. Open CLAUDE.md and fill in the project intent"
+    echo "  2. Edit features/registry.yaml — replace the example entry with real features"
+    echo "  3. Start Claude Code: claude"
+    echo "  4. Tell Claude: 'Read .codeos/dba-system.md' (the authoritative DBA doctrine)"
+    echo "  5. Paste .codeos/prompts/00-session-start.md to begin"
+    echo ""
+    echo "Session type choices (from 00-session-start.md):"
+    echo "  A — Feature Brief (new feature discovery)"
+    echo "  B — Feature Stage Work (Stages 1–9)"
+    echo "  C — Architectural Refinement (structural changes)"
+    echo "  D — Existing Codebase Onboarding (working code, no DBA artifacts)"
+    echo ""
+    echo "To create your first feature brief:"
+    echo "  cp .codeos/templates/feature-brief.md backlog/[feature_id].md"
+    echo "  # Complete the brief, then use it as Stage 1 input"
+    echo ""
+    echo "Optional — Codebase Digest (structural orientation for Claude):"
+    echo "  Complete docs/codebase-digest.md after your first implementation is in place."
+    echo "  Claude will read it at session start (Step 2b). Generate from openlore,"
+    echo "  static analysis, or manual inspection. See templates/codebase-digest.md."
+    echo ""
+    echo "Implementation Profile (architecture/implementation-profile.yaml):"
+    echo "  Scaffolded as a non-binding proposal (status: proposed, primary_language: rust)."
+    echo "  Edit it, or leave it as-is, then have a human explicitly approve it before"
+    echo "  Stage 4 relies on it. See .codeos/dba-system.md → 'Implementation Profile'."
+    echo ""
+
+DIFF TO REVIEW (base->review, secret/size filtered)
+diff --git a/scripts/dba-init.sh b/scripts/dba-init.sh
+index 64ca98e..228c0ee 100755
+--- a/scripts/dba-init.sh
++++ b/scripts/dba-init.sh
+@@ -122,7 +122,21 @@ else
+     echo "[ok]   docs/codebase-digest.md (template — complete after first implementation)"
+ fi
+ 
+-# ── 8. Git init ─────────────────────────────────────────────────────────────
++# ── 8. Implementation Profile ────────────────────────────────────────────────
++
++ARCH_DIR="$PROJECT_DIR/architecture"
++PROFILE="$ARCH_DIR/implementation-profile.yaml"
++PROFILE_TEMPLATE="$CODEOS_PATH/templates/implementation-profile.yaml"
++
++if [ -f "$PROFILE" ]; then
++    echo "[skip] architecture/implementation-profile.yaml already exists"
++else
++    mkdir -p "$ARCH_DIR"
++    cp "$PROFILE_TEMPLATE" "$PROFILE"
++    echo "[ok]   architecture/implementation-profile.yaml (from template — status: proposed, non-binding)"
++fi
++
++# ── 9. Git init ─────────────────────────────────────────────────────────────
+ 
+ if [ -d "$PROJECT_DIR/.git" ]; then
+     echo "[skip] git repo already exists"
+@@ -131,7 +145,7 @@ else
+     echo "[ok]   git init (branch: main)"
+ fi
+ 
+-# ── 9. Git remote ────────────────────────────────────────────────────────────
++# ── 10. Git remote ───────────────────────────────────────────────────────────
+ 
+ if [ -n "$REMOTE_URL" ]; then
+     if git -C "$PROJECT_DIR" remote get-url origin &>/dev/null; then
+@@ -142,7 +156,7 @@ if [ -n "$REMOTE_URL" ]; then
+     fi
+ fi
+ 
+-# ── 10. Reviewer config ─────────────────────────────────────────────────────
++# ── 11. Reviewer config ──────────────────────────────────────────────────────
+ 
+ REVIEWER_TOML="$PROJECT_DIR/reviewer.toml"
+ REVIEWER_TEMPLATE="$CODEOS_PATH/templates/reviewer.toml"
+@@ -156,7 +170,7 @@ else
+     echo "[warn] reviewer.toml template not found at $REVIEWER_TEMPLATE — skipping"
+ fi
+ 
+-# ── 11. Done ────────────────────────────────────────────────────────────────
++# ── 12. Done ─────────────────────────────────────────────────────────────────
+ 
+ echo ""
+ echo "Done. Project initialized."
+@@ -183,3 +197,8 @@ echo "  Complete docs/codebase-digest.md after your first implementation is in p
+ echo "  Claude will read it at session start (Step 2b). Generate from openlore,"
+ echo "  static analysis, or manual inspection. See templates/codebase-digest.md."
+ echo ""
++echo "Implementation Profile (architecture/implementation-profile.yaml):"
++echo "  Scaffolded as a non-binding proposal (status: proposed, primary_language: rust)."
++echo "  Edit it, or leave it as-is, then have a human explicitly approve it before"
++echo "  Stage 4 relies on it. See .codeos/dba-system.md → 'Implementation Profile'."
++echo ""
+diff --git a/status/self-development.md b/status/self-development.md
+index c7207e6..4c6775a 100644
+--- a/status/self-development.md
++++ b/status/self-development.md
+@@ -73,6 +73,7 @@
+ | UPG-0050 | CHG-20260716-001 | downstream-doctrine | downstream doctrine only | 4-Reconcile | ACCEPTED (series RVS__…__S4; Step 1 R1 DO NOT ADVANCE → R2 NO OBJECTION; Step 2 R1 NO OBJECTION; Step 3 R1 DO NOT ADVANCE → R2 NO OBJECTION; Step 4 R1 NO OBJECTION; all 9 ACs verified; live dba-init.sh scratch run) | COMPLETE | — |
+ | UPG-0051 | CHG-20260719-001 | downstream-doctrine | downstream doctrine only | 4-Reconcile | ACCEPTED (series RVS__…__S4; Step 1 R1 DO NOT ADVANCE → R2 NO OBJECTION; Step 2 R1 NO OBJECTION, R2 NO OBJECTION post CHANGES-ADVISED fixes; Step 3 R1 DO NOT ADVANCE → R2 NO OBJECTION; Step 4 R1 NO OBJECTION; all 15 ACs verified; 3 in-scope blockers found+fixed across the change) | COMPLETE | — |
+ | UPG-0052 | CHG-20260719-002 | downstream-doctrine | downstream doctrine only | 4-Reconcile | ACCEPTED (series RVS__…__S4; Step 1 R1 DO NOT ADVANCE → R2 NO OBJECTION → 1st human CHANGES-ADVISED → R3 NO OBJECTION → 2nd human CHANGES-ADVISED → R4 NO OBJECTION (human-requested, beyond budget); Step 2 R1 NO OBJECTION; Step 3 R1 NO OBJECTION; Step 4 R1 DO NOT ADVANCE → R2 NO OBJECTION; all 17 ACs verified; 4 in-scope blockers found+fixed across the change) | COMPLETE | — |
++| UPG-0053 | CHG-20260719-003 | script-tooling | self-dev only | 2-Acceptance | REVIEWED (series RVS__…__S2; R1 DO NOT ADVANCE — false cp-atomicity claim + AC6/AC8 contradiction, both fixed; R2 NO OBJECTION) | IN_PROGRESS | — |
+ 
+ <!--
+ Identity   : Feature ID = UPG-#### (stable). Change ID = CHG-YYYYMMDD-NNN (one execution), or a
