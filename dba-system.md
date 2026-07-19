@@ -24,6 +24,7 @@ When intent, runtime evidence, and structural analysis disagree, resolve as foll
 2. **Runtime behavior** (observed events) overrides intent text when behavior is more specific. Example: schema declares `"string"`, runtime consistently emits integer — this is empirical evidence of intent-text drift, not a runtime error.
 3. **Safety, authorization, and invariant-enforcement logic** always preserves intent primacy regardless of runtime behavior. Example: runtime shows no authorization check was invoked — this is a contract violation, not an authorization redesign.
 4. **Structural digest observations** (fan-in, god functions, known risk zones) do not override behavioral findings. They inform blast-radius estimates and remediation sequencing only.
+5. **An approved Architecture Baseline** (see "Multi-Feature Architecture Synthesis Gate" below) is authoritative only for project-level structural decisions not fixed by rules 1–4's behavioral artifacts. It never overrides Intent, Contract, Event Schema, explicit human correction, or safety/authorization invariants. Conflicts with runtime evidence are handled through rule 2 above, not a separate baseline-specific rule — runtime behavior does not silently amend the baseline, and the baseline does not silently override runtime-confirmed intent drift either.
 
 When a conflict cannot be resolved by these rules: surface it clearly to the human rather than silently resolving it.
 
@@ -153,6 +154,108 @@ STEP 9 — Targeted Refinement
 
 ---
 
+## Multi-Feature Architecture Synthesis Gate
+
+This is a **conditional, project-level structural approval gate** — not a numbered stage
+inserted into the 9-Step loop above, and not required for single-feature or loosely-coupled
+projects. It exists for multi-feature projects whose features could materially constrain each
+other's implementation architecture.
+
+**When it applies — the core cohort test.** A **core architecture cohort** is two or more
+features whose independent implementation choices could *materially constrain* each other's
+canonical ownership, dependency direction, persistence boundary, integration contract, shared
+infrastructure, or deployment topology. Merely sharing a runtime or a database is evidence to
+inspect, not automatic inclusion — a broader test (e.g. "shares runtime/persistence/events")
+would pull nearly every feature in a project into one cohort and make this gate universal
+rather than conditional, which it must not be.
+
+**Declaring a cohort.** A human declares a core cohort by adding an `architecture_cohorts:`
+entry to `features/registry.yaml` (see the template's schema comments) and setting each member
+feature's `architecture_cohort` field to that cohort's id. **A feature belongs to at most one
+active cohort**; a project may declare multiple cohorts, but their feature memberships must not
+overlap. This declaration is where cohort membership and gate status live — the registry
+remains an index (membership, status, a baseline version *reference*), never a second home for
+the structural decisions the baseline itself owns.
+
+**The rule.** Once a cohort is declared, every member feature reaching Stage 4 requires that
+cohort's Architecture Baseline to be `approved` for the version applicable to that feature — see
+`.codeos/prompts/04-implement.md`'s cohort eligibility check. Intent, Contract, and Event Schema
+approval remain required exactly as before; the baseline is an *additional* requirement for
+cohort members, not a replacement for the three approved artifacts.
+
+**The gate sequence.**
+1. Every cohort member completes Stage 1 (Intent). An **Intent Cohort Check** —
+   duplicate outcomes, missing or circular ownership, inconsistent actor definitions — is
+   *recommended* once the cohort's intents are all approved.
+2. Every cohort member completes Stage 2 (Contract). A **Contract Cohort Check** — canonical
+   artifact ownership, lifecycle/failure consistency, circular preconditions — is *recommended*.
+3. Every cohort member completes Stage 3 (Event Schema). An **Event Cohort Check** — event
+   ownership, envelope uniformity, correlation strategy, observational-vs-integration
+   classification — is *required* as input to synthesis.
+4. **Architecture Synthesis** (`.codeos/prompts/03b-architecture-synthesis.md`) produces
+   `architecture/core-baseline.md` (template: `.codeos/templates/architecture-baseline.md`).
+   Human approval of this baseline is **the single new mandatory gate** this workflow adds — not
+   four separate mandatory gates.
+5. Only after the baseline is `approved` for the applicable version may cohort members begin
+   Stage 4, in whatever dependency order the baseline recommends.
+
+**What the baseline may and may not do.** The baseline may constrain implementation structure —
+crate/workspace topology, dependency direction, shared-infrastructure decisions, integration
+style. It may **never** invent or alter behavior. Any behavioral gap discovered during synthesis
+returns the affected feature to its owning Stage 1, 2, or 3 — it is never patched inside the
+baseline directly.
+
+**Authoritative decisions vs. derived views.** The baseline distinguishes decisions a human
+manually approved (authoritative) from matrices and inventories mechanically derived from
+already-approved artifacts (ownership matrix, dependency graph, event producer/consumer matrix —
+regenerable, each carrying provenance to its source artifact). The derived views are never a
+second canonical model that can silently drift from what they were built from.
+
+**Cohort and baseline versioning.** `architecture_cohorts[].baseline_version` is a single,
+**cohort-level** field — one current value, not tracked per member feature. A baseline approves a
+specific *versioned cohort membership set*. Adding or removing a feature does not silently
+rewrite the cohort or its approved baseline. A material membership change creates a new
+cohort/baseline version and **requires an impact assessment**. Prior Stage 4 work already
+approved under the earlier version is **not invalidated merely by the membership change itself**
+— it must be reconciled only when that assessment identifies an **actual structural conflict**,
+and reconciliation happens through Stage 9/10 for the specific affected feature, not by
+re-running this gate. Approved baseline versions are never silently rewritten; a replacement
+supersedes and is recorded — the superseded file moves to
+`architecture/history/core-baseline-v<version>.md` *before* the new version is written to
+`architecture/core-baseline.md`, so the two are never both "current-looking" at once; the registry
+entry's `baseline_version` is updated to the new version as part of that same approval (see
+`.codeos/prompts/03b-architecture-synthesis.md`'s Step 3). Historical files are a **provenance
+record only** — they document which version governed a feature's already-completed Stage 4 work;
+they are never consulted for a *new* Stage 4 eligibility decision.
+
+**Verifying a `baseline_version` reference (live Stage 4 eligibility).** A cohort's
+`baseline_version` in `features/registry.yaml` is valid, for the purpose of *entering or
+re-entering Stage 4 right now*, only if it equals `architecture/core-baseline.md`'s **current**
+`Baseline version` field exactly. A value that instead matches an
+`architecture/history/core-baseline-v<version>.md` file is **stale, not valid** — it blocks Stage
+4 exactly as an unapproved status would (see `.codeos/prompts/04-implement.md`'s cohort
+eligibility check), until either the registry is updated to the current version (normally
+automatic, as part of approving that version) or a human resolves the discrepancy. This is
+deliberately stricter than "any version this feature was ever pinned to": the live check only
+ever accepts the current version; historical files matter for audit and for the non-retroactive
+protection above, not for gating new work.
+
+**Reviewer coverage.** `codeos-reviewer` has no dedicated checklist for an `architecture-synthesis`
+stage id today (it falls through to the tool's generic, untailored fallback). Until native
+support exists, use the **Review Waiver** mechanism described under "Default Advisory Review"
+above for gate reviews at this stage, recording the specific reason ("`architecture-synthesis`
+stage id not yet supported by `codeos-reviewer`"). The waiver does not weaken Non-Negotiable Rule
+#1 — the human still explicitly approves the baseline.
+
+**Naming.** This is the **Architecture Synthesis Gate**, producing the **Core Architecture
+Baseline** — deliberately not "Architecture Discovery." Solution Discovery
+(`.codeos/prompts/00a-solution-discovery.md`) is optional, non-gating, and pre-Stage-1; its
+output is never approved architecture. This gate is the opposite: conditional but, once
+triggered, mandatory, and it runs only after Stage 3 approval across the whole cohort, consuming
+approved artifacts rather than producing speculative ones.
+
+---
+
 ## What You Do at Each Stage
 
 Use the corresponding prompt file from `.codeos/prompts/` for detailed instructions. The
@@ -170,6 +273,7 @@ Advisory Review" below.
 | Stage 1: Intent | `1` | `.codeos/prompts/01-intent.md` |
 | Stage 2: Contracts | `2` | `.codeos/prompts/02-contract.md` |
 | Stage 3: Event Schema | `3` | `.codeos/prompts/03-event-schema.md` |
+| **Architecture Synthesis Gate** (conditional, cohort-level) | `architecture-synthesis` | `.codeos/prompts/03b-architecture-synthesis.md` |
 | Stage 4: Implementation | `4` | `.codeos/prompts/04-implement.md` |
 | Stage 5: Tests | `5` | `.codeos/prompts/05-tests.md` |
 | Stage 6: Observation | `6` | `.codeos/prompts/06-observe.md` |
@@ -185,7 +289,14 @@ when bootstrapping an existing codebase that lacks DBA artifacts. The Stage ID s
 (`discovery, brief, onboarding, 1, 2, ..., 10`) is identifier vocabulary and documentation
 order — not a claim that every feature is a single linear path through all of it.
 
-The Architectural Refinement workflow is a 5-step alternative loop (Scope → Impact → Implement → Verify → Reconcile) for structural changes that have no behavioral contract or event schema. Use it for workspace restructuring, shared library extraction, dependency consolidation, test infrastructure, and naming normalization. Use the 9-step loop for any change that would alter a contract or schema.
+**On `architecture-synthesis`'s position in this list**: it is not a per-feature step every
+feature passes through between Stage 3 and Stage 4. It is a **project-level gate** that applies
+only when a human has declared a core architecture cohort (see "Multi-Feature Architecture
+Synthesis Gate" above) — most features, and most projects, never trigger it. When it does apply,
+every member of the declared cohort must reach Stage 3 before this gate runs, and the gate's
+approval is required before *any* cohort member begins Stage 4.
+
+The Architectural Refinement workflow is a 5-step alternative loop (Scope → Impact → Implement → Verify → Reconcile) for structural changes that have no behavioral contract or event schema. Use it for workspace restructuring, shared library extraction, dependency consolidation, test infrastructure, and naming normalization. Use the 9-step loop for any change that would alter a contract or schema. A structural-only correction to an already-approved Architecture Baseline (see "Multi-Feature Architecture Synthesis Gate" above) is Stage-10-eligible only when it does not change any feature's behavior — a change that would is not a refinement of the baseline, it returns the affected feature to its earlier stage instead.
 
 Use the corresponding template from `.codeos/templates/` when producing artifacts:
 
@@ -198,6 +309,7 @@ Use the corresponding template from `.codeos/templates/` when producing artifact
 | Feature specification | `.codeos/templates/feature-spec.md` |
 | Refinement log | `.codeos/templates/refinement.md` |
 | Architectural refinement | `.codeos/templates/arch-refinement.md` |
+| Architecture Baseline (cohort-level, conditional) | `.codeos/templates/architecture-baseline.md` |
 | Codebase digest | `.codeos/templates/codebase-digest.md` |
 | Session handoff | `.codeos/templates/handoff.md` |
 | Review Package | `.codeos/templates/review-package.md` |
@@ -245,6 +357,7 @@ in `.codeos/templates/conventions.md` → Feature IDs.
 | Codebase Digest (`docs/codebase-digest.md`) | Optional | Existing codebases and mature projects; absent digest is never a blocker |
 | Structural Alignment (Stage 7 output section) | Optional output | Produced at Stage 7 only when architectural observations exist |
 | Architectural Refinement (`refinements/arch/[id].md`) | Optional | Non-behavioral structural changes; uses the Stage 10 workflow |
+| Architecture Baseline (`architecture/core-baseline.md`) | **Required for cohort members' Stage 4** | Only when a core architecture cohort is declared (see "Multi-Feature Architecture Synthesis Gate"); not applicable to single-feature or non-cohort projects |
 | Onboarding artifacts (`HYPOTHESIZED_INTENT`) | Onboarding only | Produced by Session Type D; must pass Stage 1 review before advancing |
 
 ---
@@ -260,6 +373,10 @@ project/
 ├── CLAUDE.md                     ← project-level instructions (references this file)
 ├── features/
 │   └── registry.yaml             ← authoritative feature status index (human-maintained)
+├── architecture/                 ← only when a core architecture cohort is declared
+│   ├── core-baseline.md          ← current approved Architecture Baseline (current version only)
+│   └── history/
+│       └── core-baseline-v[N].md ← superseded baseline versions, named for their own version
 ├── intents/
 │   └── [feature_id].md           ← one per feature
 ├── contracts/

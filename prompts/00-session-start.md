@@ -55,7 +55,16 @@ ls tests/     2>/dev/null || echo "(none)"
 ```
 Report each directory as a one-line list of filenames.
 
-After completing 3a–3c, state:
+**3d — Architecture cohort state (if `features/registry.yaml` declares any `architecture_cohorts`):**
+
+For each declared cohort, report: `cohort_id`, `status` (declared / gate-in-progress /
+approved), and `baseline_version` if approved. If any cohort's `status` is not `approved`, name
+which member features are therefore blocked from Stage 4 (see `.codeos/dba-system.md` →
+"Multi-Feature Architecture Synthesis Gate" and `.codeos/prompts/03b-architecture-synthesis.md`).
+If no `architecture_cohorts` are declared, state: "No architecture cohort declared — proceeding
+without a cohort-eligibility check."
+
+After completing 3a–3d, state:
 `CURRENT STATE VERIFIED — Branch: <branch>, Commit: <sha>, Tree: <clean|dirty>, Feature: <id|none>, Stage: <N|unknown>`
 
 **Repair-Before-Next-Feature check:** Before proceeding to Step 4, check whether the

@@ -71,6 +71,8 @@
 | UPG-0046 | CHG-20260713-001 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S4; R1 DO NOT ADVANCE — real fail-closed bug fixed; R2 NO OBJECTION; all 11 ACs verified; 171 tests pass) | COMPLETE | — |
 | UPG-0047 | CHG-20260713-002 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S4; R1 NO OBJECTION; all 11 ACs verified; 182 tests pass; 294/317 findings parse, 23 documented long-tail) | COMPLETE | — |
 | UPG-0050 | CHG-20260716-001 | downstream-doctrine | downstream doctrine only | 4-Reconcile | ACCEPTED (series RVS__…__S4; Step 1 R1 DO NOT ADVANCE → R2 NO OBJECTION; Step 2 R1 NO OBJECTION; Step 3 R1 DO NOT ADVANCE → R2 NO OBJECTION; Step 4 R1 NO OBJECTION; all 9 ACs verified; live dba-init.sh scratch run) | COMPLETE | — |
+| UPG-0051 | CHG-20260719-001 | downstream-doctrine | downstream doctrine only | 4-Reconcile | ACCEPTED (series RVS__…__S4; Step 1 R1 DO NOT ADVANCE → R2 NO OBJECTION; Step 2 R1 NO OBJECTION, R2 NO OBJECTION post CHANGES-ADVISED fixes; Step 3 R1 DO NOT ADVANCE → R2 NO OBJECTION; Step 4 R1 NO OBJECTION; all 15 ACs verified; 3 in-scope blockers found+fixed across the change) | COMPLETE | — |
+| UPG-0052 | CHG-20260719-002 | downstream-doctrine | downstream doctrine only | 1-Intent | DRAFT (Step 1 review pending) | IN_PROGRESS | — |
 
 <!--
 Identity   : Feature ID = UPG-#### (stable). Change ID = CHG-YYYYMMDD-NNN (one execution), or a

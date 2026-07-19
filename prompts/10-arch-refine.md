@@ -16,6 +16,10 @@ Use this workflow (not the 9-step DBA loop) when the change is:
 - Build system or CI changes
 - File and directory layout normalization
 - Naming convention normalization across existing modules
+- A structural-only correction to an already-approved Architecture Baseline
+  (`architecture/core-baseline.md`, see `.codeos/dba-system.md` → "Multi-Feature Architecture
+  Synthesis Gate") — eligible here only when no feature's behavior changes; a correction that
+  would change behavior is not a refinement, it returns the affected feature to its earlier stage
 
 Do **NOT** use this workflow for:
 - New observable behavior (use 9-step feature loop)

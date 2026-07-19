@@ -475,3 +475,37 @@ the finding with that reasoning rather than prematurely drafting Acceptance Crit
 to appease it. In this change, R2 did not re-raise it once the actual scope-boundary blocker was
 fixed, suggesting it may not recur consistently, but the reasoning for rejecting it if it does is
 worth keeping.
+
+---
+
+## AJ-015 — A "current version governs new work" gate and a "protect already-approved past work" guarantee are different concerns and must not share one validity check
+
+*Origin: UPG-0051 / CHG-20260719-001 (multi-feature-architecture-synthesis-gate), Step 4 Reconcile.*
+
+UPG-0051 introduced a cohort-level `baseline_version` field (`features/registry.yaml`) plus a
+superseded-version archive (`architecture/history/core-baseline-v<N>.md`). The first drafted
+"valid reference" rule accepted *either* the current baseline's version *or* a historical
+archived file as a valid `baseline_version` — reasoning that this was needed to support the
+non-retroactive-invalidation guarantee (a feature already approved under an older version
+shouldn't be forced to redo Stage 4 merely because a newer version now exists).
+
+That reasoning conflated two genuinely different concerns:
+- **Live eligibility** — may this feature enter or re-enter Stage 4 *right now*? This must
+  always require the single, current, cohort-level approved version. A registry entry pointing
+  at a historical version is stale, not "still valid."
+- **Non-retroactive protection** — does a *later* version bump force re-verification of Stage 4
+  work *already completed* under an earlier version? No, not unless an impact assessment finds
+  an actual conflict — but this is a provenance/audit question about the past, resolved through
+  Stage 9/10 if needed, never a live gate a new Stage 4 attempt can satisfy by pointing at an old
+  file.
+
+Letting historical files satisfy the live check meant a stale registry entry could silently
+"authorize" new work under an outdated architecture, defeating the point of requiring approval
+before proceeding.
+
+**Rule:** when a versioned approval-gate schema has a single current-value field plus an archive
+of superseded versions, keep exactly one validity condition for "can new work proceed" (current
+version only) and treat the archive as read-only provenance for what governed past decisions —
+never write a check that accepts both as if they were interchangeable "valid" states.
+
+Related: none.

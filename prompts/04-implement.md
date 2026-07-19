@@ -16,6 +16,21 @@ You MUST have ALL THREE approved before starting. Verify each:
 If any is missing or not approved — **STOP** and request it.
 Implementation without all three is a DBA violation.
 
+**Cohort eligibility check (if `features/registry.yaml` exists):** read this feature's registry
+entry.
+- If `architecture_cohort` is absent or `null` — no further check; proceed.
+- If it names a cohort: find that cohort's `architecture_cohorts` entry. If `status` is not
+  `approved`, or the entry (or its `baseline_version`) is missing entirely — **STOP**. This
+  feature is not eligible for Stage 4 yet; report the specific gap and point to
+  `.codeos/prompts/03b-architecture-synthesis.md` rather than proceeding.
+- If `approved`: verify the referenced `baseline_version` equals `architecture/core-baseline.md`'s
+  **current** `Baseline version` field exactly. A value matching only an
+  `architecture/history/core-baseline-v<version>.md` file is **stale, not valid** — treat it the
+  same as a non-`approved` status and **STOP**; historical files are a provenance record for
+  already-completed Stage 4 work, never a valid reference for entering Stage 4 now. See
+  `.codeos/dba-system.md` → "Multi-Feature Architecture Synthesis Gate" → "Verifying a
+  `baseline_version` reference."
+
 ## What You Receive
 
 - Approved intent: `intents/[feature_id].md`
