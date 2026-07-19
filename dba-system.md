@@ -256,6 +256,84 @@ approved artifacts rather than producing speculative ones.
 
 ---
 
+## Implementation Profile
+
+DBA artifacts through Stage 3 are language-neutral, and this stays true. A project may declare an
+**Implementation Profile** — a project-level statement of a preferred implementation language
+and its scope — that Stage 4 must consult once approved. This is an independent, optional
+mechanism: it has **no dependency on the Multi-Feature Architecture Synthesis Gate above**, and
+works identically for a single-feature project that never declares a core cohort.
+
+**Lifecycle.** A profile has exactly one non-binding pre-approval state: `proposed → approved →
+superseded`. A profile becomes `approved` only following an explicit human approval decision;
+setting `status: approved` plus `approved_by`/`approved_at` **records** that decision, it does
+not **constitute** it — an agent must never move a profile to `approved` merely because the
+fields are writable.
+
+**Immutability and the transition path.** Once `approved`, a profile version is never edited in
+place. The current path, `architecture/implementation-profile.yaml`, always holds only the
+current approved version (or a first-ever profile with no predecessor, which may sit `proposed`
+directly at the current path — there being no existing binding version it could be confused
+with). A material change (language, applicability, exceptions) is drafted at
+`architecture/proposals/implementation-profile-v<N>.yaml` (`status: proposed`, `supersedes`
+pointing at the version it would replace) while the current approved version remains binding,
+unaffected, at the current path. On explicit human approval, in this order: (1) the old current
+file moves to `architecture/history/implementation-profile-v<old-N>.yaml` and its `status`
+becomes `superseded`; (2) the proposal is promoted to `architecture/implementation-profile.yaml`
+with `status: approved`. This ordering means the binding version is never ambiguous — the old
+version stays authoritative until the instant its replacement actually takes its place. This is
+the same current-vs-historical distinction the Architecture Baseline above uses (see `AJ-015`):
+**only the current approved version is binding for new Stage 4 entry; proposed and historical
+versions are never binding.**
+
+**Binding profile, advisory pattern — kept sharply separate.** Stage 4 must verify that the
+implementation is covered by an *approved* Implementation Profile or a recorded exception, within
+the profile's resolved scope. The corresponding technology pattern's recommendations (e.g.
+`.codeos/patterns/rust-project-structure.md` when `primary_language: rust`) remain advisory —
+consulted, never overriding an approved Architecture Baseline or another project-specific
+decision. No additional human gate is introduced beyond the existing Stage 4 approval, and no new
+Stage ID is needed.
+
+**Resolvable scope — not free text.** `applies_to.scope` is one of `all | feature_ids |
+cohort_ids`; `feature_ids`/`cohort_ids` name the exact features or declared cohorts (see
+"Multi-Feature Architecture Synthesis Gate") the profile covers. Free-text labels (e.g.
+"core-domain") cannot be mechanically checked against a specific feature at Stage 4, so they are
+not a valid scope kind. A profile whose `scope` is `feature_ids` or `cohort_ids` must leave the
+other list empty — a populated-but-unused selector field is itself an invalid profile.
+
+**Exceptions and determinism.** An exception uses the same selector model (`scope: feature_id |
+cohort_id`, an `id`, a `language`, and a required non-empty `rationale`) to override the profile's
+`primary_language` for a specific feature or cohort. Exceptions are considered only for a feature
+already found within `applies_to`'s resolved scope. When a feature matches both a feature-level
+and a cohort-level exception, **the feature-level exception wins** (more specific). Multiple
+matching exceptions at the *same* specificity that disagree make the profile **invalid for that
+feature** — Stage 4 treats it as ineligible rather than picking one arbitrarily.
+
+**Profile–Architecture Baseline consistency.** When both an approved profile and an approved
+Architecture Baseline apply to a feature, and the baseline's authoritative decisions specify a
+different language for that feature than the profile resolves to (with no matching recorded
+exception), this is an **unreconciled contradiction**. Stage 4 must treat it as **ineligible**,
+not silently prefer either artifact — the human must add a profile exception or approve a
+reconciling profile version before the feature can proceed.
+
+**Provenance.** When an approved profile applies to a feature, Stage 4's output records the
+`profile_id`, `profile_version`, the resolved language, and any matched exception — paralleling
+the Architecture Baseline's requirement that implementations record which baseline version
+governed them.
+
+**Codeos's default policy**, stated honestly about what exists today: Codeos recommends a
+rust-first profile as the default for new projects. A human creates
+`architecture/implementation-profile.yaml` from `.codeos/templates/implementation-profile.yaml`
+to declare it. Automatic scaffolding of this proposal by `dba-init.sh` is tracked separately and
+not yet built — until it lands, this is a manual step, not something `dba-init.sh` already does.
+
+**Reviewer coverage.** This mechanism introduces no new Stage ID. Consultation changes to Stage 4
+are covered by the existing Stage ID `4`; onboarding changes are covered by the existing
+`onboarding` Stage ID (see "What You Do at Each Stage" below) — no Review Waiver note is needed
+the way the Architecture Synthesis Gate needed one.
+
+---
+
 ## What You Do at Each Stage
 
 Use the corresponding prompt file from `.codeos/prompts/` for detailed instructions. The
@@ -310,6 +388,7 @@ Use the corresponding template from `.codeos/templates/` when producing artifact
 | Refinement log | `.codeos/templates/refinement.md` |
 | Architectural refinement | `.codeos/templates/arch-refinement.md` |
 | Architecture Baseline (cohort-level, conditional) | `.codeos/templates/architecture-baseline.md` |
+| Implementation Profile (project-level, optional) | `.codeos/templates/implementation-profile.yaml` |
 | Codebase digest | `.codeos/templates/codebase-digest.md` |
 | Session handoff | `.codeos/templates/handoff.md` |
 | Review Package | `.codeos/templates/review-package.md` |
@@ -358,6 +437,7 @@ in `.codeos/templates/conventions.md` → Feature IDs.
 | Structural Alignment (Stage 7 output section) | Optional output | Produced at Stage 7 only when architectural observations exist |
 | Architectural Refinement (`refinements/arch/[id].md`) | Optional | Non-behavioral structural changes; uses the Stage 10 workflow |
 | Architecture Baseline (`architecture/core-baseline.md`) | **Required for cohort members' Stage 4** | Only when a core architecture cohort is declared (see "Multi-Feature Architecture Synthesis Gate"); not applicable to single-feature or non-cohort projects |
+| Implementation Profile (`architecture/implementation-profile.yaml`) | Optional | Governs Stage 4 language/pattern consultation only once `approved`; absent or merely `proposed` imposes no requirement (see "Implementation Profile") |
 | Onboarding artifacts (`HYPOTHESIZED_INTENT`) | Onboarding only | Produced by Session Type D; must pass Stage 1 review before advancing |
 
 ---
@@ -373,10 +453,15 @@ project/
 ├── CLAUDE.md                     ← project-level instructions (references this file)
 ├── features/
 │   └── registry.yaml             ← authoritative feature status index (human-maintained)
-├── architecture/                 ← only when a core architecture cohort is declared
-│   ├── core-baseline.md          ← current approved Architecture Baseline (current version only)
+├── architecture/                 ← project-level architecture artifacts, each independently optional
+│   ├── implementation-profile.yaml   ← current Implementation Profile (proposed or approved)
+│   ├── proposals/
+│   │   └── implementation-profile-v[N].yaml  ← pending replacement, never binding
+│   ├── core-baseline.md          ← current approved Architecture Baseline — only when a core
+│   │                                architecture cohort is declared (current version only)
 │   └── history/
-│       └── core-baseline-v[N].md ← superseded baseline versions, named for their own version
+│       ├── core-baseline-v[N].md              ← superseded baseline versions
+│       └── implementation-profile-v[N].yaml   ← superseded profile versions
 ├── intents/
 │   └── [feature_id].md           ← one per feature
 ├── contracts/

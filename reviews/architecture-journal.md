@@ -509,3 +509,58 @@ version only) and treat the archive as read-only provenance for what governed pa
 never write a check that accepts both as if they were interchangeable "valid" states.
 
 Related: none.
+
+---
+
+## AJ-016 — A reviewer packet claim is only as verifiable as the evidence actually embedded in it, not the evidence that exists elsewhere
+
+*Origin: UPG-0051 / CHG-20260719-001 Step 1 R1, and UPG-0052 / CHG-20260719-002 Step 4 R1 — same
+mistake, twice, in adjacent changes.*
+
+Twice in one session, a change record stated a true claim — "`packet.rs` has no match arm for
+this stage id" (UPG-0051), "every referenced prompt/template filename resolves"
+(UPG-0052's AC16) — and the reviewer correctly returned DO NOT ADVANCE anyway, because the packet
+sent for review didn't contain the evidence, only a prose summary asserting the conclusion. Both
+times the underlying claim was already true; both times a review round was spent making it
+*shown*, not making it *true*.
+
+The reviewer's own rules state this rationale explicitly: it assesses only what the packet
+contains, pinned to that commit, and treats an unverifiable strong claim as a candidate finding
+whenever it affects acceptance or scope. A summary sentence — even an accurate one — is not
+evidence to a reviewer that cannot see the command that produced it.
+
+**Rule:** when an acceptance criterion is itself "X grep/read-through sweep shows Y," embed the
+actual command and its full output in the artifact under review (in the Reconciliation section,
+or as an attached file), not a prose summary of the result. This is cheap to do the first time
+and costs a full review round to fix after the fact — twice, apparently, before the pattern was
+internalized.
+
+Related: none.
+
+---
+
+## AJ-017 — Completed-but-uncommitted self-dev work looks like scope drift on the *next* change's review
+
+*Origin: UPG-0052 / CHG-20260719-002 Step 1 R1.*
+
+`UPG-0051` reached COMPLETE and human-approved, but nothing had been committed yet this session.
+When `UPG-0052`'s Step 1 review ran, the packet's diff (computed against the last real commit)
+included all of `UPG-0051`'s already-approved changes to `dba-system.md`, `04-implement.md`, and
+`templates/feature-registry.yaml` — files `UPG-0052`'s own Step 1 explicitly promised not to
+touch. The reviewer correctly flagged this as a scope-boundary contradiction; its own
+`HIGHEST-IMPACT UNCERTAINTY` line named the real cause exactly: "if this is accidental carryover,
+removing it likely resolves the blocker."
+
+The fix wasn't editing `UPG-0052`'s content at all — it was committing `UPG-0051` first, using
+this repo's existing one-commit-per-completed-change convention (`Codeos: UPG-#### CHG-... 
+(COMPLETE)`, plus a separate `Backlog: Register UPG-####..` commit for registrations). Once the
+working tree was clean except for `UPG-0052`'s own new files, the identical review re-ran clean
+with a zero-byte diff.
+
+**Rule:** commit a completed, human-approved self-dev change *before* starting the next change's
+Step 1 review — not after, not "whenever convenient." An uncommitted-but-approved change is
+invisible to git history but not to `git diff`, and every subsequent change's review packet will
+silently inherit its full diff until it's committed, generating false scope-drift findings that
+have nothing to do with the new change's actual content.
+
+Related: none.

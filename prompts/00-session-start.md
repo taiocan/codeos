@@ -64,7 +64,14 @@ which member features are therefore blocked from Stage 4 (see `.codeos/dba-syste
 If no `architecture_cohorts` are declared, state: "No architecture cohort declared — proceeding
 without a cohort-eligibility check."
 
-After completing 3a–3d, state:
+**3e — Implementation Profile status (if `architecture/implementation-profile.yaml` exists):**
+
+Report its `status` (`proposed` / `approved`) and, if `approved`, `primary_language` and
+`profile_version`. If a pending replacement exists at `architecture/proposals/`, note it as
+non-binding. If the file does not exist, state: "No Implementation Profile declared — proceeding
+with no Stage 4 language requirement." See `.codeos/dba-system.md` → "Implementation Profile."
+
+After completing 3a–3e, state:
 `CURRENT STATE VERIFIED — Branch: <branch>, Commit: <sha>, Tree: <clean|dirty>, Feature: <id|none>, Stage: <N|unknown>`
 
 **Repair-Before-Next-Feature check:** Before proceeding to Step 4, check whether the

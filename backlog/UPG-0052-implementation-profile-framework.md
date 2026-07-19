@@ -2,7 +2,7 @@
 feature_id: UPG-0052
 slug: implementation-profile-framework
 title: Implementation Profile Framework and Rust-First Default Profile
-status: PROPOSED
+status: COMPLETE
 priority: P2
 depends_on: []
 related_features: [UPG-0051, UPG-0053, UPG-0054]
@@ -15,7 +15,7 @@ superseded_by: []
 **Priority**: P2 (effectively P1 for a project like EvidenceAtlas, whose first Architecture
 Synthesis should consume an already-approved Rust-first profile rather than retrofit the
 preference afterward)
-**Status**: PROPOSED
+**Status**: COMPLETE
 **Type**: downstream-doctrine
 
 ## Problem
@@ -153,19 +153,29 @@ Deciding hastily risks:
 
 | Change ID | File | Purpose | State |
 |---|---|---|---|
-| (none yet) | — | — | PROPOSED |
+| CHG-20260719-002 | `changes/UPG-0052__CHG-20260719-002__implementation-profile-framework.md` | Add the Implementation Profile framework doctrine, template, and Stage 4/session-start/onboarding wiring | COMPLETE |
 
 ### Reviews
 
 | Review ID | Change ID | Step | Round | Verdict |
 |---|---|---|---|---|
+| RVS__UPG-0052__CHG-20260719-002__S1 | CHG-20260719-002 | 1-Intent | R1→R4 | R1 DO NOT ADVANCE (scope-drift, uncommitted UPG-0051) → R2 NO OBJECTION → R3 NO OBJECTION (post 1st human revision) → R4 NO OBJECTION (human-requested beyond budget, post 2nd human revision) |
+| RVS__UPG-0052__CHG-20260719-002__S2 | CHG-20260719-002 | 2-Acceptance | R1 | NO OBJECTION |
+| RVS__UPG-0052__CHG-20260719-002__S3 | CHG-20260719-002 | 3-Implement | R1 | NO OBJECTION |
+| RVS__UPG-0052__CHG-20260719-002__S4 | CHG-20260719-002 | 4-Reconcile | R1→R2 | R1 DO NOT ADVANCE (AC16 unverifiable) → R2 NO OBJECTION — ACCEPTED |
 
 ### Findings Tracked Inside This Feature
 
 | Finding ID | Review ID | Classification | Resolution |
 |---|---|---|---|
+| (Step 1) scope-drift false positive from uncommitted UPG-0051 diff | RVS__…__S1 | IN-SCOPE BLOCKER | Fixed — committed UPG-0051 as two commits, confirmed with human first |
+| (Step 1, human round 1) free-text applicability, no immutability/history, no profile-baseline consistency | RVS__…__S1 | IN-SCOPE BLOCKER (×3) | Fixed — resolvable selectors, immutability + history, consistency rule added |
+| (Step 1, human round 2) no location for pending proposed replacement, non-deterministic exceptions, no provenance recording | RVS__…__S1 | IN-SCOPE BLOCKER (×3) | Fixed — `proposals/` directory, exception specificity rule, provenance field added |
+| (Step 4) AC16 marked PASS with a prose summary, not embedded evidence | RVS__…__S4 | IN-SCOPE BLOCKER | Fixed — full grep sweep output embedded verbatim; journaled as AJ-016 |
+| Native `codeos-reviewer` support (from UPG-0051, still open) | — | OUT-OF-SCOPE BACKLOG | Unrelated to this feature; tracked on UPG-0051's own Feature Thread |
 
 ### Follow-up Features
 
 | Feature ID | Reason | Source finding |
 |---|---|---|
+| — | None spun out — all findings resolved inside this change | — |

@@ -14,6 +14,17 @@ and a structural entry in `features/registry.yaml`.
 
 ---
 
+## Implementation Profile Awareness
+
+This session must **not presumptively propose or impose a rust-first Implementation Profile**
+for an existing codebase (see `.codeos/dba-system.md` → "Implementation Profile"). If no
+`architecture/implementation-profile.yaml` exists yet, you may derive a `proposed` profile
+consistent with the *observed* dominant language across the modules in scope, or ask the human to
+declare one — but you must never write `status: approved`. Onboarding drafts are never
+authoritative; the same rule applies here as to `HYPOTHESIZED_INTENT` drafts below.
+
+---
+
 ## When This Prompt Applies
 
 Use Session Type D when ALL of the following are true:

@@ -1,0 +1,72 @@
+# Implementation Profile
+#
+# Optional, project-level statement of a preferred implementation language and its scope.
+# Independent of the Architecture Synthesis Gate (see dba-system.md) — works identically for a
+# project with no declared core cohort.
+#
+# Recommended downstream instance path (current version): architecture/implementation-profile.yaml
+# A pending, not-yet-approved replacement lives at:       architecture/proposals/implementation-profile-v<N>.yaml
+# A superseded (no longer current) version lives at:      architecture/history/implementation-profile-v<N>.yaml
+#
+# LIFECYCLE — status values:
+#   proposed   — non-binding. No Stage 4 language requirement is imposed while a profile is only
+#                proposed, whether it's a first-ever profile at the current path or a pending
+#                replacement under proposals/. A profile becomes approved only following an
+#                explicit human approval decision; setting status: approved (below) RECORDS that
+#                decision, it does not CONSTITUTE it.
+#   approved   — binding within its resolved `applies_to` scope. Only the version at the CURRENT
+#                path (architecture/implementation-profile.yaml) is ever binding — a version
+#                found only under proposals/ or history/ is never binding, regardless of its own
+#                status field.
+#   superseded — historical only, retained at architecture/history/implementation-profile-v<N>.yaml
+#                for provenance. Never binding for new or re-entering Stage 4 work.
+#
+# IMMUTABILITY: once approved, this file is never edited in place. A material change (language,
+# applicability, exceptions) is drafted as a NEW file at
+# architecture/proposals/implementation-profile-v<N>.yaml with supersedes set to this version's
+# profile_version. On human approval, in this order: (1) this file moves to
+# architecture/history/implementation-profile-v<N>.yaml with status: superseded, (2) the proposal
+# is promoted to architecture/implementation-profile.yaml with status: approved. This ordering
+# means the binding version is never ambiguous.
+#
+# APPLIES_TO — resolvable selectors only, never free text (Stage 4 must be able to mechanically
+# check membership):
+#   scope: all           — applies to every feature in the project
+#   scope: feature_ids    — applies only to the features listed in feature_ids
+#   scope: cohort_ids      — applies only to features whose architecture_cohort (see
+#                           features/registry.yaml) is one of the listed cohort_ids
+# Populate only the list matching the active scope kind; leave the other list empty. A
+# populated-but-unused list (e.g. cohort_ids non-empty while scope: feature_ids) is itself an
+# invalid profile.
+#
+# EXCEPTIONS — same selector model, per exception entry:
+#   scope: feature_id — id names one F-#### this exception covers
+#   scope: cohort_id   — id names one cohort_id this exception covers
+# rationale is required and must be non-empty. Exceptions are considered only for a feature
+# already within applies_to's resolved scope. A feature-level exception overrides a matching
+# cohort-level exception (more specific). Multiple matching exceptions at the SAME specificity
+# that disagree make the profile invalid for that feature — Stage 4 treats this as ineligible,
+# not resolved arbitrarily.
+#
+# No baseline-defined-component selector exists yet — a possible future extension, not built here.
+
+profile_id: implementation-profile   # stable identifier across all versions of this profile
+profile_version: 1                   # increments with each new (proposed) version
+status: proposed                     # proposed | approved | superseded
+primary_language: rust
+
+applies_to:
+  scope: all              # all | feature_ids | cohort_ids
+  feature_ids: []          # populated only when scope: feature_ids
+  cohort_ids: []           # populated only when scope: cohort_ids
+
+exceptions: []
+# exceptions:
+#   - scope: feature_id    # feature_id | cohort_id
+#     id: "F-0003"
+#     language: python
+#     rationale: "Vendor SDK has no viable Rust client; isolated to this feature only."
+
+approved_by: ""            # filled only when status becomes approved
+approved_at: ""             # filled only when status becomes approved, ISO date
+supersedes: null            # profile_version of the prior approved version this replaces, or null

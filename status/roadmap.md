@@ -96,7 +96,7 @@ cheap pilot-adjacent wins early.
 | UPG-0048 | Review Ledger Event Sourcing (Speculative — Long-Term) | P3 | UPG-0046, UPG-0047 | — | PROPOSED |
 | UPG-0049 | External Review Policy Registry | P3 | — | — | PROPOSED |
 | UPG-0051 | Multi-Feature Architecture Synthesis Gate | P1 | — | CHG-20260719-001 | COMPLETE |
-| UPG-0052 | Implementation Profile Framework and Rust-First Default Profile | P2 | — | — | PROPOSED |
+| UPG-0052 | Implementation Profile Framework and Rust-First Default Profile | P2 | — | CHG-20260719-002 | COMPLETE |
 | UPG-0053 | Implementation-Profile Scaffolding in dba-init.sh | P3 | UPG-0052 | — | PROPOSED |
 | UPG-0054 | Contract-to-Implementation Failure Boundary | P2 | — | — | PROPOSED |
 | UPG-0028 | Reviewer self-reference recursion (scoping) | P2 | — | — | COMPLETE (backlog-only, no CHG — see backlog note) |

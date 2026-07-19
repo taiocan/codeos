@@ -12,6 +12,13 @@ Apply this pattern when:
 - Multiple DBA features share event emission or test infrastructure
 - CI is needed and test isolation matters
 
+**Consulted by:** Stage 4 (`.codeos/prompts/04-implement.md`), when the project's approved
+Implementation Profile (`.codeos/dba-system.md` → "Implementation Profile") resolves
+`primary_language: rust` for the feature being implemented; and optionally by Architecture
+Synthesis (`.codeos/dba-system.md` → "Multi-Feature Architecture Synthesis Gate") when a core
+cohort also exists. This pattern's recommendations are always advisory — consulted, never
+overriding an approved Architecture Baseline or another project-specific decision.
+
 ---
 
 ## Cargo Workspace Layout
@@ -293,6 +300,29 @@ fn test_[feature_id]_replay_produces_identical_state() {
 
 Replay tests do not mock the binary or intercept internal calls. They invoke the real
 binary and inspect the JSONL output. They are integration tests, not unit tests.
+
+---
+
+## Recommended Toolchain/Lint Baseline
+
+This is a **recommendation**, not mandatory project configuration — no Implementation Profile or
+Architecture Baseline requires every Rust project to adopt these identically. A reasonable
+starting point:
+
+```text
+rust-toolchain.toml
+Cargo.toml workspace lint policy
+cargo fmt --check
+cargo clippy --workspace --all-targets -- -D warnings
+cargo test --workspace
+```
+
+Exact MSRV, edition, and lint strictness stay project-specific decisions — a project may record
+its actual choices in its Architecture Baseline (see `dba-system.md` → "Multi-Feature
+Architecture Synthesis Gate") when one exists, or simply in its own `rust-toolchain.toml`/
+`Cargo.toml` when it doesn't. This pattern does not mandate a specific MSRV, a specific edition,
+or `-D warnings` strictness for every project — only that *if* a project wants a baseline, this
+is a reasonable Rust-idiomatic starting point.
 
 ---
 

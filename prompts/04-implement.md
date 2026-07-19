@@ -31,6 +31,31 @@ entry.
   `.codeos/dba-system.md` → "Multi-Feature Architecture Synthesis Gate" → "Verifying a
   `baseline_version` reference."
 
+**Implementation Profile consultation (if `architecture/implementation-profile.yaml` exists):**
+- Absent, or `status: proposed` at the current path — no profile is binding; proceed with no
+  language requirement. (A pending `architecture/proposals/` replacement is never consulted
+  here.)
+- `status: approved` — verify `profile_version` matches the file at the current path exactly (not
+  a `proposals/` or `history/` file — same current-only rule as the cohort baseline check above).
+  Resolve whether this feature is in scope via `applies_to.scope`:
+  - `all` — in scope.
+  - `feature_ids` — in scope iff this feature's id is listed.
+  - `cohort_ids` — in scope iff this feature's `architecture_cohort` (from `features/registry.yaml`)
+    is listed.
+  - Not in scope — no requirement applies; proceed.
+  - In scope — check for a matching exception. A feature-level exception overrides a matching
+    cohort-level exception (more specific). Multiple matching exceptions at the *same*
+    specificity that disagree — **STOP**, the profile is invalid for this feature. Otherwise: the
+    matched exception's `language` is binding if one applies; else `primary_language` is binding.
+    If the binding language has an applicable Codeos pattern (e.g. `rust` →
+    `.codeos/patterns/rust-project-structure.md`), consult it — advisory only, never overriding an
+    approved Architecture Baseline or another project-specific decision.
+- **Profile–Baseline consistency check:** if this feature also has an approved Architecture
+  Baseline whose authoritative decisions specify a language for this feature that conflicts with
+  the profile's resolution above, and no exception reconciles it — **STOP**. Ineligible,
+  unreconciled contradiction; neither artifact is silently preferred. See `.codeos/dba-system.md`
+  → "Implementation Profile" → "Profile–Architecture Baseline consistency."
+
 ## What You Receive
 
 - Approved intent: `intents/[feature_id].md`
@@ -134,6 +159,9 @@ Structural Risk levels (only populate when a Critical Hub or God Function is tou
    - What is not covered yet: [explicit list of what stages 5–9 still need to verify]
    - Suggested areas: (1) Are there contract clauses technically satisfied but implemented in a surprising or fragile way? (2) Does the implementation introduce any behavior not traceable to the approved intent, contract, or schema? (3) What is the most likely Stage 7 gap or mismatch, given what was implemented?
    - Known tensions: from schema design decisions or contract boundary cases, or "none"
+   - Implementation Profile applied: if an approved profile applied to this feature, state
+     `profile_id`, `profile_version`, the resolved language, and any matched exception; otherwise
+     state "no profile" or "profile proposed, non-binding."
 5. State: **`AWAITING HUMAN APPROVAL TO PROCEED TO STAGE 5`**
 
 **STOP.** Do not write tests until the human explicitly approves the implementation.
