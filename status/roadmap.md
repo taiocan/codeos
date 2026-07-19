@@ -95,6 +95,10 @@ cheap pilot-adjacent wins early.
 | UPG-0047 | Structured Finding Lifecycle | P2 | UPG-0046 | — | PROPOSED |
 | UPG-0048 | Review Ledger Event Sourcing (Speculative — Long-Term) | P3 | UPG-0046, UPG-0047 | — | PROPOSED |
 | UPG-0049 | External Review Policy Registry | P3 | — | — | PROPOSED |
+| UPG-0051 | Multi-Feature Architecture Synthesis Gate | P1 | — | CHG-20260719-001 | COMPLETE |
+| UPG-0052 | Implementation Profile Framework and Rust-First Default Profile | P2 | — | — | PROPOSED |
+| UPG-0053 | Implementation-Profile Scaffolding in dba-init.sh | P3 | UPG-0052 | — | PROPOSED |
+| UPG-0054 | Contract-to-Implementation Failure Boundary | P2 | — | — | PROPOSED |
 | UPG-0028 | Reviewer self-reference recursion (scoping) | P2 | — | — | COMPLETE (backlog-only, no CHG — see backlog note) |
 | UPG-0029 | Review artifact durability + packet naming policy | P2 | UPG-0001 | CHG-20260629-001 | COMPLETE |
 | UPG-0030 | Lean Self-Development Review Profiles | P1 | — | CHG-20260629-001 | COMPLETE |
