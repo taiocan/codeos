@@ -1,0 +1,380 @@
+Reviewer task:
+
+SCOPE CONTRACT
+  Assess this artifact against the STATED SCOPE of this stage/PR — the Expected Stage
+  Output below and what the artifacts actually claim — NOT against an ideal final system.
+  A capability the artifacts do not claim to provide is OUT-OF-SCOPE, not a defect.
+  The following are OUT-OF-SCOPE BACKLOG unless THIS artifact explicitly claims to provide
+  them: formal approval-binding enforcement; rollback correctness; COMMIT_BOUND/
+  WORKSPACE_BOUND enforcement; JSON Schema validation; CI validation; exact
+  decision-integrity; per-feature decision ledgers; autonomous approval; enabled hooks.
+
+YOUR TASK — answer these five questions using only the evidence in the packet:
+  1. Acceptance criteria: Does the artifact satisfy each of its stated acceptance criteria?
+     Cite evidence for each criterion (or note its absence).
+  2. Claim support: Are universal or strong claims (all, every, never, always, no X) in the
+     artifact supported by evidence in the packet? Any unverifiable strong claim is a candidate
+     finding only if it affects acceptance, scope, safety, decision integrity, or the artifact's
+     stated guarantees.
+  3. Scope drift: Is there any change beyond the stated scope boundary? (Files not in the
+     "What changes" list; behavior changes not in the intent; downstream doctrine modified
+     rather than read.)
+  4. In-scope blockers: Are there facts that, if left in, would make the artifact wrong,
+     unsafe, or internally contradictory?
+  5. Finding classification: Classify every finding you raise as exactly one of the five
+     TRIAGE RULE categories below.
+
+TRIAGE RULE — classify EVERY finding as exactly one of:
+  IN-SCOPE BLOCKER         breaks the stated goal; creates a FALSE CLAIM in this artifact;
+                           weakens the advisory/read-only/human-gated guarantees; prevents
+                           the work from running; or violates an explicit safety constraint.
+  IN-SCOPE NON-BLOCKER     improves it but is not required for this PR.
+  OUT-OF-SCOPE BACKLOG     valid, but belongs to a future feature / stronger guarantee.
+  REJECTED                 conflicts with the stated scope or Codeos philosophy.
+  SELF-REFERENCE /         review records that are stale because of the previous round's
+  REVIEW-BOOKKEEPING       own existence (causal loop); not a real artifact defect.
+  Base the PR decision ONLY on IN-SCOPE BLOCKER findings. An OUT-OF-SCOPE BACKLOG finding
+  must NOT cause DO NOT ADVANCE unless this artifact FALSELY CLAIMS to solve it.
+
+WHAT NOT TO DO
+  - Do not flag style or wording issues as blockers unless the wording creates a false claim,
+    contradiction, parser breakage, or wrong governance instruction.
+  - Do not re-review unchanged full context when the packet is in delta mode.
+  - Do not treat local-only review history as a blocker unless the artifact falsely
+    claims the review artifacts are committed/durable.
+
+INSTRUCTIONS
+  If this is a resumed session, ignore any earlier-session conclusions unless they are
+  re-established by THIS packet; assess only the evidence above, pinned to this commit.
+  Give a focused assessment of this artifact against the stated scope, acceptance criteria,
+  and evidence in this packet. Rank findings by severity. Suggest a better design only when
+  needed to explain a required fix for an IN-SCOPE BLOCKER.
+
+  Limit findings to the top 3 IN-SCOPE BLOCKERS. Additional non-blocking observations may be
+  summarized in one short paragraph only if useful.
+
+  For EACH finding emit:
+    Finding: / Severity: High|Medium|Low / Classification: <one of the TRIAGE RULE labels>
+    Evidence: <file/line> / Why: <short> / Required action: fix now|optional fix|backlog|reject
+    Scope reason: <why it does/does not belong to this PR's scope>
+  Then emit:
+    PR decision: ADVANCE | REQUEST CHANGES | DO NOT ADVANCE   (based ONLY on in-scope blockers)
+    Scope drift warning: yes|no — <is anything pulling this PR beyond its stated scope?>
+  Then on the LAST three lines emit exactly (map ADVANCE->NO OBJECTION,
+  REQUEST CHANGES->CHANGES ADVISED, DO NOT ADVANCE->DO NOT ADVANCE):
+    LOG SUMMARY: <NO OBJECTION | CHANGES ADVISED | DO NOT ADVANCE | UNCLASSIFIED> — <single most important point>
+      (use UNCLASSIFIED if you genuinely cannot classify the artifact safely)
+    EVIDENCE: <A|B|C|D|E>
+    HIGHEST-IMPACT UNCERTAINTY: <one sentence — what single thing, if wrong, most affects this assessment>
+
+  Evidence grade — the grade describes what the assessment rests on, not reviewer confidence:
+    A — Directly verified in the artifact, diff, or output shown in the packet
+    B — Verified with multiple direct pieces of evidence, but coverage is not complete
+    C — Partially verified, partially inferred from structure or context
+    D — Mostly inferred from structure or indirect evidence
+    E — Hypothesis or very limited basis — little to no direct evidence
+
+
+PACKET MANIFEST
+  generated: 2026-07-20T05:38:51Z
+  task_prompt: /home/rimo/projects/Codeos/prompts/codeos-reviewer-task.md (4959 bytes)
+  review_content_bytes: 13343
+  estimated_review_tokens: ~3335
+  budget_status: OK
+  packet_mode: full
+  delta_base: none
+  items:
+    - path: changes/UPG-0055__CHG-20260720-001__reviewer-architecture-synthesis-stage-support.md
+      mode: full_file
+      bytes: 4962
+      sha256: 8203e457d6e9c1206150c41b2e5aa67ced309fbffa30994fbf44168923da4cda
+    - path: backlog/UPG-0055-reviewer-architecture-synthesis-stage-support.md
+      mode: full_file
+      bytes: 6822
+      sha256: cde29f46aeb658a1adbde125d62bcfc8dd07c8a765402bdf2b840bf0f96eacc7
+    - path: (diff)
+      mode: full_file
+      bytes: 1559
+
+REVIEW CONTEXT
+  Feature:                UPG-0055__CHG-20260720-001
+  Stage:                  selfdev-step-1
+  Branch:                 main
+  Base commit:            (no base pin)
+  Review commit:          ae731153007289061a1eac8abf0dfe935701481a (+ uncommitted workspace changes)
+  Current approved stage: n/a (non-numeric stage)
+  Evidence coverage:      FULL_COVERAGE
+  Workspace dirty:        yes (uncommitted changes at review time)
+
+DBA RULES RELEVANT TO THIS STAGE
+  - Human approval is required for every stage transition; you are advisory only.
+  - Memory is not truth — assess only what is provided, pinned to the review commit.
+  - Implementation must trace to approved artifacts; no behavior beyond intent+contract+schema.
+  - No events outside the approved event schema; no hidden behavior.
+
+STAGE-SPECIFIC CHECKS
+  - (no stage-specific checklist for stage selfdev-step-1)
+
+EXPECTED STAGE OUTPUT
+  (no expected-output template for stage)
+
+ARTIFACTS TO REVIEW
+  --- changes/UPG-0055__CHG-20260720-001__reviewer-architecture-synthesis-stage-support.md (sha256: 8203e457d6e9c1206150c41b2e5aa67ced309fbffa30994fbf44168923da4cda, visibility: shown) ---
+    # Self-Development Change: UPG-0055__CHG-20260720-001 — reviewer-architecture-synthesis-stage-support
+    
+    <!--
+    PURPOSE: Per-change source of truth for a non-trivial change to the Codeos toolkit
+    itself (prompts, templates, docs, patterns, scripts).
+    
+    This is NOT a downstream DBA feature. It has no behavioral contract, no event schema,
+    and no replay. Trivial changes do not get a record.
+    
+    Workflow: prompts/codeos-self-dev.md (4-step loop)
+    Each step requires explicit human approval; Codex review cadence is governed by the assigned review profile (see prompts/codeos-self-dev.md Step 0a).
+    The live status row lives in status/self-development.md, not here.
+    -->
+    
+    <!-- TRACE HEADER (canonical) -->
+    ```yaml
+    feature_id: UPG-0055
+    primary_feature_id: UPG-0055
+    change_id: CHG-20260720-001
+    slug: reviewer-architecture-synthesis-stage-support
+    state: IN_PROGRESS
+    current_step: 1-Intent
+    implements:
+      - UPG-0055
+    related_features: [UPG-0051, UPG-0049]
+    review_series: null
+    review_profile: PROFILE-3
+    review_state: DRAFT
+    review_history: reviews/review-log.md
+    fixes_findings: []
+    follow_up_of: null
+    ```
+    
+    <!-- SELF-REFERENCE BOUNDARY: this artifact is itself reviewed, so it must NOT embed the current
+    review round (which does not exist until after the packet is built). Reference the stable review
+    SERIES (review_series) + review_state; exact rounds live only in reviews/review-log.md and
+    reviews/codex/*. See prompts/codeos-self-dev.md → "Feature Thread & IDs" / "Self-Reference Boundary". -->
+    
+    
+    ## Change Intent
+    
+    **Why (problem in the toolkit):**
+    
+    `codeos-reviewer` (`tools/reviewer/src/packet.rs`) accepts an arbitrary `stage` string, but its
+    `stage_expected`/`stage_checks` functions have no match arm for `"architecture-synthesis"` — the
+    stage id `UPG-0051` introduced. An invocation with that stage id falls through to the generic
+    fallback (`"(no expected-output template for stage)"` / `"(no stage-specific checklist for stage
+    {})"`) instead of a real checklist, the same way `discovery`, `brief`, `onboarding`, and `1`-`10`
+    already get one. `dba-system.md` currently documents this gap and directs use of the Review Waiver
+    mechanism as an interim path.
+    
+    **What changes:**
+    
+    1. `tools/reviewer/src/packet.rs`:
+       - Add an `"architecture-synthesis"` match arm to `stage_expected` (line ~675, alongside `"10"`),
+         summarizing `dba-system.md`'s "Multi-Feature Architecture Synthesis Gate" section and
+         `prompts/03b-architecture-synthesis.md`'s 3-step pipeline in the same terse, single-sentence
+         register as every existing entry.
+       - Add a matching `"architecture-synthesis"` arm to `stage_checks` (line ~694), in the same
+         terse `"  - clause; clause; clause."` register as every existing entry — observable review
+         questions only (cohort declared, baseline version declared, every declared cohort member
+         evaluated for architectural relevance, authoritative decisions distinguished from derived
+         views, no synthesized behavior), never a restatement of implementation/tooling status like
+         "Review Waiver no longer needed."
+       - Extend the two existing tests that enumerate "new downstream identifiers" —
+         `stage_expected_new_downstream_identifiers_are_real_not_placeholder` and
+         `stage_checks_new_downstream_identifiers_are_real_not_placeholder` (both currently iterate
+         `["discovery", "brief", "onboarding", "10"]`) — to also include `"architecture-synthesis"`.
+         Unlike `UPG-0053`'s `dba-init.sh` change, this toolkit already has a real `cargo test` suite
+         covering exactly this surface; this change uses it rather than a live scratch run.
+    
+    **Scope boundary — what stays the same:**
+    
+    - No change to any existing stage id's `stage_expected`/`stage_checks` text.
+    - No change to `dba-system.md` or `prompts/03b-architecture-synthesis.md` — this change only makes
+      the reviewer aware of doctrine/prompt content that already exists (per `UPG-0055`'s own
+      guardrail: `packet.rs` remains a consumer of doctrine, never a second authority — the new match
+      arm text must not introduce any review criterion absent from those two files).
+    - No general external stage-policy mechanism (that's `UPG-0049`'s territory, explicitly out of
+      scope here).
+    - No support added for any stage id other than `architecture-synthesis`.
+    - `stage_checks_unrecognized_identifier_still_falls_back_to_placeholder` (the negative-case test
+      for a truly unknown stage id) is unaffected — a different, still-nonexistent stage string must
+      continue falling back exactly as before.
+    
+    **Class:** script-tooling
+    **Scope axis:** self-dev only
+    **Backlog item:** backlog/UPG-0055-reviewer-architecture-synthesis-stage-support.md
+    
+    ---
+    
+    ## Acceptance Criteria
+    
+    <!-- Filled in Step 2. -->
+    
+    ---
+    
+    ## Implementation Notes
+    
+    <!-- Filled during Step 3. Summary only — the git diff is the source of truth.
+    Note decisions, discoveries, and anything deferred (and re-triaged as its own change). -->
+    
+    ---
+    
+    ## Reconciliation
+    
+    <!-- Filled in Step 4. -->
+    
+    ---
+
+  --- backlog/UPG-0055-reviewer-architecture-synthesis-stage-support.md (sha256: cde29f46aeb658a1adbde125d62bcfc8dd07c8a765402bdf2b840bf0f96eacc7, visibility: shown) ---
+    ---
+    feature_id: UPG-0055
+    slug: reviewer-architecture-synthesis-stage-support
+    title: Reviewer Support for the `architecture-synthesis` Stage ID
+    status: PROPOSED
+    priority: P3
+    depends_on: []
+    related_features: [UPG-0051, UPG-0049]
+    supersedes: []
+    superseded_by: []
+    ---
+    
+    # Upgrade: reviewer-architecture-synthesis-stage-support — Reviewer Support for the `architecture-synthesis` Stage ID
+    
+    **Priority**: P3
+    **Status**: PROPOSED
+    **Type**: script-tooling
+    
+    ## Problem
+    
+    `UPG-0051` (Multi-Feature Architecture Synthesis Gate) introduced a new downstream stage id,
+    `architecture-synthesis`, documented in `dba-system.md` and used by
+    `prompts/03b-architecture-synthesis.md`. `codeos-reviewer` (`tools/reviewer/src/packet.rs`)
+    accepts an arbitrary `stage` string, but its `stage_expected`/`stage_checks` functions have no
+    match arm for `"architecture-synthesis"` — confirmed by direct code read during `UPG-0051`'s
+    Step 1/4 (`packet.rs:661-696`). An invocation with this stage id falls through to the generic,
+    untailored fallback branches (`"(no expected-output template for stage)"` /
+    `"(no stage-specific checklist for stage {})"`) instead of getting a real checklist the way
+    `discovery`, `brief`, `onboarding`, and `1`-`10` already do. `dba-system.md` currently documents
+    this gap explicitly and directs use of the Review Waiver mechanism as an interim path — this
+    brief is what would let that waiver eventually be retired for this stage id.
+    
+    ## Upgrade
+    
+    Add match arms for `"architecture-synthesis"` to both `stage_expected` and `stage_checks` in
+    `tools/reviewer/src/packet.rs`, following the exact pattern of the existing entries (e.g. `"10"`,
+    `"onboarding"`) — terse reviewer reminders, not a restatement of doctrine (see Guardrail). Content
+    should summarize, not duplicate, `dba-system.md`'s "Multi-Feature Architecture Synthesis Gate"
+    section and `prompts/03b-architecture-synthesis.md`'s 3-step pipeline (Cohort Evidence Review →
+    Draft Baseline → Approval and Activation) — e.g.:
+    
+    - **Expected output**: an approved `architecture/core-baseline.md` distinguishing authoritative
+      decisions from derived views, with a stated cohort membership set and version; behavioral gaps
+      discovered during synthesis are named and routed back to the affected feature's earlier stage,
+      never patched into the baseline.
+    - **Checklist** — observable review questions only, not deployment/tooling status: cohort declared;
+      baseline version declared; every declared cohort member's approved artifacts were evaluated for
+      architectural relevance (not necessarily all materially contributing — a member may legitimately
+      have none); authoritative decisions vs. derived views kept distinct; no synthesized behavior.
+    
+    **Definition of success**: after this change, invoking `codeos-reviewer` with
+    `stage=architecture-synthesis` no longer produces the generic fallback strings
+    (`"(no expected-output template for stage)"` / `"(no stage-specific checklist for stage {})"`)
+    and instead renders the dedicated expected-output template and checklist above. This is the
+    natural starting point for Step 2's acceptance criteria when this is picked up.
+    
+    ## Scope
+    
+    `tools/reviewer/src/packet.rs` only — the two match arms and their content. Out of scope: a
+    general external stage-policy mechanism (that already has its own broader, more speculative
+    backlog item — see Related); any change to `dba-system.md` or `prompts/03b-architecture-synthesis.md`
+    themselves (this brief only makes the reviewer aware of stage content that already exists);
+    support for any other future custom stage id beyond `architecture-synthesis` (a genuinely new
+    stage id would need its own brief or ride along with whichever change introduces it).
+    
+    ## Value
+    
+    Retires the Review Waiver interim path `UPG-0051` had to adopt for this stage id, giving
+    Architecture Synthesis Gate reviews a real tailored checklist instead of the generic fallback.
+    Small, mechanical, low-risk.
+    
+    Trade-offs: none significant — purely additive to an existing, well-understood match statement.
+    
+    ## Risk
+    
+    Low. Main risk is `packet.rs` gradually accumulating enough restated doctrine detail that it
+    becomes a second, driftable authority instead of a thin advisory summary — the same staleness
+    risk every other stage's checklist already carries, not a new category of risk, but worth
+    naming explicitly here since this is exactly the failure mode this session's `UPG-0051`/`UPG-0052`
+    work was reacting to in a different form (orphaned/duplicated doctrine). The guardrail above is
+    the mitigation: keep the reviewer text terse and clearly subordinate to `dba-system.md`.
+    
+    ## Guardrail
+    
+    - **`packet.rs` remains a consumer of doctrine, never a second authority.** The reviewer text is
+      advisory only and intentionally *summarizes* `dba-system.md`/`prompts/03b-architecture-synthesis.md`
+      — it must never introduce a review criterion absent from those files, and it must stay terse
+      (matching the existing entries' length and register), not become a parallel normative
+      description of Architecture Synthesis. If the two ever appear to disagree, the doctrine files
+      are authoritative and the reviewer text is stale and needs updating.
+    - Match arm content should track `dba-system.md`'s actual "Multi-Feature Architecture Synthesis
+      Gate" section, not invent independent criteria.
+    - Does not change reviewer behavior for any existing stage id.
+    - Does not attempt to build a general external policy mechanism — that is out of scope here (see
+      `UPG-0049`).
+    
+    ## Related
+    
+    - **UPG-0051**: Multi-Feature Architecture Synthesis Gate — the stage id this brief adds reviewer
+      support for; originally shipped with a Review Waiver as an explicit interim path, tracked as a
+      named follow-up on `UPG-0051`'s own Feature Thread.
+    - **UPG-0049**: External Review Policy Registry — the broader, more speculative mechanism for
+      externalizing stage-specific review policy generally; this brief is a narrow, immediate
+      stopgap, not a substitute for it and not blocked by it.
+    - Discovered during `UPG-0051` / `CHG-20260719-001`'s Step 1 and Step 4 (direct read of
+      `packet.rs:661-696`); noted on both `UPG-0051`'s and `UPG-0052`'s Feature Threads as an
+      out-of-scope-backlog finding never previously filed as its own UPG.
+    
+    ## Feature Thread
+    
+    > Canonical thread rollup for this feature. Compact links/IDs only; full detail lives in the
+    > change records and review files. May be maintained manually.
+    
+    ### Changes
+    
+    | Change ID | File | Purpose | State |
+    |---|---|---|---|
+    | (none yet) | — | — | PROPOSED |
+    
+    ### Reviews
+    
+    | Review ID | Change ID | Step | Round | Verdict |
+    |---|---|---|---|---|
+    
+    ### Findings Tracked Inside This Feature
+    
+    | Finding ID | Review ID | Classification | Resolution |
+    |---|---|---|---|
+    
+    ### Follow-up Features
+    
+    | Feature ID | Reason | Source finding |
+    |---|---|---|
+
+DIFF TO REVIEW (base->review, secret/size filtered)
+diff --git a/status/self-development.md b/status/self-development.md
+index 3a319f1..77b86fd 100644
+--- a/status/self-development.md
++++ b/status/self-development.md
+@@ -75,6 +75,7 @@
+ | UPG-0052 | CHG-20260719-002 | downstream-doctrine | downstream doctrine only | 4-Reconcile | ACCEPTED (series RVS__…__S4; Step 1 R1 DO NOT ADVANCE → R2 NO OBJECTION → 1st human CHANGES-ADVISED → R3 NO OBJECTION → 2nd human CHANGES-ADVISED → R4 NO OBJECTION (human-requested, beyond budget); Step 2 R1 NO OBJECTION; Step 3 R1 NO OBJECTION; Step 4 R1 DO NOT ADVANCE → R2 NO OBJECTION; all 17 ACs verified; 4 in-scope blockers found+fixed across the change) | COMPLETE | — |
+ | UPG-0053 | CHG-20260719-003 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S4; Step 1 R1 NO OBJECTION; Step 2 R1 DO NOT ADVANCE → R2 NO OBJECTION; Step 3 R1 NO OBJECTION; Step 4 R1 NO OBJECTION; all 8 ACs verified via live scratch run) | COMPLETE | — |
+ | UPG-0054 | CHG-20260719-004 | downstream-doctrine | downstream doctrine only | 4-Reconcile | ACCEPTED (series RVS__…__S4; Step 1 R1 NO OBJECTION; Step 2 R1 DO NOT ADVANCE → R2 NO OBJECTION; Step 3 R1 DO NOT ADVANCE → R2 DO NOT ADVANCE → R3 NO OBJECTION; Step 4 R1 NO OBJECTION; all 13 ACs verified; 3 in-scope blockers found+fixed) | COMPLETE | — |
++| UPG-0055 | CHG-20260720-001 | script-tooling | self-dev only | 1-Intent | DRAFT (Step 1 review pending) | IN_PROGRESS | — |
+ 
+ <!--
+ Identity   : Feature ID = UPG-#### (stable). Change ID = CHG-YYYYMMDD-NNN (one execution), or a

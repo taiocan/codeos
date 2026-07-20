@@ -590,3 +590,27 @@ pass — not just the location the finding happened to point at. A rule repeated
 prompts/patterns is only as correct as its least-precise restatement.
 
 Related: none.
+
+---
+
+## AJ-019 — `--sha-only` proves a file's identity to the reviewer, not its content
+
+*Origin: UPG-0055 / CHG-20260720-001 (reviewer-architecture-synthesis-stage-support), Step 3 R1→R2.*
+
+An acceptance criterion required proving new reviewer-checklist text traced only to
+`dba-system.md` and `prompts/03b-architecture-synthesis.md` — no invented criterion. Step 3 R1
+correctly flagged this as unverifiable because neither file was in the packet. To reduce packet
+size on the next round, `--sha-only` was used for both files instead of full content. R2 caught
+the same finding again, for a subtly different reason: `--sha-only` includes a path and a hash,
+not the file's text, so the reviewer could confirm *which version* of each file was being
+referenced but still could not read a single clause of either one to check the claim against.
+
+**Rule:** `--sha-only` is for a large, genuinely unrelated context file the reviewer only needs to
+confirm exists/is-pinned at a specific version — never for a file an acceptance criterion asks the
+reviewer to cross-check content against. If a claim depends on what a file *says*, that file needs
+full content in the packet, even at real cost to packet size (accepting the size-budget warning is
+cheaper than a wasted review round).
+
+Related: AJ-016 (evidence must be embedded, not summarized) — this is the same principle applied
+to a specific tool flag that looks like it solves the size problem while silently reintroducing
+the exact evidence gap AJ-016 already named.

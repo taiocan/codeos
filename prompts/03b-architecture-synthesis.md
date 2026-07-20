@@ -116,7 +116,7 @@ Output: confirmation of the approved baseline + registry update +
 
 ## Reviewer Note
 
-`codeos-reviewer` has no dedicated checklist for the `architecture-synthesis` stage id yet (see
-`dba-system.md`). Record a Review Waiver for gate reviews at this stage using the mechanism
-described under "Default Advisory Review," naming the specific reason. This does not weaken the
-requirement for explicit human approval at each step above.
+`codeos-reviewer` has a dedicated checklist for the `architecture-synthesis` stage id — run
+`codeos-reviewer review <feature_id> architecture-synthesis` for gate reviews at this stage, per
+"Default Advisory Review" in `dba-system.md`. This does not weaken the requirement for explicit
+human approval at each step above.

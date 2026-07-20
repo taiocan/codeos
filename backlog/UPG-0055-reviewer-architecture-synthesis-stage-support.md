@@ -2,7 +2,7 @@
 feature_id: UPG-0055
 slug: reviewer-architecture-synthesis-stage-support
 title: Reviewer Support for the `architecture-synthesis` Stage ID
-status: PROPOSED
+status: COMPLETE
 priority: P3
 depends_on: []
 related_features: [UPG-0051, UPG-0049]
@@ -13,7 +13,7 @@ superseded_by: []
 # Upgrade: reviewer-architecture-synthesis-stage-support — Reviewer Support for the `architecture-synthesis` Stage ID
 
 **Priority**: P3
-**Status**: PROPOSED
+**Status**: COMPLETE
 **Type**: script-tooling
 
 ## Problem
@@ -115,19 +115,28 @@ the mitigation: keep the reviewer text terse and clearly subordinate to `dba-sys
 
 | Change ID | File | Purpose | State |
 |---|---|---|---|
-| (none yet) | — | — | PROPOSED |
+| CHG-20260720-001 | `changes/UPG-0055__CHG-20260720-001__reviewer-architecture-synthesis-stage-support.md` | Add `architecture-synthesis` match arms to `codeos-reviewer` | COMPLETE |
 
 ### Reviews
 
 | Review ID | Change ID | Step | Round | Verdict |
 |---|---|---|---|---|
+| RVS__UPG-0055__CHG-20260720-001__S1 | CHG-20260720-001 | 1-Intent | R1 | NO OBJECTION |
+| RVS__UPG-0055__CHG-20260720-001__S2 | CHG-20260720-001 | 2-Acceptance | R1 | NO OBJECTION |
+| RVS__UPG-0055__CHG-20260720-001__S3 | CHG-20260720-001 | 3-Implement | R1→R3 | R1 DO NOT ADVANCE → R2 DO NOT ADVANCE → R3 NO OBJECTION |
+| RVS__UPG-0055__CHG-20260720-001__S4 | CHG-20260720-001 | 4-Reconcile | R1→R2 | R1 DO NOT ADVANCE → R2 NO OBJECTION — ACCEPTED |
 
 ### Findings Tracked Inside This Feature
 
 | Finding ID | Review ID | Classification | Resolution |
 |---|---|---|---|
+| (Step 3 R1) AC3 (doctrine alignment) and AC7 (test pass) claimed but unverifiable — neither doctrine files nor test output in packet | RVS__…__S3 | IN-SCOPE BLOCKER | Fixed — embedded actual test output; doctrine files added to packet |
+| (Step 3 R2) `--sha-only` for doctrine files proves identity, not content — AC3 still unverifiable | RVS__…__S3 | IN-SCOPE BLOCKER | Fixed — re-ran with full doctrine file content; journaled as AJ-019 |
+| (Step 4 R1) Reconciliation self-contradicted: claimed "no stale references" while naming one | RVS__…__S4 | IN-SCOPE BLOCKER | Fixed — reworded to acknowledge the known, out-of-scope stale reference explicitly |
+| `dba-system.md`'s Review Waiver note is now stale (this change is what retires the gap it describes) | Step 4 Reconciliation | OUT-OF-SCOPE BACKLOG | Not fixed here — trivial one-line correction, to be applied as a direct edit |
 
 ### Follow-up Features
 
 | Feature ID | Reason | Source finding |
 |---|---|---|
+| — | None spun out — the stale `dba-system.md` note is a trivial direct-edit fix, not a new feature | — |

@@ -240,12 +240,10 @@ deliberately stricter than "any version this feature was ever pinned to": the li
 ever accepts the current version; historical files matter for audit and for the non-retroactive
 protection above, not for gating new work.
 
-**Reviewer coverage.** `codeos-reviewer` has no dedicated checklist for an `architecture-synthesis`
-stage id today (it falls through to the tool's generic, untailored fallback). Until native
-support exists, use the **Review Waiver** mechanism described under "Default Advisory Review"
-above for gate reviews at this stage, recording the specific reason ("`architecture-synthesis`
-stage id not yet supported by `codeos-reviewer`"). The waiver does not weaken Non-Negotiable Rule
-#1 — the human still explicitly approves the baseline.
+**Reviewer coverage.** `codeos-reviewer` has a dedicated checklist for the `architecture-synthesis`
+stage id — run `codeos-reviewer review <feature_id> architecture-synthesis` the same way as any
+other stage, per "Default Advisory Review" above. This does not weaken Non-Negotiable Rule #1 —
+the human still explicitly approves the baseline.
 
 **Naming.** This is the **Architecture Synthesis Gate**, producing the **Core Architecture
 Baseline** — deliberately not "Architecture Discovery." Solution Discovery

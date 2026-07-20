@@ -99,7 +99,7 @@ cheap pilot-adjacent wins early.
 | UPG-0052 | Implementation Profile Framework and Rust-First Default Profile | P2 | — | CHG-20260719-002 | COMPLETE |
 | UPG-0053 | Implementation-Profile Scaffolding in dba-init.sh | P3 | UPG-0052 | CHG-20260719-003 | COMPLETE |
 | UPG-0054 | Contract-to-Implementation Failure Boundary | P2 | — | CHG-20260719-004 | COMPLETE |
-| UPG-0055 | Reviewer Support for the `architecture-synthesis` Stage ID | P3 | — | — | PROPOSED |
+| UPG-0055 | Reviewer Support for the `architecture-synthesis` Stage ID | P3 | — | CHG-20260720-001 | COMPLETE |
 | UPG-0028 | Reviewer self-reference recursion (scoping) | P2 | — | — | COMPLETE (backlog-only, no CHG — see backlog note) |
 | UPG-0029 | Review artifact durability + packet naming policy | P2 | UPG-0001 | CHG-20260629-001 | COMPLETE |
 | UPG-0030 | Lean Self-Development Review Profiles | P1 | — | CHG-20260629-001 | COMPLETE |
