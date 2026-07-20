@@ -194,4 +194,4 @@ Deciding hastily risks:
 
 | Feature ID | Reason | Source finding |
 |---|---|---|
-| — | Native reviewer stage-id support noted but not yet spun into its own UPG | Step 1 / Step 4 findings above |
+| UPG-0055 | Native `codeos-reviewer` support for the `architecture-synthesis` stage id | Step 1 / Step 4 findings above |
