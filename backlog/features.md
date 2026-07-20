@@ -84,7 +84,7 @@ The goal is to speed up Codeos development without weakening DBA advantages.
 | UPG-0051 | [UPG-0051-multi-feature-architecture-synthesis-gate.md](UPG-0051-multi-feature-architecture-synthesis-gate.md) | Multi-Feature Architecture Synthesis Gate | P1 | COMPLETE |
 | UPG-0052 | [UPG-0052-implementation-profile-framework.md](UPG-0052-implementation-profile-framework.md) | Implementation Profile Framework and Rust-First Default Profile | P2 | COMPLETE |
 | UPG-0053 | [UPG-0053-implementation-profile-scaffolding-dba-init.md](UPG-0053-implementation-profile-scaffolding-dba-init.md) | Implementation-Profile Scaffolding in dba-init.sh | P3 | COMPLETE |
-| UPG-0054 | [UPG-0054-contract-to-implementation-failure-boundary.md](UPG-0054-contract-to-implementation-failure-boundary.md) | Contract-to-Implementation Failure Boundary | P2 | PROPOSED |
+| UPG-0054 | [UPG-0054-contract-to-implementation-failure-boundary.md](UPG-0054-contract-to-implementation-failure-boundary.md) | Contract-to-Implementation Failure Boundary | P2 | COMPLETE |
 
 > Priority `—` = no formal P-rank (a completed cleanup, or a discovery note). Feature IDs are
 > assigned once and never reused. `UPG-0002` and `UPG-0003` are historical/piloted work given IDs

@@ -42,6 +42,17 @@ One test per named failure in the contract's Failure Classifications table.
 Assert: the correct FAILURE event is emitted with the correct `failure_reason`.
 Assert: system state is unchanged (unless contract specifies otherwise).
 
+Per `.codeos/dba-system.md` → "Contract-to-Implementation Failure Boundary," also verify the
+negative direction — these are not optional extras, they are part of what "Failure Mode Tests"
+means for this category:
+- **No masquerading**: trigger a technical/internal error not listed in the Failure
+  Classifications table (e.g. a simulated storage or serialization failure) and assert that it
+  does **not** produce any approved FAILURE event — it propagates as the internal error type
+  itself (or an uncaught exception), never as a misleading classified outcome.
+- **No unapproved events**: across the failure-path tests in this category, assert that every
+  emitted event's type is present in the approved event schema — an internal error must never
+  result in an event the schema doesn't list.
+
 ### 3. Telemetry Tests
 Assert: correlation_id is present and non-empty in every emitted event.
 Assert: all required event fields are present (`event_id`, `event_type`, `timestamp`, `source_module`).
@@ -190,6 +201,7 @@ Falsification Scenarios table. This is required for Stage 7 and Stage 8 traceabi
 Verify before outputting:
 - [ ] One behavioral test per contract happy path scenario
 - [ ] One behavioral test per named failure in Failure Classifications
+- [ ] Failure boundary: a technical/internal failure does not masquerade as an approved FAILURE event, and no unapproved failure event type is emitted
 - [ ] One invariant falsification test per row in the contract's Invariant Falsification Scenarios table
 - [ ] Telemetry test asserts `correlation_id` and all six base fields on every event
 - [ ] Replay test asserts: base fields, schema event types, correlation chain integrity, deterministic sequence

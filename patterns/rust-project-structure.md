@@ -303,6 +303,53 @@ binary and inspect the JSONL output. They are integration tests, not unit tests.
 
 ---
 
+## Error Boundary Convention
+
+Rust realization of `.codeos/dba-system.md` → "Contract-to-Implementation Failure Boundary."
+
+**Internal errors may be as rich as needed.** A feature's internal error type is not constrained
+by this pattern — a hand-written `enum`, `thiserror`, `anyhow`, or any other approach is
+acceptable. No specific crate or single canonical enum is mandated; this is an example, not a
+requirement:
+
+```rust
+#[derive(Debug)]
+enum InternalError {
+    Storage(std::io::Error),
+    Serialization(serde_json::Error),
+    NotFound { id: String },
+    // ...as rich as the implementation actually needs
+}
+```
+
+**A separate, explicit mapping converts internal errors to approved classifications.** Two
+separate approvals gate a classified failure event, not one blended condition: the *classification*
+must be named in the approved contract, and, independently, the *event* produced from it must be
+present in the approved event schema — the schema authorizes event types, not classification
+names. A mapping arm exists only for a variant satisfying both. Everything else propagates
+unmapped — it does not become a misleading approved failure:
+
+```rust
+// Explicit, reviewable, and total over InternalError's approved-classification subset.
+// Returns None for anything not an approved Failure Classification — the caller propagates
+// the InternalError itself (e.g. via `?`), it does not invent an approved event for it.
+fn to_failure_event(err: &InternalError) -> Option<FailureEvent> {
+    match err {
+        InternalError::NotFound { id } => Some(FailureEvent::ItemNotFound { id: id.clone() }),
+        // Storage/Serialization variants: not an approved classification — no arm here,
+        // deliberately. They propagate as InternalError, consistent with
+        // `.codeos/prompts/04-implement.md`'s "No speculative error handling" rule.
+        _ => None,
+    }
+}
+```
+
+This mapping is what Stage 4's Failure Mapping Table documents (see
+`.codeos/prompts/04-implement.md`) — one row per approved classification, naming the internal
+error variant(s) it maps from and the event it produces.
+
+---
+
 ## Recommended Toolchain/Lint Baseline
 
 This is a **recommendation**, not mandatory project configuration — no Implementation Profile or

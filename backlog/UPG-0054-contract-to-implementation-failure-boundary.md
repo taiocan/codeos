@@ -2,7 +2,7 @@
 feature_id: UPG-0054
 slug: contract-to-implementation-failure-boundary
 title: Contract-to-Implementation Failure Boundary
-status: PROPOSED
+status: COMPLETE
 priority: P2
 depends_on: []
 related_features: [UPG-0052]
@@ -14,7 +14,7 @@ superseded_by: []
 
 **Priority**: P2 (not required to start Architecture Synthesis, but should land before substantial
 Stage 4 Rust implementation work begins)
-**Status**: PROPOSED
+**Status**: COMPLETE
 **Type**: downstream-doctrine
 
 ## Problem
@@ -95,19 +95,29 @@ internal-to-contractual mapping be explicit, reviewable, and Stage-5-tested in b
 
 | Change ID | File | Purpose | State |
 |---|---|---|---|
-| (none yet) | — | — | PROPOSED |
+| CHG-20260719-004 | `changes/UPG-0054__CHG-20260719-004__contract-to-implementation-failure-boundary.md` | Add the Contract-to-Implementation Failure Boundary doctrine, Rust realization, and Stage 4/5 wiring | COMPLETE |
 
 ### Reviews
 
 | Review ID | Change ID | Step | Round | Verdict |
 |---|---|---|---|---|
+| RVS__UPG-0054__CHG-20260719-004__S1 | CHG-20260719-004 | 1-Intent | R1 | NO OBJECTION |
+| RVS__UPG-0054__CHG-20260719-004__S2 | CHG-20260719-004 | 2-Acceptance | R1→R2 | R1 DO NOT ADVANCE (AC6 under-verified) → R2 NO OBJECTION |
+| RVS__UPG-0054__CHG-20260719-004__S3 | CHG-20260719-004 | 3-Implement | R1→R3 | R1 DO NOT ADVANCE → R2 DO NOT ADVANCE → R3 NO OBJECTION |
+| RVS__UPG-0054__CHG-20260719-004__S4 | CHG-20260719-004 | 4-Reconcile | R1 | NO OBJECTION — ACCEPTED |
 
 ### Findings Tracked Inside This Feature
 
 | Finding ID | Review ID | Classification | Resolution |
 |---|---|---|---|
+| (Step 2) AC6 "anywhere" guardrail verified against only 2 of 4 in-scope files | RVS__…__S2 | IN-SCOPE BLOCKER | Fixed — verification expanded to all 4 files |
+| (Step 3 R1) Rust pattern blurred classification-approval vs. event-schema-authorization into one condition | RVS__…__S3 | IN-SCOPE BLOCKER | Fixed — reworded as two separate, independent approvals |
+| (Step 3 R1) Implementation Notes falsely claimed "verbatim" sentence preservation | RVS__…__S3 | IN-SCOPE BLOCKER | Fixed — reworded to describe intent-preserved, wording-generalized |
+| (Step 3 R2) same classification/event-schema blur still present in `prompts/04-implement.md` | RVS__…__S3 | IN-SCOPE BLOCKER | Fixed — same corrected wording applied; journaled as AJ-018 |
+| Stale `dba-init.sh` "not yet built" claim in `dba-system.md`'s Implementation Profile section (now false since UPG-0053) | Step 3 Implementation Notes | OUT-OF-SCOPE BACKLOG | Not fixed here — flagged to human as a trivial one-line correction |
 
 ### Follow-up Features
 
 | Feature ID | Reason | Source finding |
 |---|---|---|
+| — | None spun out — the stale `dba-init.sh` note is a trivial direct-edit fix, not a new feature | — |

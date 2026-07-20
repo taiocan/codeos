@@ -564,3 +564,29 @@ silently inherit its full diff until it's committed, generating false scope-drif
 have nothing to do with the new change's actual content.
 
 Related: none.
+
+---
+
+## AJ-018 — Fixing an imprecise rule restatement in one file doesn't fix it everywhere else the same rule is restated
+
+*Origin: UPG-0054 / CHG-20260719-004 (contract-to-implementation-failure-boundary), Step 3 R1→R2.*
+
+`UPG-0054` introduced a rule with two separate, independent approvals: a failure classification
+must be named in the approved Contract, and, independently, the event it produces must be present
+in the approved Event Schema. The first draft of both `patterns/rust-project-structure.md`'s Rust
+realization *and* `prompts/04-implement.md`'s tightened Stage 4 rule blurred these into one
+blended condition — reading as if the classification itself had to be "present in the approved
+event schema," which is not what the schema authorizes (event types, not classification names).
+
+Step 3 R1 caught this in the Rust pattern file and it was fixed there. R2 caught the *identical*
+imprecision still sitting in `prompts/04-implement.md` — the same wrong phrasing, written in a
+different file, that the R1 fix never touched because the fix was scoped to the one file the
+finding named.
+
+**Rule:** when a reviewer (or anything else) catches an imprecise or incorrect restatement of a
+rule, before considering the finding resolved, grep every other file this change touches (or that
+already exists) for the same rule being restated in its own words, and fix all of them in the same
+pass — not just the location the finding happened to point at. A rule repeated in multiple
+prompts/patterns is only as correct as its least-precise restatement.
+
+Related: none.

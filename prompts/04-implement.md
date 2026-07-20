@@ -96,8 +96,8 @@ You may ONLY emit events listed in the approved schema. If you discover you need
 **No undeclared runtime artifacts.**
 You must not create or write to any file or directory other than `events/runtime_events.jsonl` unless the contract's Runtime Artifacts section explicitly names it. If state persistence is needed and not listed in the contract, stop and raise it for contract amendment — do NOT silently create files.
 
-**No speculative error handling.**
-Only handle failure modes explicitly listed in the contract's Failure Classifications. Other errors propagate as uncaught exceptions.
+**No speculative error handling — and the Contract-to-Implementation Failure Boundary.**
+Only handle failure modes explicitly listed in the contract's Failure Classifications. Other errors propagate as uncaught exceptions (or, in a language with richer error types, as the internal error type itself — never invented as a classified failure). Two boundaries stay distinct: the *behavioral boundary* (Failure Classifications the contract approves) and the *technical API boundary* (internal/storage/serialization/I/O errors, which may be as rich as the implementation needs). Two separate approvals gate an emitted failure event, not one blended condition: the classification must be named in the approved contract, and, independently, the specific event produced from it must be present in the approved event schema — the schema authorizes event types, not classification names; a contract-approved classification alone does not authorize emitting anything. Every mapping from an internal error to an approved classification is explicit and reviewable — document it in the Failure Mapping Table below, not left implicit in code. See `.codeos/dba-system.md` → "Contract-to-Implementation Failure Boundary" and, for Rust, `.codeos/patterns/rust-project-structure.md` → "Error Boundary Convention."
 
 **Implementation must be deterministic.**
 No hidden randomness, no time-based branching not reflected in contracts.
@@ -151,7 +151,18 @@ Structural Risk levels (only populate when a Critical Hub or God Function is tou
 |---|---|---|
 | [EventName] | [file:line] | [when] |
 
-4. Present the Review Package using `.codeos/templates/review-package.md` (Stage 4–5 format, inline only):
+4. Present a **Failure Mapping Table** (see "No speculative error handling" above and
+   `.codeos/dba-system.md` → "Contract-to-Implementation Failure Boundary") — one row per
+   approved Failure Classification that this feature's implementation actually maps to:
+
+| Internal Error | Contract Failure Classification | Emitted Event | Mapping Site |
+|---|---|---|---|
+| [internal error variant/type] | [Failure Classification name from the contract] | [event name, must also be in the approved schema] | [file:line of the mapping] |
+
+If no internal errors map to any approved classification for this feature, state "none" rather
+than omitting the table.
+
+5. Present the Review Package using `.codeos/templates/review-package.md` (Stage 4–5 format, inline only):
    - Artifact: `modules/[feature_id]/`
    - Stage purpose: Implement only what the three approved artifacts specify.
    - Files changed: [list all files created or modified]
@@ -162,6 +173,6 @@ Structural Risk levels (only populate when a Critical Hub or God Function is tou
    - Implementation Profile applied: if an approved profile applied to this feature, state
      `profile_id`, `profile_version`, the resolved language, and any matched exception; otherwise
      state "no profile" or "profile proposed, non-binding."
-5. State: **`AWAITING HUMAN APPROVAL TO PROCEED TO STAGE 5`**
+6. State: **`AWAITING HUMAN APPROVAL TO PROCEED TO STAGE 5`**
 
 **STOP.** Do not write tests until the human explicitly approves the implementation.

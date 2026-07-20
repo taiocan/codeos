@@ -322,15 +322,53 @@ the Architecture Baseline's requirement that implementations record which baseli
 governed them.
 
 **Codeos's default policy**, stated honestly about what exists today: Codeos recommends a
-rust-first profile as the default for new projects. A human creates
+rust-first profile as the default for new projects. `dba-init.sh` scaffolds
 `architecture/implementation-profile.yaml` from `.codeos/templates/implementation-profile.yaml`
-to declare it. Automatic scaffolding of this proposal by `dba-init.sh` is tracked separately and
-not yet built — until it lands, this is a manual step, not something `dba-init.sh` already does.
+automatically for every new project, always as `status: proposed` — never pre-approved. A human
+edits or replaces it, then explicitly approves it before Stage 4 relies on it.
 
 **Reviewer coverage.** This mechanism introduces no new Stage ID. Consultation changes to Stage 4
 are covered by the existing Stage ID `4`; onboarding changes are covered by the existing
 `onboarding` Stage ID (see "What You Do at Each Stage" below) — no Review Waiver note is needed
 the way the Architecture Synthesis Gate needed one.
+
+---
+
+## Contract-to-Implementation Failure Boundary
+
+This is a Stage 4/5 discipline, not a new gate, new Stage ID, or new Non-Negotiable Rule. It makes
+explicit an interaction that already follows from Non-Negotiable Rules #2 (never implement before
+intent + contract + event schema are all approved) and #4 (never emit events not listed in the
+approved event schema).
+
+**Two boundaries, kept distinct.** The **behavioral boundary** is the set of observable business
+or governance outcomes — defined jointly by the Stage 2 Contract's Failure Classifications *and*
+the Stage 3 Event Schema. The **technical API boundary** is implementation-internal error
+propagation — a function may legitimately return or propagate storage, serialization, I/O, or
+other internal error types that have no behavioral meaning of their own.
+
+**The rule.** Only failure classifications approved by the Stage 2 Contract may be exposed as
+classified behavioral outcomes. A failure event may be emitted only when that event is *also*
+present in the approved Stage 3 Event Schema — **a Contract-approved classification alone does
+not authorize emitting it as an event.** This is not a new rule; it is Non-Negotiable Rules #2 and
+#4 applied together to the failure case specifically, made explicit because the interaction is
+easy to miss when only the Contract side is in view.
+
+Internal and technical errors may propagate through richer implementation error types, but they
+must remain distinguishable from contractual outcomes and must never be silently mapped to one.
+Every internal-to-contractual classification mapping is explicit and reviewable — Stage 4 records
+it in a Failure Mapping Table (see `.codeos/prompts/04-implement.md`).
+
+**Stage 5 verifies all four directions:**
+1. Approved contractual failures produce the correct observable classification.
+2. Emitted failure events conform to the approved Stage 3 schema.
+3. Technical failures never masquerade as approved behavioral failures.
+4. No unapproved failure event is emitted.
+
+**No universal error library or single canonical enum is prescribed.** This stays language-neutral
+here; a Rust realization (rich internal error types, no mandated crate, an explicit mapping to
+approved classifications) is in `.codeos/patterns/rust-project-structure.md` → "Error Boundary
+Convention."
 
 ---
 
