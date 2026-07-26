@@ -1,0 +1,267 @@
+Reviewer task:
+
+SCOPE CONTRACT
+  Assess this artifact against the STATED SCOPE of this stage/PR — the Expected Stage
+  Output below and what the artifacts actually claim — NOT against an ideal final system.
+  A capability the artifacts do not claim to provide is OUT-OF-SCOPE, not a defect.
+  The following are OUT-OF-SCOPE BACKLOG unless THIS artifact explicitly claims to provide
+  them: formal approval-binding enforcement; rollback correctness; COMMIT_BOUND/
+  WORKSPACE_BOUND enforcement; JSON Schema validation; CI validation; exact
+  decision-integrity; per-feature decision ledgers; autonomous approval; enabled hooks.
+
+YOUR TASK — answer these five questions using only the evidence in the packet:
+  1. Acceptance criteria: Does the artifact satisfy each of its stated acceptance criteria?
+     Cite evidence for each criterion (or note its absence).
+  2. Claim support: Are universal or strong claims (all, every, never, always, no X) in the
+     artifact supported by evidence in the packet? Any unverifiable strong claim is a candidate
+     finding only if it affects acceptance, scope, safety, decision integrity, or the artifact's
+     stated guarantees.
+  3. Scope drift: Is there any change beyond the stated scope boundary? (Files not in the
+     "What changes" list; behavior changes not in the intent; downstream doctrine modified
+     rather than read.)
+  4. In-scope blockers: Are there facts that, if left in, would make the artifact wrong,
+     unsafe, or internally contradictory?
+  5. Finding classification: Classify every finding you raise as exactly one of the five
+     TRIAGE RULE categories below.
+
+TRIAGE RULE — classify EVERY finding as exactly one of:
+  IN-SCOPE BLOCKER         breaks the stated goal; creates a FALSE CLAIM in this artifact;
+                           weakens the advisory/read-only/human-gated guarantees; prevents
+                           the work from running; or violates an explicit safety constraint.
+  IN-SCOPE NON-BLOCKER     improves it but is not required for this PR.
+  OUT-OF-SCOPE BACKLOG     valid, but belongs to a future feature / stronger guarantee.
+  REJECTED                 conflicts with the stated scope or Codeos philosophy.
+  SELF-REFERENCE /         review records that are stale because of the previous round's
+  REVIEW-BOOKKEEPING       own existence (causal loop); not a real artifact defect.
+  Base the PR decision ONLY on IN-SCOPE BLOCKER findings. An OUT-OF-SCOPE BACKLOG finding
+  must NOT cause DO NOT ADVANCE unless this artifact FALSELY CLAIMS to solve it.
+
+WHAT NOT TO DO
+  - Do not flag style or wording issues as blockers unless the wording creates a false claim,
+    contradiction, parser breakage, or wrong governance instruction.
+  - Do not re-review unchanged full context when the packet is in delta mode.
+  - Do not treat local-only review history as a blocker unless the artifact falsely
+    claims the review artifacts are committed/durable.
+
+INSTRUCTIONS
+  If this is a resumed session, ignore any earlier-session conclusions unless they are
+  re-established by THIS packet; assess only the evidence above, pinned to this commit.
+  Give a focused assessment of this artifact against the stated scope, acceptance criteria,
+  and evidence in this packet. Rank findings by severity. Suggest a better design only when
+  needed to explain a required fix for an IN-SCOPE BLOCKER.
+
+  Limit findings to the top 3 IN-SCOPE BLOCKERS. Additional non-blocking observations may be
+  summarized in one short paragraph only if useful.
+
+  For EACH finding emit:
+    Finding: / Severity: High|Medium|Low / Classification: <one of the TRIAGE RULE labels>
+    Evidence: <file/line> / Why: <short> / Required action: fix now|optional fix|backlog|reject
+    Scope reason: <why it does/does not belong to this PR's scope>
+  Then emit:
+    PR decision: ADVANCE | REQUEST CHANGES | DO NOT ADVANCE   (based ONLY on in-scope blockers)
+    Scope drift warning: yes|no — <is anything pulling this PR beyond its stated scope?>
+  Then on the LAST three lines emit exactly (map ADVANCE->NO OBJECTION,
+  REQUEST CHANGES->CHANGES ADVISED, DO NOT ADVANCE->DO NOT ADVANCE):
+    LOG SUMMARY: <NO OBJECTION | CHANGES ADVISED | DO NOT ADVANCE | UNCLASSIFIED> — <single most important point>
+      (use UNCLASSIFIED if you genuinely cannot classify the artifact safely)
+    EVIDENCE: <A|B|C|D|E>
+    HIGHEST-IMPACT UNCERTAINTY: <one sentence — what single thing, if wrong, most affects this assessment>
+
+  Evidence grade — the grade describes what the assessment rests on, not reviewer confidence:
+    A — Directly verified in the artifact, diff, or output shown in the packet
+    B — Verified with multiple direct pieces of evidence, but coverage is not complete
+    C — Partially verified, partially inferred from structure or context
+    D — Mostly inferred from structure or indirect evidence
+    E — Hypothesis or very limited basis — little to no direct evidence
+
+
+PACKET MANIFEST
+  generated: 2026-07-26T15:12:32Z
+  task_prompt: /home/rimo/projects/Codeos/prompts/codeos-reviewer-task.md (4959 bytes)
+  review_content_bytes: 13637
+  estimated_review_tokens: ~3409
+  budget_status: OK
+  packet_mode: full
+  delta_base: none
+  items:
+    - path: changes/UPG-0058__CHG-20260726-002__cohort-logical-design-artifact.md
+      mode: full_file
+      bytes: 11110
+      sha256: 1cce43e6b622a08d442f13757cc30067081850b5b149f654eec2365afe8e72da
+    - path: (diff)
+      mode: full_file
+      bytes: 2527
+
+REVIEW CONTEXT
+  Feature:                UPG-0058__CHG-20260726-002
+  Stage:                  selfdev-step-2
+  Branch:                 main
+  Base commit:            (no base pin)
+  Review commit:          9a67f72df2d81867f4416c38f19a3049e60947ff (+ uncommitted workspace changes)
+  Current approved stage: n/a (non-numeric stage)
+  Evidence coverage:      FULL_COVERAGE
+  Workspace dirty:        yes (uncommitted changes at review time)
+
+DBA RULES RELEVANT TO THIS STAGE
+  - Human approval is required for every stage transition; you are advisory only.
+  - Memory is not truth — assess only what is provided, pinned to the review commit.
+  - Implementation must trace to approved artifacts; no behavior beyond intent+contract+schema.
+  - No events outside the approved event schema; no hidden behavior.
+
+STAGE-SPECIFIC CHECKS
+  - (no stage-specific checklist for stage selfdev-step-2)
+
+EXPECTED STAGE OUTPUT
+  (no expected-output template for stage)
+
+ARTIFACTS TO REVIEW
+  --- changes/UPG-0058__CHG-20260726-002__cohort-logical-design-artifact.md (sha256: 1cce43e6b622a08d442f13757cc30067081850b5b149f654eec2365afe8e72da, visibility: shown) ---
+    # Self-Development Change: UPG-0058__CHG-20260726-002 — cohort-logical-design-artifact
+    
+    <!-- TRACE HEADER (canonical) -->
+    ```yaml
+    feature_id: UPG-0058
+    primary_feature_id: UPG-0058
+    change_id: CHG-20260726-002
+    slug: cohort-logical-design-artifact
+    state: IN_PROGRESS
+    current_step: 2-Acceptance
+    implements:
+      - UPG-0058
+    related_features: [UPG-0051, UPG-0055]
+    review_series: null
+    review_profile: PROFILE-4
+    review_state: DRAFT
+    review_history: reviews/review-log.md
+    fixes_findings: []
+    follow_up_of: null
+    ```
+    
+    <!-- SELF-REFERENCE BOUNDARY: this artifact is itself reviewed, so it must NOT embed the current
+    review round (which does not exist until after the packet is built). Reference the stable review
+    SERIES (review_series) + review_state; exact rounds live only in reviews/review-log.md and
+    reviews/codex/*. See prompts/codeos-self-dev.md → "Feature Thread & IDs" / "Self-Reference Boundary". -->
+    
+    
+    ## Change Intent
+    
+    **Why (problem in the toolkit):**
+    
+    `UPG-0051`'s Multi-Feature Architecture Synthesis Gate produces exactly one output — the Core
+    Architecture Baseline — which resolves strategic structural questions (topology, module ownership,
+    dependency direction, persistence technology, integration style) but not logical design questions
+    (identity/key strategy, revision/supersession pattern, module interface boundaries, transaction
+    ownership, event-emission points, read-model ownership). A real downstream project's discovery
+    found this insufficient: independently-implemented Stage-4 features sharing persistence and
+    identity can still make conflicting local decisions the gate exists to prevent — one feature using
+    UUID primary keys for a canonical entity, another identifying the same entity by URL, a third by a
+    composite key. The baseline is deliberately high-level; nothing in the current gate fixes the
+    logical detail features actually need shared *before* Stage 4.
+    
+    **What changes:**
+    
+    - `dba-system.md` — "Multi-Feature Architecture Synthesis Gate" section: documents the second
+      output (Cohort Logical Design), the new intermediate cohort status `baseline-approved`, the
+      changed meaning of `approved` (now requires both Baseline and Logical Design), the compatibility
+      rule for cohorts already `approved` under the pre-this-UPG rule, the restated structure-not-
+      behavior guardrail for the new artifact, one new Artifact Classification row, one new File Layout
+      line, one new History Layout line (`architecture/history/cohort-logical-design-v[N].md`).
+    - `prompts/03b-architecture-synthesis.md` — extends the pipeline from 3 steps to 4: Cohort Evidence
+      Review (unchanged) → Draft Baseline (unchanged, now yields `baseline-approved` not `approved`) →
+      **Draft Cohort Logical Design (new step)** → Approval and Activation (renumbered from Step 3 to
+      Step 4; now approves the Logical Design and sets the cohort to `approved`, unblocking Stage 4).
+    - `templates/cohort-logical-design.md` (new) — modeled on `templates/architecture-baseline.md`'s
+      exact skeleton (Identity and Version / Authoritative Decisions-equivalent sections / Derived-
+      Views-equivalent mapping / Open Risks / Revisit Triggers / metadata footer): logical ERD;
+      entity/aggregate ownership; identity and key strategy; revision/supersession model; module
+      interface map; command/query responsibilities; transaction boundaries; validation ownership;
+      event-emission rules; read-model design; indexing/spatial principles; migration strategy;
+      integration-test obligations; mapping from each design element to its source feature artifacts.
+    - `templates/feature-registry.yaml` — new `logical_design_version` field on
+      `architecture_cohorts[]` entries (parallel to `baseline_version`, same versioning/staleness
+      semantics); `status` enum gains `baseline-approved` between `gate-in-progress` and `approved`.
+    - `tools/reviewer/src/packet.rs` — small content update to the existing `"architecture-synthesis"`
+      checklist (already generic to the whole `03b-architecture-synthesis.md` pipeline per `UPG-0055`)
+      to mention the Logical Design step; no new stage id, no new match arm.
+    
+    **Lifecycle bookkeeping (standard for every non-trivial self-dev change, not substantive scope):**
+    `backlog/features.md` and `status/roadmap.md` already carry `UPG-0058`'s row (registered before
+    this Step 1 was drafted); `status/self-development.md` gains this change's row as Step 1 activates.
+    
+    **Scope boundary — what stays the same:**
+    
+    Anything not named above is in scope for no change. In particular, this change does **not**: alter
+    `templates/architecture-baseline.md`'s own content or the Baseline's authoritative-decision
+    categories; change the cohort declaration mechanism (`architecture_cohort` field, cohort test,
+    declaration procedure) itself; add any new Stage ID (the new step lives inside the existing
+    conditional gate, not the 9-step loop); add any new Non-Negotiable Rule; silently reinterpret an
+    already-`approved` cohort as still fully `approved` under the new, stricter meaning (handled by the
+    explicit `baseline-approved` compatibility landing state, verified as an acceptance criterion); or
+    write a full technical design document inline in the new template (which stays terse and
+    placeholder-driven, matching the Baseline template's register).
+    
+    **Class:** downstream-doctrine
+    **Scope axis:** downstream doctrine only
+    **Backlog item:** `backlog/UPG-0058-cohort-logical-design-artifact.md`
+    
+    ---
+    
+    ## Acceptance Criteria
+    
+    | # | Criterion | How it will be verified |
+    |---|---|---|
+    | 1 | `dba-system.md`'s gate section documents Cohort Logical Design as a second output, naming all 14 content areas (logical ERD; entity/aggregate ownership; identity/key strategy; revision/supersession model; module interface map; command/query responsibilities; transaction boundaries; validation ownership; event-emission rules; read-model design; indexing/spatial principles; migration strategy; integration-test obligations; mapping to source feature artifacts) or referencing the template that names them. | Read-through. |
+    | 2 | The new intermediate cohort status `baseline-approved` is documented with exact semantics: Baseline approved for the applicable version, Logical Design not yet approved, Stage 4 still blocked (same as `declared`/`gate-in-progress`). | Read-through of `dba-system.md` and `templates/feature-registry.yaml`'s status-enum comment. |
+    | 3 | `approved`'s meaning is updated **consistently everywhere it gates Stage 4 eligibility** to mean both Baseline and Logical Design are approved for their applicable versions — no file retains the old single-output meaning. | Grep for `architecture_cohorts`/cohort-status language across `dba-system.md`, `prompts/03b-architecture-synthesis.md`, `templates/feature-registry.yaml`, `prompts/04-implement.md`'s cohort eligibility check; confirm consistent wording. |
+    | 4 | A compatibility rule is explicitly stated for a cohort already `approved` under the pre-this-UPG single-output rule: treated as `baseline-approved` (not `approved`) on first read after this UPG ships — not silently reinterpreted as still fully `approved`. | Read-through of `dba-system.md`'s explicit compatibility paragraph. |
+    | 5 | The Logical Design's guardrail (may define structure, never invent behavior; a discovered behavioral gap returns to the owning Stage 1, 2, or 3 artifact) is stated explicitly, in the same spirit as the Baseline's existing guardrail. | Read-through comparing wording intent, not literal duplication. |
+    | 6 | `templates/cohort-logical-design.md` exists, modeled on `templates/architecture-baseline.md`'s skeleton (Identity and Version / structural-decision sections / derived-views-equivalent mapping / Open Risks / Revisit Triggers / metadata footer), with a placeholder section for each of the 14 content areas from AC1. | Direct read + structural side-by-side comparison with `templates/architecture-baseline.md`. |
+    | 7 | `prompts/03b-architecture-synthesis.md`'s pipeline is exactly 4 steps in order — Cohort Evidence Review → Draft Baseline → Draft Cohort Logical Design (new) → Approval and Activation (renumbered) — each ending in the standard `AWAITING HUMAN APPROVAL TO PROCEED TO STEP [N+1]` gate line. | Read-through. |
+    | 8 | The new Step 3 (Draft Cohort Logical Design) explicitly consumes the approved Baseline plus the original cohort evidence, and restates "do not resolve behavioral gaps here — return upstream," matching Step 2's existing rule. | Read-through. |
+    | 9 | The renumbered final step versions and writes `architecture/cohort-logical-design.md` the same way the Baseline is versioned (superseded file moves to `architecture/history/cohort-logical-design-v<version>.md` *before* the new version is written), updates the registry's new `logical_design_version` field, and only then may set cohort status to `approved`. | Read-through. |
+    | 10 | `templates/feature-registry.yaml` documents `logical_design_version` with the same current-version-only / staleness semantics as `baseline_version` (a historical file value is stale, not an alternate valid one, for live Stage-4 eligibility). | Read-through, comparing wording symmetry with the existing `baseline_version` comment block. |
+    | 11 | `templates/feature-registry.yaml`'s `status` enum comment documents all four values (`declared \| gate-in-progress \| baseline-approved \| approved`). | Read-through. |
+    | 12 | `tools/reviewer/src/packet.rs`'s existing `"architecture-synthesis"` checklist content mentions the Logical Design without inventing a criterion absent from `dba-system.md`/`prompts/03b-architecture-synthesis.md` (per `UPG-0055`'s own guardrail: the reviewer summarizes doctrine, it is never a second authority). | Read-through comparing checklist text against the doctrine files it summarizes. |
+    | 13 | No new Stage ID is added — the 9-Step DBA Development Loop / stage table is untouched. | `git diff` on that section shows no change. |
+    | 14 | No Non-Negotiable Rule is changed. | `git diff` on that section shows no change. |
+    | 15 | **Downstream-compatibility:** every new cross-reference path this change introduces (to `templates/cohort-logical-design.md`, the renumbered pipeline steps, the new registry fields) resolves to a real file/section — a downstream project's `.codeos` symlink still reaches everything referenced. | Grep/`ls` confirming each new path mentioned actually exists once Step 3 lands; no internal contradiction between `dba-system.md` and `prompts/03b-architecture-synthesis.md`'s step numbering. |
+    | 16 | **Cross-reference integrity sweep** (required for `downstream-doctrine` class): no file retains a stale description of the old 3-step pipeline or the old single-output `approved` meaning after this change. | Grep across `dba-system.md`, `prompts/03b-architecture-synthesis.md`, `templates/feature-registry.yaml`, `templates/architecture-baseline.md` (which must **not** mention Logical Design — it stays a separate, stable artifact per the Guardrail), `tools/reviewer/src/packet.rs`. |
+    
+    ---
+    
+    ## Implementation Notes
+    
+    <!-- Filled in Step 3. -->
+    
+    ---
+    
+    ## Reconciliation
+    
+    <!-- Filled in Step 4. -->
+
+DIFF TO REVIEW (base->review, secret/size filtered)
+diff --git a/backlog/UPG-0058-cohort-logical-design-artifact.md b/backlog/UPG-0058-cohort-logical-design-artifact.md
+index 8c3a8eb..2adede9 100644
+--- a/backlog/UPG-0058-cohort-logical-design-artifact.md
++++ b/backlog/UPG-0058-cohort-logical-design-artifact.md
+@@ -138,6 +138,7 @@ reviewed one.
+ 
+ | Review ID | Change ID | Step | Round | Verdict |
+ |---|---|---|---|---|
++| RVS__UPG-0058__CHG-20260726-002__S1 | CHG-20260726-002 | 1-Intent | R1→R2 | R1 DO NOT ADVANCE (packet-hygiene: prior uncommitted UPG-0056/registration work appeared as apparent scope drift — resolved per AJ-017 by committing that finished work first) → R2 NO OBJECTION |
+ 
+ ### Findings Tracked Inside This Feature
+ 
+diff --git a/status/self-development.md b/status/self-development.md
+index 8a69d2f..f86d555 100644
+--- a/status/self-development.md
++++ b/status/self-development.md
+@@ -77,7 +77,7 @@
+ | UPG-0054 | CHG-20260719-004 | downstream-doctrine | downstream doctrine only | 4-Reconcile | ACCEPTED (series RVS__…__S4; Step 1 R1 NO OBJECTION; Step 2 R1 DO NOT ADVANCE → R2 NO OBJECTION; Step 3 R1 DO NOT ADVANCE → R2 DO NOT ADVANCE → R3 NO OBJECTION; Step 4 R1 NO OBJECTION; all 13 ACs verified; 3 in-scope blockers found+fixed) | COMPLETE | — |
+ | UPG-0055 | CHG-20260720-001 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S4; Step 1 R1 NO OBJECTION; Step 2 R1 NO OBJECTION; Step 3 R1 DO NOT ADVANCE → R2 DO NOT ADVANCE → R3 NO OBJECTION; Step 4 R1 DO NOT ADVANCE → R2 NO OBJECTION; all 9 ACs verified; 182 tests pass; 4 in-scope blockers found+fixed) | COMPLETE | — |
+ | UPG-0056 | CHG-20260726-001 | downstream-doctrine | downstream doctrine only | 4-Reconcile | ACCEPTED (series RVS__…__S4; Step 1 R1-R3 DO NOT ADVANCE→NO OBJECTION (original design) then revised to lean convention, R4 DO NOT ADVANCE→APPROVE_STAGE; Step 2 R1 DO NOT ADVANCE→R2 NO OBJECTION; Step 3 R1-R2 DO NOT ADVANCE→R3 NO OBJECTION; Step 4 R1 DO NOT ADVANCE→R2 NO OBJECTION; all 12 ACs verified; no code shipped) | COMPLETE | UPG-0057 |
+-| UPG-0058 | CHG-20260726-002 | downstream-doctrine | downstream doctrine only | 1-Intent | Step 1 Change Intent drafted, review pending | IN_PROGRESS | — |
++| UPG-0058 | CHG-20260726-002 | downstream-doctrine | downstream doctrine only | 2-Acceptance | Step 1 ACCEPTED by human; Step 2 Acceptance Criteria drafted (16 ACs), review pending | IN_PROGRESS | — |
+ 
+ <!--
+ Identity   : Feature ID = UPG-#### (stable). Change ID = CHG-YYYYMMDD-NNN (one execution), or a

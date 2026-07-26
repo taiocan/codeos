@@ -43,12 +43,19 @@
 #   Gate".
 #
 # architecture_cohorts[].status values:
-#   declared        — cohort membership set is declared; gate not yet started
-#   gate-in-progress — Intent/Contract/Event Cohort Checks and/or synthesis underway
-#   approved        — Architecture Baseline approved for baseline_version; cohort members may
-#                      begin Stage 4 (subject to the applicable baseline version covering them)
-#   Stage 4 treats `declared` and `gate-in-progress` identically — both block Stage 4 for
-#   member features exactly the same way; only `approved` unblocks it.
+#   declared          — cohort membership set is declared; gate not yet started
+#   gate-in-progress  — Intent/Contract/Event Cohort Checks and/or synthesis underway (drafting the
+#                        Baseline and/or the Cohort Logical Design; neither is approved yet)
+#   baseline-approved — compatibility-only landing state: a cohort that reached `approved` under the
+#                        pre-two-output-model rule (Baseline only) is reinterpreted as this on first
+#                        read after that model changed. A fresh cohort going through the current
+#                        4-step pipeline does not pass through this state — see .codeos/dba-system.md
+#                        → "Multi-Feature Architecture Synthesis Gate".
+#   approved          — both Architecture Baseline (baseline_version) and Cohort Logical Design
+#                        (logical_design_version) approved; cohort members may begin Stage 4 (subject
+#                        to both applicable versions covering them)
+#   Stage 4 treats `declared`, `gate-in-progress`, and `baseline-approved` identically — all three
+#   block Stage 4 for member features exactly the same way; only `approved` unblocks it.
 
 schema_version: 2
 
@@ -90,19 +97,28 @@ architectural_refinements:
 #     member_features: [F-0001, F-0002]   # each listed feature's own architecture_cohort field
 #                                          # must equal this cohort_id — no feature may appear in
 #                                          # more than one cohort's member_features list
-#     status: declared                    # declared | gate-in-progress | approved
+#     status: declared                    # declared | gate-in-progress | baseline-approved | approved
 #     baseline_version: null              # a single, cohort-level current value — set once status
-#                                          # becomes approved, and kept equal to
-#                                          # architecture/core-baseline.md's current version at all
-#                                          # times. Historical architecture/history/core-baseline-
+#                                          # reaches approved (or, for a cohort mid-transition to the
+#                                          # two-output model, at baseline-approved), and kept equal
+#                                          # to architecture/core-baseline.md's current version at
+#                                          # all times. Historical architecture/history/core-baseline-
 #                                          # v<version>.md files are provenance records only — a
 #                                          # stale (non-current) value here blocks Stage 4 for this
 #                                          # cohort's members, it is not an alternate valid value
 #                                          # (see .codeos/dba-system.md → "Verifying a
-#                                          # `baseline_version` reference")
+#                                          # `baseline_version` or `logical_design_version` reference")
+#     logical_design_version: null        # a single, cohort-level current value — set once status
+#                                          # reaches approved, kept equal to architecture/cohort-
+#                                          # logical-design.md's current version at all times, with
+#                                          # the same staleness rule as baseline_version above. Stays
+#                                          # null while status is declared, gate-in-progress, or
+#                                          # baseline-approved — a Logical Design is not yet approved
+#                                          # in any of those states.
 #     declared_by: ""
 #     declared_at: ""
 #     # No free-form `notes` field here, deliberately: this registry entry is an index only —
-#     # membership, gate status, and a baseline version reference. Rationale, open questions, and
-#     # any other structural context belong in architecture/core-baseline.md itself (Open
-#     # Architectural Risks / Revisit Triggers), never smuggled into the registry as free text.
+#     # membership, gate status, and version references. Rationale, open questions, and any other
+#     # structural context belong in architecture/core-baseline.md or architecture/cohort-logical-
+#     # design.md themselves (Open Architectural Risks / Revisit Triggers), never smuggled into the
+#     # registry as free text.

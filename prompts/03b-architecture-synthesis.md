@@ -88,35 +88,84 @@ Output: Draft Baseline + **`AWAITING HUMAN APPROVAL TO PROCEED TO STEP 3`**
 
 ---
 
-### Step 3 — Approval and Activation
+### Step 3 — Draft Cohort Logical Design
 
-Present the draft baseline for final review. If any behavioral gap was discovered during
-synthesis — something the cohort's approved artifacts don't actually support — **do not patch it
-in the baseline**. Name the affected feature and the specific stage (Intent, Contract, or Event
-Schema) it must return to, and stop; the baseline cannot be approved while a member feature has an
-unresolved behavioral gap.
+Using `.codeos/templates/cohort-logical-design.md`, produce a draft
+`architecture/cohort-logical-design.md`, consuming the draft baseline from Step 2 plus the same
+cohort evidence from Step 1. This elaborates the logical detail the baseline deliberately leaves
+unresolved — the shared structure independently-implemented Stage 4 features need fixed once, in
+common, rather than inventing locally:
 
-Once the human approves:
-- Write `architecture/core-baseline.md` with `status: approved` and its version identifier. If
-  this baseline supersedes an earlier approved version, first move the superseded file to
-  `architecture/history/core-baseline-v<version>.md` — named for the exact version it was
-  current as — then write the new version to `architecture/core-baseline.md`. This file always
-  holds only the current version; superseded versions are never left in place alongside it.
-- Update the cohort's `features/registry.yaml` entry: `status: approved`, `baseline_version` set
-  to the approved version.
-- Cohort members may now begin Stage 4, in the dependency order the baseline recommends.
+1. **Logical ERD** — entities, relationships, cardinality.
+2. **Entity/aggregate ownership** — which feature owns which canonical entity or aggregate.
+3. **Identity and key strategy** — for shared/canonical entities specifically; local per-feature
+   types may still be decided at Stage 4.
+4. **Revision/supersession model** — the shared pattern (e.g. `logical_record_id` /
+   `revision_id` / `revision_number` / `supersedes_revision_id`), if the draft baseline or approved
+   artifacts already establish append-only/revision-based persistence.
+5. **Module interface map** — what each module boundary exposes and consumes.
+6. **Command/query responsibilities** — operation categories and ownership.
+7. **Transaction boundaries** — which operations must be atomic, and which module owns the
+   transaction.
+8. **Validation ownership** — which module validates each shared invariant.
+9. **Event-emission rules** — timing relative to validation and transaction commit.
+10. **Read-model design** — ownership, source-of-truth relationship, refresh semantics.
+11. **Indexing and spatial principles** — required access paths and indexing policy at the
+    principle level (not final index definitions).
+12. **Migration strategy** — ordering, ownership, compatibility, rollback policy, at the strategy
+    level (not concrete migration scripts).
+13. **Integration-test obligations** — named boundaries requiring integration coverage; the tests
+    themselves belong to Stage 5.
+14. **Mapping** from each of the 13 design elements above to the approved feature artifact(s) it
+    derives from.
 
-**Complete when:** the baseline file reflects `approved` status and version; the registry cohort
-entry is updated to match; any superseded version is archived, not deleted.
+Exactly like Step 2, do **not** resolve any behavioral gap here — if a design question turns out to
+be a behavioral decision (e.g. whether one record may cover multiple referenced entities, or
+inventing a new status value), name the affected feature and stage and stop; present the question
+to the human rather than deciding it in the logical design. Do not restate or re-decide anything
+the draft baseline already settled (topology, dependency direction, persistence technology,
+integration style) — reference it, don't duplicate it.
 
-Output: confirmation of the approved baseline + registry update +
-**`AWAITING HUMAN APPROVAL — ARCHITECTURE BASELINE APPROVED`**
+**Complete when:** every one of the 14 numbered items above is addressed (explicitly marked "not
+applicable to this cohort" where genuinely out of scope, not silently omitted); no behavioral
+decision has been resolved inline.
+
+Output: Draft Cohort Logical Design + **`AWAITING HUMAN APPROVAL TO PROCEED TO STEP 4`**
+
+---
+
+### Step 4 — Approval and Activation
+
+Present both the draft baseline (Step 2) and the draft logical design (Step 3) together for a
+single final human review. If any behavioral gap was discovered during synthesis — something the
+cohort's approved artifacts don't actually support — **do not patch it in either artifact**. Name
+the affected feature and the specific stage (Intent, Contract, or Event Schema) it must return to,
+and stop; neither artifact can be approved while a member feature has an unresolved behavioral gap.
+
+Once the human approves both:
+- Write `architecture/core-baseline.md` with `status: approved` and its version identifier. If it
+  supersedes an earlier approved version, first move the superseded file to
+  `architecture/history/core-baseline-v<version>.md` — named for the exact version it was current
+  as — then write the new version. This file always holds only the current version.
+- Write `architecture/cohort-logical-design.md` with `status: approved` and its version identifier,
+  the same way — superseded versions move to
+  `architecture/history/cohort-logical-design-v<version>.md` first.
+- Update the cohort's `features/registry.yaml` entry: `status: approved`, `baseline_version` and
+  `logical_design_version` both set to their approved versions.
+- Cohort members may now begin Stage 4, in the dependency order the baseline and logical design
+  recommend.
+
+**Complete when:** both artifacts reflect `approved` status and version; the registry cohort entry
+is updated to match both fields; any superseded versions are archived, not deleted.
+
+Output: confirmation of both approved artifacts + registry update +
+**`AWAITING HUMAN APPROVAL — ARCHITECTURE SYNTHESIS APPROVED`**
 
 ---
 
 ## Reviewer Note
 
-`codeos-reviewer` has a dedicated checklist for the `architecture-synthesis` stage id — run
-`codeos-reviewer review <feature_id> architecture-synthesis` for gate reviews at this stage, per
-"Default Advisory Review" in `dba-system.md`. This does not weaken the requirement for explicit
-human approval at each step above.
+`codeos-reviewer` has a dedicated checklist for the `architecture-synthesis` stage id, covering all
+four steps of this pipeline — run `codeos-reviewer review <feature_id> architecture-synthesis` for
+gate reviews at this stage, per "Default Advisory Review" in `dba-system.md`. This does not weaken
+the requirement for explicit human approval at each step above.

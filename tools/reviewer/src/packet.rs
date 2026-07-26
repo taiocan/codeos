@@ -673,7 +673,7 @@ fn stage_expected(stage: &str) -> &'static str {
         "8" => "Replay — schema conformance + correlation chain integrity + determinism check; nondeterminism explained; missing fixtures reported.",
         "9" => "Refinement — smallest effective change per observed trigger; no redesign disguised as refinement; affected artifacts named.",
         "10" => "Architectural Refinement — Scope->Impact->Implement->Verify->Reconcile for structural changes with no behavioral contract or event schema; smallest effective change, no full rewrite.",
-        "architecture-synthesis" => "Architecture Synthesis Gate — Cohort Evidence Review->Draft Baseline->Approval and Activation; approved architecture/core-baseline.md distinguishing authoritative decisions from derived views, with stated cohort membership and version; behavioral gaps return to the affected feature's earlier stage, never patched into the baseline.",
+        "architecture-synthesis" => "Architecture Synthesis Gate — Cohort Evidence Review->Draft Baseline->Draft Cohort Logical Design->Approval and Activation; approved architecture/core-baseline.md (topology/dependency/persistence, authoritative decisions vs. derived views) and architecture/cohort-logical-design.md (identity/key strategy, revision model, module interfaces, transaction/event-emission ownership) approved together, both with stated cohort membership and version; behavioral gaps return to the affected feature's earlier stage, never patched into either artifact.",
         _ => "(no expected-output template for stage)",
     }
 }
@@ -693,7 +693,7 @@ fn stage_checks(stage: &str) -> String {
         "8" => "  - replay actually checks event sequence + schema conformance; nondeterminism explained; missing fixtures reported.".to_string(),
         "9" => "  - trigger valid; proposed fix minimal; no redesign disguised as refinement; affected artifacts identified.".to_string(),
         "10" => "  - genuinely structural (no contract/schema change); impact assessed before implementing; verification is real, not just described; no full rewrite disguised as refinement.".to_string(),
-        "architecture-synthesis" => "  - cohort declared; baseline version declared; every declared cohort member evaluated for architectural relevance (not necessarily all materially contributing); authoritative decisions distinguished from derived views; no synthesized behavior.".to_string(),
+        "architecture-synthesis" => "  - cohort declared; baseline version AND logical design version both declared; every declared cohort member evaluated for architectural relevance (not necessarily all materially contributing); authoritative baseline decisions distinguished from derived views; logical design does not restate or re-decide baseline decisions; no synthesized behavior in either artifact.".to_string(),
         _ => format!("  - (no stage-specific checklist for stage {})", stage),
     }
 }

@@ -20,16 +20,19 @@ Implementation without all three is a DBA violation.
 entry.
 - If `architecture_cohort` is absent or `null` — no further check; proceed.
 - If it names a cohort: find that cohort's `architecture_cohorts` entry. If `status` is not
-  `approved`, or the entry (or its `baseline_version`) is missing entirely — **STOP**. This
-  feature is not eligible for Stage 4 yet; report the specific gap and point to
+  `approved` — including `declared`, `gate-in-progress`, or the compatibility state
+  `baseline-approved`, all three of which block Stage 4 identically — or the entry (or either of
+  its `baseline_version`/`logical_design_version`) is missing entirely — **STOP**. This feature is
+  not eligible for Stage 4 yet; report the specific gap and point to
   `.codeos/prompts/03b-architecture-synthesis.md` rather than proceeding.
-- If `approved`: verify the referenced `baseline_version` equals `architecture/core-baseline.md`'s
-  **current** `Baseline version` field exactly. A value matching only an
-  `architecture/history/core-baseline-v<version>.md` file is **stale, not valid** — treat it the
-  same as a non-`approved` status and **STOP**; historical files are a provenance record for
-  already-completed Stage 4 work, never a valid reference for entering Stage 4 now. See
-  `.codeos/dba-system.md` → "Multi-Feature Architecture Synthesis Gate" → "Verifying a
-  `baseline_version` reference."
+- If `approved`: verify **both** referenced versions — `baseline_version` equals
+  `architecture/core-baseline.md`'s current `Baseline version` field exactly, **and**
+  `logical_design_version` equals `architecture/cohort-logical-design.md`'s current `Logical design
+  version` field exactly. A value matching only a file under `architecture/history/` is **stale,
+  not valid** for either — treat it the same as a non-`approved` status and **STOP**; historical
+  files are a provenance record for already-completed Stage 4 work, never a valid reference for
+  entering Stage 4 now. See `.codeos/dba-system.md` → "Multi-Feature Architecture Synthesis Gate" →
+  "Verifying a `baseline_version` or `logical_design_version` reference."
 
 **Implementation Profile consultation (if `architecture/implementation-profile.yaml` exists):**
 - Absent, or `status: proposed` at the current path — no profile is binding; proceed with no

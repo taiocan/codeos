@@ -24,7 +24,7 @@ When intent, runtime evidence, and structural analysis disagree, resolve as foll
 2. **Runtime behavior** (observed events) overrides intent text when behavior is more specific. Example: schema declares `"string"`, runtime consistently emits integer — this is empirical evidence of intent-text drift, not a runtime error.
 3. **Safety, authorization, and invariant-enforcement logic** always preserves intent primacy regardless of runtime behavior. Example: runtime shows no authorization check was invoked — this is a contract violation, not an authorization redesign.
 4. **Structural digest observations** (fan-in, god functions, known risk zones) do not override behavioral findings. They inform blast-radius estimates and remediation sequencing only.
-5. **An approved Architecture Baseline** (see "Multi-Feature Architecture Synthesis Gate" below) is authoritative only for project-level structural decisions not fixed by rules 1–4's behavioral artifacts. It never overrides Intent, Contract, Event Schema, explicit human correction, or safety/authorization invariants. Conflicts with runtime evidence are handled through rule 2 above, not a separate baseline-specific rule — runtime behavior does not silently amend the baseline, and the baseline does not silently override runtime-confirmed intent drift either.
+5. **An approved Architecture Baseline and Cohort Logical Design** (see "Multi-Feature Architecture Synthesis Gate" below) are authoritative only for project-level structural decisions not fixed by rules 1–4's behavioral artifacts — the baseline at the strategic level, the logical design one level deeper. Neither ever overrides Intent, Contract, Event Schema, explicit human correction, or safety/authorization invariants. Conflicts with runtime evidence are handled through rule 2 above, not a separate baseline- or logical-design-specific rule — runtime behavior does not silently amend either artifact, and neither silently overrides runtime-confirmed intent drift.
 
 When a conflict cannot be resolved by these rules: surface it clearly to the human rather than silently resolving it.
 
@@ -174,14 +174,15 @@ entry to `features/registry.yaml` (see the template's schema comments) and setti
 feature's `architecture_cohort` field to that cohort's id. **A feature belongs to at most one
 active cohort**; a project may declare multiple cohorts, but their feature memberships must not
 overlap. This declaration is where cohort membership and gate status live — the registry
-remains an index (membership, status, a baseline version *reference*), never a second home for
-the structural decisions the baseline itself owns.
+remains an index (membership, status, baseline and logical design version *references*), never a
+second home for the structural decisions those artifacts themselves own.
 
 **The rule.** Once a cohort is declared, every member feature reaching Stage 4 requires that
-cohort's Architecture Baseline to be `approved` for the version applicable to that feature — see
-`.codeos/prompts/04-implement.md`'s cohort eligibility check. Intent, Contract, and Event Schema
-approval remain required exactly as before; the baseline is an *additional* requirement for
-cohort members, not a replacement for the three approved artifacts.
+cohort's Architecture Baseline **and** its Cohort Logical Design to both be `approved`, for the
+versions applicable to that feature — see `.codeos/prompts/04-implement.md`'s cohort eligibility
+check. Intent, Contract, and Event Schema approval remain required exactly as before; the baseline
+and logical design are *additional* requirements for cohort members, not a replacement for the
+three approved artifacts.
 
 **The gate sequence.**
 1. Every cohort member completes Stage 1 (Intent). An **Intent Cohort Check** —
@@ -192,12 +193,25 @@ cohort members, not a replacement for the three approved artifacts.
 3. Every cohort member completes Stage 3 (Event Schema). An **Event Cohort Check** — event
    ownership, envelope uniformity, correlation strategy, observational-vs-integration
    classification — is *required* as input to synthesis.
-4. **Architecture Synthesis** (`.codeos/prompts/03b-architecture-synthesis.md`) produces
-   `architecture/core-baseline.md` (template: `.codeos/templates/architecture-baseline.md`).
-   Human approval of this baseline is **the single new mandatory gate** this workflow adds — not
-   four separate mandatory gates.
-5. Only after the baseline is `approved` for the applicable version may cohort members begin
-   Stage 4, in whatever dependency order the baseline recommends.
+4. **Architecture Synthesis, Step 2** (`.codeos/prompts/03b-architecture-synthesis.md`) drafts
+   `architecture/core-baseline.md` (template: `.codeos/templates/architecture-baseline.md`). This is
+   a draft, not yet a human-approved artifact — Stage 4 remains blocked.
+5. **Architecture Synthesis, Step 3** drafts `architecture/cohort-logical-design.md` (template:
+   `.codeos/templates/cohort-logical-design.md`), consuming the draft baseline plus the same cohort
+   evidence already gathered — the logical detail (identity/key strategy, revision/supersession
+   model, module interfaces, transaction boundaries, event-emission rules, read-model design,
+   indexing/spatial principles, migration strategy) that the baseline deliberately leaves
+   unresolved, but that independently-implemented Stage 4 features sharing persistence and identity
+   still need fixed once, in common, rather than inventing locally and incompatibly.
+6. **Architecture Synthesis, Step 4 (Approval and Activation)** presents both drafts together for a
+   single human review. Human approval is **the single new mandatory gate** this workflow adds (now
+   producing two artifacts, not two separate mandatory gates) — both `architecture/core-baseline.md`
+   and `architecture/cohort-logical-design.md` are written as approved, at matching versions, in the
+   same step; the registry's `baseline_version` and `logical_design_version` are both set; cohort
+   status becomes `approved` directly. Only once `approved` may cohort members begin Stage 4, in
+   whatever dependency order the baseline and logical design recommend. (`baseline-approved` is not
+   a state this fresh 4-step pipeline passes through — it exists only as the compatibility landing
+   state for a cohort that reached `approved` under the pre-this-UPG single-output rule; see below.)
 
 **What the baseline may and may not do.** The baseline may constrain implementation structure —
 crate/workspace topology, dependency direction, shared-infrastructure decisions, integration
@@ -205,45 +219,74 @@ style. It may **never** invent or alter behavior. Any behavioral gap discovered 
 returns the affected feature to its owning Stage 1, 2, or 3 — it is never patched inside the
 baseline directly.
 
+**What the logical design may and may not do.** The same rule applies one level deeper: the
+logical design may fix shared *logical* structure — identity/key strategy, revision/supersession
+pattern, module interface boundaries, transaction and event-emission ownership, read-model
+ownership, indexing and migration strategy — but it may **never** invent or alter behavior either.
+For example: deciding that a foreign key exists between two canonical entities is architecture;
+deciding whether one decision record may cover multiple referenced entities is behavior. Deciding
+that revisions are append-only is architecture *when an approved artifact already implies it*;
+inventing a new status value (e.g. a "draft" or "expired" record state) outright is behavior. Any
+behavioral gap discovered while drafting the logical design returns the affected feature to its
+owning Stage 1, 2, or 3 the same way a baseline-stage gap does — it is never patched inside the
+logical design directly. The logical design also does not restate or re-decide anything the
+baseline already settled (topology, dependency direction, persistence technology) — it consumes
+those decisions and elaborates the logical detail beneath them.
+
 **Authoritative decisions vs. derived views.** The baseline distinguishes decisions a human
 manually approved (authoritative) from matrices and inventories mechanically derived from
 already-approved artifacts (ownership matrix, dependency graph, event producer/consumer matrix —
 regenerable, each carrying provenance to its source artifact). The derived views are never a
 second canonical model that can silently drift from what they were built from.
 
-**Cohort and baseline versioning.** `architecture_cohorts[].baseline_version` is a single,
-**cohort-level** field — one current value, not tracked per member feature. A baseline approves a
-specific *versioned cohort membership set*. Adding or removing a feature does not silently
-rewrite the cohort or its approved baseline. A material membership change creates a new
-cohort/baseline version and **requires an impact assessment**. Prior Stage 4 work already
-approved under the earlier version is **not invalidated merely by the membership change itself**
-— it must be reconciled only when that assessment identifies an **actual structural conflict**,
-and reconciliation happens through Stage 9/10 for the specific affected feature, not by
-re-running this gate. Approved baseline versions are never silently rewritten; a replacement
-supersedes and is recorded — the superseded file moves to
-`architecture/history/core-baseline-v<version>.md` *before* the new version is written to
-`architecture/core-baseline.md`, so the two are never both "current-looking" at once; the registry
-entry's `baseline_version` is updated to the new version as part of that same approval (see
-`.codeos/prompts/03b-architecture-synthesis.md`'s Step 3). Historical files are a **provenance
-record only** — they document which version governed a feature's already-completed Stage 4 work;
-they are never consulted for a *new* Stage 4 eligibility decision.
+**Cohort, baseline, and logical design versioning.** `architecture_cohorts[].baseline_version` and
+`architecture_cohorts[].logical_design_version` are each a single, **cohort-level** field — one
+current value per artifact, not tracked per member feature. A baseline (or logical design)
+approves a specific *versioned cohort membership set*. Adding or removing a feature does not
+silently rewrite the cohort or either approved artifact. A material membership change creates a
+new version of whichever artifact is affected and **requires an impact assessment**. Prior Stage 4
+work already approved under an earlier version is **not invalidated merely by the membership
+change itself** — it must be reconciled only when that assessment identifies an **actual
+structural conflict**, and reconciliation happens through Stage 9/10 for the specific affected
+feature, not by re-running this gate. Neither artifact's approved versions are ever silently
+rewritten; a replacement supersedes and is recorded the same way for both: the superseded file
+moves to `architecture/history/core-baseline-v<version>.md` (or
+`architecture/history/cohort-logical-design-v<version>.md`) *before* the new version is written to
+`architecture/core-baseline.md` (or `architecture/cohort-logical-design.md`), so the two are never
+both "current-looking" at once; the corresponding registry field is updated to the new version as
+part of that same approval (see `.codeos/prompts/03b-architecture-synthesis.md`). Historical files
+are a **provenance record only** — they document which version governed a feature's
+already-completed Stage 4 work; they are never consulted for a *new* Stage 4 eligibility decision.
 
-**Verifying a `baseline_version` reference (live Stage 4 eligibility).** A cohort's
-`baseline_version` in `features/registry.yaml` is valid, for the purpose of *entering or
-re-entering Stage 4 right now*, only if it equals `architecture/core-baseline.md`'s **current**
-`Baseline version` field exactly. A value that instead matches an
-`architecture/history/core-baseline-v<version>.md` file is **stale, not valid** — it blocks Stage
-4 exactly as an unapproved status would (see `.codeos/prompts/04-implement.md`'s cohort
-eligibility check), until either the registry is updated to the current version (normally
+**Compatibility rule for cohorts approved before this two-output model existed.** A cohort whose
+registry `status` was already `approved` under the original single-output rule (baseline only) is
+treated, on first read after this change lands, as `baseline-approved` — **not** `approved` — for
+the purpose of any *new* Stage 4 entry. Its existing baseline stays valid and its already-completed
+Stage 4 work is not invalidated; a Cohort Logical Design must still be drafted and approved before
+further Stage 4 entry for that cohort's members. This is a one-time reinterpretation of the
+existing `approved` value at the moment this rule takes effect, not a silent, ongoing redefinition
+— once a cohort's Logical Design is approved, its status becomes `approved` again under the new,
+stricter meaning.
+
+**Verifying a `baseline_version` or `logical_design_version` reference (live Stage 4
+eligibility).** A cohort's `baseline_version` in `features/registry.yaml` is valid, for the
+purpose of *entering or re-entering Stage 4 right now*, only if it equals
+`architecture/core-baseline.md`'s **current** `Baseline version` field exactly — and, once a
+Logical Design exists for the cohort, `logical_design_version` must equally match
+`architecture/cohort-logical-design.md`'s **current** version field exactly. A value that instead
+matches a file under `architecture/history/` is **stale, not valid** for either artifact — it
+blocks Stage 4 exactly as an unapproved status would (see `.codeos/prompts/04-implement.md`'s
+cohort eligibility check), until either the registry is updated to the current version (normally
 automatic, as part of approving that version) or a human resolves the discrepancy. This is
 deliberately stricter than "any version this feature was ever pinned to": the live check only
-ever accepts the current version; historical files matter for audit and for the non-retroactive
-protection above, not for gating new work.
+ever accepts the current version of *both* artifacts; historical files matter for audit and for
+the non-retroactive protection above, not for gating new work.
 
 **Reviewer coverage.** `codeos-reviewer` has a dedicated checklist for the `architecture-synthesis`
-stage id — run `codeos-reviewer review <feature_id> architecture-synthesis` the same way as any
-other stage, per "Default Advisory Review" above. This does not weaken Non-Negotiable Rule #1 —
-the human still explicitly approves the baseline.
+stage id, covering all four pipeline steps — run `codeos-reviewer review <feature_id>
+architecture-synthesis` the same way as any other stage, per "Default Advisory Review" above. This
+does not weaken Non-Negotiable Rule #1 — the human still explicitly approves both the baseline and
+the logical design.
 
 **Naming.** This is the **Architecture Synthesis Gate**, producing the **Core Architecture
 Baseline** — deliberately not "Architecture Discovery." Solution Discovery
@@ -442,6 +485,7 @@ Use the corresponding template from `.codeos/templates/` when producing artifact
 | Refinement log | `.codeos/templates/refinement.md` |
 | Architectural refinement | `.codeos/templates/arch-refinement.md` |
 | Architecture Baseline (cohort-level, conditional) | `.codeos/templates/architecture-baseline.md` |
+| Cohort Logical Design (cohort-level, conditional) | `.codeos/templates/cohort-logical-design.md` |
 | Implementation Profile (project-level, optional) | `.codeos/templates/implementation-profile.yaml` |
 | Codebase digest | `.codeos/templates/codebase-digest.md` |
 | Session handoff | `.codeos/templates/handoff.md` |
@@ -491,6 +535,7 @@ in `.codeos/templates/conventions.md` → Feature IDs.
 | Structural Alignment (Stage 7 output section) | Optional output | Produced at Stage 7 only when architectural observations exist |
 | Architectural Refinement (`refinements/arch/[id].md`) | Optional | Non-behavioral structural changes; uses the Stage 10 workflow |
 | Architecture Baseline (`architecture/core-baseline.md`) | **Required for cohort members' Stage 4** | Only when a core architecture cohort is declared (see "Multi-Feature Architecture Synthesis Gate"); not applicable to single-feature or non-cohort projects |
+| Cohort Logical Design (`architecture/cohort-logical-design.md`) | **Required for cohort members' Stage 4** | Only when a core architecture cohort is declared, approved together with the Baseline at Architecture Synthesis Step 4 (see "Multi-Feature Architecture Synthesis Gate"); not applicable to single-feature or non-cohort projects |
 | Implementation Profile (`architecture/implementation-profile.yaml`) | Optional | Governs Stage 4 language/pattern consultation only once `approved`; absent or merely `proposed` imposes no requirement (see "Implementation Profile") |
 | Onboarding artifacts (`HYPOTHESIZED_INTENT`) | Onboarding only | Produced by Session Type D; must pass Stage 1 review before advancing |
 
@@ -513,11 +558,14 @@ project/
 │   │   └── implementation-profile-v[N].yaml  ← pending replacement, never binding
 │   ├── core-baseline.md          ← current approved Architecture Baseline — only when a core
 │   │                                architecture cohort is declared (current version only)
+│   ├── cohort-logical-design.md  ← current approved Cohort Logical Design — approved together
+│   │                                with the Baseline for a declared cohort (current version only)
 │   ├── [mechanism-name].yaml     ← optional: an enabled/disabled status file for an optional
 │   │                                AI-doctrine mechanism (see .codeos/templates/conventions.md →
 │   │                                Optional Mechanism Status Convention); none by default
 │   └── history/
 │       ├── core-baseline-v[N].md              ← superseded baseline versions
+│       ├── cohort-logical-design-v[N].md      ← superseded logical design versions
 │       └── implementation-profile-v[N].yaml   ← superseded profile versions
 ├── intents/
 │   └── [feature_id].md           ← one per feature

@@ -11,7 +11,7 @@ NEVER invent or alter behavior. Any behavioral gap discovered while producing th
 document returns the affected feature to its owning Stage 1, 2, or 3 — it is not
 resolved here.
 
-Workflow: .codeos/prompts/03b-architecture-synthesis.md (3-step pipeline)
+Workflow: .codeos/prompts/03b-architecture-synthesis.md (4-step pipeline)
 Each step requires explicit human approval.
 See: .codeos/dba-system.md → "Multi-Feature Architecture Synthesis Gate"
 -->

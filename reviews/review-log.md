@@ -7556,3 +7556,163 @@ Log summary: DO NOT ADVANCE — reviewed diff includes downstream-doctrine chang
 Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-26T150738Z-UPG-0058__CHG-20260726-002-stage-selfdev-step-1-a362979.md (sha256:e7c07d523c65e78d7db9eeed301bbcb85edb79e2391e63cbe1a8d2f704e22bf9)
 Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260726T150738Z-UPG-0058__CHG-20260726-002-stage-selfdev-step-1-a362979.packet.txt (sha256:035e6469b5243338a6fdf8ebd02ce9d854f84940d0d74c47f7a59ee0302df652)
 Human decision: (append with: codeos-reviewer decision UPG-0058__CHG-20260726-002 selfdev-step-1 <DECISION> "<reason>")
+
+## 2026-07-26T15:10:26Z REVIEW — UPG-0058__CHG-20260726-002 — Stage selfdev-step-1
+Review ID: REV__UPG-0058__CHG-20260726-002__selfdev-step-1__R2
+Base: (no base pin)  Review: 9a67f72df2d81867f4416c38f19a3049e60947ff  Branch: main
+Diff-hash: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+Reviewer: codex default-model (session 019f9ef6-9d43-7391-915c-565527d57f3a)
+Effort: high   Wall time: 31589ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — Step 1 intent is present, with no acceptance criteria yet and no evidenced scope drift.
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-26T151026Z-UPG-0058__CHG-20260726-002-stage-selfdev-step-1-9a67f72.md (sha256:cd6586fa2de6bfbc671e4335990ddd1ca654b6b5c09224fd00193d6fb80c13c8)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260726T151026Z-UPG-0058__CHG-20260726-002-stage-selfdev-step-1-9a67f72.packet.txt (sha256:ec1b16cf626dc295577e5cc60ff82a0bf88a972dc6d40991ba3f7358e7c9f286)
+Human decision: (append with: codeos-reviewer decision UPG-0058__CHG-20260726-002 selfdev-step-1 <DECISION> "<reason>")
+
+## 2026-07-26T15:11:23Z HUMAN DECISION — UPG-0058__CHG-20260726-002 — Stage selfdev-step-1
+Commit at decision: 9a67f72df2d81867f4416c38f19a3049e60947ff
+Decision: APPROVE_STAGE
+Reason/next: Human approved Step 1 Change Intent. Proceeding to Step 2.
+Provenance:
+  assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-26T151026Z-UPG-0058__CHG-20260726-002-stage-selfdev-step-1-9a67f72.md
+  review_commit: 9a67f72df2d81867f4416c38f19a3049e60947ff  [HEAD_MATCH]
+  packet_sha256: [MATCH]
+  coverage_state: FULL_COVERAGE  [OK]
+
+## 2026-07-26T15:13:38Z REVIEW — UPG-0058__CHG-20260726-002 — Stage selfdev-step-2
+Review ID: REV__UPG-0058__CHG-20260726-002__selfdev-step-2__R1
+Base: (no base pin)  Review: 9a67f72df2d81867f4416c38f19a3049e60947ff  Branch: main
+Diff-hash: 31e4cd752cedcd922c45453b3028609ff5cf57d8f50d0034c9c93bdd7bf33515
+Reviewer: codex default-model (session 019f9ef6-9d43-7391-915c-565527d57f3a)
+Effort: high   Wall time: 65357ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — Step 2 acceptance criteria are present and no in-scope blocker is evidenced.
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-26T151338Z-UPG-0058__CHG-20260726-002-stage-selfdev-step-2-9a67f72.md (sha256:1f868a8741416e419c03ef1ed35f1dd7908549d9bda6de5c433826260e68b82d)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260726T151338Z-UPG-0058__CHG-20260726-002-stage-selfdev-step-2-9a67f72.packet.txt (sha256:8c12da92bf8d3042f653c03686c41a941c1477e81e45399aa122ac1087456261)
+Human decision: (append with: codeos-reviewer decision UPG-0058__CHG-20260726-002 selfdev-step-2 <DECISION> "<reason>")
+
+## 2026-07-26T15:14:40Z HUMAN DECISION — UPG-0058__CHG-20260726-002 — Stage selfdev-step-2
+Commit at decision: 9a67f72df2d81867f4416c38f19a3049e60947ff
+Decision: APPROVE_STAGE
+Reason/next: Human approved Step 2 Acceptance Criteria. Proceeding to Step 3.
+Provenance:
+  assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-26T151338Z-UPG-0058__CHG-20260726-002-stage-selfdev-step-2-9a67f72.md
+  review_commit: 9a67f72df2d81867f4416c38f19a3049e60947ff  [HEAD_MATCH]
+  packet_sha256: [MATCH]
+  coverage_state: FULL_COVERAGE  [OK]
+
+## 2026-07-26T19:52:09Z REVIEW — UPG-0058__CHG-20260726-002 — Stage selfdev-step-3
+Review ID: REV__UPG-0058__CHG-20260726-002__selfdev-step-3__R1
+Base: (no base pin)  Review: 9a67f72df2d81867f4416c38f19a3049e60947ff  Branch: main
+Diff-hash: d01e50abcb2b6f88845dbc6cd36e93a42d5076046802a1f1a48c02c661872a9c
+Reviewer: codex default-model (session 019f9ef6-9d43-7391-915c-565527d57f3a)
+Effort: high   Wall time: 179571ms   Reconnects: 0
+Codex concern: DO NOT ADVANCE
+Effective concern: DO NOT ADVANCE
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: DO NOT ADVANCE — `baseline-approved` and Stage 4 eligibility semantics are internally inconsistent.
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-26T195209Z-UPG-0058__CHG-20260726-002-stage-selfdev-step-3-9a67f72.md (sha256:c6fc1f9fafa8f586d11d4c56222c87096c7b410107ad32a76b7cfa81d6d9e833)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260726T195209Z-UPG-0058__CHG-20260726-002-stage-selfdev-step-3-9a67f72.packet.txt (sha256:1097f2f41126f1a07c9463a72dd8dab4e4e9d0884472ae204269e436baaef7dc)
+Human decision: (append with: codeos-reviewer decision UPG-0058__CHG-20260726-002 selfdev-step-3 <DECISION> "<reason>")
+
+## 2026-07-26T19:57:29Z REVIEW — UPG-0058__CHG-20260726-002 — Stage selfdev-step-3
+Review ID: REV__UPG-0058__CHG-20260726-002__selfdev-step-3__R2
+Base: (no base pin)  Review: 9a67f72df2d81867f4416c38f19a3049e60947ff  Branch: main
+Diff-hash: 07bcb4c7f898c1a197bde4fa923a89c58ca8cc6ea75a955278cad4e5fc17e6d8
+Reviewer: codex default-model (session 019f9ef6-9d43-7391-915c-565527d57f3a)
+Effort: high   Wall time: 87139ms   Reconnects: 0
+Codex concern: DO NOT ADVANCE
+Effective concern: DO NOT ADVANCE
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: DO NOT ADVANCE — stale `dba-system.md` text still conflicts with the two-artifact registry and combined approval model.
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-26T195729Z-UPG-0058__CHG-20260726-002-stage-selfdev-step-3-9a67f72.md (sha256:67926cc0c043533579c78a20269b929ae06febdfc2f594da63f75e45427a8c99)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260726T195729Z-UPG-0058__CHG-20260726-002-stage-selfdev-step-3-9a67f72.packet.txt (sha256:9abd7ec86481caeb73b7b4e20496ce18bd7fc69d0944fca6ca07b62c26383f6e)
+Human decision: (append with: codeos-reviewer decision UPG-0058__CHG-20260726-002 selfdev-step-3 <DECISION> "<reason>")
+
+## 2026-07-26T19:59:39Z REVIEW — UPG-0058__CHG-20260726-002 — Stage selfdev-step-3
+Review ID: REV__UPG-0058__CHG-20260726-002__selfdev-step-3__R3
+Base: (no base pin)  Review: 9a67f72df2d81867f4416c38f19a3049e60947ff  Branch: main
+Diff-hash: 2fe0d41fe1f56d1e3298fce24aa2606814050c93c3ebc8da77a313a0eac98823
+Reviewer: codex default-model (session 019f9ef6-9d43-7391-915c-565527d57f3a)
+Effort: high   Wall time: 41541ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: B
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — Step 3 implementation now aligns with the stated two-artifact, compatibility-only `baseline-approved` design.
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-26T195939Z-UPG-0058__CHG-20260726-002-stage-selfdev-step-3-9a67f72.md (sha256:57f1c5949829bb973d13b47ca45b0fccbcb26503a6bf112fda2bccdd2d3ae90d)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260726T195939Z-UPG-0058__CHG-20260726-002-stage-selfdev-step-3-9a67f72.packet.txt (sha256:b52f4ba3b8d3274d754850be0ab65a7896a2a7f481a24984fe67b9061922ebac)
+Human decision: (append with: codeos-reviewer decision UPG-0058__CHG-20260726-002 selfdev-step-3 <DECISION> "<reason>")
+
+## 2026-07-26T20:01:20Z HUMAN DECISION — UPG-0058__CHG-20260726-002 — Stage selfdev-step-3
+Commit at decision: 9a67f72df2d81867f4416c38f19a3049e60947ff
+Decision: APPROVE_STAGE
+Reason/next: Human approved Step 3 implementation (R3 NO OBJECTION). Proceeding to Step 4 Reconcile.
+Provenance:
+  assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-26T195939Z-UPG-0058__CHG-20260726-002-stage-selfdev-step-3-9a67f72.md
+  review_commit: 9a67f72df2d81867f4416c38f19a3049e60947ff  [HEAD_MATCH]
+  packet_sha256: [MATCH]
+  coverage_state: FULL_COVERAGE  [OK]
+
+## 2026-07-26T20:04:07Z REVIEW — UPG-0058__CHG-20260726-002 — Stage selfdev-step-4
+Review ID: REV__UPG-0058__CHG-20260726-002__selfdev-step-4__R1
+Base: (no base pin)  Review: 9a67f72df2d81867f4416c38f19a3049e60947ff  Branch: main
+Diff-hash: 825ef4e5f5e63431ac2d051d92e62e4634ab6387794947ae0644b0d47d28283d
+Reviewer: codex default-model (session 019f9ef6-9d43-7391-915c-565527d57f3a)
+Effort: high   Wall time: 78869ms   Reconnects: 0
+Codex concern: DO NOT ADVANCE
+Effective concern: DO NOT ADVANCE
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: DO NOT ADVANCE — AC16 is false because `templates/architecture-baseline.md` still describes the synthesis workflow as a 3-step pipeline.
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-26T200407Z-UPG-0058__CHG-20260726-002-stage-selfdev-step-4-9a67f72.md (sha256:b7c83e6d42676f4c164f97cc11055facdcecf9b3d4318299aa759a9017f9fac7)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260726T200407Z-UPG-0058__CHG-20260726-002-stage-selfdev-step-4-9a67f72.packet.txt (sha256:1ccfa481e2537a124bc837efe79150b4d7e842bb310ed29f5dc9699fca6715ac)
+Human decision: (append with: codeos-reviewer decision UPG-0058__CHG-20260726-002 selfdev-step-4 <DECISION> "<reason>")
+
+## 2026-07-26T20:06:24Z REVIEW — UPG-0058__CHG-20260726-002 — Stage selfdev-step-4
+Review ID: REV__UPG-0058__CHG-20260726-002__selfdev-step-4__R2
+Base: (no base pin)  Review: 9a67f72df2d81867f4416c38f19a3049e60947ff  Branch: main
+Diff-hash: 8d20d06b1bd1ac1d3cf6d7dd8037626955d63bb29eae8c222340bd1b39f38d7c
+Reviewer: codex default-model (session 019f9ef6-9d43-7391-915c-565527d57f3a)
+Effort: high   Wall time: 103333ms   Reconnects: 0
+Codex concern: DO NOT ADVANCE
+Effective concern: DO NOT ADVANCE
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: DO NOT ADVANCE — AC16 and the scope claims are false because `templates/architecture-baseline.md` was changed and now mentions Cohort Logical Design.
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-26T200624Z-UPG-0058__CHG-20260726-002-stage-selfdev-step-4-9a67f72.md (sha256:f73408b2cb4a2f19ef1371e45b83f25658316809abfec92da8692b2c7444b5c5)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260726T200624Z-UPG-0058__CHG-20260726-002-stage-selfdev-step-4-9a67f72.packet.txt (sha256:eeb82f5074da2e8e02cb75548eca9cad142bbb928d027fdaf7a05f80d4643868)
+Human decision: (append with: codeos-reviewer decision UPG-0058__CHG-20260726-002 selfdev-step-4 <DECISION> "<reason>")
+
+## 2026-07-26T20:09:43Z REVIEW — UPG-0058__CHG-20260726-002 — Stage selfdev-step-4
+Review ID: REV__UPG-0058__CHG-20260726-002__selfdev-step-4__R3
+Base: (no base pin)  Review: 9a67f72df2d81867f4416c38f19a3049e60947ff  Branch: main
+Diff-hash: 0988dbae474a7ee1dfce4be8238fbbf1a2c210cca807483fd1d2f9c4ce2087b4
+Reviewer: codex default-model (session 019f9ef6-9d43-7391-915c-565527d57f3a)
+Effort: high   Wall time: 73459ms   Reconnects: 0
+Codex concern: NO OBJECTION
+Effective concern: NO OBJECTION
+Evidence: A
+Coverage: FULL_COVERAGE; redactions: 0; workspace_dirty: true
+Log summary: NO OBJECTION — all stated acceptance criteria are satisfied with no in-scope blockers.
+Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-26T200943Z-UPG-0058__CHG-20260726-002-stage-selfdev-step-4-9a67f72.md (sha256:7012f4978e7e94ee53e9fa5fab00bbff7ad91ddbe9c97affabe60ea0d29cd189)
+Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260726T200943Z-UPG-0058__CHG-20260726-002-stage-selfdev-step-4-9a67f72.packet.txt (sha256:26a3e8d6a4afb4dbf219cbc9dd2b874b513f70401b7ec5b00bb1029cd44b825e)
+Human decision: (append with: codeos-reviewer decision UPG-0058__CHG-20260726-002 selfdev-step-4 <DECISION> "<reason>")
+
+## 2026-07-26T20:13:04Z HUMAN DECISION — UPG-0058__CHG-20260726-002 — Stage selfdev-step-4
+Commit at decision: 9a67f72df2d81867f4416c38f19a3049e60947ff
+Decision: APPROVE_STAGE
+Reason/next: Human approved Step 4 Reconciliation (R3 NO OBJECTION). Self-development change complete.
+Provenance:
+  assessment: /home/rimo/projects/Codeos/reviews/codex/2026-07-26T200943Z-UPG-0058__CHG-20260726-002-stage-selfdev-step-4-9a67f72.md
+  review_commit: 9a67f72df2d81867f4416c38f19a3049e60947ff  [HEAD_MATCH]
+  packet_sha256: [MATCH]
+  coverage_state: FULL_COVERAGE  [OK]

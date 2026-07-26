@@ -2,7 +2,7 @@
 feature_id: UPG-0058
 slug: cohort-logical-design-artifact
 title: Cohort Logical Design — a Second Architecture Synthesis Output
-status: PROPOSED
+status: COMPLETE
 priority: P1
 depends_on: [UPG-0051]
 related_features: [UPG-0051, UPG-0055]
@@ -13,7 +13,7 @@ superseded_by: []
 # Upgrade: cohort-logical-design-artifact — Cohort Logical Design — a Second Architecture Synthesis Output
 
 **Priority**: P1
-**Status**: PROPOSED
+**Status**: COMPLETE
 **Type**: downstream-doctrine
 
 ## Problem
@@ -132,17 +132,28 @@ reviewed one.
 
 | Change ID | File | Purpose | State |
 |---|---|---|---|
-| CHG-20260726-002 | `changes/UPG-0058__CHG-20260726-002__cohort-logical-design-artifact.md` | Add the Cohort Logical Design artifact and 4-step pipeline | IN_PROGRESS |
+| CHG-20260726-002 | `changes/UPG-0058__CHG-20260726-002__cohort-logical-design-artifact.md` | Add the Cohort Logical Design artifact and 4-step pipeline | COMPLETE |
 
 ### Reviews
 
 | Review ID | Change ID | Step | Round | Verdict |
 |---|---|---|---|---|
+| RVS__UPG-0058__CHG-20260726-002__S1 | CHG-20260726-002 | 1-Intent | R1→R2 | R1 DO NOT ADVANCE (packet-hygiene: prior uncommitted UPG-0056/registration work appeared as apparent scope drift — resolved per AJ-017 by committing that finished work first) → R2 NO OBJECTION |
+| RVS__UPG-0058__CHG-20260726-002__S2 | CHG-20260726-002 | 2-Acceptance | R1 | NO OBJECTION |
+| RVS__UPG-0058__CHG-20260726-002__S3 | CHG-20260726-002 | 3-Implement | R1→R3 | R1 DO NOT ADVANCE (`baseline-approved` semantics contradicted the already-approved Step 1/2 combined-approval framing; stale single-baseline-only Stage 4 rule; 13-vs-14 content-area miscount) → fixed → R2 DO NOT ADVANCE (two more stale single-output sentences: registry description singular "baseline version reference"; Cohort Logical Design classification/layout implying sequential approval) → fixed → R3 NO OBJECTION |
+| RVS__UPG-0058__CHG-20260726-002__S4 | CHG-20260726-002 | 4-Reconcile | R1→R3 | R1 DO NOT ADVANCE (`templates/architecture-baseline.md`'s workflow comment still said "3-step pipeline," missed across all of Step 3's rounds) → fix attempt added "Cohort Logical Design" mention → R2 DO NOT ADVANCE (that fix violated the Guardrail's "must not mention Logical Design" and the Scope boundary's "file untouched" claim) → fixed properly (step count only, no Logical Design mention, file added honestly to the touched-file list) → R3 NO OBJECTION |
 
 ### Findings Tracked Inside This Feature
 
 | Finding ID | Review ID | Classification | Resolution |
 |---|---|---|---|
+| (Step 3 R1) `baseline-approved` described as a normal intermediate pipeline state, contradicting AC7's single combined approval step and the actual implementation | RVS__…__S3 | IN-SCOPE BLOCKER | Fixed — Change Intent/AC2/AC8 corrected to describe it as compatibility-only |
+| (Step 3 R1) `dba-system.md`'s "The rule." and Truth Authority #5 still required only the Baseline for Stage 4 | RVS__…__S3 | IN-SCOPE BLOCKER | Fixed — both now require the Logical Design too |
+| (Step 3 R1) Content-area count internally inconsistent ("13" vs. implied 14) | RVS__…__S3 | IN-SCOPE BLOCKER | Fixed — Step 3 prompt now enumerates all 14 items 1:1 with AC1 and the template |
+| (Step 3 R2) Registry description still said "a baseline version reference" (singular) | RVS__…__S3 | IN-SCOPE BLOCKER | Fixed — "baseline and logical design version references" |
+| (Step 3 R2) Artifact Classification/File Layout entries implied sequential Baseline-then-Logical-Design approval | RVS__…__S3 | IN-SCOPE BLOCKER | Fixed — "approved together... at Architecture Synthesis Step 4" |
+| (Step 4 R1) `templates/architecture-baseline.md` still said "3-step pipeline" — missed by every Step 3 round's sweep | RVS__…__S4 | IN-SCOPE BLOCKER | Fixed (imperfectly) — corrected to "4-step pipeline" but the fix text named Logical Design |
+| (Step 4 R2) The R1 fix itself violated the Guardrail (Baseline template must not mention Logical Design) and the Scope boundary (claimed the file was untouched) | RVS__…__S4 | IN-SCOPE BLOCKER | Fixed — step count corrected with no Logical Design mention; file honestly added to the touched-file list (six, not five) |
 
 ### Follow-up Features
 
