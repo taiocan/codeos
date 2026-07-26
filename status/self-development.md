@@ -76,6 +76,8 @@
 | UPG-0053 | CHG-20260719-003 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S4; Step 1 R1 NO OBJECTION; Step 2 R1 DO NOT ADVANCE → R2 NO OBJECTION; Step 3 R1 NO OBJECTION; Step 4 R1 NO OBJECTION; all 8 ACs verified via live scratch run) | COMPLETE | — |
 | UPG-0054 | CHG-20260719-004 | downstream-doctrine | downstream doctrine only | 4-Reconcile | ACCEPTED (series RVS__…__S4; Step 1 R1 NO OBJECTION; Step 2 R1 DO NOT ADVANCE → R2 NO OBJECTION; Step 3 R1 DO NOT ADVANCE → R2 DO NOT ADVANCE → R3 NO OBJECTION; Step 4 R1 NO OBJECTION; all 13 ACs verified; 3 in-scope blockers found+fixed) | COMPLETE | — |
 | UPG-0055 | CHG-20260720-001 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S4; Step 1 R1 NO OBJECTION; Step 2 R1 NO OBJECTION; Step 3 R1 DO NOT ADVANCE → R2 DO NOT ADVANCE → R3 NO OBJECTION; Step 4 R1 DO NOT ADVANCE → R2 NO OBJECTION; all 9 ACs verified; 182 tests pass; 4 in-scope blockers found+fixed) | COMPLETE | — |
+| UPG-0056 | CHG-20260726-001 | downstream-doctrine | downstream doctrine only | 4-Reconcile | ACCEPTED (series RVS__…__S4; Step 1 R1-R3 DO NOT ADVANCE→NO OBJECTION (original design) then revised to lean convention, R4 DO NOT ADVANCE→APPROVE_STAGE; Step 2 R1 DO NOT ADVANCE→R2 NO OBJECTION; Step 3 R1-R2 DO NOT ADVANCE→R3 NO OBJECTION; Step 4 R1 DO NOT ADVANCE→R2 NO OBJECTION; all 12 ACs verified; no code shipped) | COMPLETE | UPG-0057 |
+| UPG-0058 | CHG-20260726-002 | downstream-doctrine | downstream doctrine only | 1-Intent | Step 1 Change Intent drafted, review pending | IN_PROGRESS | — |
 
 <!--
 Identity   : Feature ID = UPG-#### (stable). Change ID = CHG-YYYYMMDD-NNN (one execution), or a

@@ -614,3 +614,42 @@ cheaper than a wasted review round).
 Related: AJ-016 (evidence must be embedded, not summarized) — this is the same principle applied
 to a specific tool flag that looks like it solves the size problem while silently reintroducing
 the exact evidence gap AJ-016 already named.
+
+## AJ-020 — The dashboard row must be updated *before* the step review runs, not just before the human sees it
+
+*Origin: UPG-0056 / CHG-20260726-001 (governed-mechanism-activation-convention), Step 3 R2 and
+Step 4 R1.*
+
+Both times, the review packet included `status/self-development.md` alongside the change record,
+and both times the reviewer caught the same contradiction: the change record's trace header said
+`current_step: N`, but the dashboard row still said "awaiting human approval to proceed to Step N"
+— because the row had only been updated for the *previous* step's outcome, not yet for the fact
+that the current step's implementation/reconciliation had already been written and was now under
+review. This is a real internal inconsistency, not review noise: a packet claiming to be at Step N
+while its own tracked dashboard says Step N hasn't started yet is genuinely contradictory evidence.
+
+**Rule:** update the dashboard row to reflect the *current* step's actual state (implementation
+done, review in progress) at the same time the step's own artifact is written — before invoking
+the reviewer for that step — not only after the human approves and the loop advances. Treat the
+dashboard row as part of the artifact set under review, not a bookkeeping afterthought.
+
+## AJ-021 — Reactive, round-by-round review can over-engineer a simple feature; only an outside proportionality check catches it
+
+*Origin: UPG-0056 (governed-mechanism-activation-convention) / UPG-0057
+(controlled-plain-english-writing-discipline), planning phase, rounds 1-7.*
+
+A request for "a human-controlled on/off switch for a writing-style preference" grew, across seven
+adversarial planning-review rounds, into a versioned governed-mechanism framework: a Rust resolver
+crate, 25 stable result codes, two governance modes, per-artifact provenance stamps, historical-
+version review coverage. Each round's fix was individually reasonable — every finding it raised was
+real and worth fixing — yet no round ever asked whether the *cumulative* design remained
+proportionate to the actual need. It took an explicit, out-of-band human intervention ("configuration
+architecture is too complex and is making all new upgs almost impossible") to reset the design to a
+one-line status file, after which the same review process converged cleanly in two more rounds.
+
+**Rule:** adversarial round-by-round review is good at finding local defects but structurally blind
+to cumulative scope growth, because each round only ever compares the artifact to itself, not to
+the original need. A design that has been through several consecutive rounds — especially one that
+keeps adding new categories of machinery (a new field, a new code, a new mode) rather than just
+refining existing ones — is a signal to explicitly re-ask "is this still proportionate to what was
+asked for," from outside the review loop, before continuing to iterate inside it.

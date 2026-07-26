@@ -370,6 +370,24 @@ Convention."
 
 ---
 
+## Optional Mechanism Status Convention
+
+A future feature may need a human-controlled on/off switch for some AI-doctrine or generation
+behavior. Rather than each such feature inventing its own status-file shape, one minimal convention
+is documented once in `.codeos/templates/conventions.md` → "Optional Mechanism Status Convention":
+a file containing exactly one line, `status: enabled` or `status: disabled`; missing means disabled;
+anything else is a configuration error. No resolver, no schema version, no versioning, no
+provenance fields — git history is the audit trail, and only an explicit human instruction changes
+the value.
+
+This is documentation of a reusable shape, not a new Stage ID, not a new Non-Negotiable Rule, and
+not a new mandatory gate. **No current doctrine rule in this file uses it** — it exists so a future
+feature (e.g. a writing-style discipline) can adopt it instead of inventing its own on/off
+mechanism. A project-local status file for such a mechanism lives under `architecture/`, alongside
+the other project-level architecture artifacts already documented there.
+
+---
+
 ## What You Do at Each Stage
 
 Use the corresponding prompt file from `.codeos/prompts/` for detailed instructions. The
@@ -495,6 +513,9 @@ project/
 │   │   └── implementation-profile-v[N].yaml  ← pending replacement, never binding
 │   ├── core-baseline.md          ← current approved Architecture Baseline — only when a core
 │   │                                architecture cohort is declared (current version only)
+│   ├── [mechanism-name].yaml     ← optional: an enabled/disabled status file for an optional
+│   │                                AI-doctrine mechanism (see .codeos/templates/conventions.md →
+│   │                                Optional Mechanism Status Convention); none by default
 │   └── history/
 │       ├── core-baseline-v[N].md              ← superseded baseline versions
 │       └── implementation-profile-v[N].yaml   ← superseded profile versions

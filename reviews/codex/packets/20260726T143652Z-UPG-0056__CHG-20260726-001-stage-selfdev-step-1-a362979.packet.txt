@@ -1,0 +1,500 @@
+Reviewer task:
+
+SCOPE CONTRACT
+  Assess this artifact against the STATED SCOPE of this stage/PR — the Expected Stage
+  Output below and what the artifacts actually claim — NOT against an ideal final system.
+  A capability the artifacts do not claim to provide is OUT-OF-SCOPE, not a defect.
+  The following are OUT-OF-SCOPE BACKLOG unless THIS artifact explicitly claims to provide
+  them: formal approval-binding enforcement; rollback correctness; COMMIT_BOUND/
+  WORKSPACE_BOUND enforcement; JSON Schema validation; CI validation; exact
+  decision-integrity; per-feature decision ledgers; autonomous approval; enabled hooks.
+
+YOUR TASK — answer these five questions using only the evidence in the packet:
+  1. Acceptance criteria: Does the artifact satisfy each of its stated acceptance criteria?
+     Cite evidence for each criterion (or note its absence).
+  2. Claim support: Are universal or strong claims (all, every, never, always, no X) in the
+     artifact supported by evidence in the packet? Any unverifiable strong claim is a candidate
+     finding only if it affects acceptance, scope, safety, decision integrity, or the artifact's
+     stated guarantees.
+  3. Scope drift: Is there any change beyond the stated scope boundary? (Files not in the
+     "What changes" list; behavior changes not in the intent; downstream doctrine modified
+     rather than read.)
+  4. In-scope blockers: Are there facts that, if left in, would make the artifact wrong,
+     unsafe, or internally contradictory?
+  5. Finding classification: Classify every finding you raise as exactly one of the five
+     TRIAGE RULE categories below.
+
+TRIAGE RULE — classify EVERY finding as exactly one of:
+  IN-SCOPE BLOCKER         breaks the stated goal; creates a FALSE CLAIM in this artifact;
+                           weakens the advisory/read-only/human-gated guarantees; prevents
+                           the work from running; or violates an explicit safety constraint.
+  IN-SCOPE NON-BLOCKER     improves it but is not required for this PR.
+  OUT-OF-SCOPE BACKLOG     valid, but belongs to a future feature / stronger guarantee.
+  REJECTED                 conflicts with the stated scope or Codeos philosophy.
+  SELF-REFERENCE /         review records that are stale because of the previous round's
+  REVIEW-BOOKKEEPING       own existence (causal loop); not a real artifact defect.
+  Base the PR decision ONLY on IN-SCOPE BLOCKER findings. An OUT-OF-SCOPE BACKLOG finding
+  must NOT cause DO NOT ADVANCE unless this artifact FALSELY CLAIMS to solve it.
+
+WHAT NOT TO DO
+  - Do not flag style or wording issues as blockers unless the wording creates a false claim,
+    contradiction, parser breakage, or wrong governance instruction.
+  - Do not re-review unchanged full context when the packet is in delta mode.
+  - Do not treat local-only review history as a blocker unless the artifact falsely
+    claims the review artifacts are committed/durable.
+
+INSTRUCTIONS
+  If this is a resumed session, ignore any earlier-session conclusions unless they are
+  re-established by THIS packet; assess only the evidence above, pinned to this commit.
+  Give a focused assessment of this artifact against the stated scope, acceptance criteria,
+  and evidence in this packet. Rank findings by severity. Suggest a better design only when
+  needed to explain a required fix for an IN-SCOPE BLOCKER.
+
+  Limit findings to the top 3 IN-SCOPE BLOCKERS. Additional non-blocking observations may be
+  summarized in one short paragraph only if useful.
+
+  For EACH finding emit:
+    Finding: / Severity: High|Medium|Low / Classification: <one of the TRIAGE RULE labels>
+    Evidence: <file/line> / Why: <short> / Required action: fix now|optional fix|backlog|reject
+    Scope reason: <why it does/does not belong to this PR's scope>
+  Then emit:
+    PR decision: ADVANCE | REQUEST CHANGES | DO NOT ADVANCE   (based ONLY on in-scope blockers)
+    Scope drift warning: yes|no — <is anything pulling this PR beyond its stated scope?>
+  Then on the LAST three lines emit exactly (map ADVANCE->NO OBJECTION,
+  REQUEST CHANGES->CHANGES ADVISED, DO NOT ADVANCE->DO NOT ADVANCE):
+    LOG SUMMARY: <NO OBJECTION | CHANGES ADVISED | DO NOT ADVANCE | UNCLASSIFIED> — <single most important point>
+      (use UNCLASSIFIED if you genuinely cannot classify the artifact safely)
+    EVIDENCE: <A|B|C|D|E>
+    HIGHEST-IMPACT UNCERTAINTY: <one sentence — what single thing, if wrong, most affects this assessment>
+
+  Evidence grade — the grade describes what the assessment rests on, not reviewer confidence:
+    A — Directly verified in the artifact, diff, or output shown in the packet
+    B — Verified with multiple direct pieces of evidence, but coverage is not complete
+    C — Partially verified, partially inferred from structure or context
+    D — Mostly inferred from structure or indirect evidence
+    E — Hypothesis or very limited basis — little to no direct evidence
+
+
+PACKET MANIFEST
+  generated: 2026-07-26T14:35:35Z
+  task_prompt: /home/rimo/projects/Codeos/prompts/codeos-reviewer-task.md (4959 bytes)
+  review_content_bytes: 32614
+  estimated_review_tokens: ~8153
+  budget_status: OK
+  packet_mode: full
+  delta_base: none
+  items:
+    - path: changes/UPG-0056__CHG-20260726-001__governed-mechanism-activation-convention.md
+      mode: full_file
+      bytes: 5382
+      sha256: 4a248d645e3a533c6db252687b8f5425976e1f2f1efe6edb05e81b7e97bf2ed7
+    - path: backlog/UPG-0056-governed-mechanism-activation-convention.md
+      mode: full_file
+      bytes: 7628
+      sha256: 3d4fbac04f1ba86ab9ad682ffed58c7b05ff130bc248e6f46e096cf5d9aa6d73
+    - path: status/self-development.md
+      mode: full_file
+      bytes: 15480
+      sha256: 883f6a35ea81398d9918c610b990928e24f319c3f0f571e18a854b6d88accf2e
+    - path: (diff)
+      mode: full_file
+      bytes: 4124
+
+REVIEW CONTEXT
+  Feature:                UPG-0056__CHG-20260726-001
+  Stage:                  selfdev-step-1
+  Branch:                 main
+  Base commit:            (no base pin)
+  Review commit:          a362979748374ccca1b7a63c6ffe47486c328baf (+ uncommitted workspace changes)
+  Current approved stage: n/a (non-numeric stage)
+  Evidence coverage:      FULL_COVERAGE
+  Workspace dirty:        yes (uncommitted changes at review time)
+
+DBA RULES RELEVANT TO THIS STAGE
+  - Human approval is required for every stage transition; you are advisory only.
+  - Memory is not truth — assess only what is provided, pinned to the review commit.
+  - Implementation must trace to approved artifacts; no behavior beyond intent+contract+schema.
+  - No events outside the approved event schema; no hidden behavior.
+
+STAGE-SPECIFIC CHECKS
+  - (no stage-specific checklist for stage selfdev-step-1)
+
+EXPECTED STAGE OUTPUT
+  (no expected-output template for stage)
+
+ARTIFACTS TO REVIEW
+  --- changes/UPG-0056__CHG-20260726-001__governed-mechanism-activation-convention.md (sha256: 4a248d645e3a533c6db252687b8f5425976e1f2f1efe6edb05e81b7e97bf2ed7, visibility: shown) ---
+    # Self-Development Change: UPG-0056__CHG-20260726-001 — governed-mechanism-activation-convention
+    
+    <!-- TRACE HEADER (canonical) -->
+    ```yaml
+    feature_id: UPG-0056
+    primary_feature_id: UPG-0056
+    change_id: CHG-20260726-001
+    slug: governed-mechanism-activation-convention
+    state: IN_PROGRESS
+    current_step: 1-Intent
+    implements:
+      - UPG-0056
+    related_features: []
+    review_series: RVS__UPG-0056__CHG-20260726-001__S1
+    review_profile: PROFILE-4
+    review_state: DRAFT
+    review_history: reviews/review-log.md
+    fixes_findings: []
+    follow_up_of: null
+    ```
+    
+    <!-- SELF-REFERENCE BOUNDARY: this artifact is itself reviewed, so it must NOT embed the current
+    review round (which does not exist until after the packet is built). Reference the stable review
+    SERIES (review_series) + review_state; exact rounds live only in reviews/review-log.md and
+    reviews/codex/*. See prompts/codeos-self-dev.md → "Feature Thread & IDs" / "Self-Reference Boundary". -->
+    
+    
+    ## Change Intent
+    
+    <!-- REVISED after UPG-0057 planning review: the original design (below, preserved in git history)
+    was a versioned governed-mechanism framework — a Rust resolver, 25 result codes, activation modes,
+    provenance stamps — disproportionate for what every known consumer actually needs: a human-readable
+    on/off switch. This revision replaces that with a minimal one-line convention, per the human's
+    explicit direction and the plan at
+    /home/rimo/.claude/plans/calude-consider-this-inputs-steady-pnueli.md. -->
+    
+    **Why (problem in the toolkit):**
+    
+    No future Codeos feature that needs a human-controlled on/off switch for AI doctrine/generation
+    behavior — the first known case being a "Controlled Plain English" writing-style discipline, whose
+    own UPG (`UPG-0057`) is deliberately deferred and out of scope here — has one shared, documented
+    convention to reuse. Without one, each such feature would invent its own ad hoc status-file shape
+    and wording, and prompts consulting it would each phrase the same three-way check ("is it on, is it
+    off, is it broken?") slightly differently.
+    
+    **What changes:**
+    
+    - `templates/conventions.md` — new "Optional Mechanism Status Convention" section: the exact
+      one-line file grammar (`status: enabled` / `status: disabled`, nothing else), the four-outcome
+      table (absent → disabled; exact `disabled` → disabled; exact `enabled` → enabled; anything else →
+      stop and report a configuration error), whitespace/line-ending pinning, the human-only-changes-it
+      rule, and the `architecture/` downstream placement rule (self-dev placement is intentionally left
+      to the first feature that needs it — see Scope boundary).
+    - `templates/optional-mechanism-status.yaml` (new) — a minimal illustrative example file containing
+      exactly `status: disabled`, so a future feature has an exact copy-paste starting point.
+    - `dba-system.md` — a new, short `## Optional Mechanism Status Convention` section: what it is,
+      where it is fully defined, the `architecture/` downstream placement rule, an explicit statement
+      that no current doctrine rule uses it yet. One new File Layout line.
+    - `backlog/UPG-0056-governed-mechanism-activation-convention.md` — already created (this brief);
+      updated to match this revision.
+    
+    **No code of any kind** — no Rust crate, no shell script, no resolver binary. A one-line status file
+    is read directly by whichever prompt consults it; that check is a few words in each prompt's own
+    text, not shared tooling.
+    
+    **Lifecycle bookkeeping (standard for every non-trivial self-dev change, not substantive scope):**
+    `backlog/features.md` (one new row), `status/roadmap.md` (one new row), `status/self-development.md`
+    (one new/updated row per step, per `prompts/codeos-self-dev.md`'s Step 1 instruction to "activate
+    the row"). These three are touched by every self-dev change as dashboard registration, not as
+    feature content — listed here explicitly so the scope boundary below is accurate rather than silently
+    excluding them.
+    
+    **Scope boundary — what stays the same:**
+    
+    Anything not named above is in scope for no change. In particular, this change does **not**: create
+    any concrete status file anywhere (downstream or self-dev — no `architecture/*.yaml`, no
+    `config/*.yaml`); touch `scripts/dba-init.sh`, `CLAUDE.md`, or `prompts/codeos-self-dev.md`; add any
+    Controlled Plain English content (all deferred to `UPG-0057`); add any resolver, shell script, Rust
+    crate, provenance stamp, version field, result-code table, or absence-policy option of any kind;
+    change any Non-Negotiable Rule; add any new Stage ID; add any new mandatory human-approval gate; or
+    touch anything resembling a runtime product feature flag (out of category — this governs AI
+    doctrine/generation behavior, never application runtime behavior). `dba-system.md`'s 9-stage
+    substance, stage table, and existing Artifact Classification/File Layout entries are otherwise
+    untouched — only additive.
+    
+    **Class:** downstream-doctrine (revised — no executable tooling remains in scope, so the earlier
+    combined `downstream-doctrine + script-tooling` classification no longer applies).
+    **Profile:** PROFILE-4.
+    **Scope axis:** downstream doctrine only
+    **Backlog item:** `backlog/UPG-0056-governed-mechanism-activation-convention.md`
+    
+    ---
+    
+    ## Acceptance Criteria
+    
+    <!-- Filled in Step 2. -->
+    
+    ---
+    
+    ## Implementation Notes
+    
+    <!-- Filled in Step 3. -->
+    
+    ---
+    
+    ## Reconciliation
+    
+    <!-- Filled in Step 4. -->
+
+  --- backlog/UPG-0056-governed-mechanism-activation-convention.md (sha256: 3d4fbac04f1ba86ab9ad682ffed58c7b05ff130bc248e6f46e096cf5d9aa6d73, visibility: shown) ---
+    ---
+    feature_id: UPG-0056
+    slug: governed-mechanism-activation-convention
+    title: Optional Mechanism Status Convention
+    status: PROPOSED
+    priority: P2
+    depends_on: []
+    related_features: []
+    supersedes: []
+    superseded_by: []
+    ---
+    
+    # Upgrade: governed-mechanism-activation-convention — Optional Mechanism Status Convention
+    
+    **Priority**: P2
+    **Status**: PROPOSED
+    **Type**: downstream-doctrine
+    
+    > **Revision note:** this brief originally described a versioned governed-mechanism framework (a
+    > Rust resolver, activation modes, provenance stamps, 25 result codes). During planning of the first
+    > consuming feature (`UPG-0057`, Controlled Plain English), that design was found disproportionate
+    > for what every known consumer actually needs — a human-readable on/off switch — and was replaced
+    > with the minimal convention below. The Feature Thread's historical review rows are preserved
+    > unchanged below them, as an accurate record of what was reviewed at the time; they do not describe
+    > the current design.
+    
+    ## Problem
+    
+    A future Codeos feature (the first known case: a "Controlled Plain English" writing-style
+    discipline, `UPG-0057`, deliberately deferred out of this change) needs a human-controlled, on/off
+    switch for AI doctrine/generation behavior, in both downstream projects and Codeos's own
+    self-development. No shared convention for this exists today. Without one, each such feature would
+    invent its own ad hoc status-file shape and wording, and every prompt consulting it would phrase the
+    same three-way check ("is it on, off, or broken?") slightly differently.
+    
+    ## Upgrade
+    
+    Document one minimal convention, once, in `templates/conventions.md`: a status file containing
+    **exactly one line**, `status: enabled` or `status: disabled`. Four outcomes only:
+    
+    | File state | Result |
+    |---|---|
+    | Absent | Disabled |
+    | Exact `status: disabled` | Disabled |
+    | Exact `status: enabled` | Enabled |
+    | Anything else (unreadable, extra content, any other value) | Stop and report a configuration error |
+    
+    Missing means disabled, everywhere, with no absence-policy options. Only an explicit human
+    instruction changes the value; an agent never does so on its own initiative. Git history is the
+    audit trail — no resolver, no schema version, no activation id, no provenance fields, no versioned
+    governing artifact.
+    
+    **Definition of success**: a future feature (starting with `UPG-0057`) can read a status file of
+    this exact shape directly, with no shared tool, and get one of the four outcomes above,
+    deterministically, from a one-line check in its own prompt text.
+    
+    ## Scope
+    
+    **In scope**: `templates/conventions.md` (the convention's full documentation: grammar, the
+    four-outcome table, whitespace/line-ending pinning, the `architecture/` downstream placement rule),
+    `templates/optional-mechanism-status.yaml` (a minimal illustrative example file), a short
+    `dba-system.md` doctrine-pointer section, this brief.
+    
+    **Out of scope**: any concrete status file (downstream or self-dev — that's each consuming
+    feature's own job, starting with `UPG-0057`); any change to `scripts/dba-init.sh`, `CLAUDE.md`, or
+    `prompts/codeos-self-dev.md`; any Controlled Plain English content; any resolver, shell script, Rust
+    crate, provenance stamp, version field, result-code table, or absence-policy option of any kind; any
+    Non-Negotiable Rule change; any new Stage ID; any new mandatory human-approval gate; runtime product
+    feature flags (a different category of thing entirely — this governs AI doctrine/generation
+    behavior, never application runtime behavior).
+    
+    ## Value
+    
+    Gives every future toggle-needing feature one documented convention to reuse instead of inventing its
+    own status-file wording. Deliberately minimal — no behavioral risk from shipping it, since it is
+    pure documentation plus one illustrative example file; no code exists to have a bug in.
+    
+    ## Risk
+    
+    Very low. No code, no consumer wired up yet. The only design risk is that the convention proves too
+    minimal for some future need — acceptable, since the fix is additive (a future feature can still add
+    its own extra fields if it genuinely needs them; nothing here forecloses that).
+    
+    ## Guardrail
+    
+    - This UPG documents the convention only. It must not scaffold any concrete status file anywhere.
+    - Do not let this become a second governance layer parallel to `dba-system.md` — it is a convention a
+      future doctrine change may adopt, not doctrine itself. `dba-system.md`'s new section says
+      explicitly that no current doctrine rule uses it yet.
+    - Do not reintroduce resolver/schema/versioning complexity here — if a future feature genuinely needs
+      more than "enabled/disabled," that is that feature's own extension, decided when the need is
+      concrete, not spec'd speculatively here.
+    
+    ## Related
+    
+    - Originally proposed together with a "Controlled Plain English" writing-style discipline; narrowed
+      to this generic convention only, at the human's explicit direction. Controlled Plain English is
+      `UPG-0057`, which depends on this feature and consumes its convention.
+    
+    ## Feature Thread
+    
+    > Canonical thread rollup for this feature. Compact links/IDs only; full detail lives in the change
+    > records and review files. May be maintained manually.
+    
+    ### Changes
+    
+    | Change ID | File | Purpose | State |
+    |---|---|---|---|
+    | CHG-20260726-001 | `changes/UPG-0056__CHG-20260726-001__governed-mechanism-activation-convention.md` | Document the minimal Optional Mechanism Status Convention | IN_PROGRESS |
+    
+    ### Reviews
+    
+    | Review ID | Change ID | Step | Round | Verdict |
+    |---|---|---|---|---|
+    | RVS__UPG-0056__CHG-20260726-001__S1 (original, superseded design) | CHG-20260726-001 | 1-Intent | R1→R3 | R1 DO NOT ADVANCE (scope misclassification, unlisted lifecycle files, overclaimed risk) → R2 DO NOT ADVANCE ("provably authorized" overclaim) → R3 NO OBJECTION — **this round reviewed the original Rust-resolver design, since replaced; a fresh Step 1 review is required for the lean revision** |
+    
+    ### Findings Tracked Inside This Feature
+    
+    | Finding ID | Review ID | Classification | Resolution |
+    |---|---|---|---|
+    | (Step 1 R1, original design) Class declared `downstream-doctrine` but the intent added a Rust resolver + shell wrapper + tests — a script-tooling change too | RVS__…__S1 | IN-SCOPE BLOCKER | Fixed at the time; moot now — no code remains in scope after the lean revision |
+    | (Step 1 R1, original design) `backlog/features.md`/`status/roadmap.md`/`status/self-development.md` changed but not named in "What changes"; dashboard row said "Step 1 not yet drafted" while Step 1 existed | RVS__…__S1 | IN-SCOPE BLOCKER | Fixed — lifecycle bookkeeping still listed explicitly in the revised Change Intent |
+    | (Step 1 R1, original design) "No behavioral risk from shipping it" — absolute safety claim unsupported by a repo-wide consumer analysis | RVS__…__S1 | IN-SCOPE BLOCKER | Moot after the lean revision — there is no code, so the claim is now straightforwardly true |
+    | (Step 1 R2, original design) "the change provably authorized" — overclaimed a formal/cryptographic approval-binding guarantee | RVS__…__S1 | IN-SCOPE BLOCKER | Moot after the lean revision — no provenance-authorization claim is made at all now |
+    | (Planning) The entire original design was disproportionate to the need | — (human direction, not a Codex review finding) | IN-SCOPE BLOCKER | Fixed — replaced with the minimal one-line convention above |
+    
+    ### Follow-up Features
+    
+    | Feature ID | Reason | Source finding |
+    |---|---|---|
+    | UPG-0057 | Controlled Plain English — the first consumer of this convention | Deferred by explicit human direction during planning |
+
+  --- status/self-development.md (sha256: 883f6a35ea81398d9918c610b990928e24f319c3f0f571e18a854b6d88accf2e, visibility: shown) ---
+    # Self-Development Status
+    
+    > Live dashboard for in-flight Codeos toolkit changes. **Mutable** — maintained by the
+    > 4-step self-development loop (see repo-root `CLAUDE.md` and `prompts/codeos-self-dev.md`).
+    > The stable rulebook is `CLAUDE.md`; per-change detail is in
+    > `changes/UPG-####__CHG-YYYYMMDD-NNN__slug.md`; the wave plan is `status/roadmap.md`; the
+    > authoritative feature-id map is `backlog/features.md`.
+    >
+    > **Identity is split** (see `backlog/UPG-0001-feature-thread-traceability.md`): a **Feature ID**
+    > (`UPG-####`, stable) names the backlog feature; a **Change ID** (`CHG-YYYYMMDD-NNN`) names one
+    > execution against it. A historical row may carry a legacy change-stem in **Change ID** and `—`
+    > in **Feature ID** when no backlog feature exists.
+    >
+    > Step 1 activates a row; each step updates **Loop step** and **Latest review**. Reconcile marks
+    > **State: COMPLETE** once the step's compulsory (advisory) review has run **and** the human has
+    > accepted the result — NO OBJECTION, or CHANGES ADVISED with residual non-blocking findings
+    > accepted or tracked to a named **Follow-up** `UPG-####`. The review informs the human; it never
+    > gates by itself. A change with open, unaccepted in-scope findings stays **IN_PROGRESS**.
+    
+    | Feature ID | Change ID | Class | Scope | Loop step | Review (state / accepted outcome) | State | Follow-up |
+    |---|---|---|---|---|---|---|---|
+    | — | 0001-claude-split | self-dev-governance + downstream-doctrine | both | 4-Reconcile | CHANGES ADV →0004 | COMPLETE | — |
+    | UPG-0002 | 0002-doc-consistency-rename | documentation | downstream doctrine only | 4-Reconcile | CHANGES ADV →0004 | COMPLETE | — |
+    | — (planning) | 0003-implementation-roadmap | backlog-only / planning | self-dev only | 4-Reconcile | CHANGES ADV →0004 | COMPLETE | — |
+    | — (reviewer findings) | 0004-review-fixes | documentation / self-dev-governance | self-dev only | 4-Reconcile | CHANGES ADV (accepted) | COMPLETE | — |
+    | UPG-0001 | CHG-20260627-001 | self-dev-governance | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S4; rounds in review-log) | COMPLETE | UPG-0029 |
+    | UPG-0029 | CHG-20260629-001 | documentation | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S4; rounds in review-log) | COMPLETE | UPG-0030 |
+    | UPG-0030 | CHG-20260629-001 | self-dev-governance | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S4; rounds in review-log) | COMPLETE | — |
+    | UPG-0027 | CHG-20260629-002 | prompt / script-tooling | self-dev only | 4-Reconcile | ACCEPTED (NO OBJECTION) | COMPLETE | — |
+    | UPG-0027 | CHG-20260629-003 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (NO OBJECTION) | COMPLETE | — |
+    | UPG-0027 | CHG-20260629-004 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (human approved; all 12 ACs verified by functional test) | COMPLETE | — |
+    | UPG-0027 | CHG-20260629-005 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (human approved; all 14 ACs verified by functional test) | COMPLETE | — |
+    | UPG-0004 | CHG-20260630-001 | template | self-dev only | 4-Reconcile | ACCEPTED (Steps 2–4 reviewed; R2 NO OBJECTION at each gate) | COMPLETE | UPG-0031 |
+    | UPG-0031 | CHG-20260630-002 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (Step 4 R2 NO OBJECTION; corrected by CHG-20260630-003) | COMPLETE | — |
+    | UPG-0031 | CHG-20260630-003 | script-tooling + documentation | self-dev only | 4-Reconcile | ACCEPTED (all 5 ACs verified; corrects false B8b in CHG-20260630-002) | COMPLETE | — |
+    | UPG-0005 | CHG-20260630-004 | prompt + template | self-dev only | 4-Reconcile | ACCEPTED (Step 3 R2 NO OBJECTION; Step 4 R1 CHANGES ADVISED — F1 fixed, F2 REVIEW-BOOKKEEPING) | COMPLETE | — |
+    | UPG-0007 | CHG-20260630-005 | prompt | self-dev only | 4-Reconcile | ACCEPTED (Steps 1–4 reviewed; Step 4 R2 NO OBJECTION; all 7 ACs verified) | COMPLETE | — |
+    | UPG-0033 | CHG-20260701-001 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (all 8 ACs verified; F-A investigation-first exception accepted; F-B AJ-009 deferred) | COMPLETE | — |
+    | UPG-0010 | CHG-20260701-002 | prompt | self-dev only | 4-Reconcile | ACCEPTED (Steps 1–4 reviewed; Step 4 R1 NO OBJECTION; all 7 ACs verified) | COMPLETE | — |
+    | UPG-0011 | CHG-20260701-003 | template | self-dev only | 4-Reconcile | ACCEPTED (Steps 1–4 reviewed; Step 4 R2 NO OBJECTION; all 9 ACs verified) | COMPLETE | — |
+    | UPG-0012 | CHG-20260701-004 | prompt | self-dev only | 4-Reconcile | ACCEPTED (Steps 1–4 reviewed; Step 4 R1 NO OBJECTION; all 8 ACs verified) | COMPLETE | — |
+    | UPG-0013 | CHG-20260701-005 | template | self-dev only | 4-Reconcile | ACCEPTED (Steps 1–4 reviewed; Step 4 R1 NO OBJECTION; all 8 ACs verified) | COMPLETE | — |
+    | UPG-0008 | CHG-20260701-006 | prompt | self-dev only | 4-Reconcile | ACCEPTED (Steps 1–4 reviewed; Step 4 R1 NO OBJECTION; all 7 ACs verified) | COMPLETE | — |
+    | UPG-0009 | CHG-20260701-007 | template | self-dev only | 4-Reconcile | ACCEPTED (Steps 1–4 reviewed; Step 4 R3 NO OBJECTION; all 7 ACs verified) | COMPLETE | — |
+    | UPG-0006 | CHG-20260701-008 | prompt | self-dev only | 4-Reconcile | ACCEPTED (Steps 1–4 reviewed; Step 4 R1 NO OBJECTION; all 6 ACs verified) | COMPLETE | — |
+    | UPG-0032 | CHG-20260702-001 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (Step 3: 6 rounds, all blockers applied; Step 4 R1 NO OBJECTION; all 11 ACs verified; 33 tests; post-reconcile delta-mode fix applied) | COMPLETE | UPG-0034, UPG-0035 |
+    | UPG-0015 | CHG-20260702-002 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (Steps 1–4 reviewed; Step 4 R2 NO OBJECTION; all 13 ACs verified; 48 tests; coverage gate + provenance binding in Rust engine) | COMPLETE | — |
+    | UPG-0016 | CHG-20260702-003 | documentation | self-dev only | 4-Reconcile | ACCEPTED (Step 4 R1 NO OBJECTION; all 7 ACs verified) | COMPLETE | — |
+    | UPG-0014 | CHG-20260702-004 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (Step 3: 3 rounds + budget-exceeded inline fixes; Step 4 R3 NO OBJECTION; all 9 ACs verified; 55 tests) | COMPLETE | — |
+    | UPG-0035 | CHG-20260702-005 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (Step 3 R1 + Step 4 R1 CHANGES ADVISED — AC-6 test-exec-not-pinned REJECTED both rounds; all 6 ACs verified; 57 tests) | COMPLETE | — |
+    | UPG-0034 | CHG-20260702-006 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (Step 3: 3 rounds — F1 post-error skip, F2 missing success filter (both snapshots), F4 scope drift fixed; F3 live-path test accepted as structural limitation; Step 4 R1 NO OBJECTION; all 7 ACs verified; 59 tests) | COMPLETE | — |
+    | UPG-0017 | CHG-20260703-001 | template | self-dev only | 4-Reconcile | ACCEPTED (Step 3: R1 CHANGES ADVISED — 3 blockers fixed; R2 NO OBJECTION; Step 4: R1 CHANGES ADVISED — F1 review-state contradiction, F2 backlog `docs/` orphan fixed; R2 NO OBJECTION; all 7 ACs verified) | COMPLETE | — |
+    | UPG-0020 | CHG-20260703-002 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (Step 3: R1–R3 CHANGES ADVISED — F1 watched-set description fixed x2, F2 backlog stale fixed, F3/AC-10 REJECTED structural limitation; Step 4 R1 CHANGES ADVISED — AC-10 REJECTED structural limitation; all 9 substantive ACs verified; 42 tests) | COMPLETE | — |
+    | UPG-0021 | CHG-20260703-003 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 3 R1→R2 NO OBJECTION; Step 4 R1→R2 NO OBJECTION; all 16 ACs verified; 63 tests) | COMPLETE | — |
+    | UPG-0022 | CHG-20260703-004 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION; Step 2 NO OBJECTION; Step 3 NO OBJECTION; Step 4 NO OBJECTION; all 14 ACs verified; 77 tests) | COMPLETE | — |
+    | UPG-0023 | CHG-20260704-001 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION; Step 2 NO OBJECTION; Step 3 NO OBJECTION R2; Step 4 NO OBJECTION R1; all 15 ACs verified; 94 tests) | COMPLETE | UPG-0040, UPG-0041 |
+    | UPG-0019 | CHG-20260706-001 | documentation | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION; Step 2 NO OBJECTION; Step 3 NO OBJECTION R3; Step 4 NO OBJECTION R3; all 8 ACs verified) | COMPLETE | — |
+    | UPG-0024 | CHG-20260706-002 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION; Step 2 NO OBJECTION R2; Step 3 NO OBJECTION; Step 4 NO OBJECTION; all 15 ACs verified; 110 smoke tests) | COMPLETE | — |
+    | UPG-0025 | CHG-20260706-003 | downstream-doctrine | downstream doctrine only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION; Step 2 NO OBJECTION; Step 3 NO OBJECTION; Step 4 NO OBJECTION; all 11 ACs verified; live FundFlow symlink check) | COMPLETE | — |
+    | UPG-0026 | CHG-20260707-001 | documentation | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION; Step 2 NO OBJECTION R2; Step 3 NO OBJECTION; Step 4 NO OBJECTION; all 8 ACs verified) | COMPLETE | — |
+    | UPG-0038 | CHG-20260707-002 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION; Step 2 NO OBJECTION; Step 3 NO OBJECTION R2; Step 4 NO OBJECTION R3; all 10 ACs verified; real FundFlow invocation) | COMPLETE | — |
+    | UPG-0039 | CHG-20260707-003 | downstream-doctrine | downstream doctrine only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION; Step 2 NO OBJECTION R2; Step 3 accepted R2, Step 4 accepted R1 — both SECRET_REDACTION coverage, same known benign trigger; all 11 ACs verified; live FundFlow check) | COMPLETE | — |
+    | UPG-0040 | CHG-20260707-004 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION R2; Step 2 NO OBJECTION R3; Step 3 NO OBJECTION; Step 4 NO OBJECTION R2; all 8 ACs verified; 2× 20-run stress test, 0 failures) | COMPLETE | — |
+    | UPG-0041 | CHG-20260707-005 | downstream-doctrine | downstream doctrine only | 4-Reconcile | Step 3 R2 NO OBJECTION, Step 4 R2 NO OBJECTION (Evidence: A) | COMPLETE | — |
+    | UPG-0036 | CHG-20260705-001 | self-dev-governance | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION R3; Step 2 NO OBJECTION R2; Step 3 NO OBJECTION R3; Step 4 NO OBJECTION R1; all 10 ACs verified; real check-drift run) | COMPLETE | — |
+    | UPG-0037 | CHG-20260705-002 | downstream-doctrine | downstream doctrine only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION; Step 2 NO OBJECTION R2; Step 3 accepted at budget R3 (0 blockers, SECRET_REDACTION coverage); Step 4 accepted R1 (0 blockers, same SECRET_REDACTION cause); all 13 ACs verified; 105 tests; real FundFlow dry-runs) | COMPLETE | UPG-0038 |
+    | UPG-0042 | CHG-20260711-001 | script-tooling | self-dev only | 4-Reconcile | REVIEWED (series RVS__…__S4; R2 NO OBJECTION; all 10 ACs verified; 124 tests pass) | COMPLETE | — |
+    | UPG-0043 | CHG-20260711-002 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S4; R3 budget exhausted; inline doc fix accepted by human; all 5 final verifications pass; 124 tests across 8 files) | COMPLETE | — |
+    | UPG-0044 | CHG-20260712-001 | documentation | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S4; R1 CHANGES ADVISED — 1 finding fixed; R2 NO OBJECTION; all 12 ACs verified) | COMPLETE | — |
+    | UPG-0045 | CHG-20260712-002 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S4; R1 NO OBJECTION; all 12 ACs verified; 159 tests pass) | COMPLETE | — |
+    | UPG-0046 | CHG-20260713-001 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S4; R1 DO NOT ADVANCE — real fail-closed bug fixed; R2 NO OBJECTION; all 11 ACs verified; 171 tests pass) | COMPLETE | — |
+    | UPG-0047 | CHG-20260713-002 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S4; R1 NO OBJECTION; all 11 ACs verified; 182 tests pass; 294/317 findings parse, 23 documented long-tail) | COMPLETE | — |
+    | UPG-0050 | CHG-20260716-001 | downstream-doctrine | downstream doctrine only | 4-Reconcile | ACCEPTED (series RVS__…__S4; Step 1 R1 DO NOT ADVANCE → R2 NO OBJECTION; Step 2 R1 NO OBJECTION; Step 3 R1 DO NOT ADVANCE → R2 NO OBJECTION; Step 4 R1 NO OBJECTION; all 9 ACs verified; live dba-init.sh scratch run) | COMPLETE | — |
+    | UPG-0051 | CHG-20260719-001 | downstream-doctrine | downstream doctrine only | 4-Reconcile | ACCEPTED (series RVS__…__S4; Step 1 R1 DO NOT ADVANCE → R2 NO OBJECTION; Step 2 R1 NO OBJECTION, R2 NO OBJECTION post CHANGES-ADVISED fixes; Step 3 R1 DO NOT ADVANCE → R2 NO OBJECTION; Step 4 R1 NO OBJECTION; all 15 ACs verified; 3 in-scope blockers found+fixed across the change) | COMPLETE | — |
+    | UPG-0052 | CHG-20260719-002 | downstream-doctrine | downstream doctrine only | 4-Reconcile | ACCEPTED (series RVS__…__S4; Step 1 R1 DO NOT ADVANCE → R2 NO OBJECTION → 1st human CHANGES-ADVISED → R3 NO OBJECTION → 2nd human CHANGES-ADVISED → R4 NO OBJECTION (human-requested, beyond budget); Step 2 R1 NO OBJECTION; Step 3 R1 NO OBJECTION; Step 4 R1 DO NOT ADVANCE → R2 NO OBJECTION; all 17 ACs verified; 4 in-scope blockers found+fixed across the change) | COMPLETE | — |
+    | UPG-0053 | CHG-20260719-003 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S4; Step 1 R1 NO OBJECTION; Step 2 R1 DO NOT ADVANCE → R2 NO OBJECTION; Step 3 R1 NO OBJECTION; Step 4 R1 NO OBJECTION; all 8 ACs verified via live scratch run) | COMPLETE | — |
+    | UPG-0054 | CHG-20260719-004 | downstream-doctrine | downstream doctrine only | 4-Reconcile | ACCEPTED (series RVS__…__S4; Step 1 R1 NO OBJECTION; Step 2 R1 DO NOT ADVANCE → R2 NO OBJECTION; Step 3 R1 DO NOT ADVANCE → R2 DO NOT ADVANCE → R3 NO OBJECTION; Step 4 R1 NO OBJECTION; all 13 ACs verified; 3 in-scope blockers found+fixed) | COMPLETE | — |
+    | UPG-0055 | CHG-20260720-001 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S4; Step 1 R1 NO OBJECTION; Step 2 R1 NO OBJECTION; Step 3 R1 DO NOT ADVANCE → R2 DO NOT ADVANCE → R3 NO OBJECTION; Step 4 R1 DO NOT ADVANCE → R2 NO OBJECTION; all 9 ACs verified; 182 tests pass; 4 in-scope blockers found+fixed) | COMPLETE | — |
+    | UPG-0056 | CHG-20260726-001 | downstream-doctrine | downstream doctrine only | 1-Intent | Revised to a minimal one-line convention (dropped Rust resolver/script-tooling scope) after `UPG-0057` planning found the original design disproportionate; Step 1 Change Intent rewritten, review_state DRAFT, fresh Step 1 review needed before the human gate | IN_PROGRESS | UPG-0057 |
+    
+    <!--
+    Identity   : Feature ID = UPG-#### (stable). Change ID = CHG-YYYYMMDD-NNN (one execution), or a
+                 legacy change-stem (0001..0004) for historical/piloted work recorded truthfully.
+    Loop step  : 1-Intent / 2-Acceptance / 3-Implement / 4-Reconcile / —
+    Review     : review STATE/outcome, not a live round — in-flight: `review_state` (IN_REVIEW…) + the
+                 review series `RVS__…__S<N>`; closed: the accepted verdict summary. Exact `REV__…__R<N>`
+                 rounds + human decisions live ONLY in reviews/review-log.md (Self-Reference Boundary).
+                 `→UPG-####` / `→NNNN` = findings tracked to a follow-up.
+    State      : PROPOSED / IN_PROGRESS / BLOCKED / COMPLETE (+ feature states PILOTED/SUPERSEDED/ABANDONED)
+    Follow-up  : UPG-#### tracking out-of-scope findings from this change, or —
+    -->
+
+DIFF TO REVIEW (base->review, secret/size filtered)
+diff --git a/backlog/features.md b/backlog/features.md
+index c8fa56e..b92075b 100644
+--- a/backlog/features.md
++++ b/backlog/features.md
+@@ -86,6 +86,8 @@ The goal is to speed up Codeos development without weakening DBA advantages.
+ | UPG-0053 | [UPG-0053-implementation-profile-scaffolding-dba-init.md](UPG-0053-implementation-profile-scaffolding-dba-init.md) | Implementation-Profile Scaffolding in dba-init.sh | P3 | COMPLETE |
+ | UPG-0054 | [UPG-0054-contract-to-implementation-failure-boundary.md](UPG-0054-contract-to-implementation-failure-boundary.md) | Contract-to-Implementation Failure Boundary | P2 | COMPLETE |
+ | UPG-0055 | [UPG-0055-reviewer-architecture-synthesis-stage-support.md](UPG-0055-reviewer-architecture-synthesis-stage-support.md) | Reviewer Support for the `architecture-synthesis` Stage ID | P3 | COMPLETE |
++| UPG-0056 | [UPG-0056-governed-mechanism-activation-convention.md](UPG-0056-governed-mechanism-activation-convention.md) | Optional Mechanism Status Convention | P2 | PROPOSED |
++| UPG-0057 | [UPG-0057-controlled-plain-english-writing-discipline.md](UPG-0057-controlled-plain-english-writing-discipline.md) | Controlled Plain English Writing Discipline | P3 | PROPOSED |
+ 
+ > Priority `—` = no formal P-rank (a completed cleanup, or a discovery note). Feature IDs are
+ > assigned once and never reused. `UPG-0002` and `UPG-0003` are historical/piloted work given IDs
+diff --git a/status/roadmap.md b/status/roadmap.md
+index 4777775..ad8a53b 100644
+--- a/status/roadmap.md
++++ b/status/roadmap.md
+@@ -100,6 +100,8 @@ cheap pilot-adjacent wins early.
+ | UPG-0053 | Implementation-Profile Scaffolding in dba-init.sh | P3 | UPG-0052 | CHG-20260719-003 | COMPLETE |
+ | UPG-0054 | Contract-to-Implementation Failure Boundary | P2 | — | CHG-20260719-004 | COMPLETE |
+ | UPG-0055 | Reviewer Support for the `architecture-synthesis` Stage ID | P3 | — | CHG-20260720-001 | COMPLETE |
++| UPG-0056 | Optional Mechanism Status Convention | P2 | — | CHG-20260726-001 | IN_PROGRESS |
++| UPG-0057 | Controlled Plain English Writing Discipline | P3 | UPG-0056 | — | PROPOSED |
+ | UPG-0028 | Reviewer self-reference recursion (scoping) | P2 | — | — | COMPLETE (backlog-only, no CHG — see backlog note) |
+ | UPG-0029 | Review artifact durability + packet naming policy | P2 | UPG-0001 | CHG-20260629-001 | COMPLETE |
+ | UPG-0030 | Lean Self-Development Review Profiles | P1 | — | CHG-20260629-001 | COMPLETE |
+diff --git a/status/self-development.md b/status/self-development.md
+index b2026a9..8fd2957 100644
+--- a/status/self-development.md
++++ b/status/self-development.md
+@@ -76,6 +76,7 @@
+ | UPG-0053 | CHG-20260719-003 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S4; Step 1 R1 NO OBJECTION; Step 2 R1 DO NOT ADVANCE → R2 NO OBJECTION; Step 3 R1 NO OBJECTION; Step 4 R1 NO OBJECTION; all 8 ACs verified via live scratch run) | COMPLETE | — |
+ | UPG-0054 | CHG-20260719-004 | downstream-doctrine | downstream doctrine only | 4-Reconcile | ACCEPTED (series RVS__…__S4; Step 1 R1 NO OBJECTION; Step 2 R1 DO NOT ADVANCE → R2 NO OBJECTION; Step 3 R1 DO NOT ADVANCE → R2 DO NOT ADVANCE → R3 NO OBJECTION; Step 4 R1 NO OBJECTION; all 13 ACs verified; 3 in-scope blockers found+fixed) | COMPLETE | — |
+ | UPG-0055 | CHG-20260720-001 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S4; Step 1 R1 NO OBJECTION; Step 2 R1 NO OBJECTION; Step 3 R1 DO NOT ADVANCE → R2 DO NOT ADVANCE → R3 NO OBJECTION; Step 4 R1 DO NOT ADVANCE → R2 NO OBJECTION; all 9 ACs verified; 182 tests pass; 4 in-scope blockers found+fixed) | COMPLETE | — |
++| UPG-0056 | CHG-20260726-001 | downstream-doctrine | downstream doctrine only | 1-Intent | Revised to a minimal one-line convention (dropped Rust resolver/script-tooling scope) after `UPG-0057` planning found the original design disproportionate; Step 1 Change Intent rewritten, review_state DRAFT, fresh Step 1 review needed before the human gate | IN_PROGRESS | UPG-0057 |
+ 
+ <!--
+ Identity   : Feature ID = UPG-#### (stable). Change ID = CHG-YYYYMMDD-NNN (one execution), or a
