@@ -86,6 +86,9 @@ The goal is to speed up Codeos development without weakening DBA advantages.
 | UPG-0053 | [UPG-0053-implementation-profile-scaffolding-dba-init.md](UPG-0053-implementation-profile-scaffolding-dba-init.md) | Implementation-Profile Scaffolding in dba-init.sh | P3 | COMPLETE |
 | UPG-0054 | [UPG-0054-contract-to-implementation-failure-boundary.md](UPG-0054-contract-to-implementation-failure-boundary.md) | Contract-to-Implementation Failure Boundary | P2 | COMPLETE |
 | UPG-0055 | [UPG-0055-reviewer-architecture-synthesis-stage-support.md](UPG-0055-reviewer-architecture-synthesis-stage-support.md) | Reviewer Support for the `architecture-synthesis` Stage ID | P3 | COMPLETE |
+| UPG-0056 | [UPG-0056-governed-mechanism-activation-convention.md](UPG-0056-governed-mechanism-activation-convention.md) | Optional Mechanism Status Convention | P2 | COMPLETE |
+| UPG-0057 | [UPG-0057-controlled-plain-english-writing-discipline.md](UPG-0057-controlled-plain-english-writing-discipline.md) | Controlled Plain English Writing Discipline | P3 | PROPOSED |
+| UPG-0058 | [UPG-0058-cohort-logical-design-artifact.md](UPG-0058-cohort-logical-design-artifact.md) | Cohort Logical Design — a Second Architecture Synthesis Output | P1 | PROPOSED |
 
 > Priority `—` = no formal P-rank (a completed cleanup, or a discovery note). Feature IDs are
 > assigned once and never reused. `UPG-0002` and `UPG-0003` are historical/piloted work given IDs
