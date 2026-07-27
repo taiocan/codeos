@@ -13,6 +13,15 @@ You MUST have an APPROVED intent document before starting this stage.
 Check: does `intents/[feature_id].md` have `status: APPROVED`?
 If not — **STOP** and request approval of the intent first.
 
+**Controlled Plain English check (if `architecture/controlled-plain-english.yaml` exists):** read
+its `status` per the Optional Mechanism Status Convention's four-outcome table
+(`.codeos/templates/conventions.md`). Absent or `disabled` → proceed unaffected. `enabled` → read
+`.codeos/patterns/controlled-plain-english.md`; if missing/unreadable, **STOP** and report a
+pattern-access error; otherwise apply Layer B to this Contract's prose — this stage is the primary
+owner of the observable-behavior and edge-case content areas in the pattern's adaptation matrix, so
+apply Layer B's modal-verb/quantifier precision there deliberately (Layer C1 always applies
+regardless of the toggle). Malformed status file → **STOP** and report a configuration error.
+
 ## What You Receive
 
 - Approved intent: `intents/[feature_id].md`

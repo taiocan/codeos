@@ -50,6 +50,16 @@ INSTRUCTIONS
   and evidence in this packet. Rank findings by severity. Suggest a better design only when
   needed to explain a required fix for an IN-SCOPE BLOCKER.
 
+  CONTROLLED PLAIN ENGLISH (if one of the artifacts under review states "Controlled Plain
+  English status for this review: enabled" or "...: disabled" — this task template never reads
+  any configuration file itself; whoever invokes the review includes that line as one of the
+  reviewed artifacts, the same way any other file is included, when the relevant project has the
+  discipline enabled): Layer D1 (advisory verdict, no invented requirements, evidence separated
+  from inference — the TRIAGE RULE and "based ONLY on in-scope blockers" instructions above
+  already are this) always applies regardless of that value. When the value is `enabled`,
+  additionally write your prose in Layer D2 style — short sentences, common words, direct
+  explanations. This affects wording only; it never changes the footer format below.
+
   Limit findings to the top 3 IN-SCOPE BLOCKERS. Additional non-blocking observations may be
   summarized in one short paragraph only if useful.
 

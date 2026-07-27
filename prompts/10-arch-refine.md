@@ -30,6 +30,14 @@ If you are unsure whether a change is architectural or behavioral — it is beha
 it would change any row in a feature's Contract or Event Schema. If yes, use Stage 9
 refinement. If no, use this workflow.
 
+**Controlled Plain English check (if `architecture/controlled-plain-english.yaml` exists):** read
+its `status` per the Optional Mechanism Status Convention's four-outcome table
+(`.codeos/templates/conventions.md`). Absent or `disabled` → proceed unaffected. `enabled` → read
+`.codeos/patterns/controlled-plain-english.md`; if missing/unreadable, **STOP** and report a
+pattern-access error; otherwise apply Layer B on every regeneration of the refined artifact — no
+exemption from the discipline applied at first generation (Layer C1 always applies regardless).
+Malformed status file → **STOP** and report a configuration error.
+
 ---
 
 ## The 5-Step Architectural Refinement Pipeline

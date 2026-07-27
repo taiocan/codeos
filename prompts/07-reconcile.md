@@ -22,6 +22,15 @@ You find **mismatches and gaps** between:
 - [ ] Tests in `tests/` — APPROVED
 - [ ] `events/runtime_events.jsonl` — populated from Stage 6
 
+**Controlled Plain English check (if `architecture/controlled-plain-english.yaml` exists):** read
+its `status` per the Optional Mechanism Status Convention's four-outcome table
+(`.codeos/templates/conventions.md`). Absent or `disabled` → proceed unaffected. `enabled` → read
+`.codeos/patterns/controlled-plain-english.md`; if missing/unreadable, **STOP** and report a
+pattern-access error; otherwise apply **Layer D1 always, Layer D2 when enabled** to this Findings
+Summary's prose — evidence stays separate from inference, no invented requirements, the ALIGNED/
+GAP/MISMATCH/MISSING verdict stays advisory (Layer C1 always applies regardless of the toggle).
+Malformed status file → **STOP** and report a configuration error.
+
 ## Output Sequence
 
 Follow this sequence exactly. Do not skip any step.

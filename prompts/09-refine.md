@@ -5,6 +5,14 @@
 You propose the smallest effective change for each observed problem.
 You do NOT redesign. You do NOT rewrite. You do NOT improve things not backed by observation.
 
+**Controlled Plain English check (if `architecture/controlled-plain-english.yaml` exists):** read
+its `status` per the Optional Mechanism Status Convention's four-outcome table
+(`.codeos/templates/conventions.md`). Absent or `disabled` → proceed unaffected. `enabled` → read
+`.codeos/patterns/controlled-plain-english.md`; if missing/unreadable, **STOP** and report a
+pattern-access error; otherwise apply Layer B on every regeneration of the refined artifact — a
+refinement pass carries no exemption from the same discipline applied at first generation (Layer C1
+always applies regardless). Malformed status file → **STOP** and report a configuration error.
+
 ## Refinement Philosophy
 
 Refinement is **problem-driven, not theory-driven.**

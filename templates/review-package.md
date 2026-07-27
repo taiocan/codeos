@@ -128,3 +128,9 @@ Then list the stage-specific fields:
 
 "Suggested areas to examine" — not "Assess specifically." These are starting points.
 The reviewer is free to ignore every suggestion and raise something entirely different.
+
+**Controlled Plain English (if the relevant project has enabled it — see
+`.codeos/dba-system.md` → "Controlled Plain English Writing Discipline"):** Layer D1 (reviewer
+integrity — advisory verdict, no invented requirements, evidence separated from inference) always
+applies to this Review Package's prose, in both the Stage 4-5 and Stage 7 format variants. Layer D2
+(plain review prose) applies only when the relevant activation is `enabled`.

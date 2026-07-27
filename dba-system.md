@@ -424,10 +424,46 @@ provenance fields — git history is the audit trail, and only an explicit human
 the value.
 
 This is documentation of a reusable shape, not a new Stage ID, not a new Non-Negotiable Rule, and
-not a new mandatory gate. **No current doctrine rule in this file uses it** — it exists so a future
-feature (e.g. a writing-style discipline) can adopt it instead of inventing its own on/off
-mechanism. A project-local status file for such a mechanism lives under `architecture/`, alongside
-the other project-level architecture artifacts already documented there.
+not a new mandatory gate. A project-local status file for such a mechanism lives under
+`architecture/`, alongside the other project-level architecture artifacts already documented there.
+The Controlled Plain English Writing Discipline (below) is the first feature to adopt it.
+
+---
+
+## Controlled Plain English Writing Discipline
+
+An optional writing discipline for AI-generated prose, adopting the Optional Mechanism Status
+Convention above. Full content — the four layers (plain communication; specification precision;
+literal-content protection C1/C2; reviewer/reconciliation precision D1/D2), the reviewer model, the
+non-retroactivity rule, and the 15-section adaptation matrix — lives in
+`.codeos/patterns/controlled-plain-english.md`. This section documents only the activation
+mechanics and where the mechanism applies.
+
+**Activation.** A downstream project's status file is `architecture/controlled-plain-english.yaml`
+(project-local — not reached through the `.codeos` symlink; `scripts/dba-init.sh` scaffolds it at
+`status: enabled` by default — a human sets it to `status: disabled` to turn the discipline off).
+The pattern file itself *is* reached through the symlink, at
+`.codeos/patterns/controlled-plain-english.md`. A missing file still means disabled (the Optional
+Mechanism Status Convention's own fallback, unchanged); the exact grammar and four-outcome table
+are that convention's, unchanged.
+
+**Call-site map** — every consumer is named explicitly; none guesses which file applies:
+
+| Call site | Configuration it reads |
+|---|---|
+| Stage 1-10 prompts (`.codeos/prompts/01-intent.md` … `10-arch-refine.md`) | `architecture/controlled-plain-english.yaml` |
+| `.codeos/prompts/pipeline-reviewer.md` | `architecture/controlled-plain-english.yaml` |
+| `.codeos/prompts/codeos-reviewer-task.md` (shared reviewer infrastructure) | **Reads neither file — configuration-neutral.** Whoever invokes the review (a human, or an agent under human instruction) includes a fixed status line — "Controlled Plain English status for this review: enabled/disabled" — as one of the reviewed artifacts, the same way any other file is passed to `codeos-reviewer review`. There is no automatic packet-assembly step that reads a config file on the invoker's behalf; `tools/reviewer` embeds whatever artifact paths it is given, unchanged. |
+
+**What is and isn't toggle-gated.** Layer A (plain communication) and Layer C1/D1 (existing
+literal-protection and reviewer-integrity authority) are **not** new mandatory rules and are never
+toggle-gated — they restate expectations already binding elsewhere. Layer B, C2, and D2 are the
+only parts this switch actually gates. Disabling (or never configuring) this mechanism leaves
+generation and review behavior exactly as it is today.
+
+**No new Stage ID, no new Non-Negotiable Rule, no new mandatory human-approval gate.** This is a
+writing discipline consulted by existing stages and the existing reviewer, not a new stage or gate
+of its own.
 
 ---
 
@@ -537,6 +573,7 @@ in `.codeos/templates/conventions.md` → Feature IDs.
 | Architecture Baseline (`architecture/core-baseline.md`) | **Required for cohort members' Stage 4** | Only when a core architecture cohort is declared (see "Multi-Feature Architecture Synthesis Gate"); not applicable to single-feature or non-cohort projects |
 | Cohort Logical Design (`architecture/cohort-logical-design.md`) | **Required for cohort members' Stage 4** | Only when a core architecture cohort is declared, approved together with the Baseline at Architecture Synthesis Step 4 (see "Multi-Feature Architecture Synthesis Gate"); not applicable to single-feature or non-cohort projects |
 | Implementation Profile (`architecture/implementation-profile.yaml`) | Optional | Governs Stage 4 language/pattern consultation only once `approved`; absent or merely `proposed` imposes no requirement (see "Implementation Profile") |
+| Controlled Plain English status (`architecture/controlled-plain-english.yaml`) | Optional | Governs Layer B/C2/D2 writing-discipline consultation only when `status: enabled`; absent or `disabled` imposes no requirement (see "Controlled Plain English Writing Discipline") |
 | Onboarding artifacts (`HYPOTHESIZED_INTENT`) | Onboarding only | Produced by Session Type D; must pass Stage 1 review before advancing |
 
 ---
@@ -563,6 +600,10 @@ project/
 │   ├── [mechanism-name].yaml     ← optional: an enabled/disabled status file for an optional
 │   │                                AI-doctrine mechanism (see .codeos/templates/conventions.md →
 │   │                                Optional Mechanism Status Convention); none by default
+│   ├── controlled-plain-english.yaml ← status file for the Controlled Plain English Writing
+│   │                                Discipline; scaffolded by dba-init.sh at status: enabled
+│   │                                for every new project (a human sets status: disabled to
+│   │                                turn it off)
 │   └── history/
 │       ├── core-baseline-v[N].md              ← superseded baseline versions
 │       ├── cohort-logical-design-v[N].md      ← superseded logical design versions

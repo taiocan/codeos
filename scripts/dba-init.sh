@@ -136,7 +136,19 @@ else
     echo "[ok]   architecture/implementation-profile.yaml (from template — status: proposed, non-binding)"
 fi
 
-# ── 9. Git init ─────────────────────────────────────────────────────────────
+# ── 9. Controlled Plain English status ───────────────────────────────────────
+
+CPE_STATUS="$ARCH_DIR/controlled-plain-english.yaml"
+
+if [ -f "$CPE_STATUS" ]; then
+    echo "[skip] architecture/controlled-plain-english.yaml already exists"
+else
+    mkdir -p "$ARCH_DIR"
+    printf 'status: enabled\n' > "$CPE_STATUS"
+    echo "[ok]   architecture/controlled-plain-english.yaml (status: enabled)"
+fi
+
+# ── 10. Git init ────────────────────────────────────────────────────────────
 
 if [ -d "$PROJECT_DIR/.git" ]; then
     echo "[skip] git repo already exists"
@@ -145,7 +157,7 @@ else
     echo "[ok]   git init (branch: main)"
 fi
 
-# ── 10. Git remote ───────────────────────────────────────────────────────────
+# ── 11. Git remote ────────────────────────────────────────────────────────
 
 if [ -n "$REMOTE_URL" ]; then
     if git -C "$PROJECT_DIR" remote get-url origin &>/dev/null; then
@@ -156,7 +168,7 @@ if [ -n "$REMOTE_URL" ]; then
     fi
 fi
 
-# ── 11. Reviewer config ──────────────────────────────────────────────────────
+# ── 12. Reviewer config ───────────────────────────────────────────────────
 
 REVIEWER_TOML="$PROJECT_DIR/reviewer.toml"
 REVIEWER_TEMPLATE="$CODEOS_PATH/templates/reviewer.toml"
@@ -170,7 +182,7 @@ else
     echo "[warn] reviewer.toml template not found at $REVIEWER_TEMPLATE — skipping"
 fi
 
-# ── 12. Done ─────────────────────────────────────────────────────────────────
+# ── 13. Done ──────────────────────────────────────────────────────────────
 
 echo ""
 echo "Done. Project initialized."
@@ -201,4 +213,9 @@ echo "Implementation Profile (architecture/implementation-profile.yaml):"
 echo "  Scaffolded as a non-binding proposal (status: proposed, primary_language: rust)."
 echo "  Edit it, or leave it as-is, then have a human explicitly approve it before"
 echo "  Stage 4 relies on it. See .codeos/dba-system.md → 'Implementation Profile'."
+echo ""
+echo "Controlled Plain English (architecture/controlled-plain-english.yaml):"
+echo "  Scaffolded as status: enabled by default. Set it to status: disabled to turn"
+echo "  it off. See .codeos/dba-system.md → 'Controlled Plain English Writing"
+echo "  Discipline'."
 echo ""

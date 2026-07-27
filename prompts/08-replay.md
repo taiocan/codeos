@@ -18,6 +18,15 @@ This creates a guarantee: same inputs + same module version + same constraints �
 ## Preconditions
 
 - [ ] Stage 7 reconciliation review — APPROVED
+
+**Controlled Plain English check (if `architecture/controlled-plain-english.yaml` exists):** read
+its `status` per the Optional Mechanism Status Convention's four-outcome table
+(`.codeos/templates/conventions.md`). Absent or `disabled` → proceed unaffected. `enabled` → read
+`.codeos/patterns/controlled-plain-english.md`; if missing/unreadable, **STOP** and report a
+pattern-access error; otherwise apply **factual reporting plus Layer D1's evidence-vs-inference
+separation** (not Layer B) — replay compares observed outcomes against expectation, closer to
+review than to spec-writing (Layer C1 always applies regardless). Malformed status file → **STOP**
+and report a configuration error.
 - [ ] `events/runtime_events.jsonl` — populated
 - [ ] Replay tests in `tests/replay/` — present
 
