@@ -15,8 +15,9 @@ layers below apply to it and applies the enabled-but-pattern-unavailable rule (b
 `codeos-reviewer-task.md` is **not** a consumer of this file — it stays configuration-neutral (see
 "Reviewer Model" and `dba-system.md`'s call-site map): it never reads this pattern or any status
 file itself, and therefore never performs the enabled-but-pattern-unavailable check. It only reacts
-to a status line manually included by whoever invokes the review, using Layer D2's rule text, which
-is restated inline in `codeos-reviewer-task.md` itself rather than requiring it to read this file.
+to a status line automatically injected by `scripts/codeos-review.sh` (or `.codeos/scripts/
+codeos-review.sh` downstream) before the reviewer is invoked, using Layer D2's rule text, which is
+restated inline in `codeos-reviewer-task.md` itself rather than requiring it to read this file.
 This pattern's Layer B/C2/D2 rules are toggle-gated (see "Layers," below); Layer A/C1/D1 are always
 active regardless of the toggle, since they restate expectations that already exist elsewhere in
 this environment or in Codeos's own Non-Negotiable Rules — naming them here consolidates them, it

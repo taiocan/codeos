@@ -1,0 +1,391 @@
+Reviewer task:
+
+SCOPE CONTRACT
+  Assess this artifact against the STATED SCOPE of this stage/PR — the Expected Stage
+  Output below and what the artifacts actually claim — NOT against an ideal final system.
+  A capability the artifacts do not claim to provide is OUT-OF-SCOPE, not a defect.
+  The following are OUT-OF-SCOPE BACKLOG unless THIS artifact explicitly claims to provide
+  them: formal approval-binding enforcement; rollback correctness; COMMIT_BOUND/
+  WORKSPACE_BOUND enforcement; JSON Schema validation; CI validation; exact
+  decision-integrity; per-feature decision ledgers; autonomous approval; enabled hooks.
+
+YOUR TASK — answer these five questions using only the evidence in the packet:
+  1. Acceptance criteria: Does the artifact satisfy each of its stated acceptance criteria?
+     Cite evidence for each criterion (or note its absence).
+  2. Claim support: Are universal or strong claims (all, every, never, always, no X) in the
+     artifact supported by evidence in the packet? Any unverifiable strong claim is a candidate
+     finding only if it affects acceptance, scope, safety, decision integrity, or the artifact's
+     stated guarantees.
+  3. Scope drift: Is there any change beyond the stated scope boundary? (Files not in the
+     "What changes" list; behavior changes not in the intent; downstream doctrine modified
+     rather than read.)
+  4. In-scope blockers: Are there facts that, if left in, would make the artifact wrong,
+     unsafe, or internally contradictory?
+  5. Finding classification: Classify every finding you raise as exactly one of the five
+     TRIAGE RULE categories below.
+
+TRIAGE RULE — classify EVERY finding as exactly one of:
+  IN-SCOPE BLOCKER         breaks the stated goal; creates a FALSE CLAIM in this artifact;
+                           weakens the advisory/read-only/human-gated guarantees; prevents
+                           the work from running; or violates an explicit safety constraint.
+  IN-SCOPE NON-BLOCKER     improves it but is not required for this PR.
+  OUT-OF-SCOPE BACKLOG     valid, but belongs to a future feature / stronger guarantee.
+  REJECTED                 conflicts with the stated scope or Codeos philosophy.
+  SELF-REFERENCE /         review records that are stale because of the previous round's
+  REVIEW-BOOKKEEPING       own existence (causal loop); not a real artifact defect.
+  Base the PR decision ONLY on IN-SCOPE BLOCKER findings. An OUT-OF-SCOPE BACKLOG finding
+  must NOT cause DO NOT ADVANCE unless this artifact FALSELY CLAIMS to solve it.
+
+WHAT NOT TO DO
+  - Do not flag style or wording issues as blockers unless the wording creates a false claim,
+    contradiction, parser breakage, or wrong governance instruction.
+  - Do not re-review unchanged full context when the packet is in delta mode.
+  - Do not treat local-only review history as a blocker unless the artifact falsely
+    claims the review artifacts are committed/durable.
+
+INSTRUCTIONS
+  If this is a resumed session, ignore any earlier-session conclusions unless they are
+  re-established by THIS packet; assess only the evidence above, pinned to this commit.
+  Give a focused assessment of this artifact against the stated scope, acceptance criteria,
+  and evidence in this packet. Rank findings by severity. Suggest a better design only when
+  needed to explain a required fix for an IN-SCOPE BLOCKER.
+
+  CONTROLLED PLAIN ENGLISH (if one of the artifacts under review states "Controlled Plain
+  English status for this review: enabled" or "...: disabled" — this task template never reads
+  any configuration file itself; whoever invokes the review includes that line as one of the
+  reviewed artifacts, the same way any other file is included, when the relevant project has the
+  discipline enabled): Layer D1 (advisory verdict, no invented requirements, evidence separated
+  from inference — the TRIAGE RULE and "based ONLY on in-scope blockers" instructions above
+  already are this) always applies regardless of that value. When the value is `enabled`,
+  additionally write your prose in Layer D2 style — short sentences, common words, direct
+  explanations. This affects wording only; it never changes the footer format below.
+
+  Limit findings to the top 3 IN-SCOPE BLOCKERS. Additional non-blocking observations may be
+  summarized in one short paragraph only if useful.
+
+  For EACH finding emit:
+    Finding: / Severity: High|Medium|Low / Classification: <one of the TRIAGE RULE labels>
+    Evidence: <file/line> / Why: <short> / Required action: fix now|optional fix|backlog|reject
+    Scope reason: <why it does/does not belong to this PR's scope>
+  Then emit:
+    PR decision: ADVANCE | REQUEST CHANGES | DO NOT ADVANCE   (based ONLY on in-scope blockers)
+    Scope drift warning: yes|no — <is anything pulling this PR beyond its stated scope?>
+  Then on the LAST three lines emit exactly (map ADVANCE->NO OBJECTION,
+  REQUEST CHANGES->CHANGES ADVISED, DO NOT ADVANCE->DO NOT ADVANCE):
+    LOG SUMMARY: <NO OBJECTION | CHANGES ADVISED | DO NOT ADVANCE | UNCLASSIFIED> — <single most important point>
+      (use UNCLASSIFIED if you genuinely cannot classify the artifact safely)
+    EVIDENCE: <A|B|C|D|E>
+    HIGHEST-IMPACT UNCERTAINTY: <one sentence — what single thing, if wrong, most affects this assessment>
+
+  Evidence grade — the grade describes what the assessment rests on, not reviewer confidence:
+    A — Directly verified in the artifact, diff, or output shown in the packet
+    B — Verified with multiple direct pieces of evidence, but coverage is not complete
+    C — Partially verified, partially inferred from structure or context
+    D — Mostly inferred from structure or indirect evidence
+    E — Hypothesis or very limited basis — little to no direct evidence
+
+
+PACKET MANIFEST
+  generated: 2026-07-27T13:50:57Z
+  task_prompt: /home/rimo/projects/Codeos/prompts/codeos-reviewer-task.md (5794 bytes)
+  review_content_bytes: 23768
+  estimated_review_tokens: ~5942
+  budget_status: OK
+  packet_mode: full
+  delta_base: none
+  items:
+    - path: changes/UPG-0057__CHG-20260727-001__automatic-cpe-status-injection.md
+      mode: full_file
+      bytes: 17461
+      sha256: d9e48a8b9f602da24c9c4d0c85b56b07bc3b2b996ce23124d6e4fa96e88997d7
+    - path: (diff)
+      mode: full_file
+      bytes: 6307
+
+REVIEW CONTEXT
+  Feature:                UPG-0057__CHG-20260727-001
+  Stage:                  selfdev-step-2
+  Branch:                 main
+  Base commit:            (no base pin)
+  Review commit:          fd2b1983a3bf21d54b19ba55f99f4da30f050609 (+ uncommitted workspace changes)
+  Current approved stage: n/a (non-numeric stage)
+  Evidence coverage:      FULL_COVERAGE
+  Workspace dirty:        yes (uncommitted changes at review time)
+
+DBA RULES RELEVANT TO THIS STAGE
+  - Human approval is required for every stage transition; you are advisory only.
+  - Memory is not truth — assess only what is provided, pinned to the review commit.
+  - Implementation must trace to approved artifacts; no behavior beyond intent+contract+schema.
+  - No events outside the approved event schema; no hidden behavior.
+
+STAGE-SPECIFIC CHECKS
+  - (no stage-specific checklist for stage selfdev-step-2)
+
+EXPECTED STAGE OUTPUT
+  (no expected-output template for stage)
+
+ARTIFACTS TO REVIEW
+  --- changes/UPG-0057__CHG-20260727-001__automatic-cpe-status-injection.md (sha256: d9e48a8b9f602da24c9c4d0c85b56b07bc3b2b996ce23124d6e4fa96e88997d7, visibility: shown) ---
+    # Self-Development Change: UPG-0057__CHG-20260727-001 — automatic-cpe-status-injection
+    
+    <!-- TRACE HEADER (canonical) -->
+    ```yaml
+    feature_id: UPG-0057
+    primary_feature_id: UPG-0057
+    change_id: CHG-20260727-001
+    slug: automatic-cpe-status-injection
+    state: IN_PROGRESS
+    current_step: 2-Acceptance
+    implements:
+      - UPG-0057
+    related_features: [UPG-0056]
+    review_series: null
+    review_profile: PROFILE-5
+    review_state: DRAFT
+    review_history: reviews/review-log.md
+    fixes_findings: []
+    follow_up_of: null
+    ```
+    
+    <!-- SELF-REFERENCE BOUNDARY: this artifact is itself reviewed, so it must NOT embed the current
+    review round (which does not exist until after the packet is built). Reference the stable review
+    SERIES (review_series) + review_state; exact rounds live only in reviews/review-log.md and
+    reviews/codex/*. See prompts/codeos-self-dev.md → "Feature Thread & IDs" / "Self-Reference Boundary". -->
+    
+    ## Change Intent
+    
+    **Why (problem in the toolkit):**
+    
+    `CHG-A` (`CHG-20260726-003`) established the Controlled Plain English pattern and wired every
+    consuming prompt to it, including a fixed status line
+    (`Controlled Plain English status for this review: enabled` / `...: disabled`) that
+    `prompts/codeos-reviewer-task.md` recognizes among reviewed artifacts. But `CHG-A` discovered that
+    `tools/reviewer/src/packet.rs` embeds that shared template as static text — it has no code path to
+    read any config file on the invoker's behalf — so within `CHG-A` alone, that status line had to be
+    included by hand by whoever runs a review. This was explicitly accepted as `CHG-A`'s scope, not as
+    the discipline's final operating model, and `UPG-0057` was marked incomplete pending this change.
+    
+    A human reviewer of that design rejected manual inclusion as the final state and proposed a
+    Rust-based automatic-injection-with-fail-closed-blocking alternative. That was weighed and replaced
+    with a narrower counter-proposal: `scripts/codeos-review.sh` (the bash wrapper `tools/reviewer`
+    already ships) can resolve the status itself and append a synthetic status artifact to the packet's
+    file list — using the Rust engine's existing "embed whatever paths you're given" behavior — with no
+    Rust changes and no fail-closed blocking of ordinary review generation over a cosmetic style toggle
+    (which would break the advisory/non-gatekeeping principle this toolkit protects everywhere else).
+    The human accepted this counter-proposal and set five refinement conditions, reproduced in full
+    below since they are this change's actual acceptance bar.
+    
+    A second, related gap: several doctrine and prompt files instruct running the compiled
+    `codeos-reviewer` binary directly (bypassing the wrapper entirely), and `docs/reviewer-pipeline.md`
+    explicitly states direct binary invocation "remains a valid alternative." If that remains true,
+    automatic status injection in the wrapper is silently bypassable by anyone who invokes the binary
+    directly — the wrapper must become the one documented, supported entry point for this to actually
+    hold.
+    
+    **What changes:**
+    
+    - `scripts/codeos-review.sh` — before invoking the binary for a `review` or `plan` subcommand
+      (the two subcommands that build a reviewer packet), resolve the Controlled Plain English status
+      and inject it as an extra artifact:
+      - **Context resolution:** if the caller's git root (already computed by the existing precondition
+        check) equals `CODEOS_ROOT` (this repo itself), read the self-development config,
+        `config/writing-discipline.yaml`; otherwise read the downstream project's
+        `architecture/controlled-plain-english.yaml` relative to the caller's git root.
+      - **Four-outcome resolution** (per `UPG-0056`'s Optional Mechanism Status Convention, unchanged):
+        absent or exact `status: disabled` → `disabled`; exact `status: enabled` → `enabled`; anything
+        else → configuration error.
+      - **Valid resolved status (`enabled` or `disabled`):** write a synthetic temp file (via `mktemp`,
+        a recognizable name pattern, quoted paths throughout, `trap` cleanup on both success and
+        failure) containing the exact recognized line first, plus context lines:
+        ```
+        Controlled Plain English status for this review: enabled
+        Source: config/writing-discipline.yaml
+        Applicable scope: selfdev-step-3
+        ```
+        (or the downstream config path and the actual `<stage>` argument, as applicable), then append
+        that temp file's path to the artifact list passed to the binary.
+      - **Malformed or contradictory configuration** (the "anything else" outcome): stop with a clear
+        error **before invoking the reviewer** — this is an invocation precondition failure, the same
+        class as today's "binary not found" check, not a reviewer finding.
+      - **Ordinary style non-compliance** (the content of generated prose): entirely unaffected by this
+        change — remains a reviewer finding under existing advisory authority, never a packet-generation
+        failure.
+    - `config/writing-discipline.yaml` (new file, new `config/` directory) — the self-development status
+      file, proposed default `status: enabled` for consistency with `CHG-A`'s downstream default
+      (flagged here for explicit human confirmation at this gate, since no prior decision fixed this
+      file's own default).
+    - `dba-system.md` — "Default Advisory Review" → "How to run it" changes from
+      `codeos-reviewer review <feature_id> <stage>` to `.codeos/scripts/codeos-review.sh review
+      <feature_id> <stage>`, with a new sentence stating the wrapper is the supported entry point for
+      automatic Controlled Plain English status injection, and that direct binary invocation bypasses
+      it. The architecture-synthesis reviewer-coverage note (~line 285) and the Stage-ID cross-reference
+      (~line 474) get the same command-form correction. The Call-site map's
+      `codeos-reviewer-task.md` row is rewritten to describe automatic injection by the wrapper instead
+      of manual inclusion by the invoker.
+    - `docs/reviewer-pipeline.md` — the "Direct binary invocation ... still works identically and
+      remains a valid alternative" sentence (§12) is corrected: direct invocation still runs, but is no
+      longer described as a supported alternative for Controlled Plain English purposes, since it
+      bypasses the wrapper's injection step. A new subsection documents the injection mechanism itself
+      (context resolution rule, four-outcome handling, temp-file hygiene, the three-way advisory
+      distinction above).
+    - `prompts/00a-solution-discovery.md`, `prompts/pipeline-reviewer.md`, `prompts/03b-architecture-synthesis.md`
+      — each has one inline `codeos-reviewer review ...` mention corrected to the wrapper form
+      (`.codeos/scripts/codeos-review.sh review ...`), matching the doctrine-level correction above.
+    - `patterns/controlled-plain-english.md` — the "Consulted by" paragraph's sentence describing
+      `codeos-reviewer-task.md`'s status line as "manually included by whoever invokes the review" is
+      replaced with a description of automatic injection by `scripts/codeos-review.sh`; the pattern's
+      configuration-neutral claim about `codeos-reviewer-task.md` itself is unchanged (it still never
+      reads a config file — it receives an already-resolved line, now from the wrapper instead of a
+      human).
+    - `CLAUDE.md` (repo root) — new `## Writing Discipline (Controlled Plain English)` section:
+      references (does not redefine) `config/writing-discipline.yaml` and the pattern's layers; states
+      Layer A always applies to self-dev chat; a per-section rule table (Change Intent / Acceptance
+      Criteria / Implementation Plan sections = Layer B; Implementation Notes = factual reporting;
+      review findings / Reconciliation = D1 always + D2 when enabled); restates the Reviewer Model (no
+      historical-compliance audit); the `config/` vs `status/` placement note (evidence/config, not
+      live mutable status); one new File Layout line for `config/`; the Assumptions-subsection
+      convention (guidance only — no new formal field on `templates/codeos-change.md`; rendered only
+      when a material assumption exists and no existing change-record section already represents it).
+      The existing reviewer-invocation snippet in `CLAUDE.md` (~line 118) already uses
+      `bash scripts/codeos-review.sh review ...` — no correction needed there.
+    - `prompts/codeos-self-dev.md` — new "Step 0b — Writing Discipline Check": read
+      `config/writing-discipline.yaml` per the four-outcome table; apply the per-section rule table
+      above when enabled. No new change-record trace-header field — non-retroactivity stays the
+      one-sentence rule already stated in the pattern.
+    - `backlog/UPG-0057-controlled-plain-english-writing-discipline.md` — Feature Thread updated: new
+      `CHG-20260727-001` row, and the "Status note" rewritten once this change completes to state that
+      manual inclusion is no longer part of the operating model.
+    - `status/self-development.md` — dashboard row bookkeeping for this change's own step transitions
+      (Step 1 → Step 2 → Step 3 → Step 4), updated at each gate, same as every other change in this
+      repo's history; not a content edit to the mechanism itself.
+    
+    **Scope boundary — what stays the same:**
+    
+    - `tools/reviewer/src/*` (the Rust engine) is **not touched** by this change — no new subcommand, no
+      new flag, no new parsing logic. The wrapper only appends an ordinary artifact path to the existing
+      trailing-args list `review`/`plan` already accept.
+    - The exact recognized status-line text already implemented in `prompts/codeos-reviewer-task.md` by
+      `CHG-A` is unchanged — this change produces that same line automatically instead of requiring a
+      human to type it.
+    - `UPG-0056`'s Optional Mechanism Status Convention (the four-outcome table, whitespace pinning,
+      missing-means-disabled rule) is consumed, not modified.
+    - No new Stage ID, no new mandatory approval gate, no new Non-Negotiable Rule.
+    - Historical `changes/*.md` records that mention `codeos-reviewer review` directly (many, across
+      the toolkit's history) are **not** rewritten — those are append-only history of what command was
+      run at the time, not living doctrine telling someone what command to run today. Only
+      currently-authoritative doctrine and prompt text is corrected.
+    - Ordinary style/CPE non-compliance in generated prose remains advisory-only — this change never
+      makes review-packet generation fail over content quality, only over the wrapper's own
+      configuration-read failing.
+    
+    **Human refinement conditions this change must satisfy (verbatim, from the gate that authorized this
+    CHG):**
+    
+    1. Make the wrapper the authoritative entry point — establish `scripts/codeos-review.sh` as the
+       supported review entry point, or identify/migrate every existing direct reviewer invocation, to
+       prevent a silent manual-bypass path via direct `codeos-reviewer` binary invocation.
+    2. Preserve the advisory boundary — exactly: valid resolved status → inject it automatically; valid
+       disabled/not-applicable status → inject that state and continue; malformed or contradictory
+       configuration → fail before invoking the reviewer; ordinary style non-compliance → reviewer
+       finding only, never a packet-generation failure.
+    3. Make the generated artifact explicit — the synthetic temp file is clearly synthetic and
+       deterministic (status line + `Source:` + `Applicable scope:`), with safe temp-file handling,
+       `trap` cleanup, quoted paths, and a recognizable filename.
+    4. Keep `CHG-A` and `CHG-B` historically honest — `CHG-A` established the pattern and consumer
+       wiring; `CHG-B` completes automatic status delivery at the supported reviewer invocation
+       boundary; manual inclusion is not part of the final operating model.
+    5. `CHG-B` acceptance criteria seed from the ten-item list the human specified, quoted verbatim:
+       downstream stage ID resolves from architecture config; self-dev stage ID resolves from
+       writing-discipline config; generated status artifact automatically appended; no
+       operator-supplied status path required; enabled/disabled/not-applicable outcomes represented
+       correctly; malformed/ambiguous config stops invocation with clear error; valid
+       disabled/not-applicable status does not block review; Rust reviewer remains unchanged; all
+       supported review paths use the wrapper or equivalent; temp files cleaned after success and
+       failure.
+    
+    **Class:** script-tooling + downstream-doctrine + self-dev-governance (three-way — see rationale
+    below).
+    **Scope axis:** both.
+    **Backlog item:** `backlog/UPG-0057-controlled-plain-english-writing-discipline.md`
+    
+    **Why three classes, one change:** the core implementation (`scripts/codeos-review.sh`) is
+    script-tooling; correcting `dba-system.md` and downstream-facing prompt text to name the wrapper as
+    authoritative is downstream-doctrine; adding `CLAUDE.md`'s Writing Discipline section and
+    `prompts/codeos-self-dev.md`'s Step 0b is self-dev-governance. Splitting these three into separate
+    CHGs would separate one coherent "wrapper becomes the authoritative, self-resolving entry point"
+    change into artificially disconnected pieces reviewed against different, narrower criteria. Per
+    `CLAUDE.md`'s triage table, the union of all three classes' requirements applies (downstream-
+    compatibility criteria + grep cross-reference + reviewer scope-triage, and scope-drift review for
+    the `CLAUDE.md`/self-dev-loop edits). **Review profile:** `PROFILE-5` (the most stringent of the
+    three, since this touches `CLAUDE.md` itself).
+    
+    ---
+    
+    ## Acceptance Criteria
+    
+    | # | Criterion | How it will be verified |
+    |---|---|---|
+    | 1 | Downstream review invocations resolve `architecture/controlled-plain-english.yaml` relative to the caller's git root (not through `.codeos`) | Read `scripts/codeos-review.sh`'s context-resolution logic; fixture test from a downstream-shaped directory |
+    | 2 | Self-development review invocations resolve `config/writing-discipline.yaml` relative to `CODEOS_ROOT` | Read the same logic; fixture test invoked from within this repo |
+    | 3 | The generated status artifact is automatically appended to the packet's artifact list for `review` and `plan` subcommands — no operator-supplied status path required | Two `--print-packet` smoke runs, one via `review` and one via `plan`, each showing the synthetic artifact's content without it being named on the command line |
+    | 4 | `enabled`, `disabled`, and absent-config (→ disabled) outcomes are all represented correctly in the injected line | Three fixture runs, one per case (`status: enabled`, `status: disabled`, no config file present), each asserting the exact injected line text |
+    | 5 | Malformed or ambiguous configuration stops invocation with a clear error before the reviewer runs | Fixture with an invalid config file; asserts non-zero exit and no packet/log/assessment file written |
+    | 6 | A valid disabled, not-applicable (absent config), or otherwise non-blocking status does not block review — it is injected and the review proceeds normally | Two fixture runs — one with `status: disabled`, one with no config file present — each asserting the reviewer still runs and produces an assessment |
+    | 7 | `tools/reviewer/src/*` is unchanged by this change | `git diff --stat -- tools/reviewer/src` is empty; `cargo test --release --manifest-path tools/reviewer/Cargo.toml` still passes at the same count as before this change |
+    | 8 | All currently-authoritative doctrine and prompt text that instructs running the reviewer names the wrapper (`.codeos/scripts/codeos-review.sh` downstream, `scripts/codeos-review.sh` self-dev), not the raw binary | grep for `` `codeos-reviewer review `` and `` `codeos-reviewer plan `` across `dba-system.md`, `CLAUDE.md`, `prompts/*.md`, `docs/reviewer-pipeline.md` (excluding `changes/*.md` history) returns no remaining bare-binary invocation instruction |
+    | 9 | `docs/reviewer-pipeline.md` no longer describes direct binary invocation as a valid supported alternative for review purposes | Read-through of §12; the corrected sentence states the bypass risk explicitly |
+    | 10 | Temp files are cleaned up after both a successful and a failing invocation | `trap` fixture test: run once to success, once forcing a mid-script failure, assert no leftover temp file matching the recognizable pattern in either case |
+    | 11 | The exact status-line text `codeos-reviewer-task.md` already recognizes (`Controlled Plain English status for this review: enabled`/`disabled`) is the temp file's first line, byte-identical to `CHG-A`'s implementation | grep the generated temp file in a fixture run against the exact string `codeos-reviewer-task.md` checks for |
+    | 12 | `CLAUDE.md`'s new Writing Discipline section does not introduce a new mandatory template field on `templates/codeos-change.md` | `git diff -- templates/codeos-change.md` is empty; the Assumptions-subsection convention is stated as guidance only |
+    | 13 | `config/writing-discipline.yaml`'s default value is explicitly confirmed at this gate (`status: enabled`, approved at the Step 1 gate) | Read the shipped file's content in Step 4; confirm it matches what was approved |
+    
+    <!-- Downstream-compatibility: AC1, AC8, AC9 verify the downstream-facing correction.
+    Script-tooling: AC3, AC5, AC6, AC7, AC10, AC11 verify I/O behavior, fail-closed cases, cleanup.
+    Self-dev-governance: AC2, AC12, AC13 verify the CLAUDE.md/config addition doesn't drift scope. -->
+    
+    ---
+    
+    ## Implementation Notes
+    
+    [Filled during Step 3.]
+    
+    ---
+    
+    ## Reconciliation
+    
+    [Filled during Step 4.]
+
+DIFF TO REVIEW (base->review, secret/size filtered)
+diff --git a/backlog/UPG-0057-controlled-plain-english-writing-discipline.md b/backlog/UPG-0057-controlled-plain-english-writing-discipline.md
+index d0b7d33..e1065be 100644
+--- a/backlog/UPG-0057-controlled-plain-english-writing-discipline.md
++++ b/backlog/UPG-0057-controlled-plain-english-writing-discipline.md
+@@ -109,11 +109,14 @@ considered complete until `CHG-B` reaches `COMPLETE`.**
+ | Change ID | File | Purpose | State |
+ |---|---|---|---|
+ | CHG-20260726-003 | `changes/UPG-0057__CHG-20260726-003__controlled-plain-english-writing-discipline.md` | CHG-A: pattern + downstream doctrine + prompt wiring | COMPLETE |
++| CHG-20260727-001 | `changes/UPG-0057__CHG-20260727-001__automatic-cpe-status-injection.md` | CHG-B: automatic status injection in `scripts/codeos-review.sh` (no Rust changes); wrapper established as sole supported entry point | DRAFT |
+ 
+ ### Reviews
+ 
+ | Review ID | Change ID | Step | Round | Verdict |
+ |---|---|---|---|---|
++| RVS__UPG-0057__CHG-20260727-001__S1 | CHG-20260727-001 | 1-Intent | R1→R3 | R1 CHANGES ADVISED (Change Intent's "What changes" list omitted `status/self-development.md`'s own dashboard-bookkeeping edits; Acceptance Criteria was already fully drafted inside the Step 1 submission, blending Step 2 content into Step 1) → fixed (file added to "What changes"; AC table moved out of the Step 1 artifact to a Step 2 placeholder, draft held in scratchpad for reuse) → R2 CHANGES ADVISED (Step 2 placeholder claimed the "ten-item list quoted in Change Intent above," but only the five refinement conditions were actually quoted there — the ten-item list itself was missing) → fixed (ten-item list now quoted verbatim in condition 5 of Change Intent; placeholder wording corrected to match) → R3 NO OBJECTION |
++| RVS__UPG-0057__CHG-20260727-001__S2 | CHG-20260727-001 | 2-Acceptance | R1→ | R1 CHANGES ADVISED (AC3's verification only named a `--print-packet` run, silent on `plan`, though the criterion claims both subcommands; AC6's verification tested only `status: disabled`, silent on the absent-config case though the criterion claims both; AC8's grep set omitted `CLAUDE.md` despite this change's own self-dev-governance scope) → fixed (AC3/AC6 verification steps now name each case explicitly; AC8's grep set now includes `CLAUDE.md`) |
+ | RVS__UPG-0057__CHG-20260726-003__S1 | CHG-20260726-003 | 1-Intent | R1 | NO OBJECTION |
+ | RVS__UPG-0057__CHG-20260726-003__S2 | CHG-20260726-003 | 2-Acceptance | R1→R2 | R1 DO NOT ADVANCE (AC3/AC4/AC18 depended on external plan content not in the packet; AC18's "cannot silently reintroduce" overstated an advisory generation discipline as enforcement) → fixed → R2 NO OBJECTION |
+ | RVS__UPG-0057__CHG-20260726-003__S3 | CHG-20260726-003 | 3-Implement | R1→R3 | R1 DO NOT ADVANCE (`codeos-reviewer-task.md` falsely claimed as a pattern consumer able to enforce the pattern-unavailable check; File Layout "none by default" contradicted `dba-init.sh`'s own scaffolding; "Thirteen files" undercounted the actual 18) → fixed → R2 NO OBJECTION → revised post-R2 per human direction (scaffolded default changed `disabled`→`enabled`) → R3 DO NOT ADVANCE (Implementation Notes' own file-list sentence still said `status: disabled` for `dba-init.sh`, contradicting AC13's own "no remaining stale claim" text) → fixed. **PROFILE-4's 3-round/step budget is now exhausted for Step 3** — fix applied inline per CLAUDE.md's budget-exceeded rule; no further automatic round run; escalated to human decision |
+diff --git a/status/self-development.md b/status/self-development.md
+index 86fc334..0a4ee42 100644
+--- a/status/self-development.md
++++ b/status/self-development.md
+@@ -78,7 +78,8 @@
+ | UPG-0055 | CHG-20260720-001 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S4; Step 1 R1 NO OBJECTION; Step 2 R1 NO OBJECTION; Step 3 R1 DO NOT ADVANCE → R2 DO NOT ADVANCE → R3 NO OBJECTION; Step 4 R1 DO NOT ADVANCE → R2 NO OBJECTION; all 9 ACs verified; 182 tests pass; 4 in-scope blockers found+fixed) | COMPLETE | — |
+ | UPG-0056 | CHG-20260726-001 | downstream-doctrine | downstream doctrine only | 4-Reconcile | ACCEPTED (series RVS__…__S4; Step 1 R1-R3 DO NOT ADVANCE→NO OBJECTION (original design) then revised to lean convention, R4 DO NOT ADVANCE→APPROVE_STAGE; Step 2 R1 DO NOT ADVANCE→R2 NO OBJECTION; Step 3 R1-R2 DO NOT ADVANCE→R3 NO OBJECTION; Step 4 R1 DO NOT ADVANCE→R2 NO OBJECTION; all 12 ACs verified; no code shipped) | COMPLETE | UPG-0057 |
+ | UPG-0058 | CHG-20260726-002 | downstream-doctrine | downstream doctrine only | 4-Reconcile | ACCEPTED (series RVS__…__S4; Step 1 R1→R2 NO OBJECTION; Step 2 R1 NO OBJECTION; Step 3 R1→R2 DO NOT ADVANCE→R3 NO OBJECTION; Step 4 R1→R2 DO NOT ADVANCE→R3 NO OBJECTION; all 16 ACs verified; 182 tests pass; 7 in-scope blockers found+fixed across the change) | COMPLETE | — |
+-| UPG-0057 | CHG-20260726-003 | downstream-doctrine | downstream doctrine only | 4-Reconcile | CHG-A; Steps 1-3 ACCEPTED (Step 3 revised per human direction: default disabled→enabled, plus interim-state framing for status-line delivery); Step 4 R1 DO NOT ADVANCE (stale historical disabled-default note)→fixed→R2 NO OBJECTION — accepted for pattern+wiring scope only; awaiting human Step 4 gate decision; UPG-0057 as a whole not complete until CHG-B (bash-level automatic status injection) lands | IN_PROGRESS | — |
++| UPG-0057 | CHG-20260726-003 | downstream-doctrine | downstream doctrine only | 4-Reconcile | CHG-A ACCEPTED and committed (fd2b198) — pattern + downstream doctrine + prompt wiring; manual status-line inclusion accepted as CHG-A-scope only, not final operating model | COMPLETE | UPG-0057 (CHG-B) |
++| UPG-0057 | CHG-20260727-001 | script-tooling + downstream-doctrine + self-dev-governance | both | 2-Acceptance | CHG-B: automatic Controlled Plain English status injection in `scripts/codeos-review.sh` (no Rust changes), wrapper established as sole supported entry point; Step 1 ACCEPTED (R1-R2 CHANGES ADVISED→R3 NO OBJECTION); Step 2 Acceptance Criteria (13 items) drafted; UPG-0057 not complete until this CHG reaches COMPLETE | IN_PROGRESS | — |
+ 
+ <!--
+ Identity   : Feature ID = UPG-#### (stable). Change ID = CHG-YYYYMMDD-NNN (one execution), or a

@@ -61,6 +61,26 @@ Record `review_profile: PROFILE-N` in the change record trace header.
 
 ---
 
+## Step 0b — Writing Discipline Check
+
+Read `config/writing-discipline.yaml` (Codeos-repo-local). Per the Optional Mechanism Status
+Convention's four-outcome table (`templates/conventions.md`): absent or exact `status: disabled` →
+disabled; exact `status: enabled` → enabled; anything else → stop and report a configuration error.
+
+When enabled, apply `CLAUDE.md`'s "Writing Discipline (Controlled Plain English)" per-section rule
+table to this change's own artifacts (Layer B for Change Intent / Acceptance Criteria /
+Implementation Plan; factual reporting for Implementation Notes; Layer D1 always + D2 when enabled
+for review findings and Reconciliation). No new change-record trace-header field is added for
+this — non-retroactivity is the one-sentence rule already stated in
+`patterns/controlled-plain-english.md`, nothing to stamp per change.
+
+`scripts/codeos-review.sh` reads this same file automatically and injects its resolved status into
+every review packet built for a self-development change — see `docs/reviewer-pipeline.md §12a`.
+This step is about applying the discipline while *writing* the artifact; the wrapper's injection is
+about what the *reviewer* is told, a separate but related mechanism.
+
+---
+
 ## The 4-Step Loop
 
 Each step requires explicit human approval before the next.

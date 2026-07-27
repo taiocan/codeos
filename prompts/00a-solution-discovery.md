@@ -204,7 +204,7 @@ To continue with feature work:
    specification. Stage 1 (Intent Capture) is the authoritative entry point.
 
 **If this output is carried into a Feature Brief or a Stage 1 Intent**, that handoff gets
-the default advisory review (`codeos-reviewer review <feature_id> discovery`) or an explicit
+the default advisory review (`.codeos/scripts/codeos-review.sh review <feature_id> discovery`) or an explicit
 Review Waiver — see `dba-system.md`'s "Default Advisory Review" section. This session
 itself stays optional and non-gating either way; a Discovery session whose output nobody
 carries forward is never reviewed, because there is nothing yet to review.

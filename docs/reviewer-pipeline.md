@@ -421,27 +421,31 @@ sessions feature-scoped · reviewed state pinned (base+review SHA, artifact hash
 output → UNCLASSIFIED/high-attention · secret/large-diff filtering present · no hooks active ·
 no core rules changed.
 
-## 10. Architecture: `codeos-review.sh` is a static locator shim
+## 10. Architecture: `codeos-review.sh` is a locator shim plus one preprocessing step
 
 ```bash
-# scripts/codeos-review.sh — final line; everything above it only locates the binary
-exec "${BINARY}" "$@"
+# scripts/codeos-review.sh — for review/plan, resolves + injects a CPE status artifact,
+# then invokes the binary as a subprocess (not exec, so its own cleanup trap can still
+# fire); every other subcommand still ends in the original: exec "${BINARY}" "$@"
 ```
 
-`codeos-review.sh` is a **~28-line static locator shim** (see `UPG-0038` for why it isn't
-shorter: a caller-git-repository precondition, plus script-relative binary-path resolution
-that works correctly through the `.codeos` symlink from a downstream project, plus a PATH
-fallback if the compiled binary isn't found at its expected location). It finds the compiled
-Rust binary (`tools/reviewer/target/release/codeos-reviewer`) and passes all arguments
-through verbatim (`"$@"`). Its conditionals are entirely about *locating the binary and
-validating preconditions* — it contains no argument preprocessing and no reviewer capability
-of its own.
+`codeos-review.sh` is a **locator shim** (see `UPG-0038` for why it isn't shorter: a
+caller-git-repository precondition, plus script-relative binary-path resolution that works
+correctly through the `.codeos` symlink from a downstream project, plus a PATH fallback if
+the compiled binary isn't found at its expected location) **plus, since `UPG-0057` CHG-B,
+one argument-preprocessing step**: for the `review` and `plan` subcommands only, it resolves
+this project's Controlled Plain English status and appends a synthetic status artifact to
+the argument list before invoking the binary (§12a). Every other subcommand (`decision`,
+`diagnose`, `stage-start`, `check-drift`, `generate-*`) is still passed through with no
+preprocessing at all, ending in the original `exec "${BINARY}" "$@"`.
 
-**Consequence for upgrades:** any reviewer capability change — new packet sections, new
-subcommand behavior, new flags, new decision-log fields — lives in the **Rust engine**
-(`tools/reviewer/src/`). Changing only the bash script cannot add or modify reviewer
-behavior. The bash script only needs to change if binary location, build instructions, or
-path-resolution semantics change.
+**Consequence for upgrades:** any reviewer *capability* change — new packet sections, new
+subcommand behavior, new flags, new decision-log fields, anything the Rust engine itself must
+parse or act on — still lives in the **Rust engine** (`tools/reviewer/src/`); the wrapper's one
+preprocessing step only ever appends an ordinary artifact path that the engine already knows how
+to embed, it does not teach the engine anything new. The bash script needs to change for: binary
+location, build instructions, path-resolution semantics, or the Controlled Plain English
+injection logic itself (§12a).
 
 ## 11. Usage
 
@@ -498,9 +502,43 @@ Reviewing a Feature Brief before confirming it:
 ```bash
 .codeos/scripts/codeos-review.sh review checkout-flow brief backlog/checkout-flow.md
 ```
-Direct binary invocation (`/path/to/Codeos/tools/reviewer/target/release/codeos-reviewer
-...`, where `/path/to/Codeos` is wherever `.codeos` resolves to — check with `readlink -f
-.codeos`) still works identically and remains a valid alternative.
+**`.codeos/scripts/codeos-review.sh` (or `scripts/codeos-review.sh` for Codeos's own
+self-development) is the supported entry point**, not a convenience wrapper among several equally
+valid options. Since `UPG-0057` CHG-B, it automatically resolves and injects this project's
+Controlled Plain English status (§12a below) before invoking the reviewer. Direct binary invocation
+(`/path/to/Codeos/tools/reviewer/target/release/codeos-reviewer ...`, where `/path/to/Codeos` is
+wherever `.codeos` resolves to — check with `readlink -f .codeos`) still runs identically, but
+skips that injection step entirely — it is **not** a supported alternative for Controlled Plain
+English purposes, since `codeos-reviewer-task.md` never reads any config file itself and depends
+on the wrapper to supply the resolved status line.
+
+## 12a. Controlled Plain English automatic status injection (`UPG-0057` CHG-B)
+
+Before invoking the reviewer for a `review` or `plan` subcommand (the two subcommands that build a
+packet), the wrapper:
+
+1. **Resolves context** — if the caller's own git root is the Codeos repo itself, this is a
+   self-development review and the wrapper reads `config/writing-discipline.yaml` (relative to the
+   Codeos repo root); otherwise it's a downstream review and the wrapper reads
+   `architecture/controlled-plain-english.yaml` relative to the *caller's* git root (not through
+   `.codeos`).
+2. **Resolves the four-outcome status** per `UPG-0056`'s Optional Mechanism Status Convention:
+   absent or exact `status: disabled` → `disabled`; exact `status: enabled` → `enabled`; anything
+   else → a configuration error.
+3. **On a valid status** (`enabled` or `disabled`), writes a synthetic, deterministic temp file
+   (recognizable name `codeos-cpe-status.*`, created with `mktemp`, cleaned up via a `trap` on both
+   the success and failure paths) containing the exact line `codeos-reviewer-task.md` recognizes,
+   plus its source config path and the stage argument, then appends that file's path to the
+   packet's artifact list — no operator-supplied status path is ever required.
+4. **On a malformed or contradictory status file**, stops with a clear error *before* invoking the
+   reviewer (exit code 7) — this is an invocation precondition failure, the same class as "binary
+   not found," never a reviewer finding.
+
+Ordinary style non-compliance in the reviewed prose itself is entirely unaffected: it remains an
+advisory reviewer finding under existing authority, never a packet-generation failure. A `disabled`
+(or absent/not-applicable) status is injected and reviewed normally — it never blocks anything.
+`tools/reviewer/src/*` is unchanged by this mechanism; the wrapper only appends an ordinary
+artifact path that the Rust engine already knows how to embed.
 
 **If reviewer tooling isn't built or configured** for a downstream project, see
 `dba-system.md`'s Review Waiver practice — record a plain reason in that feature's review
@@ -567,7 +605,7 @@ Includes full artifact content where allowed by packet size and redaction rules.
 
 **Command:**
 ```bash
-codeos-reviewer review <feature> <stage> <artifact-paths>
+.codeos/scripts/codeos-review.sh review <feature> <stage> <artifact-paths>
 ```
 
 ### Delta Mode
@@ -581,7 +619,7 @@ Includes only changes since a base commit. Unchanged artifacts are represented b
 
 **Command:**
 ```bash
-codeos-reviewer review <feature> <stage> --mode delta --base <commit-sha> <artifact-paths>
+.codeos/scripts/codeos-review.sh review <feature> <stage> --mode delta --base <commit-sha> <artifact-paths>
 ```
 
 **Guardrail:** Delta mode requires artifact paths to be tracked by git. Untracked files cannot be compared to the base commit and will error.
@@ -597,7 +635,7 @@ Includes only the file path and hash, not file content. **This reduces packet si
 
 **Command:**
 ```bash
-codeos-reviewer review <feature> <stage> --sha-only <context-file> <other-artifacts>
+.codeos/scripts/codeos-review.sh review <feature> <stage> --sha-only <context-file> <other-artifacts>
 ```
 
 **Guardrail:** Do not use SHA-only for files whose changed behavior, wording, or structure the reviewer must assess. Changed behavior must remain reviewable as full content or diff.
@@ -607,7 +645,7 @@ codeos-reviewer review <feature> <stage> --sha-only <context-file> <other-artifa
 Delta mode and SHA-only can be combined. When both apply, SHA-only paths are included as path/hash references rather than full content or diff.
 
 ```bash
-codeos-reviewer review UPG-0042 selfdev-step-3 \
+scripts/codeos-review.sh review UPG-0042 selfdev-step-3 \
   --mode delta --base abc123 \
   --sha-only docs/large-reference.md \
   changes/UPG-0042__CHG-*.md src/packet.rs
@@ -615,7 +653,7 @@ codeos-reviewer review UPG-0042 selfdev-step-3 \
 
 ### Preview a plan before reviewing
 
-`codeos-reviewer plan` accepts the exact same arguments as `review` (feature, stage,
+`codeos-review.sh plan` (like `review`, resolved through the wrapper — §12a) accepts the exact same arguments as `review` (feature, stage,
 artifacts, `--mode`/`--base`, `--sha-only`) and reports what a `review` call with those
 arguments would send — resolved artifacts with their mode and byte size, `review_content_bytes`
 vs. the packet budget, `estimated_review_tokens`, coverage state, and (when over budget) the
@@ -624,7 +662,7 @@ same `packet::build()` function `review`/`--print-packet` use, so it cannot desc
 `review` wouldn't actually build.
 
 ```bash
-codeos-reviewer plan UPG-0042 selfdev-step-1 changes/UPG-0042__CHG-*.md src/packet.rs
+scripts/codeos-review.sh plan UPG-0042 selfdev-step-1 changes/UPG-0042__CHG-*.md src/packet.rs
 ```
 
 `plan` never resolves or invokes a provider and never writes to `reviews/` or any other tracked

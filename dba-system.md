@@ -50,13 +50,22 @@ that Codeos's own toolkit development already holds itself to.
 
 **How to run it.** Before each gate's human-approval decision, run:
 ```
-codeos-reviewer review <feature_id> <stage>
+.codeos/scripts/codeos-review.sh review <feature_id> <stage>
 ```
-using the Stage ID from the table above (e.g. `codeos-reviewer review checkout-flow 2` before
-approving Stage 2's contract; `codeos-reviewer review checkout-flow brief` before confirming
-a Feature Brief). The reviewer is independent, read-only, and non-gatekeeping — its verdict
-(NO OBJECTION / CHANGES ADVISED / DO NOT ADVANCE) informs the human's decision but never
-auto-blocks. **The human decides at the gate; Non-Negotiable Rule #1 is unchanged.**
+using the Stage ID from the table above (e.g. `.codeos/scripts/codeos-review.sh review
+checkout-flow 2` before approving Stage 2's contract; `.codeos/scripts/codeos-review.sh review
+checkout-flow brief` before confirming a Feature Brief). The reviewer is independent, read-only,
+and non-gatekeeping — its verdict (NO OBJECTION / CHANGES ADVISED / DO NOT ADVANCE) informs the
+human's decision but never auto-blocks. **The human decides at the gate; Non-Negotiable Rule #1
+is unchanged.**
+
+**The wrapper is the supported entry point.** `.codeos/scripts/codeos-review.sh` (downstream) and
+`scripts/codeos-review.sh` (Codeos's own self-development) automatically resolve and inject this
+project's Controlled Plain English status (see "Controlled Plain English Writing Discipline"
+below) before invoking the reviewer. Invoking the compiled `codeos-reviewer` binary directly
+bypasses that injection — it still runs, but it is not a supported alternative for Controlled
+Plain English purposes, since the shared reviewer template never reads any config file itself
+(see the Call-site map below).
 
 **Round budget.** Round 1 runs before the gate. Rounds 2-3 are allowed for fixes or material
 deltas raised by the previous round. After 3 rounds, stop and require a human decision rather
@@ -283,8 +292,9 @@ ever accepts the current version of *both* artifacts; historical files matter fo
 the non-retroactive protection above, not for gating new work.
 
 **Reviewer coverage.** `codeos-reviewer` has a dedicated checklist for the `architecture-synthesis`
-stage id, covering all four pipeline steps — run `codeos-reviewer review <feature_id>
-architecture-synthesis` the same way as any other stage, per "Default Advisory Review" above. This
+stage id, covering all four pipeline steps — run `.codeos/scripts/codeos-review.sh review
+<feature_id> architecture-synthesis` the same way as any other stage, per "Default Advisory
+Review" above. This
 does not weaken Non-Negotiable Rule #1 — the human still explicitly approves both the baseline and
 the logical design.
 
@@ -453,7 +463,7 @@ are that convention's, unchanged.
 |---|---|
 | Stage 1-10 prompts (`.codeos/prompts/01-intent.md` … `10-arch-refine.md`) | `architecture/controlled-plain-english.yaml` |
 | `.codeos/prompts/pipeline-reviewer.md` | `architecture/controlled-plain-english.yaml` |
-| `.codeos/prompts/codeos-reviewer-task.md` (shared reviewer infrastructure) | **Reads neither file — configuration-neutral.** Whoever invokes the review (a human, or an agent under human instruction) includes a fixed status line — "Controlled Plain English status for this review: enabled/disabled" — as one of the reviewed artifacts, the same way any other file is passed to `codeos-reviewer review`. There is no automatic packet-assembly step that reads a config file on the invoker's behalf; `tools/reviewer` embeds whatever artifact paths it is given, unchanged. |
+| `.codeos/prompts/codeos-reviewer-task.md` (shared reviewer infrastructure) | **Reads neither file — configuration-neutral.** `.codeos/scripts/codeos-review.sh` resolves this project's status automatically and appends a synthetic status artifact — "Controlled Plain English status for this review: enabled/disabled" plus its config source and applicable stage — to the packet before invoking the reviewer, the same way any other file is passed to `codeos-reviewer review`. `codeos-reviewer-task.md` still never reads a config file itself; it only recognizes the already-resolved line among the reviewed artifacts. `tools/reviewer` is unchanged — it still embeds whatever artifact paths it is given; the wrapper is what supplies this one automatically now. |
 
 **What is and isn't toggle-gated.** Layer A (plain communication) and Layer C1/D1 (existing
 literal-protection and reviewer-integrity authority) are **not** new mandatory rules and are never
@@ -471,8 +481,8 @@ of its own.
 
 Use the corresponding prompt file from `.codeos/prompts/` for detailed instructions. The
 **Stage ID** column is the identifier vocabulary used both for documentation ordering and as
-the `<stage>` argument to `codeos-reviewer review <feature_id> <stage>` — see "Default
-Advisory Review" below.
+the `<stage>` argument to `.codeos/scripts/codeos-review.sh review <feature_id> <stage>` — see
+"Default Advisory Review" below.
 
 | Stage | Stage ID | File |
 |---|---|---|

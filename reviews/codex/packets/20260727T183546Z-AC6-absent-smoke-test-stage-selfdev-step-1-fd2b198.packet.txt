@@ -1,0 +1,915 @@
+Reviewer task:
+
+SCOPE CONTRACT
+  Assess this artifact against the STATED SCOPE of this stage/PR — the Expected Stage
+  Output below and what the artifacts actually claim — NOT against an ideal final system.
+  A capability the artifacts do not claim to provide is OUT-OF-SCOPE, not a defect.
+  The following are OUT-OF-SCOPE BACKLOG unless THIS artifact explicitly claims to provide
+  them: formal approval-binding enforcement; rollback correctness; COMMIT_BOUND/
+  WORKSPACE_BOUND enforcement; JSON Schema validation; CI validation; exact
+  decision-integrity; per-feature decision ledgers; autonomous approval; enabled hooks.
+
+YOUR TASK — answer these five questions using only the evidence in the packet:
+  1. Acceptance criteria: Does the artifact satisfy each of its stated acceptance criteria?
+     Cite evidence for each criterion (or note its absence).
+  2. Claim support: Are universal or strong claims (all, every, never, always, no X) in the
+     artifact supported by evidence in the packet? Any unverifiable strong claim is a candidate
+     finding only if it affects acceptance, scope, safety, decision integrity, or the artifact's
+     stated guarantees.
+  3. Scope drift: Is there any change beyond the stated scope boundary? (Files not in the
+     "What changes" list; behavior changes not in the intent; downstream doctrine modified
+     rather than read.)
+  4. In-scope blockers: Are there facts that, if left in, would make the artifact wrong,
+     unsafe, or internally contradictory?
+  5. Finding classification: Classify every finding you raise as exactly one of the five
+     TRIAGE RULE categories below.
+
+TRIAGE RULE — classify EVERY finding as exactly one of:
+  IN-SCOPE BLOCKER         breaks the stated goal; creates a FALSE CLAIM in this artifact;
+                           weakens the advisory/read-only/human-gated guarantees; prevents
+                           the work from running; or violates an explicit safety constraint.
+  IN-SCOPE NON-BLOCKER     improves it but is not required for this PR.
+  OUT-OF-SCOPE BACKLOG     valid, but belongs to a future feature / stronger guarantee.
+  REJECTED                 conflicts with the stated scope or Codeos philosophy.
+  SELF-REFERENCE /         review records that are stale because of the previous round's
+  REVIEW-BOOKKEEPING       own existence (causal loop); not a real artifact defect.
+  Base the PR decision ONLY on IN-SCOPE BLOCKER findings. An OUT-OF-SCOPE BACKLOG finding
+  must NOT cause DO NOT ADVANCE unless this artifact FALSELY CLAIMS to solve it.
+
+WHAT NOT TO DO
+  - Do not flag style or wording issues as blockers unless the wording creates a false claim,
+    contradiction, parser breakage, or wrong governance instruction.
+  - Do not re-review unchanged full context when the packet is in delta mode.
+  - Do not treat local-only review history as a blocker unless the artifact falsely
+    claims the review artifacts are committed/durable.
+
+INSTRUCTIONS
+  If this is a resumed session, ignore any earlier-session conclusions unless they are
+  re-established by THIS packet; assess only the evidence above, pinned to this commit.
+  Give a focused assessment of this artifact against the stated scope, acceptance criteria,
+  and evidence in this packet. Rank findings by severity. Suggest a better design only when
+  needed to explain a required fix for an IN-SCOPE BLOCKER.
+
+  CONTROLLED PLAIN ENGLISH (if one of the artifacts under review states "Controlled Plain
+  English status for this review: enabled" or "...: disabled" — this task template never reads
+  any configuration file itself; whoever invokes the review includes that line as one of the
+  reviewed artifacts, the same way any other file is included, when the relevant project has the
+  discipline enabled): Layer D1 (advisory verdict, no invented requirements, evidence separated
+  from inference — the TRIAGE RULE and "based ONLY on in-scope blockers" instructions above
+  already are this) always applies regardless of that value. When the value is `enabled`,
+  additionally write your prose in Layer D2 style — short sentences, common words, direct
+  explanations. This affects wording only; it never changes the footer format below.
+
+  Limit findings to the top 3 IN-SCOPE BLOCKERS. Additional non-blocking observations may be
+  summarized in one short paragraph only if useful.
+
+  For EACH finding emit:
+    Finding: / Severity: High|Medium|Low / Classification: <one of the TRIAGE RULE labels>
+    Evidence: <file/line> / Why: <short> / Required action: fix now|optional fix|backlog|reject
+    Scope reason: <why it does/does not belong to this PR's scope>
+  Then emit:
+    PR decision: ADVANCE | REQUEST CHANGES | DO NOT ADVANCE   (based ONLY on in-scope blockers)
+    Scope drift warning: yes|no — <is anything pulling this PR beyond its stated scope?>
+  Then on the LAST three lines emit exactly (map ADVANCE->NO OBJECTION,
+  REQUEST CHANGES->CHANGES ADVISED, DO NOT ADVANCE->DO NOT ADVANCE):
+    LOG SUMMARY: <NO OBJECTION | CHANGES ADVISED | DO NOT ADVANCE | UNCLASSIFIED> — <single most important point>
+      (use UNCLASSIFIED if you genuinely cannot classify the artifact safely)
+    EVIDENCE: <A|B|C|D|E>
+    HIGHEST-IMPACT UNCERTAINTY: <one sentence — what single thing, if wrong, most affects this assessment>
+
+  Evidence grade — the grade describes what the assessment rests on, not reviewer confidence:
+    A — Directly verified in the artifact, diff, or output shown in the packet
+    B — Verified with multiple direct pieces of evidence, but coverage is not complete
+    C — Partially verified, partially inferred from structure or context
+    D — Mostly inferred from structure or indirect evidence
+    E — Hypothesis or very limited basis — little to no direct evidence
+
+
+PACKET MANIFEST
+  generated: 2026-07-27T18:32:07Z
+  task_prompt: /home/rimo/projects/Codeos/prompts/codeos-reviewer-task.md (5794 bytes)
+  review_content_bytes: 53044
+  estimated_review_tokens: ~13261
+  budget_status: WARNING — 53044 bytes exceeds CODEOS_PACKET_BUDGET_BYTES=50000
+  packet_mode: full
+  delta_base: none
+  items:
+    - path: CLAUDE.md
+      mode: full_file
+      bytes: 14071
+      sha256: cf95a873a95d1bc16f6f6aaf5394c024846d51a75ac5adb14d77d7eae71f5e32
+    - path: /tmp/codeos-cpe-status.wTywjn
+      mode: full_file
+      bytes: 157
+      sha256: df37304546e025a68e31c8a379add367a5eca7354d3205bb2e74ac570295244d
+    - path: (diff)
+      mode: full_file
+      bytes: 38816
+
+REVIEW CONTEXT
+  Feature:                AC6-absent-smoke-test
+  Stage:                  selfdev-step-1
+  Branch:                 main
+  Base commit:            (no base pin)
+  Review commit:          fd2b1983a3bf21d54b19ba55f99f4da30f050609 (+ uncommitted workspace changes)
+  Current approved stage: n/a (non-numeric stage)
+  Evidence coverage:      FULL_COVERAGE
+  Workspace dirty:        yes (uncommitted changes at review time)
+
+DBA RULES RELEVANT TO THIS STAGE
+  - Human approval is required for every stage transition; you are advisory only.
+  - Memory is not truth — assess only what is provided, pinned to the review commit.
+  - Implementation must trace to approved artifacts; no behavior beyond intent+contract+schema.
+  - No events outside the approved event schema; no hidden behavior.
+
+STAGE-SPECIFIC CHECKS
+  - (no stage-specific checklist for stage selfdev-step-1)
+
+EXPECTED STAGE OUTPUT
+  (no expected-output template for stage)
+
+ARTIFACTS TO REVIEW
+  --- CLAUDE.md (sha256: cf95a873a95d1bc16f6f6aaf5394c024846d51a75ac5adb14d77d7eae71f5e32, visibility: shown) ---
+    # Codeos Self-Development — Toolkit Operating Guide
+    
+    > **What this file is.** This file governs development of the **Codeos toolkit repository
+    > itself** — its prompts, templates, docs, patterns, and scripts. It does **not** replace
+    > the downstream DBA doctrine in [`dba-system.md`](dba-system.md), which is what
+    > *downstream projects* load via `.codeos/dba-system.md`. Do not run the full 9-stage DBA
+    > loop on the toolkit; use the lean self-development loop below.
+    
+    This is a **stable rulebook**. It contains no live workflow state. Current status lives in
+    [`status/self-development.md`](status/self-development.md); per-change detail lives in
+    `changes/UPG-####__CHG-YYYYMMDD-NNN__slug.md`.
+    
+    All paths in this file are **repo-relative** (`prompts/`, `templates/`, `scripts/`, …).
+    There is no `.codeos/` symlink inside this repo — that prefix is only for downstream projects.
+    
+    ---
+    
+    ## Mode Declaration
+    
+    You are developing the Codeos toolkit. Codeos *defines* Declarative Behavioral Architecture
+    (DBA); it does not need to prove DBA to itself. Toolkit changes are prose (prompts,
+    templates, docs, patterns) and bash tooling (the reviewer pipeline, `dba-init.sh`). There
+    are no runtime events, no event schema, and no replay here — so the 9-stage loop does not
+    apply. Self-development keeps DBA's **philosophy** — intent primacy, approve-the-WHAT-before-
+    the-HOW, human-approved gates, advisory (never gatekeeping) review — in a leaner shape.
+    
+    ---
+    
+    ## At Session Start
+    
+    1. Read this file.
+    2. Read [`status/self-development.md`](status/self-development.md) — the live Self-Development
+       Status dashboard (what is in flight and at which step).
+    3. Inspect the active `changes/UPG-####__CHG-YYYYMMDD-NNN__slug.md` for any IN_PROGRESS row.
+    4. Confirm the current state with the human, then **STOP** and ask what to work on.
+    
+    ---
+    
+    ## Truth Authority (inherited)
+    
+    1. **Explicit human correction** at any gate overrides everything else.
+    2. **The artifacts on disk are authoritative** — never memory of them. Re-read before acting.
+    3. Surface unresolved conflicts to the human rather than silently resolving them.
+    
+    The downstream doctrine in `dba-system.md` is the authority on DBA *substance*. When a
+    self-development change touches it, see the `downstream-doctrine` rules below.
+    
+    ---
+    
+    ## Triage Front-Door
+    
+    Classify every change before doing anything. Class determines rigor.
+    
+    | Class | Path |
+    |---|---|
+    | `trivial` | Direct edit. No loop, no review, no change record. |
+    | `backlog-only` | Direct edit, unless it changes accepted scope (then 4-step loop). |
+    | `documentation` (normative) | 4-step loop. |
+    | `template` / `prompt` / `script-tooling` | 4-step loop. |
+    | `downstream-doctrine` | 4-step loop **+ downstream-compatibility acceptance criteria + grep cross-reference verification + reviewer scope-triage**. |
+    | `self-dev-governance` | 4-step loop **+ scope-drift review** (changes to this file or the self-dev loop itself). |
+    
+    **`trivial` means non-semantic only:** typo, broken link, formatting, a wording
+    clarification that does not change meaning, or a backlog note with no implementation.
+    **Anything** that touches process, policy, behavior, script behavior, template meaning,
+    prompt semantics, doctrine, stage names, approval rules, file layout, or generated-project
+    layout is **non-trivial** and uses the 4-step loop. When unsure, treat it as non-trivial.
+    
+    **Scope axis** — every non-trivial change must declare its scope in Step 1:
+    `self-dev only` | `downstream doctrine only` | `both`. This prevents accidental drift into
+    the downstream master doctrine.
+    
+    After triage, assign a **review profile** (Step 0a of `prompts/codeos-self-dev.md`); the
+    profile governs Codex review cadence and round limits.
+    
+    ---
+    
+    ## The 4-Step Self-Development Loop
+    
+    Anchor each non-trivial change to a `backlog/` item (create one if none exists). Use
+    [`prompts/codeos-self-dev.md`](prompts/codeos-self-dev.md) for the detailed step prompt and
+    [`templates/codeos-change.md`](templates/codeos-change.md) for the change record. One change
+    record per non-trivial change: `changes/UPG-####__CHG-YYYYMMDD-NNN__slug.md`.
+    
+    Each step: **produce output → run the Codex review if required by profile → STOP at the
+    gate → human approves → next step.** (Profile governs review cadence — see Step 0a of
+    `prompts/codeos-self-dev.md`.)
+    
+    1. **Change Intent** — Why (problem in the toolkit), what changes (named files), what stays
+       the same (scope boundary), triage class, scope axis, originating backlog id. Start the
+       change record; activate the row in `status/self-development.md`.
+    2. **Acceptance Criteria** — The consistency contracts the change must hold.
+       *Doctrine/downstream:* cross-reference integrity, downstream-compatibility (the generated
+       project still loads `.codeos/dba-system.md`; stage tables, prompt filenames, and
+       references move together), no internal contradiction. *Tooling:* I/O behavior, exit-code /
+       fail-closed cases, idempotency.
+    3. **Implement** — Edits constrained to the approved scope. Update **all** cross-references
+       in the same change. No scope creep. If a change you discover is out of scope, stop and
+       re-triage it as its own change.
+    4. **Reconcile** — Verify each acceptance criterion. Sweep the toolkit for stale references,
+       orphaned links, and stage-table↔prompt-file drift (grep). For tooling, do a smoke run.
+       Apply reviewer **scope triage** (IN-SCOPE BLOCKER / IN-SCOPE NON-BLOCKER /
+       OUT-OF-SCOPE BACKLOG / REJECTED / SELF-REFERENCE / REVIEW-BOOKKEEPING). Mark the row COMPLETE in `status/self-development.md`;
+       log the decision (see Review Logging).
+    
+    ### Review cadence and advisory verdict
+    
+    Review cadence is governed by the **review profile** assigned in Step 0a of
+    `prompts/codeos-self-dev.md`. High-risk profiles (PROFILE-3 through PROFILE-5) require
+    a Codex review before each step gate. Lighter profiles (PROFILE-1, PROFILE-2) may
+    limit Codex review to Reconcile only or reduce the round budget, as defined by the
+    profile. Human approval at each step transition is required at every profile; reviewer
+    output is advisory and non-gatekeeping at every profile.
+    
+    To run the reviewer:
+    
+    ```
+    bash scripts/codeos-review.sh review UPG-####__CHG-YYYYMMDD-NNN selfdev-step-<N> changes/UPG-####__CHG-YYYYMMDD-NNN__slug.md <touched-files>
+    ```
+    
+    The verdict is **advisory** — NO OBJECTION / CHANGES ADVISED / DO NOT ADVANCE inform
+    the human's decision but never auto-block. The reviewer is independent, read-only, and
+    non-gatekeeping; the human decides at the gate.
+    
+    ### Gate discipline
+    
+    After each step output (and its review), STOP and state:
+    `AWAITING HUMAN APPROVAL TO PROCEED TO STEP [N+1]`. Advance only on an explicit
+    "APPROVED" / "approved" / "yes proceed" / equivalent. Anything else is a revision request.
+    
+    ---
+    
+    ## Stack / Dependency Reconciliation
+    
+    Evidence hygiene tied to watched files — not a second governance layer, not doctrine, and not
+    an independent approval authority. `status/stack-manifest.md` records the current observed
+    stack and dependency-policy status for Codeos self-development. Human approval at each gate
+    remains the authority; the manifest and reconciliation reports are evidence, not authority.
+    
+    - Dependency/stack-file changes (watched files: `Cargo.toml`, `Cargo.lock` in this repo — see
+      `status/stack-manifest.md` for the full list and which patterns actually apply here) must be
+      declared in Step 1's "What changes," or explicitly re-triaged before implementation if
+      discovered later.
+    - If Step 1 declares a watched-file change, Step 2 must include a verification criterion for
+      it.
+    - Step 4 verifies that a `status/stack-reconciliation/<CHG-id>-stack-reconciliation-report.md`
+      instance exists for the change, and runs `check-drift` against it.
+    
+    ---
+    
+    ## What You NEVER Do (self-development)
+    
+    - Treat a non-trivial change as trivial to skip the loop.
+    - Advance a step without running the review required by your profile and getting explicit approval.
+    - Change the downstream doctrine (`dba-system.md`) as a side effect — that requires an
+      explicit `downstream-doctrine` (or `both`) scope declaration in Step 1.
+    - Rewrite downstream 9-stage substance when only a path/location change is intended.
+    - Put live status into this file — it belongs in `status/self-development.md`.
+    - Turn `prompts/codeos-self-dev.md` into a second doctrine; keep it a practical step prompt.
+    - Let the reviewer become an enforcement engine — its verdict is advisory, scope-triaged.
+    
+    ---
+    
+    ## Writing Discipline (Controlled Plain English)
+    
+    References, does not redefine, `patterns/controlled-plain-english.md`'s layers and reviewer model
+    (see `dba-system.md` → "Controlled Plain English Writing Discipline" for the downstream side of
+    this same mechanism). Self-development's own status file is `config/writing-discipline.yaml`
+    (Codeos-repo-local, not project-local like the downstream file), read and injected automatically by
+    `scripts/codeos-review.sh` per `UPG-0057` CHG-B — see `prompts/codeos-self-dev.md`'s Step 0b.
+    
+    **Layer A** (plain communication in ordinary chat, session updates, explanations) always applies,
+    unconditionally, exactly as it already does everywhere else in this environment — it is not
+    gated by this file's status.
+    
+    **Per-section rule table**, when `status: enabled`:
+    
+    | Change-record section | Layer applied |
+    |---|---|
+    | Change Intent / Acceptance Criteria / Implementation Plan | Layer B (specification precision) |
+    | Implementation Notes | Factual reporting, not Layer B — this section reports what happened |
+    | Review findings / Reconciliation | Layer D1 always; Layer D2 (plain review prose) when enabled |
+    
+    **Reviewer Model** (restated, not new authority): no separate "Controlled Plain English
+    violation" finding category, and no historical-compliance audit — a reviewer reports meaning loss,
+    authority mixing, or an unverifiable requirement using existing review authority, exactly as it
+    does today. See the pattern's own "Reviewer Model" section for the full statement.
+    
+    **Placement note:** `config/writing-discipline.yaml` lives under `config/`, not `status/` — it is a
+    human-set configuration toggle, not live mutable workflow state like the dashboard or roadmap.
+    
+    **Assumptions-subsection convention** (guidance only — no new formal field on
+    `templates/codeos-change.md`): when Layer B applies and a material assumption exists that no
+    existing change-record section already represents, an agent may add a plainly-labeled
+    "Assumptions" subsection to Implementation Notes. Never rendered when empty; never parsed by any
+    script or template validator.
+    
+    ---
+    
+    ## Self-Development File Layout
+    
+    ```
+    Codeos/                          ← toolkit repo (this repo)
+    ├── CLAUDE.md                    ← THIS FILE — stable self-development operating guide
+    ├── dba-system.md                ← downstream DBA doctrine (loaded by downstream projects)
+    ├── config/
+    │   └── writing-discipline.yaml   ← Controlled Plain English status for self-development (see "Writing Discipline" above)
+    ├── status/
+    │   ├── self-development.md       ← live Self-Development Status dashboard (mutable; Feature ID + Change ID)
+    │   ├── roadmap.md                ← dependency-aware wave plan, keyed by UPG-#### (mutable)
+    │   ├── stack-manifest.md         ← live stack/dependency status (evidence, not authority; mutable)
+    │   └── stack-reconciliation/     ← one *-stack-reconciliation-report.md per watched-file change
+    ├── changes/
+    │   └── UPG-####__CHG-YYYYMMDD-NNN__slug.md  ← per-change source of truth (one per non-trivial change)
+    ├── backlog/
+    │   ├── features.md               ← authoritative UPG-#### → file map (identity)
+    │   └── UPG-####-slug.md          ← feature briefs w/ trace header + Feature Thread (feed Step 1)
+    ├── prompts/                     ← stage + self-dev step prompts
+    ├── templates/                   ← artifact templates
+    ├── patterns/                    ← structural patterns
+    ├── docs/                        ← toolkit documentation
+    ├── scripts/                     ← dba-init.sh, codeos-review.sh
+    └── reviews/
+        ├── review-log.md             ← append-only review + decision log
+        ├── architecture-journal.md   ← cross-cutting institutional memory (AJ-NNN)
+        └── codex/                     ← reviewer assessments + packets
+    ```
+    
+    **Identity & IDs (Feature Thread model).** Work is traced by stable **`UPG-####`** feature ids,
+    per-execution **`CHG-YYYYMMDD-NNN`** change ids, **`REV__…__S<N>__R<N>`** review-round ids, and the
+    stable **`RVS__…__S<N>`** review-series id. **Self-Reference Boundary:** reviewed artifacts carry
+    `review_series` + `review_state`, never a live round — exact rounds live only in `reviews/`. The
+    dashboard separates Feature ID from Change ID, and every backlog brief carries a
+    `## Feature Thread` rollup. The full model is `backlog/UPG-0001-feature-thread-traceability.md`.
+    In-scope review fixes stay inside the same `CHG-*`; only OUT-OF-SCOPE BACKLOG findings spawn a new
+    `UPG-####` (see the Review-Fix Rule in `prompts/codeos-self-dev.md`).
+    
+    ---
+    
+    ## Review Logging
+    
+    When the human gives a reviewer's assessment and their decision, before any other work:
+    show a brief (≈5-line) preview of what you will write, then write it.
+    
+    1. **One entry** to `reviews/review-log.md` (append-only) capturing the reviewer's core
+       insight (close to verbatim) and the human decision separately.
+    2. **One entry** to `reviews/architecture-journal.md` (`AJ-NNN`) only if the insight will
+       still matter six months from now to someone who has forgotten this change. When unsure,
+       journal only if future usefulness is clear.
+    
+    **Human overrides:** "do not log this review" / "journal this" / "do not journal this".
+    
+    **Fidelity:** preserve the insight verbatim; compress only context. Record conclusions and
+    rationale, not conversation history. Log entries are append-only — supersede with a new
+    entry, never rewrite.
+
+  --- /tmp/codeos-cpe-status.wTywjn (sha256: df37304546e025a68e31c8a379add367a5eca7354d3205bb2e74ac570295244d, visibility: shown) ---
+    Controlled Plain English status for this review: disabled
+    Source: /home/rimo/projects/Codeos/config/writing-discipline.yaml
+    Applicable scope: selfdev-step-1
+
+DIFF TO REVIEW (base->review, secret/size filtered)
+diff --git a/CLAUDE.md b/CLAUDE.md
+index a3301a7..abe2383 100644
+--- a/CLAUDE.md
++++ b/CLAUDE.md
+@@ -161,12 +161,50 @@ remains the authority; the manifest and reconciliation reports are evidence, not
+ 
+ ---
+ 
++## Writing Discipline (Controlled Plain English)
++
++References, does not redefine, `patterns/controlled-plain-english.md`'s layers and reviewer model
++(see `dba-system.md` → "Controlled Plain English Writing Discipline" for the downstream side of
++this same mechanism). Self-development's own status file is `config/writing-discipline.yaml`
++(Codeos-repo-local, not project-local like the downstream file), read and injected automatically by
++`scripts/codeos-review.sh` per `UPG-0057` CHG-B — see `prompts/codeos-self-dev.md`'s Step 0b.
++
++**Layer A** (plain communication in ordinary chat, session updates, explanations) always applies,
++unconditionally, exactly as it already does everywhere else in this environment — it is not
++gated by this file's status.
++
++**Per-section rule table**, when `status: enabled`:
++
++| Change-record section | Layer applied |
++|---|---|
++| Change Intent / Acceptance Criteria / Implementation Plan | Layer B (specification precision) |
++| Implementation Notes | Factual reporting, not Layer B — this section reports what happened |
++| Review findings / Reconciliation | Layer D1 always; Layer D2 (plain review prose) when enabled |
++
++**Reviewer Model** (restated, not new authority): no separate "Controlled Plain English
++violation" finding category, and no historical-compliance audit — a reviewer reports meaning loss,
++authority mixing, or an unverifiable requirement using existing review authority, exactly as it
++does today. See the pattern's own "Reviewer Model" section for the full statement.
++
++**Placement note:** `config/writing-discipline.yaml` lives under `config/`, not `status/` — it is a
++human-set configuration toggle, not live mutable workflow state like the dashboard or roadmap.
++
++**Assumptions-subsection convention** (guidance only — no new formal field on
++`templates/codeos-change.md`): when Layer B applies and a material assumption exists that no
++existing change-record section already represents, an agent may add a plainly-labeled
++"Assumptions" subsection to Implementation Notes. Never rendered when empty; never parsed by any
++script or template validator.
++
++---
++
+ ## Self-Development File Layout
+ 
+ ```
+ Codeos/                          ← toolkit repo (this repo)
+ ├── CLAUDE.md                    ← THIS FILE — stable self-development operating guide
+ ├── dba-system.md                ← downstream DBA doctrine (loaded by downstream projects)
++├── config/
++│   └── writing-discipline.yaml   ← Controlled Plain English status for self-development (see "Writing Discipline" above)
+ ├── status/
+ │   ├── self-development.md       ← live Self-Development Status dashboard (mutable; Feature ID + Change ID)
+ │   ├── roadmap.md                ← dependency-aware wave plan, keyed by UPG-#### (mutable)
+diff --git a/backlog/UPG-0057-controlled-plain-english-writing-discipline.md b/backlog/UPG-0057-controlled-plain-english-writing-discipline.md
+index d0b7d33..ff7e10f 100644
+--- a/backlog/UPG-0057-controlled-plain-english-writing-discipline.md
++++ b/backlog/UPG-0057-controlled-plain-english-writing-discipline.md
+@@ -87,17 +87,17 @@ explicit call-site map and Reconcile's consistency sweep.
+ - Depends on `UPG-0056` (Optional Mechanism Status Convention), which must reach `COMPLETE` before
+   this UPG's own Step 3 (Implement) can begin.
+ 
+-**Status note (added after CHG-A's Step 3 review):** `CHG-A` establishes the pattern and consumer
+-wiring, including a status line `codeos-reviewer-task.md` recognizes when present among reviewed
+-artifacts. Discovered during `CHG-A`'s implementation: `tools/reviewer` embeds whatever artifact
+-paths it is given and has no code path to read a config file on an invoker's behalf, so within
+-`CHG-A` alone that line must be included by hand. **This is accepted as `CHG-A`'s scope, not as
+-this discipline's final operating model.** `CHG-B` gives `scripts/codeos-review.sh` (the bash
+-wrapper) the job of resolving the status automatically — for both the downstream and
+-self-development branches of that one shared script — before invoking the reviewer, and of
+-establishing that wrapper as the supported entry point so a direct `codeos-reviewer` invocation
+-cannot silently bypass it. `tools/reviewer` itself is not touched by `CHG-B`. **`UPG-0057` is not
+-considered complete until `CHG-B` reaches `COMPLETE`.**
++**Status note (updated after `CHG-B`'s Step 4 Reconciliation):** `CHG-A` established the
++Controlled Plain English pattern and consumer wiring. `CHG-B` completed automatic status delivery
++at the supported reviewer invocation boundary: `scripts/codeos-review.sh` (self-development) and
++`.codeos/scripts/codeos-review.sh` (downstream, the same shared script through the symlink) now
++resolve this project's status automatically and inject it before invoking the reviewer, for both
++the `review` and `plan` subcommands. Every currently-authoritative doctrine and prompt reference to
++running the reviewer names that wrapper, not the raw `codeos-reviewer` binary, which no longer
++serves as a supported alternative for Controlled Plain English purposes. **Manual inclusion is not
++part of the final operating model.** `tools/reviewer/src/*` was not touched by `CHG-B` — the
++injection is entirely a wrapper-level (bash) preprocessing step. **With `CHG-B` accepted, `UPG-0057`
++is complete.**
+ 
+ ## Feature Thread
+ 
+@@ -109,11 +109,15 @@ considered complete until `CHG-B` reaches `COMPLETE`.**
+ | Change ID | File | Purpose | State |
+ |---|---|---|---|
+ | CHG-20260726-003 | `changes/UPG-0057__CHG-20260726-003__controlled-plain-english-writing-discipline.md` | CHG-A: pattern + downstream doctrine + prompt wiring | COMPLETE |
++| CHG-20260727-001 | `changes/UPG-0057__CHG-20260727-001__automatic-cpe-status-injection.md` | CHG-B: automatic status injection in `scripts/codeos-review.sh` (no Rust changes); wrapper established as sole supported entry point | DRAFT |
+ 
+ ### Reviews
+ 
+ | Review ID | Change ID | Step | Round | Verdict |
+ |---|---|---|---|---|
++| RVS__UPG-0057__CHG-20260727-001__S1 | CHG-20260727-001 | 1-Intent | R1→R3 | R1 CHANGES ADVISED (Change Intent's "What changes" list omitted `status/self-development.md`'s own dashboard-bookkeeping edits; Acceptance Criteria was already fully drafted inside the Step 1 submission, blending Step 2 content into Step 1) → fixed (file added to "What changes"; AC table moved out of the Step 1 artifact to a Step 2 placeholder, draft held in scratchpad for reuse) → R2 CHANGES ADVISED (Step 2 placeholder claimed the "ten-item list quoted in Change Intent above," but only the five refinement conditions were actually quoted there — the ten-item list itself was missing) → fixed (ten-item list now quoted verbatim in condition 5 of Change Intent; placeholder wording corrected to match) → R3 NO OBJECTION |
++| RVS__UPG-0057__CHG-20260727-001__S2 | CHG-20260727-001 | 2-Acceptance | R1→R2 | R1 CHANGES ADVISED (AC3's verification only named a `--print-packet` run, silent on `plan`, though the criterion claims both subcommands; AC6's verification tested only `status: disabled`, silent on the absent-config case though the criterion claims both; AC8's grep set omitted `CLAUDE.md` despite this change's own self-dev-governance scope) → fixed (AC3/AC6 verification steps now name each case explicitly; AC8's grep set now includes `CLAUDE.md`) → R2 NO OBJECTION |
++| RVS__UPG-0057__CHG-20260727-001__S3 | CHG-20260727-001 | 3-Implement | R1→R3 | R1 CHANGES ADVISED (`docs/reviewer-pipeline.md` §10 still described the wrapper as a "static locator shim" with "no argument preprocessing," directly contradicting the implemented CPE injection logic in `scripts/codeos-review.sh`; a coverage-metadata secret-redaction flag also fired on a pre-existing, unrelated template field label — "Secret / non-secret:" in `prompts/00a-solution-discovery.md` — confirmed a false positive, no actual secret, no fix needed) → fixed (§10 rewritten to describe the locator-shim-plus-one-preprocessing-step architecture accurately) → R2 CHANGES ADVISED (the "Preview a plan before reviewing" prose still named the raw `codeos-reviewer plan` binary instead of the wrapper, missed in R1's fix pass) → fixed → R3 CHANGES ADVISED (no in-scope blocker; one IN-SCOPE NON-BLOCKER — a stray "§13 below" cross-reference for Controlled Plain English status, should say §12a; LOG SUMMARY driven only by the recurring benign `SECRET_REDACTION` false positive, not a real blocker) → fixed inline. **PROFILE-5's 3-round/step budget is now exhausted for Step 3** — fix applied per CLAUDE.md's budget-exceeded rule; no further automatic round; escalated to human decision |
+ | RVS__UPG-0057__CHG-20260726-003__S1 | CHG-20260726-003 | 1-Intent | R1 | NO OBJECTION |
+ | RVS__UPG-0057__CHG-20260726-003__S2 | CHG-20260726-003 | 2-Acceptance | R1→R2 | R1 DO NOT ADVANCE (AC3/AC4/AC18 depended on external plan content not in the packet; AC18's "cannot silently reintroduce" overstated an advisory generation discipline as enforcement) → fixed → R2 NO OBJECTION |
+ | RVS__UPG-0057__CHG-20260726-003__S3 | CHG-20260726-003 | 3-Implement | R1→R3 | R1 DO NOT ADVANCE (`codeos-reviewer-task.md` falsely claimed as a pattern consumer able to enforce the pattern-unavailable check; File Layout "none by default" contradicted `dba-init.sh`'s own scaffolding; "Thirteen files" undercounted the actual 18) → fixed → R2 NO OBJECTION → revised post-R2 per human direction (scaffolded default changed `disabled`→`enabled`) → R3 DO NOT ADVANCE (Implementation Notes' own file-list sentence still said `status: disabled` for `dba-init.sh`, contradicting AC13's own "no remaining stale claim" text) → fixed. **PROFILE-4's 3-round/step budget is now exhausted for Step 3** — fix applied inline per CLAUDE.md's budget-exceeded rule; no further automatic round run; escalated to human decision |
+diff --git a/dba-system.md b/dba-system.md
+index 7c6f5d0..f0bf997 100644
+--- a/dba-system.md
++++ b/dba-system.md
+@@ -50,13 +50,22 @@ that Codeos's own toolkit development already holds itself to.
+ 
+ **How to run it.** Before each gate's human-approval decision, run:
+ ```
+-codeos-reviewer review <feature_id> <stage>
++.codeos/scripts/codeos-review.sh review <feature_id> <stage>
+ ```
+-using the Stage ID from the table above (e.g. `codeos-reviewer review checkout-flow 2` before
+-approving Stage 2's contract; `codeos-reviewer review checkout-flow brief` before confirming
+-a Feature Brief). The reviewer is independent, read-only, and non-gatekeeping — its verdict
+-(NO OBJECTION / CHANGES ADVISED / DO NOT ADVANCE) informs the human's decision but never
+-auto-blocks. **The human decides at the gate; Non-Negotiable Rule #1 is unchanged.**
++using the Stage ID from the table above (e.g. `.codeos/scripts/codeos-review.sh review
++checkout-flow 2` before approving Stage 2's contract; `.codeos/scripts/codeos-review.sh review
++checkout-flow brief` before confirming a Feature Brief). The reviewer is independent, read-only,
++and non-gatekeeping — its verdict (NO OBJECTION / CHANGES ADVISED / DO NOT ADVANCE) informs the
++human's decision but never auto-blocks. **The human decides at the gate; Non-Negotiable Rule #1
++is unchanged.**
++
++**The wrapper is the supported entry point.** `.codeos/scripts/codeos-review.sh` (downstream) and
++`scripts/codeos-review.sh` (Codeos's own self-development) automatically resolve and inject this
++project's Controlled Plain English status (see "Controlled Plain English Writing Discipline"
++below) before invoking the reviewer. Invoking the compiled `codeos-reviewer` binary directly
++bypasses that injection — it still runs, but it is not a supported alternative for Controlled
++Plain English purposes, since the shared reviewer template never reads any config file itself
++(see the Call-site map below).
+ 
+ **Round budget.** Round 1 runs before the gate. Rounds 2-3 are allowed for fixes or material
+ deltas raised by the previous round. After 3 rounds, stop and require a human decision rather
+@@ -283,8 +292,9 @@ ever accepts the current version of *both* artifacts; historical files matter fo
+ the non-retroactive protection above, not for gating new work.
+ 
+ **Reviewer coverage.** `codeos-reviewer` has a dedicated checklist for the `architecture-synthesis`
+-stage id, covering all four pipeline steps — run `codeos-reviewer review <feature_id>
+-architecture-synthesis` the same way as any other stage, per "Default Advisory Review" above. This
++stage id, covering all four pipeline steps — run `.codeos/scripts/codeos-review.sh review
++<feature_id> architecture-synthesis` the same way as any other stage, per "Default Advisory
++Review" above. This
+ does not weaken Non-Negotiable Rule #1 — the human still explicitly approves both the baseline and
+ the logical design.
+ 
+@@ -453,7 +463,7 @@ are that convention's, unchanged.
+ |---|---|
+ | Stage 1-10 prompts (`.codeos/prompts/01-intent.md` … `10-arch-refine.md`) | `architecture/controlled-plain-english.yaml` |
+ | `.codeos/prompts/pipeline-reviewer.md` | `architecture/controlled-plain-english.yaml` |
+-| `.codeos/prompts/codeos-reviewer-task.md` (shared reviewer infrastructure) | **Reads neither file — configuration-neutral.** Whoever invokes the review (a human, or an agent under human instruction) includes a fixed status line — "Controlled Plain English status for this review: enabled/disabled" — as one of the reviewed artifacts, the same way any other file is passed to `codeos-reviewer review`. There is no automatic packet-assembly step that reads a config file on the invoker's behalf; `tools/reviewer` embeds whatever artifact paths it is given, unchanged. |
++| `.codeos/prompts/codeos-reviewer-task.md` (shared reviewer infrastructure) | **Reads neither file — configuration-neutral.** `.codeos/scripts/codeos-review.sh` resolves this project's status automatically and appends a synthetic status artifact — "Controlled Plain English status for this review: enabled/disabled" plus its config source and applicable stage — to the packet before invoking the reviewer, the same way any other file is passed to `codeos-reviewer review`. `codeos-reviewer-task.md` still never reads a config file itself; it only recognizes the already-resolved line among the reviewed artifacts. `tools/reviewer` is unchanged — it still embeds whatever artifact paths it is given; the wrapper is what supplies this one automatically now. |
+ 
+ **What is and isn't toggle-gated.** Layer A (plain communication) and Layer C1/D1 (existing
+ literal-protection and reviewer-integrity authority) are **not** new mandatory rules and are never
+@@ -471,8 +481,8 @@ of its own.
+ 
+ Use the corresponding prompt file from `.codeos/prompts/` for detailed instructions. The
+ **Stage ID** column is the identifier vocabulary used both for documentation ordering and as
+-the `<stage>` argument to `codeos-reviewer review <feature_id> <stage>` — see "Default
+-Advisory Review" below.
++the `<stage>` argument to `.codeos/scripts/codeos-review.sh review <feature_id> <stage>` — see
++"Default Advisory Review" below.
+ 
+ | Stage | Stage ID | File |
+ |---|---|---|
+diff --git a/docs/reviewer-pipeline.md b/docs/reviewer-pipeline.md
+index 67ec4da..b8b7ca6 100644
+--- a/docs/reviewer-pipeline.md
++++ b/docs/reviewer-pipeline.md
+@@ -421,27 +421,31 @@ sessions feature-scoped · reviewed state pinned (base+review SHA, artifact hash
+ output → UNCLASSIFIED/high-attention · secret/large-diff filtering present · no hooks active ·
+ no core rules changed.
+ 
+-## 10. Architecture: `codeos-review.sh` is a static locator shim
++## 10. Architecture: `codeos-review.sh` is a locator shim plus one preprocessing step
+ 
+ ```bash
+-# scripts/codeos-review.sh — final line; everything above it only locates the binary
+-exec "${BINARY}" "$@"
++# scripts/codeos-review.sh — for review/plan, resolves + injects a CPE status artifact,
++# then invokes the binary as a subprocess (not exec, so its own cleanup trap can still
++# fire); every other subcommand still ends in the original: exec "${BINARY}" "$@"
+ ```
+ 
+-`codeos-review.sh` is a **~28-line static locator shim** (see `UPG-0038` for why it isn't
+-shorter: a caller-git-repository precondition, plus script-relative binary-path resolution
+-that works correctly through the `.codeos` symlink from a downstream project, plus a PATH
+-fallback if the compiled binary isn't found at its expected location). It finds the compiled
+-Rust binary (`tools/reviewer/target/release/codeos-reviewer`) and passes all arguments
+-through verbatim (`"$@"`). Its conditionals are entirely about *locating the binary and
+-validating preconditions* — it contains no argument preprocessing and no reviewer capability
+-of its own.
+-
+-**Consequence for upgrades:** any reviewer capability change — new packet sections, new
+-subcommand behavior, new flags, new decision-log fields — lives in the **Rust engine**
+-(`tools/reviewer/src/`). Changing only the bash script cannot add or modify reviewer
+-behavior. The bash script only needs to change if binary location, build instructions, or
+-path-resolution semantics change.
++`codeos-review.sh` is a **locator shim** (see `UPG-0038` for why it isn't shorter: a
++caller-git-repository precondition, plus script-relative binary-path resolution that works
++correctly through the `.codeos` symlink from a downstream project, plus a PATH fallback if
++the compiled binary isn't found at its expected location) **plus, since `UPG-0057` CHG-B,
++one argument-preprocessing step**: for the `review` and `plan` subcommands only, it resolves
++this project's Controlled Plain English status and appends a synthetic status artifact to
++the argument list before invoking the binary (§12a). Every other subcommand (`decision`,
++`diagnose`, `stage-start`, `check-drift`, `generate-*`) is still passed through with no
++preprocessing at all, ending in the original `exec "${BINARY}" "$@"`.
++
++**Consequence for upgrades:** any reviewer *capability* change — new packet sections, new
++subcommand behavior, new flags, new decision-log fields, anything the Rust engine itself must
++parse or act on — still lives in the **Rust engine** (`tools/reviewer/src/`); the wrapper's one
++preprocessing step only ever appends an ordinary artifact path that the engine already knows how
++to embed, it does not teach the engine anything new. The bash script needs to change for: binary
++location, build instructions, path-resolution semantics, or the Controlled Plain English
++injection logic itself (§12a).
+ 
+ ## 11. Usage
+ 
+@@ -498,9 +502,43 @@ Reviewing a Feature Brief before confirming it:
+ ```bash
+ .codeos/scripts/codeos-review.sh review checkout-flow brief backlog/checkout-flow.md
+ ```
+-Direct binary invocation (`/path/to/Codeos/tools/reviewer/target/release/codeos-reviewer
+-...`, where `/path/to/Codeos` is wherever `.codeos` resolves to — check with `readlink -f
+-.codeos`) still works identically and remains a valid alternative.
++**`.codeos/scripts/codeos-review.sh` (or `scripts/codeos-review.sh` for Codeos's own
++self-development) is the supported entry point**, not a convenience wrapper among several equally
++valid options. Since `UPG-0057` CHG-B, it automatically resolves and injects this project's
++Controlled Plain English status (§12a below) before invoking the reviewer. Direct binary invocation
++(`/path/to/Codeos/tools/reviewer/target/release/codeos-reviewer ...`, where `/path/to/Codeos` is
++wherever `.codeos` resolves to — check with `readlink -f .codeos`) still runs identically, but
++skips that injection step entirely — it is **not** a supported alternative for Controlled Plain
++English purposes, since `codeos-reviewer-task.md` never reads any config file itself and depends
++on the wrapper to supply the resolved status line.
++
++## 12a. Controlled Plain English automatic status injection (`UPG-0057` CHG-B)
++
++Before invoking the reviewer for a `review` or `plan` subcommand (the two subcommands that build a
++packet), the wrapper:
++
++1. **Resolves context** — if the caller's own git root is the Codeos repo itself, this is a
++   self-development review and the wrapper reads `config/writing-discipline.yaml` (relative to the
++   Codeos repo root); otherwise it's a downstream review and the wrapper reads
++   `architecture/controlled-plain-english.yaml` relative to the *caller's* git root (not through
++   `.codeos`).
++2. **Resolves the four-outcome status** per `UPG-0056`'s Optional Mechanism Status Convention:
++   absent or exact `status: disabled` → `disabled`; exact `status: enabled` → `enabled`; anything
++   else → a configuration error.
++3. **On a valid status** (`enabled` or `disabled`), writes a synthetic, deterministic temp file
++   (recognizable name `codeos-cpe-status.*`, created with `mktemp`, cleaned up via a `trap` on both
++   the success and failure paths) containing the exact line `codeos-reviewer-task.md` recognizes,
++   plus its source config path and the stage argument, then appends that file's path to the
++   packet's artifact list — no operator-supplied status path is ever required.
++4. **On a malformed or contradictory status file**, stops with a clear error *before* invoking the
++   reviewer (exit code 7) — this is an invocation precondition failure, the same class as "binary
++   not found," never a reviewer finding.
++
++Ordinary style non-compliance in the reviewed prose itself is entirely unaffected: it remains an
++advisory reviewer finding under existing authority, never a packet-generation failure. A `disabled`
++(or absent/not-applicable) status is injected and reviewed normally — it never blocks anything.
++`tools/reviewer/src/*` is unchanged by this mechanism; the wrapper only appends an ordinary
++artifact path that the Rust engine already knows how to embed.
+ 
+ **If reviewer tooling isn't built or configured** for a downstream project, see
+ `dba-system.md`'s Review Waiver practice — record a plain reason in that feature's review
+@@ -567,7 +605,7 @@ Includes full artifact content where allowed by packet size and redaction rules.
+ 
+ **Command:**
+ ```bash
+-codeos-reviewer review <feature> <stage> <artifact-paths>
++.codeos/scripts/codeos-review.sh review <feature> <stage> <artifact-paths>
+ ```
+ 
+ ### Delta Mode
+@@ -581,7 +619,7 @@ Includes only changes since a base commit. Unchanged artifacts are represented b
+ 
+ **Command:**
+ ```bash
+-codeos-reviewer review <feature> <stage> --mode delta --base <commit-sha> <artifact-paths>
++.codeos/scripts/codeos-review.sh review <feature> <stage> --mode delta --base <commit-sha> <artifact-paths>
+ ```
+ 
+ **Guardrail:** Delta mode requires artifact paths to be tracked by git. Untracked files cannot be compared to the base commit and will error.
+@@ -597,7 +635,7 @@ Includes only the file path and hash, not file content. **This reduces packet si
+ 
+ **Command:**
+ ```bash
+-codeos-reviewer review <feature> <stage> --sha-only <context-file> <other-artifacts>
++.codeos/scripts/codeos-review.sh review <feature> <stage> --sha-only <context-file> <other-artifacts>
+ ```
+ 
+ **Guardrail:** Do not use SHA-only for files whose changed behavior, wording, or structure the reviewer must assess. Changed behavior must remain reviewable as full content or diff.
+@@ -607,7 +645,7 @@ codeos-reviewer review <feature> <stage> --sha-only <context-file> <other-artifa
+ Delta mode and SHA-only can be combined. When both apply, SHA-only paths are included as path/hash references rather than full content or diff.
+ 
+ ```bash
+-codeos-reviewer review UPG-0042 selfdev-step-3 \
++scripts/codeos-review.sh review UPG-0042 selfdev-step-3 \
+   --mode delta --base abc123 \
+   --sha-only docs/large-reference.md \
+   changes/UPG-0042__CHG-*.md src/packet.rs
+@@ -615,7 +653,7 @@ codeos-reviewer review UPG-0042 selfdev-step-3 \
+ 
+ ### Preview a plan before reviewing
+ 
+-`codeos-reviewer plan` accepts the exact same arguments as `review` (feature, stage,
++`codeos-review.sh plan` (like `review`, resolved through the wrapper — §12a) accepts the exact same arguments as `review` (feature, stage,
+ artifacts, `--mode`/`--base`, `--sha-only`) and reports what a `review` call with those
+ arguments would send — resolved artifacts with their mode and byte size, `review_content_bytes`
+ vs. the packet budget, `estimated_review_tokens`, coverage state, and (when over budget) the
+@@ -624,7 +662,7 @@ same `packet::build()` function `review`/`--print-packet` use, so it cannot desc
+ `review` wouldn't actually build.
+ 
+ ```bash
+-codeos-reviewer plan UPG-0042 selfdev-step-1 changes/UPG-0042__CHG-*.md src/packet.rs
++scripts/codeos-review.sh plan UPG-0042 selfdev-step-1 changes/UPG-0042__CHG-*.md src/packet.rs
+ ```
+ 
+ `plan` never resolves or invokes a provider and never writes to `reviews/` or any other tracked
+diff --git a/patterns/controlled-plain-english.md b/patterns/controlled-plain-english.md
+index 18bc282..b695128 100644
+--- a/patterns/controlled-plain-english.md
++++ b/patterns/controlled-plain-english.md
+@@ -15,8 +15,9 @@ layers below apply to it and applies the enabled-but-pattern-unavailable rule (b
+ `codeos-reviewer-task.md` is **not** a consumer of this file — it stays configuration-neutral (see
+ "Reviewer Model" and `dba-system.md`'s call-site map): it never reads this pattern or any status
+ file itself, and therefore never performs the enabled-but-pattern-unavailable check. It only reacts
+-to a status line manually included by whoever invokes the review, using Layer D2's rule text, which
+-is restated inline in `codeos-reviewer-task.md` itself rather than requiring it to read this file.
++to a status line automatically injected by `scripts/codeos-review.sh` (or `.codeos/scripts/
++codeos-review.sh` downstream) before the reviewer is invoked, using Layer D2's rule text, which is
++restated inline in `codeos-reviewer-task.md` itself rather than requiring it to read this file.
+ This pattern's Layer B/C2/D2 rules are toggle-gated (see "Layers," below); Layer A/C1/D1 are always
+ active regardless of the toggle, since they restate expectations that already exist elsewhere in
+ this environment or in Codeos's own Non-Negotiable Rules — naming them here consolidates them, it
+diff --git a/prompts/00a-solution-discovery.md b/prompts/00a-solution-discovery.md
+index 9fc93d5..33e4eec 100644
+--- a/prompts/00a-solution-discovery.md
++++ b/prompts/00a-solution-discovery.md
+@@ -204,7 +204,7 @@ To continue with feature work:
+    specification. Stage 1 (Intent Capture) is the authoritative entry point.
+ 
+ **If this output is carried into a Feature Brief or a Stage 1 Intent**, that handoff gets
+-the default advisory review (`codeos-reviewer review <feature_id> discovery`) or an explicit
++the default advisory review (`.codeos/scripts/codeos-review.sh review <feature_id> discovery`) or an explicit
+ Review Waiver — see `dba-system.md`'s "Default Advisory Review" section. This session
+ itself stays optional and non-gating either way; a Discovery session whose output nobody
+ carries forward is never reviewed, because there is nothing yet to review.
+diff --git a/prompts/03b-architecture-synthesis.md b/prompts/03b-architecture-synthesis.md
+index 734b51e..30de51a 100644
+--- a/prompts/03b-architecture-synthesis.md
++++ b/prompts/03b-architecture-synthesis.md
+@@ -174,6 +174,7 @@ Output: confirmation of both approved artifacts + registry update +
+ ## Reviewer Note
+ 
+ `codeos-reviewer` has a dedicated checklist for the `architecture-synthesis` stage id, covering all
+-four steps of this pipeline — run `codeos-reviewer review <feature_id> architecture-synthesis` for
+-gate reviews at this stage, per "Default Advisory Review" in `dba-system.md`. This does not weaken
++four steps of this pipeline — run `.codeos/scripts/codeos-review.sh review <feature_id>
++architecture-synthesis` for gate reviews at this stage, per "Default Advisory Review" in
++`dba-system.md`. This does not weaken
+ the requirement for explicit human approval at each step above.
+diff --git a/prompts/codeos-self-dev.md b/prompts/codeos-self-dev.md
+index a2fa67a..9b0e103 100644
+--- a/prompts/codeos-self-dev.md
++++ b/prompts/codeos-self-dev.md
+@@ -61,6 +61,26 @@ Record `review_profile: PROFILE-N` in the change record trace header.
+ 
+ ---
+ 
++## Step 0b — Writing Discipline Check
++
++Read `config/writing-discipline.yaml` (Codeos-repo-local). Per the Optional Mechanism Status
++Convention's four-outcome table (`templates/conventions.md`): absent or exact `status: disabled` →
++disabled; exact `status: enabled` → enabled; anything else → stop and report a configuration error.
++
++When enabled, apply `CLAUDE.md`'s "Writing Discipline (Controlled Plain English)" per-section rule
++table to this change's own artifacts (Layer B for Change Intent / Acceptance Criteria /
++Implementation Plan; factual reporting for Implementation Notes; Layer D1 always + D2 when enabled
++for review findings and Reconciliation). No new change-record trace-header field is added for
++this — non-retroactivity is the one-sentence rule already stated in
++`patterns/controlled-plain-english.md`, nothing to stamp per change.
++
++`scripts/codeos-review.sh` reads this same file automatically and injects its resolved status into
++every review packet built for a self-development change — see `docs/reviewer-pipeline.md §12a`.
++This step is about applying the discipline while *writing* the artifact; the wrapper's injection is
++about what the *reviewer* is told, a separate but related mechanism.
++
++---
++
+ ## The 4-Step Loop
+ 
+ Each step requires explicit human approval before the next.
+diff --git a/prompts/pipeline-reviewer.md b/prompts/pipeline-reviewer.md
+index 7043c06..90cd033 100644
+--- a/prompts/pipeline-reviewer.md
++++ b/prompts/pipeline-reviewer.md
+@@ -4,7 +4,7 @@ Paste this at the start of a reviewer LLM session before providing a stage artif
+ 
+ **This is an optional, supplementary second opinion** — an independent critical-assessor
+ pass free to challenge the artifact, the feature, or DBA itself. It does not replace the
+-default advisory review (`codeos-reviewer review <feature_id> <stage>`, structured and
++default advisory review (`.codeos/scripts/codeos-review.sh review <feature_id> <stage>`, structured and
+ acceptance-criteria-bound) described in `dba-system.md`'s "Default Advisory Review" section.
+ Use both when a stage warrants extra scrutiny; use this alone only when the default review
+ tooling isn't available and a waiver has been recorded but a human still wants a second read.
+diff --git a/scripts/codeos-review.sh b/scripts/codeos-review.sh
+index 5bf00a7..44983a9 100755
+--- a/scripts/codeos-review.sh
++++ b/scripts/codeos-review.sh
+@@ -1,7 +1,14 @@
+ #!/usr/bin/env bash
+-# codeos-review.sh — thin shim delegating to the compiled Rust binary.
+-# Subcommands: review / decision / diagnose / stage-start  (see: codeos-reviewer --help)
++# codeos-review.sh — thin shim delegating to the compiled Rust binary, with automatic
++# Controlled Plain English status injection for the two packet-building subcommands.
++# Subcommands: review / plan / decision / diagnose / stage-start / check-drift / generate-*
++# (see: codeos-reviewer --help)
+ # To build: cargo build --release --manifest-path tools/reviewer/Cargo.toml
++#
++# Exit codes: 1 = not a git repo, 2 = binary not found, 7 = Controlled Plain English
++# status file is malformed (see "Controlled Plain English automatic status injection"
++# below). Codes 0/3/4/5/6 belong to the Rust binary itself (tools/reviewer/src/main.rs)
++# and are passed through unchanged.
+ set -euo pipefail
+ # Preserve the original precondition: the shim requires the CALLER to be inside some git
+ # repository (a property of the project being reviewed) — unrelated to where the binary
+@@ -25,4 +32,75 @@ if [[ ! -x "${BINARY}" ]]; then
+     exit 2
+   }
+ fi
++
++SUBCOMMAND="${1:-}"
++
++# ── Controlled Plain English automatic status injection ────────────────────────────────
++# Only "review" and "plan" build a reviewer packet (see tools/reviewer/src/main.rs); every
++# other subcommand (decision, diagnose, stage-start, check-drift, generate-*) is passed
++# through unchanged below, exactly as before this change.
++if [[ "${SUBCOMMAND}" == "review" || "${SUBCOMMAND}" == "plan" ]]; then
++  # Context resolution: this one shared script is reached two ways — directly as
++  # scripts/codeos-review.sh from within this repo (a self-development review), or as
++  # .codeos/scripts/codeos-review.sh through the downstream symlink (a downstream
++  # project's review). The caller's own git root (already required to exist by the
++  # precondition above) tells them apart: it equals CODEOS_ROOT only in the former case.
++  CALLER_ROOT="$(cd "$(git rev-parse --show-toplevel)" && pwd -P)"
++  STAGE_ARG="${3:-}"
++
++  if [[ "${CALLER_ROOT}" == "${CODEOS_ROOT}" ]]; then
++    CPE_CONFIG="${CODEOS_ROOT}/config/writing-discipline.yaml"
++  else
++    CPE_CONFIG="${CALLER_ROOT}/architecture/controlled-plain-english.yaml"
++  fi
++
++  # Four-outcome resolution, per UPG-0056's Optional Mechanism Status Convention
++  # (templates/conventions.md): absent -> disabled; exact "status: disabled" -> disabled;
++  # exact "status: enabled" -> enabled; anything else -> configuration error. Leading/
++  # trailing blank lines are allowed and line endings are normalized (CRLF -> LF) before
++  # comparison; internal whitespace, case, tabs, and comments are NOT normalized and make
++  # the file invalid, exactly like every other consumer of this convention.
++  CPE_STATUS=""
++  if [[ ! -f "${CPE_CONFIG}" ]]; then
++    CPE_STATUS="disabled"
++  else
++    CPE_NONBLANK=()
++    while IFS= read -r _cpe_line || [[ -n "${_cpe_line}" ]]; do
++      [[ -n "${_cpe_line}" ]] && CPE_NONBLANK+=("${_cpe_line}")
++    done < <(tr -d '\r' < "${CPE_CONFIG}")
++
++    if [[ "${#CPE_NONBLANK[@]}" -eq 1 && "${CPE_NONBLANK[0]}" == "status: disabled" ]]; then
++      CPE_STATUS="disabled"
++    elif [[ "${#CPE_NONBLANK[@]}" -eq 1 && "${CPE_NONBLANK[0]}" == "status: enabled" ]]; then
++      CPE_STATUS="enabled"
++    else
++      # Malformed or contradictory configuration: fail BEFORE invoking the reviewer. This
++      # is an invocation precondition failure (same class as "binary not found" above),
++      # never a reviewer finding — ordinary style non-compliance in generated prose is
++      # always and only a reviewer finding, never a packet-generation failure.
++      echo "error: invalid Controlled Plain English status file: ${CPE_CONFIG}" >&2
++      echo "       must contain exactly one non-blank line: 'status: enabled' or 'status: disabled'" >&2
++      exit 7
++    fi
++  fi
++
++  # The generated artifact is explicitly synthetic: a recognizable filename
++  # (codeos-cpe-status.*), a deterministic three-line body, and safe temp-file handling
++  # (mktemp, quoted paths, trap cleanup covering both the success and failure paths).
++  # NOTE: this branch cannot end in `exec` (see below) — a bash EXIT trap never fires
++  # across exec, since exec replaces the process image instead of letting the shell
++  # return to run its traps. To still guarantee cleanup, the binary is invoked as an
++  # ordinary subprocess here and this script exits with its exact exit code afterward.
++  CPE_STATUS_FILE="$(mktemp "${TMPDIR:-/tmp}/codeos-cpe-status.XXXXXX")"
++  trap 'rm -f "${CPE_STATUS_FILE}"' EXIT
++  {
++    printf 'Controlled Plain English status for this review: %s\n' "${CPE_STATUS}"
++    printf 'Source: %s\n' "${CPE_CONFIG}"
++    printf 'Applicable scope: %s\n' "${STAGE_ARG}"
++  } > "${CPE_STATUS_FILE}"
++
++  "${BINARY}" "$@" "${CPE_STATUS_FILE}"
++  exit $?
++fi
++
+ exec "${BINARY}" "$@"
+diff --git a/status/self-development.md b/status/self-development.md
+index 86fc334..b6d21b4 100644
+--- a/status/self-development.md
++++ b/status/self-development.md
+@@ -78,7 +78,8 @@
+ | UPG-0055 | CHG-20260720-001 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S4; Step 1 R1 NO OBJECTION; Step 2 R1 NO OBJECTION; Step 3 R1 DO NOT ADVANCE → R2 DO NOT ADVANCE → R3 NO OBJECTION; Step 4 R1 DO NOT ADVANCE → R2 NO OBJECTION; all 9 ACs verified; 182 tests pass; 4 in-scope blockers found+fixed) | COMPLETE | — |
+ | UPG-0056 | CHG-20260726-001 | downstream-doctrine | downstream doctrine only | 4-Reconcile | ACCEPTED (series RVS__…__S4; Step 1 R1-R3 DO NOT ADVANCE→NO OBJECTION (original design) then revised to lean convention, R4 DO NOT ADVANCE→APPROVE_STAGE; Step 2 R1 DO NOT ADVANCE→R2 NO OBJECTION; Step 3 R1-R2 DO NOT ADVANCE→R3 NO OBJECTION; Step 4 R1 DO NOT ADVANCE→R2 NO OBJECTION; all 12 ACs verified; no code shipped) | COMPLETE | UPG-0057 |
+ | UPG-0058 | CHG-20260726-002 | downstream-doctrine | downstream doctrine only | 4-Reconcile | ACCEPTED (series RVS__…__S4; Step 1 R1→R2 NO OBJECTION; Step 2 R1 NO OBJECTION; Step 3 R1→R2 DO NOT ADVANCE→R3 NO OBJECTION; Step 4 R1→R2 DO NOT ADVANCE→R3 NO OBJECTION; all 16 ACs verified; 182 tests pass; 7 in-scope blockers found+fixed across the change) | COMPLETE | — |
+-| UPG-0057 | CHG-20260726-003 | downstream-doctrine | downstream doctrine only | 4-Reconcile | CHG-A; Steps 1-3 ACCEPTED (Step 3 revised per human direction: default disabled→enabled, plus interim-state framing for status-line delivery); Step 4 R1 DO NOT ADVANCE (stale historical disabled-default note)→fixed→R2 NO OBJECTION — accepted for pattern+wiring scope only; awaiting human Step 4 gate decision; UPG-0057 as a whole not complete until CHG-B (bash-level automatic status injection) lands | IN_PROGRESS | — |
++| UPG-0057 | CHG-20260726-003 | downstream-doctrine | downstream doctrine only | 4-Reconcile | CHG-A ACCEPTED and committed (fd2b198) — pattern + downstream doctrine + prompt wiring; manual status-line inclusion accepted as CHG-A-scope only, not final operating model | COMPLETE | UPG-0057 (CHG-B) |
++| UPG-0057 | CHG-20260727-001 | script-tooling + downstream-doctrine + self-dev-governance | both | 4-Reconcile | CHG-B: automatic Controlled Plain English status injection implemented in `scripts/codeos-review.sh` (no Rust changes, 182 tests unchanged); wrapper established as supported entry point; Step 3 ACCEPTED by human decision (budget exhausted, no in-scope blocker, SECRET_REDACTION confirmed false positive recorded in Implementation Notes); Step 4 Reconciliation written, all 13 ACs PASS; review pending | IN_PROGRESS | — |
+ 
+ <!--
+ Identity   : Feature ID = UPG-#### (stable). Change ID = CHG-YYYYMMDD-NNN (one execution), or a

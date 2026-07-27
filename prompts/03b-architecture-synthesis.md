@@ -174,6 +174,7 @@ Output: confirmation of both approved artifacts + registry update +
 ## Reviewer Note
 
 `codeos-reviewer` has a dedicated checklist for the `architecture-synthesis` stage id, covering all
-four steps of this pipeline — run `codeos-reviewer review <feature_id> architecture-synthesis` for
-gate reviews at this stage, per "Default Advisory Review" in `dba-system.md`. This does not weaken
+four steps of this pipeline — run `.codeos/scripts/codeos-review.sh review <feature_id>
+architecture-synthesis` for gate reviews at this stage, per "Default Advisory Review" in
+`dba-system.md`. This does not weaken
 the requirement for explicit human approval at each step above.

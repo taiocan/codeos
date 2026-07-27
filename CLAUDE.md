@@ -161,12 +161,50 @@ remains the authority; the manifest and reconciliation reports are evidence, not
 
 ---
 
+## Writing Discipline (Controlled Plain English)
+
+References, does not redefine, `patterns/controlled-plain-english.md`'s layers and reviewer model
+(see `dba-system.md` → "Controlled Plain English Writing Discipline" for the downstream side of
+this same mechanism). Self-development's own status file is `config/writing-discipline.yaml`
+(Codeos-repo-local, not project-local like the downstream file), read and injected automatically by
+`scripts/codeos-review.sh` per `UPG-0057` CHG-B — see `prompts/codeos-self-dev.md`'s Step 0b.
+
+**Layer A** (plain communication in ordinary chat, session updates, explanations) always applies,
+unconditionally, exactly as it already does everywhere else in this environment — it is not
+gated by this file's status.
+
+**Per-section rule table**, when `status: enabled`:
+
+| Change-record section | Layer applied |
+|---|---|
+| Change Intent / Acceptance Criteria / Implementation Plan | Layer B (specification precision) |
+| Implementation Notes | Factual reporting, not Layer B — this section reports what happened |
+| Review findings / Reconciliation | Layer D1 always; Layer D2 (plain review prose) when enabled |
+
+**Reviewer Model** (restated, not new authority): no separate "Controlled Plain English
+violation" finding category, and no historical-compliance audit — a reviewer reports meaning loss,
+authority mixing, or an unverifiable requirement using existing review authority, exactly as it
+does today. See the pattern's own "Reviewer Model" section for the full statement.
+
+**Placement note:** `config/writing-discipline.yaml` lives under `config/`, not `status/` — it is a
+human-set configuration toggle, not live mutable workflow state like the dashboard or roadmap.
+
+**Assumptions-subsection convention** (guidance only — no new formal field on
+`templates/codeos-change.md`): when Layer B applies and a material assumption exists that no
+existing change-record section already represents, an agent may add a plainly-labeled
+"Assumptions" subsection to Implementation Notes. Never rendered when empty; never parsed by any
+script or template validator.
+
+---
+
 ## Self-Development File Layout
 
 ```
 Codeos/                          ← toolkit repo (this repo)
 ├── CLAUDE.md                    ← THIS FILE — stable self-development operating guide
 ├── dba-system.md                ← downstream DBA doctrine (loaded by downstream projects)
+├── config/
+│   └── writing-discipline.yaml   ← Controlled Plain English status for self-development (see "Writing Discipline" above)
 ├── status/
 │   ├── self-development.md       ← live Self-Development Status dashboard (mutable; Feature ID + Change ID)
 │   ├── roadmap.md                ← dependency-aware wave plan, keyed by UPG-#### (mutable)
