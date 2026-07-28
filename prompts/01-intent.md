@@ -98,6 +98,12 @@ Call out explicitly:
 - Scope that seems too large for one feature intent (should be split)
 - **Undefined anchor terms** — if a term appears in multiple guarantees as an anchor (e.g., "recognized type", "active vocabulary"), flag it for formal definition. Undefined anchor terms force contract authors to infer semantics, which produces divergent implementations.
 
+Answer each ambiguity called out here, and each open question from Step 3's cross-examination, in
+one of three forms — never a forced, manufactured answer: (a) a proposed answer with a one-line
+rationale; (b) bounded alternatives with a recommendation; or (c) no defensible proposal yet, with
+the missing decision or evidence named explicitly. The human confirms or overrides (a)/(b) at the
+gate; (c) is a legitimate outcome, not a drafting failure.
+
 ## Output Sequence
 
 **Step 1 — Generate complete draft**
@@ -140,7 +146,9 @@ If any answer is "unclear from the draft": mark it as an open question in Step 4
 1. Present the verified `intents/[feature_id].md` content
 2. Present the completed checklist (with ✓ / ✗ marks)
 3. Present the cross-examination results: one line per question (answered / open)
-4. List any ambiguities you detected and questions for the human
+4. List any ambiguities you detected and questions for the human, each answered in one of the
+   three forms from Ambiguity Detection (proposed answer + rationale; bounded alternatives +
+   recommendation; or no defensible proposal + the missing decision/evidence named)
 5. Present the Review Package using `.codeos/templates/review-package.md` (Stage 1–3 format, inline only):
    - Artifact: `intents/[feature_id].md`
    - Stage purpose: Establish implementation-independent actor-outcome intent.

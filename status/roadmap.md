@@ -103,6 +103,7 @@ cheap pilot-adjacent wins early.
 | UPG-0056 | Optional Mechanism Status Convention | P2 | — | CHG-20260726-001 | COMPLETE |
 | UPG-0057 | Controlled Plain English Writing Discipline | P3 | UPG-0056 | CHG-20260726-003, CHG-20260727-001 | COMPLETE |
 | UPG-0058 | Cohort Logical Design — a Second Architecture Synthesis Output | P1 | UPG-0051 | CHG-20260726-002 | COMPLETE |
+| UPG-0059 | Wave-Gated Batch Review for Multi-Feature Stage 1-3 Cohorts | P2 | UPG-0051, UPG-0058 | CHG-20260728-001 | COMPLETE |
 | UPG-0028 | Reviewer self-reference recursion (scoping) | P2 | — | — | COMPLETE (backlog-only, no CHG — see backlog note) |
 | UPG-0029 | Review artifact durability + packet naming policy | P2 | UPG-0001 | CHG-20260629-001 | COMPLETE |
 | UPG-0030 | Lean Self-Development Review Profiles | P1 | — | CHG-20260629-001 | COMPLETE |

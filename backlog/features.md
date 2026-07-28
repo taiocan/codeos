@@ -89,6 +89,7 @@ The goal is to speed up Codeos development without weakening DBA advantages.
 | UPG-0056 | [UPG-0056-governed-mechanism-activation-convention.md](UPG-0056-governed-mechanism-activation-convention.md) | Optional Mechanism Status Convention | P2 | COMPLETE |
 | UPG-0057 | [UPG-0057-controlled-plain-english-writing-discipline.md](UPG-0057-controlled-plain-english-writing-discipline.md) | Controlled Plain English Writing Discipline | P3 | COMPLETE |
 | UPG-0058 | [UPG-0058-cohort-logical-design-artifact.md](UPG-0058-cohort-logical-design-artifact.md) | Cohort Logical Design — a Second Architecture Synthesis Output | P1 | COMPLETE |
+| UPG-0059 | [UPG-0059-wave-gated-batch-review.md](UPG-0059-wave-gated-batch-review.md) | Wave-Gated Batch Review for Multi-Feature Stage 1-3 Cohorts | P2 | COMPLETE |
 
 > Priority `—` = no formal P-rank (a completed cleanup, or a discovery note). Feature IDs are
 > assigned once and never reused. `UPG-0002` and `UPG-0003` are historical/piloted work given IDs

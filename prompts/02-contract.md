@@ -181,10 +181,14 @@ During contract derivation you may discover that the intent is ambiguous.
 If so:
 1. List the ambiguities explicitly
 2. State that you cannot complete the contract without human clarification
-3. Present the partial contract with UNKNOWN markers where clarification is needed
+3. Present the partial contract with UNKNOWN markers where clarification is needed. Each marker
+   carries one of three forms — never left as a bare gap: (a) a proposed answer with a one-line
+   rationale; (b) bounded alternatives with a recommendation; or (c) no defensible proposal yet,
+   with the missing decision or evidence named explicitly.
 4. **STOP** and request intent clarification before proceeding
 
-This is a legitimate reason to return to Stage 1.
+This is a legitimate reason to return to Stage 1. The STOP itself is unchanged by this — the three
+forms make the clarification request actionable, they do not weaken or replace the stop.
 
 ## Completeness Check
 

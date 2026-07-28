@@ -193,15 +193,44 @@ check. Intent, Contract, and Event Schema approval remain required exactly as be
 and logical design are *additional* requirements for cohort members, not a replacement for the
 three approved artifacts.
 
+**Wave Gates.** For each of Stage 1, 2, and 3, a cohort may batch drafting and the human's review
+session across every member feature — one **Wave Gate** per stage — instead of reviewing each
+feature in a separate sitting. Batching applies to drafting and to the human's attention only:
+**the approval decision remains individual, per feature, per artifact version**, exactly as
+Non-Negotiable Rule #1 requires outside any cohort. A Wave Gate is never all-or-nothing — some
+features may be approved while others are returned for revision in the same sitting. Each feature's
+draft must be independently justified by its own already-approved upstream inputs; sibling drafts
+from the same wave may inform comparison and shared-domain awareness, but must never become
+unstated authority for a decision the feature's own approved inputs don't support. A change to a
+draft driven by comparing it against siblings must be traceable in the review record. **Checks
+(Row and Column, below) carry no decision authority of their own — the human still decides every
+approval — but an unresolved material contradiction a check surfaces makes that approval
+unsupported unless the human explicitly overrides it with a recorded rationale.**
+
 **The gate sequence.**
-1. Every cohort member completes Stage 1 (Intent). An **Intent Cohort Check** —
-   duplicate outcomes, missing or circular ownership, inconsistent actor definitions — is
-   *recommended* once the cohort's intents are all approved.
-2. Every cohort member completes Stage 2 (Contract). A **Contract Cohort Check** — canonical
-   artifact ownership, lifecycle/failure consistency, circular preconditions — is *recommended*.
-3. Every cohort member completes Stage 3 (Event Schema). An **Event Cohort Check** — event
+1. Every cohort member completes Stage 1 (Intent), optionally via a Wave Gate. No cross-stage
+   check is possible yet — only Intent exists. The **Intent Cohort Check** (Row Check: duplicate
+   outcomes, missing or circular ownership, inconsistent actor definitions) is *recommended*,
+   and runs across every drafted feature before any feature in the wave is approved.
+2. Every cohort member completes Stage 2 (Contract), optionally via a Wave Gate. Each feature's
+   Contract draft gets an **upstream-alignment check** against that feature's own approved Intent
+   (not yet a full cross-stage check — Event Schema doesn't exist yet). The **Contract Cohort
+   Check** (Row Check: canonical artifact ownership, lifecycle/failure consistency, circular
+   preconditions) is *recommended*, and runs across the wave before any feature is approved.
+3. Every cohort member completes Stage 3 (Event Schema), optionally via a Wave Gate. Each
+   feature's Event Schema draft gets the complete **Column Check**: compared against that
+   feature's own approved Contract *and* Intent — scope, guarantees, exclusions, terminology, and
+   lifecycle assumptions, not only actors and event ownership. Sequence: draft every feature's
+   Stage 3 → each feature's Column Check → the cohort's **Event Cohort Check** (Row Check: event
    ownership, envelope uniformity, correlation strategy, observational-vs-integration
-   classification — is *required* as input to synthesis.
+   classification, *required* as input to synthesis) → only then does the Wave Gate decide every
+   individual Stage 3 approval. No feature is approved before the Event Cohort Check has run.
+
+   A feature deliberately removed, deferred, split into another cohort, or abandoned after a
+   partial Wave Gate requires an explicit cohort-membership revision (a new membership version,
+   per the versioning rule below) — never silent exclusion. Architecture Synthesis proceeds once
+   every *current* member of the cohort's current approved membership version has passed Stage 3;
+   a deferred or removed feature does not block it.
 4. **Architecture Synthesis, Step 2** (`.codeos/prompts/03b-architecture-synthesis.md`) drafts
    `architecture/core-baseline.md` (template: `.codeos/templates/architecture-baseline.md`). This is
    a draft, not yet a human-approved artifact — Stage 4 remains blocked.
@@ -266,6 +295,13 @@ both "current-looking" at once; the corresponding registry field is updated to t
 part of that same approval (see `.codeos/prompts/03b-architecture-synthesis.md`). Historical files
 are a **provenance record only** — they document which version governed a feature's
 already-completed Stage 4 work; they are never consulted for a *new* Stage 4 eligibility decision.
+
+**Targeted reassessment of Stage 1-3 approvals.** The same impact-assessment pattern above applies
+one level down, to individual Stage 1, 2, and 3 approvals inside a cohort: a revision to one
+member's approved artifact identifies potentially affected already-approved artifacts, in that
+feature or others. Only artifacts the assessment actually identifies are marked for reassessment;
+every other approval remains current at its already-approved version — never a full Wave Gate or
+cohort restart.
 
 **Compatibility rule for cohorts approved before this two-output model existed.** A cohort whose
 registry `status` was already `approved` under the original single-output rule (baseline only) is

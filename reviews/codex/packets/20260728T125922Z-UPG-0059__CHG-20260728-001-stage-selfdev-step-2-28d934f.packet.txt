@@ -1,0 +1,319 @@
+Reviewer task:
+
+SCOPE CONTRACT
+  Assess this artifact against the STATED SCOPE of this stage/PR — the Expected Stage
+  Output below and what the artifacts actually claim — NOT against an ideal final system.
+  A capability the artifacts do not claim to provide is OUT-OF-SCOPE, not a defect.
+  The following are OUT-OF-SCOPE BACKLOG unless THIS artifact explicitly claims to provide
+  them: formal approval-binding enforcement; rollback correctness; COMMIT_BOUND/
+  WORKSPACE_BOUND enforcement; JSON Schema validation; CI validation; exact
+  decision-integrity; per-feature decision ledgers; autonomous approval; enabled hooks.
+
+YOUR TASK — answer these five questions using only the evidence in the packet:
+  1. Acceptance criteria: Does the artifact satisfy each of its stated acceptance criteria?
+     Cite evidence for each criterion (or note its absence).
+  2. Claim support: Are universal or strong claims (all, every, never, always, no X) in the
+     artifact supported by evidence in the packet? Any unverifiable strong claim is a candidate
+     finding only if it affects acceptance, scope, safety, decision integrity, or the artifact's
+     stated guarantees.
+  3. Scope drift: Is there any change beyond the stated scope boundary? (Files not in the
+     "What changes" list; behavior changes not in the intent; downstream doctrine modified
+     rather than read.)
+  4. In-scope blockers: Are there facts that, if left in, would make the artifact wrong,
+     unsafe, or internally contradictory?
+  5. Finding classification: Classify every finding you raise as exactly one of the five
+     TRIAGE RULE categories below.
+
+TRIAGE RULE — classify EVERY finding as exactly one of:
+  IN-SCOPE BLOCKER         breaks the stated goal; creates a FALSE CLAIM in this artifact;
+                           weakens the advisory/read-only/human-gated guarantees; prevents
+                           the work from running; or violates an explicit safety constraint.
+  IN-SCOPE NON-BLOCKER     improves it but is not required for this PR.
+  OUT-OF-SCOPE BACKLOG     valid, but belongs to a future feature / stronger guarantee.
+  REJECTED                 conflicts with the stated scope or Codeos philosophy.
+  SELF-REFERENCE /         review records that are stale because of the previous round's
+  REVIEW-BOOKKEEPING       own existence (causal loop); not a real artifact defect.
+  Base the PR decision ONLY on IN-SCOPE BLOCKER findings. An OUT-OF-SCOPE BACKLOG finding
+  must NOT cause DO NOT ADVANCE unless this artifact FALSELY CLAIMS to solve it.
+
+WHAT NOT TO DO
+  - Do not flag style or wording issues as blockers unless the wording creates a false claim,
+    contradiction, parser breakage, or wrong governance instruction.
+  - Do not re-review unchanged full context when the packet is in delta mode.
+  - Do not treat local-only review history as a blocker unless the artifact falsely
+    claims the review artifacts are committed/durable.
+
+INSTRUCTIONS
+  If this is a resumed session, ignore any earlier-session conclusions unless they are
+  re-established by THIS packet; assess only the evidence above, pinned to this commit.
+  Give a focused assessment of this artifact against the stated scope, acceptance criteria,
+  and evidence in this packet. Rank findings by severity. Suggest a better design only when
+  needed to explain a required fix for an IN-SCOPE BLOCKER.
+
+  CONTROLLED PLAIN ENGLISH (if one of the artifacts under review states "Controlled Plain
+  English status for this review: enabled" or "...: disabled" — this task template never reads
+  any configuration file itself; whoever invokes the review includes that line as one of the
+  reviewed artifacts, the same way any other file is included, when the relevant project has the
+  discipline enabled): Layer D1 (advisory verdict, no invented requirements, evidence separated
+  from inference — the TRIAGE RULE and "based ONLY on in-scope blockers" instructions above
+  already are this) always applies regardless of that value. When the value is `enabled`,
+  additionally write your prose in Layer D2 style — short sentences, common words, direct
+  explanations. This affects wording only; it never changes the footer format below.
+
+  Limit findings to the top 3 IN-SCOPE BLOCKERS. Additional non-blocking observations may be
+  summarized in one short paragraph only if useful.
+
+  For EACH finding emit:
+    Finding: / Severity: High|Medium|Low / Classification: <one of the TRIAGE RULE labels>
+    Evidence: <file/line> / Why: <short> / Required action: fix now|optional fix|backlog|reject
+    Scope reason: <why it does/does not belong to this PR's scope>
+  Then emit:
+    PR decision: ADVANCE | REQUEST CHANGES | DO NOT ADVANCE   (based ONLY on in-scope blockers)
+    Scope drift warning: yes|no — <is anything pulling this PR beyond its stated scope?>
+  Then on the LAST three lines emit exactly (map ADVANCE->NO OBJECTION,
+  REQUEST CHANGES->CHANGES ADVISED, DO NOT ADVANCE->DO NOT ADVANCE):
+    LOG SUMMARY: <NO OBJECTION | CHANGES ADVISED | DO NOT ADVANCE | UNCLASSIFIED> — <single most important point>
+      (use UNCLASSIFIED if you genuinely cannot classify the artifact safely)
+    EVIDENCE: <A|B|C|D|E>
+    HIGHEST-IMPACT UNCERTAINTY: <one sentence — what single thing, if wrong, most affects this assessment>
+
+  Evidence grade — the grade describes what the assessment rests on, not reviewer confidence:
+    A — Directly verified in the artifact, diff, or output shown in the packet
+    B — Verified with multiple direct pieces of evidence, but coverage is not complete
+    C — Partially verified, partially inferred from structure or context
+    D — Mostly inferred from structure or indirect evidence
+    E — Hypothesis or very limited basis — little to no direct evidence
+
+
+PACKET MANIFEST
+  generated: 2026-07-28T12:57:42Z
+  task_prompt: /home/rimo/projects/Codeos/prompts/codeos-reviewer-task.md (5794 bytes)
+  review_content_bytes: 17037
+  estimated_review_tokens: ~4259
+  budget_status: OK
+  packet_mode: full
+  delta_base: none
+  items:
+    - path: changes/UPG-0059__CHG-20260728-001__wave-gated-batch-review.md
+      mode: full_file
+      bytes: 12305
+      sha256: 10e61270568047dfa68d2496bf7e64bec5f2f7964c2affea767f5f99a3bf5854
+    - path: /tmp/codeos-cpe-status.cvu6r3
+      mode: full_file
+      bytes: 156
+      sha256: 5543a308f9534537c6d68f629027f5b74c54896e7f128c9f023b020c473f1ad3
+    - path: (diff)
+      mode: full_file
+      bytes: 4576
+
+REVIEW CONTEXT
+  Feature:                UPG-0059__CHG-20260728-001
+  Stage:                  selfdev-step-2
+  Branch:                 main
+  Base commit:            (no base pin)
+  Review commit:          28d934fc706d2b5388623c588e425fbb409040d2 (+ uncommitted workspace changes)
+  Current approved stage: n/a (non-numeric stage)
+  Evidence coverage:      FULL_COVERAGE
+  Workspace dirty:        yes (uncommitted changes at review time)
+
+DBA RULES RELEVANT TO THIS STAGE
+  - Human approval is required for every stage transition; you are advisory only.
+  - Memory is not truth — assess only what is provided, pinned to the review commit.
+  - Implementation must trace to approved artifacts; no behavior beyond intent+contract+schema.
+  - No events outside the approved event schema; no hidden behavior.
+
+STAGE-SPECIFIC CHECKS
+  - (no stage-specific checklist for stage selfdev-step-2)
+
+EXPECTED STAGE OUTPUT
+  (no expected-output template for stage)
+
+ARTIFACTS TO REVIEW
+  --- changes/UPG-0059__CHG-20260728-001__wave-gated-batch-review.md (sha256: 10e61270568047dfa68d2496bf7e64bec5f2f7964c2affea767f5f99a3bf5854, visibility: shown) ---
+    # Self-Development Change: UPG-0059__CHG-20260728-001 — wave-gated-batch-review
+    
+    <!-- TRACE HEADER (canonical) -->
+    ```yaml
+    feature_id: UPG-0059
+    primary_feature_id: UPG-0059
+    change_id: CHG-20260728-001
+    slug: wave-gated-batch-review
+    state: IN_PROGRESS
+    current_step: 2-Acceptance
+    implements:
+      - UPG-0059
+    related_features: [UPG-0051, UPG-0057, UPG-0058]
+    review_series: null
+    review_profile: PROFILE-4
+    review_state: DRAFT
+    review_history: reviews/review-log.md
+    fixes_findings: []
+    follow_up_of: null
+    ```
+    
+    <!-- SELF-REFERENCE BOUNDARY: this artifact is itself reviewed, so it must NOT embed the current
+    review round (which does not exist until after the packet is built). Reference the stable review
+    SERIES (review_series) + review_state; exact rounds live only in reviews/review-log.md and
+    reviews/codex/*. See prompts/codeos-self-dev.md → "Feature Thread & IDs" / "Self-Reference Boundary". -->
+    
+    ## Change Intent
+    
+    **Why (problem in the toolkit):**
+    
+    Multi-feature DBA projects using the existing Multi-Feature Architecture Synthesis Gate
+    (`UPG-0051`/`UPG-0058`) pay a real efficiency cost from per-feature, per-stage individual review
+    sessions at cohort scale: Stage 1/2/3 approval fragments into many separate round trips, each its
+    own context switch. A batched-drafting-and-review approach was proposed to fix this, in a form that
+    removed the per-feature human approval gate entirely — draft Stage 1-3 for every cohort feature with
+    no human checkpoint, review only once at the very end. That form was rejected after critical
+    assessment: it maximizes blast radius, since a bad Stage-1 assumption for one feature could compound
+    through two more stages and spread to sibling features drafted in the same batch before any human
+    ever saw it. Four rounds of review converged on a safer alternative that keeps the speed benefit
+    without that risk. Full design history —
+    including the rejected original proposal and the reasoning at each refinement round — lives in
+    `/home/rimo/.claude/plans/calude-consider-this-inputs-steady-pnueli.md`.
+    
+    **What changes:**
+    
+    - `dba-system.md` — the Multi-Feature Architecture Synthesis Gate section gets:
+      - A **Wave Gate** definition: for a declared cohort, drafting and the human's review session
+        batch per stage (one wave = one stage, every member feature, one human sitting), but the
+        approval decision stays individual, per feature, per artifact version — Non-Negotiable Rule #1
+        unchanged. Partial-wave outcomes are explicit: some features approved, some returned for
+        revision, in the same sitting; a Wave Gate is never all-or-nothing.
+      - An **independent-justification** requirement: each feature's draft must be justified by its own
+        approved upstream inputs; sibling drafts from the same wave may inform comparison but must never
+        become unstated authority for a decision the feature's own approved artifacts don't support.
+      - A **traceable cohort harmonization** rule: cohort-driven changes must be traceable in the review
+        record (no doctrine-level enumeration of exactly where).
+      - **Progressive check definitions**, replacing a single uniform "Column Check": Stage 1 has no
+        cross-stage check (nothing exists yet to compare); Stage 2 gets an upstream-alignment check
+        (Contract vs. that feature's approved Intent); Stage 3 gets the complete Column Check (Event
+        Schema vs. that feature's approved Contract and Intent — scope, guarantees, exclusions,
+        terminology, lifecycle assumptions, not only actors/event ownership). Sequencing: draft → each
+        feature's upstream-alignment/Column Check → the cohort's Row Check (the existing Cohort Check,
+        tightened to run as standard practice at the Wave Gate) → only then the Wave Gate decides every
+        individual approval. No feature is approved before the cohort-level Row Check has run.
+      - **Advisory-but-not-ignorable** wording for both checks: no decision authority of their own, but
+        an unresolved material contradiction makes an approval unsupported unless the human explicitly
+        overrides it with a recorded rationale.
+      - **Targeted reassessment via a lightweight impact assessment**, reusing the section's own
+        existing versioned-impact-assessment pattern (today used for cohort baseline/logical-design
+        changes) one level down: a revision to one cohort member identifies potentially affected
+        already-approved Stage 1-3 artifacts; only those identified are marked for reassessment, every
+        other approval remains current at its already-approved version.
+      - **Versioned cohort membership for deferred/removed features**, reusing the section's own
+        existing membership-versioning pattern: a feature deliberately removed, deferred, split into
+        another cohort, or abandoned after a partial Wave Gate requires an explicit membership-version
+        revision, never silent exclusion. Architecture Synthesis proceeds once every *current* member of
+        the cohort's current approved membership version has passed Stage 3 — so one deferred feature
+        cannot indefinitely block synthesis for the rest.
+    - `01-intent.md`, `02-contract.md`, `03-event-schema.md` — each stage's existing "Ambiguity
+      Detection" section gets one added requirement: every open question is answered as (a) a proposed
+      answer with rationale, (b) bounded alternatives with a recommendation, or (c) no defensible
+      proposal yet with the missing decision/evidence named explicitly — never a forced, manufactured
+      answer.
+    - `backlog/UPG-0059-wave-gated-batch-review.md` (new) — Feature Thread brief; `depends_on:
+      [UPG-0051, UPG-0058]`.
+    - `status/roadmap.md`, `backlog/features.md`, `status/self-development.md` — registration and
+      dashboard bookkeeping for this change's own step transitions.
+    
+    **Scope boundary — what stays the same:**
+    
+    - `UPG-0057` (Controlled Plain English) is untouched. CPE precision level is explicitly not used as
+      a proxy for draft-vs-final rigor anywhere in this change; if a cheap whole-cohort big-picture pass
+      is wanted before full Stage 1-3 rigor, `00a-solution-discovery.md` (Solution Discovery) already
+      serves that need and is unaffected by this change.
+    - `tools/reviewer/src` is not touched — review execution stays per-feature-per-stage, a description
+      of the current reviewer architecture's packet-budget constraint (documented as operational
+      guidance in `docs/reviewer-pipeline.md` if needed, not written into `dba-system.md`'s normative
+      text), not a new doctrine principle.
+    - Architecture Synthesis's own 4-step pipeline (`UPG-0051`/`UPG-0058`: draft baseline, draft logical
+      design, combined approval) is unchanged — this change only makes its existing "every cohort member
+      passes Stage 3" precondition explicit against versioned membership, it does not touch the
+      pipeline's steps themselves.
+    - No new Stage ID, no new mandatory gate beyond the existing per-feature Stage 1/2/3 gates, no
+      Non-Negotiable Rule change.
+    - No code — pure doctrine and prompt text.
+    
+    **Class:** downstream-doctrine
+    **Scope axis:** downstream doctrine only
+    **Backlog item:** `backlog/UPG-0059-wave-gated-batch-review.md`
+    
+    ---
+    
+    ## Acceptance Criteria
+    
+    | # | Criterion | How it will be verified |
+    |---|---|---|
+    | 1 | `dba-system.md` defines a Wave Gate: batched drafting + one batched human session per stage-wave, with the approval decision itself remaining individual, per feature, per artifact version | Read-through of the new Wave Gate text; confirm it states approval stays per-feature/per-version, not a group decision |
+    | 2 | The Wave Gate definition explicitly allows partial outcomes (some features approved, some returned) and states a Wave Gate is never all-or-nothing | Read-through of the same section for the partial-outcome sentence |
+    | 3 | An independent-justification requirement is present: a feature's draft must be justified by its own approved upstream inputs; sibling drafts may inform but never become unstated authority | Read-through; confirm the "informs, never becomes unstated authority" distinction is stated, not just "drafts must be independent" |
+    | 4 | A traceability requirement for cohort-driven changes is present, without enumerating a specific storage location in doctrine text | Read-through of the harmonization rule; grep confirms no "review notes / cohort-check report / draft history" enumeration appears in `dba-system.md` itself |
+    | 5 | Progressive check definitions replace a uniform per-stage Column Check: Stage 1 has no cross-stage check; Stage 2 has an upstream-alignment check (Contract vs. that feature's approved Intent); Stage 3 has the complete Column Check (Event Schema vs. that feature's approved Contract and Intent) | Read-through of each stage's check definition; confirm Stage 1 explicitly states no cross-stage check is possible yet |
+    | 6 | The Stage 3 Column Check's scope covers more than actors/event ownership — explicitly scope, guarantees, exclusions, terminology, and lifecycle assumptions | Read-through of the Stage 3 Column Check definition for all five named concerns |
+    | 7 | Sequencing is explicit: draft → per-feature check (upstream-alignment or Column) → cohort Row Check → only then Wave Gate approval decisions; no feature is approved before the Row Check has run | Read-through of the sequencing text for the four-step order and the "no early approval" statement |
+    | 8 | Checks are worded as advisory-but-not-ignorable: no decision authority of their own, but an unresolved material contradiction makes an approval unsupported without an explicit human override + rationale | Read-through for both halves of this statement — advisory framing and the override-required consequence |
+    | 9 | Targeted reassessment is defined via a lightweight impact assessment, explicitly stated as reusing the existing cohort baseline/logical-design versioned-impact-assessment pattern, applied one level down to individual Stage 1-3 approvals | Read-through; confirm the new text cross-references the existing pattern rather than defining an unrelated new mechanism |
+    | 10 | Versioned cohort membership for deferred/removed/split/abandoned features is defined, explicitly stated as reusing the existing membership-versioning pattern; Architecture Synthesis proceeds once every *current* member of the current approved membership version has passed Stage 3 | Read-through; confirm the cross-reference to the existing membership-versioning rule and the "current member of current version" precondition wording |
+    | 11 | Each of `01-intent.md`, `02-contract.md`, `03-event-schema.md`'s existing "Ambiguity Detection" sections gains the three allowed response forms (proposed answer + rationale; bounded alternatives + recommendation; no defensible proposal + named gap), and none is written as compulsory in a way that forces a manufactured answer | Read-through of all three files' Ambiguity Detection sections |
+    | 12 | No new Stage ID, new Non-Negotiable Rule, or new mandatory gate beyond the existing per-feature Stage 1/2/3 gates is introduced | Read-through of the diff against `dba-system.md`'s Non-Negotiable Rules and Stage ID table; confirm neither is touched |
+    | 13 | Packet-budget mechanics, the CPE-as-wrong-knob argument, and other alternatives-considered reasoning do not appear in `dba-system.md`'s added text | Read-through of the added section; confirm it is purely operative, no discursive justification |
+    | 14 | `patterns/controlled-plain-english.md` and `UPG-0056`'s status-file convention are unchanged | `git diff --stat -- patterns/controlled-plain-english.md templates/optional-mechanism-status.yaml templates/conventions.md` empty |
+    | 15 | `tools/reviewer/src/*` is unchanged | `git diff --stat -- tools/reviewer/src` empty; `cargo test --release --manifest-path tools/reviewer/Cargo.toml` passes at the same count as before this change |
+    | 16 | Architecture Synthesis's own 4-step pipeline (baseline draft, logical design draft, combined approval) is textually unchanged beyond stating its existing Stage-3-across-the-cohort precondition against versioned membership | Read-through of the "gate sequence" numbered steps 4-6; confirm no step's content changed, only the membership-versioning precondition is made explicit |
+    
+    ---
+    
+    ## Implementation Notes
+    
+    [Filled during Step 3.]
+    
+    ---
+    
+    ## Reconciliation
+    
+    [Filled during Step 4.]
+
+  --- /tmp/codeos-cpe-status.cvu6r3 (sha256: 5543a308f9534537c6d68f629027f5b74c54896e7f128c9f023b020c473f1ad3, visibility: shown) ---
+    Controlled Plain English status for this review: enabled
+    Source: /home/rimo/projects/Codeos/config/writing-discipline.yaml
+    Applicable scope: selfdev-step-2
+
+DIFF TO REVIEW (base->review, secret/size filtered)
+diff --git a/backlog/features.md b/backlog/features.md
+index 65ba17b..59d2260 100644
+--- a/backlog/features.md
++++ b/backlog/features.md
+@@ -89,6 +89,7 @@ The goal is to speed up Codeos development without weakening DBA advantages.
+ | UPG-0056 | [UPG-0056-governed-mechanism-activation-convention.md](UPG-0056-governed-mechanism-activation-convention.md) | Optional Mechanism Status Convention | P2 | COMPLETE |
+ | UPG-0057 | [UPG-0057-controlled-plain-english-writing-discipline.md](UPG-0057-controlled-plain-english-writing-discipline.md) | Controlled Plain English Writing Discipline | P3 | COMPLETE |
+ | UPG-0058 | [UPG-0058-cohort-logical-design-artifact.md](UPG-0058-cohort-logical-design-artifact.md) | Cohort Logical Design — a Second Architecture Synthesis Output | P1 | COMPLETE |
++| UPG-0059 | [UPG-0059-wave-gated-batch-review.md](UPG-0059-wave-gated-batch-review.md) | Wave-Gated Batch Review for Multi-Feature Stage 1-3 Cohorts | P2 | PROPOSED |
+ 
+ > Priority `—` = no formal P-rank (a completed cleanup, or a discovery note). Feature IDs are
+ > assigned once and never reused. `UPG-0002` and `UPG-0003` are historical/piloted work given IDs
+diff --git a/status/roadmap.md b/status/roadmap.md
+index d3b64a7..eef2a25 100644
+--- a/status/roadmap.md
++++ b/status/roadmap.md
+@@ -103,6 +103,7 @@ cheap pilot-adjacent wins early.
+ | UPG-0056 | Optional Mechanism Status Convention | P2 | — | CHG-20260726-001 | COMPLETE |
+ | UPG-0057 | Controlled Plain English Writing Discipline | P3 | UPG-0056 | CHG-20260726-003, CHG-20260727-001 | COMPLETE |
+ | UPG-0058 | Cohort Logical Design — a Second Architecture Synthesis Output | P1 | UPG-0051 | CHG-20260726-002 | COMPLETE |
++| UPG-0059 | Wave-Gated Batch Review for Multi-Feature Stage 1-3 Cohorts | P2 | UPG-0051, UPG-0058 | CHG-20260728-001 | PROPOSED |
+ | UPG-0028 | Reviewer self-reference recursion (scoping) | P2 | — | — | COMPLETE (backlog-only, no CHG — see backlog note) |
+ | UPG-0029 | Review artifact durability + packet naming policy | P2 | UPG-0001 | CHG-20260629-001 | COMPLETE |
+ | UPG-0030 | Lean Self-Development Review Profiles | P1 | — | CHG-20260629-001 | COMPLETE |
+diff --git a/status/self-development.md b/status/self-development.md
+index 5c8f1a4..2eeb3e5 100644
+--- a/status/self-development.md
++++ b/status/self-development.md
+@@ -78,6 +78,7 @@
+ | UPG-0055 | CHG-20260720-001 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S4; Step 1 R1 NO OBJECTION; Step 2 R1 NO OBJECTION; Step 3 R1 DO NOT ADVANCE → R2 DO NOT ADVANCE → R3 NO OBJECTION; Step 4 R1 DO NOT ADVANCE → R2 NO OBJECTION; all 9 ACs verified; 182 tests pass; 4 in-scope blockers found+fixed) | COMPLETE | — |
+ | UPG-0056 | CHG-20260726-001 | downstream-doctrine | downstream doctrine only | 4-Reconcile | ACCEPTED (series RVS__…__S4; Step 1 R1-R3 DO NOT ADVANCE→NO OBJECTION (original design) then revised to lean convention, R4 DO NOT ADVANCE→APPROVE_STAGE; Step 2 R1 DO NOT ADVANCE→R2 NO OBJECTION; Step 3 R1-R2 DO NOT ADVANCE→R3 NO OBJECTION; Step 4 R1 DO NOT ADVANCE→R2 NO OBJECTION; all 12 ACs verified; no code shipped) | COMPLETE | UPG-0057 |
+ | UPG-0058 | CHG-20260726-002 | downstream-doctrine | downstream doctrine only | 4-Reconcile | ACCEPTED (series RVS__…__S4; Step 1 R1→R2 NO OBJECTION; Step 2 R1 NO OBJECTION; Step 3 R1→R2 DO NOT ADVANCE→R3 NO OBJECTION; Step 4 R1→R2 DO NOT ADVANCE→R3 NO OBJECTION; all 16 ACs verified; 182 tests pass; 7 in-scope blockers found+fixed across the change) | COMPLETE | — |
++| UPG-0059 | CHG-20260728-001 | downstream-doctrine | downstream doctrine only | 2-Acceptance | Wave-Gated Batch Review for multi-feature Stage 1-3 cohorts; Step 1 ACCEPTED (R1 DO NOT ADVANCE unrelated bookkeeping in diff→R2 NO OBJECTION); Step 2 Acceptance Criteria (16 items) drafted | IN_PROGRESS | — |
+ | UPG-0057 | CHG-20260726-003 | downstream-doctrine | downstream doctrine only | 4-Reconcile | CHG-A ACCEPTED and committed (fd2b198) — pattern + downstream doctrine + prompt wiring; manual status-line inclusion accepted as CHG-A-scope only, not final operating model | COMPLETE | UPG-0057 (CHG-B) |
+ | UPG-0057 | CHG-20260727-001 | script-tooling + downstream-doctrine + self-dev-governance | both | 4-Reconcile | CHG-B ACCEPTED and complete — automatic Controlled Plain English status injection in `scripts/codeos-review.sh` (no Rust changes, 182 tests unchanged); wrapper established as sole supported entry point; all 13 ACs verified PASS; manual inclusion no longer part of the operating model | COMPLETE | — |
+ 
