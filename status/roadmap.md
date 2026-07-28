@@ -101,7 +101,7 @@ cheap pilot-adjacent wins early.
 | UPG-0054 | Contract-to-Implementation Failure Boundary | P2 | — | CHG-20260719-004 | COMPLETE |
 | UPG-0055 | Reviewer Support for the `architecture-synthesis` Stage ID | P3 | — | CHG-20260720-001 | COMPLETE |
 | UPG-0056 | Optional Mechanism Status Convention | P2 | — | CHG-20260726-001 | COMPLETE |
-| UPG-0057 | Controlled Plain English Writing Discipline | P3 | UPG-0056 | — | PROPOSED |
+| UPG-0057 | Controlled Plain English Writing Discipline | P3 | UPG-0056 | CHG-20260726-003, CHG-20260727-001 | COMPLETE |
 | UPG-0058 | Cohort Logical Design — a Second Architecture Synthesis Output | P1 | UPG-0051 | CHG-20260726-002 | COMPLETE |
 | UPG-0028 | Reviewer self-reference recursion (scoping) | P2 | — | — | COMPLETE (backlog-only, no CHG — see backlog note) |
 | UPG-0029 | Review artifact durability + packet naming policy | P2 | UPG-0001 | CHG-20260629-001 | COMPLETE |
