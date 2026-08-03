@@ -653,3 +653,91 @@ the original need. A design that has been through several consecutive rounds —
 keeps adding new categories of machinery (a new field, a new code, a new mode) rather than just
 refining existing ones — is a signal to explicitly re-ask "is this still proportionate to what was
 asked for," from outside the review loop, before continuing to iterate inside it.
+
+## AJ-022 — A rigorous specification is a poor delegation target: Stage 4 delegability falls as contract rigor rises
+
+*Origin: UPG-0060 (deepseek-delegated-implementation), CHG-B gate measurement, 2026-08-03 — a
+realistic downstream feature (EvidenceAtlas EA-0003 corpus_construction) run through delegated
+Stage 4 implementation and compared against the Claude-only path.*
+
+The premise of delegating Stage 4 to a cheaper model was that implementation is bulk generation:
+the approved artifacts already specify the behavior, so a weaker model should be able to satisfy
+them and leave the strong model only the approval, reconciliation, and review that already guard
+correctness. Measured on a real feature, that premise inverted.
+
+The delegate produced a fluent, plausible, well-organized 466-line module that did not compile, and
+that violated eight specific clauses of the approved contract and event schema once repaired enough
+to run. The violations were not scattered — seven of the eight landed squarely on the parts of the
+specification that exist *because* they are easy to get subtly wrong: the falsification scenarios
+(a mirrored source must not inflate coverage), the vocabulary invariants ("Weak" and "weak" must
+produce identical outcomes), the three-valued field whose schema text explicitly says which value
+may never appear, the boundary scenario distinguishing one stopping reason from another. The
+delegate satisfied all of these in *appearance* — the fields were present, the names were right,
+the doc comments claimed the checks existed — and violated them in *fact*. Its own notes file even
+flagged two of them unprompted, which is to say the draft arrived with an accurate warning that it
+was wrong.
+
+The common cause was structural rather than a list of eight mistakes. The candidate implemented the
+report as a serializer: the caller computes coverage, decides retention, supplies the derived
+fields, and the module writes them to JSON. Every invariant the contract exists to protect was
+delegated onward to an unspecified caller. There is no eight-point patch for that — the invariants
+have nowhere to live in that design — so the "rework" was a rewrite, and the token saving the whole
+mechanism was built to capture never materialized: the delegated arm cost the Claude-only arm plus
+the delegate's tokens plus the cost of reading and diagnosing the draft, and saved no generation at
+all.
+
+**Rule:** the value of delegating implementation is inversely proportional to how much genuine
+specification the approved artifacts contain. DBA's Stage 2 and Stage 3 artifacts are, by design,
+concentrated exactly where a fluent-but-shallow drafter fails — so the better a project applies the
+methodology, the worse a cheap-model Stage 4 performs against it, and the *less* there is to save.
+This does not generalize to every kind of delegation: read-only advisory review delegates cleanly
+(a weak review costs nothing because the human still decides at the gate), and mechanical work whose
+failures are loud rather than silent — Stage 5 test authoring is the candidate — may still pay off.
+The distinction is whether the delegated output is the *primary artifact flowing through the gates*.
+When it is, a weaker draft does not remove cost, it relocates it into reconciliation, and the only
+honest way to know which happened is to measure one realistic feature before committing any doctrine
+text to the mechanism.
+
+Related: AJ-021 (round-by-round review is blind to cumulative disproportion) — the same corrective
+shape, an outside empirical check that the review loop itself cannot produce. The two-change split
+that made CHG-B contingent on measured evidence is what let this feature stop cleanly at a negative
+result instead of shipping doctrine for a saving that was never there.
+
+### Amendment (2026-08-03, same day) — the measurement that produced this entry was confounded
+
+Re-reading the delegation harness after this entry was first written shows the packet handicapped the
+delegate in ways the original attribution did not account for. This does not withdraw the rule above,
+but a reader must not inherit it as a clean structural verdict.
+
+`prompts/codeos-implementer-task.md` **forbade the build manifest** the candidate needed — "Never emit
+a path that is not a source or test file," plus "Add no … files … not traced to the approved
+artifacts." The word `Cargo.toml` appears zero times in the 105KB packet. The missing manifest was
+therefore a harness defect reported as a model defect. The packet also contained **no layout exemplar**
+— the only `modules/` string in it comes from the prompt itself, so the candidate's module naming was a
+guess with nothing to guess from. Most consequentially, the prompt's "**add no abstractions**"
+minimalism instruction pushes a literal reader away from precisely the invariant-carrying structure
+whose absence this entry identified as the root cause: the serializer design may have been partly
+induced by the prompt rather than chosen by the model. Output was additionally constrained to
+JSON-escaped source in a single shot with no compiler feedback, both known to degrade generated code.
+
+What survives that correction, and is not attributable to the harness: the missing `derive(Hash)` on a
+`HashMap` key; a doc comment asserting a validation the function does not perform; a knowingly-stubbed
+timestamp shipped with a comment saying a real implementation would differ; the `#[cfg(test)]` module
+shipped against an explicit "do not write tests in a Stage 4 candidate" instruction; and the
+`scope_fully_examined` violation, whose governing schema sentence — "`null` never means 'examined but
+the outcome is unknown'" — was present in the packet twice and still ignored. Seven of the eight
+violations landed on invariant-dense contract text that *was* supplied, which is the observation the
+rule above rests on and which the confound does not disturb.
+
+A further limit worth naming: the same author wrote the comparator implementation, the violation
+suite, and this entry. The individual violations are objective against quoted contract and schema
+text, but the count and the framing are not independent of the grader.
+
+**Consequence for the rule:** the structural claim — that verification cost does not compress the way
+generation cost does, because the delegated draft is the primary artifact through the gates — is
+independent of both the harness and the delegate, and stands. The stronger reading, that a cheap model
+*cannot* satisfy a rigorous contract, is **not yet established**: it was measured through a harness
+that suppressed manifests, withheld layout, discouraged the needed abstractions, and allowed no repair
+iteration. Correcting the harness is therefore a **prerequisite** to any further model comparison, not
+an alternative avenue — a re-test that changes the model without fixing the packet is uninterpretable.
+See `backlog/UPG-0060-deepseek-delegated-implementation.md` for the ordered re-test conditions.

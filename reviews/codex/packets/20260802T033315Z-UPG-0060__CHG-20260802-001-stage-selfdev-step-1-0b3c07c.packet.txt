@@ -1,0 +1,460 @@
+Reviewer task:
+
+SCOPE CONTRACT
+  Assess this artifact against the STATED SCOPE of this stage/PR — the Expected Stage
+  Output below and what the artifacts actually claim — NOT against an ideal final system.
+  A capability the artifacts do not claim to provide is OUT-OF-SCOPE, not a defect.
+  The following are OUT-OF-SCOPE BACKLOG unless THIS artifact explicitly claims to provide
+  them: formal approval-binding enforcement; rollback correctness; COMMIT_BOUND/
+  WORKSPACE_BOUND enforcement; JSON Schema validation; CI validation; exact
+  decision-integrity; per-feature decision ledgers; autonomous approval; enabled hooks.
+
+YOUR TASK — answer these five questions using only the evidence in the packet:
+  1. Acceptance criteria: Does the artifact satisfy each of its stated acceptance criteria?
+     Cite evidence for each criterion (or note its absence).
+  2. Claim support: Are universal or strong claims (all, every, never, always, no X) in the
+     artifact supported by evidence in the packet? Any unverifiable strong claim is a candidate
+     finding only if it affects acceptance, scope, safety, decision integrity, or the artifact's
+     stated guarantees.
+  3. Scope drift: Is there any change beyond the stated scope boundary? (Files not in the
+     "What changes" list; behavior changes not in the intent; downstream doctrine modified
+     rather than read.)
+  4. In-scope blockers: Are there facts that, if left in, would make the artifact wrong,
+     unsafe, or internally contradictory?
+  5. Finding classification: Classify every finding you raise as exactly one of the five
+     TRIAGE RULE categories below.
+
+TRIAGE RULE — classify EVERY finding as exactly one of:
+  IN-SCOPE BLOCKER         breaks the stated goal; creates a FALSE CLAIM in this artifact;
+                           weakens the advisory/read-only/human-gated guarantees; prevents
+                           the work from running; or violates an explicit safety constraint.
+  IN-SCOPE NON-BLOCKER     improves it but is not required for this PR.
+  OUT-OF-SCOPE BACKLOG     valid, but belongs to a future feature / stronger guarantee.
+  REJECTED                 conflicts with the stated scope or Codeos philosophy.
+  SELF-REFERENCE /         review records that are stale because of the previous round's
+  REVIEW-BOOKKEEPING       own existence (causal loop); not a real artifact defect.
+  Base the PR decision ONLY on IN-SCOPE BLOCKER findings. An OUT-OF-SCOPE BACKLOG finding
+  must NOT cause DO NOT ADVANCE unless this artifact FALSELY CLAIMS to solve it.
+
+WHAT NOT TO DO
+  - Do not flag style or wording issues as blockers unless the wording creates a false claim,
+    contradiction, parser breakage, or wrong governance instruction.
+  - Do not re-review unchanged full context when the packet is in delta mode.
+  - Do not treat local-only review history as a blocker unless the artifact falsely
+    claims the review artifacts are committed/durable.
+
+INSTRUCTIONS
+  If this is a resumed session, ignore any earlier-session conclusions unless they are
+  re-established by THIS packet; assess only the evidence above, pinned to this commit.
+  Give a focused assessment of this artifact against the stated scope, acceptance criteria,
+  and evidence in this packet. Rank findings by severity. Suggest a better design only when
+  needed to explain a required fix for an IN-SCOPE BLOCKER.
+
+  CONTROLLED PLAIN ENGLISH (if one of the artifacts under review states "Controlled Plain
+  English status for this review: enabled" or "...: disabled" — this task template never reads
+  any configuration file itself; whoever invokes the review includes that line as one of the
+  reviewed artifacts, the same way any other file is included, when the relevant project has the
+  discipline enabled): Layer D1 (advisory verdict, no invented requirements, evidence separated
+  from inference — the TRIAGE RULE and "based ONLY on in-scope blockers" instructions above
+  already are this) always applies regardless of that value. When the value is `enabled`,
+  additionally write your prose in Layer D2 style — short sentences, common words, direct
+  explanations. This affects wording only; it never changes the footer format below.
+
+  Limit findings to the top 3 IN-SCOPE BLOCKERS. Additional non-blocking observations may be
+  summarized in one short paragraph only if useful.
+
+  For EACH finding emit:
+    Finding: / Severity: High|Medium|Low / Classification: <one of the TRIAGE RULE labels>
+    Evidence: <file/line> / Why: <short> / Required action: fix now|optional fix|backlog|reject
+    Scope reason: <why it does/does not belong to this PR's scope>
+  Then emit:
+    PR decision: ADVANCE | REQUEST CHANGES | DO NOT ADVANCE   (based ONLY on in-scope blockers)
+    Scope drift warning: yes|no — <is anything pulling this PR beyond its stated scope?>
+  Then on the LAST three lines emit exactly (map ADVANCE->NO OBJECTION,
+  REQUEST CHANGES->CHANGES ADVISED, DO NOT ADVANCE->DO NOT ADVANCE):
+    LOG SUMMARY: <NO OBJECTION | CHANGES ADVISED | DO NOT ADVANCE | UNCLASSIFIED> — <single most important point>
+      (use UNCLASSIFIED if you genuinely cannot classify the artifact safely)
+    EVIDENCE: <A|B|C|D|E>
+    HIGHEST-IMPACT UNCERTAINTY: <one sentence — what single thing, if wrong, most affects this assessment>
+
+  Evidence grade — the grade describes what the assessment rests on, not reviewer confidence:
+    A — Directly verified in the artifact, diff, or output shown in the packet
+    B — Verified with multiple direct pieces of evidence, but coverage is not complete
+    C — Partially verified, partially inferred from structure or context
+    D — Mostly inferred from structure or indirect evidence
+    E — Hypothesis or very limited basis — little to no direct evidence
+
+
+PACKET MANIFEST
+  generated: 2026-08-02T03:31:10Z
+  task_prompt: /home/rimo/projects/Codeos/prompts/codeos-reviewer-task.md (5794 bytes)
+  review_content_bytes: 18661
+  estimated_review_tokens: ~4665
+  budget_status: OK
+  packet_mode: full
+  delta_base: none
+  items:
+    - path: changes/UPG-0060__CHG-20260802-001__deepseek-implement-tool.md
+      mode: full_file
+      bytes: 6252
+      sha256: 07381c2ea200b87bf7b8c0f3cbcaeceb9f028ca3b9844196893d2c76aa46e507
+    - path: backlog/UPG-0060-deepseek-delegated-implementation.md
+      mode: full_file
+      bytes: 9461
+      sha256: 83f42f40b4b4da93d107069316ab092419a3cf1fd16a8cb73174b2ce8cb903ae
+    - path: /tmp/codeos-cpe-status.ps24xs
+      mode: full_file
+      bytes: 156
+      sha256: de32594591eb2a1c1bf9526dd44201f7d9fcd08db98d9d345024a1a7ebc5912c
+    - path: (diff)
+      mode: full_file
+      bytes: 2792
+
+REVIEW CONTEXT
+  Feature:                UPG-0060__CHG-20260802-001
+  Stage:                  selfdev-step-1
+  Branch:                 main
+  Base commit:            (no base pin)
+  Review commit:          0b3c07cf877e591f35dba8ed99456f8639877197 (+ uncommitted workspace changes)
+  Current approved stage: n/a (non-numeric stage)
+  Evidence coverage:      FULL_COVERAGE
+  Workspace dirty:        yes (uncommitted changes at review time)
+
+DBA RULES RELEVANT TO THIS STAGE
+  - Human approval is required for every stage transition; you are advisory only.
+  - Memory is not truth — assess only what is provided, pinned to the review commit.
+  - Implementation must trace to approved artifacts; no behavior beyond intent+contract+schema.
+  - No events outside the approved event schema; no hidden behavior.
+
+STAGE-SPECIFIC CHECKS
+  - (no stage-specific checklist for stage selfdev-step-1)
+
+EXPECTED STAGE OUTPUT
+  (no expected-output template for stage)
+
+ARTIFACTS TO REVIEW
+  --- changes/UPG-0060__CHG-20260802-001__deepseek-implement-tool.md (sha256: 07381c2ea200b87bf7b8c0f3cbcaeceb9f028ca3b9844196893d2c76aa46e507, visibility: shown) ---
+    # Self-Development Change: UPG-0060__CHG-20260802-001 — deepseek-implement-tool
+    
+    <!--
+    PURPOSE: Per-change source of truth for CHG-A of UPG-0060 — build and pilot the out-of-band
+    DeepSeek Stage 4/5 implementer tool. Self-development toolkit change (script-tooling); no downstream
+    behavioral contract, event schema, or replay. Workflow: prompts/codeos-self-dev.md (4-step loop).
+    The live status row lives in status/self-development.md, not here.
+    -->
+    
+    <!-- TRACE HEADER (canonical) -->
+    ```yaml
+    feature_id: UPG-0060
+    primary_feature_id: UPG-0060
+    change_id: CHG-20260802-001
+    slug: deepseek-implement-tool
+    state: IN_PROGRESS      # DRAFT | IN_REVIEW | IN_PROGRESS | BLOCKED | COMPLETE | ABANDONED | SUPERSEDED
+    current_step: 1-Intent  # 1-Intent | 2-Acceptance | 3-Implement | 4-Reconcile
+    implements:
+      - UPG-0060
+    related_features: [UPG-0056, UPG-0032, UPG-0057]
+    review_series: RVS__UPG-0060__CHG-20260802-001__S1   # ALL Step-1 reviews for this change (stable)
+    review_profile: PROFILE-3   # script-tooling (Step 0a)
+    review_state: DRAFT     # DRAFT | IN_REVIEW | REVIEWED | ACCEPTED  (operational; NOT a round)
+    review_history: reviews/review-log.md   # exact per-round REV__…__R<N> verdicts + human decisions live here
+    fixes_findings: []
+    follow_up_of: null
+    ```
+    
+    <!-- SELF-REFERENCE BOUNDARY: this artifact is itself reviewed, so it must NOT embed the current
+    review round. Reference the stable review SERIES (review_series) + review_state; exact rounds live
+    only in reviews/review-log.md and reviews/codex/*. -->
+    
+    
+    ## Change Intent
+    
+    **Why (problem in the toolkit):**
+    Codeos offloads advisory *review* work to the Codex CLI to keep it off Claude Code's token budget, but
+    has no equivalent for the most token-expensive AI work in the downstream loop: Stage 4 (Implementation)
+    and Stage 5 (Tests), where the AI writes code and tests as a constrained satisfier. A cheaper model is
+    available (`DEEPSEEK_API_KEY` is present in the environment), but two facts shape the design: (1)
+    delegating implementation differs from delegating review — the draft is the primary artifact that flows
+    through the gates, so net token benefit must be *measured*, not assumed; and (2) the reviewer is a
+    local-CLI, read-only integration with no HTTP or API-key path in the repo, so a DeepSeek-via-API tool is
+    a new kind of integration that *writes* code. This change builds and pilots the tool, off by default,
+    and captures token/quality evidence — with no downstream-doctrine change (that is CHG-B, contingent on
+    this pilot).
+    
+    **What changes:**
+    - `scripts/codeos-implement.sh` — **new.** Out-of-band tool mirroring `scripts/codeos-review.sh`'s
+      entry-point discipline: `set -euo pipefail`; git-repo precondition; self-dev-vs-downstream context
+      resolution via `pwd -P` symlink comparison against `CODEOS_ROOT`; explicit, documented exit codes;
+      fail-closed preconditions. Reads the activation status file per the Optional Mechanism Status
+      Convention (UPG-0056) and refuses to run unless `status: enabled`. When enabled: builds the packet
+      from `prompts/codeos-implementer-task.md` plus the approved artifacts, calls the DeepSeek API with
+      `$DEEPSEEK_API_KEY`, writes the candidate to a staging directory (never `modules/`/`tests/`, never
+      committed), preserves the sent packet and raw response for audit, and logs DeepSeek token usage.
+    - `prompts/codeos-implementer-task.md` — **new.** The packet task prompt pinning DeepSeek to the
+      Stage-4 constrained-satisfier role (`prompts/04-implement.md`) — implement only what the three
+      approved artifacts specify, emit the required events, satisfy the contract clauses; for stage 5,
+      author behavioral and replay tests only.
+    - `config/delegated-implementation.yaml` — **new.** Self-dev activation status file, scaffolded at
+      `status: disabled` (mechanism off by default; missing means disabled per the convention).
+    - `backlog/UPG-0060-deepseek-delegated-implementation.md` — **new** feature brief (this change's
+      Feature Thread).
+    - `changes/UPG-0060__CHG-20260802-001__deepseek-implement-tool.md` — **new**, this record.
+    - Lifecycle bookkeeping: `backlog/features.md` (new UPG-0060 row), `status/self-development.md` (new
+      IN_PROGRESS row), `status/roadmap.md` (record the in-flight change).
+    - Pilot evidence: one captured `codeos-implement.sh` run against a sample feature with a
+      token-and-quality comparison (DeepSeek tokens spent vs. Claude generation avoided; does the candidate
+      pass the existing Stage 5 tests and `codeos-review.sh review`?), recorded in Implementation Notes.
+    
+    **Scope boundary — what stays the same:**
+    - No change to `dba-system.md` or any downstream stage prompt (`prompts/04-implement.md`,
+      `prompts/05-tests.md`, `prompts/06-observe.md`). Doctrine wiring is CHG-B, contingent on this pilot.
+    - No change to the Rust reviewer engine (`tools/reviewer/`); no DeepSeek provider is added there.
+    - No new mandatory human-approval gate, no new Stage ID, no Non-Negotiable Rule change.
+    - The tool never promotes a candidate into `modules/`/`tests/` and never commits; the human gate,
+      advisory review, and reconciliation are unchanged.
+    - Stage 6 (Observation) is out — it is human-run runtime execution with no implementation to delegate.
+    - The mechanism is not enabled by default anywhere.
+    
+    **Class:** script-tooling
+    **Scope axis:** self-dev only
+    **Backlog item:** backlog/UPG-0060-deepseek-delegated-implementation.md
+    
+    ---
+    
+    ## Acceptance Criteria
+    
+    <!-- Filled in Step 2. The consistency contracts this change must satisfy; each checkable in Reconcile.
+    For script-tooling: include I/O behavior, exit-code / fail-closed cases, idempotency, and secret
+    non-leakage. -->
+    
+    | # | Criterion | How it will be verified |
+    |---|---|---|
+    | — | (to be produced in Step 2) | — |
+    
+    ---
+    
+    ## Implementation Notes
+    
+    <!-- Filled during Step 3. Summary only — the git diff is the source of truth. Includes the pilot run
+    and its token/quality comparison. -->
+    
+    [Pending Step 3.]
+    
+    ---
+    
+    ## Reconciliation
+    
+    <!-- Filled during Step 4. -->
+    
+    **Acceptance verification:**
+    
+    | # | Criterion | Result | Evidence |
+    |---|---|---|---|
+    | — | — | — | — |
+    
+    **Consistency sweep (grep):**
+    [Pending Step 4.]
+    
+    **Findings scope-triage:**
+    
+    | Finding | Triage | Action |
+    |---|---|---|
+    | — | — | — |
+    
+    ---
+
+  --- backlog/UPG-0060-deepseek-delegated-implementation.md (sha256: 83f42f40b4b4da93d107069316ab092419a3cf1fd16a8cb73174b2ce8cb903ae, visibility: shown) ---
+    ---
+    feature_id: UPG-0060
+    slug: deepseek-delegated-implementation
+    title: DeepSeek-Delegated Implementation for Stages 4-5
+    status: PROPOSED
+    priority: P2
+    depends_on: [UPG-0056]
+    related_features: [UPG-0032, UPG-0057]
+    supersedes: []
+    superseded_by: []
+    ---
+    
+    # Upgrade: deepseek-delegated-implementation — DeepSeek-Delegated Implementation for Stages 4-5
+    
+    **Priority**: P2
+    **Status**: PROPOSED
+    **Type**: script-tooling + downstream-doctrine (two CHGs — CHG-A tool pilot, CHG-B doctrine wiring)
+    
+    ## Problem
+    
+    Codeos already offloads one kind of AI work to a non-Claude model to keep it off Claude Code's token
+    budget: the advisory Codex reviewer (`scripts/codeos-review.sh` → `tools/reviewer/`). No equivalent
+    exists for the most token-expensive part of the downstream DBA loop — **Stage 4 (Implementation)**
+    and **Stage 5 (Tests)**, where the AI writes code and tests as a "constrained satisfier"
+    (`prompts/04-implement.md`, `prompts/05-tests.md`). Every downstream feature pays Claude's generation
+    tokens for that code and those tests. A cheaper model (`DEEPSEEK_API_KEY` is present in the
+    environment) could draft the Stage 4/5 candidate, leaving Claude's stronger reasoning for the
+    approval, reconciliation, and review that already guard correctness.
+    
+    Two facts constrain any design:
+    
+    - **Delegating implementation is not the same as delegating review.** Review is read-only and
+      advisory — a weak review costs nothing because the human still decides at the gate. Implementation
+      is the *primary artifact* that flows through the gates, so a weaker draft shifts cost onto
+      reconciliation and review rather than removing it. Net token savings are plausible but **not proven
+      in advance** — they must be measured before any doctrine commits to the mechanism.
+    - **The reviewer is a local-CLI, read-only integration, not an HTTP/API one.** It shells out to the
+      `codex` CLI in a read-only sandbox; there is no HTTP client or API key anywhere in the toolkit. A
+      DeepSeek-via-API tool would be the first HTTP/API-key path in the repo, and it *writes* rather than
+      reads — so it cannot simply reuse the reviewer's read-only invariant.
+    
+    ## Upgrade
+    
+    Introduce an **opt-in, off-by-default** tool that drafts Stage 4/5 candidates via the DeepSeek API,
+    staged for human promotion, with every existing human-approval gate and advisory review unchanged.
+    Delivered in two change records so the doctrine change is contingent on measured pilot evidence:
+    
+    - **CHG-A (script-tooling, self-dev only) — build and pilot the tool.** A new
+      `scripts/codeos-implement.sh` that mirrors the reviewer shim's shape (git-repo precondition,
+      self-dev-vs-downstream context resolution by `pwd -P` symlink comparison, explicit exit codes,
+      fail-closed preconditions). It reads a one-line activation status file per the Optional Mechanism
+      Status Convention (UPG-0056) and refuses to run unless `status: enabled`. When enabled, it builds a
+      packet from a new `prompts/codeos-implementer-task.md` (pinning DeepSeek to the constrained-satisfier
+      role and the three approved artifacts), calls the DeepSeek API using `$DEEPSEEK_API_KEY`, and writes
+      the candidate code/tests to a staging directory — never directly into `modules/` or `tests/`, never
+      committed. It preserves the sent packet and raw response for audit and logs DeepSeek token usage.
+      The change captures one pilot run with a token-and-quality comparison as evidence.
+    
+    - **CHG-B (downstream-doctrine, both) — wire the mechanism into doctrine, only if CHG-A is
+      net-positive.** Add an optional-mechanism section to `dba-system.md` documenting activation
+      mechanics only (mirroring the Controlled Plain English section: no new Stage ID, no new
+      Non-Negotiable Rule, no new mandatory human-approval gate); scaffold the downstream status file at
+      `status: disabled` in `scripts/dba-init.sh`; add advisory notes to `prompts/04-implement.md` and
+      `prompts/05-tests.md` that a delegated candidate MAY be produced but the same gate and advisory
+      review apply. If the pilot is not net-positive, CHG-B is not done and this feature is abandoned.
+    
+    The tool stages a *candidate*; a human (or Claude) promotes it, and the existing Stage 4/5 human gate,
+    advisory Codex review, and Stage 7 reconciliation then apply exactly as today. The tool never
+    approves anything — Non-Negotiable Rule #1 (the human decides at the gate) is untouched.
+    
+    ## Scope
+    
+    **In scope (CHG-A):** `scripts/codeos-implement.sh`, `prompts/codeos-implementer-task.md`, a self-dev
+    activation status file `config/delegated-implementation.yaml` (scaffolded at `status: disabled`), this
+    brief, the CHG-A change record, and lifecycle bookkeeping (`backlog/features.md`,
+    `status/self-development.md`, `status/roadmap.md`). One captured pilot run with token/quality evidence.
+    
+    **In scope (CHG-B, contingent):** an optional-mechanism section in `dba-system.md`; downstream status
+    file scaffolding in `scripts/dba-init.sh` at `status: disabled`; advisory notes in
+    `prompts/04-implement.md` and `prompts/05-tests.md`; downstream-compatibility acceptance criteria and a
+    grep cross-reference sweep.
+    
+    **Out of scope:** any change to the Rust reviewer engine (`tools/reviewer/`) — adding an HTTP DeepSeek
+    provider there is a possible future consolidation, decided when concrete, not here; any new mandatory
+    human-approval gate; any new Stage ID; any Non-Negotiable Rule change; automatic promotion of a
+    candidate into `modules/`/`tests/` or any auto-commit; Stage 6 (Observation is human-run runtime
+    execution — there is no implementation to delegate); enabling the mechanism by default anywhere.
+    
+    ## Value
+    
+    Moves Stage 4/5 code and test generation off Claude Code's token budget when a project opts in, the
+    same lever the reviewer already applies to review work. The two-CHG split makes the saving *measured,
+    not assumed*: CHG-A proves (or disproves) net token benefit and gate-passing quality on a real run
+    before any downstream-doctrine text commits to the mechanism. Because the mechanism is off by default
+    and inert unless explicitly enabled, shipping CHG-A carries no behavioral change for any existing
+    project.
+    
+    ## Risk
+    
+    - **First HTTP/API-key path in the toolkit.** The key must never reach a packet, log, response dump,
+      or candidate file. Mitigated by reusing the reviewer's secret-redaction discipline and verifying by
+      grep over the tool's outputs.
+    - **Writing automation, not read-only.** The tool writes generated code. Mitigated by candidate
+      staging plus explicit human promotion: the tool never writes into `modules/`/`tests/` and never
+      commits, preserving "artifacts on disk are authoritative" and the human gate.
+    - **Net-token benefit is unproven.** A weaker draft can add review/reconciliation rounds. Mitigated by
+      making CHG-A measure it and by gating CHG-B on that evidence; the feature is abandonable if the
+      pilot is not net-positive.
+    - **Autonomy prohibition.** `dba-system.md` forbids multi-step autonomous execution. Mitigated by
+      framing the tool as single-shot, human-invoked generation of a staged candidate — not an autonomous
+      agent.
+    
+    ## Guardrail
+    
+    - The tool must refuse to run when its activation status file is absent, `status: disabled`, or
+      malformed — fail-closed, exactly like the reviewer shim's preconditions.
+    - The tool must never write into `modules/` or `tests/`, and never commit. Staging directory only.
+    - `DEEPSEEK_API_KEY` must never appear in any preserved packet, log, response, or candidate.
+    - CHG-A must not touch `dba-system.md` or any downstream prompt. Doctrine wiring is CHG-B, and CHG-B
+      proceeds only on positive CHG-A evidence.
+    - Do not add a DeepSeek provider to the Rust reviewer engine as part of this feature. That is a
+      separate decision if a concrete need arises.
+    
+    ## Related
+    
+    - **UPG-0056** (Optional Mechanism Status Convention) — the one-line on/off convention this tool's
+      activation gate consumes; `depends_on`.
+    - **UPG-0057** (Controlled Plain English) — precedent for a two-CHG feature and for an optional
+      mechanism documented as activation-mechanics-only in `dba-system.md` with no new gate.
+    - **UPG-0032** (Rust Reviewer Engine, multi-provider) — the reviewer's provider abstraction and the
+      place a future consolidation could host a DeepSeek provider; explicitly out of scope here.
+    - Backlog thesis items 1 ("reduce human review load" / token load) and 2 ("make Stage 4–6 execution
+      transparent") in `backlog/features.md`.
+    
+    ## Feature Thread
+    
+    > Canonical thread rollup for this feature. Compact links/IDs only; full detail lives in the change
+    > records and review files. May be maintained manually.
+    
+    ### Changes
+    
+    | Change ID | File | Purpose | State |
+    |---|---|---|---|
+    | CHG-20260802-001 | `changes/UPG-0060__CHG-20260802-001__deepseek-implement-tool.md` | Build and pilot the out-of-band DeepSeek Stage 4/5 implementer tool (CHG-A) | IN_PROGRESS |
+    | (planned) CHG-B | — | Wire the mechanism into `dba-system.md` + prompts as an optional, off-by-default mechanism — **contingent on CHG-A pilot evidence** | NOT STARTED |
+    
+    ### Reviews
+    
+    | Review Series | Change ID | Step | Rounds | Accepted Verdict |
+    |---|---|---|---|---|
+    | RVS__UPG-0060__CHG-20260802-001__S1 | CHG-20260802-001 | 1-Intent | (in progress) | — |
+    
+    ### Findings Tracked Inside This Feature
+    
+    | Review Series | Classification(s) | Resolution |
+    |---|---|---|
+    | — | — | — |
+    
+    ### Follow-up Features
+    
+    | Feature ID | Reason | Source finding |
+    |---|---|---|
+    | — | — | — |
+
+  --- /tmp/codeos-cpe-status.ps24xs (sha256: de32594591eb2a1c1bf9526dd44201f7d9fcd08db98d9d345024a1a7ebc5912c, visibility: shown) ---
+    Controlled Plain English status for this review: enabled
+    Source: /home/rimo/projects/Codeos/config/writing-discipline.yaml
+    Applicable scope: selfdev-step-1
+
+DIFF TO REVIEW (base->review, secret/size filtered)
+diff --git a/backlog/features.md b/backlog/features.md
+index d302cb4..65aa187 100644
+--- a/backlog/features.md
++++ b/backlog/features.md
+@@ -90,6 +90,7 @@ The goal is to speed up Codeos development without weakening DBA advantages.
+ | UPG-0057 | [UPG-0057-controlled-plain-english-writing-discipline.md](UPG-0057-controlled-plain-english-writing-discipline.md) | Controlled Plain English Writing Discipline | P3 | COMPLETE |
+ | UPG-0058 | [UPG-0058-cohort-logical-design-artifact.md](UPG-0058-cohort-logical-design-artifact.md) | Cohort Logical Design — a Second Architecture Synthesis Output | P1 | COMPLETE |
+ | UPG-0059 | [UPG-0059-wave-gated-batch-review.md](UPG-0059-wave-gated-batch-review.md) | Wave-Gated Batch Review for Multi-Feature Stage 1-3 Cohorts | P2 | COMPLETE |
++| UPG-0060 | [UPG-0060-deepseek-delegated-implementation.md](UPG-0060-deepseek-delegated-implementation.md) | DeepSeek-Delegated Implementation for Stages 4-5 | P2 | PROPOSED |
+ 
+ > Priority `—` = no formal P-rank (a completed cleanup, or a discovery note). Feature IDs are
+ > assigned once and never reused. `UPG-0002` and `UPG-0003` are historical/piloted work given IDs
+diff --git a/status/self-development.md b/status/self-development.md
+index 0f09308..d6e087d 100644
+--- a/status/self-development.md
++++ b/status/self-development.md
+@@ -81,6 +81,7 @@
+ | UPG-0059 | CHG-20260728-001 | downstream-doctrine | downstream doctrine only | 4-Reconcile | ACCEPTED — Wave-Gated Batch Review for multi-feature Stage 1-3 cohorts; batches drafting/human attention per stage-wave, keeps per-feature approval individual; progressive checks, targeted reassessment, versioned membership reuse existing patterns; three ambiguity-response forms in `01-intent.md`/`02-contract.md`; all 16 ACs verified; no code | COMPLETE | — |
+ | UPG-0057 | CHG-20260726-003 | downstream-doctrine | downstream doctrine only | 4-Reconcile | CHG-A ACCEPTED and committed (fd2b198) — pattern + downstream doctrine + prompt wiring; manual status-line inclusion accepted as CHG-A-scope only, not final operating model | COMPLETE | UPG-0057 (CHG-B) |
+ | UPG-0057 | CHG-20260727-001 | script-tooling + downstream-doctrine + self-dev-governance | both | 4-Reconcile | CHG-B ACCEPTED and complete — automatic Controlled Plain English status injection in `scripts/codeos-review.sh` (no Rust changes, 182 tests unchanged); wrapper established as sole supported entry point; all 13 ACs verified PASS; manual inclusion no longer part of the operating model | COMPLETE | — |
++| UPG-0060 | CHG-20260802-001 | script-tooling | self-dev only | 1-Intent | DRAFT (series RVS__UPG-0060__CHG-20260802-001__S1; PROFILE-3) | IN_PROGRESS | — |
+ 
+ <!--
+ Identity   : Feature ID = UPG-#### (stable). Change ID = CHG-YYYYMMDD-NNN (one execution), or a

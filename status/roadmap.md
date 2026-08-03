@@ -27,6 +27,9 @@ Entries under **Change ID** are self-development *change* records (execution), n
 | `0004-review-fixes` | — (reviewer findings) | DONE | Advisory-review follow-up fixes. |
 | — | UPG-0003 | PILOTED | `reviewer-decision-brief`: advisory Bash reviewer (`scripts/codeos-review.sh` + `docs/reviewer-pipeline.md`). Manual, read-only, non-gatekeeping. |
 | `CHG-20260627-001` | UPG-0001 | COMPLETE | Feature Thread traceability + stable IDs (review-series self-reference boundary; accepted by decision 2026-06-28). |
+| `CHG-20260802-001` | UPG-0060 | COMPLETE | CHG-A of `deepseek-delegated-implementation`: built + piloted an opt-in, off-by-default DeepSeek Stage 4/5 implementer tool (`scripts/codeos-implement.sh`). Accepted 2026-08-03. |
+| — | UPG-0060 | PILOTED (negative) | CHG-B gate: a realistic-feature measurement (EvidenceAtlas EA-0003 Stage 4) returned NOT NET-POSITIVE — the delegated arm cost the Claude-only arm plus ~5.4K Claude input tokens plus 28,437 DeepSeek tokens and saved zero Claude output tokens. **CHG-B will not be done.** Feature held at CHG-A; tool stays off by default with no downstream footprint. Re-test conditions named in the brief. Finding journaled as AJ-022. |
+| `CHG-20260803-001` | UPG-0060 | IN_PROGRESS | Harness correction — re-test **condition 0**, a prerequisite to any further delegation comparison: the gate measurement was confounded by CHG-A's own packet (forbade build manifests, no layout exemplar, instructed against required abstractions, JSON-escaped single-shot output, no compiler feedback). `prompt + script-tooling`, self-dev only. Does not re-open CHG-B and does not enable the mechanism anywhere. |
 
 (`UPG-0006` reviewer-quality-scale is **partially piloted** — the reviewer already emits an
 evidence grade; the full scale is scheduled in Wave 1.)
