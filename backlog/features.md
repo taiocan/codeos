@@ -90,7 +90,8 @@ The goal is to speed up Codeos development without weakening DBA advantages.
 | UPG-0057 | [UPG-0057-controlled-plain-english-writing-discipline.md](UPG-0057-controlled-plain-english-writing-discipline.md) | Controlled Plain English Writing Discipline | P3 | COMPLETE |
 | UPG-0058 | [UPG-0058-cohort-logical-design-artifact.md](UPG-0058-cohort-logical-design-artifact.md) | Cohort Logical Design — a Second Architecture Synthesis Output | P1 | COMPLETE |
 | UPG-0059 | [UPG-0059-wave-gated-batch-review.md](UPG-0059-wave-gated-batch-review.md) | Wave-Gated Batch Review for Multi-Feature Stage 1-3 Cohorts | P2 | COMPLETE |
-| UPG-0060 | [UPG-0060-deepseek-delegated-implementation.md](UPG-0060-deepseek-delegated-implementation.md) | DeepSeek-Delegated Implementation for Stages 4-5 | P2 | PILOTED (negative — CHG-A shipped off by default; CHG-B not done, see AJ-022) |
+| UPG-0060 | [UPG-0060-deepseek-delegated-implementation.md](UPG-0060-deepseek-delegated-implementation.md) | DeepSeek-Delegated Implementation for Stages 4-5 | P2 | PILOTED (negative — CHG-A shipped off by default; CHG-B not done, see AJ-022). Harness corrected (CHG-20260803-001); **frozen pending the realistic re-test** |
+| UPG-0061 | [UPG-0061-review-finding-severity-taxonomy.md](UPG-0061-review-finding-severity-taxonomy.md) | Separate Behavioral Blockers from Record-Hygiene Findings in Review | P2 | PROPOSED |
 
 > Priority `—` = no formal P-rank (a completed cleanup, or a discovery note). Feature IDs are
 > assigned once and never reused. `UPG-0002` and `UPG-0003` are historical/piloted work given IDs

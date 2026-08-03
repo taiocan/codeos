@@ -157,7 +157,7 @@ project.
 | Change ID | File | Purpose | State |
 |---|---|---|---|
 | CHG-20260802-001 | `changes/UPG-0060__CHG-20260802-001__deepseek-implement-tool.md` | Build and pilot the out-of-band DeepSeek Stage 4/5 implementer tool (CHG-A) | COMPLETE (accepted 2026-08-03) |
-| CHG-20260803-001 | `changes/UPG-0060__CHG-20260803-001__implementer-harness-correction.md` | Correct the delegation harness — re-test **condition 0**: permit build manifests, supply a layout exemplar, stop instructing against required abstractions, emit plain source instead of JSON-escaped, allow one bounded repair iteration | IN_PROGRESS (Step 1) |
+| CHG-20260803-001 | `changes/UPG-0060__CHG-20260803-001__implementer-harness-correction.md` | Correct the delegation harness — re-test **condition 0**: permit build manifests, supply a layout exemplar, stop instructing against required abstractions, emit plain source instead of JSON-escaped, allow one bounded repair iteration | COMPLETE (accepted 2026-08-03; 33 tests, 4 mutations verified) |
 | (planned) CHG-B | — | Wire the mechanism into `dba-system.md` + prompts as an optional, off-by-default mechanism — was contingent on the CHG-B gate measurement below | **NOT DONE** — gate returned NOT NET-POSITIVE; human decision 2026-08-03. Re-openable only after condition 0 + a re-test clearing all three axes |
 
 ### CHG-B Gate — realistic-feature net-token measurement
@@ -192,7 +192,23 @@ exemplar, instructed against the abstractions the invariants require, forced JSO
 allowed no repair iteration. **Condition 0 gates conditions 1-3: a re-test that changes the model
 without first fixing the packet is uninterpretable.**
 
-**0. Harness correction — PREREQUISITE.** A `prompt` + `script-tooling` change under this feature, run
+> **FREEZE (human decision, 2026-08-03).** **No further DeepSeek infrastructure changes until a
+> realistic feature has been attempted with the current harness.** Condition 0 is now DONE
+> (`CHG-20260803-001`). The next action on this feature is the *experiment*, not more tooling. This
+> rule exists because the work slipped into meta-work — improve harness, document harness, review
+> documentation, fix evidence, review packet, fix wording — while the question that justifies the
+> feature's existence went unanswered. Treating this integration as production infrastructure before
+> proving DeepSeek can reliably produce useful implementations was premature hardening.
+>
+> The re-test answers exactly three questions and nothing else:
+> 1. Did DeepSeek substantially satisfy the contract?
+> 2. How much Claude work was required to repair/reconcile it?
+> 3. Was total cost materially lower than Claude implementing it directly?
+>
+> Poor result again despite the corrected harness → **stop; do not build CHG-B.** DeepSeek may still
+> suit narrower tasks, but not as Codeos's implementation delegate. Good result → productionize.
+
+**0. Harness correction — PREREQUISITE.** ✅ **DONE** — `CHG-20260803-001`, accepted 2026-08-03. A `prompt` + `script-tooling` change under this feature, run
 through the 4-step self-development loop before any further comparison:
    - permit non-source files (build manifests, module config) when the target language requires them
      to build, while keeping the stage-area allowlist;

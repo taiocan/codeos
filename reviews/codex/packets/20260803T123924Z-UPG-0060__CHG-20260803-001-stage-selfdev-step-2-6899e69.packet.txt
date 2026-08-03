@@ -1,0 +1,858 @@
+Reviewer task:
+
+SCOPE CONTRACT
+  Assess this artifact against the STATED SCOPE of this stage/PR — the Expected Stage
+  Output below and what the artifacts actually claim — NOT against an ideal final system.
+  A capability the artifacts do not claim to provide is OUT-OF-SCOPE, not a defect.
+  The following are OUT-OF-SCOPE BACKLOG unless THIS artifact explicitly claims to provide
+  them: formal approval-binding enforcement; rollback correctness; COMMIT_BOUND/
+  WORKSPACE_BOUND enforcement; JSON Schema validation; CI validation; exact
+  decision-integrity; per-feature decision ledgers; autonomous approval; enabled hooks.
+
+YOUR TASK — answer these five questions using only the evidence in the packet:
+  1. Acceptance criteria: Does the artifact satisfy each of its stated acceptance criteria?
+     Cite evidence for each criterion (or note its absence).
+  2. Claim support: Are universal or strong claims (all, every, never, always, no X) in the
+     artifact supported by evidence in the packet? Any unverifiable strong claim is a candidate
+     finding only if it affects acceptance, scope, safety, decision integrity, or the artifact's
+     stated guarantees.
+  3. Scope drift: Is there any change beyond the stated scope boundary? (Files not in the
+     "What changes" list; behavior changes not in the intent; downstream doctrine modified
+     rather than read.)
+  4. In-scope blockers: Are there facts that, if left in, would make the artifact wrong,
+     unsafe, or internally contradictory?
+  5. Finding classification: Classify every finding you raise as exactly one of the five
+     TRIAGE RULE categories below.
+
+TRIAGE RULE — classify EVERY finding as exactly one of:
+  IN-SCOPE BLOCKER         breaks the stated goal; creates a FALSE CLAIM in this artifact;
+                           weakens the advisory/read-only/human-gated guarantees; prevents
+                           the work from running; or violates an explicit safety constraint.
+  IN-SCOPE NON-BLOCKER     improves it but is not required for this PR.
+  OUT-OF-SCOPE BACKLOG     valid, but belongs to a future feature / stronger guarantee.
+  REJECTED                 conflicts with the stated scope or Codeos philosophy.
+  SELF-REFERENCE /         review records that are stale because of the previous round's
+  REVIEW-BOOKKEEPING       own existence (causal loop); not a real artifact defect.
+  Base the PR decision ONLY on IN-SCOPE BLOCKER findings. An OUT-OF-SCOPE BACKLOG finding
+  must NOT cause DO NOT ADVANCE unless this artifact FALSELY CLAIMS to solve it.
+
+WHAT NOT TO DO
+  - Do not flag style or wording issues as blockers unless the wording creates a false claim,
+    contradiction, parser breakage, or wrong governance instruction.
+  - Do not re-review unchanged full context when the packet is in delta mode.
+  - Do not treat local-only review history as a blocker unless the artifact falsely
+    claims the review artifacts are committed/durable.
+
+INSTRUCTIONS
+  If this is a resumed session, ignore any earlier-session conclusions unless they are
+  re-established by THIS packet; assess only the evidence above, pinned to this commit.
+  Give a focused assessment of this artifact against the stated scope, acceptance criteria,
+  and evidence in this packet. Rank findings by severity. Suggest a better design only when
+  needed to explain a required fix for an IN-SCOPE BLOCKER.
+
+  CONTROLLED PLAIN ENGLISH (if one of the artifacts under review states "Controlled Plain
+  English status for this review: enabled" or "...: disabled" — this task template never reads
+  any configuration file itself; whoever invokes the review includes that line as one of the
+  reviewed artifacts, the same way any other file is included, when the relevant project has the
+  discipline enabled): Layer D1 (advisory verdict, no invented requirements, evidence separated
+  from inference — the TRIAGE RULE and "based ONLY on in-scope blockers" instructions above
+  already are this) always applies regardless of that value. When the value is `enabled`,
+  additionally write your prose in Layer D2 style — short sentences, common words, direct
+  explanations. This affects wording only; it never changes the footer format below.
+
+  Limit findings to the top 3 IN-SCOPE BLOCKERS. Additional non-blocking observations may be
+  summarized in one short paragraph only if useful.
+
+  For EACH finding emit:
+    Finding: / Severity: High|Medium|Low / Classification: <one of the TRIAGE RULE labels>
+    Evidence: <file/line> / Why: <short> / Required action: fix now|optional fix|backlog|reject
+    Scope reason: <why it does/does not belong to this PR's scope>
+  Then emit:
+    PR decision: ADVANCE | REQUEST CHANGES | DO NOT ADVANCE   (based ONLY on in-scope blockers)
+    Scope drift warning: yes|no — <is anything pulling this PR beyond its stated scope?>
+  Then on the LAST three lines emit exactly (map ADVANCE->NO OBJECTION,
+  REQUEST CHANGES->CHANGES ADVISED, DO NOT ADVANCE->DO NOT ADVANCE):
+    LOG SUMMARY: <NO OBJECTION | CHANGES ADVISED | DO NOT ADVANCE | UNCLASSIFIED> — <single most important point>
+      (use UNCLASSIFIED if you genuinely cannot classify the artifact safely)
+    EVIDENCE: <A|B|C|D|E>
+    HIGHEST-IMPACT UNCERTAINTY: <one sentence — what single thing, if wrong, most affects this assessment>
+
+  Evidence grade — the grade describes what the assessment rests on, not reviewer confidence:
+    A — Directly verified in the artifact, diff, or output shown in the packet
+    B — Verified with multiple direct pieces of evidence, but coverage is not complete
+    C — Partially verified, partially inferred from structure or context
+    D — Mostly inferred from structure or indirect evidence
+    E — Hypothesis or very limited basis — little to no direct evidence
+
+
+PACKET MANIFEST
+  generated: 2026-08-03T12:37:43Z
+  task_prompt: /home/rimo/projects/Codeos/prompts/codeos-reviewer-task.md (5794 bytes)
+  review_content_bytes: 63147
+  estimated_review_tokens: ~15786
+  budget_status: WARNING — 63147 bytes exceeds CODEOS_PACKET_BUDGET_BYTES=50000
+  packet_mode: full
+  delta_base: none
+  items:
+    - path: changes/UPG-0060__CHG-20260803-001__implementer-harness-correction.md
+      mode: full_file
+      bytes: 17584
+      sha256: b7588e51b6e8c805237dea75a6c9deb2c78adc6c3768908cffdd7394836f8478
+    - path: prompts/codeos-implementer-task.md
+      mode: full_file
+      bytes: 3689
+      sha256: 3196a1cf8f6fd608c6be21d34c6420defbd511d019e5ca4a317f0ffc8c7a92ea
+    - path: scripts/codeos-implement.sh
+      mode: full_file
+      bytes: 12305
+      sha256: 20ff047061aa5227c3d0633fcbbc61b13ee493aabb50ef7e1be550edad7325f5
+    - path: status/self-development.md
+      mode: full_file
+      bytes: 18176
+      sha256: 97e4647be67741aaaa6a726917a6329994b5d21e34f847a1ea52cb9766823f37
+    - path: /tmp/codeos-cpe-status.iuKPgl
+      mode: full_file
+      bytes: 156
+      sha256: 5543a308f9534537c6d68f629027f5b74c54896e7f128c9f023b020c473f1ad3
+    - path: (diff)
+      mode: full_file
+      bytes: 11237
+
+REVIEW CONTEXT
+  Feature:                UPG-0060__CHG-20260803-001
+  Stage:                  selfdev-step-2
+  Branch:                 main
+  Base commit:            (no base pin)
+  Review commit:          6899e69fccb8c9773dd3471632d0b394533cc55a (+ uncommitted workspace changes)
+  Current approved stage: n/a (non-numeric stage)
+  Evidence coverage:      FULL_COVERAGE
+  Workspace dirty:        yes (uncommitted changes at review time)
+
+DBA RULES RELEVANT TO THIS STAGE
+  - Human approval is required for every stage transition; you are advisory only.
+  - Memory is not truth — assess only what is provided, pinned to the review commit.
+  - Implementation must trace to approved artifacts; no behavior beyond intent+contract+schema.
+  - No events outside the approved event schema; no hidden behavior.
+
+STAGE-SPECIFIC CHECKS
+  - (no stage-specific checklist for stage selfdev-step-2)
+
+EXPECTED STAGE OUTPUT
+  (no expected-output template for stage)
+
+ARTIFACTS TO REVIEW
+  --- changes/UPG-0060__CHG-20260803-001__implementer-harness-correction.md (sha256: b7588e51b6e8c805237dea75a6c9deb2c78adc6c3768908cffdd7394836f8478, visibility: shown) ---
+    # Self-Development Change: UPG-0060__CHG-20260803-001 — implementer-harness-correction
+    
+    <!--
+    PURPOSE: Per-change source of truth for the harness correction that the CHG-B gate measurement
+    identified as a prerequisite to any further delegation comparison (condition 0 in the feature brief;
+    AJ-022 same-day amendment). Self-development toolkit change (prompt + script-tooling); no downstream
+    behavioral contract, event schema, or replay. Workflow: prompts/codeos-self-dev.md (4-step loop).
+    The live status row lives in status/self-development.md, not here.
+    
+    This change corrects the delegation harness. It does NOT re-open CHG-B, does not enable the mechanism
+    anywhere, and does not by itself decide whether delegation is adopted — the re-test that follows it is
+    a separate measurement, judged on the three axes named in the feature brief.
+    -->
+    
+    <!-- TRACE HEADER (canonical) -->
+    ```yaml
+    feature_id: UPG-0060
+    primary_feature_id: UPG-0060
+    change_id: CHG-20260803-001
+    slug: implementer-harness-correction
+    state: IN_PROGRESS      # DRAFT | IN_REVIEW | IN_PROGRESS | BLOCKED | COMPLETE | ABANDONED | SUPERSEDED
+    current_step: 2-Acceptance  # 1-Intent | 2-Acceptance | 3-Implement | 4-Reconcile
+    implements:
+      - UPG-0060
+    related_features: [UPG-0056, UPG-0057]
+    review_series: RVS__UPG-0060__CHG-20260803-001__S2   # S1 ACCEPTED (R1 CHANGES ADVISED → R2 NO OBJECTION)
+    review_profile: PROFILE-3   # prompt + script-tooling, same as CHG-A (Step 0a)
+    review_state: IN_REVIEW # DRAFT | IN_REVIEW | REVIEWED | ACCEPTED  (operational; NOT a round)
+    review_history: reviews/review-log.md
+    fixes_findings: []
+    follow_up_of: CHG-20260802-001
+    ```
+    
+    <!-- SELF-REFERENCE BOUNDARY: this artifact is itself reviewed, so it must NOT embed the current
+    review round. Reference the stable review SERIES (review_series) + review_state; exact rounds live
+    only in reviews/review-log.md and reviews/codex/*. -->
+    
+    ---
+    
+    ## Change Intent
+    
+    **Why (problem in the toolkit):**
+    
+    The CHG-B gate measurement (`changes/UPG-0060__CHG-B-GATE__realistic-feature-evidence.md`) ran a real
+    downstream feature through delegated Stage 4 and returned a negative result. Re-reading the harness
+    afterwards showed part of that result was caused by CHG-A's own packet, not by the delegate:
+    
+    | Observed in the measurement | Harness cause |
+    |---|---|
+    | Candidate arrived with no build manifest and could not be built | `prompts/codeos-implementer-task.md` forbids it — *"Never emit a path that is not a source or test file"* and *"Add no … files … not traced to the approved artifacts."* `Cargo.toml` appears 0 times in the 105,510-byte packet. The **script already permits** `modules/<name>/Cargo.toml` under its stage-area allowlist; only the prompt blocks it |
+    | Module named against the project's convention | No layout exemplar was in the packet — the only `modules/` string in it comes from the prompt itself |
+    | The candidate delegated every contract invariant to its caller | The prompt says *"Add no behavior, no files, no abstractions … not traced to the approved artifacts,"* which reads as an instruction to omit the invariant-carrying structure the contract actually requires |
+    | Two `E0599` compile errors reached the human | Single shot, JSON-escaped source, no compiler feedback — all harness choices, all known to degrade generated code |
+    
+    Until these are fixed, no comparison between delegate models is interpretable: a re-test that changes
+    the model while keeping the packet cannot separate model capability from harness handicap. That is why
+    the feature brief makes this **condition 0**, gating conditions 1-3.
+    
+    **What changes:**
+    
+    - `prompts/codeos-implementer-task.md` — **modified.**
+      - Permit non-source files the target language requires in order to build (build manifest, module
+        config), scoped to files required for the candidate to build, still inside the stage area.
+      - Replace the blanket *"add no abstractions"* with *"no unnecessary capability; implement the
+        abstractions the contract's explicit invariants require"* — the current wording pushes against
+        exactly the structure a rigorous contract needs, while the intended constraint (do not invent
+        capabilities the artifacts never asked for) is preserved.
+      - Replace the single-JSON-object output contract with a delimited plain-text file protocol, so
+        source is emitted as source rather than JSON string escapes.
+      - Describe the layout exemplar section so the model knows the packet's exemplar is a convention to
+        follow, not an artifact to implement.
+    - `scripts/codeos-implement.sh` — **modified.**
+      - Accept and label a repository-layout exemplar distinctly from approved artifacts, so it is never
+        mistaken for something to implement.
+      - Parse the new delimited output protocol in place of `jq`-extracted JSON, keeping every existing
+        safety property: stage-area allowlist, absolute-path and `..` rejection, `CANDIDATE_BLOCKED.md`
+        escape hatch, key never in argv/body/packet/response/candidate, timestamped non-overwriting
+        staging, full audit set, token instrumentation.
+      - Accept a repair input (previous candidate + build/test output) so one bounded repair iteration can
+        be run — see the open question below for what the tool itself is permitted to execute.
+      - Documented exit codes extended for the new failure modes, in the existing header-table style.
+    - `changes/UPG-0060__CHG-20260803-001__implementer-harness-correction.md` — **new**, this record.
+    - Lifecycle bookkeeping: `status/self-development.md` (new IN_PROGRESS row), `status/roadmap.md`,
+      `backlog/UPG-0060-deepseek-delegated-implementation.md` (Feature Thread row for this change, plus
+      correcting two stale sentences that still asserted the feature would be abandoned on a negative
+      pilot — the 2026-08-03 decision held it at CHG-A instead).
+    
+    **Uncommitted prior work in the same working tree (not part of this change).** The workspace also
+    carries the completed, accepted UPG-0060 CHG-A work and the CHG-B gate record — `scripts/codeos-implement.sh`,
+    `prompts/codeos-implementer-task.md`, `config/delegated-implementation.yaml`,
+    `changes/UPG-0060__CHG-20260802-001__*`, `changes/UPG-0060__CHG-B-GATE__*`,
+    `reviews/architecture-journal.md` (AJ-022), `reviews/review-log.md`, and the UPG-0060 status row in
+    `backlog/features.md`. Those belong to CHG-20260802-001 and the gate decision, both already accepted;
+    they appear in this change's reviewed diff only because they are not yet committed. This is the
+    AJ-017 pattern (completed-but-uncommitted self-dev work reads as scope drift on the next change's
+    review). `backlog/features.md` in particular is **not** modified by this change.
+    
+    **Scope boundary — what stays the same:**
+    
+    - **No re-opening of CHG-B.** No change to `dba-system.md`, any downstream stage prompt, or
+      `scripts/dba-init.sh`. The feature stays PILOTED (negative) until a re-test clears all three axes.
+    - **The mechanism stays off by default everywhere.** `config/delegated-implementation.yaml` stays
+      `status: disabled`; no downstream status file is scaffolded.
+    - **Every existing safety property is preserved, not renegotiated** — candidate staging only, never
+      `modules/`/`tests/` in the real tree, never a commit, no key leakage, fail-closed preconditions,
+      **and the tool continues to execute nothing on the local machine.** The repair iteration is
+      therefore scoped to **option B below**: the tool accepts build output as *input*; it does not run a
+      build. Options A and C are recorded as alternatives the human may substitute at this gate — if A is
+      chosen, this bullet no longer holds and the scope boundary must be rewritten before Step 2.
+    - No change to `tools/reviewer/`; no DeepSeek provider added there.
+    - No new mandatory human-approval gate, no new Stage ID, no Non-Negotiable Rule change.
+    - This change makes no claim about whether delegation is net-positive. It only makes the next
+      measurement interpretable.
+    
+    **Class:** prompt + script-tooling
+    **Scope axis:** self-dev only
+    **Backlog item:** `backlog/UPG-0060-deepseek-delegated-implementation.md` (re-test condition 0)
+    
+    ---
+    
+    ## Design position taken, and the alternative the human may substitute
+    
+    **This change takes option B: the tool accepts build output as input and never runs a build itself.**
+    That position is what the scope boundary above asserts, and it is what Step 2's acceptance criteria
+    will be written against. The alternatives are recorded here so the human can substitute one at this
+    gate; A in particular would require rewriting the scope boundary first, because it gives up a safety
+    property this change otherwise claims to preserve.
+    
+    The repair iteration needs compiler output. Today the tool executes nothing local — it makes one
+    network call and writes files. Running `cargo build` (or any project build) on a downstream repository
+    means executing arbitrary project code: build scripts, proc macros, test harnesses. That is a
+    categorical change to what this tool is, which is why it is surfaced at the gate rather than decided
+    inside the implementation.
+    
+    | Option | Effect |
+    |---|---|
+    | **A. Tool runs the build** | Fully automatic repair loop. Gives up the "executes nothing local" property and inherits arbitrary-code-execution risk from any downstream repo it is pointed at |
+    | **B. Tool accepts build output as input** *(recommended)* | The human or Claude runs the build and re-invokes with the errors. Preserves "executes nothing local," delivers the same feedback signal, costs a small amount of Claude token budget per iteration |
+    | **C. No repair iteration in this change** | Smallest change; leaves re-test condition 0 only partly satisfied, so the re-test still cannot show whether repair converges |
+    
+    I recommend **B**. The feedback signal is what the measurement needs, and it does not cost the tool its
+    read-only-locally character — which is the same property that makes the Codex reviewer safe to point at
+    any repository. The token cost of running a build and re-invoking is small relative to the generation
+    it is meant to protect.
+    
+    ---
+    
+    ## Acceptance Criteria
+    
+    <!-- The consistency contracts this change must satisfy; each checkable in Reconcile. prompt +
+    script-tooling: I/O behavior, exit-code / fail-closed cases, idempotency, secret non-leakage, plus
+    prompt-wording criteria that must be true of the text a model actually receives. -->
+    
+    Terms: the **activation status file**, **staging directory**, and **stage area** carry the same
+    meanings as in `changes/UPG-0060__CHG-20260802-001__deepseek-implement-tool.md`. **Exemplar** means a
+    real file from the target repository supplied to show layout/naming convention. **Repair input** means
+    a previous candidate plus the build/test output it produced. **Option B** is the pinned design
+    position: the tool accepts build output as input and runs no build itself.
+    
+    ### Group 1 — the five corrections (why this change exists)
+    
+    | # | Criterion | How it will be verified |
+    |---|---|---|
+    | 1 | **Build manifests are permitted, and scoped.** The prompt no longer forbids non-source files outright; it permits exactly those files the target language needs for the candidate to build (build manifest, module config), still confined to the stage area. The old blanket sentence "Never emit a path that is not a source or test file" is gone. | Read the prompt; grep confirms the old sentence's absence and the new permission's presence. |
+    | 2 | **A manifest actually survives end to end.** A candidate containing `modules/<name>/Cargo.toml` is staged intact, unaltered, at that path. | Fixture run with a stubbed model response containing a manifest; assert the staged file exists byte-identical. |
+    | 3 | **A layout exemplar reaches the packet, labeled as convention.** The tool accepts exemplar paths and renders them in the packet under a section distinct from `--- APPROVED ARTIFACT: … ---`, so an exemplar can never be mistaken for something to implement. | Inspect a generated `packet.txt`: exemplar content present under its own distinct heading. |
+    | 4 | **The prompt explains the exemplar's role.** The prompt tells the model the exemplar shows layout and naming to follow, and is not a specification to implement. | Read the prompt. |
+    | 5 | **The anti-abstraction instruction is corrected, not merely softened.** No sentence forbids abstractions outright. The replacement preserves the real constraint (invent no capability the artifacts do not require) while requiring the abstractions the contract's explicit invariants demand. | Read the prompt; grep confirms no remaining "no abstractions"-style prohibition. |
+    | 6 | **Source is emitted as source.** The prompt's output contract is a plain-text delimited protocol; no candidate file content passes through JSON string escaping at any point. | Read the prompt; inspect a staged candidate for absence of escape artifacts (`\n`, `\"`) that the JSON path produced. |
+    | 7 | **The delimited protocol is not corruptible by content.** A candidate whose file content contains a line resembling the delimiter either parses correctly or fails closed with a distinct exit code — it never silently truncates a file, misattributes content, or writes a partial candidate. | Fixture run with a stubbed response whose content embeds a delimiter-lookalike line; assert correct parse or clean fail-closed, and assert no partial file is left staged. |
+    | 8 | **Repair input is accepted and labeled as feedback.** The tool accepts a previous candidate plus its build/test output and renders both in the packet under a section that identifies them as feedback on a prior attempt, distinct from approved artifacts and from the exemplar. | Inspect a generated `packet.txt` from a repair invocation. |
+    | 9 | **Option B holds: the tool executes nothing.** `scripts/codeos-implement.sh` invokes no build, test, compile, or package-manager command, and no shell-out to project-supplied commands. Its only external process calls remain `git rev-parse`, `curl`, `jq`, `mktemp`, and coreutils. | Read-through of the script plus a grep for build/test invocations; a repair run observed to issue no build. |
+    
+    ### Group 2 — every CHG-A property preserved (regression)
+    
+    | # | Criterion | How it will be verified |
+    |---|---|---|
+    | 10 | **All CHG-A fail-closed cases still hold at their documented exit codes** — non-git (1), missing dependency (2), usage/stage ∉ {4,5} (3), disabled or absent status (4), malformed status (5), missing key before any network call (6), missing artifact (7). | Re-run the CHG-A fail-closed suite unchanged; assert the same codes. |
+    | 11 | **Stage-area allowlist and path safety still enforced, manifests included.** Absolute paths, `..` traversal, and any path outside the stage area are still rejected — the manifest permission widens *file kind*, never *location*. | Fixture runs with an absolute path, a `..` path, and an in-stage-area manifest; assert reject / reject / accept. |
+    | 12 | **The `CANDIDATE_BLOCKED.md` escape hatch still works** under the new protocol. | Fixture run with a blocked response; assert the file stages and the run reports it. |
+    | 13 | **Secret non-leakage.** `DEEPSEEK_API_KEY` appears in no packet, request, response, candidate, repair input echo, or log — and is still absent from argv and the request body. | `grep -rF "$DEEPSEEK_API_KEY"` over the whole staging tree and log after a run. |
+    | 14 | **Write-safety unchanged.** Nothing is written under `modules/` or `tests/` in the real tree; no `git add`/`git commit` is run. | `git status` after a run; grep the script for `git add`/`git commit`. |
+    | 15 | **Idempotency unchanged.** Re-running for the same feature/stage produces a distinct, non-overwriting, timestamped audit directory. | Run twice; assert two distinct staging dirs each with a full audit set. |
+    | 16 | **Auditability and token instrumentation survive the protocol change.** Each run still preserves the exact packet sent and the raw response, and still records prompt/completion/total token counts and one `implement-log.md` record. | Inspect the audit set after a run. |
+    | 17 | **Still off by default.** `config/delegated-implementation.yaml` remains exactly `status: disabled`; no downstream status file is created or scaffolded by this change. | Read the file; `git diff --stat` shows no `scripts/dba-init.sh` change. |
+    | 18 | **New failure modes get distinct, documented exit codes** in the header table, in CHG-A's style — at minimum: exemplar path missing, repair-input path missing, unparseable candidate under the new protocol. | Read the header table; trigger each case and assert the documented code. |
+    
+    ### Group 3 — scope preservation
+    
+    | # | Criterion | How it will be verified |
+    |---|---|---|
+    | 19 | **CHG-B is not re-opened and no doctrine moves.** `dba-system.md`, `prompts/04-implement.md`, `prompts/05-tests.md`, `prompts/06-observe.md`, `scripts/dba-init.sh`, and `tools/reviewer/` are byte-unchanged. The feature's state stays PILOTED (negative). | `git diff --stat` over the change; read the feature brief's state. |
+    | 20 | **This change claims no measurement result.** No artifact in this change asserts that delegation is or will be net-positive; the re-test remains a separate, later measurement judged on the brief's three axes. | Read the change record and the prompt. |
+    
+    **Explicitly not in scope for these criteria:** whether the corrected harness improves candidate
+    quality. That is the re-test's question, not this change's. Criterion 20 exists to keep the two from
+    being conflated.
+    
+    ---
+    
+    ## Implementation Notes
+    
+    *(pending Step 3)*
+    
+    ---
+    
+    ## Reconciliation
+    
+    *(pending Step 4)*
+
+  --- prompts/codeos-implementer-task.md (sha256: 3196a1cf8f6fd608c6be21d34c6420defbd511d019e5ca4a317f0ffc8c7a92ea, visibility: shown) ---
+    # Codeos Delegated Implementer — Task Prompt
+    
+    You are a **constrained satisfier** producing a Stage 4 (Implementation) or Stage 5 (Tests) candidate
+    for a Declarative Behavioral Architecture (DBA) feature. This candidate is **not** approved code. It
+    is a draft that a human reviews at the existing Stage 4/5 gate and that the existing advisory review
+    and Stage 7 reconciliation still check. You do not approve anything and you do not decide scope.
+    
+    This prompt is delivered to a non-Claude model by `scripts/codeos-implement.sh`. The exact stage,
+    the feature id, and the approved artifacts are appended below this task by the tool.
+    
+    ## The one rule
+    
+    Implement **only** what the approved artifacts specify. You are not a creative designer here. Add no
+    behavior, no files, no abstractions, no error handling, and no events that are not traced to the
+    approved Intent, Contract, and Event Schema provided to you. A capability the artifacts do not require
+    is out of scope — omit it.
+    
+    ## Stage 4 (Implementation)
+    
+    - Implement the behavior each contract clause specifies, emitting every event named in the approved
+      event schema, exactly under the conditions the contract and schema state.
+    - Do not write tests in a Stage 4 candidate. Tests are Stage 5.
+    - Match the target project's language and layout as shown by the approved artifacts and any file
+      paths they reference. When the artifacts do not determine an internal choice (data structure, error
+      propagation), pick the simplest option that satisfies the contract and record it in `notes`.
+    
+    ## Stage 5 (Tests)
+    
+    - Write behavioral tests and replay tests only, verifying **observable** behavior — state changes,
+      emitted events (name, payload fields, correlation id presence), error signals per failure mode, and
+      idempotency only if the contract specifies it. Do not test private methods, internal state, or
+      intermediate computations.
+    - Use event names from the approved event schema exactly as written.
+    
+    ## Output contract (STRICT — the tool parses this)
+    
+    Return a single JSON object and nothing else. Do not wrap it in Markdown fences. Do not add prose
+    before or after it. The object has exactly these fields:
+    
+    ```
+    {
+      "files": [
+        { "path": "<repo-relative path for this candidate file>", "content": "<full file contents>" }
+      ],
+      "contract_satisfaction": "<short table or list: contract clause -> where satisfied>",
+      "event_emission": "<short table or list: event -> emitted at -> condition>  (Stage 4; '' for Stage 5)",
+      "notes": "<any internal choices not fixed by the artifacts, and anything a reviewer should check>"
+    }
+    ```
+    
+    Rules for the object:
+    
+    - `files` must contain at least one entry. Each `path` is repo-relative and must sit under the
+      stage's area: `modules/…` for Stage 4, `tests/…` (e.g. `tests/behavioral/…`, `tests/replay/…`) for
+      Stage 5. Never emit a path that is not a source or test file (no edits to doctrine, config, or
+      governance files). The tool **enforces** this: it rejects the run if any candidate path is absolute,
+      contains `..`, or falls outside the stage area (the sole exception is `CANDIDATE_BLOCKED.md`, below).
+    - `content` is the complete file, not a diff and not a fragment.
+    - Keep `contract_satisfaction`, `event_emission`, and `notes` short and factual. They help the human
+      reviewer; they are not the code.
+    - Emit valid JSON. Escape newlines and quotes inside `content` correctly.
+    
+    If the approved artifacts are missing, contradictory, or insufficient to implement without inventing
+    behavior, do not guess: return a `files` array with a single explanatory file at path
+    `CANDIDATE_BLOCKED.md` whose `content` states precisely what is missing, and say so in `notes`.
+
+  --- scripts/codeos-implement.sh (sha256: 20ff047061aa5227c3d0633fcbbc61b13ee493aabb50ef7e1be550edad7325f5, visibility: shown) ---
+    #!/usr/bin/env bash
+    # codeos-implement.sh — out-of-band, opt-in DeepSeek implementer for DBA Stage 4 (Implementation)
+    # and Stage 5 (Tests). It drafts a CANDIDATE only: output is staged under
+    # .codeos-state/deepseek-candidates/, never written into modules/ or tests/, and never committed.
+    # A human promotes the candidate, and the existing Stage 4/5 human gate, advisory review, and
+    # Stage 7 reconciliation apply unchanged. This tool approves nothing.
+    #
+    # Companion to scripts/codeos-review.sh: it mirrors that shim's entry-point discipline (git-repo
+    # precondition, self-dev-vs-downstream context resolution, fail-closed preconditions, an explicit
+    # exit-code table). It is off by default — see the activation status file below.
+    #
+    # Usage:
+    #   codeos-implement.sh <feature_id> <stage:4|5> <artifact-path> [more artifact-paths...]
+    #     <feature_id>     the DBA feature id (used only to name the staging directory)
+    #     <stage>          4 (implementation) or 5 (tests) — no other value is accepted
+    #     <artifact-path>  one or more approved artifacts (intent / contract / event schema; plus the
+    #                      Stage 4 output when stage=5). Each must exist.
+    #
+    # Activation (Optional Mechanism Status Convention, UPG-0056): a one-line status file, resolved by
+    # context the same way codeos-review.sh resolves its writing-discipline file —
+    #   self-dev    (caller git root == this repo): config/delegated-implementation.yaml
+    #   downstream  (caller git root != this repo): architecture/delegated-implementation.yaml
+    # Four outcomes: absent -> disabled; exact "status: disabled" -> disabled; exact "status: enabled"
+    # -> enabled; anything else -> configuration error. The tool runs ONLY when the value is enabled.
+    #
+    # Environment:
+    #   DEEPSEEK_API_KEY        required when enabled. Read only into the HTTP Authorization header via a
+    #                           curl config on stdin — never placed in argv, the request body, the
+    #                           preserved packet, the response dump, or any candidate file.
+    #   CODEOS_DEEPSEEK_MODEL   optional, default "deepseek-chat".
+    #   CODEOS_DEEPSEEK_URL     optional, default "https://api.deepseek.com/chat/completions".
+    #
+    # Exit codes:
+    #   0  success — candidate staged
+    #   1  not inside a git repository
+    #   2  missing dependency (curl or jq not found on PATH)
+    #   3  usage error (missing args, or stage not 4/5)
+    #   4  mechanism disabled or status file absent (refuse to run)
+    #   5  activation status file malformed (configuration error)
+    #   6  DEEPSEEK_API_KEY unset or empty (while enabled) — refuse before any network call
+    #   7  a passed artifact path does not exist
+    #   8  DeepSeek API / transport error, or an unparseable / unsafe model response
+    set -euo pipefail
+    
+    err() { echo "error: $*" >&2; }
+    
+    # ── 1. git-repo precondition (property of the calling project, checked first) ───────────────────
+    git rev-parse --show-toplevel >/dev/null 2>&1 || { err "not inside a git repository"; exit 1; }
+    
+    # ── 3. usage / args ─────────────────────────────────────────────────────────────────────────────
+    if [[ $# -lt 3 ]]; then
+      err "usage: codeos-implement.sh <feature_id> <stage:4|5> <artifact-path> [more...]"
+      exit 3
+    fi
+    FEATURE="$1"; STAGE="$2"; shift 2
+    ARTIFACTS=("$@")
+    if [[ "${STAGE}" != "4" && "${STAGE}" != "5" ]]; then
+      err "stage must be 4 (implementation) or 5 (tests); got '${STAGE}'"
+      exit 3
+    fi
+    # Candidate files must stay in the stage's area (Stage 4 -> modules/, Stage 5 -> tests/). This
+    # backs the "strict path" contract stated in prompts/codeos-implementer-task.md: the model is
+    # instructed, and the tool enforces, so a doctrine/config/governance path can never be staged.
+    case "${STAGE}" in
+      4) ALLOWED_PREFIX="modules/";;
+      5) ALLOWED_PREFIX="tests/";;
+    esac
+    
+    # ── 2. dependencies ─────────────────────────────────────────────────────────────────────────────
+    for dep in curl jq; do
+      command -v "${dep}" >/dev/null 2>&1 || { err "required dependency '${dep}' not found on PATH"; exit 2; }
+    done
+    
+    # ── Resolve this script's repo (CODEOS_ROOT) and the caller's repo (CALLER_ROOT) ────────────────
+    # pwd -P (physical) follows the .codeos symlink when invoked from a downstream project, matching
+    # scripts/codeos-review.sh. The caller's own git root distinguishes self-dev from downstream.
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+    CODEOS_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd -P)"
+    CALLER_ROOT="$(cd "$(git rev-parse --show-toplevel)" && pwd -P)"
+    
+    if [[ "${CALLER_ROOT}" == "${CODEOS_ROOT}" ]]; then
+      STATUS_FILE="${CODEOS_ROOT}/config/delegated-implementation.yaml"
+    else
+      STATUS_FILE="${CALLER_ROOT}/architecture/delegated-implementation.yaml"
+    fi
+    
+    # ── 4/5. activation status (four-outcome, per UPG-0056; parse identical to codeos-review.sh) ─────
+    STATUS=""
+    if [[ ! -f "${STATUS_FILE}" ]]; then
+      STATUS="disabled"
+    else
+      NONBLANK=()
+      while IFS= read -r _line || [[ -n "${_line}" ]]; do
+        [[ -n "${_line}" ]] && NONBLANK+=("${_line}")
+      done < <(tr -d '\r' < "${STATUS_FILE}")
+      if [[ "${#NONBLANK[@]}" -eq 1 && "${NONBLANK[0]}" == "status: disabled" ]]; then
+        STATUS="disabled"
+      elif [[ "${#NONBLANK[@]}" -eq 1 && "${NONBLANK[0]}" == "status: enabled" ]]; then
+        STATUS="enabled"
+      else
+        err "invalid activation status file: ${STATUS_FILE}"
+        err "       must contain exactly one non-blank line: 'status: enabled' or 'status: disabled'"
+        exit 5
+      fi
+    fi
+    if [[ "${STATUS}" != "enabled" ]]; then
+      err "delegated implementation is disabled (status file: ${STATUS_FILE})."
+      err "       This mechanism is off by default. Set it to 'status: enabled' to opt in."
+      exit 4
+    fi
+    
+    # ── 7. artifacts must exist ─────────────────────────────────────────────────────────────────────
+    for a in "${ARTIFACTS[@]}"; do
+      [[ -f "${a}" ]] || { err "artifact path does not exist: ${a}"; exit 7; }
+    done
+    
+    # ── 6. API key present (only checked once enabled; before any network call) ─────────────────────
+    if [[ -z "${DEEPSEEK_API_KEY:-}" ]]; then
+      err "DEEPSEEK_API_KEY is unset or empty; refusing to run (no network call made)."
+      exit 6
+    fi
+    
+    MODEL="${CODEOS_DEEPSEEK_MODEL:-deepseek-chat}"
+    DS_URL="${CODEOS_DEEPSEEK_URL:-https://api.deepseek.com/chat/completions}"
+    TASK_PROMPT="${CODEOS_ROOT}/prompts/codeos-implementer-task.md"
+    [[ -f "${TASK_PROMPT}" ]] || { err "implementer task prompt not found: ${TASK_PROMPT}"; exit 8; }
+    
+    # ── Staging directory (timestamped -> idempotent across re-runs) ─────────────────────────────────
+    TS="$(date -u +%Y%m%dT%H%M%SZ)"
+    FEATURE_SAFE="${FEATURE//\//_}"
+    STAGE_ROOT="${CALLER_ROOT}/.codeos-state/deepseek-candidates"
+    mkdir -p "${STAGE_ROOT}/${FEATURE_SAFE}-stage-${STAGE}"
+    # mktemp guarantees a unique leaf even on rapid same-second re-runs, so a run never overwrites a
+    # prior run's audit artifacts.
+    STAGE_DIR="$(mktemp -d "${STAGE_ROOT}/${FEATURE_SAFE}-stage-${STAGE}/${TS}.XXXXXX")"
+    mkdir -p "${STAGE_DIR}/candidate"
+    LOG_FILE="${STAGE_ROOT}/implement-log.md"
+    
+    # ── Build the two message contents (system = role/contract; user = task + artifacts) ────────────
+    SYS="$(cat "${TASK_PROMPT}")"
+    {
+      printf 'DELEGATED IMPLEMENTATION REQUEST\n'
+      printf '  feature_id: %s\n' "${FEATURE}"
+      printf '  stage: %s (%s)\n\n' "${STAGE}" "$([[ ${STAGE} == 4 ]] && echo implementation || echo tests)"
+      printf 'Produce the Stage %s candidate for this feature, following the STRICT output contract in\n' "${STAGE}"
+      printf 'the task above. Approved artifacts follow.\n'
+      for a in "${ARTIFACTS[@]}"; do
+        printf '\n--- APPROVED ARTIFACT: %s ---\n' "${a}"
+        cat "${a}"
+      done
+    } > "${STAGE_DIR}/user_content.txt"
+    USR="$(cat "${STAGE_DIR}/user_content.txt")"
+    
+    # Human-readable audit packet (contains NO key — the key is only ever in the Authorization header).
+    {
+      printf '=== SYSTEM ===\n%s\n\n=== USER ===\n%s\n' "${SYS}" "${USR}"
+    } > "${STAGE_DIR}/packet.txt"
+    
+    # JSON request body (jq escapes everything; body carries NO key).
+    REQ_BODY="${STAGE_DIR}/request.json"
+    jq -n --arg model "${MODEL}" --arg sys "${SYS}" --arg usr "${USR}" \
+      '{model:$model,
+        messages:[{role:"system",content:$sys},{role:"user",content:$usr}],
+        response_format:{type:"json_object"},
+        temperature:0,
+        stream:false}' > "${REQ_BODY}"
+    
+    # ── 8. Call DeepSeek. Key is passed via a curl config on stdin (never argv / body / files). ──────
+    RESP_FILE="${STAGE_DIR}/response.json"
+    HTTP_CODE="$(
+      printf 'header = "Authorization: Bearer %s"\n' "${DEEPSEEK_API_KEY}" \
+        | curl -sS -K - \
+            -H 'Content-Type: application/json' \
+            -X POST "${DS_URL}" \
+            --data-binary @"${REQ_BODY}" \
+            -o "${RESP_FILE}" \
+            -w '%{http_code}' \
+        || true
+    )"
+    if [[ ! "${HTTP_CODE}" =~ ^2[0-9][0-9]$ ]]; then
+      err "DeepSeek API call failed (http_code=${HTTP_CODE:-none}); response saved to ${RESP_FILE}"
+      exit 8
+    fi
+    
+    # Extract the model's JSON object (json_object mode guarantees the content is valid JSON).
+    CONTENT_JSON="${STAGE_DIR}/model_content.json"
+    jq -r '.choices[0].message.content // empty' "${RESP_FILE}" > "${CONTENT_JSON}"
+    if [[ ! -s "${CONTENT_JSON}" ]] || ! jq empty "${CONTENT_JSON}" >/dev/null 2>&1; then
+      err "model did not return a parseable JSON object; see ${RESP_FILE}"
+      exit 8
+    fi
+    
+    NFILES="$(jq '(.files // []) | length' "${CONTENT_JSON}")"
+    if [[ "${NFILES}" -lt 1 ]]; then
+      err "model response contained no candidate files; see ${CONTENT_JSON}"
+      exit 8
+    fi
+    
+    # Write candidate files into the staging area only, with path-traversal protection.
+    for ((i=0; i<NFILES; i++)); do
+      fpath="$(jq -r ".files[${i}].path // empty" "${CONTENT_JSON}")"
+      if [[ -z "${fpath}" ]]; then err "candidate file ${i} has no path"; exit 8; fi
+      case "${fpath}" in
+        /*|*..*) err "unsafe candidate path rejected (absolute or traversal): ${fpath}"; exit 8;;
+      esac
+      # Enforce the stage-area allowlist, except for the documented CANDIDATE_BLOCKED.md escape hatch
+      # the model uses to report insufficient artifacts.
+      if [[ "${fpath}" != "CANDIDATE_BLOCKED.md" && "${fpath}" != "${ALLOWED_PREFIX}"* ]]; then
+        err "candidate path outside the Stage ${STAGE} area (must start with '${ALLOWED_PREFIX}'): ${fpath}"
+        exit 8
+      fi
+      outfile="${STAGE_DIR}/candidate/${fpath}"
+      mkdir -p "$(dirname "${outfile}")"
+      jq -r ".files[${i}].content // \"\"" "${CONTENT_JSON}" > "${outfile}"
+    done
+    
+    # Sidecar summaries for the human reviewer.
+    jq -r '.contract_satisfaction // ""' "${CONTENT_JSON}" > "${STAGE_DIR}/contract_satisfaction.txt" || true
+    jq -r '.event_emission // ""'        "${CONTENT_JSON}" > "${STAGE_DIR}/event_emission.txt" || true
+    jq -r '.notes // ""'                 "${CONTENT_JSON}" > "${STAGE_DIR}/notes.txt" || true
+    
+    # Token usage.
+    PT="$(jq -r '.usage.prompt_tokens // "?"' "${RESP_FILE}")"
+    CT="$(jq -r '.usage.completion_tokens // "?"' "${RESP_FILE}")"
+    TT="$(jq -r '.usage.total_tokens // "?"' "${RESP_FILE}")"
+    printf 'prompt_tokens=%s completion_tokens=%s total_tokens=%s model=%s\n' "${PT}" "${CT}" "${TT}" "${MODEL}" \
+      > "${STAGE_DIR}/tokens.txt"
+    
+    # Append one invocation record to the log.
+    {
+      printf '## %s — %s stage %s\n' "${TS}" "${FEATURE}" "${STAGE}"
+      printf -- '- model: %s\n' "${MODEL}"
+      printf -- '- tokens: prompt=%s completion=%s total=%s\n' "${PT}" "${CT}" "${TT}"
+      printf -- '- candidate files: %s\n' "${NFILES}"
+      printf -- '- staging: %s\n\n' "${STAGE_DIR}"
+    } >> "${LOG_FILE}"
+    
+    echo "candidate staged: ${STAGE_DIR}/candidate  (${NFILES} file(s))"
+    echo "  tokens: prompt=${PT} completion=${CT} total=${TT}   model=${MODEL}"
+    echo "  audit:  packet=${STAGE_DIR}/packet.txt  response=${RESP_FILE}  log=${LOG_FILE}"
+    echo "  NOTE: candidate only — promote manually; the Stage ${STAGE} human gate + advisory review still apply."
+
+  --- status/self-development.md (sha256: 97e4647be67741aaaa6a726917a6329994b5d21e34f847a1ea52cb9766823f37, visibility: shown) ---
+    # Self-Development Status
+    
+    > Live dashboard for in-flight Codeos toolkit changes. **Mutable** — maintained by the
+    > 4-step self-development loop (see repo-root `CLAUDE.md` and `prompts/codeos-self-dev.md`).
+    > The stable rulebook is `CLAUDE.md`; per-change detail is in
+    > `changes/UPG-####__CHG-YYYYMMDD-NNN__slug.md`; the wave plan is `status/roadmap.md`; the
+    > authoritative feature-id map is `backlog/features.md`.
+    >
+    > **Identity is split** (see `backlog/UPG-0001-feature-thread-traceability.md`): a **Feature ID**
+    > (`UPG-####`, stable) names the backlog feature; a **Change ID** (`CHG-YYYYMMDD-NNN`) names one
+    > execution against it. A historical row may carry a legacy change-stem in **Change ID** and `—`
+    > in **Feature ID** when no backlog feature exists.
+    >
+    > Step 1 activates a row; each step updates **Loop step** and **Latest review**. Reconcile marks
+    > **State: COMPLETE** once the step's compulsory (advisory) review has run **and** the human has
+    > accepted the result — NO OBJECTION, or CHANGES ADVISED with residual non-blocking findings
+    > accepted or tracked to a named **Follow-up** `UPG-####`. The review informs the human; it never
+    > gates by itself. A change with open, unaccepted in-scope findings stays **IN_PROGRESS**.
+    
+    | Feature ID | Change ID | Class | Scope | Loop step | Review (state / accepted outcome) | State | Follow-up |
+    |---|---|---|---|---|---|---|---|
+    | — | 0001-claude-split | self-dev-governance + downstream-doctrine | both | 4-Reconcile | CHANGES ADV →0004 | COMPLETE | — |
+    | UPG-0002 | 0002-doc-consistency-rename | documentation | downstream doctrine only | 4-Reconcile | CHANGES ADV →0004 | COMPLETE | — |
+    | — (planning) | 0003-implementation-roadmap | backlog-only / planning | self-dev only | 4-Reconcile | CHANGES ADV →0004 | COMPLETE | — |
+    | — (reviewer findings) | 0004-review-fixes | documentation / self-dev-governance | self-dev only | 4-Reconcile | CHANGES ADV (accepted) | COMPLETE | — |
+    | UPG-0001 | CHG-20260627-001 | self-dev-governance | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S4; rounds in review-log) | COMPLETE | UPG-0029 |
+    | UPG-0029 | CHG-20260629-001 | documentation | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S4; rounds in review-log) | COMPLETE | UPG-0030 |
+    | UPG-0030 | CHG-20260629-001 | self-dev-governance | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S4; rounds in review-log) | COMPLETE | — |
+    | UPG-0027 | CHG-20260629-002 | prompt / script-tooling | self-dev only | 4-Reconcile | ACCEPTED (NO OBJECTION) | COMPLETE | — |
+    | UPG-0027 | CHG-20260629-003 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (NO OBJECTION) | COMPLETE | — |
+    | UPG-0027 | CHG-20260629-004 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (human approved; all 12 ACs verified by functional test) | COMPLETE | — |
+    | UPG-0027 | CHG-20260629-005 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (human approved; all 14 ACs verified by functional test) | COMPLETE | — |
+    | UPG-0004 | CHG-20260630-001 | template | self-dev only | 4-Reconcile | ACCEPTED (Steps 2–4 reviewed; R2 NO OBJECTION at each gate) | COMPLETE | UPG-0031 |
+    | UPG-0031 | CHG-20260630-002 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (Step 4 R2 NO OBJECTION; corrected by CHG-20260630-003) | COMPLETE | — |
+    | UPG-0031 | CHG-20260630-003 | script-tooling + documentation | self-dev only | 4-Reconcile | ACCEPTED (all 5 ACs verified; corrects false B8b in CHG-20260630-002) | COMPLETE | — |
+    | UPG-0005 | CHG-20260630-004 | prompt + template | self-dev only | 4-Reconcile | ACCEPTED (Step 3 R2 NO OBJECTION; Step 4 R1 CHANGES ADVISED — F1 fixed, F2 REVIEW-BOOKKEEPING) | COMPLETE | — |
+    | UPG-0007 | CHG-20260630-005 | prompt | self-dev only | 4-Reconcile | ACCEPTED (Steps 1–4 reviewed; Step 4 R2 NO OBJECTION; all 7 ACs verified) | COMPLETE | — |
+    | UPG-0033 | CHG-20260701-001 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (all 8 ACs verified; F-A investigation-first exception accepted; F-B AJ-009 deferred) | COMPLETE | — |
+    | UPG-0010 | CHG-20260701-002 | prompt | self-dev only | 4-Reconcile | ACCEPTED (Steps 1–4 reviewed; Step 4 R1 NO OBJECTION; all 7 ACs verified) | COMPLETE | — |
+    | UPG-0011 | CHG-20260701-003 | template | self-dev only | 4-Reconcile | ACCEPTED (Steps 1–4 reviewed; Step 4 R2 NO OBJECTION; all 9 ACs verified) | COMPLETE | — |
+    | UPG-0012 | CHG-20260701-004 | prompt | self-dev only | 4-Reconcile | ACCEPTED (Steps 1–4 reviewed; Step 4 R1 NO OBJECTION; all 8 ACs verified) | COMPLETE | — |
+    | UPG-0013 | CHG-20260701-005 | template | self-dev only | 4-Reconcile | ACCEPTED (Steps 1–4 reviewed; Step 4 R1 NO OBJECTION; all 8 ACs verified) | COMPLETE | — |
+    | UPG-0008 | CHG-20260701-006 | prompt | self-dev only | 4-Reconcile | ACCEPTED (Steps 1–4 reviewed; Step 4 R1 NO OBJECTION; all 7 ACs verified) | COMPLETE | — |
+    | UPG-0009 | CHG-20260701-007 | template | self-dev only | 4-Reconcile | ACCEPTED (Steps 1–4 reviewed; Step 4 R3 NO OBJECTION; all 7 ACs verified) | COMPLETE | — |
+    | UPG-0006 | CHG-20260701-008 | prompt | self-dev only | 4-Reconcile | ACCEPTED (Steps 1–4 reviewed; Step 4 R1 NO OBJECTION; all 6 ACs verified) | COMPLETE | — |
+    | UPG-0032 | CHG-20260702-001 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (Step 3: 6 rounds, all blockers applied; Step 4 R1 NO OBJECTION; all 11 ACs verified; 33 tests; post-reconcile delta-mode fix applied) | COMPLETE | UPG-0034, UPG-0035 |
+    | UPG-0015 | CHG-20260702-002 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (Steps 1–4 reviewed; Step 4 R2 NO OBJECTION; all 13 ACs verified; 48 tests; coverage gate + provenance binding in Rust engine) | COMPLETE | — |
+    | UPG-0016 | CHG-20260702-003 | documentation | self-dev only | 4-Reconcile | ACCEPTED (Step 4 R1 NO OBJECTION; all 7 ACs verified) | COMPLETE | — |
+    | UPG-0014 | CHG-20260702-004 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (Step 3: 3 rounds + budget-exceeded inline fixes; Step 4 R3 NO OBJECTION; all 9 ACs verified; 55 tests) | COMPLETE | — |
+    | UPG-0035 | CHG-20260702-005 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (Step 3 R1 + Step 4 R1 CHANGES ADVISED — AC-6 test-exec-not-pinned REJECTED both rounds; all 6 ACs verified; 57 tests) | COMPLETE | — |
+    | UPG-0034 | CHG-20260702-006 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (Step 3: 3 rounds — F1 post-error skip, F2 missing success filter (both snapshots), F4 scope drift fixed; F3 live-path test accepted as structural limitation; Step 4 R1 NO OBJECTION; all 7 ACs verified; 59 tests) | COMPLETE | — |
+    | UPG-0017 | CHG-20260703-001 | template | self-dev only | 4-Reconcile | ACCEPTED (Step 3: R1 CHANGES ADVISED — 3 blockers fixed; R2 NO OBJECTION; Step 4: R1 CHANGES ADVISED — F1 review-state contradiction, F2 backlog `docs/` orphan fixed; R2 NO OBJECTION; all 7 ACs verified) | COMPLETE | — |
+    | UPG-0020 | CHG-20260703-002 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (Step 3: R1–R3 CHANGES ADVISED — F1 watched-set description fixed x2, F2 backlog stale fixed, F3/AC-10 REJECTED structural limitation; Step 4 R1 CHANGES ADVISED — AC-10 REJECTED structural limitation; all 9 substantive ACs verified; 42 tests) | COMPLETE | — |
+    | UPG-0021 | CHG-20260703-003 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 3 R1→R2 NO OBJECTION; Step 4 R1→R2 NO OBJECTION; all 16 ACs verified; 63 tests) | COMPLETE | — |
+    | UPG-0022 | CHG-20260703-004 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION; Step 2 NO OBJECTION; Step 3 NO OBJECTION; Step 4 NO OBJECTION; all 14 ACs verified; 77 tests) | COMPLETE | — |
+    | UPG-0023 | CHG-20260704-001 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION; Step 2 NO OBJECTION; Step 3 NO OBJECTION R2; Step 4 NO OBJECTION R1; all 15 ACs verified; 94 tests) | COMPLETE | UPG-0040, UPG-0041 |
+    | UPG-0019 | CHG-20260706-001 | documentation | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION; Step 2 NO OBJECTION; Step 3 NO OBJECTION R3; Step 4 NO OBJECTION R3; all 8 ACs verified) | COMPLETE | — |
+    | UPG-0024 | CHG-20260706-002 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION; Step 2 NO OBJECTION R2; Step 3 NO OBJECTION; Step 4 NO OBJECTION; all 15 ACs verified; 110 smoke tests) | COMPLETE | — |
+    | UPG-0025 | CHG-20260706-003 | downstream-doctrine | downstream doctrine only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION; Step 2 NO OBJECTION; Step 3 NO OBJECTION; Step 4 NO OBJECTION; all 11 ACs verified; live FundFlow symlink check) | COMPLETE | — |
+    | UPG-0026 | CHG-20260707-001 | documentation | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION; Step 2 NO OBJECTION R2; Step 3 NO OBJECTION; Step 4 NO OBJECTION; all 8 ACs verified) | COMPLETE | — |
+    | UPG-0038 | CHG-20260707-002 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION; Step 2 NO OBJECTION; Step 3 NO OBJECTION R2; Step 4 NO OBJECTION R3; all 10 ACs verified; real FundFlow invocation) | COMPLETE | — |
+    | UPG-0039 | CHG-20260707-003 | downstream-doctrine | downstream doctrine only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION; Step 2 NO OBJECTION R2; Step 3 accepted R2, Step 4 accepted R1 — both SECRET_REDACTION coverage, same known benign trigger; all 11 ACs verified; live FundFlow check) | COMPLETE | — |
+    | UPG-0040 | CHG-20260707-004 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION R2; Step 2 NO OBJECTION R3; Step 3 NO OBJECTION; Step 4 NO OBJECTION R2; all 8 ACs verified; 2× 20-run stress test, 0 failures) | COMPLETE | — |
+    | UPG-0041 | CHG-20260707-005 | downstream-doctrine | downstream doctrine only | 4-Reconcile | Step 3 R2 NO OBJECTION, Step 4 R2 NO OBJECTION (Evidence: A) | COMPLETE | — |
+    | UPG-0036 | CHG-20260705-001 | self-dev-governance | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION R3; Step 2 NO OBJECTION R2; Step 3 NO OBJECTION R3; Step 4 NO OBJECTION R1; all 10 ACs verified; real check-drift run) | COMPLETE | — |
+    | UPG-0037 | CHG-20260705-002 | downstream-doctrine | downstream doctrine only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION; Step 2 NO OBJECTION R2; Step 3 accepted at budget R3 (0 blockers, SECRET_REDACTION coverage); Step 4 accepted R1 (0 blockers, same SECRET_REDACTION cause); all 13 ACs verified; 105 tests; real FundFlow dry-runs) | COMPLETE | UPG-0038 |
+    | UPG-0042 | CHG-20260711-001 | script-tooling | self-dev only | 4-Reconcile | REVIEWED (series RVS__…__S4; R2 NO OBJECTION; all 10 ACs verified; 124 tests pass) | COMPLETE | — |
+    | UPG-0043 | CHG-20260711-002 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S4; R3 budget exhausted; inline doc fix accepted by human; all 5 final verifications pass; 124 tests across 8 files) | COMPLETE | — |
+    | UPG-0044 | CHG-20260712-001 | documentation | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S4; R1 CHANGES ADVISED — 1 finding fixed; R2 NO OBJECTION; all 12 ACs verified) | COMPLETE | — |
+    | UPG-0045 | CHG-20260712-002 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S4; R1 NO OBJECTION; all 12 ACs verified; 159 tests pass) | COMPLETE | — |
+    | UPG-0046 | CHG-20260713-001 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S4; R1 DO NOT ADVANCE — real fail-closed bug fixed; R2 NO OBJECTION; all 11 ACs verified; 171 tests pass) | COMPLETE | — |
+    | UPG-0047 | CHG-20260713-002 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S4; R1 NO OBJECTION; all 11 ACs verified; 182 tests pass; 294/317 findings parse, 23 documented long-tail) | COMPLETE | — |
+    | UPG-0050 | CHG-20260716-001 | downstream-doctrine | downstream doctrine only | 4-Reconcile | ACCEPTED (series RVS__…__S4; Step 1 R1 DO NOT ADVANCE → R2 NO OBJECTION; Step 2 R1 NO OBJECTION; Step 3 R1 DO NOT ADVANCE → R2 NO OBJECTION; Step 4 R1 NO OBJECTION; all 9 ACs verified; live dba-init.sh scratch run) | COMPLETE | — |
+    | UPG-0051 | CHG-20260719-001 | downstream-doctrine | downstream doctrine only | 4-Reconcile | ACCEPTED (series RVS__…__S4; Step 1 R1 DO NOT ADVANCE → R2 NO OBJECTION; Step 2 R1 NO OBJECTION, R2 NO OBJECTION post CHANGES-ADVISED fixes; Step 3 R1 DO NOT ADVANCE → R2 NO OBJECTION; Step 4 R1 NO OBJECTION; all 15 ACs verified; 3 in-scope blockers found+fixed across the change) | COMPLETE | — |
+    | UPG-0052 | CHG-20260719-002 | downstream-doctrine | downstream doctrine only | 4-Reconcile | ACCEPTED (series RVS__…__S4; Step 1 R1 DO NOT ADVANCE → R2 NO OBJECTION → 1st human CHANGES-ADVISED → R3 NO OBJECTION → 2nd human CHANGES-ADVISED → R4 NO OBJECTION (human-requested, beyond budget); Step 2 R1 NO OBJECTION; Step 3 R1 NO OBJECTION; Step 4 R1 DO NOT ADVANCE → R2 NO OBJECTION; all 17 ACs verified; 4 in-scope blockers found+fixed across the change) | COMPLETE | — |
+    | UPG-0053 | CHG-20260719-003 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S4; Step 1 R1 NO OBJECTION; Step 2 R1 DO NOT ADVANCE → R2 NO OBJECTION; Step 3 R1 NO OBJECTION; Step 4 R1 NO OBJECTION; all 8 ACs verified via live scratch run) | COMPLETE | — |
+    | UPG-0054 | CHG-20260719-004 | downstream-doctrine | downstream doctrine only | 4-Reconcile | ACCEPTED (series RVS__…__S4; Step 1 R1 NO OBJECTION; Step 2 R1 DO NOT ADVANCE → R2 NO OBJECTION; Step 3 R1 DO NOT ADVANCE → R2 DO NOT ADVANCE → R3 NO OBJECTION; Step 4 R1 NO OBJECTION; all 13 ACs verified; 3 in-scope blockers found+fixed) | COMPLETE | — |
+    | UPG-0055 | CHG-20260720-001 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S4; Step 1 R1 NO OBJECTION; Step 2 R1 NO OBJECTION; Step 3 R1 DO NOT ADVANCE → R2 DO NOT ADVANCE → R3 NO OBJECTION; Step 4 R1 DO NOT ADVANCE → R2 NO OBJECTION; all 9 ACs verified; 182 tests pass; 4 in-scope blockers found+fixed) | COMPLETE | — |
+    | UPG-0056 | CHG-20260726-001 | downstream-doctrine | downstream doctrine only | 4-Reconcile | ACCEPTED (series RVS__…__S4; Step 1 R1-R3 DO NOT ADVANCE→NO OBJECTION (original design) then revised to lean convention, R4 DO NOT ADVANCE→APPROVE_STAGE; Step 2 R1 DO NOT ADVANCE→R2 NO OBJECTION; Step 3 R1-R2 DO NOT ADVANCE→R3 NO OBJECTION; Step 4 R1 DO NOT ADVANCE→R2 NO OBJECTION; all 12 ACs verified; no code shipped) | COMPLETE | UPG-0057 |
+    | UPG-0058 | CHG-20260726-002 | downstream-doctrine | downstream doctrine only | 4-Reconcile | ACCEPTED (series RVS__…__S4; Step 1 R1→R2 NO OBJECTION; Step 2 R1 NO OBJECTION; Step 3 R1→R2 DO NOT ADVANCE→R3 NO OBJECTION; Step 4 R1→R2 DO NOT ADVANCE→R3 NO OBJECTION; all 16 ACs verified; 182 tests pass; 7 in-scope blockers found+fixed across the change) | COMPLETE | — |
+    | UPG-0059 | CHG-20260728-001 | downstream-doctrine | downstream doctrine only | 4-Reconcile | ACCEPTED — Wave-Gated Batch Review for multi-feature Stage 1-3 cohorts; batches drafting/human attention per stage-wave, keeps per-feature approval individual; progressive checks, targeted reassessment, versioned membership reuse existing patterns; three ambiguity-response forms in `01-intent.md`/`02-contract.md`; all 16 ACs verified; no code | COMPLETE | — |
+    | UPG-0057 | CHG-20260726-003 | downstream-doctrine | downstream doctrine only | 4-Reconcile | CHG-A ACCEPTED and committed (fd2b198) — pattern + downstream doctrine + prompt wiring; manual status-line inclusion accepted as CHG-A-scope only, not final operating model | COMPLETE | UPG-0057 (CHG-B) |
+    | UPG-0057 | CHG-20260727-001 | script-tooling + downstream-doctrine + self-dev-governance | both | 4-Reconcile | CHG-B ACCEPTED and complete — automatic Controlled Plain English status injection in `scripts/codeos-review.sh` (no Rust changes, 182 tests unchanged); wrapper established as sole supported entry point; all 13 ACs verified PASS; manual inclusion no longer part of the operating model | COMPLETE | — |
+    | UPG-0060 | CHG-20260802-001 | script-tooling | self-dev only | 4-Reconcile | CHG-A ACCEPTED — S1,S2 ACCEPTED; S3 ACCEPTED (R1-R3 CHANGES ADVISED, all fixed inline; human-authorized confirmatory R4 NO OBJECTION); S4 R1 CHANGES ADVISED [AC-8 exit-code evidence] → R2 NO OBJECTION (series RVS__UPG-0060__CHG-20260802-001__S4); all 15 ACs verified. CHG-B gate measured 2026-08-03 (EvidenceAtlas EA-0003 Stage 4) → NOT NET-POSITIVE; human held the feature at CHG-A as PILOTED (negative), CHG-B not done (evidence: `changes/UPG-0060__CHG-B-GATE__realistic-feature-evidence.md`; finding: AJ-022) | COMPLETE | CHG-20260803-001 |
+    | UPG-0060 | CHG-20260803-001 | prompt + script-tooling | self-dev only | 2-Acceptance | S1 ACCEPTED (R1 CHANGES ADVISED — 3 in-scope blockers: stale abandonment wording, unlisted `backlog/features.md`, safety-boundary vs. open-question contradiction → all fixed → R2 NO OBJECTION, evidence A). S2 written (20 ACs, Option B pinned), review in progress (series RVS__UPG-0060__CHG-20260803-001__S2) | IN_PROGRESS | — |
+    
+    <!--
+    Identity   : Feature ID = UPG-#### (stable). Change ID = CHG-YYYYMMDD-NNN (one execution), or a
+                 legacy change-stem (0001..0004) for historical/piloted work recorded truthfully.
+    Loop step  : 1-Intent / 2-Acceptance / 3-Implement / 4-Reconcile / —
+    Review     : review STATE/outcome, not a live round — in-flight: `review_state` (IN_REVIEW…) + the
+                 review series `RVS__…__S<N>`; closed: the accepted verdict summary. Exact `REV__…__R<N>`
+                 rounds + human decisions live ONLY in reviews/review-log.md (Self-Reference Boundary).
+                 `→UPG-####` / `→NNNN` = findings tracked to a follow-up.
+    State      : PROPOSED / IN_PROGRESS / BLOCKED / COMPLETE (+ feature states PILOTED/SUPERSEDED/ABANDONED)
+    Follow-up  : UPG-#### tracking out-of-scope findings from this change, or —
+    -->
+
+  --- /tmp/codeos-cpe-status.iuKPgl (sha256: 5543a308f9534537c6d68f629027f5b74c54896e7f128c9f023b020c473f1ad3, visibility: shown) ---
+    Controlled Plain English status for this review: enabled
+    Source: /home/rimo/projects/Codeos/config/writing-discipline.yaml
+    Applicable scope: selfdev-step-2
+
+DIFF TO REVIEW (base->review, secret/size filtered)
+diff --git a/changes/UPG-0060__CHG-20260803-001__implementer-harness-correction.md b/changes/UPG-0060__CHG-20260803-001__implementer-harness-correction.md
+index 4cb66af..5533aba 100644
+--- a/changes/UPG-0060__CHG-20260803-001__implementer-harness-correction.md
++++ b/changes/UPG-0060__CHG-20260803-001__implementer-harness-correction.md
+@@ -19,11 +19,11 @@ primary_feature_id: UPG-0060
+ change_id: CHG-20260803-001
+ slug: implementer-harness-correction
+ state: IN_PROGRESS      # DRAFT | IN_REVIEW | IN_PROGRESS | BLOCKED | COMPLETE | ABANDONED | SUPERSEDED
+-current_step: 1-Intent  # 1-Intent | 2-Acceptance | 3-Implement | 4-Reconcile
++current_step: 2-Acceptance  # 1-Intent | 2-Acceptance | 3-Implement | 4-Reconcile
+ implements:
+   - UPG-0060
+ related_features: [UPG-0056, UPG-0057]
+-review_series: RVS__UPG-0060__CHG-20260803-001__S1
++review_series: RVS__UPG-0060__CHG-20260803-001__S2   # S1 ACCEPTED (R1 CHANGES ADVISED → R2 NO OBJECTION)
+ review_profile: PROFILE-3   # prompt + script-tooling, same as CHG-A (Step 0a)
+ review_state: IN_REVIEW # DRAFT | IN_REVIEW | REVIEWED | ACCEPTED  (operational; NOT a round)
+ review_history: reviews/review-log.md
+@@ -147,9 +147,54 @@ it is meant to protect.
+ 
+ ## Acceptance Criteria
+ 
+-<!-- Step 2. Not yet written — this record is at Step 1. -->
+-
+-*(pending Step 2)*
++<!-- The consistency contracts this change must satisfy; each checkable in Reconcile. prompt +
++script-tooling: I/O behavior, exit-code / fail-closed cases, idempotency, secret non-leakage, plus
++prompt-wording criteria that must be true of the text a model actually receives. -->
++
++Terms: the **activation status file**, **staging directory**, and **stage area** carry the same
++meanings as in `changes/UPG-0060__CHG-20260802-001__deepseek-implement-tool.md`. **Exemplar** means a
++real file from the target repository supplied to show layout/naming convention. **Repair input** means
++a previous candidate plus the build/test output it produced. **Option B** is the pinned design
++position: the tool accepts build output as input and runs no build itself.
++
++### Group 1 — the five corrections (why this change exists)
++
++| # | Criterion | How it will be verified |
++|---|---|---|
++| 1 | **Build manifests are permitted, and scoped.** The prompt no longer forbids non-source files outright; it permits exactly those files the target language needs for the candidate to build (build manifest, module config), still confined to the stage area. The old blanket sentence "Never emit a path that is not a source or test file" is gone. | Read the prompt; grep confirms the old sentence's absence and the new permission's presence. |
++| 2 | **A manifest actually survives end to end.** A candidate containing `modules/<name>/Cargo.toml` is staged intact, unaltered, at that path. | Fixture run with a stubbed model response containing a manifest; assert the staged file exists byte-identical. |
++| 3 | **A layout exemplar reaches the packet, labeled as convention.** The tool accepts exemplar paths and renders them in the packet under a section distinct from `--- APPROVED ARTIFACT: … ---`, so an exemplar can never be mistaken for something to implement. | Inspect a generated `packet.txt`: exemplar content present under its own distinct heading. |
++| 4 | **The prompt explains the exemplar's role.** The prompt tells the model the exemplar shows layout and naming to follow, and is not a specification to implement. | Read the prompt. |
++| 5 | **The anti-abstraction instruction is corrected, not merely softened.** No sentence forbids abstractions outright. The replacement preserves the real constraint (invent no capability the artifacts do not require) while requiring the abstractions the contract's explicit invariants demand. | Read the prompt; grep confirms no remaining "no abstractions"-style prohibition. |
++| 6 | **Source is emitted as source.** The prompt's output contract is a plain-text delimited protocol; no candidate file content passes through JSON string escaping at any point. | Read the prompt; inspect a staged candidate for absence of escape artifacts (`\n`, `\"`) that the JSON path produced. |
++| 7 | **The delimited protocol is not corruptible by content.** A candidate whose file content contains a line resembling the delimiter either parses correctly or fails closed with a distinct exit code — it never silently truncates a file, misattributes content, or writes a partial candidate. | Fixture run with a stubbed response whose content embeds a delimiter-lookalike line; assert correct parse or clean fail-closed, and assert no partial file is left staged. |
++| 8 | **Repair input is accepted and labeled as feedback.** The tool accepts a previous candidate plus its build/test output and renders both in the packet under a section that identifies them as feedback on a prior attempt, distinct from approved artifacts and from the exemplar. | Inspect a generated `packet.txt` from a repair invocation. |
++| 9 | **Option B holds: the tool executes nothing.** `scripts/codeos-implement.sh` invokes no build, test, compile, or package-manager command, and no shell-out to project-supplied commands. Its only external process calls remain `git rev-parse`, `curl`, `jq`, `mktemp`, and coreutils. | Read-through of the script plus a grep for build/test invocations; a repair run observed to issue no build. |
++
++### Group 2 — every CHG-A property preserved (regression)
++
++| # | Criterion | How it will be verified |
++|---|---|---|
++| 10 | **All CHG-A fail-closed cases still hold at their documented exit codes** — non-git (1), missing dependency (2), usage/stage ∉ {4,5} (3), disabled or absent status (4), malformed status (5), missing key before any network call (6), missing artifact (7). | Re-run the CHG-A fail-closed suite unchanged; assert the same codes. |
++| 11 | **Stage-area allowlist and path safety still enforced, manifests included.** Absolute paths, `..` traversal, and any path outside the stage area are still rejected — the manifest permission widens *file kind*, never *location*. | Fixture runs with an absolute path, a `..` path, and an in-stage-area manifest; assert reject / reject / accept. |
++| 12 | **The `CANDIDATE_BLOCKED.md` escape hatch still works** under the new protocol. | Fixture run with a blocked response; assert the file stages and the run reports it. |
++| 13 | **Secret non-leakage.** `DEEPSEEK_API_KEY` appears in no packet, request, response, candidate, repair input echo, or log — and is still absent from argv and the request body. | `grep -rF "$DEEPSEEK_API_KEY"` over the whole staging tree and log after a run. |
++| 14 | **Write-safety unchanged.** Nothing is written under `modules/` or `tests/` in the real tree; no `git add`/`git commit` is run. | `git status` after a run; grep the script for `git add`/`git commit`. |
++| 15 | **Idempotency unchanged.** Re-running for the same feature/stage produces a distinct, non-overwriting, timestamped audit directory. | Run twice; assert two distinct staging dirs each with a full audit set. |
++| 16 | **Auditability and token instrumentation survive the protocol change.** Each run still preserves the exact packet sent and the raw response, and still records prompt/completion/total token counts and one `implement-log.md` record. | Inspect the audit set after a run. |
++| 17 | **Still off by default.** `config/delegated-implementation.yaml` remains exactly `status: disabled`; no downstream status file is created or scaffolded by this change. | Read the file; `git diff --stat` shows no `scripts/dba-init.sh` change. |
++| 18 | **New failure modes get distinct, documented exit codes** in the header table, in CHG-A's style — at minimum: exemplar path missing, repair-input path missing, unparseable candidate under the new protocol. | Read the header table; trigger each case and assert the documented code. |
++
++### Group 3 — scope preservation
++
++| # | Criterion | How it will be verified |
++|---|---|---|
++| 19 | **CHG-B is not re-opened and no doctrine moves.** `dba-system.md`, `prompts/04-implement.md`, `prompts/05-tests.md`, `prompts/06-observe.md`, `scripts/dba-init.sh`, and `tools/reviewer/` are byte-unchanged. The feature's state stays PILOTED (negative). | `git diff --stat` over the change; read the feature brief's state. |
++| 20 | **This change claims no measurement result.** No artifact in this change asserts that delegation is or will be net-positive; the re-test remains a separate, later measurement judged on the brief's three axes. | Read the change record and the prompt. |
++
++**Explicitly not in scope for these criteria:** whether the corrected harness improves candidate
++quality. That is the re-test's question, not this change's. Criterion 20 exists to keep the two from
++being conflated.
+ 
+ ---
+ 
+diff --git a/status/self-development.md b/status/self-development.md
+index 78c285a..e456de3 100644
+--- a/status/self-development.md
++++ b/status/self-development.md
+@@ -82,7 +82,7 @@
+ | UPG-0057 | CHG-20260726-003 | downstream-doctrine | downstream doctrine only | 4-Reconcile | CHG-A ACCEPTED and committed (fd2b198) — pattern + downstream doctrine + prompt wiring; manual status-line inclusion accepted as CHG-A-scope only, not final operating model | COMPLETE | UPG-0057 (CHG-B) |
+ | UPG-0057 | CHG-20260727-001 | script-tooling + downstream-doctrine + self-dev-governance | both | 4-Reconcile | CHG-B ACCEPTED and complete — automatic Controlled Plain English status injection in `scripts/codeos-review.sh` (no Rust changes, 182 tests unchanged); wrapper established as sole supported entry point; all 13 ACs verified PASS; manual inclusion no longer part of the operating model | COMPLETE | — |
+ | UPG-0060 | CHG-20260802-001 | script-tooling | self-dev only | 4-Reconcile | CHG-A ACCEPTED — S1,S2 ACCEPTED; S3 ACCEPTED (R1-R3 CHANGES ADVISED, all fixed inline; human-authorized confirmatory R4 NO OBJECTION); S4 R1 CHANGES ADVISED [AC-8 exit-code evidence] → R2 NO OBJECTION (series RVS__UPG-0060__CHG-20260802-001__S4); all 15 ACs verified. CHG-B gate measured 2026-08-03 (EvidenceAtlas EA-0003 Stage 4) → NOT NET-POSITIVE; human held the feature at CHG-A as PILOTED (negative), CHG-B not done (evidence: `changes/UPG-0060__CHG-B-GATE__realistic-feature-evidence.md`; finding: AJ-022) | COMPLETE | CHG-20260803-001 |
+-| UPG-0060 | CHG-20260803-001 | prompt + script-tooling | self-dev only | 1-Intent | R1 CHANGES ADVISED (3 in-scope blockers: stale abandonment wording in the brief, unlisted `backlog/features.md`, safety-boundary vs. open-question contradiction) → all fixed → R2 NO OBJECTION, evidence A, 0 findings (series RVS__UPG-0060__CHG-20260803-001__S1) | IN_PROGRESS | — |
++| UPG-0060 | CHG-20260803-001 | prompt + script-tooling | self-dev only | 2-Acceptance | S1 ACCEPTED (R1 CHANGES ADVISED — 3 in-scope blockers: stale abandonment wording, unlisted `backlog/features.md`, safety-boundary vs. open-question contradiction → all fixed → R2 NO OBJECTION, evidence A). S2 written (20 ACs, Option B pinned), review in progress (series RVS__UPG-0060__CHG-20260803-001__S2) | IN_PROGRESS | — |
+ 
+ <!--
+ Identity   : Feature ID = UPG-#### (stable). Change ID = CHG-YYYYMMDD-NNN (one execution), or a

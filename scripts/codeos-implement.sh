@@ -10,11 +10,26 @@
 # exit-code table). It is off by default — see the activation status file below.
 #
 # Usage:
-#   codeos-implement.sh <feature_id> <stage:4|5> <artifact-path> [more artifact-paths...]
+#   codeos-implement.sh [options] <feature_id> <stage:4|5> <artifact-path> [more artifact-paths...]
 #     <feature_id>     the DBA feature id (used only to name the staging directory)
 #     <stage>          4 (implementation) or 5 (tests) — no other value is accepted
 #     <artifact-path>  one or more approved artifacts (intent / contract / event schema; plus the
 #                      Stage 4 output when stage=5). Each must exist.
+#
+#   Options (each repeatable, each must precede the positional arguments):
+#     --exemplar PATH          a real file from the target repository shown as a LAYOUT EXEMPLAR:
+#                              context demonstrating module naming/placement conventions, explicitly
+#                              not a specification to implement. Must exist.
+#     --repair-candidate PATH  a file from a previous candidate, shown as a PRIOR ATTEMPT.
+#     --repair-output PATH     build/test output produced by that prior attempt, shown as FEEDBACK.
+#
+#   This tool NEVER runs a build, test, compile, or package-manager command, never eval's, and never
+#   shells out to a project-supplied command. Build output is an INPUT the caller supplies; obtaining
+#   it is the caller's explicit, external step. The processes this script starts are exactly:
+#     git, curl, jq, awk, sed, cat, tr, od, head, date, mkdir, mktemp, rmdir, dirname
+#   (awk runs the output-frame parser and sed extracts line ranges — both operate only on the model's
+#   own reply). scripts/tests/codeos-implement-tests.sh scans this script against that list and fails
+#   if any external tool outside it appears, so this comment cannot silently drift from the code.
 #
 # Activation (Optional Mechanism Status Convention, UPG-0056): a one-line status file, resolved by
 # context the same way codeos-review.sh resolves its writing-discipline file —
@@ -39,7 +54,10 @@
 #   5  activation status file malformed (configuration error)
 #   6  DEEPSEEK_API_KEY unset or empty (while enabled) — refuse before any network call
 #   7  a passed artifact path does not exist
-#   8  DeepSeek API / transport error, or an unparseable / unsafe model response
+#   8  DeepSeek API / transport error, or an unsafe candidate path in the model response
+#   9  a passed --exemplar path does not exist
+#  10  a passed --repair-candidate / --repair-output path does not exist
+#  11  the model response violates the delimited output protocol (malformed frame) — nothing staged
 set -euo pipefail
 
 err() { echo "error: $*" >&2; }
@@ -48,8 +66,25 @@ err() { echo "error: $*" >&2; }
 git rev-parse --show-toplevel >/dev/null 2>&1 || { err "not inside a git repository"; exit 1; }
 
 # ── 3. usage / args ─────────────────────────────────────────────────────────────────────────────
+EXEMPLARS=()
+REPAIR_CANDIDATES=()
+REPAIR_OUTPUTS=()
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --exemplar)          [[ $# -ge 2 ]] || { err "--exemplar requires a path"; exit 3; }
+                         EXEMPLARS+=("$2"); shift 2;;
+    --repair-candidate)  [[ $# -ge 2 ]] || { err "--repair-candidate requires a path"; exit 3; }
+                         REPAIR_CANDIDATES+=("$2"); shift 2;;
+    --repair-output)     [[ $# -ge 2 ]] || { err "--repair-output requires a path"; exit 3; }
+                         REPAIR_OUTPUTS+=("$2"); shift 2;;
+    --)                  shift; break;;
+    -*)                  err "unknown option: $1"; exit 3;;
+    *)                   break;;
+  esac
+done
 if [[ $# -lt 3 ]]; then
-  err "usage: codeos-implement.sh <feature_id> <stage:4|5> <artifact-path> [more...]"
+  err "usage: codeos-implement.sh [--exemplar PATH] [--repair-candidate PATH] [--repair-output PATH]"
+  err "                           <feature_id> <stage:4|5> <artifact-path> [more...]"
   exit 3
 fi
 FEATURE="$1"; STAGE="$2"; shift 2
@@ -109,9 +144,15 @@ if [[ "${STATUS}" != "enabled" ]]; then
   exit 4
 fi
 
-# ── 7. artifacts must exist ─────────────────────────────────────────────────────────────────────
+# ── 7/9/10. every supplied input must exist (distinct code per input kind) ──────────────────────
 for a in "${ARTIFACTS[@]}"; do
   [[ -f "${a}" ]] || { err "artifact path does not exist: ${a}"; exit 7; }
+done
+for e in ${EXEMPLARS[@]+"${EXEMPLARS[@]}"}; do
+  [[ -f "${e}" ]] || { err "exemplar path does not exist: ${e}"; exit 9; }
+done
+for r in ${REPAIR_CANDIDATES[@]+"${REPAIR_CANDIDATES[@]}"} ${REPAIR_OUTPUTS[@]+"${REPAIR_OUTPUTS[@]}"}; do
+  [[ -f "${r}" ]] || { err "repair-input path does not exist: ${r}"; exit 10; }
 done
 
 # ── 6. API key present (only checked once enabled; before any network call) ─────────────────────
@@ -138,16 +179,45 @@ LOG_FILE="${STAGE_ROOT}/implement-log.md"
 
 # ── Build the two message contents (system = role/contract; user = task + artifacts) ────────────
 SYS="$(cat "${TASK_PROMPT}")"
+
+# Fresh per-run nonce for the output protocol. Random so that candidate content can never collide
+# with a marker by accident; the parser accepts a marker ONLY with this exact value.
+NONCE="$(head -c 8 /dev/urandom | od -An -tx1 | tr -d ' \n')"
+[[ -n "${NONCE}" ]] || { err "could not generate an output nonce"; exit 8; }
+
 {
   printf 'DELEGATED IMPLEMENTATION REQUEST\n'
   printf '  feature_id: %s\n' "${FEATURE}"
-  printf '  stage: %s (%s)\n\n' "${STAGE}" "$([[ ${STAGE} == 4 ]] && echo implementation || echo tests)"
+  printf '  stage: %s (%s)\n' "${STAGE}" "$([[ ${STAGE} == 4 ]] && echo implementation || echo tests)"
+  printf '  output_nonce: %s\n\n' "${NONCE}"
   printf 'Produce the Stage %s candidate for this feature, following the STRICT output contract in\n' "${STAGE}"
-  printf 'the task above. Approved artifacts follow.\n'
+  printf 'the task above. Use the output_nonce above verbatim in every marker.\n'
   for a in "${ARTIFACTS[@]}"; do
     printf '\n--- APPROVED ARTIFACT: %s ---\n' "${a}"
     cat "${a}"
   done
+  # Layout exemplars are context, never specification. They are labeled distinctly from approved
+  # artifacts so they can never be mistaken for something to implement.
+  for e in ${EXEMPLARS[@]+"${EXEMPLARS[@]}"}; do
+    printf '\n--- LAYOUT EXEMPLAR (context only — shows this repository'"'"'s conventions; do NOT implement,\n'
+    printf '    modify, or copy the domain behavior of this file): %s ---\n' "${e}"
+    cat "${e}"
+  done
+  # A prior attempt plus the build/test output it produced. The tool does not run any build — this
+  # output was obtained by the caller as an explicit, external step.
+  if [[ ${#REPAIR_CANDIDATES[@]} -gt 0 || ${#REPAIR_OUTPUTS[@]} -gt 0 ]]; then
+    printf '\n=== REPAIR REQUEST — this is a retry of a previous attempt ===\n'
+    printf 'Fix what the feedback below reports, then re-emit the COMPLETE candidate (every file, in\n'
+    printf 'full), not a patch. Do not drop a contract invariant to make an error go away.\n'
+    for r in ${REPAIR_CANDIDATES[@]+"${REPAIR_CANDIDATES[@]}"}; do
+      printf '\n--- PRIOR ATTEMPT (your previous candidate): %s ---\n' "${r}"
+      cat "${r}"
+    done
+    for r in ${REPAIR_OUTPUTS[@]+"${REPAIR_OUTPUTS[@]}"}; do
+      printf '\n--- FEEDBACK (build/test output from that prior attempt): %s ---\n' "${r}"
+      cat "${r}"
+    done
+  fi
 } > "${STAGE_DIR}/user_content.txt"
 USR="$(cat "${STAGE_DIR}/user_content.txt")"
 
@@ -158,10 +228,11 @@ USR="$(cat "${STAGE_DIR}/user_content.txt")"
 
 # JSON request body (jq escapes everything; body carries NO key).
 REQ_BODY="${STAGE_DIR}/request.json"
+# No response_format: the candidate is returned as plain text under the delimited protocol, so source
+# is never routed through JSON string escaping.
 jq -n --arg model "${MODEL}" --arg sys "${SYS}" --arg usr "${USR}" \
   '{model:$model,
     messages:[{role:"system",content:$sys},{role:"user",content:$usr}],
-    response_format:{type:"json_object"},
     temperature:0,
     stream:false}' > "${REQ_BODY}"
 
@@ -182,42 +253,116 @@ if [[ ! "${HTTP_CODE}" =~ ^2[0-9][0-9]$ ]]; then
   exit 8
 fi
 
-# Extract the model's JSON object (json_object mode guarantees the content is valid JSON).
-CONTENT_JSON="${STAGE_DIR}/model_content.json"
-jq -r '.choices[0].message.content // empty' "${RESP_FILE}" > "${CONTENT_JSON}"
-if [[ ! -s "${CONTENT_JSON}" ]] || ! jq empty "${CONTENT_JSON}" >/dev/null 2>&1; then
-  err "model did not return a parseable JSON object; see ${RESP_FILE}"
+# Extract the model's plain-text reply verbatim.
+CONTENT_TXT="${STAGE_DIR}/model_content.txt"
+jq -r '.choices[0].message.content // empty' "${RESP_FILE}" > "${CONTENT_TXT}"
+if [[ ! -s "${CONTENT_TXT}" ]]; then
+  err "model returned an empty reply; see ${RESP_FILE}"
   exit 8
 fi
 
-NFILES="$(jq '(.files // []) | length' "${CONTENT_JSON}")"
-if [[ "${NFILES}" -lt 1 ]]; then
-  err "model response contained no candidate files; see ${CONTENT_JSON}"
-  exit 8
+# ── Parse the delimited output protocol ─────────────────────────────────────────────────────────
+# Two passes, deliberately: pass 1 validates the whole frame and produces a manifest; pass 2 writes.
+# Nothing reaches the candidate directory until the entire response is known to be well formed, so a
+# malformed frame can never leave a partial or truncated candidate staged.
+MANIFEST="${STAGE_DIR}/.frame-manifest"
+FRAME_ERR="${STAGE_DIR}/.frame-error"
+: > "${FRAME_ERR}"
+
+awk -v nonce="${NONCE}" -v manifest="${MANIFEST}" -v errfile="${FRAME_ERR}" '
+  function fail(msg) { print "line " NR ": " msg > errfile; bad=1; exit }
+  BEGIN {
+    fpfx  = "<<<CODEOS:" nonce ":FILE:"
+    endf  = "<<<CODEOS:" nonce ":ENDFILE>>>"
+    spfx  = "<<<CODEOS:" nonce ":SECTION:"
+    ends  = "<<<CODEOS:" nonce ":ENDSECTION>>>"
+    open  = ""   # "", "file", or "section"
+    nfile = 0
+  }
+  # A line is a marker ONLY if it matches exactly, with this run s nonce, alone on the line.
+  index($0, fpfx) == 1 && substr($0, length($0)-2) == ">>>" {
+    if (open != "") fail("FILE marker inside an open " open " block")
+    path = substr($0, length(fpfx)+1, length($0)-length(fpfx)-3)
+    if (path == "") fail("FILE marker with an empty path")
+    if (path in seen) fail("duplicate candidate path: " path)
+    seen[path] = 1
+    open = "file"; start = NR; curpath = path
+    next
+  }
+  $0 == endf {
+    if (open != "file") fail("ENDFILE with no open FILE block")
+    print "file\t" curpath "\t" (start+1) "\t" (NR-1) > manifest
+    nfile++; open = ""
+    next
+  }
+  index($0, spfx) == 1 && substr($0, length($0)-2) == ">>>" {
+    if (open != "") fail("SECTION marker inside an open " open " block")
+    name = substr($0, length(spfx)+1, length($0)-length(spfx)-3)
+    if (name != "contract_satisfaction" && name != "event_emission" && name != "notes")
+      fail("unknown section name: " name)
+    if (name in seensec) fail("duplicate section: " name)
+    seensec[name] = 1
+    open = "section"; start = NR; curname = name
+    next
+  }
+  $0 == ends {
+    if (open != "section") fail("ENDSECTION with no open SECTION block")
+    print "section\t" curname "\t" (start+1) "\t" (NR-1) > manifest
+    open = ""
+    next
+  }
+  END {
+    if (bad) exit
+    if (open != "") { print "unterminated " open " block at end of response" > errfile; exit }
+    if (nfile < 1) { print "response contained no candidate file blocks" > errfile; exit }
+  }
+' "${CONTENT_TXT}"
+
+if [[ -s "${FRAME_ERR}" ]]; then
+  err "model response violates the output protocol: $(tr '\n' ';' < "${FRAME_ERR}")"
+  err "       nothing was staged. Raw reply preserved at ${CONTENT_TXT}"
+  rmdir "${STAGE_DIR}/candidate" 2>/dev/null || true
+  exit 11
 fi
 
-# Write candidate files into the staging area only, with path-traversal protection.
-for ((i=0; i<NFILES; i++)); do
-  fpath="$(jq -r ".files[${i}].path // empty" "${CONTENT_JSON}")"
-  if [[ -z "${fpath}" ]]; then err "candidate file ${i} has no path"; exit 8; fi
-  case "${fpath}" in
-    /*|*..*) err "unsafe candidate path rejected (absolute or traversal): ${fpath}"; exit 8;;
+# Validate every path BEFORE writing any of them, for the same all-or-nothing reason.
+while IFS=$'\t' read -r kind name _s _e; do
+  [[ "${kind}" == "file" ]] || continue
+  case "${name}" in
+    /*|*..*) err "unsafe candidate path rejected (absolute or traversal): ${name}"
+             rmdir "${STAGE_DIR}/candidate" 2>/dev/null || true; exit 8;;
   esac
   # Enforce the stage-area allowlist, except for the documented CANDIDATE_BLOCKED.md escape hatch
-  # the model uses to report insufficient artifacts.
-  if [[ "${fpath}" != "CANDIDATE_BLOCKED.md" && "${fpath}" != "${ALLOWED_PREFIX}"* ]]; then
-    err "candidate path outside the Stage ${STAGE} area (must start with '${ALLOWED_PREFIX}'): ${fpath}"
+  # the model uses to report insufficient artifacts. This constrains WHERE a file may go; it does
+  # not constrain what KIND of file it is (a build manifest inside the stage area is permitted).
+  if [[ "${name}" != "CANDIDATE_BLOCKED.md" && "${name}" != "${ALLOWED_PREFIX}"* ]]; then
+    err "candidate path outside the Stage ${STAGE} area (must start with '${ALLOWED_PREFIX}'): ${name}"
+    rmdir "${STAGE_DIR}/candidate" 2>/dev/null || true
     exit 8
   fi
-  outfile="${STAGE_DIR}/candidate/${fpath}"
-  mkdir -p "$(dirname "${outfile}")"
-  jq -r ".files[${i}].content // \"\"" "${CONTENT_JSON}" > "${outfile}"
-done
+done < "${MANIFEST}"
 
-# Sidecar summaries for the human reviewer.
-jq -r '.contract_satisfaction // ""' "${CONTENT_JSON}" > "${STAGE_DIR}/contract_satisfaction.txt" || true
-jq -r '.event_emission // ""'        "${CONTENT_JSON}" > "${STAGE_DIR}/event_emission.txt" || true
-jq -r '.notes // ""'                 "${CONTENT_JSON}" > "${STAGE_DIR}/notes.txt" || true
+# Pass 2 — write. Content is emitted byte for byte between its markers, never re-encoded.
+NFILES=0
+while IFS=$'\t' read -r kind name s e; do
+  if [[ "${kind}" == "file" ]]; then
+    outfile="${STAGE_DIR}/candidate/${name}"
+    mkdir -p "$(dirname "${outfile}")"
+    NFILES=$((NFILES+1))
+  else
+    outfile="${STAGE_DIR}/${name}.txt"
+  fi
+  if [[ "${s}" -gt "${e}" ]]; then
+    : > "${outfile}"                      # a legitimately empty block
+  else
+    sed -n "${s},${e}p" "${CONTENT_TXT}" > "${outfile}"
+  fi
+done < "${MANIFEST}"
+
+# Sidecars the model omitted still exist, empty, so the audit set is uniform across runs.
+for s in contract_satisfaction event_emission notes; do
+  [[ -f "${STAGE_DIR}/${s}.txt" ]] || : > "${STAGE_DIR}/${s}.txt"
+done
 
 # Token usage.
 PT="$(jq -r '.usage.prompt_tokens // "?"' "${RESP_FILE}")"
