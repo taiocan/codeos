@@ -109,7 +109,7 @@ is authoritative for *order*, this map is authoritative for *identity*.
 
 ---
 
-## Future candidates (no UPG-#### assigned yet)
+## Future candidates (no `UPG-####` assigned yet)
 
 | Candidate | Description |
 |---|---|
