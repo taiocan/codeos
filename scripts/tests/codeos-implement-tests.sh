@@ -192,6 +192,24 @@ done
   && ok "C9 no external tool outside the documented allowlist" \
   || bad "C9 undocumented external tool" "found:${unexpected} — update the change record's process list"
 
+# ── regression: a packet larger than MAX_ARG_STRLEN (128 KiB) must still build ──────────────────
+# Latent since CHG-A and only triggered once packets grew past 128 KB: `jq --arg usr "$USR"` passed
+# the whole packet as one argv element, and Linux caps a single argument at 128 KiB regardless of
+# ARG_MAX. Found by running the tool on a realistic downstream feature, not by review.
+fixture '<<<CODEOS:{N}:FILE:modules/thing/src/lib.rs>>>
+ok
+<<<CODEOS:{N}:ENDFILE>>>'
+reset_state; enable_mech
+python3 -c "print('# filler line to grow the packet past the 128 KiB single-argument limit\n' * 4000)" \
+  > "${REPO}/intents/BIG.md"
+big=$(wc -c < "${REPO}/intents/BIG.md")
+rc=$(run_tool F-0001 4 intents/F-0001.md intents/BIG.md)
+if [[ "${rc}" == "0" && -f "$(latest_stage_dir)/candidate/modules/thing/src/lib.rs" ]]; then
+  ok "REG packet of ${big} bytes (>128 KiB) builds and runs"
+else
+  bad "REG oversized packet" "rc=${rc} packet=${big}B $(tail -2 "${OUT}")"
+fi
+
 echo "== Group 1: protocol robustness (criterion 7) =="
 
 # 7a: a marker line bearing the WRONG nonce is ordinary content, written verbatim.

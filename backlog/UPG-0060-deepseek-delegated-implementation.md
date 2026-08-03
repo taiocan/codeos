@@ -192,9 +192,19 @@ exemplar, instructed against the abstractions the invariants require, forced JSO
 allowed no repair iteration. **Condition 0 gates conditions 1-3: a re-test that changes the model
 without first fixing the packet is uninterpretable.**
 
-> **FREEZE (human decision, 2026-08-03).** **No further DeepSeek infrastructure changes until a
-> realistic feature has been attempted with the current harness.** Condition 0 is now DONE
-> (`CHG-20260803-001`). The next action on this feature is the *experiment*, not more tooling. This
+> **RE-TEST COMPLETED 2026-08-03 — result negative. Freeze discharged; feature closed for general
+> Stage-4 delegation.** Corrected single-shot arm on EA-0003: compiled clean with correct layout and
+> real timestamps, but **6 contract violations survived**. One repair iteration fixed **6 of 6** —
+> but only because Claude supplied an explicit specification of every required mechanism, which took
+> the same contract comprehension as implementing the feature. DeepSeek executes a precise
+> architectural specification well; it does not derive one. Totals: 73,211 DeepSeek tokens across two
+> runs, and the candidate still needed a manual `Hash` derive to compile. The narrower hypothesis —
+> delegated execution of an *already-approved* architecture — is carried forward as **UPG-0062**,
+> which treats this evidence as prior evidence and does not reopen this feature.
+>
+> The original freeze text, now discharged, read: no further DeepSeek infrastructure changes until a
+> realistic feature has been attempted with the current harness. Condition 0 was DONE
+> (`CHG-20260803-001`); the experiment then ran. This
 > rule exists because the work slipped into meta-work — improve harness, document harness, review
 > documentation, fix evidence, review packet, fix wording — while the question that justifies the
 > feature's existence went unanswered. Treating this integration as production infrastructure before

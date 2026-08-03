@@ -230,7 +230,14 @@ USR="$(cat "${STAGE_DIR}/user_content.txt")"
 REQ_BODY="${STAGE_DIR}/request.json"
 # No response_format: the candidate is returned as plain text under the delimited protocol, so source
 # is never routed through JSON string escaping.
-jq -n --arg model "${MODEL}" --arg sys "${SYS}" --arg usr "${USR}" \
+# --rawfile, not --arg: --arg passes the whole packet as a single argv element, and Linux caps one
+# argument at 128 KiB (MAX_ARG_STRLEN) regardless of the much larger total ARG_MAX. A realistic
+# downstream packet exceeds that — EA-0003 with a layout exemplar and a repair input is ~133 KB —
+# and jq then dies with "Argument list too long". Reading from the files avoids argv entirely, so
+# packet size is bounded by memory rather than by an exec limit.
+jq -n --arg model "${MODEL}" \
+      --rawfile sys "${TASK_PROMPT}" \
+      --rawfile usr "${STAGE_DIR}/user_content.txt" \
   '{model:$model,
     messages:[{role:"system",content:$sys},{role:"user",content:$usr}],
     temperature:0,
