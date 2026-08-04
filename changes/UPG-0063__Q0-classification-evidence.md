@@ -151,3 +151,32 @@ Worth noting for UPG-0063's argument: this is exactly the class of defect a reco
 resolution would expose. Writing down *"vocabulary canonicalization: local hardcoded map, applied to
 limitations"* invites the immediate question "why not to access forms?" — which nothing currently asks.
 
+
+---
+
+## 3. CORRECTION to §1d (2026-08-04) — "enumerable by grep" is withdrawn
+
+§1d wrote that explicit deferrals are *"enumerable from the artifacts themselves (`grep` for 'not
+prescribed', 'unresolved', 'MANUAL-PENDING', 'left open')"* and that *"a deferral with no recorded
+resolution is a detectable omission."*
+
+**Both statements are withdrawn.** They define the obligation by phrase, and governance defined by
+phrase is bypassed by paraphrase: an author writing an equivalent deferral in different words would
+silently owe nothing. It would also fire on prose that merely contains the words.
+
+**The governing definition is semantic**, as stated in
+`backlog/UPG-0063-deferral-resolution-trace.md`: a deferral is a statement in an approved artifact
+that a specific question is deliberately left unresolved *by that artifact*, whatever wording is used
+— distinct from silence (no affirmative statement) and from implementation freedom (behavior settled,
+technique open).
+
+**Phrase search keeps only the role it actually earned here:** it is how the four Q0 candidates were
+*discovered*. Discovery assistance, never the definition, and never the basis of an enforcement claim.
+
+**Consequence, carried into Step 1 rather than hidden:** a missing record is *not* mechanically
+detectable. Detecting one would require enumerating deferrals, which without phrase-matching cannot be
+automated. Enforcement therefore rests on the Stage 4 author and the human gate — weaker than Codeos
+usually accepts, and the open question the Step 1 record puts to the gate.
+
+The §1 findings themselves are unaffected: they rest on quoted artifact text, not on how the
+candidates were found.
