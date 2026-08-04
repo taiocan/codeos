@@ -2,7 +2,7 @@
 feature_id: UPG-0062
 slug: architecture-constrained-delegated-implementation
 title: Architecture-Constrained Delegated Implementation (Stage 4)
-status: PROPOSED
+status: IN_PROGRESS
 priority: P2
 depends_on: [UPG-0051, UPG-0058, UPG-0052]
 related_features: [UPG-0060, UPG-0032, UPG-0056]
@@ -13,7 +13,7 @@ superseded_by: []
 # Upgrade: architecture-constrained-delegated-implementation
 
 **Priority**: P2
-**Status**: PROPOSED — Step 1 (Change Intent) awaiting human approval
+**Status**: IN_PROGRESS — Step 1 APPROVED (human, 2026-08-04, with a correction to the artifact's status); Step 2 in progress
 **Type**: script-tooling + Rust engine (pilot first; no doctrine change proposed)
 
 > **Relationship to UPG-0060.** UPG-0060 is closed and is not reopened by this feature. Its evidence
@@ -107,17 +107,34 @@ The cohort artifacts are working as designed; they are simply the wrong altitude
 36 KB approved document finds one mention of "duplicate", one of "quality", and zero of
 `scope_fully_examined`.
 
-**Smallest missing information:** a per-feature **Invariant Allocation** — for each contract invariant
-and falsification scenario, the mechanism that enforces it and where it lives (a narrowing type, a
-derivation, a validation step, a construction-time guarantee).
+**Smallest missing information:** a per-feature **Feature Implementation Design** — for each contract
+invariant and falsification scenario, the mechanism that enforces it and where it lives (a narrowing
+type, a derivation, a validation step, a construction-time guarantee).
 
-**Proposed form, avoiding a second architecture authority:** not a new approved artifact and not a new
-gate. A Stage-4-entry **derived view**, produced by Claude from the already-approved
-contract + schema + baseline + cohort design, in the same spirit as the Baseline's own "Derived Views"
-section — regenerable, citing its sources, non-authoritative. If it disagrees with an approved
-artifact, the approved artifact wins and the view is regenerated. It is an input to the packet, never
-a competing source of truth. Whether it needs to persist as a file at all, or can be assembled
-transiently into the packet, is a Step 2 question.
+**This is not a derived view — corrected at the Step 1 gate (human, 2026-08-04).** An earlier draft of
+this brief called it one. That was wrong and the error mattered. When the approved architecture says
+*where* an invariant belongs but not *how* it is enforced, choosing "a transitive resolver with cycle
+protection" is a **new design decision**, not a restatement of anything approved. Presenting it as
+derived would have created a second architecture layer that looked like it needed no governance
+precisely because of what it was called.
+
+The artifact must therefore keep two kinds of content visibly separate, per row:
+
+| Classification | Meaning | Requirement |
+|---|---|---|
+| `SOURCE-DERIVED` | Traces to an approved artifact | Must cite artifact + section |
+| `NEW DESIGN` | Not determined by any approved artifact | Must be marked as a design decision, never attributed to the Baseline |
+
+Whether the `NEW DESIGN` content needs a governed home — an approval gate, a lifecycle, a place in the
+artifact hierarchy — is an open question this feature must answer, not assume. See "Architectural
+question" below.
+
+**The larger possibility this exposes.** If Stage 4 routinely requires mechanism decisions that no
+approved artifact determines, then Codeos has a real gap between logical architecture and
+implementation that Claude has been **silently bridging inside the code** on every feature to date.
+Those decisions are governed today only indirectly — the human approves the resulting code, never the
+decision itself, and it is never recorded as a decision. That would make this feature valuable
+independently of whether delegation is ever adopted.
 
 ## What the Stage 4 prompt gives Claude that no architecture artifact contains
 
@@ -221,22 +238,35 @@ sufficient output-token capacity configured (UPG-0060's repair run truncated at 
 nothing); mechanical compile quality distinguished from architectural correctness; model capability
 never inferred from harness defects; economic value never claimed without measuring reconciliation.
 
-## Architectural question that must be resolved before Step 2
+## The two questions Step 2 must answer
 
-**Does producing the Invariant Allocation cost materially less than writing the implementation?**
+Revised at the Step 1 gate (human, 2026-08-04). Step 2 is a **premise test executed before any Rust
+is written**, and it tests two things, not one.
 
-If deriving it requires the same close reading as implementing the feature, this hypothesis collapses
-into UPG-0060's finding and the feature should be abandoned at Step 2 rather than piloted.
+**Q1 — Is producing the Feature Implementation Design materially cheaper than direct implementation?**
 
-The empirical reason to think it may not: UPG-0060's run-3 feedback was ~2.5 KB and produced 610 lines
-(~25 KB) of correct Rust — roughly a 10:1 expansion. If that ratio holds when the allocation is
-written *before* seeing a candidate rather than *after* diagnosing one, the leverage is real.
+If deriving it requires the same close contract reading as implementing the feature, this hypothesis
+collapses into UPG-0060's finding and the feature stops at Step 2 — cheaply, before any engine exists.
 
-That qualifier is the risk. The run-3 feedback was written with a failed candidate in hand, which is
-strictly easier than writing an allocation from the contract alone. **Step 2 must include a
-falsifiable test of this** — for example, drafting EA-0004's allocation from approved artifacts only,
-measuring its cost, and comparing against the measured cost of Arm B's implementation. If the
-allocation approaches implementation cost, stop.
+Evidence for: UPG-0060's run-3 feedback was ~2.5 KB and produced 610 lines (~25 KB) of correct Rust,
+roughly 10:1. Evidence against, and this is the risk: that feedback was written **with a failed
+candidate in hand**, which is strictly easier than writing a design from approved artifacts alone.
+The premise test must therefore be run the hard way — EA-0004's design produced from approved
+artifacts only, with no candidate available — or it measures the wrong thing.
+
+**Q2 — Does Codeos need a governed home for mechanism decisions?**
+
+Independent of delegation. If the design's `NEW DESIGN` rows turn out to be substantial, then Stage 4
+has been making unrecorded architectural decisions on every feature, approved only implicitly via the
+code they produced. That is worth knowing whether or not an external model is ever used, and it may be
+this feature's most durable output.
+
+Q2 must be answered before any Rust is built, not after. Building a delegation engine that consumes an
+artifact whose authority and lifecycle are undecided would create exactly the ungoverned second
+architecture layer this feature is supposed to avoid.
+
+**Sequencing:** Q1 fails → stop UPG-0062. Q1 passes → answer Q2 and settle the artifact's authority
+and lifecycle → only then build the engine.
 
 ## Related
 
