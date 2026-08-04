@@ -193,3 +193,72 @@ The feature's more durable output is the thing it found on the way: Codeos has a
 logical architecture and code, and Claude has been bridging it silently inside Stage 4 implementations.
 That was worth discovering, and it is worth fixing on its own terms rather than as a means to
 delegation.
+
+---
+
+## 5. CORRECTION (2026-08-04, during UPG-0063's retrofit measurement)
+
+**§2b's existence claim is substantially wrong, and §2a's classification is partly unreliable. The
+method that produced them was flawed.**
+
+### What went wrong
+
+To decide whether an approved artifact "determines the mechanism", I grepped the contract for the
+*implementation's* vocabulary — `is_locked`, `evaluate_change`, `newtype`, `smart constructor` — found
+nothing, and concluded the mechanism was unspecified. That tests whether the contract uses the code's
+names. It does not test whether the contract states the rule.
+
+### EA-0001 — the claim is retracted
+
+§2b asserted the contract "never says lockedness is computed by conjunction of two injected
+references". It does, explicitly:
+
+> `contracts/EA-0001-research_brief_contract.md:134` — "A Research Brief transitions to Locked only
+> when both the investigation-approval decision and the research-began signal are present and each is
+> bound to the exact Research Brief version being locked."
+
+There is also an invariant-falsification row (line 157) specifying the version-binding behaviour and
+naming the wrong implementation assumption. `is_locked` is a faithful transcription of an approved
+rule — **`SOURCE-DERIVED`, not `NEW DESIGN`.** Likewise `evaluate_change`'s Locked-gate and the two
+reference types: they realise that stated rule rather than inventing one.
+
+What may survive for EA-0001 is the `ResearchContractValidator` *seam* — and even there the contract
+acknowledges the split, marking validator-semantics falsification rows "MANUAL-PENDING: validator
+semantics — orchestration only" (lines 148-149). So EA-0001 supports **at most one** genuine
+`NEW DESIGN` decision, not the four claimed.
+
+### EA-0004 — §2a's "10 of 10" is not reliable
+
+Spot-checking the same way shows the contract is more prescriptive than credited:
+
+- non-inflation: "presented as addressed by **one distinct underlying source**, not by as many
+  Candidate Evidence items as there are derivative presentations" (lines 114-115) — close to
+  specifying the counting rule;
+- totality: "For **every** Research Question within the extraction's scope, the result always
+  identifies either…" (line 141);
+- concept identity: "invariant under substitution of equivalent classification representations" and
+  "must not appear as inputs to domain decision logic" (lines 163, 168).
+
+Some rows plausibly remain `NEW DESIGN` — a resolver *seam* where ownership is explicitly open,
+choosing a narrowing type so an illegal state is unrepresentable rather than validating at runtime,
+enforcing-by-absence. But the boundary between "the contract requires this property" and "the
+implementation chose this mechanism" is far blurrier than "10 of 10" implies, and that figure should
+not be relied on.
+
+### What this does and does not change
+
+- **Q1 is unaffected.** The cost measurement compared two artifacts by size; it never depended on the
+  classification being right.
+- **Q2's verdict is downgraded from "the gap is real" to "the gap is unproven, and smaller than
+  reported if it exists at all."**
+- **UPG-0063's premise is therefore in question.** Its Step 1 must re-establish whether the gap exists
+  using a sound method — reading each approved artifact for the *rule*, in the artifact's own
+  vocabulary, rather than searching it for the implementation's names.
+
+### The original text is left standing above
+
+§2a and §2b are not rewritten. The error is more useful visible than erased, and rewriting an evidence
+record to look correct in hindsight is precisely the habit these guardrails exist to prevent.
+
+**Found by doing the retrofit measurement first.** Had Step 1 been written before this check, UPG-0063
+would have been justified by a claim that does not hold.
