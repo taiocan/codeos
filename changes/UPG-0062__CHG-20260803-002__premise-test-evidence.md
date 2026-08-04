@@ -154,9 +154,12 @@ A governed home for feature-level implementation-design decisions **is required*
 real, load-bearing, and currently unrecorded.
 
 **This change does not design it.** Per AC-9, proving the gap and solving it are separate. No
-mechanism, gate, template, lifecycle, or artifact is proposed here. A separate prerequisite feature is
-filed to define the governed home, its lifecycle, its approval semantics, and its relationship to the
-Architecture Baseline.
+mechanism, gate, template, lifecycle, or artifact is proposed here. A separate feature (**UPG-0063**) is filed to
+solve it. Its working hypothesis is deliberately lean — expose only load-bearing `NEW DESIGN`
+decisions inside the *existing* Stage 4 workflow and gate, with no new stage, artifact, or gate — and
+its cost basis is explicitly **not** this document's 62%: that figure measured deriving a complete
+design up front, whereas Stage 4 makes these decisions anyway, so UPG-0063's true cost is only the
+marginal effort of recording an already-necessary decision.
 
 Per AC-12: any future delegated-tooling work is **blocked** until that capability exists, because a
 delegation engine consuming an experimental non-authoritative artifact is precisely the ungoverned

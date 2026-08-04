@@ -1,114 +1,165 @@
 ---
 feature_id: UPG-0063
 slug: feature-implementation-design-layer
-title: Governed Home for Feature-Level Implementation-Design Decisions
+title: Expose Load-Bearing Implementation Decisions Inside Stage 4
 status: PROPOSED
 priority: P1
-depends_on: [UPG-0051, UPG-0058]
-related_features: [UPG-0062, UPG-0052]
+depends_on: []
+related_features: [UPG-0062, UPG-0051, UPG-0058]
 supersedes: []
 superseded_by: []
 ---
 
-# Upgrade: feature-implementation-design-layer
+# Upgrade: expose load-bearing implementation decisions inside Stage 4
 
 **Priority**: P1
 **Status**: PROPOSED
-**Type**: downstream-doctrine (likely) — scope to be settled at Step 1
+**Type**: to be settled at Step 1 — **the working hypothesis is that this needs no new stage, no new
+artifact, and no new gate**
 
-> **Origin.** Discovered by UPG-0062's Q2 premise test (2026-08-04), which established the gap and was
-> explicitly forbidden from solving it. This feature exists to solve it. UPG-0062's delegation
-> hypothesis failed on cost and is closed; this finding is independent of that failure and outlives it.
+> **Origin.** UPG-0062's Q2 established the gap and was explicitly forbidden from solving it. This
+> feature solves it — as leanly as possible.
+
+## Hypothesis
+
+> **Can Codeos expose only load-bearing `NEW DESIGN` decisions inside the existing Stage 4 workflow,
+> at very low marginal cost, without creating a new stage, artifact, or gate?**
+
+Only if that fails should a dedicated Feature Implementation Design layer be considered. The starting
+position is deliberately the leanest thing that could work: a short **Implementation Decisions**
+section in the Stage 4 output, reviewed by the **existing Stage 4 human gate**.
 
 ## Problem
 
 Codeos's approved architecture artifacts determine **what** must be true and **who** is responsible.
-They do not determine **by what mechanism** a feature-local invariant is enforced. That decision is
-real, load-bearing, and currently recorded nowhere.
+They do not determine **by what mechanism** a feature-local invariant is enforced. Those decisions are
+real, load-bearing, and currently recorded nowhere — approved only implicitly, by approving the code
+that embodies them.
 
-**Evidence the gap exists** (UPG-0062, `changes/UPG-0062__CHG-20260803-002__premise-test-evidence.md`):
+**Evidence** (UPG-0062, `changes/UPG-0062__CHG-20260803-002__premise-test-evidence.md`):
 
 - Writing EA-0004's full implementation design from approved artifacts produced **ten mechanism
-  allocations, all ten classified `NEW DESIGN`** — not determined by any approved artifact. The
-  artifacts fixed language, ownership, transactionality, correlation, event shapes, field lists and
-  layout, and fixed *none* of the ten mechanisms by which the invariants would hold.
-- EvidenceAtlas's Cohort Logical Design §8 assigns ownership of EA-0003's quality/duplicate/
-  stopping-basis validation and **explicitly declines** to specify the mechanism. The artifacts are
-  working as designed; they are simply the wrong altitude.
-- A shipped, human-approved feature already carries such decisions in code alone. EA-0001's
-  `modules/research_brief/src/lib.rs` contains a `ResearchContractValidator` seam, an `is_locked`
+  allocations, all ten `NEW DESIGN`**. The artifacts fixed language, ownership, transactionality,
+  correlation, event shapes, field lists and layout — and none of the ten mechanisms.
+- EvidenceAtlas's Cohort Logical Design §8 assigns ownership of EA-0003's classification validation
+  and **explicitly declines** to specify the mechanism. The artifacts work as designed; they are the
+  wrong altitude for this.
+- EA-0001, shipped and human-approved, carries a `ResearchContractValidator` seam, an `is_locked`
   predicate computing lockedness by conjunction of two injected decision references, and an
   `evaluate_change` gate. Its approved contract says "Locked" fifteen times as a *state* and never
-  says how lockedness is computed. None of these appear in any approved artifact.
+  says how it is computed. None of these appear in any approved artifact.
 
-So Stage 4 makes architectural decisions that no gate ever sees as decisions. They are approved only
-implicitly, by approving the code that embodies them. A reviewer at Stage 4 sees the mechanism as an
-implementation detail; a reader six months later cannot tell a deliberate design choice from an
-incidental one; and a reconciliation cannot check a decision that was never stated.
+**Existence, not prevalence.** One shipped feature plus one designed feature establish the gap is
+real. They establish nothing about frequency. Step 1 should sample 2–3 implemented features before
+deciding how heavy the remedy needs to be.
 
-**Scope of the evidence, stated honestly:** existence, not prevalence. One shipped feature plus one
-designed-but-unimplemented feature establish that the gap is real. They do not establish frequency.
-Step 1 should examine 2-3 representative implemented features before deciding how heavy the remedy
-should be.
+## The cost question — correcting an anchoring error
 
-## Upgrade
+UPG-0062 measured a Feature Implementation Design at **62% of implementation cost**. That figure is
+**not this feature's cost**, and carrying it over would misprice the whole thing.
 
-Define the governed home for feature-level implementation-design decisions:
+UPG-0062 measured *deriving and writing a complete design, from approved artifacts, before
+implementation*. Everything had to be specified, including mechanisms a competent implementer would
+have chosen correctly unaided.
 
-- **Where it sits** relative to Stage 3 (Event Schema) and Stage 4 (Implementation) — a Stage 3b, a
-  Stage 4 precondition, or a section of an existing artifact.
-- **What it contains** — at minimum, per contract invariant and falsification scenario, the enforcing
-  mechanism, and a `SOURCE-DERIVED` / `NEW DESIGN` classification so a reader can tell a restatement
-  from a decision.
-- **Its authority** — explicitly subordinate to the approved Baseline, Cohort Logical Design, Contract
-  and Event Schema. It must never become a second architecture authority; where it conflicts with an
-  approved artifact, the approved artifact wins.
-- **Its lifecycle** — when it is written, when it is revised, what happens when an approved artifact
-  changes underneath it, and whether it is regenerable or hand-maintained.
-- **Its approval semantics** — whether it needs a human gate of its own, or rides the Stage 4 gate
-  with the mechanism decisions made explicit rather than implicit.
+**Stage 4 makes these decisions anyway.** They are not optional work this feature adds; they are work
+already happening, invisibly. The incremental cost here is therefore:
+
+> **the cost of making an already-necessary decision explicit** — not the cost of designing it.
+
+When Claude decides during implementation that lockedness is `brief-approval-reference ∧
+research-began-reference`, recording it is one line:
+
+> `Lockedness → conjunction of the injected brief-approval and research-began references; implemented in is_locked().`
+
+That is a fundamentally different quantity from 62%, and it may be small enough to be free in
+practice. **Step 1 must measure the recording cost specifically** — retrofit the record for one or two
+already-implemented features and measure only the marginal effort — rather than reasoning from
+UPG-0062's number.
+
+## What gets recorded
+
+**Only material `NEW DESIGN` decisions.** Not a row per invariant.
+
+If an invariant's mechanism is already determined upstream, restating it adds nothing and creates
+boilerplate that will drift. `SOURCE-DERIVED` remains useful as an *analysis* step — it is how you
+decide whether something needs recording — but it should not become a permanent column that every
+feature must fill in.
+
+### The materiality test
+
+A decision is recorded only if:
+
+> **Would changing this mechanism, while preserving the same public behavior, materially affect an
+> invariant, a boundary, the state model, data integrity, or future implementation freedom?**
+
+If no, it is ordinary implementation detail and is **not** governed. This deliberately excludes loop
+choice, helper structure, naming, collection types, error-message wording, and the rest of the long
+tail that would otherwise flood the record and make it worthless.
+
+### Shape (illustrative, not settled)
+
+| Decision | Mechanism | Why material |
+|---|---|---|
+| Lockedness | conjunction of injected brief-approval and research-began references | Determines whether mutation is permitted |
+| Duplicate coverage | resolve to distinct underlying source before counting | Prevents false coverage inflation |
+
+Populated only when a genuinely load-bearing decision exists. **Empty is the expected common case**
+and must never be rendered as an empty table or a "none" ceremony.
+
+## Authority and conflict
+
+The record is **subordinate to approved upstream artifacts**. It never becomes a second architecture
+authority.
+
+**On conflict:** if a recorded implementation decision conflicts with an approved artifact, that
+conflict **must be reconciled** — it does not resolve itself by the approved artifact silently
+winning, and the implementation decision may never override or reinterpret the approved artifact. A
+conflict may well mean the implementation cannot legitimately continue until the upstream artifact is
+amended through its own governance path. This follows Codeos's existing rule that unresolved conflicts
+are surfaced to the human rather than silently resolved.
 
 ## Open questions for Step 1
 
-- **Is a new artifact needed at all,** or does an existing one (Cohort Logical Design, or a Stage 4
-  section) extend to cover it? Prefer extension over addition.
-- **How heavy?** The gap is real but the remedy could be as light as a required "mechanism decisions"
-  section in the Stage 4 output, recording what was decided and why. UPG-0056's lesson (AJ-021)
-  applies: a rigorous framework here would be disproportionate to a problem that may be solved by a
-  paragraph.
-- **Does it apply to every feature, or only where invariant density warrants it?** Prevalence work
-  feeds this.
-- **What does it cost?** UPG-0062 measured a full design at 62% of implementation cost. A mandatory
-  artifact that expensive would be a serious tax on every feature. A lighter record of only the
-  `NEW DESIGN` decisions would cost far less — quantifying that is part of Step 1.
+- **Does the Stage 4 output already have a home for this?** Prefer extending an existing section over
+  adding one. Check `prompts/04-implement.md`'s existing output format and the Stage 4 report template
+  before proposing anything new.
+- **What is the true marginal recording cost?** Retrofit EA-0001 and one other implemented feature;
+  measure only the incremental effort of writing the record, not of making the decision.
+- **How often is the record non-empty?** Feeds the prevalence question and determines whether this is
+  a routine section or a rare one.
+- **Does the existing Stage 4 gate suffice?** The hypothesis says yes. What would have to be true for
+  it not to?
+- **Does the reviewer need to know?** A recorded decision is checkable against the contract in a way an
+  unrecorded one is not — possibly a free improvement to advisory review, possibly scope creep.
 
 ## Value
 
-Makes load-bearing design decisions visible to the gate that is supposed to govern them, and legible
-to whoever reads the code later. Independent of delegation: it improves reconciliation, review, and
-institutional memory whether or not any external model is ever used.
+Makes load-bearing design decisions visible to the gate that already governs them, and legible to
+whoever reads the code later. Improves reconciliation, review, and institutional memory. Independent
+of delegation — worth doing whether or not any external model is ever used.
 
 ## Risk
 
-Over-engineering. The finding justifies *recording* mechanism decisions; it does not by itself justify
-a new stage, a new approval gate, or a new template. AJ-021 is the cautionary precedent — a request
-for a simple on/off switch grew into a versioned governance framework across seven review rounds
-before a human reset it.
+**Over-engineering is the main risk, and the precedent is specific.** AJ-021: a request for a simple
+on/off switch grew across seven review rounds into a versioned governance framework before a human
+reset it. The finding here justifies *recording* material decisions. It does not by itself justify a
+new stage, a new gate, a new template, or a mandatory artifact — and Step 1 should have to argue hard
+for any of those against the lean default.
 
-A second risk: cost. If the remedy approaches UPG-0062's measured 62%, it would be rejected on those
-grounds alone. The remedy must be much lighter than a full design document.
+**Second risk: boilerplate.** A record that must be filled in for every feature becomes ritual, drifts
+from the code, and ends up worse than nothing. The materiality test and the empty-is-normal default
+exist to prevent that.
 
-## Blocking relationship
+## Non-goals
 
-Any future delegated-implementation tooling (UPG-0062 CHG-C or a successor) is **blocked** on this
-feature. A delegation engine consuming an experimental, non-authoritative design artifact would create
-exactly the ungoverned second architecture authority this feature exists to prevent. UPG-0062 is
-independently closed on cost, so this blocks nothing currently in flight.
+A new DBA stage. A new approval gate. A mandatory per-invariant design document. Anything resembling
+UPG-0062's full FID. Delegated implementation — that is closed and this feature is not a route back
+to it.
 
 ## Related
 
-- **UPG-0062** — discovered the gap; forbidden from solving it. Its evidence file is the primary source.
-- **UPG-0051 / UPG-0058** — the approved architecture artifacts this sits below; assessed as necessary
-  but not sufficient as implementation specifications.
-- **AJ-021** — round-by-round review is blind to cumulative disproportion; relevant to keeping the
-  remedy proportionate.
+- **UPG-0062** — discovered the gap; closed on cost. Its evidence file is the primary source, and its
+  62% figure is explicitly *not* this feature's cost basis (see above).
+- **UPG-0051 / UPG-0058** — the approved architecture artifacts this sits below.
+- **AJ-021** — the cautionary precedent for keeping the remedy proportionate.
