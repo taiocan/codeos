@@ -2,7 +2,7 @@
 feature_id: UPG-0064
 slug: delegated-stage4-envelope-alignment
 title: Delegated Stage-4 Envelope Alignment and Governed Pilot
-status: PROPOSED
+status: IN_PROGRESS
 priority: P2
 depends_on: [UPG-0051, UPG-0052, UPG-0063]
 related_features: [UPG-0060, UPG-0062, UPG-0056]
@@ -13,7 +13,7 @@ superseded_by: []
 # Upgrade: delegated Stage-4 envelope alignment and governed pilot
 
 **Priority**: P2
-**Status**: PROPOSED — CHG-A Step 1 in progress
+**Status**: IN_PROGRESS — CHG-A at Step 2 (Acceptance Criteria)
 **Type**: prompt + script-tooling (CHG-A), then a measured pilot (CHG-B)
 
 ## Problem — an integration defect, not an architecture-design problem
@@ -117,6 +117,10 @@ Three deliberately different features, chosen so the cases fail differently:
 
 Case 3 is the most valuable: it validates UPG-0063 prospectively against an independent implementer,
 which is materially stronger evidence than the retrospective Q0 fixtures.
+
+**Binding precondition (set by CHG-A, human 2026-08-04):** CHG-B must declare **every** governed
+artifact with an explicit role flag. Positionals are compatibility-only and may not be used in the
+pilot — otherwise the experiment would run through the degraded path CHG-A exists to remove.
 
 **Measured — not "did it compile":** contract compliance; architecture violations; invented
 requirements; missed explicit deferrals; unnecessary design decisions; Codex findings by severity;

@@ -94,7 +94,7 @@ The goal is to speed up Codeos development without weakening DBA advantages.
 | UPG-0061 | [UPG-0061-review-finding-severity-taxonomy.md](UPG-0061-review-finding-severity-taxonomy.md) | Point-of-Action Delivery for Known Procedural Rules (+ finding taxonomy) | P1 | PROPOSED |
 | UPG-0062 | [UPG-0062-architecture-constrained-delegated-implementation.md](UPG-0062-architecture-constrained-delegated-implementation.md) | Architecture-Constrained Delegated Implementation (Stage 4) | P2 | CLOSED (premise test negative — producing the design cost 62% of implementing; no tooling built) |
 | UPG-0063 | [UPG-0063-deferral-resolution-trace.md](UPG-0063-deferral-resolution-trace.md) | Deferral → Resolution Trace for Stage 4 | P1 | COMPLETE |
-| UPG-0064 | [UPG-0064-delegated-stage4-envelope-alignment.md](UPG-0064-delegated-stage4-envelope-alignment.md) | Delegated Stage-4 Envelope Alignment and Governed Pilot | P2 | PROPOSED |
+| UPG-0064 | [UPG-0064-delegated-stage4-envelope-alignment.md](UPG-0064-delegated-stage4-envelope-alignment.md) | Delegated Stage-4 Envelope Alignment and Governed Pilot | P2 | IN_PROGRESS |
 
 > Priority `—` = no formal P-rank (a completed cleanup, or a discovery note). Feature IDs are
 > assigned once and never reused. `UPG-0002` and `UPG-0003` are historical/piloted work given IDs

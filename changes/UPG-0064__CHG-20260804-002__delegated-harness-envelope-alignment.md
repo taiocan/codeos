@@ -15,11 +15,11 @@ primary_feature_id: UPG-0064
 change_id: CHG-20260804-002
 slug: delegated-harness-envelope-alignment
 state: IN_PROGRESS      # DRAFT | IN_REVIEW | IN_PROGRESS | BLOCKED | COMPLETE | ABANDONED | SUPERSEDED
-current_step: 1-Intent  # 1-Intent | 2-Acceptance | 3-Implement | 4-Reconcile
+current_step: 2-Acceptance  # 1-Intent | 2-Acceptance | 3-Implement | 4-Reconcile
 implements:
   - UPG-0064
 related_features: [UPG-0051, UPG-0052, UPG-0063, UPG-0060, UPG-0062]
-review_series: RVS__UPG-0064__CHG-20260804-002__S1
+review_series: RVS__UPG-0064__CHG-20260804-002__S2   # S1 ACCEPTED (R1 DO NOT ADVANCE → R2 NO OBJECTION)
 review_profile: PROFILE-3   # prompt + script-tooling, self-dev only (Step 0a)
 review_state: IN_REVIEW # DRAFT | IN_REVIEW | REVIEWED | ACCEPTED  (operational; NOT a round)
 review_history: reviews/review-log.md
@@ -124,9 +124,85 @@ model silently receiving a mislabelled authority.
 
 ---
 
+## Step 1 gate — decisions carried into Step 2
+
+**Role resolution: option A, explicit per-artifact flags** (human, 2026-08-04). The caller declares
+artifact authority; the tool transports it. Named flags rather than a generic `--artifact-role` —
+the vocabulary is small and closed, and the CLI stays self-documenting:
+
+`--contract` · `--event-schema` · `--architecture` · `--cohort-design` · `--profile` · `--exemplar`
+
+**The tool infers authority from nothing** — not path, filename, content, headings, or directory.
+
+**Positionals stay supported, with a semantic rule:** a positional artifact is *role unspecified* and
+**must never silently satisfy any role-specific requirement**. Labelled
+`--- APPROVED ARTIFACT (ROLE UNSPECIFIED): <path> ---`, and the prompt states the consequence. This
+fixes the failure direction: a missing role declaration degrades authority **visibly**, rather than
+the tool guessing.
+
+**CHG-B may not use the compatibility path.** The pilot must declare every governed artifact with an
+explicit role flag — otherwise we could align the harness correctly and then accidentally test the
+delegate through the degraded path.
+
+---
+
 ## Acceptance Criteria
 
-*(pending Step 2)*
+<!-- prompt + script-tooling. These criteria are DEFINED here and verified at Step 4 — nothing below
+has been verified yet. Planned verification: reading the changed text, plus fixture runs against the
+existing stub endpoint (no network, no API spend). -->
+
+### Group 1 — caller-declared roles
+
+| # | Criterion | How it will be verified |
+|---|---|---|
+| 1 | **Six role flags exist**, each accepting a path: `--contract`, `--event-schema`, `--architecture`, `--cohort-design`, `--profile`, `--exemplar`. The vocabulary is closed — no generic role flag. | `--help`/usage text; fixture invocation of each. |
+| 2 | **Each declared artifact is labelled with its role** in the packet, stating how it binds — contract = behavior to satisfy; event schema = events to emit; architecture baseline and cohort logical design = binding architectural constraints, not behavior to invent; implementation profile = binding implementation constraint; exemplar = context, not authority. | Inspect a generated `packet.txt`; each role's heading present and distinct. |
+| 3 | **The tool infers authority from nothing.** No role is derived from path, filename, content, headings, or directory. | Read-through of the script; a fixture placing a file at `architecture/core-baseline.md` and passing it *positionally* is labelled ROLE UNSPECIFIED, not ARCHITECTURE BASELINE. |
+
+### Group 2 — backward compatibility, degraded visibly
+
+| # | Criterion | How it will be verified |
+|---|---|---|
+| 4 | **Positionals still work.** The pre-existing `<feature> <stage> <artifact-path>…` form runs and stages a candidate. | Re-run the existing suite's positional invocations unchanged. |
+| 5 | **A positional is labelled `--- APPROVED ARTIFACT (ROLE UNSPECIFIED): <path> ---`** — visibly degraded, never silently promoted to a role. | Inspect `packet.txt` from a positional invocation. |
+| 6 | **The prompt states the consequence:** role-unspecified artifacts may provide supporting context, and do not replace a Behavioral Contract, Event Schema, Architecture Baseline, Cohort Logical Design, or Implementation Profile when that role has been declared separately. | Read the prompt. |
+
+### Group 3 — mechanical properties (pinned, no larger abstraction)
+
+| # | Criterion | How it will be verified |
+|---|---|---|
+| 7 | **One path cannot acquire two conflicting authority roles.** The same artifact passed under two different role flags fails closed with a distinct, documented exit code, before any network call. | Fixture: same path via `--contract` and `--architecture`; assert the exit code and that no packet was sent. |
+| 8 | **Role labels survive unchanged into the exact prompt sent.** The label text in `packet.txt` is byte-identical to what appears in the request body actually transmitted. | Compare the labels in `packet.txt` against `request.json`'s user message after a fixture run. |
+| 9 | **Role labelling changes no artifact contents.** The bytes between a role heading and the next heading are the source file's bytes, unmodified. | Fixture run; byte-compare an extracted region against the source file. |
+
+### Group 4 — the prompt
+
+| # | Criterion | How it will be verified |
+|---|---|---|
+| 10 | **UPG-0063's deferral rule is imported semantically**, with both exclusions: ordinary implementation technique choices, and matters merely *unspecified* rather than *explicitly deferred*. **No phrase list is normative.** | Read the prompt; grep confirms no phrase list presented as definitional. |
+| 11 | **A `deferral_resolution` output section exists**, carrying UPG-0063's five fields, and is **omitted entirely** when nothing was deferred — no empty table, no "none". | Read the output contract; fixture responses with and without the section both parse. |
+| 12 | **The delegate is told it produces a candidate, not the authoritative Stage-4 report.** | Read the prompt. |
+
+### Group 5 — every existing property preserved (regression)
+
+| # | Criterion | How it will be verified |
+|---|---|---|
+| 13 | **All existing fail-closed cases hold at their documented exit codes**; new failure modes get distinct, documented codes in the header table. | Re-run the existing fail-closed suite; trigger the new cases. |
+| 14 | **Secret non-leakage, write-safety, idempotency, and the full audit set are unchanged**; the mechanism stays `status: disabled`. | Existing suite (positive-control-gated secret check included). |
+| 15 | **Option B holds — the tool runs no build, test, or project-supplied command**, and its external-process allowlist is unchanged or updated together with the header. | The suite's allowlist scan. |
+
+### Group 6 — scope, and the constraint on CHG-B
+
+| # | Criterion | How it will be verified |
+|---|---|---|
+| 16 | **No pilot, no measurement, no adoption claim in this change.** No delegated run against a real feature; nothing asserts the delegate performs better. | Read the change record; `git diff --stat` shows no pilot evidence file. |
+| 17 | **The constraint on CHG-B is recorded as a binding precondition** — that the pilot must declare every governed artifact with an explicit role flag, positionals being compatibility-only, so the experiment cannot run through the degraded path this change exists to remove. *CHG-A is verified by the constraint being **written down**, not by CHG-B obeying it: this change cannot be accepted on evidence that only exists after it completes.* CHG-B's own Step 2 owns compliance. | The precondition appears in `backlog/UPG-0064-…md` and in this record's scope boundary. |
+| 18 | **No downstream doctrine change, no reviewer change.** `dba-system.md`, all stage prompts including `prompts/04-implement.md`, and `tools/reviewer/` byte-unchanged. | `git diff --stat`. |
+
+**Explicitly not in scope for these criteria:** whether the delegate performs better with the aligned
+harness. That is CHG-B's question and cannot be answered here — by criterion 16 there is no run to
+answer it with.
 
 ---
 
