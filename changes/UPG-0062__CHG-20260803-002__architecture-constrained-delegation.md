@@ -165,6 +165,12 @@ would be premature hardening if written before Q1 and Q2 are answered. -->
 
 **Definitions.** The **Feature Implementation Design (FID)** is the per-feature artifact under test:
 for each contract invariant and falsification scenario, the enforcing mechanism and its location.
+
+> **The FID produced here is a NON-AUTHORITATIVE EXPERIMENTAL ARTIFACT, used only for measurement.**
+> (Human guardrail, 2026-08-04.) Q2 exists precisely because the governance of such an artifact is
+> unresolved; treating this one as authoritative — even provisionally — would create the second
+> architecture authority this change is investigating. It governs nothing, no downstream work may cite
+> it as authority, and it does not enter EvidenceAtlas's approved artifact set.
 **Arm B** is Claude implementing EA-0004 directly by the normal Stage 4 process. **Approved artifacts**
 means EA-0004's intent, contract, event schema, plus the cohort Architecture Baseline, Cohort Logical
 Design, and Implementation Profile.
@@ -173,11 +179,12 @@ Design, and Implementation Profile.
 
 | # | Criterion | How it will be verified |
 |---|---|---|
+| 0 | **The FID is marked non-authoritative on its face.** It carries an explicit banner stating it is experimental, governs nothing, and may not be cited as authority. It is not added to EvidenceAtlas's approved artifacts. | Read the artifact's header; confirm no approved artifact or registry references it. |
 | 1 | **The FID is produced from approved artifacts only.** No candidate implementation — delegated or Claude-written — exists or is consulted while it is written. This is the criterion that makes the test honest: UPG-0060's run-3 feedback was written with a failed candidate in hand, which is strictly easier and would measure the wrong thing. | Ordering is recorded: FID written and its content frozen (hash recorded) before Arm B begins. |
 | 2 | **Every row is classified and every `SOURCE-DERIVED` row cites a real artifact section.** No row attributes a mechanism choice to the approved Baseline when the Baseline does not determine it. | Read every row; spot-check each cited section actually says what is claimed. |
 | 3 | **The FID covers every invariant and falsification scenario in EA-0004's approved contract** — never a subset. | Count against the contract; each contract item appears. |
 | 4 | **Cost of producing the FID is measured** — Claude input and output tokens (derived from byte counts, method stated), and its own size. | Recorded in the evidence file. |
-| 5 | **Arm B is executed and measured** on the same feature: Claude implements EA-0004 directly, cost recorded on the same basis. | Recorded in the evidence file; the implementation exists and compiles. |
+| 5 | **Arm B is executed in an isolated experimental workspace and measured** — a temp worktree or scratch directory, never committed as part of this change. It is evidence, not a deliverable: this change is classified no-code, and a committed implementation would contradict that. Claude implements EA-0004 directly; cost recorded on the same basis. | The implementation exists and compiles in the isolated workspace; `git diff --stat` for this change shows no EvidenceAtlas implementation and no `modules/` addition. |
 | 6 | **A stop/continue verdict is stated explicitly**, with the comparison, and with "materially cheaper" given a stated threshold rather than left to impression. A result inside the error bars of the estimation method counts as *not* materially cheaper. | Read the verdict; the threshold is stated before the numbers are compared. |
 
 ### Group 2 — Q2: does Codeos need a governed home for mechanism decisions?
@@ -185,17 +192,17 @@ Design, and Implementation Profile.
 | # | Criterion | How it will be verified |
 |---|---|---|
 | 7 | **The `NEW DESIGN` share of the FID is quantified**, not characterised. How much of EA-0004's implementation design is determined by approved artifacts, and how much is genuinely new. | Row counts by classification, plus a judgement of weight, both reported. |
-| 8 | **The question "has Stage 4 been silently making these decisions all along?" is answered with evidence**, by examining at least one already-implemented feature (EA-0001) for mechanism decisions present in its code and absent from every approved artifact. | Named examples from `modules/research_brief/`, each traced to the absence of a governing artifact. |
-| 9 | **A recommendation on governance is made**, with options and a preference: no artifact needed / an ungated record / a gated artifact — and if gated, where it sits relative to Stage 3 and Stage 4 and who approves it. | Read the recommendation; it names a preference and its cost. |
-| 10 | **The recommendation does not create a second architecture authority.** Whatever is proposed, approved artifacts remain authoritative and the FID never overrides them. | Read against the brief's governance constraints. |
+| 8 | **EA-0001 is used to establish EXISTENCE, not prevalence.** The question answered is narrow: *do real Stage-4 implementations contain material `NEW DESIGN` decisions absent from approved artifacts?* One shipped feature can establish "this gap exists in at least one real implementation" and nothing more. **No claim of the form "every feature" or "Stage 4 always" may be made from this sample** — if prevalence turns out to matter, 2-3 representative features are inspected in separate work, not by expanding this change. | Named examples from `modules/research_brief/`, each traced to the absence of a governing artifact; the evidence file states the existence/prevalence limit explicitly. |
+| 9 | **Q2 determines whether a governed layer is REQUIRED — it does not design one.** Proving the gap and solving it are separated. If the answer is *no*, Q2 closes and no new governance layer is proposed. If *yes*, the conclusion is recorded and a **separate prerequisite UPG** is filed to define the governed home, lifecycle, approval semantics, and relationship to the Architecture Baseline. That design work happens there, never here. | Read the conclusion; confirm this change contains no proposed governance mechanism, gate, template, or lifecycle. |
+| 10 | **Nothing in this change creates or implies a second architecture authority.** Approved artifacts remain authoritative throughout; the experimental FID overrides nothing. | Read against the brief's governance constraints. |
 
 ### Group 3 — gates and scope
 
 | # | Criterion | How it will be verified |
 |---|---|---|
 | 11 | **If Q1 fails, this change closes at Step 2 and UPG-0062 stops.** No Rust is written, no engine scaffolded, no prompt rewritten. A negative result is a complete and acceptable outcome. | If triggered: the change record records the stop and the feature status changes; `git diff --stat` shows no `tools/implementer/`. |
-| 12 | **If Q1 passes, Q2 is settled before CHG-C opens.** The engine is not built against an artifact whose authority and lifecycle are undecided. | CHG-C's Step 1 cites the settled governance answer as a precondition. |
-| 13 | **No Rust, no prompt rewrite, no shim change in this change.** `tools/`, `scripts/`, and `prompts/` are untouched. | `git diff --stat`. |
+| 12 | **CHG-C is blocked until the governance answer is not merely reached but *satisfied*.** If Q2 finds a governed FID layer is required, **UPG-0062 pauses all delegated-tooling work until that capability is separately established by the prerequisite UPG** — because otherwise the delegation engine would consume an experimental, non-authoritative artifact, which is the failure this whole guardrail exists to prevent. If Q2 finds no layer is required, CHG-C may open on Q1's result alone. | CHG-C's Step 1 cites either "no governance layer required" or the completed prerequisite UPG as its precondition. |
+| 13 | **No code of any kind belongs to this change.** `tools/`, `scripts/`, and `prompts/` are untouched, and Arm B's implementation stays in its isolated workspace (AC-5). | `git diff --stat` over this change. |
 | 14 | **No downstream doctrine change and no new gate.** `dba-system.md`, `prompts/04-implement.md`, `prompts/05-tests.md`, `scripts/dba-init.sh` byte-unchanged; `config/delegated-implementation.yaml` stays `status: disabled`; UPG-0060's records unmodified. | `git diff --stat`. |
 | 15 | **EA-0004 stays uncontaminated for CHG-C's pilot, or the contamination is declared.** Arm B produces a Claude implementation of EA-0004 as the cost baseline — so if CHG-C later runs a delegated arm on EA-0004, the comparison is against a known baseline, not a blind one. Any effect this has on CHG-C's pilot design is stated now, not discovered later. | Read the statement in the evidence file. |
 
@@ -207,7 +214,41 @@ with.
 
 ## Implementation Notes
 
-*(pending Step 3)*
+### Step 3.0 — Materiality threshold, precommitted
+
+<!-- AC-6. Recorded BEFORE the FID is written and BEFORE any measurement exists. Timestamped by its
+position in git history: this text is committed prior to any number it will be compared against. -->
+
+**Declared 2026-08-04, before EA-0004's FID was written and before Arm B was run.**
+
+Cost basis for both arms: Claude input and output tokens, derived from measured byte counts at
+~3.7 bytes/token, with **output weighted 5× input** to reflect price. Method stated here so it cannot
+be selected after the fact to favour a result.
+
+**"Materially cheaper" requires BOTH:**
+
+| Metric | Threshold |
+|---|---|
+| FID output tokens ÷ Arm B implementation output tokens | **≤ 0.40** |
+| FID weighted total ÷ Arm B weighted total | **≤ 0.50** |
+
+**Rationale for setting it this tight rather than at a naive break-even.** The FID does not replace
+the implementation cost — it replaces it *and adds* the reconciliation of a delegated candidate, which
+CHG-C would then have to pay. UPG-0060 measured that reconciliation as substantial. A ratio near 1.0
+means no saving; a ratio near 0.8 means a saving that reconciliation would erase. 0.40/0.50 leaves
+genuine headroom for the cost CHG-C will add, and sits well outside the ±20% error band of
+byte-count-derived estimation.
+
+**Verdicts, fixed in advance:**
+
+- Both thresholds met **and** the FID is complete per AC-3 → **CONTINUE** to Q2.
+- Either threshold missed → **STOP.** UPG-0062 closes. A result between 0.50 and 1.0 is *cheaper but
+  not materially cheaper*, and per AC-6 that counts as a failure, not a partial success.
+- FID incomplete (missing invariants) → **STOP** regardless of cost; a cheap incomplete design is not
+  the thing being tested.
+
+No renegotiation of these numbers after measurement. If the result lands just outside, it is outside.
+
 
 ---
 
