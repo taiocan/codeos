@@ -13,14 +13,14 @@ feature_id: UPG-0063
 primary_feature_id: UPG-0063
 change_id: CHG-20260804-001
 slug: deferral-resolution-trace
-state: DRAFT            # DRAFT | IN_REVIEW | IN_PROGRESS | BLOCKED | COMPLETE | ABANDONED | SUPERSEDED
-current_step: 1-Intent  # 1-Intent | 2-Acceptance | 3-Implement | 4-Reconcile
+state: IN_PROGRESS      # DRAFT | IN_REVIEW | IN_PROGRESS | BLOCKED | COMPLETE | ABANDONED | SUPERSEDED
+current_step: 2-Acceptance  # 1-Intent | 2-Acceptance | 3-Implement | 4-Reconcile
 implements:
   - UPG-0063
 related_features: [UPG-0062, UPG-0051, UPG-0058]
-review_series: RVS__UPG-0063__CHG-20260804-001__S1
+review_series: RVS__UPG-0063__CHG-20260804-001__S2   # S1 ACCEPTED (R1 DO NOT ADVANCE → R2 NO OBJECTION)
 review_profile: PROFILE-4   # touches prompts/04-implement.md — downstream doctrine (Step 0a)
-review_state: DRAFT     # DRAFT | IN_REVIEW | REVIEWED | ACCEPTED  (operational; NOT a round)
+review_state: IN_REVIEW # DRAFT | IN_REVIEW | REVIEWED | ACCEPTED  (operational; NOT a round)
 review_history: reviews/review-log.md
 fixes_findings: []
 follow_up_of: null
@@ -55,14 +55,18 @@ change rests only on the narrower, artifact-attested finding above. Full correct
 
 **What changes:**
 
-Scope is contingent on Step 2's evidence and is stated here as the *hypothesis to be tested*, not as a
-commitment:
+*Amended at the Step 1 gate (human, 2026-08-04): safeguard 1 adds a narrow `tools/reviewer/` change.
+Step 1's original list did not include it; the amendment is recorded rather than applied silently.*
 
 - `prompts/04-implement.md` — **modified, if the hypothesis holds.** Add a short
   **Deferral → Resolution** subsection to the existing Stage 4 output format, with the five fields
   below, populated only when a material explicit deferral was resolved. Extending the existing output
   is strongly preferred over adding anything new.
-- `templates/` — **only if** Step 2 shows the prompt alone cannot carry it. Not assumed.
+- `tools/reviewer/src/packet.rs` — **modified.** One line: `stage_checks("4")` gains the reviewer's
+  active question (safeguard 1). No other match arm, and no engine, provider, packet-architecture,
+  config, or CLI change.
+- `tools/reviewer/tests/` — **modified.** Coverage for that checklist content.
+- `templates/` — **only if** Step 3 shows the prompt alone cannot carry it. Not assumed.
 - `changes/UPG-0063__CHG-20260804-001__deferral-resolution-trace.md` — **new**, this record.
 - Lifecycle bookkeeping: `backlog/features.md`, `status/self-development.md`, `status/roadmap.md`.
 
@@ -80,14 +84,19 @@ interim**; and if interim, the expected superseder.
 - **No phrase list is normative.** A deferral is defined semantically (see below). Phrase search may
   assist discovery and may never define the obligation.
 - No change to `dba-system.md`'s stage table, Non-Negotiable Rules, or any other stage prompt.
-- No change to `tools/reviewer/`, `scripts/`, or any delegation tooling. UPG-0060 and UPG-0062 are
-  closed and this is not a route back to either.
+- **`tools/reviewer/` changes are confined to the stage-4 checklist string and its test** (see
+  safeguard 1). No provider, packet-architecture, config, or CLI change; no other stage's checklist or
+  expected-output string is touched.
+- No change to `scripts/` or any delegation tooling. UPG-0060 and UPG-0062 are closed and this is not
+  a route back to either.
 - **The PlotSpot defect found during Q0 is out of scope** — filed as
   `PlotSpot/refinements/F-0001-known-access-form-canonicalization.md`, PlotSpot's to triage. This
   change must not become a bug-fixing change.
 
-**Class:** downstream-doctrine (modifies `prompts/04-implement.md`, which downstream projects load)
-**Scope axis:** downstream doctrine only
+**Class:** downstream-doctrine + script-tooling (modifies `prompts/04-implement.md`, which downstream
+projects load, plus a one-line stage-4 reviewer checklist)
+**Scope axis:** downstream doctrine only — the reviewer change serves the downstream Stage 4 gate and
+introduces no self-dev behavior
 **Backlog item:** `backlog/UPG-0063-deferral-resolution-trace.md`
 
 ---
@@ -112,7 +121,8 @@ normative, an author could write an equivalent deferral in different words and t
 silently not attach — governance a synonym defeats is not governance. It would also produce false
 positives on prose that merely contains the words. Phrase search is **discovery assistance only**.
 
-**The unresolved consequence, and the honest open question for the gate:** a semantic definition is
+**Resolved at the gate — see "Step 1 gate" below. Retained for provenance.** The unresolved
+consequence, and the honest open question that was put to the gate: a semantic definition is
 correct but not mechanically checkable. A missing record cannot be detected by grep without
 reintroducing the phrase-dependence the definition rejects. So the obligation likely rests on the
 Stage 4 author identifying the deferral and the human gate catching omissions — which is weaker
@@ -127,9 +137,79 @@ gate.
 
 ---
 
+## Step 1 gate — decisions carried into Step 2
+
+**The weaker enforcement model is ACCEPTED** (human, 2026-08-04). This feature governs *traceability of
+an explicit deferral resolution*, not runtime correctness, and requiring mechanical detection would
+make the mechanism worse than the problem: phrase matching is bypassable, mandatory tags everywhere
+add doctrine weight, and automatic enumeration of semantic deferrals is unrealistic.
+
+**The rule to be stated at Stage 4:**
+
+> When Stage 4 resolves a material question that an approved upstream artifact explicitly deferred,
+> the implementation author must record a Deferral→Resolution trace. The Stage 4 review checks this
+> obligation as part of artifact reconciliation. **Absence is a traceability defect, not an automatic
+> implementation failure.**
+
+**Two safeguards, both in scope:**
+
+1. **The reviewer asks actively**, rather than relying on the author's memory — the Stage 4 checklist
+   carries the question directly.
+2. **No automatic deferral discovery.** If later evidence shows omissions are common, that justifies a
+   separate improvement — not scope growth here.
+
+**Scope consequence:** safeguard 1 means `tools/reviewer/` is now in scope, narrowly — `stage_checks`
+for stage `"4"` is a single string (`tools/reviewer/src/packet.rs:688`), which is exactly where a
+Stage 4 reviewer check belongs. This is a one-line checklist extension plus test coverage, not an
+engine change.
+
+---
+
 ## Acceptance Criteria
 
-*(pending Step 2)*
+<!-- downstream-doctrine + a narrow reviewer checklist line. Verification is by reading the changed
+text, by the reviewer engine's own tests, and by a retrofit sanity check against Q0's real cases. -->
+
+### Group 1 — the Stage 4 obligation
+
+| # | Criterion | How it will be verified |
+|---|---|---|
+| 1 | **The obligation is stated in `prompts/04-implement.md`** in the terms agreed at the gate, including that absence is a **traceability defect, not an automatic implementation failure**. | Read the added text against the rule quoted above. |
+| 2 | **A deferral is defined semantically**, and the definition explicitly excludes (a) **silence** — an artifact that never mentions a question has deferred nothing — and (b) **implementation freedom** — behavior settled, technique open. Both exclusions are present, not implied. | Read; both exclusions appear with their reasons. |
+| 3 | **No phrase list is normative.** If example phrasings appear at all, they are marked as illustration or discovery assistance and never as the trigger for the obligation. | Grep the added text for any list presented as definitional; confirm none. |
+| 4 | **Exactly the five fields**: source artifact + deferral; chosen resolution; where implemented; final or interim; expected superseder when interim. No sixth field is added. | Read the format. |
+| 5 | **Materiality gates entry.** Only deferrals whose resolution determines invariant placement, component responsibility, state/data integrity, or future architectural freedom. | Read the stated gate. |
+| 6 | **Empty is the normal case and costs nothing** — no empty table, no "none" line, no ceremony when nothing was deferred. | Read the instruction for the empty case. |
+
+### Group 2 — the reviewer safeguard
+
+| # | Criterion | How it will be verified |
+|---|---|---|
+| 7 | **The Stage 4 reviewer checklist asks the question directly** — in substance: *did implementation resolve any question an approved artifact explicitly deferred, and is each material resolution recorded?* | Read `stage_checks("4")`; generate a stage-4 packet and confirm the question appears under STAGE-SPECIFIC CHECKS. |
+| 8 | **Only stage 4 changes.** No other stage's checklist or expected-output string is altered. | `git diff` of `packet.rs`; every other match arm byte-unchanged. |
+| 9 | **Reviewer test coverage exists** for the stage-4 checklist content, and the full existing suite still passes. | `cargo test` in `tools/reviewer/`; count compared against the pre-change baseline. |
+
+### Group 3 — what must NOT happen
+
+| # | Criterion | How it will be verified |
+|---|---|---|
+| 10 | **No automatic deferral discovery.** Nothing scans, greps, or enumerates artifacts for deferrals — not in the prompt, not in the engine. | Read both changed files; no scanning logic, no phrase-matching. |
+| 11 | **No new stage, no new gate, no standalone artifact.** The existing Stage 4 human gate reviews this. `dba-system.md`'s stage table, Non-Negotiable Rules, and stage count are unchanged. | `git diff --stat`; read `dba-system.md`. |
+| 12 | **The trace never becomes a second architecture authority.** It is stated as subordinate, and a conflict with an approved artifact is **reconciled** — never silently resolved in the trace's favour, and never by the trace overriding or reinterpreting the artifact. | Read the added text. |
+| 13 | **`tools/reviewer/` changes are confined to the stage-4 checklist string and its test.** No provider, packet-architecture, config, or CLI change. | `git diff --stat` over `tools/reviewer/`. |
+| 14 | **No other downstream stage prompt changes.** `prompts/01-intent.md`, `02-contract.md`, `03-*.md`, `05-tests.md`, `06-observe.md`, `07`–`10` byte-unchanged. | `git diff --stat`. |
+
+### Group 4 — downstream compatibility and fitness
+
+| # | Criterion | How it will be verified |
+|---|---|---|
+| 15 | **Downstream compatibility holds.** A generated project still loads `.codeos/dba-system.md`; stage names, prompt filenames, and cross-references move together; no reference is orphaned. | `grep` cross-reference sweep; `scripts/dba-init.sh` scratch run. |
+| 16 | **Retrofit sanity check — the five fields actually fit the real cases.** Write the trace for Q0's three confirmed instances (PlotSpot validation-ordering; PlotSpot vocabulary-ownership; EA-0001 validator seam) and confirm each is expressible without inventing a field, and that the interim/superseder fields do real work on the vocabulary case. | The three retrofitted records appear in the change's evidence; any field that proves unusable or missing is reported rather than silently accommodated. |
+
+**Explicitly not in scope for these criteria:** whether the obligation is *complied with* in practice.
+That needs downstream features to pass through Stage 4 after this ships, and is the evidence that
+would later justify stronger machinery — per the gate decision, stronger machinery is not added
+pre-emptively.
 
 ---
 
