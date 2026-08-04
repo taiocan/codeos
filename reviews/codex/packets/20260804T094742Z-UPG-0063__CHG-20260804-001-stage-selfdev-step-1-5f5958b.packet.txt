@@ -1,0 +1,746 @@
+Reviewer task:
+
+SCOPE CONTRACT
+  Assess this artifact against the STATED SCOPE of this stage/PR — the Expected Stage
+  Output below and what the artifacts actually claim — NOT against an ideal final system.
+  A capability the artifacts do not claim to provide is OUT-OF-SCOPE, not a defect.
+  The following are OUT-OF-SCOPE BACKLOG unless THIS artifact explicitly claims to provide
+  them: formal approval-binding enforcement; rollback correctness; COMMIT_BOUND/
+  WORKSPACE_BOUND enforcement; JSON Schema validation; CI validation; exact
+  decision-integrity; per-feature decision ledgers; autonomous approval; enabled hooks.
+
+YOUR TASK — answer these five questions using only the evidence in the packet:
+  1. Acceptance criteria: Does the artifact satisfy each of its stated acceptance criteria?
+     Cite evidence for each criterion (or note its absence).
+  2. Claim support: Are universal or strong claims (all, every, never, always, no X) in the
+     artifact supported by evidence in the packet? Any unverifiable strong claim is a candidate
+     finding only if it affects acceptance, scope, safety, decision integrity, or the artifact's
+     stated guarantees.
+  3. Scope drift: Is there any change beyond the stated scope boundary? (Files not in the
+     "What changes" list; behavior changes not in the intent; downstream doctrine modified
+     rather than read.)
+  4. In-scope blockers: Are there facts that, if left in, would make the artifact wrong,
+     unsafe, or internally contradictory?
+  5. Finding classification: Classify every finding you raise as exactly one of the five
+     TRIAGE RULE categories below.
+
+TRIAGE RULE — classify EVERY finding as exactly one of:
+  IN-SCOPE BLOCKER         breaks the stated goal; creates a FALSE CLAIM in this artifact;
+                           weakens the advisory/read-only/human-gated guarantees; prevents
+                           the work from running; or violates an explicit safety constraint.
+  IN-SCOPE NON-BLOCKER     improves it but is not required for this PR.
+  OUT-OF-SCOPE BACKLOG     valid, but belongs to a future feature / stronger guarantee.
+  REJECTED                 conflicts with the stated scope or Codeos philosophy.
+  SELF-REFERENCE /         review records that are stale because of the previous round's
+  REVIEW-BOOKKEEPING       own existence (causal loop); not a real artifact defect.
+  Base the PR decision ONLY on IN-SCOPE BLOCKER findings. An OUT-OF-SCOPE BACKLOG finding
+  must NOT cause DO NOT ADVANCE unless this artifact FALSELY CLAIMS to solve it.
+
+WHAT NOT TO DO
+  - Do not flag style or wording issues as blockers unless the wording creates a false claim,
+    contradiction, parser breakage, or wrong governance instruction.
+  - Do not re-review unchanged full context when the packet is in delta mode.
+  - Do not treat local-only review history as a blocker unless the artifact falsely
+    claims the review artifacts are committed/durable.
+
+INSTRUCTIONS
+  If this is a resumed session, ignore any earlier-session conclusions unless they are
+  re-established by THIS packet; assess only the evidence above, pinned to this commit.
+  Give a focused assessment of this artifact against the stated scope, acceptance criteria,
+  and evidence in this packet. Rank findings by severity. Suggest a better design only when
+  needed to explain a required fix for an IN-SCOPE BLOCKER.
+
+  CONTROLLED PLAIN ENGLISH (if one of the artifacts under review states "Controlled Plain
+  English status for this review: enabled" or "...: disabled" — this task template never reads
+  any configuration file itself; whoever invokes the review includes that line as one of the
+  reviewed artifacts, the same way any other file is included, when the relevant project has the
+  discipline enabled): Layer D1 (advisory verdict, no invented requirements, evidence separated
+  from inference — the TRIAGE RULE and "based ONLY on in-scope blockers" instructions above
+  already are this) always applies regardless of that value. When the value is `enabled`,
+  additionally write your prose in Layer D2 style — short sentences, common words, direct
+  explanations. This affects wording only; it never changes the footer format below.
+
+  Limit findings to the top 3 IN-SCOPE BLOCKERS. Additional non-blocking observations may be
+  summarized in one short paragraph only if useful.
+
+  For EACH finding emit:
+    Finding: / Severity: High|Medium|Low / Classification: <one of the TRIAGE RULE labels>
+    Evidence: <file/line> / Why: <short> / Required action: fix now|optional fix|backlog|reject
+    Scope reason: <why it does/does not belong to this PR's scope>
+  Then emit:
+    PR decision: ADVANCE | REQUEST CHANGES | DO NOT ADVANCE   (based ONLY on in-scope blockers)
+    Scope drift warning: yes|no — <is anything pulling this PR beyond its stated scope?>
+  Then on the LAST three lines emit exactly (map ADVANCE->NO OBJECTION,
+  REQUEST CHANGES->CHANGES ADVISED, DO NOT ADVANCE->DO NOT ADVANCE):
+    LOG SUMMARY: <NO OBJECTION | CHANGES ADVISED | DO NOT ADVANCE | UNCLASSIFIED> — <single most important point>
+      (use UNCLASSIFIED if you genuinely cannot classify the artifact safely)
+    EVIDENCE: <A|B|C|D|E>
+    HIGHEST-IMPACT UNCERTAINTY: <one sentence — what single thing, if wrong, most affects this assessment>
+
+  Evidence grade — the grade describes what the assessment rests on, not reviewer confidence:
+    A — Directly verified in the artifact, diff, or output shown in the packet
+    B — Verified with multiple direct pieces of evidence, but coverage is not complete
+    C — Partially verified, partially inferred from structure or context
+    D — Mostly inferred from structure or indirect evidence
+    E — Hypothesis or very limited basis — little to no direct evidence
+
+
+PACKET MANIFEST
+  generated: 2026-08-04T09:46:47Z
+  task_prompt: /home/rimo/projects/Codeos/prompts/codeos-reviewer-task.md (5794 bytes)
+  review_content_bytes: 47488
+  estimated_review_tokens: ~11872
+  budget_status: OK
+  packet_mode: full
+  delta_base: none
+  items:
+    - path: changes/UPG-0063__CHG-20260804-001__deferral-resolution-trace.md
+      mode: full_file
+      bytes: 7632
+      sha256: c17e976425aaaaa1bcb9b7d75e42bc80a2e2c511a04736c2db402ad93cfe6fc3
+    - path: backlog/UPG-0063-deferral-resolution-trace.md
+      mode: full_file
+      bytes: 9229
+      sha256: 78ce3b45e7e9fbf764ed6ddf2460853cee21541cb6e67c7826c92943dfb1d770
+    - path: changes/UPG-0063__Q0-classification-evidence.md
+      mode: full_file
+      bytes: 10854
+      sha256: b694e35a2cf597f84da37c3672f8b89c7d34b11fa75d0dd7670b9b3152788207
+    - path: status/self-development.md
+      mode: full_file
+      bytes: 19617
+      sha256: af78ebe7d7ad009e325abc7e14d919ce1a31de9d8a7522dab65b8d6ae0ea2f29
+    - path: /tmp/codeos-cpe-status.J0BQp6
+      mode: full_file
+      bytes: 156
+      sha256: de32594591eb2a1c1bf9526dd44201f7d9fcd08db98d9d345024a1a7ebc5912c
+    - path: (diff)
+      mode: full_file
+      bytes: 0
+
+REVIEW CONTEXT
+  Feature:                UPG-0063__CHG-20260804-001
+  Stage:                  selfdev-step-1
+  Branch:                 main
+  Base commit:            (no base pin)
+  Review commit:          5f5958b87a0756e399630a4b24858efb5f989812
+  Current approved stage: n/a (non-numeric stage)
+  Evidence coverage:      FULL_COVERAGE
+  Workspace dirty:        no
+
+DBA RULES RELEVANT TO THIS STAGE
+  - Human approval is required for every stage transition; you are advisory only.
+  - Memory is not truth — assess only what is provided, pinned to the review commit.
+  - Implementation must trace to approved artifacts; no behavior beyond intent+contract+schema.
+  - No events outside the approved event schema; no hidden behavior.
+
+STAGE-SPECIFIC CHECKS
+  - (no stage-specific checklist for stage selfdev-step-1)
+
+EXPECTED STAGE OUTPUT
+  (no expected-output template for stage)
+
+ARTIFACTS TO REVIEW
+  --- changes/UPG-0063__CHG-20260804-001__deferral-resolution-trace.md (sha256: c17e976425aaaaa1bcb9b7d75e42bc80a2e2c511a04736c2db402ad93cfe6fc3, visibility: shown) ---
+    # Self-Development Change: UPG-0063__CHG-20260804-001 — deferral-resolution-trace
+    
+    <!--
+    PURPOSE: Per-change source of truth for the first change of UPG-0063 — determine whether a lightweight
+    Deferral -> Resolution trace can live inside the existing Stage 4 workflow, and if so, add it. The
+    working hypothesis is deliberately the leanest thing that could work; anything heavier must argue for
+    itself against evidence. Workflow: prompts/codeos-self-dev.md (4-step loop).
+    -->
+    
+    <!-- TRACE HEADER (canonical) -->
+    ```yaml
+    feature_id: UPG-0063
+    primary_feature_id: UPG-0063
+    change_id: CHG-20260804-001
+    slug: deferral-resolution-trace
+    state: DRAFT            # DRAFT | IN_REVIEW | IN_PROGRESS | BLOCKED | COMPLETE | ABANDONED | SUPERSEDED
+    current_step: 1-Intent  # 1-Intent | 2-Acceptance | 3-Implement | 4-Reconcile
+    implements:
+      - UPG-0063
+    related_features: [UPG-0062, UPG-0051, UPG-0058]
+    review_series: RVS__UPG-0063__CHG-20260804-001__S1
+    review_profile: PROFILE-4   # touches prompts/04-implement.md — downstream doctrine (Step 0a)
+    review_state: DRAFT     # DRAFT | IN_REVIEW | REVIEWED | ACCEPTED  (operational; NOT a round)
+    review_history: reviews/review-log.md
+    fixes_findings: []
+    follow_up_of: null
+    ```
+    
+    <!-- SELF-REFERENCE BOUNDARY: this artifact is itself reviewed, so it must NOT embed the current
+    review round. Reference the stable review SERIES (review_series) + review_state; exact rounds live
+    only in reviews/review-log.md and reviews/codex/*. -->
+    
+    ---
+    
+    ## Change Intent
+    
+    **Why (problem in the toolkit):**
+    
+    Approved artifacts sometimes explicitly defer a design or behavioral question — naming it and stating
+    that the artifact does not settle it. Stage 4 must resolve some of those deferrals for an
+    implementation to exist. Codeos records nothing about how the deferral was resolved, whether the
+    resolution is interim, or whether an upstream artifact must later supersede it.
+    
+    Q0 established this across two independent DBA projects
+    (`changes/UPG-0063__Q0-classification-evidence.md`, method precommitted at `1b0dbd1`). The sharpest
+    case: PlotSpot's F-0001/2/3 contracts state that vocabulary *"canonical ownership is unresolved until
+    Architecture Synthesis"*; all three implementations resolved it with a hardcoded local map; nothing
+    anywhere records that those maps are interim and must move when Synthesis lands.
+    
+    **What this change does NOT rest on.** UPG-0062's claim that approved artifacts "do not determine the
+    mechanism" was **retracted** — it came from grepping contracts for the implementation's vocabulary and
+    reading absence of the code's names as absence of the rule. The artifacts determine a great deal. This
+    change rests only on the narrower, artifact-attested finding above. Full correction in
+    `changes/UPG-0060__CHG-20260803-002__premise-test-evidence.md` §5.
+    
+    **What changes:**
+    
+    Scope is contingent on Step 2's evidence and is stated here as the *hypothesis to be tested*, not as a
+    commitment:
+    
+    - `prompts/04-implement.md` — **modified, if the hypothesis holds.** Add a short
+      **Deferral → Resolution** subsection to the existing Stage 4 output format, with the five fields
+      below, populated only when a material explicit deferral was resolved. Extending the existing output
+      is strongly preferred over adding anything new.
+    - `templates/` — **only if** Step 2 shows the prompt alone cannot carry it. Not assumed.
+    - `changes/UPG-0063__CHG-20260804-001__deferral-resolution-trace.md` — **new**, this record.
+    - Lifecycle bookkeeping: `backlog/features.md`, `status/self-development.md`, `status/roadmap.md`.
+    
+    The recorded fields: source artifact + deferral; chosen resolution; where implemented; **final or
+    interim**; and if interim, the expected superseder.
+    
+    **Scope boundary — what stays the same:**
+    
+    - **No new DBA stage, no new approval gate, no standalone design artifact.** The existing Stage 4
+      human gate reviews this, or the hypothesis has failed and the change stops.
+    - **No survey of all implementation decisions**, no `SOURCE-DERIVED` inventory, nothing resembling
+      UPG-0062's Feature Implementation Design. Only material deferrals actually resolved.
+    - **The trace never becomes a second architecture authority.** Approved artifacts stay authoritative;
+      a conflict is reconciled through the existing governance path, never resolved by the trace.
+    - **No phrase list is normative.** A deferral is defined semantically (see below). Phrase search may
+      assist discovery and may never define the obligation.
+    - No change to `dba-system.md`'s stage table, Non-Negotiable Rules, or any other stage prompt.
+    - No change to `tools/reviewer/`, `scripts/`, or any delegation tooling. UPG-0060 and UPG-0062 are
+      closed and this is not a route back to either.
+    - **The PlotSpot defect found during Q0 is out of scope** — filed as
+      `PlotSpot/refinements/F-0001-known-access-form-canonicalization.md`, PlotSpot's to triage. This
+      change must not become a bug-fixing change.
+    
+    **Class:** downstream-doctrine (modifies `prompts/04-implement.md`, which downstream projects load)
+    **Scope axis:** downstream doctrine only
+    **Backlog item:** `backlog/UPG-0063-deferral-resolution-trace.md`
+    
+    ---
+    
+    ## The definitional problem Step 2 must solve
+    
+    This is the load-bearing question, and it is a definition problem rather than a mechanism problem.
+    
+    **A deferral is:** a statement in an approved artifact that a specific design or behavioral question
+    is deliberately left unresolved *by that artifact*, whatever wording is used.
+    
+    **It must be distinguished from two neighbours it superficially resembles:**
+    
+    | Not a deferral | Why it matters |
+    |---|---|
+    | **Silence** — the artifact simply never mentions the question | If silence counted, the obligation would be unbounded: every feature would owe a record of everything its artifacts failed to say. A deferral is an *affirmative* statement of non-resolution |
+    | **Implementation freedom** — the artifact settles the behavior and leaves the technique open | Choosing a `BTreeSet` resolves nothing. This is what keeps the trace from degenerating into a design diary |
+    
+    **Why a phrase list cannot be the definition.** Scanning for *"not prescribed"*, *"unresolved"*,
+    *"MANUAL-PENDING"* is how Q0 found its candidates and is genuinely useful. But if the phrase list were
+    normative, an author could write an equivalent deferral in different words and the obligation would
+    silently not attach — governance a synonym defeats is not governance. It would also produce false
+    positives on prose that merely contains the words. Phrase search is **discovery assistance only**.
+    
+    **The unresolved consequence, and the honest open question for the gate:** a semantic definition is
+    correct but not mechanically checkable. A missing record cannot be detected by grep without
+    reintroducing the phrase-dependence the definition rejects. So the obligation likely rests on the
+    Stage 4 author identifying the deferral and the human gate catching omissions — which is weaker
+    enforcement than Codeos usually accepts, and Step 2 must decide whether that is good enough or whether
+    it sinks the lean hypothesis.
+    
+    My inclination: accept the weaker enforcement. The deferrals are *in the approved artifacts the Stage
+    4 author is already required to read*, an unrecorded resolution is not a correctness failure but a
+    traceability one, and the alternative — a checkable phrase convention — buys enforceability by making
+    the mechanism bypassable and noisy. But this is a genuine trade and it is the human's call at the
+    gate.
+    
+    ---
+    
+    ## Acceptance Criteria
+    
+    *(pending Step 2)*
+    
+    ---
+    
+    ## Implementation Notes
+    
+    *(pending Step 3)*
+    
+    ---
+    
+    ## Reconciliation
+    
+    *(pending Step 4)*
+
+  --- backlog/UPG-0063-deferral-resolution-trace.md (sha256: 78ce3b45e7e9fbf764ed6ddf2460853cee21541cb6e67c7826c92943dfb1d770, visibility: shown) ---
+    ---
+    feature_id: UPG-0063
+    slug: deferral-resolution-trace
+    title: Deferral → Resolution Trace for Stage 4
+    status: PROPOSED
+    priority: P1
+    depends_on: []
+    related_features: [UPG-0062, UPG-0051, UPG-0058]
+    supersedes: []
+    superseded_by: []
+    ---
+    
+    # Upgrade: deferral → resolution trace for Stage 4
+    
+    **Priority**: P1
+    **Status**: PROPOSED — Step 1 in progress
+    **Type**: to be settled at Step 1 — **working hypothesis: no new stage, no standalone artifact, no new
+    gate**
+    
+    ## Problem
+    
+    Approved artifacts sometimes **explicitly defer** a design or behavioral question — they name it and
+    state that this artifact does not settle it. Stage 4 must resolve some of those deferrals for an
+    implementation to exist at all. Codeos has no governed way to record **how** a deferral was resolved,
+    **whether the resolution is temporary**, or **whether an upstream artifact must later be updated**.
+    
+    The resolution happens regardless. It is simply invisible: approved implicitly, by approving the code
+    that embodies it, and indistinguishable afterwards from a decision nobody made deliberately.
+    
+    ## Evidence — Q0, and the correction that produced it
+    
+    Full record: `changes/UPG-0063__Q0-classification-evidence.md`. Method and decision rule were
+    committed before any classification (`1b0dbd1`).
+    
+    **This feature's original motivating claim was wrong and was retracted.** UPG-0062 reported that
+    approved artifacts "do not determine by what mechanism a feature-local invariant is enforced." That
+    rested on a method error — grepping contracts for the *implementation's* vocabulary (`is_locked`,
+    `newtype`), finding nothing, and reading absence of the code's names as absence of the rule. The
+    artifacts in fact determine a great deal: EA-0001's contract states the Locked rule outright at line
+    134. See `changes/UPG-0062__CHG-20260803-002__premise-test-evidence.md` §5.
+    
+    Q0 re-ran the analysis properly across **two independent DBA projects** and found a narrower, better
+    grounded gap. The strongest cases are not ones where anyone inferred silence — they are ones where the
+    approved artifact **says it is leaving the question open**:
+    
+    | Explicit deferral (quoted from the approved artifact) | Resolved in code as | |
+    |---|---|---|
+    | *"Validation ordering is not prescribed."* — PlotSpot `F-0001/2/3` schemas | First-failure-wins in a chosen order; fixes which failure signal a caller observes for multiply-invalid input | material |
+    | *"canonical ownership is unresolved until Architecture Synthesis."* — PlotSpot `F-0001/2/3` contracts | A hardcoded literal map inside the feature module; **nothing records that it is interim or must move** | material |
+    | *"MANUAL-PENDING: validator semantics — orchestration only"* — EA-0001 contract | A `ResearchContractValidator` trait seam | material |
+    | *"No evaluation order between `NoApprovedPlan` and `StalePlanVersion` is prescribed."* — EA-0003 schema | Not yet implemented — same pattern, pending | pending |
+    
+    Three confirmed instances across four features and two projects, so this is a recurring pattern rather
+    than one project's habit. Correctly **excluded** by the same test: `is_locked` (the rule is stated
+    upstream), newtypes, helper seams, trait injection as technique, and the transaction boundary (stated
+    in the baseline).
+    
+    ## What a deferral is — semantic, never phrase-based
+    
+    > An **explicit deferral** is a statement in an approved artifact that a specific design or behavioral
+    > question is deliberately left unresolved *by that artifact* — whatever wording is used. It names a
+    > question, asserts that the artifact does not settle it, and often indicates where or when it would
+    > be settled.
+    
+    **Phrase search is discovery assistance, never the definition.** Scanning for *"not prescribed"*,
+    *"unresolved"*, *"left open"*, or *"MANUAL-PENDING"* is a useful way to find candidates, and that is
+    all it may ever be. If the definition were the phrase list, an author could write an equivalent
+    deferral in different words and bypass the mechanism entirely — governance that a synonym defeats is
+    not governance.
+    
+    Two distinctions the definition must carry:
+    
+    - **A deferral is not silence.** An artifact that simply never mentions a question has not deferred
+      it. A deferral is an *affirmative* statement of non-resolution. This is what keeps the mechanism
+      bounded: it does not require surveying everything an artifact failed to say.
+    - **A deferral is not implementation freedom.** An artifact that settles the behavior while leaving
+      the technique open has deferred nothing. Choosing a `BTreeSet` is not resolving a deferral.
+    
+    ## Proposed remedy — a Deferral → Resolution trace
+    
+    For each **material** explicit deferral that Stage 4 resolves, record only:
+    
+    | Field | |
+    |---|---|
+    | Source artifact + deferral | which artifact, which question |
+    | Chosen resolution | what was decided |
+    | Where implemented | the function, type, or module |
+    | Final or interim | is this settled, or standing in for a future decision |
+    | If interim: expected superseder | which upstream decision or artifact should replace it |
+    
+    Nothing else. **No survey of all invariants. No `SOURCE-DERIVED` inventory. No new architecture
+    document unless Step 1 proves one is necessary.**
+    
+    The last two fields carry most of the value. PlotSpot's hardcoded vocabulary map is an interim
+    resolution of a deferral whose own artifact says it is *"unresolved until Architecture Synthesis"* —
+    and nothing anywhere records that it must move when Synthesis lands. That is the failure mode this
+    feature exists to close.
+    
+    **Materiality still gates entry.** Only deferrals whose resolution determines invariant placement,
+    component responsibility, state or data integrity, or future architectural freedom. If changing the
+    resolution would preserve public behavior and matter to nobody, it is not recorded.
+    
+    **Empty is the expected common case** — most features defer nothing — and must never be rendered as an
+    empty table or a "none" ceremony.
+    
+    ## Authority and conflict
+    
+    The trace is **subordinate to approved upstream artifacts** and never becomes a second architecture
+    authority. It records what was decided under an authority the artifact itself granted.
+    
+    **On conflict:** if a recorded resolution conflicts with an approved artifact, that conflict must be
+    **reconciled** — it does not resolve itself by the approved artifact silently winning, and the
+    resolution may never override or reinterpret the artifact. A conflict may mean the implementation
+    cannot legitimately continue until the upstream artifact is amended through its own governance path.
+    
+    ## Open questions for Step 1
+    
+    - **Does the Stage 4 output already have a home for this?** Prefer extending `prompts/04-implement.md`'s
+      existing output format over adding anything.
+    - **Who identifies the deferral — and can that be checked?** A resolution recorded against a deferral
+      that does not exist is noise; a deferral resolved with no record is the omission this targets.
+      Whether the second is *detectable* without phrase-matching is the hard part.
+    - **Does the existing Stage 4 gate suffice?** The hypothesis says yes.
+    - **What is the marginal recording cost?** Deliberately deferred until the shape is settled — the
+      fields above are few enough that this is unlikely to be the deciding constraint, and UPG-0062's 62%
+      measured something entirely different (deriving a full design, not recording a decision already
+      made).
+    - **Do interim resolutions need a follow-up mechanism**, or is recording the expected superseder
+      enough?
+    
+    ## Value
+    
+    Makes deliberate resolutions visible as deliberate, and interim ones visible as temporary. Improves
+    review (a reviewer can check a resolution against the deferral that authorised it), reconciliation,
+    and institutional memory. Independent of delegation.
+    
+    ## Risk
+    
+    **Over-engineering** — AJ-021's precedent: a simple on/off switch grew into a versioned governance
+    framework across seven review rounds before a human reset it. The evidence justifies *recording* a
+    handful of resolutions. It does not justify a new stage, gate, template, or mandatory artifact.
+    
+    **Phrase-dependence** — the failure mode named above. If the mechanism degenerates into grepping for
+    "not prescribed", it will be bypassed by paraphrase and will also generate false positives on prose
+    that merely contains the words.
+    
+    **Boilerplate** — a trace that must be filled in for every feature becomes ritual and drifts. The
+    materiality gate and empty-is-normal default exist to prevent that.
+    
+    ## Non-goals
+    
+    A new DBA stage. A new approval gate. A standalone design artifact. A survey of all implementation
+    decisions. Anything resembling UPG-0062's Feature Implementation Design. Fixing the PlotSpot defect
+    found during Q0 — that is filed separately as
+    `PlotSpot/refinements/F-0001-known-access-form-canonicalization.md` and is PlotSpot's to triage.
+    
+    ## Related
+    
+    - **UPG-0062** — closed on cost; its Q2 finding was retracted and re-derived here. Its evidence file
+      carries the correction.
+    - **UPG-0051 / UPG-0058** — the approved architecture artifacts; assessed as carrying more
+      architectural substance than the earlier analysis credited.
+    - **AJ-021** — the precedent for keeping the remedy proportionate.
+
+  --- changes/UPG-0063__Q0-classification-evidence.md (sha256: b694e35a2cf597f84da37c3672f8b89c7d34b11fa75d0dd7670b9b3152788207, visibility: shown) ---
+    # UPG-0063 Q0 — Does a material NEW DESIGN decision exist in shipped DBA code?
+    
+    <!--
+    Gates UPG-0063 entirely. If Q0 finds nothing material, the feature closes: no demonstrated
+    governance problem. Recording cost is deliberately NOT revisited here — first establish that
+    something needs recording.
+    
+    Runs against EA-0001 (correcting the original mis-analysis) plus three PlotSpot modules (an
+    independent DBA project, previously unexamined).
+    -->
+    
+    ## 0. Method and decision rule — PRECOMMITTED before any classification
+    
+    **Declared 2026-08-04, before reading PlotSpot's contracts or reclassifying EA-0001.**
+    
+    ### The error being corrected
+    
+    UPG-0062 conflated *"does the contract prescribe the code structure or name?"* with *"does the
+    approved artifact already determine the semantic rule?"* Those are very different questions. Only the
+    second one matters. A contract that states a rule has governed it, whatever vocabulary the code then
+    uses to realise it.
+    
+    ### Classes
+    
+    | Class | Meaning |
+    |---|---|
+    | `SOURCE-DETERMINED` | Approved artifacts already determine the rule; the code merely realises it |
+    | `ORDINARY IMPLEMENTATION CHOICE` | Artifacts leave freedom, but the choice carries no governance significance |
+    | `MATERIAL NEW DESIGN` | Artifacts leave multiple valid possibilities, **and** the selected mechanism materially determines invariant placement, component responsibility, state/data integrity, or future architectural freedom |
+    
+    ### The two-part test — both must be YES for `MATERIAL NEW DESIGN`
+    
+    1. **Could another materially different mechanism satisfy every approved artifact without requiring an
+       artifact revision?**
+    2. **Would choosing between those mechanisms matter enough that a future maintainer or reviewer should
+       know it was deliberate?**
+    
+    `NO` at (1) → `SOURCE-DETERMINED`. `YES` then `NO` → `ORDINARY IMPLEMENTATION CHOICE`.
+    
+    ### Explicitly not counted
+    
+    Newtypes, resolver objects, helper seams, predicates, trait injection, and particular Rust structures
+    are **not** counted merely because they are absent from a contract. They may be nothing more than
+    implementation techniques for an already-governed semantic rule. Absence of the technique's *name*
+    from an artifact is not evidence of anything — that was the original error.
+    
+    ### Decision rule — fixed in advance
+    
+    | Q0 outcome | Consequence |
+    |---|---|
+    | No `MATERIAL NEW DESIGN` across EA-0001 + PlotSpot | **Close UPG-0063.** No demonstrated governance problem |
+    | One isolated case | Record it, but **probably still close or downgrade** the feature |
+    | Repeated material cases across independent features/projects | **Proceed to Step 1**, with real evidence for the problem and some indication of its shape |
+    
+    No renegotiation of these after the results are in.
+    
+    ---
+    
+    ## 1. Findings
+    
+    **Sample:** EA-0001 (EvidenceAtlas) + PlotSpot F-0001/F-0002/F-0003 (`source_inventory`,
+    `dataset_profile`, `source_snapshot`) — two independent DBA projects with different authors' artifact
+    styles.
+    
+    ### 1a. The decisive discovery — the artifacts declare their own silence
+    
+    The corrected method changed the finding's *shape*, not just its size. The strongest cases are not ones
+    where I inferred an artifact was silent. They are ones where **the approved artifact explicitly states
+    that it is leaving a question open**, and the implementation had to resolve it anyway in order to
+    exist.
+    
+    That removes the method error entirely: there is no judgement call about whether the artifact
+    determines the rule, because the artifact says it does not.
+    
+    | # | Explicit deferral (quoted from the approved artifact) | Where | How the implementation resolved it | Class |
+    |---|---|---|---|---|
+    | 1 | *"Validation ordering is not prescribed."* | `events/F-0001_schema.md:178`, `F-0002_schema.md:200`, `F-0003_schema.md:201` | `record_official_candidate` checks country → responsibility → identity → claim-evidence and returns on the **first** failure. For a multiply-invalid input, which failure signal the caller observes is fixed by this order | **MATERIAL NEW DESIGN** |
+    | 2 | *"canonical ownership is unresolved until Architecture Synthesis."* | `contracts/F-0001_contract.md:111`, `F-0002:108`, `F-0003:106` | A hardcoded literal map inside the feature module (`canonicalize_representations`), lowercase-matching eight known values and passing anything else through unchanged | **MATERIAL NEW DESIGN** |
+    | 3 | *"MANUAL-PENDING: validator semantics — orchestration only"* | `contracts/EA-0001-…_contract.md:148,149,151` | A `ResearchContractValidator` trait seam; orchestration fully implemented, validator semantics left to an injected implementation | **MATERIAL NEW DESIGN** |
+    | 4 | *"No evaluation order between `NoApprovedPlan` and `StalePlanVersion` is prescribed."* | `events/EA-0003-…_schema.md:215` | Not yet implemented — recorded as a pending instance of the same pattern | (pending) |
+    
+    Each of rows 1-3 passes both halves of the precommitted test:
+    
+    - **Could another materially different mechanism satisfy every approved artifact without an artifact
+      revision?** Yes, trivially — the artifact says the question is not prescribed. Any order, or
+      reporting all failures; a resolver seam, a Policy-Registry lookup, or a local map; validation in the
+      module or injected.
+    - **Would the choice matter enough that a maintainer or reviewer should know it was deliberate?** Yes.
+      Row 1 fixes observable failure behaviour a consumer may come to depend on. Row 2 places vocabulary
+      ownership somewhere the contract says is *unresolved*, so it must move when Architecture Synthesis
+      resolves it — and nothing records that it is interim. Row 3 determines where validation authority
+      lives.
+    
+    ### 1b. What did NOT survive the test
+    
+    Correctly excluded under the precommitted rules — these are implementation technique for an
+    already-governed rule, not governance-significant decisions:
+    
+    - EA-0001's `is_locked` conjunction and version-binding — **`SOURCE-DETERMINED`**, stated at
+      `contracts/EA-0001-…_contract.md:134` with a falsification row at 157. (This is the UPG-0062
+      retraction, confirmed.)
+    - Newtypes, `non_empty`, `collect_discovery_evidence_refs`, the JSONL exporter, trait injection as
+      such — **`ORDINARY IMPLEMENTATION CHOICE`**. Absent from contracts, but absence of a technique's
+      name is not evidence of anything.
+    - Transaction boundary (insert + append event in one commit) — **`SOURCE-DETERMINED`**;
+      `architecture/core-baseline.md:102` covers the transaction boundary.
+    
+    ### 1c. Verdict against the precommitted decision rule
+    
+    **Repeated material cases across independent features and projects** — three confirmed instances
+    spanning two projects and four features, plus a fourth pending instance. Per §0's fixed rule, that is
+    the **"proceed to Step 1"** branch.
+    
+    ### 1d. The reframing this forces on UPG-0063
+    
+    The brief's current problem statement is **wrong and should be rewritten before Step 1.** It says the
+    artifacts "do not determine by what mechanism a feature-local invariant is enforced." They largely
+    *do* — that was the retracted claim.
+    
+    The real gap is narrower, better evidenced, and more tractable:
+    
+    > **Approved artifacts explicitly defer specific questions. Implementations must resolve those
+    > deferrals in order to exist. Nothing records how they were resolved, or that the resolution is
+    > interim.**
+    
+    This matters for the remedy's shape and cost. The record does not need to survey every decision in a
+    feature — it keys to the artifacts' own explicit deferrals, which are **enumerable from the artifacts
+    themselves** (`grep` for "not prescribed", "unresolved", "MANUAL-PENDING", "left open"). That is a far
+    leaner mechanism than anything previously contemplated, and it is checkable: a deferral with no
+    recorded resolution is a detectable omission.
+    
+    ---
+    
+    ## 2. Incidental finding — an apparent contract violation in shipped PlotSpot code
+    
+    Not part of Q0, surfaced while examining row 2. Reported because it is a live correctness question,
+    and flagged as *apparent* because I have not executed it.
+    
+    F-0001's Vocabulary Dependency lists **"known access form"** among the concepts operated on, and its
+    Display invariant requires the displayed name to be the canonical representation *"regardless of the
+    representation used when the concept was recorded."*
+    
+    In `modules/source_inventory/src/lib.rs`, `canonicalize_representations` is applied to
+    `access_limitations` (line 208) and `lifecycle_limitations` (209) but **not** to `known_access_forms`
+    (200, passed through unchanged). The contract's own Happy Path (line 80) shows access-form values
+    —`restricted`, `paid`, `non-machine-readable`— drawn from the same vocabulary the canonicalizer
+    normalises. So `"Restricted"` and `"restricted"` recorded as a known access form appear to produce
+    different displayed outcomes, which the Display invariant forbids.
+    
+    Worth noting for UPG-0063's argument: this is exactly the class of defect a recorded deferral
+    resolution would expose. Writing down *"vocabulary canonicalization: local hardcoded map, applied to
+    limitations"* invites the immediate question "why not to access forms?" — which nothing currently asks.
+    
+    
+    ---
+    
+    ## 3. CORRECTION to §1d (2026-08-04) — "enumerable by grep" is withdrawn
+    
+    §1d wrote that explicit deferrals are *"enumerable from the artifacts themselves (`grep` for 'not
+    prescribed', 'unresolved', 'MANUAL-PENDING', 'left open')"* and that *"a deferral with no recorded
+    resolution is a detectable omission."*
+    
+    **Both statements are withdrawn.** They define the obligation by phrase, and governance defined by
+    phrase is bypassed by paraphrase: an author writing an equivalent deferral in different words would
+    silently owe nothing. It would also fire on prose that merely contains the words.
+    
+    **The governing definition is semantic**, as stated in
+    `backlog/UPG-0063-deferral-resolution-trace.md`: a deferral is a statement in an approved artifact
+    that a specific question is deliberately left unresolved *by that artifact*, whatever wording is used
+    — distinct from silence (no affirmative statement) and from implementation freedom (behavior settled,
+    technique open).
+    
+    **Phrase search keeps only the role it actually earned here:** it is how the four Q0 candidates were
+    *discovered*. Discovery assistance, never the definition, and never the basis of an enforcement claim.
+    
+    **Consequence, carried into Step 1 rather than hidden:** a missing record is *not* mechanically
+    detectable. Detecting one would require enumerating deferrals, which without phrase-matching cannot be
+    automated. Enforcement therefore rests on the Stage 4 author and the human gate — weaker than Codeos
+    usually accepts, and the open question the Step 1 record puts to the gate.
+    
+    The §1 findings themselves are unaffected: they rest on quoted artifact text, not on how the
+    candidates were found.
+
+  --- status/self-development.md (sha256: af78ebe7d7ad009e325abc7e14d919ce1a31de9d8a7522dab65b8d6ae0ea2f29, visibility: shown) ---
+    # Self-Development Status
+    
+    > Live dashboard for in-flight Codeos toolkit changes. **Mutable** — maintained by the
+    > 4-step self-development loop (see repo-root `CLAUDE.md` and `prompts/codeos-self-dev.md`).
+    > The stable rulebook is `CLAUDE.md`; per-change detail is in
+    > `changes/UPG-####__CHG-YYYYMMDD-NNN__slug.md`; the wave plan is `status/roadmap.md`; the
+    > authoritative feature-id map is `backlog/features.md`.
+    >
+    > **Identity is split** (see `backlog/UPG-0001-feature-thread-traceability.md`): a **Feature ID**
+    > (`UPG-####`, stable) names the backlog feature; a **Change ID** (`CHG-YYYYMMDD-NNN`) names one
+    > execution against it. A historical row may carry a legacy change-stem in **Change ID** and `—`
+    > in **Feature ID** when no backlog feature exists.
+    >
+    > Step 1 activates a row; each step updates **Loop step** and **Latest review**. Reconcile marks
+    > **State: COMPLETE** once the step's compulsory (advisory) review has run **and** the human has
+    > accepted the result — NO OBJECTION, or CHANGES ADVISED with residual non-blocking findings
+    > accepted or tracked to a named **Follow-up** `UPG-####`. The review informs the human; it never
+    > gates by itself. A change with open, unaccepted in-scope findings stays **IN_PROGRESS**.
+    
+    | Feature ID | Change ID | Class | Scope | Loop step | Review (state / accepted outcome) | State | Follow-up |
+    |---|---|---|---|---|---|---|---|
+    | — | 0001-claude-split | self-dev-governance + downstream-doctrine | both | 4-Reconcile | CHANGES ADV →0004 | COMPLETE | — |
+    | UPG-0002 | 0002-doc-consistency-rename | documentation | downstream doctrine only | 4-Reconcile | CHANGES ADV →0004 | COMPLETE | — |
+    | — (planning) | 0003-implementation-roadmap | backlog-only / planning | self-dev only | 4-Reconcile | CHANGES ADV →0004 | COMPLETE | — |
+    | — (reviewer findings) | 0004-review-fixes | documentation / self-dev-governance | self-dev only | 4-Reconcile | CHANGES ADV (accepted) | COMPLETE | — |
+    | UPG-0001 | CHG-20260627-001 | self-dev-governance | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S4; rounds in review-log) | COMPLETE | UPG-0029 |
+    | UPG-0029 | CHG-20260629-001 | documentation | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S4; rounds in review-log) | COMPLETE | UPG-0030 |
+    | UPG-0030 | CHG-20260629-001 | self-dev-governance | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S4; rounds in review-log) | COMPLETE | — |
+    | UPG-0027 | CHG-20260629-002 | prompt / script-tooling | self-dev only | 4-Reconcile | ACCEPTED (NO OBJECTION) | COMPLETE | — |
+    | UPG-0027 | CHG-20260629-003 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (NO OBJECTION) | COMPLETE | — |
+    | UPG-0027 | CHG-20260629-004 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (human approved; all 12 ACs verified by functional test) | COMPLETE | — |
+    | UPG-0027 | CHG-20260629-005 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (human approved; all 14 ACs verified by functional test) | COMPLETE | — |
+    | UPG-0004 | CHG-20260630-001 | template | self-dev only | 4-Reconcile | ACCEPTED (Steps 2–4 reviewed; R2 NO OBJECTION at each gate) | COMPLETE | UPG-0031 |
+    | UPG-0031 | CHG-20260630-002 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (Step 4 R2 NO OBJECTION; corrected by CHG-20260630-003) | COMPLETE | — |
+    | UPG-0031 | CHG-20260630-003 | script-tooling + documentation | self-dev only | 4-Reconcile | ACCEPTED (all 5 ACs verified; corrects false B8b in CHG-20260630-002) | COMPLETE | — |
+    | UPG-0005 | CHG-20260630-004 | prompt + template | self-dev only | 4-Reconcile | ACCEPTED (Step 3 R2 NO OBJECTION; Step 4 R1 CHANGES ADVISED — F1 fixed, F2 REVIEW-BOOKKEEPING) | COMPLETE | — |
+    | UPG-0007 | CHG-20260630-005 | prompt | self-dev only | 4-Reconcile | ACCEPTED (Steps 1–4 reviewed; Step 4 R2 NO OBJECTION; all 7 ACs verified) | COMPLETE | — |
+    | UPG-0033 | CHG-20260701-001 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (all 8 ACs verified; F-A investigation-first exception accepted; F-B AJ-009 deferred) | COMPLETE | — |
+    | UPG-0010 | CHG-20260701-002 | prompt | self-dev only | 4-Reconcile | ACCEPTED (Steps 1–4 reviewed; Step 4 R1 NO OBJECTION; all 7 ACs verified) | COMPLETE | — |
+    | UPG-0011 | CHG-20260701-003 | template | self-dev only | 4-Reconcile | ACCEPTED (Steps 1–4 reviewed; Step 4 R2 NO OBJECTION; all 9 ACs verified) | COMPLETE | — |
+    | UPG-0012 | CHG-20260701-004 | prompt | self-dev only | 4-Reconcile | ACCEPTED (Steps 1–4 reviewed; Step 4 R1 NO OBJECTION; all 8 ACs verified) | COMPLETE | — |
+    | UPG-0013 | CHG-20260701-005 | template | self-dev only | 4-Reconcile | ACCEPTED (Steps 1–4 reviewed; Step 4 R1 NO OBJECTION; all 8 ACs verified) | COMPLETE | — |
+    | UPG-0008 | CHG-20260701-006 | prompt | self-dev only | 4-Reconcile | ACCEPTED (Steps 1–4 reviewed; Step 4 R1 NO OBJECTION; all 7 ACs verified) | COMPLETE | — |
+    | UPG-0009 | CHG-20260701-007 | template | self-dev only | 4-Reconcile | ACCEPTED (Steps 1–4 reviewed; Step 4 R3 NO OBJECTION; all 7 ACs verified) | COMPLETE | — |
+    | UPG-0006 | CHG-20260701-008 | prompt | self-dev only | 4-Reconcile | ACCEPTED (Steps 1–4 reviewed; Step 4 R1 NO OBJECTION; all 6 ACs verified) | COMPLETE | — |
+    | UPG-0032 | CHG-20260702-001 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (Step 3: 6 rounds, all blockers applied; Step 4 R1 NO OBJECTION; all 11 ACs verified; 33 tests; post-reconcile delta-mode fix applied) | COMPLETE | UPG-0034, UPG-0035 |
+    | UPG-0015 | CHG-20260702-002 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (Steps 1–4 reviewed; Step 4 R2 NO OBJECTION; all 13 ACs verified; 48 tests; coverage gate + provenance binding in Rust engine) | COMPLETE | — |
+    | UPG-0016 | CHG-20260702-003 | documentation | self-dev only | 4-Reconcile | ACCEPTED (Step 4 R1 NO OBJECTION; all 7 ACs verified) | COMPLETE | — |
+    | UPG-0014 | CHG-20260702-004 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (Step 3: 3 rounds + budget-exceeded inline fixes; Step 4 R3 NO OBJECTION; all 9 ACs verified; 55 tests) | COMPLETE | — |
+    | UPG-0035 | CHG-20260702-005 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (Step 3 R1 + Step 4 R1 CHANGES ADVISED — AC-6 test-exec-not-pinned REJECTED both rounds; all 6 ACs verified; 57 tests) | COMPLETE | — |
+    | UPG-0034 | CHG-20260702-006 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (Step 3: 3 rounds — F1 post-error skip, F2 missing success filter (both snapshots), F4 scope drift fixed; F3 live-path test accepted as structural limitation; Step 4 R1 NO OBJECTION; all 7 ACs verified; 59 tests) | COMPLETE | — |
+    | UPG-0017 | CHG-20260703-001 | template | self-dev only | 4-Reconcile | ACCEPTED (Step 3: R1 CHANGES ADVISED — 3 blockers fixed; R2 NO OBJECTION; Step 4: R1 CHANGES ADVISED — F1 review-state contradiction, F2 backlog `docs/` orphan fixed; R2 NO OBJECTION; all 7 ACs verified) | COMPLETE | — |
+    | UPG-0020 | CHG-20260703-002 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (Step 3: R1–R3 CHANGES ADVISED — F1 watched-set description fixed x2, F2 backlog stale fixed, F3/AC-10 REJECTED structural limitation; Step 4 R1 CHANGES ADVISED — AC-10 REJECTED structural limitation; all 9 substantive ACs verified; 42 tests) | COMPLETE | — |
+    | UPG-0021 | CHG-20260703-003 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 3 R1→R2 NO OBJECTION; Step 4 R1→R2 NO OBJECTION; all 16 ACs verified; 63 tests) | COMPLETE | — |
+    | UPG-0022 | CHG-20260703-004 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION; Step 2 NO OBJECTION; Step 3 NO OBJECTION; Step 4 NO OBJECTION; all 14 ACs verified; 77 tests) | COMPLETE | — |
+    | UPG-0023 | CHG-20260704-001 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION; Step 2 NO OBJECTION; Step 3 NO OBJECTION R2; Step 4 NO OBJECTION R1; all 15 ACs verified; 94 tests) | COMPLETE | UPG-0040, UPG-0041 |
+    | UPG-0019 | CHG-20260706-001 | documentation | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION; Step 2 NO OBJECTION; Step 3 NO OBJECTION R3; Step 4 NO OBJECTION R3; all 8 ACs verified) | COMPLETE | — |
+    | UPG-0024 | CHG-20260706-002 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION; Step 2 NO OBJECTION R2; Step 3 NO OBJECTION; Step 4 NO OBJECTION; all 15 ACs verified; 110 smoke tests) | COMPLETE | — |
+    | UPG-0025 | CHG-20260706-003 | downstream-doctrine | downstream doctrine only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION; Step 2 NO OBJECTION; Step 3 NO OBJECTION; Step 4 NO OBJECTION; all 11 ACs verified; live FundFlow symlink check) | COMPLETE | — |
+    | UPG-0026 | CHG-20260707-001 | documentation | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION; Step 2 NO OBJECTION R2; Step 3 NO OBJECTION; Step 4 NO OBJECTION; all 8 ACs verified) | COMPLETE | — |
+    | UPG-0038 | CHG-20260707-002 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION; Step 2 NO OBJECTION; Step 3 NO OBJECTION R2; Step 4 NO OBJECTION R3; all 10 ACs verified; real FundFlow invocation) | COMPLETE | — |
+    | UPG-0039 | CHG-20260707-003 | downstream-doctrine | downstream doctrine only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION; Step 2 NO OBJECTION R2; Step 3 accepted R2, Step 4 accepted R1 — both SECRET_REDACTION coverage, same known benign trigger; all 11 ACs verified; live FundFlow check) | COMPLETE | — |
+    | UPG-0040 | CHG-20260707-004 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION R2; Step 2 NO OBJECTION R3; Step 3 NO OBJECTION; Step 4 NO OBJECTION R2; all 8 ACs verified; 2× 20-run stress test, 0 failures) | COMPLETE | — |
+    | UPG-0041 | CHG-20260707-005 | downstream-doctrine | downstream doctrine only | 4-Reconcile | Step 3 R2 NO OBJECTION, Step 4 R2 NO OBJECTION (Evidence: A) | COMPLETE | — |
+    | UPG-0036 | CHG-20260705-001 | self-dev-governance | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION R3; Step 2 NO OBJECTION R2; Step 3 NO OBJECTION R3; Step 4 NO OBJECTION R1; all 10 ACs verified; real check-drift run) | COMPLETE | — |
+    | UPG-0037 | CHG-20260705-002 | downstream-doctrine | downstream doctrine only | 4-Reconcile | ACCEPTED (series RVS__…__S1; Step 1 NO OBJECTION; Step 2 NO OBJECTION R2; Step 3 accepted at budget R3 (0 blockers, SECRET_REDACTION coverage); Step 4 accepted R1 (0 blockers, same SECRET_REDACTION cause); all 13 ACs verified; 105 tests; real FundFlow dry-runs) | COMPLETE | UPG-0038 |
+    | UPG-0042 | CHG-20260711-001 | script-tooling | self-dev only | 4-Reconcile | REVIEWED (series RVS__…__S4; R2 NO OBJECTION; all 10 ACs verified; 124 tests pass) | COMPLETE | — |
+    | UPG-0043 | CHG-20260711-002 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S4; R3 budget exhausted; inline doc fix accepted by human; all 5 final verifications pass; 124 tests across 8 files) | COMPLETE | — |
+    | UPG-0044 | CHG-20260712-001 | documentation | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S4; R1 CHANGES ADVISED — 1 finding fixed; R2 NO OBJECTION; all 12 ACs verified) | COMPLETE | — |
+    | UPG-0045 | CHG-20260712-002 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S4; R1 NO OBJECTION; all 12 ACs verified; 159 tests pass) | COMPLETE | — |
+    | UPG-0046 | CHG-20260713-001 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S4; R1 DO NOT ADVANCE — real fail-closed bug fixed; R2 NO OBJECTION; all 11 ACs verified; 171 tests pass) | COMPLETE | — |
+    | UPG-0047 | CHG-20260713-002 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S4; R1 NO OBJECTION; all 11 ACs verified; 182 tests pass; 294/317 findings parse, 23 documented long-tail) | COMPLETE | — |
+    | UPG-0050 | CHG-20260716-001 | downstream-doctrine | downstream doctrine only | 4-Reconcile | ACCEPTED (series RVS__…__S4; Step 1 R1 DO NOT ADVANCE → R2 NO OBJECTION; Step 2 R1 NO OBJECTION; Step 3 R1 DO NOT ADVANCE → R2 NO OBJECTION; Step 4 R1 NO OBJECTION; all 9 ACs verified; live dba-init.sh scratch run) | COMPLETE | — |
+    | UPG-0051 | CHG-20260719-001 | downstream-doctrine | downstream doctrine only | 4-Reconcile | ACCEPTED (series RVS__…__S4; Step 1 R1 DO NOT ADVANCE → R2 NO OBJECTION; Step 2 R1 NO OBJECTION, R2 NO OBJECTION post CHANGES-ADVISED fixes; Step 3 R1 DO NOT ADVANCE → R2 NO OBJECTION; Step 4 R1 NO OBJECTION; all 15 ACs verified; 3 in-scope blockers found+fixed across the change) | COMPLETE | — |
+    | UPG-0052 | CHG-20260719-002 | downstream-doctrine | downstream doctrine only | 4-Reconcile | ACCEPTED (series RVS__…__S4; Step 1 R1 DO NOT ADVANCE → R2 NO OBJECTION → 1st human CHANGES-ADVISED → R3 NO OBJECTION → 2nd human CHANGES-ADVISED → R4 NO OBJECTION (human-requested, beyond budget); Step 2 R1 NO OBJECTION; Step 3 R1 NO OBJECTION; Step 4 R1 DO NOT ADVANCE → R2 NO OBJECTION; all 17 ACs verified; 4 in-scope blockers found+fixed across the change) | COMPLETE | — |
+    | UPG-0053 | CHG-20260719-003 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S4; Step 1 R1 NO OBJECTION; Step 2 R1 DO NOT ADVANCE → R2 NO OBJECTION; Step 3 R1 NO OBJECTION; Step 4 R1 NO OBJECTION; all 8 ACs verified via live scratch run) | COMPLETE | — |
+    | UPG-0054 | CHG-20260719-004 | downstream-doctrine | downstream doctrine only | 4-Reconcile | ACCEPTED (series RVS__…__S4; Step 1 R1 NO OBJECTION; Step 2 R1 DO NOT ADVANCE → R2 NO OBJECTION; Step 3 R1 DO NOT ADVANCE → R2 DO NOT ADVANCE → R3 NO OBJECTION; Step 4 R1 NO OBJECTION; all 13 ACs verified; 3 in-scope blockers found+fixed) | COMPLETE | — |
+    | UPG-0055 | CHG-20260720-001 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED (series RVS__…__S4; Step 1 R1 NO OBJECTION; Step 2 R1 NO OBJECTION; Step 3 R1 DO NOT ADVANCE → R2 DO NOT ADVANCE → R3 NO OBJECTION; Step 4 R1 DO NOT ADVANCE → R2 NO OBJECTION; all 9 ACs verified; 182 tests pass; 4 in-scope blockers found+fixed) | COMPLETE | — |
+    | UPG-0056 | CHG-20260726-001 | downstream-doctrine | downstream doctrine only | 4-Reconcile | ACCEPTED (series RVS__…__S4; Step 1 R1-R3 DO NOT ADVANCE→NO OBJECTION (original design) then revised to lean convention, R4 DO NOT ADVANCE→APPROVE_STAGE; Step 2 R1 DO NOT ADVANCE→R2 NO OBJECTION; Step 3 R1-R2 DO NOT ADVANCE→R3 NO OBJECTION; Step 4 R1 DO NOT ADVANCE→R2 NO OBJECTION; all 12 ACs verified; no code shipped) | COMPLETE | UPG-0057 |
+    | UPG-0058 | CHG-20260726-002 | downstream-doctrine | downstream doctrine only | 4-Reconcile | ACCEPTED (series RVS__…__S4; Step 1 R1→R2 NO OBJECTION; Step 2 R1 NO OBJECTION; Step 3 R1→R2 DO NOT ADVANCE→R3 NO OBJECTION; Step 4 R1→R2 DO NOT ADVANCE→R3 NO OBJECTION; all 16 ACs verified; 182 tests pass; 7 in-scope blockers found+fixed across the change) | COMPLETE | — |
+    | UPG-0059 | CHG-20260728-001 | downstream-doctrine | downstream doctrine only | 4-Reconcile | ACCEPTED — Wave-Gated Batch Review for multi-feature Stage 1-3 cohorts; batches drafting/human attention per stage-wave, keeps per-feature approval individual; progressive checks, targeted reassessment, versioned membership reuse existing patterns; three ambiguity-response forms in `01-intent.md`/`02-contract.md`; all 16 ACs verified; no code | COMPLETE | — |
+    | UPG-0057 | CHG-20260726-003 | downstream-doctrine | downstream doctrine only | 4-Reconcile | CHG-A ACCEPTED and committed (fd2b198) — pattern + downstream doctrine + prompt wiring; manual status-line inclusion accepted as CHG-A-scope only, not final operating model | COMPLETE | UPG-0057 (CHG-B) |
+    | UPG-0057 | CHG-20260727-001 | script-tooling + downstream-doctrine + self-dev-governance | both | 4-Reconcile | CHG-B ACCEPTED and complete — automatic Controlled Plain English status injection in `scripts/codeos-review.sh` (no Rust changes, 182 tests unchanged); wrapper established as sole supported entry point; all 13 ACs verified PASS; manual inclusion no longer part of the operating model | COMPLETE | — |
+    | UPG-0060 | CHG-20260802-001 | script-tooling | self-dev only | 4-Reconcile | CHG-A ACCEPTED — S1,S2 ACCEPTED; S3 ACCEPTED (R1-R3 CHANGES ADVISED, all fixed inline; human-authorized confirmatory R4 NO OBJECTION); S4 R1 CHANGES ADVISED [AC-8 exit-code evidence] → R2 NO OBJECTION (series RVS__UPG-0060__CHG-20260802-001__S4); all 15 ACs verified. CHG-B gate measured 2026-08-03 (EvidenceAtlas EA-0003 Stage 4) → NOT NET-POSITIVE; human held the feature at CHG-A as PILOTED (negative), CHG-B not done (evidence: `changes/UPG-0060__CHG-B-GATE__realistic-feature-evidence.md`; finding: AJ-022) | COMPLETE | CHG-20260803-001 |
+    | UPG-0060 | CHG-20260803-001 | prompt + script-tooling | self-dev only | 4-Reconcile | ACCEPTED — S1 R1→R2 NO OBJECTION; S2 R1 NO OBJECTION; S3 R1-R5 CHANGES ADVISED (8 in-scope blockers, **all artifact-governance, none a tool defect**) → R6 **0 findings**, all 20 ACs supported, verdict capped by SECRET_REDACTION; S4 R1 one SELF-REFERENCE finding fixed without re-review per human instruction. 33 tests pass, 4 mutations verified. Structural coverage limit accepted (precedent UPG-0037/0039) | COMPLETE | UPG-0061 |
+    | UPG-0060 | CHG-20260803-003 | script-tooling | self-dev only | 4-Reconcile | ACCEPTED — narrow CHG-A bugfix: `jq --arg` passed the whole packet as one argv element, hitting Linux's 128 KiB single-argument cap at realistic packet size. `--rawfile` fix; 34 tests pass; regression test mutation-verified. PROFILE-1 per standing human instruction | COMPLETE | — |
+    | UPG-0062 | CHG-20260803-002 | documentation (premise test; no code) | self-dev only | 4-Reconcile | ACCEPTED — premise test COMPLETE. **Q1 FAILED** against a threshold precommitted before measurement: FID cost 0.619 of Arm B output (≤0.40 required) and 0.802 weighted (≤0.50). Delegated tooling not pursued; no Rust written. **Q2 answered independently — governance gap is real** (10/10 mechanism allocations NEW DESIGN; EA-0001 ships 4 mechanisms absent from approved artifacts) → filed as UPG-0063, deliberately not solved here. 15 of 16 ACs PASS; AC-2 PARTIAL FAIL (one FID frame row not artifact-cited — recorded, not repaired, to preserve the pre-Arm-B freeze) | COMPLETE | UPG-0063 |
+    | UPG-0063 | CHG-20260804-001 | downstream-doctrine | downstream doctrine only | 1-Intent | Step 1 written after Q0 established the gap across 2 independent projects (method precommitted); review pending (series RVS__UPG-0063__CHG-20260804-001__S1) | IN_PROGRESS | — |
+    
+    <!--
+    Identity   : Feature ID = UPG-#### (stable). Change ID = CHG-YYYYMMDD-NNN (one execution), or a
+                 legacy change-stem (0001..0004) for historical/piloted work recorded truthfully.
+    Loop step  : 1-Intent / 2-Acceptance / 3-Implement / 4-Reconcile / —
+    Review     : review STATE/outcome, not a live round — in-flight: `review_state` (IN_REVIEW…) + the
+                 review series `RVS__…__S<N>`; closed: the accepted verdict summary. Exact `REV__…__R<N>`
+                 rounds + human decisions live ONLY in reviews/review-log.md (Self-Reference Boundary).
+                 `→UPG-####` / `→NNNN` = findings tracked to a follow-up.
+    State      : PROPOSED / IN_PROGRESS / BLOCKED / COMPLETE (+ feature states PILOTED/SUPERSEDED/ABANDONED)
+    Follow-up  : UPG-#### tracking out-of-scope findings from this change, or —
+    -->
+
+  --- /tmp/codeos-cpe-status.J0BQp6 (sha256: de32594591eb2a1c1bf9526dd44201f7d9fcd08db98d9d345024a1a7ebc5912c, visibility: shown) ---
+    Controlled Plain English status for this review: enabled
+    Source: /home/rimo/projects/Codeos/config/writing-discipline.yaml
+    Applicable scope: selfdev-step-1
+
+DIFF TO REVIEW (base->review, secret/size filtered)
