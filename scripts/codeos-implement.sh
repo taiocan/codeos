@@ -16,7 +16,18 @@
 #     <artifact-path>  one or more approved artifacts (intent / contract / event schema; plus the
 #                      Stage 4 output when stage=5). Each must exist.
 #
-#   Options (each repeatable, each must precede the positional arguments):
+#   Options (each must precede the positional arguments):
+#     Artifact ROLE flags — the caller declares each artifact's authority; this tool performs NO
+#     inference of role from path, filename, content, headings, or directory. A role a caller does
+#     not declare is a role the model is not told about.
+#       --contract PATH        BEHAVIORAL CONTRACT   — behavior that must be satisfied
+#       --event-schema PATH    EVENT SCHEMA          — events that must be emitted correctly
+#       --architecture PATH    ARCHITECTURE BASELINE — binding architectural constraint
+#       --cohort-design PATH   COHORT LOGICAL DESIGN — binding shared design constraint
+#       --profile PATH         IMPLEMENTATION PROFILE— binding implementation constraint
+#     Positional <artifact-path> arguments remain supported for backward compatibility and are
+#     labelled APPROVED ARTIFACT (ROLE UNSPECIFIED). They never silently satisfy a declared role.
+#
 #     --exemplar PATH          a real file from the target repository shown as a LAYOUT EXEMPLAR:
 #                              context demonstrating module naming/placement conventions, explicitly
 #                              not a specification to implement. Must exist.
@@ -58,6 +69,7 @@
 #   9  a passed --exemplar path does not exist
 #  10  a passed --repair-candidate / --repair-output path does not exist
 #  11  the model response violates the delimited output protocol (malformed frame) — nothing staged
+#  12  the same artifact path was declared under two different authority roles (before any network call)
 set -euo pipefail
 
 err() { echo "error: $*" >&2; }
@@ -69,8 +81,21 @@ git rev-parse --show-toplevel >/dev/null 2>&1 || { err "not inside a git reposit
 EXEMPLARS=()
 REPAIR_CANDIDATES=()
 REPAIR_OUTPUTS=()
+# One array per declared role. Deliberately flat and explicit: the value here is that a reader can
+# see exactly which roles exist, not that the plumbing is shared.
+ROLE_CONTRACT=(); ROLE_SCHEMA=(); ROLE_ARCH=(); ROLE_COHORT=(); ROLE_PROFILE=()
 while [[ $# -gt 0 ]]; do
   case "$1" in
+    --contract)          [[ $# -ge 2 ]] || { err "--contract requires a path"; exit 3; }
+                         ROLE_CONTRACT+=("$2"); shift 2;;
+    --event-schema)      [[ $# -ge 2 ]] || { err "--event-schema requires a path"; exit 3; }
+                         ROLE_SCHEMA+=("$2"); shift 2;;
+    --architecture)      [[ $# -ge 2 ]] || { err "--architecture requires a path"; exit 3; }
+                         ROLE_ARCH+=("$2"); shift 2;;
+    --cohort-design)     [[ $# -ge 2 ]] || { err "--cohort-design requires a path"; exit 3; }
+                         ROLE_COHORT+=("$2"); shift 2;;
+    --profile)           [[ $# -ge 2 ]] || { err "--profile requires a path"; exit 3; }
+                         ROLE_PROFILE+=("$2"); shift 2;;
     --exemplar)          [[ $# -ge 2 ]] || { err "--exemplar requires a path"; exit 3; }
                          EXEMPLARS+=("$2"); shift 2;;
     --repair-candidate)  [[ $# -ge 2 ]] || { err "--repair-candidate requires a path"; exit 3; }
@@ -83,8 +108,9 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 if [[ $# -lt 3 ]]; then
-  err "usage: codeos-implement.sh [--exemplar PATH] [--repair-candidate PATH] [--repair-output PATH]"
-  err "                           <feature_id> <stage:4|5> <artifact-path> [more...]"
+  err "usage: codeos-implement.sh [role flags] [--exemplar PATH] [--repair-candidate PATH]"
+  err "                           [--repair-output PATH] <feature_id> <stage:4|5> <artifact-path>..."
+  err "       role flags: --contract --event-schema --architecture --cohort-design --profile"
   exit 3
 fi
 FEATURE="$1"; STAGE="$2"; shift 2
@@ -148,6 +174,36 @@ fi
 for a in "${ARTIFACTS[@]}"; do
   [[ -f "${a}" ]] || { err "artifact path does not exist: ${a}"; exit 7; }
 done
+for a in ${ROLE_CONTRACT[@]+"${ROLE_CONTRACT[@]}"} ${ROLE_SCHEMA[@]+"${ROLE_SCHEMA[@]}"} \
+         ${ROLE_ARCH[@]+"${ROLE_ARCH[@]}"} ${ROLE_COHORT[@]+"${ROLE_COHORT[@]}"} \
+         ${ROLE_PROFILE[@]+"${ROLE_PROFILE[@]}"}; do
+  [[ -f "${a}" ]] || { err "artifact path does not exist: ${a}"; exit 7; }
+done
+
+# ── 12. one path may not carry two authority roles ──────────────────────────────────────────────
+# Checked before any network call. An artifact declared under two roles is a caller error, never
+# something for this tool to arbitrate — it would have to decide which authority wins.
+# Pure bash — no external process, so the documented allowlist stays as it is.
+declare -A _ROLE_OF=()
+_check_role() {
+  local role="$1"; shift
+  local p
+  for p in "$@"; do
+    if [[ -n "${_ROLE_OF[${p}]:-}" && "${_ROLE_OF[${p}]}" != "${role}" ]]; then
+      err "artifact declared under two authority roles: ${p} (${_ROLE_OF[${p}]} and ${role})"
+      err "       a path carries exactly one role; the caller must choose which authority applies."
+      exit 12
+    fi
+    _ROLE_OF["${p}"]="${role}"
+  done
+}
+_check_role "BEHAVIORAL CONTRACT"    ${ROLE_CONTRACT[@]+"${ROLE_CONTRACT[@]}"}
+_check_role "EVENT SCHEMA"           ${ROLE_SCHEMA[@]+"${ROLE_SCHEMA[@]}"}
+_check_role "ARCHITECTURE BASELINE"  ${ROLE_ARCH[@]+"${ROLE_ARCH[@]}"}
+_check_role "COHORT LOGICAL DESIGN"  ${ROLE_COHORT[@]+"${ROLE_COHORT[@]}"}
+_check_role "IMPLEMENTATION PROFILE" ${ROLE_PROFILE[@]+"${ROLE_PROFILE[@]}"}
+_check_role "LAYOUT EXEMPLAR"        ${EXEMPLARS[@]+"${EXEMPLARS[@]}"}
+
 for e in ${EXEMPLARS[@]+"${EXEMPLARS[@]}"}; do
   [[ -f "${e}" ]] || { err "exemplar path does not exist: ${e}"; exit 9; }
 done
@@ -192,8 +248,33 @@ NONCE="$(head -c 8 /dev/urandom | od -An -tx1 | tr -d ' \n')"
   printf '  output_nonce: %s\n\n' "${NONCE}"
   printf 'Produce the Stage %s candidate for this feature, following the STRICT output contract in\n' "${STAGE}"
   printf 'the task above. Use the output_nonce above verbatim in every marker.\n'
+  # Declared roles first, in a fixed order, each labelled with the authority it carries. The label
+  # is the whole point: it tells the model HOW the artifact binds. Content is emitted byte for byte.
+  _emit_role() {
+    local label="$1" note="$2"; shift 2
+    local a
+    for a in "$@"; do
+      printf '\n--- %s: %s ---\n' "${label}" "${a}"
+      printf '    (%s)\n' "${note}"
+      cat "${a}"
+    done
+  }
+  _emit_role "BEHAVIORAL CONTRACT" "binding — the behavior your implementation must satisfy" \
+    ${ROLE_CONTRACT[@]+"${ROLE_CONTRACT[@]}"}
+  _emit_role "EVENT SCHEMA" "binding — the events you must emit, and only these" \
+    ${ROLE_SCHEMA[@]+"${ROLE_SCHEMA[@]}"}
+  _emit_role "ARCHITECTURE BASELINE" "binding architectural constraint — follow it; it is not behavior to invent" \
+    ${ROLE_ARCH[@]+"${ROLE_ARCH[@]}"}
+  _emit_role "COHORT LOGICAL DESIGN" "binding shared design constraint — follow it; it is not behavior to invent" \
+    ${ROLE_COHORT[@]+"${ROLE_COHORT[@]}"}
+  _emit_role "IMPLEMENTATION PROFILE" "binding implementation constraint — language and scope" \
+    ${ROLE_PROFILE[@]+"${ROLE_PROFILE[@]}"}
+  # Positional artifacts: supported, but visibly degraded. They never stand in for a declared role.
   for a in "${ARTIFACTS[@]}"; do
-    printf '\n--- APPROVED ARTIFACT: %s ---\n' "${a}"
+    printf '\n--- APPROVED ARTIFACT (ROLE UNSPECIFIED): %s ---\n' "${a}"
+    printf '    (supporting context only — the caller did not declare an authority role for this\n'
+    printf '     artifact. It does not replace a Behavioral Contract, Event Schema, Architecture\n'
+    printf '     Baseline, Cohort Logical Design, or Implementation Profile.)\n'
     cat "${a}"
   done
   # Layout exemplars are context, never specification. They are labeled distinctly from approved
@@ -305,7 +386,7 @@ awk -v nonce="${NONCE}" -v manifest="${MANIFEST}" -v errfile="${FRAME_ERR}" '
   index($0, spfx) == 1 && substr($0, length($0)-2) == ">>>" {
     if (open != "") fail("SECTION marker inside an open " open " block")
     name = substr($0, length(spfx)+1, length($0)-length(spfx)-3)
-    if (name != "contract_satisfaction" && name != "event_emission" && name != "notes")
+    if (name != "contract_satisfaction" && name != "event_emission" && name != "notes" && name != "deferral_resolution")
       fail("unknown section name: " name)
     if (name in seensec) fail("duplicate section: " name)
     seensec[name] = 1
@@ -367,6 +448,8 @@ while IFS=$'\t' read -r kind name s e; do
 done < "${MANIFEST}"
 
 # Sidecars the model omitted still exist, empty, so the audit set is uniform across runs.
+# deferral_resolution is deliberately NOT in this list: it is optional and usually absent, so the
+# file's presence is itself the signal that the model reported a resolved deferral.
 for s in contract_satisfaction event_emission notes; do
   [[ -f "${STAGE_DIR}/${s}.txt" ]] || : > "${STAGE_DIR}/${s}.txt"
 done

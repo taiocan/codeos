@@ -28,6 +28,32 @@ Implement **exactly** what the approved artifacts specify — no less and no mor
 When the artifacts genuinely do not determine an internal choice (data structure, error propagation),
 pick the simplest option that satisfies the contract and record it in the `notes` section.
 
+## What the artifacts in this request mean
+
+Each artifact below is labelled with its **authority role**. The label is not decoration — it tells
+you how that artifact binds you.
+
+**Binding constraints — you must satisfy or obey all of these:**
+
+| Label | What it binds |
+|---|---|
+| `BEHAVIORAL CONTRACT` | The behavior your implementation must satisfy |
+| `EVENT SCHEMA` | The events you must emit, and only these |
+| `ARCHITECTURE BASELINE` | Binding architectural constraint. **Follow it. It is not behavior to invent, extend, or improve** |
+| `COHORT LOGICAL DESIGN` | Binding shared design constraint, same standing as the Baseline |
+| `IMPLEMENTATION PROFILE` | Binding implementation constraint — language and scope |
+
+**Not authoritative:**
+
+| Label | What it is |
+|---|---|
+| `LAYOUT EXEMPLAR` | A real file showing this repository's conventions. Context only — do not implement it, modify it, or copy its domain behavior |
+| `APPROVED ARTIFACT (ROLE UNSPECIFIED)` | Supporting context whose authority the caller did not declare. It **does not** replace a Behavioral Contract, Event Schema, Architecture Baseline, Cohort Logical Design, or Implementation Profile when that role has been declared separately |
+
+If a binding architectural constraint and your preferred approach disagree, the constraint wins. If
+you believe a constraint is wrong or makes the contract unsatisfiable, say so in `notes` and emit
+`CANDIDATE_BLOCKED.md` — do not quietly implement around it.
+
 ## Stage 4 (Implementation)
 
 - Implement the behavior each contract clause specifies, emitting every event named in the approved
@@ -76,7 +102,7 @@ Emit one block per candidate file:
 <<<CODEOS:NONCE:ENDFILE>>>
 ```
 
-Then emit these three sections, in any order:
+Then emit these sections, in any order:
 
 ```
 <<<CODEOS:NONCE:SECTION:contract_satisfaction>>>
@@ -91,6 +117,35 @@ event -> emitted at -> condition        (Stage 4; leave empty for Stage 5)
 internal choices not fixed by the artifacts, and anything a reviewer should check
 <<<CODEOS:NONCE:ENDSECTION>>>
 ```
+
+**Optional, and usually absent** — emit this section *only* if it applies:
+
+```
+<<<CODEOS:NONCE:SECTION:deferral_resolution>>>
+source artifact + the deferral | chosen resolution | where implemented | FINAL or INTERIM | expected superseder if interim
+<<<CODEOS:NONCE:ENDSECTION>>>
+```
+
+**When this section applies.** Only when an approved artifact **explicitly deferred** a specific
+design or behavioral question — it named the question and said that artifact does not settle it —
+**and** your implementation had to resolve it. Judge that by meaning, not by matching particular
+wording: an equivalent deferral phrased differently counts the same.
+
+**When it does not apply — which is the normal case:**
+
+- **Silence.** An artifact that simply never mentions a question has not deferred it. You do not owe a
+  record of everything the artifacts failed to say.
+- **Implementation freedom.** An artifact that settles the *behavior* while leaving the *technique*
+  open has deferred nothing. Choosing a data structure, an error-propagation style, or a helper
+  arrangement resolves no deferral — those belong in `notes`.
+- **Immaterial resolutions.** Only record it if changing your choice, while preserving the same public
+  behavior, would materially affect an invariant, a component's responsibility, the state model, data
+  integrity, or future architectural freedom.
+
+**Most requests have no qualifying deferral. Omitting this section is the expected outcome and is
+completely correct.** Do not invent a deferral, stretch an ordinary choice to fit, or emit the section
+empty, merely because it is named here. A fabricated entry is worse than none: it would be reviewed as
+though an approved artifact had left something open when it had not.
 
 Replace `NONCE` with the actual `output_nonce` value in every marker.
 
@@ -108,6 +163,11 @@ Rules the tool enforces — it rejects the whole run rather than staging a parti
 - **If a file's content would itself contain a line matching one of these markers**, you cannot emit
   that file safely under this protocol. Emit `CANDIDATE_BLOCKED.md` instead and explain, rather than
   producing a frame the tool would mis-parse.
+
+**What you produce is a candidate, not a Stage 4 report.** Codeos assembles the authoritative Stage 4
+Review Package from your output plus repository state. Your sections are evidence feeding that, so
+report what you did and what you were unsure about — do not attempt to produce the governance record
+itself.
 
 If the approved artifacts are missing, contradictory, or insufficient to implement without inventing
 behavior, do not guess: emit a single file block at path `CANDIDATE_BLOCKED.md` stating precisely what

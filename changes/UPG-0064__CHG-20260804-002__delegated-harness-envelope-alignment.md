@@ -15,11 +15,11 @@ primary_feature_id: UPG-0064
 change_id: CHG-20260804-002
 slug: delegated-harness-envelope-alignment
 state: IN_PROGRESS      # DRAFT | IN_REVIEW | IN_PROGRESS | BLOCKED | COMPLETE | ABANDONED | SUPERSEDED
-current_step: 2-Acceptance  # 1-Intent | 2-Acceptance | 3-Implement | 4-Reconcile
+current_step: 3-Implement  # 1-Intent | 2-Acceptance | 3-Implement | 4-Reconcile
 implements:
   - UPG-0064
 related_features: [UPG-0051, UPG-0052, UPG-0063, UPG-0060, UPG-0062]
-review_series: RVS__UPG-0064__CHG-20260804-002__S2   # S1 ACCEPTED (R1 DO NOT ADVANCE → R2 NO OBJECTION)
+review_series: RVS__UPG-0064__CHG-20260804-002__S3   # S1, S2 ACCEPTED
 review_profile: PROFILE-3   # prompt + script-tooling, self-dev only (Step 0a)
 review_state: IN_REVIEW # DRAFT | IN_REVIEW | REVIEWED | ACCEPTED  (operational; NOT a round)
 review_history: reviews/review-log.md
@@ -208,7 +208,62 @@ answer it with.
 
 ## Implementation Notes
 
-*(pending Step 3)*
+<!-- Factual reporting. The git diff is the source of truth. -->
+
+**Script — five role flags, no inference.** `--contract`, `--event-schema`, `--architecture`,
+`--cohort-design` added alongside the existing `--exemplar`, plus `--profile`. One flat array per
+role: deliberately explicit rather than a generic role table, since the value here is that a reader
+can see exactly which roles exist. The packet emits declared roles first, in fixed order, each with a
+heading naming the authority it carries and a one-line note on how it binds; positionals follow as
+`APPROVED ARTIFACT (ROLE UNSPECIFIED)` with their non-substitutability stated inline.
+
+**Conflicting roles — exit 12**, before any network call, via a bash associative array. Same path
+under the same role twice is not a conflict; under two different roles it is, and the tool refuses
+rather than arbitrating which authority wins.
+
+**The conflict check was rewritten to avoid widening the process allowlist.** My first version used
+`grep` and `cut`, neither of which is in the documented external-tool list — the C9 allowlist scan
+(added by UPG-0060 CHG-20260803-001 for exactly this) would have caught it, but rewriting in pure
+bash was better than widening the list for a bookkeeping check.
+
+**Prompt.** New "What the artifacts in this request mean" section: a binding table (contract, event
+schema, architecture baseline, cohort logical design, implementation profile) and a non-authoritative
+table (layout exemplar, role-unspecified). States that a binding constraint wins over the model's
+preferred approach, and that disagreement goes to `notes` + `CANDIDATE_BLOCKED.md` rather than being
+implemented around. Adds that the output is a *candidate*, not a Stage 4 report.
+
+**`deferral_resolution` — optional, with the manufacture-pressure guarded explicitly.** UPG-0063's
+rule is imported semantically with both exclusions (silence; implementation freedom) plus the
+materiality gate. The section is introduced as *"Optional, and usually absent"*, and the prompt states
+**"Most requests have no qualifying deferral. Omitting this section is the expected outcome and is
+completely correct. Do not invent a deferral, stretch an ordinary choice to fit, or emit the section
+empty, merely because it is named here. A fabricated entry is worse than none."**
+
+The harness reinforces that: `deferral_resolution` is **excluded** from the uniform empty-sidecar
+loop, so unlike the other three sidecars it is never created empty. Its presence in the staging
+directory is itself the signal that the model reported one.
+
+**Tests — 45 pass, up from 34.** Eleven added: five-role labelling; positional stays ROLE UNSPECIFIED
+alongside declared roles; no inference from a conventional path; conflicting roles → 12 with nothing
+staged; same-role duplicate is not a conflict; label byte-identical in `packet.txt` and the request
+actually sent; content unmodified; missing role artifact → 7; deferral section parses when present;
+absence is a clean success with no fabricated sidecar; and the prompt carries the anti-fabrication
+wording.
+
+**Mutation-verified.** Making the tool infer `ARCHITECTURE BASELINE` from a `*core-baseline*` path
+failed exactly `ROLE inference`; removing the conflicting-role guard failed exactly `ROLE conflict`.
+Restored byte-identically after each.
+
+**A defect in my own tooling, not the change.** My first attempt at the test additions was written
+through a non-raw Python triple-quoted string, where `\` + newline is a *Python* line continuation —
+so every bash line-continuation was silently consumed and lines joined, producing a parse error 80
+lines later. I initially masked it by filtering the suite output through `grep`, which hid the syntax
+error while still showing the `ok` lines printed before bash reached it. Reverted and re-applied with
+raw strings. The lesson is about the filtering, not the escaping: a filtered test run can look green
+while the file does not parse.
+
+**Assumptions:** bash 4+ for the associative array used by the conflict check — already required by
+the existing suite and by `mapfile`-free array handling elsewhere in the script.
 
 ---
 

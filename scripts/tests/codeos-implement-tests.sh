@@ -151,7 +151,7 @@ SD2="$(latest_stage_dir)"
 if [[ "${rc}" == "0" ]]; then
   p="${SD2}/packet.txt"
   grep -q 'LAYOUT EXEMPLAR (context only' "${p}" && e1=1 || e1=0
-  grep -q 'APPROVED ARTIFACT: intents/F-0001.md' "${p}" && e2=1 || e2=0
+  grep -q 'APPROVED ARTIFACT (ROLE UNSPECIFIED): intents/F-0001.md' "${p}" && e2=1 || e2=0
   grep -q 'REPAIR REQUEST — this is a retry' "${p}" && e3=1 || e3=0
   grep -q 'FEEDBACK (build/test output' "${p}" && e4=1 || e4=0
   [[ "${e1}${e2}" == "11" ]] && ok "C3 exemplar labeled distinctly from approved artifacts" \
@@ -209,6 +209,110 @@ if [[ "${rc}" == "0" && -f "$(latest_stage_dir)/candidate/modules/thing/src/lib.
 else
   bad "REG oversized packet" "rc=${rc} packet=${big}B $(tail -2 "${OUT}")"
 fi
+
+# ── UPG-0064: caller-declared artifact roles ────────────────────────────────────────────────────
+echo "== UPG-0064: artifact authority roles =="
+mkdir -p "${REPO}/architecture" "${REPO}/contracts" "${REPO}/events"
+printf 'the contract\n'  > "${REPO}/contracts/F-0001_contract.md"
+printf 'the schema\n'    > "${REPO}/events/F-0001_schema.md"
+printf 'the baseline\n'  > "${REPO}/architecture/core-baseline.md"
+printf 'the cohort\n'    > "${REPO}/architecture/cohort-logical-design.md"
+printf 'the profile\n'   > "${REPO}/architecture/implementation-profile.yaml"
+
+fixture '<<<CODEOS:{N}:FILE:modules/thing/src/lib.rs>>>
+x
+<<<CODEOS:{N}:ENDFILE>>>'
+reset_state; enable_mech
+rc=$(run_tool --contract contracts/F-0001_contract.md --event-schema events/F-0001_schema.md --architecture architecture/core-baseline.md --cohort-design architecture/cohort-logical-design.md --profile architecture/implementation-profile.yaml F-0001 4 intents/F-0001.md)
+P="$(latest_stage_dir)/packet.txt"
+if [[ "${rc}" == "0" ]]; then
+  miss=""
+  for lbl in "BEHAVIORAL CONTRACT: contracts/F-0001_contract.md" "EVENT SCHEMA: events/F-0001_schema.md" "ARCHITECTURE BASELINE: architecture/core-baseline.md" "COHORT LOGICAL DESIGN: architecture/cohort-logical-design.md" "IMPLEMENTATION PROFILE: architecture/implementation-profile.yaml"; do
+    grep -qF -- "${lbl}" "${P}" || miss="${miss} [${lbl}]"
+  done
+  if [[ -z "${miss}" ]]; then ok "ROLE each declared artifact is labelled with its authority"
+  else bad "ROLE labelling" "missing:${miss}"; fi
+  if grep -q 'APPROVED ARTIFACT (ROLE UNSPECIFIED): intents/F-0001.md' "${P}"; then
+    ok "ROLE positional stays ROLE UNSPECIFIED alongside declared roles"
+  else bad "ROLE positional" "positional not labelled unspecified"; fi
+else
+  bad "ROLE labelling run" "rc=${rc}"
+fi
+
+reset_state
+rc=$(run_tool F-0001 4 architecture/core-baseline.md)
+P2="$(latest_stage_dir)/packet.txt"
+inferred=no
+grep -q 'ARCHITECTURE BASELINE: architecture/core-baseline.md' "${P2}" && inferred=yes
+if grep -q 'APPROVED ARTIFACT (ROLE UNSPECIFIED): architecture/core-baseline.md' "${P2}" && [[ "${inferred}" == "no" ]]; then
+  ok "ROLE no authority inferred from a conventional path"
+else
+  bad "ROLE inference" "a positional baseline-looking path acquired a role (inferred=${inferred})"
+fi
+
+reset_state
+rc=$(run_tool --contract contracts/F-0001_contract.md --architecture contracts/F-0001_contract.md F-0001 4 intents/F-0001.md)
+staged=$(find "$(latest_stage_dir)/candidate" -type f 2>/dev/null | wc -l)
+if [[ "${rc}" == "12" && "${staged}" == "0" ]]; then
+  ok "ROLE conflicting roles on one path -> exit 12, nothing staged"
+else bad "ROLE conflict" "rc=${rc} staged=${staged}"; fi
+
+reset_state
+rc=$(run_tool --contract contracts/F-0001_contract.md --contract contracts/F-0001_contract.md F-0001 4 intents/F-0001.md)
+if [[ "${rc}" == "0" ]]; then ok "ROLE same path twice under one role is not a conflict"
+else bad "ROLE duplicate same-role" "rc=${rc}"; fi
+
+reset_state
+rc=$(run_tool --architecture architecture/core-baseline.md F-0001 4 intents/F-0001.md)
+D="$(latest_stage_dir)"
+lbl='--- ARCHITECTURE BASELINE: architecture/core-baseline.md ---'
+inreq=no
+jq -r '.messages[1].content' "${D}/request.json" | grep -qF -- "${lbl}" && inreq=yes
+if grep -qF -- "${lbl}" "${D}/packet.txt" && [[ "${inreq}" == "yes" ]]; then
+  ok "ROLE label byte-identical in packet.txt and the request actually sent"
+else bad "ROLE label transport" "packet vs request differ"; fi
+if jq -r '.messages[1].content' "${D}/request.json" | grep -qxF "the baseline"; then
+  ok "ROLE labelling leaves artifact content unmodified"
+else bad "ROLE content mutated" "source bytes not verbatim in the request"; fi
+
+reset_state
+rc=$(run_tool --architecture architecture/nope.md F-0001 4 intents/F-0001.md)
+if [[ "${rc}" == "7" ]]; then ok "ROLE missing role artifact -> exit 7"
+else bad "ROLE missing" "rc=${rc}"; fi
+
+# ── UPG-0064: deferral_resolution is optional; absence must be frictionless ──────────────────────
+fixture '<<<CODEOS:{N}:FILE:modules/thing/src/lib.rs>>>
+x
+<<<CODEOS:{N}:ENDFILE>>>
+<<<CODEOS:{N}:SECTION:deferral_resolution>>>
+schema validation ordering | first-failure-wins | lib.rs:record | FINAL | -
+<<<CODEOS:{N}:ENDSECTION>>>'
+reset_state
+rc=$(run_tool F-0001 4 intents/F-0001.md)
+D="$(latest_stage_dir)"
+if [[ "${rc}" == "0" ]] && grep -q "first-failure-wins" "${D}/deferral_resolution.txt" 2>/dev/null; then
+  ok "DEFERRAL section parses and is staged when present"
+else bad "DEFERRAL present" "rc=${rc}"; fi
+
+fixture '<<<CODEOS:{N}:FILE:modules/thing/src/lib.rs>>>
+x
+<<<CODEOS:{N}:ENDFILE>>>
+<<<CODEOS:{N}:SECTION:notes>>>
+nothing was deferred
+<<<CODEOS:{N}:ENDSECTION>>>'
+reset_state
+rc=$(run_tool F-0001 4 intents/F-0001.md)
+D="$(latest_stage_dir)"
+sidecar=no
+[[ -f "${D}/deferral_resolution.txt" ]] && sidecar=yes
+if [[ "${rc}" == "0" && "${sidecar}" == "no" ]]; then
+  ok "DEFERRAL absent is a clean success; no empty sidecar fabricated"
+else bad "DEFERRAL absent" "rc=${rc} sidecar=${sidecar}"; fi
+
+PR="${CODEOS_ROOT}/prompts/codeos-implementer-task.md"
+if grep -q "Omitting this section is the expected outcome" "${PR}" && grep -q "Do not invent a deferral" "${PR}"; then
+  ok "DEFERRAL prompt states absence is expected and forbids fabrication"
+else bad "DEFERRAL no-pressure wording" "prompt lacks the anti-fabrication instruction"; fi
 
 echo "== Group 1: protocol robustness (criterion 7) =="
 
