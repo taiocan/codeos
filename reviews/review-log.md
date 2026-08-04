@@ -8871,3 +8871,13 @@ Log summary: NO OBJECTION — The packet now supports all 17 acceptance criteria
 Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-08-04T120521Z-UPG-0063__CHG-20260804-001-stage-selfdev-step-4-8319587.md (sha256:6932ee9e2b773da9de9722604bb9647da558e7ee5e19bcb1423ad4e8fc3589f2)
 Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260804T120521Z-UPG-0063__CHG-20260804-001-stage-selfdev-step-4-8319587.packet.txt (sha256:ed97d5fd27e457099c138e6e398d63e61ee77db8ed05bb8438116401a2f7aea4)
 Human decision: (append with: codeos-reviewer decision UPG-0063__CHG-20260804-001 selfdev-step-4 <DECISION> "<reason>")
+
+## 2026-08-04T13:18:16Z HUMAN DECISION — UPG-0063__CHG-20260804-001 — Stage selfdev-step-4
+Commit at decision: 88ef722c730ef1f1100937eeb6b52d36c3743d43
+Decision: APPROVE_STAGE
+Reason/next: ACCEPTED — CHG-20260804-001 COMPLETE, UPG-0063 CLOSED. All 17 acceptance criteria PASS; S4 R2 NO OBJECTION, evidence A, zero findings; stale-reference sweep clean; AC-7 verified against the deployed Stage-4 path (generated packet after rebuild), not merely Rust source and unit tests. Human noted the premature COMPLETE/ACCEPTED state was materially different from AJ-016/AJ-020 bookkeeping drift: it was a false governance-state assertion — the artifact claiming the human gate had occurred before it had — and catching and reverting it before acceptance preserved the gate's meaning. UPG-0061's problem is reframed accordingly: not a taxonomy gap but knowledge-to-action delivery — a known procedural rule can exist in the journal and still fail repeatedly because nothing reliably surfaces or enforces it at the exact workflow transition where it must be applied. Points toward proportionate point-of-action safeguards rather than more retrospective documentation.
+Provenance:
+  assessment: /home/rimo/projects/Codeos/reviews/codex/2026-08-04T120521Z-UPG-0063__CHG-20260804-001-stage-selfdev-step-4-8319587.md
+  review_commit: 83195872df0d0751fbb7bdf6543bd2a8577781cb  [HEAD_DRIFT: current=88ef722c730e]
+  packet_sha256: [MATCH]
+  coverage_state: FULL_COVERAGE  [OK]

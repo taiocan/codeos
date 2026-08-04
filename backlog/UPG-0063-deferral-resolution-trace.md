@@ -2,7 +2,7 @@
 feature_id: UPG-0063
 slug: deferral-resolution-trace
 title: Deferral → Resolution Trace for Stage 4
-status: PROPOSED
+status: COMPLETE
 priority: P1
 depends_on: []
 related_features: [UPG-0062, UPG-0051, UPG-0058]
@@ -13,9 +13,20 @@ superseded_by: []
 # Upgrade: deferral → resolution trace for Stage 4
 
 **Priority**: P1
-**Status**: PROPOSED — Step 1 in progress
-**Type**: to be settled at Step 1 — **working hypothesis: no new stage, no standalone artifact, no new
-gate**
+**Status**: COMPLETE — accepted 2026-08-04 (`CHG-20260804-001`)
+
+> **Shipped.** `prompts/04-implement.md` Output Format item 5 (conditional; omitted entirely when
+> nothing was deferred), plus one advisory Stage-4 reviewer question and its tests. All 17 acceptance
+> criteria passed. Enforcement is deliberately the lean model: the Stage 4 author carries the
+> obligation, the reviewer asks actively, and a missing record is a traceability defect rather than an
+> implementation failure. No automatic deferral discovery, no new stage, gate, or standalone artifact.
+>
+> **Not yet proven in use.** No downstream feature has passed through Stage 4 under this obligation.
+> Whether authors notice deferrals, and whether the reviewer's question surfaces omissions, is the
+> evidence that would justify anything stronger — and nothing stronger was added pre-emptively.
+
+**Type**: downstream-doctrine + script-tooling — the working hypothesis held: no new stage, no
+standalone artifact, no new gate.
 
 ## Problem
 
@@ -76,7 +87,7 @@ Two distinctions the definition must carry:
 - **A deferral is not implementation freedom.** An artifact that settles the behavior while leaving
   the technique open has deferred nothing. Choosing a `BTreeSet` is not resolving a deferral.
 
-## Proposed remedy — a Deferral → Resolution trace
+## Remedy — the Deferral → Resolution trace (shipped)
 
 For each **material** explicit deferral that Stage 4 resolves, record only:
 
@@ -89,7 +100,8 @@ For each **material** explicit deferral that Stage 4 resolves, record only:
 | If interim: expected superseder | which upstream decision or artifact should replace it |
 
 Nothing else. **No survey of all invariants. No `SOURCE-DERIVED` inventory. No new architecture
-document unless Step 1 proves one is necessary.**
+document** — Step 1 confirmed none was necessary. Shipped as Output Format item 5 in
+`prompts/04-implement.md`.
 
 The last two fields carry most of the value. PlotSpot's hardcoded vocabulary map is an interim
 resolution of a deferral whose own artifact says it is *"unresolved until Architecture Synthesis"* —
@@ -113,20 +125,27 @@ authority. It records what was decided under an authority the artifact itself gr
 resolution may never override or reinterpret the artifact. A conflict may mean the implementation
 cannot legitimately continue until the upstream artifact is amended through its own governance path.
 
-## Open questions for Step 1
+## How the Step 1 open questions resolved
 
-- **Does the Stage 4 output already have a home for this?** Prefer extending `prompts/04-implement.md`'s
-  existing output format over adding anything.
-- **Who identifies the deferral — and can that be checked?** A resolution recorded against a deferral
-  that does not exist is noise; a deferral resolved with no record is the omission this targets.
-  Whether the second is *detectable* without phrase-matching is the hard part.
-- **Does the existing Stage 4 gate suffice?** The hypothesis says yes.
-- **What is the marginal recording cost?** Deliberately deferred until the shape is settled — the
-  fields above are few enough that this is unlikely to be the deciding constraint, and UPG-0062's 62%
-  measured something entirely different (deriving a full design, not recording a decision already
-  made).
-- **Do interim resolutions need a follow-up mechanism**, or is recording the expected superseder
-  enough?
+- **Does the Stage 4 output already have a home?** Yes — the existing Output Format. Placed as its own
+  item because the Review Package's "Key architectural decisions" field covers precisely the *ordinary
+  implementation choice* category; the prompt now routes technique choices back there so the two do
+  not compete.
+- **Who identifies the deferral, and can that be checked?** The Stage 4 author identifies it; the
+  reviewer asks actively. **A missing record is not mechanically detectable** — detecting one needs
+  deferrals enumerated, which without phrase-matching cannot be automated. Accepted at the gate as the
+  right trade for a traceability obligation.
+- **Does the existing Stage 4 gate suffice?** Yes; nothing stronger was added.
+- **What is the marginal recording cost?** Not measured, and deliberately so — the question was moot
+  once the shape settled at five conditional fields. It would matter again only if the obligation grew.
+- **Do interim resolutions need a follow-up mechanism?** Not yet. Recording the expected superseder is
+  the whole mechanism; whether anything must chase it is a question for evidence from use.
+
+## Open — what use will decide
+
+Nothing here is settled by the fact that it shipped. Whether authors notice deferrals, whether the
+reviewer's question surfaces omissions, and whether interim resolutions actually get retired are all
+answerable only after downstream features pass through Stage 4 under this obligation.
 
 ## Value
 
@@ -140,9 +159,10 @@ and institutional memory. Independent of delegation.
 framework across seven review rounds before a human reset it. The evidence justifies *recording* a
 handful of resolutions. It does not justify a new stage, gate, template, or mandatory artifact.
 
-**Phrase-dependence** — the failure mode named above. If the mechanism degenerates into grepping for
-"not prescribed", it will be bypassed by paraphrase and will also generate false positives on prose
-that merely contains the words.
+**Phrase-dependence** — the failure mode named above, and the reason the shipped prompt contains **no
+phrase list at all**, not even as illustration. If the mechanism degenerates into grepping for "not
+prescribed", it will be bypassed by paraphrase and will also fire on prose that merely contains the
+words.
 
 **Boilerplate** — a trace that must be filled in for every feature becomes ritual and drifts. The
 materiality gate and empty-is-normal default exist to prevent that.

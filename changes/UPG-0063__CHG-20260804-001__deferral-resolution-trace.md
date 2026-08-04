@@ -13,14 +13,14 @@ feature_id: UPG-0063
 primary_feature_id: UPG-0063
 change_id: CHG-20260804-001
 slug: deferral-resolution-trace
-state: IN_PROGRESS      # DRAFT | IN_REVIEW | IN_PROGRESS | BLOCKED | COMPLETE | ABANDONED | SUPERSEDED
+state: COMPLETE         # DRAFT | IN_REVIEW | IN_PROGRESS | BLOCKED | COMPLETE | ABANDONED | SUPERSEDED
 current_step: 4-Reconcile  # 1-Intent | 2-Acceptance | 3-Implement | 4-Reconcile
 implements:
   - UPG-0063
 related_features: [UPG-0062, UPG-0051, UPG-0058]
 review_series: RVS__UPG-0063__CHG-20260804-001__S4   # S1, S2, S3 ACCEPTED
 review_profile: PROFILE-4   # touches prompts/04-implement.md — downstream doctrine (Step 0a)
-review_state: IN_REVIEW # DRAFT | IN_REVIEW | REVIEWED | ACCEPTED  (operational; NOT a round)
+review_state: ACCEPTED  # DRAFT | IN_REVIEW | REVIEWED | ACCEPTED  (operational; NOT a round)
 review_history: reviews/review-log.md
 fixes_findings: []
 follow_up_of: null
@@ -273,11 +273,11 @@ deferral. That is the enforcement model accepted at the Step 1 gate, not an over
 
 <!-- Layer D1: advisory verdict, evidence separated from inference. -->
 
-**All 17 acceptance criteria verify as PASS on the implemented state.** This is the reconciliation
-*finding*, not an acceptance: `state` stays `IN_PROGRESS` and `review_state` `IN_REVIEW` until the
-Step 4 review has run and the human has accepted the result, per the dashboard's own rule. An earlier
-draft of this section set `COMPLETE`/`ACCEPTED` before either had happened — corrected, because
-claiming acceptance ahead of the gate undercuts the guarantee the gate exists to provide. Raw verification output is embedded in
+**All 17 acceptance criteria PASS. Accepted by the human 2026-08-04**, after S4 R2 returned NO
+OBJECTION (evidence A, zero findings) — in that order. An earlier draft of this section set
+`COMPLETE`/`ACCEPTED` before either the review or the acceptance had happened; it was reverted and is
+recorded in the triage table below, because claiming acceptance ahead of the gate undercuts the
+guarantee the gate exists to provide. Raw verification output is embedded in
 `changes/UPG-0063__CHG-20260804-001__retrofit-fixtures.md` §"Raw verification output" rather than
 summarised here.
 
