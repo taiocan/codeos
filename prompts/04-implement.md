@@ -174,7 +174,50 @@ Structural Risk levels (only populate when a Critical Hub or God Function is tou
 If no internal errors map to any approved classification for this feature, state "none" rather
 than omitting the table.
 
-5. Present the Review Package using `.codeos/templates/review-package.md` (Stage 4–5 format, inline only):
+5. Present a **Deferral → Resolution Trace** — *only if* this implementation resolved a material
+   question that an approved upstream artifact **explicitly deferred**. Most features defer nothing;
+   when that is the case, omit this section entirely. Do not write an empty table and do not write
+   "none".
+
+   **What counts as an explicit deferral.** A statement in an approved artifact that a specific design
+   or behavioral question is deliberately left unresolved *by that artifact* — whatever wording it
+   uses. The artifact names the question and says it does not settle it, often indicating where or
+   when it would be. Judge this by meaning, never by matching particular phrases: an equivalent
+   deferral written in different words counts exactly the same.
+
+   Two things that are **not** deferrals:
+   - **Silence.** An artifact that simply never mentions a question has not deferred it. Only an
+     affirmative statement of non-resolution counts — otherwise you would owe a record of everything
+     the artifacts failed to say.
+   - **Implementation freedom.** An artifact that settles the *behavior* while leaving the *technique*
+     open has deferred nothing. Choosing a data structure or an error-propagation style resolves no
+     deferral; record those under "Key architectural decisions" in the Review Package as before.
+
+   **Materiality.** Record a resolution only when changing it — while preserving the same public
+   behavior — would materially affect an invariant, a component's responsibility, the state model,
+   data integrity, or future architectural freedom.
+
+| Source Artifact + Deferral | Chosen Resolution | Where Implemented | Final / Interim | Expected Superseder |
+|---|---|---|---|---|
+| [artifact + the question it left open] | [what you decided] | [file:line, function, or module] | [FINAL / INTERIM] | [for INTERIM: the upstream decision or artifact expected to replace this; otherwise —] |
+
+   The last two columns are the point of the trace: an interim resolution that nothing records as
+   interim is indistinguishable later from a settled decision, and the upstream work that should
+   retire it is never triggered.
+
+   **This trace is subordinate to the approved artifacts.** It records a choice made under an
+   authority the artifact itself granted; it never overrides, reinterprets, or amends anything
+   approved. If your resolution appears to conflict with an approved artifact, that conflict must be
+   **reconciled** — raise it rather than recording a resolution that contradicts approved text, and
+   expect that implementation may not legitimately continue until the artifact is amended through its
+   own governance path.
+
+   **If you omit this section and a material deferral was in fact resolved, that is a traceability
+   defect** — the Stage 4 review will ask — **not an automatic implementation failure.** The
+   implementation may still be correct; the record of how a deferred question got answered is what is
+   missing.
+
+6. Present the Review Package using `.codeos/templates/review-package.md` (Stage 4–5 format, inline only):
    - Artifact: `modules/[feature_id]/`
    - Stage purpose: Implement only what the three approved artifacts specify.
    - Files changed: [list all files created or modified]
@@ -185,6 +228,6 @@ than omitting the table.
    - Implementation Profile applied: if an approved profile applied to this feature, state
      `profile_id`, `profile_version`, the resolved language, and any matched exception; otherwise
      state "no profile" or "profile proposed, non-binding."
-6. State: **`AWAITING HUMAN APPROVAL TO PROCEED TO STAGE 5`**
+7. State: **`AWAITING HUMAN APPROVAL TO PROCEED TO STAGE 5`**
 
 **STOP.** Do not write tests until the human explicitly approves the implementation.

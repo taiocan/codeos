@@ -686,7 +686,7 @@ fn stage_checks(stage: &str) -> String {
         "1" => "  - actor/outcome clarity; no implementation detail; scope boundary explicit; stable guarantees clear; ambiguity flagged.".to_string(),
         "2" => "  - every intent outcome has observable contract coverage; failure paths named; invariants testable; no white-box claims.".to_string(),
         "3" => "  - every relevant contract scenario has event coverage; event names stable; required fields clear; no speculative telemetry.".to_string(),
-        "4" => "  - code traces to approved contract/schema only; no unapproved events; no hidden behavior; no unrelated files; report complete.".to_string(),
+        "4" => "  - code traces to approved contract/schema only; no unapproved events; no hidden behavior; no unrelated files; report complete.\n  - did implementation resolve any question an approved artifact EXPLICITLY deferred? if so, is each material resolution recorded in a Deferral -> Resolution Trace (source deferral, resolution, where implemented, final/interim, expected superseder)? judge deferral by meaning, not by phrase; a missing record is a traceability finding, not an implementation failure.".to_string(),
         "5" => "  - behavior tested not private internals; failure paths tested; event/telemetry tests present; replay tests where applicable.".to_string(),
         "6" => "  - runtime evidence captured; event log bounded/sanitized; correlation chains visible; unexpected/missing events reported.".to_string(),
         "7" => "  - ALIGNED/GAP/MISMATCH/MISSING judgments supported; no weak evidence hidden behind fluent summary; gaps routed to right action.".to_string(),
@@ -769,6 +769,40 @@ mod tests {
             assert_ne!(
                 text, "(no expected-output template for stage)",
                 "numeric stage '{}' must still have its existing expected-output text", stage
+            );
+        }
+    }
+
+    #[test]
+    fn stage_4_checklist_asks_for_the_deferral_resolution_trace() {
+        // UPG-0063: the Stage 4 reviewer asks the question actively rather than relying on the
+        // implementation author remembering the obligation.
+        let text = stage_checks("4");
+        assert!(text.contains("EXPLICITLY deferred"), "must ask about explicit deferrals: {text}");
+        assert!(text.contains("Deferral -> Resolution Trace"), "must name the trace: {text}");
+        assert!(text.contains("final/interim"), "must ask for the interim marker: {text}");
+        assert!(text.contains("expected superseder"), "must ask what supersedes an interim: {text}");
+        // Advisory, not a behavioral gate.
+        assert!(
+            text.contains("traceability finding, not an implementation failure"),
+            "must keep the finding advisory: {text}"
+        );
+        // Judged semantically — the checklist must not hand the reviewer a phrase list.
+        assert!(text.contains("by meaning, not by phrase"), "must forbid phrase-matching: {text}");
+        // The pre-existing Stage 4 checks survive.
+        assert!(text.contains("code traces to approved contract/schema only"));
+    }
+
+    #[test]
+    fn stage_4_deferral_question_is_scoped_to_stage_4_only() {
+        // No other stage's checklist mentions the trace.
+        for stage in [
+            "discovery", "brief", "onboarding", "1", "2", "3", "5", "6", "7", "8", "9", "10",
+            "architecture-synthesis",
+        ] {
+            assert!(
+                !stage_checks(stage).contains("Deferral -> Resolution Trace"),
+                "stage '{stage}' must not carry the Stage 4 deferral question"
             );
         }
     }

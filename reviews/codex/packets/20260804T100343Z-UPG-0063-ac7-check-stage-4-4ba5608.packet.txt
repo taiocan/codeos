@@ -1,0 +1,270 @@
+Reviewer task:
+
+SCOPE CONTRACT
+  Assess this artifact against the STATED SCOPE of this stage/PR — the Expected Stage
+  Output below and what the artifacts actually claim — NOT against an ideal final system.
+  A capability the artifacts do not claim to provide is OUT-OF-SCOPE, not a defect.
+  The following are OUT-OF-SCOPE BACKLOG unless THIS artifact explicitly claims to provide
+  them: formal approval-binding enforcement; rollback correctness; COMMIT_BOUND/
+  WORKSPACE_BOUND enforcement; JSON Schema validation; CI validation; exact
+  decision-integrity; per-feature decision ledgers; autonomous approval; enabled hooks.
+
+YOUR TASK — answer these five questions using only the evidence in the packet:
+  1. Acceptance criteria: Does the artifact satisfy each of its stated acceptance criteria?
+     Cite evidence for each criterion (or note its absence).
+  2. Claim support: Are universal or strong claims (all, every, never, always, no X) in the
+     artifact supported by evidence in the packet? Any unverifiable strong claim is a candidate
+     finding only if it affects acceptance, scope, safety, decision integrity, or the artifact's
+     stated guarantees.
+  3. Scope drift: Is there any change beyond the stated scope boundary? (Files not in the
+     "What changes" list; behavior changes not in the intent; downstream doctrine modified
+     rather than read.)
+  4. In-scope blockers: Are there facts that, if left in, would make the artifact wrong,
+     unsafe, or internally contradictory?
+  5. Finding classification: Classify every finding you raise as exactly one of the five
+     TRIAGE RULE categories below.
+
+TRIAGE RULE — classify EVERY finding as exactly one of:
+  IN-SCOPE BLOCKER         breaks the stated goal; creates a FALSE CLAIM in this artifact;
+                           weakens the advisory/read-only/human-gated guarantees; prevents
+                           the work from running; or violates an explicit safety constraint.
+  IN-SCOPE NON-BLOCKER     improves it but is not required for this PR.
+  OUT-OF-SCOPE BACKLOG     valid, but belongs to a future feature / stronger guarantee.
+  REJECTED                 conflicts with the stated scope or Codeos philosophy.
+  SELF-REFERENCE /         review records that are stale because of the previous round's
+  REVIEW-BOOKKEEPING       own existence (causal loop); not a real artifact defect.
+  Base the PR decision ONLY on IN-SCOPE BLOCKER findings. An OUT-OF-SCOPE BACKLOG finding
+  must NOT cause DO NOT ADVANCE unless this artifact FALSELY CLAIMS to solve it.
+
+WHAT NOT TO DO
+  - Do not flag style or wording issues as blockers unless the wording creates a false claim,
+    contradiction, parser breakage, or wrong governance instruction.
+  - Do not re-review unchanged full context when the packet is in delta mode.
+  - Do not treat local-only review history as a blocker unless the artifact falsely
+    claims the review artifacts are committed/durable.
+
+INSTRUCTIONS
+  If this is a resumed session, ignore any earlier-session conclusions unless they are
+  re-established by THIS packet; assess only the evidence above, pinned to this commit.
+  Give a focused assessment of this artifact against the stated scope, acceptance criteria,
+  and evidence in this packet. Rank findings by severity. Suggest a better design only when
+  needed to explain a required fix for an IN-SCOPE BLOCKER.
+
+  CONTROLLED PLAIN ENGLISH (if one of the artifacts under review states "Controlled Plain
+  English status for this review: enabled" or "...: disabled" — this task template never reads
+  any configuration file itself; whoever invokes the review includes that line as one of the
+  reviewed artifacts, the same way any other file is included, when the relevant project has the
+  discipline enabled): Layer D1 (advisory verdict, no invented requirements, evidence separated
+  from inference — the TRIAGE RULE and "based ONLY on in-scope blockers" instructions above
+  already are this) always applies regardless of that value. When the value is `enabled`,
+  additionally write your prose in Layer D2 style — short sentences, common words, direct
+  explanations. This affects wording only; it never changes the footer format below.
+
+  Limit findings to the top 3 IN-SCOPE BLOCKERS. Additional non-blocking observations may be
+  summarized in one short paragraph only if useful.
+
+  For EACH finding emit:
+    Finding: / Severity: High|Medium|Low / Classification: <one of the TRIAGE RULE labels>
+    Evidence: <file/line> / Why: <short> / Required action: fix now|optional fix|backlog|reject
+    Scope reason: <why it does/does not belong to this PR's scope>
+  Then emit:
+    PR decision: ADVANCE | REQUEST CHANGES | DO NOT ADVANCE   (based ONLY on in-scope blockers)
+    Scope drift warning: yes|no — <is anything pulling this PR beyond its stated scope?>
+  Then on the LAST three lines emit exactly (map ADVANCE->NO OBJECTION,
+  REQUEST CHANGES->CHANGES ADVISED, DO NOT ADVANCE->DO NOT ADVANCE):
+    LOG SUMMARY: <NO OBJECTION | CHANGES ADVISED | DO NOT ADVANCE | UNCLASSIFIED> — <single most important point>
+      (use UNCLASSIFIED if you genuinely cannot classify the artifact safely)
+    EVIDENCE: <A|B|C|D|E>
+    HIGHEST-IMPACT UNCERTAINTY: <one sentence — what single thing, if wrong, most affects this assessment>
+
+  Evidence grade — the grade describes what the assessment rests on, not reviewer confidence:
+    A — Directly verified in the artifact, diff, or output shown in the packet
+    B — Verified with multiple direct pieces of evidence, but coverage is not complete
+    C — Partially verified, partially inferred from structure or context
+    D — Mostly inferred from structure or indirect evidence
+    E — Hypothesis or very limited basis — little to no direct evidence
+
+
+PACKET MANIFEST
+  generated: 2026-08-04T10:00:46Z
+  task_prompt: /home/rimo/projects/Codeos/prompts/codeos-reviewer-task.md (5794 bytes)
+  review_content_bytes: 10343
+  estimated_review_tokens: ~2585
+  budget_status: OK
+  packet_mode: full
+  delta_base: none
+  items:
+    - path: config/delegated-implementation.yaml
+      mode: full_file
+      bytes: 17
+      sha256: 24f62215d165c8a9433897e14b12da33e164183a4c8b4e39f13cb261a6104413
+    - path: /tmp/codeos-cpe-status.M3leqr
+      mode: full_file
+      bytes: 143
+      sha256: c22a40cd1dc48c0d9acce63e96d1625aab94e30348c3eaa9213a10753f1dd4e3
+    - path: (diff)
+      mode: full_file
+      bytes: 10183
+
+REVIEW CONTEXT
+  Feature:                UPG-0063-ac7-check
+  Stage:                  4
+  Branch:                 main
+  Base commit:            (no base pin)
+  Review commit:          4ba560864ae368f3d7e8d814ef44ca27e2484e0b (+ uncommitted workspace changes)
+  Current approved stage: 3
+  Evidence coverage:      FULL_COVERAGE
+  Workspace dirty:        yes (uncommitted changes at review time)
+
+DBA RULES RELEVANT TO THIS STAGE
+  - Human approval is required for every stage transition; you are advisory only.
+  - Memory is not truth — assess only what is provided, pinned to the review commit.
+  - Implementation must trace to approved artifacts; no behavior beyond intent+contract+schema.
+  - No events outside the approved event schema; no hidden behavior.
+
+STAGE-SPECIFIC CHECKS
+  - code traces to approved contract/schema only; no unapproved events; no hidden behavior; no unrelated files; report complete.
+
+EXPECTED STAGE OUTPUT
+  Implementation — code satisfying every contract clause; emits only schema events; contract-satisfaction + event-emission tables; nothing untraceable.
+
+ARTIFACTS TO REVIEW
+  --- config/delegated-implementation.yaml (sha256: 24f62215d165c8a9433897e14b12da33e164183a4c8b4e39f13cb261a6104413, visibility: shown) ---
+    status: disabled
+
+  --- /tmp/codeos-cpe-status.M3leqr (sha256: c22a40cd1dc48c0d9acce63e96d1625aab94e30348c3eaa9213a10753f1dd4e3, visibility: shown) ---
+    Controlled Plain English status for this review: enabled
+    Source: /home/rimo/projects/Codeos/config/writing-discipline.yaml
+    Applicable scope: 4
+
+DIFF TO REVIEW (base->review, secret/size filtered)
+diff --git a/changes/UPG-0063__CHG-20260804-001__deferral-resolution-trace.md b/changes/UPG-0063__CHG-20260804-001__deferral-resolution-trace.md
+index c6a56cd..7c25260 100644
+--- a/changes/UPG-0063__CHG-20260804-001__deferral-resolution-trace.md
++++ b/changes/UPG-0063__CHG-20260804-001__deferral-resolution-trace.md
+@@ -205,6 +205,7 @@ text, by the reviewer engine's own tests, and by a retrofit sanity check against
+ |---|---|---|
+ | 15 | **Downstream compatibility holds.** A generated project still loads `.codeos/dba-system.md`; stage names, prompt filenames, and cross-references move together; no reference is orphaned. | `grep` cross-reference sweep; `scripts/dba-init.sh` scratch run. |
+ | 16 | **Retrofit sanity check — the five fields actually fit the real cases.** Write the trace for Q0's three confirmed instances (PlotSpot validation-ordering; PlotSpot vocabulary-ownership; EA-0001 validator seam) and confirm each is expressible without inventing a field, and that the interim/superseder fields do real work on the vocabulary case. | The three retrofitted records appear in the change's evidence; any field that proves unusable or missing is reported rather than silently accommodated. |
++| 17 | **The retrofit is retrospective examples only — never historical backfill.** (Human guardrail, 2026-08-04.) The three traces live in this change's evidence as clearly-marked test fixtures. **No downstream artifact is modified**: nothing is written into PlotSpot or EvidenceAtlas, and no historical governance state is rewritten as though these traces existed when those implementations were approved. Backfilling real downstream artifacts, if ever wanted, is a separate decision. | `git diff --stat` shows no change to any file outside this repo; the evidence file carries the retrospective marking on its face. |
+ 
+ **Explicitly not in scope for these criteria:** whether the obligation is *complied with* in practice.
+ That needs downstream features to pass through Stage 4 after this ships, and is the evidence that
+diff --git a/prompts/04-implement.md b/prompts/04-implement.md
+index d934726..3ff147d 100644
+--- a/prompts/04-implement.md
++++ b/prompts/04-implement.md
+@@ -174,7 +174,50 @@ Structural Risk levels (only populate when a Critical Hub or God Function is tou
+ If no internal errors map to any approved classification for this feature, state "none" rather
+ than omitting the table.
+ 
+-5. Present the Review Package using `.codeos/templates/review-package.md` (Stage 4–5 format, inline only):
++5. Present a **Deferral → Resolution Trace** — *only if* this implementation resolved a material
++   question that an approved upstream artifact **explicitly deferred**. Most features defer nothing;
++   when that is the case, omit this section entirely. Do not write an empty table and do not write
++   "none".
++
++   **What counts as an explicit deferral.** A statement in an approved artifact that a specific design
++   or behavioral question is deliberately left unresolved *by that artifact* — whatever wording it
++   uses. The artifact names the question and says it does not settle it, often indicating where or
++   when it would be. Judge this by meaning, never by matching particular phrases: an equivalent
++   deferral written in different words counts exactly the same.
++
++   Two things that are **not** deferrals:
++   - **Silence.** An artifact that simply never mentions a question has not deferred it. Only an
++     affirmative statement of non-resolution counts — otherwise you would owe a record of everything
++     the artifacts failed to say.
++   - **Implementation freedom.** An artifact that settles the *behavior* while leaving the *technique*
++     open has deferred nothing. Choosing a data structure or an error-propagation style resolves no
++     deferral; record those under "Key architectural decisions" in the Review Package as before.
++
++   **Materiality.** Record a resolution only when changing it — while preserving the same public
++   behavior — would materially affect an invariant, a component's responsibility, the state model,
++   data integrity, or future architectural freedom.
++
++| Source Artifact + Deferral | Chosen Resolution | Where Implemented | Final / Interim | Expected Superseder |
++|---|---|---|---|---|
++| [artifact + the question it left open] | [what you decided] | [file:line, function, or module] | [FINAL / INTERIM] | [for INTERIM: the upstream decision or artifact expected to replace this; otherwise —] |
++
++   The last two columns are the point of the trace: an interim resolution that nothing records as
++   interim is indistinguishable later from a settled decision, and the upstream work that should
++   retire it is never triggered.
++
++   **This trace is subordinate to the approved artifacts.** It records a choice made under an
++   authority the artifact itself granted; it never overrides, reinterprets, or amends anything
++   approved. If your resolution appears to conflict with an approved artifact, that conflict must be
++   **reconciled** — raise it rather than recording a resolution that contradicts approved text, and
++   expect that implementation may not legitimately continue until the artifact is amended through its
++   own governance path.
++
++   **If you omit this section and a material deferral was in fact resolved, that is a traceability
++   defect** — the Stage 4 review will ask — **not an automatic implementation failure.** The
++   implementation may still be correct; the record of how a deferred question got answered is what is
++   missing.
++
++6. Present the Review Package using `.codeos/templates/review-package.md` (Stage 4–5 format, inline only):
+    - Artifact: `modules/[feature_id]/`
+    - Stage purpose: Implement only what the three approved artifacts specify.
+    - Files changed: [list all files created or modified]
+@@ -185,6 +228,6 @@ than omitting the table.
+    - Implementation Profile applied: if an approved profile applied to this feature, state
+      `profile_id`, `profile_version`, the resolved language, and any matched exception; otherwise
+      state "no profile" or "profile proposed, non-binding."
+-6. State: **`AWAITING HUMAN APPROVAL TO PROCEED TO STAGE 5`**
++7. State: **`AWAITING HUMAN APPROVAL TO PROCEED TO STAGE 5`**
+ 
+ **STOP.** Do not write tests until the human explicitly approves the implementation.
+diff --git a/tools/reviewer/src/packet.rs b/tools/reviewer/src/packet.rs
+index 9e96815..1d7b350 100644
+--- a/tools/reviewer/src/packet.rs
++++ b/tools/reviewer/src/packet.rs
+@@ -686,7 +686,7 @@ fn stage_checks(stage: &str) -> String {
+         "1" => "  - actor/outcome clarity; no implementation detail; scope boundary explicit; stable guarantees clear; ambiguity flagged.".to_string(),
+         "2" => "  - every intent outcome has observable contract coverage; failure paths named; invariants testable; no white-box claims.".to_string(),
+         "3" => "  - every relevant contract scenario has event coverage; event names stable; required fields clear; no speculative telemetry.".to_string(),
+-        "4" => "  - code traces to approved contract/schema only; no unapproved events; no hidden behavior; no unrelated files; report complete.".to_string(),
++        "4" => "  - code traces to approved contract/schema only; no unapproved events; no hidden behavior; no unrelated files; report complete.\n  - did implementation resolve any question an approved artifact EXPLICITLY deferred? if so, is each material resolution recorded in a Deferral -> Resolution Trace (source deferral, resolution, where implemented, final/interim, expected superseder)? judge deferral by meaning, not by phrase; a missing record is a traceability finding, not an implementation failure.".to_string(),
+         "5" => "  - behavior tested not private internals; failure paths tested; event/telemetry tests present; replay tests where applicable.".to_string(),
+         "6" => "  - runtime evidence captured; event log bounded/sanitized; correlation chains visible; unexpected/missing events reported.".to_string(),
+         "7" => "  - ALIGNED/GAP/MISMATCH/MISSING judgments supported; no weak evidence hidden behind fluent summary; gaps routed to right action.".to_string(),
+@@ -773,6 +773,40 @@ mod tests {
+         }
+     }
+ 
++    #[test]
++    fn stage_4_checklist_asks_for_the_deferral_resolution_trace() {
++        // UPG-0063: the Stage 4 reviewer asks the question actively rather than relying on the
++        // implementation author remembering the obligation.
++        let text = stage_checks("4");
++        assert!(text.contains("EXPLICITLY deferred"), "must ask about explicit deferrals: {text}");
++        assert!(text.contains("Deferral -> Resolution Trace"), "must name the trace: {text}");
++        assert!(text.contains("final/interim"), "must ask for the interim marker: {text}");
++        assert!(text.contains("expected superseder"), "must ask what supersedes an interim: {text}");
++        // Advisory, not a behavioral gate.
++        assert!(
++            text.contains("traceability finding, not an implementation failure"),
++            "must keep the finding advisory: {text}"
++        );
++        // Judged semantically — the checklist must not hand the reviewer a phrase list.
++        assert!(text.contains("by meaning, not by phrase"), "must forbid phrase-matching: {text}");
++        // The pre-existing Stage 4 checks survive.
++        assert!(text.contains("code traces to approved contract/schema only"));
++    }
++
++    #[test]
++    fn stage_4_deferral_question_is_scoped_to_stage_4_only() {
++        // No other stage's checklist mentions the trace.
++        for stage in [
++            "discovery", "brief", "onboarding", "1", "2", "3", "5", "6", "7", "8", "9", "10",
++            "architecture-synthesis",
++        ] {
++            assert!(
++                !stage_checks(stage).contains("Deferral -> Resolution Trace"),
++                "stage '{stage}' must not carry the Stage 4 deferral question"
++            );
++        }
++    }
++
+     #[test]
+     fn stage_checks_unrecognized_identifier_still_falls_back_to_placeholder() {
+         let text = stage_checks("nonexistent-stage");

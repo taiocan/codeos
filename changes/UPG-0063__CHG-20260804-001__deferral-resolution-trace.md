@@ -14,11 +14,11 @@ primary_feature_id: UPG-0063
 change_id: CHG-20260804-001
 slug: deferral-resolution-trace
 state: IN_PROGRESS      # DRAFT | IN_REVIEW | IN_PROGRESS | BLOCKED | COMPLETE | ABANDONED | SUPERSEDED
-current_step: 2-Acceptance  # 1-Intent | 2-Acceptance | 3-Implement | 4-Reconcile
+current_step: 3-Implement  # 1-Intent | 2-Acceptance | 3-Implement | 4-Reconcile
 implements:
   - UPG-0063
 related_features: [UPG-0062, UPG-0051, UPG-0058]
-review_series: RVS__UPG-0063__CHG-20260804-001__S2   # S1 ACCEPTED (R1 DO NOT ADVANCE → R2 NO OBJECTION)
+review_series: RVS__UPG-0063__CHG-20260804-001__S3   # S1, S2 ACCEPTED
 review_profile: PROFILE-4   # touches prompts/04-implement.md — downstream doctrine (Step 0a)
 review_state: IN_REVIEW # DRAFT | IN_REVIEW | REVIEWED | ACCEPTED  (operational; NOT a round)
 review_history: reviews/review-log.md
@@ -205,6 +205,7 @@ text, by the reviewer engine's own tests, and by a retrofit sanity check against
 |---|---|---|
 | 15 | **Downstream compatibility holds.** A generated project still loads `.codeos/dba-system.md`; stage names, prompt filenames, and cross-references move together; no reference is orphaned. | `grep` cross-reference sweep; `scripts/dba-init.sh` scratch run. |
 | 16 | **Retrofit sanity check — the five fields actually fit the real cases.** Write the trace for Q0's three confirmed instances (PlotSpot validation-ordering; PlotSpot vocabulary-ownership; EA-0001 validator seam) and confirm each is expressible without inventing a field, and that the interim/superseder fields do real work on the vocabulary case. | The three retrofitted records appear in the change's evidence; any field that proves unusable or missing is reported rather than silently accommodated. |
+| 17 | **The retrofit is retrospective examples only — never historical backfill.** (Human guardrail, 2026-08-04.) The three traces live in this change's evidence as clearly-marked test fixtures. **No downstream artifact is modified by the retrofit**: no PlotSpot or EvidenceAtlas contract, schema, intent, or module is touched, and no historical governance state is rewritten as though these traces existed when those implementations were approved. Backfilling real downstream artifacts, if ever wanted, is a separate decision. *(One file was added to PlotSpot this session — `refinements/F-0001-known-access-form-canonicalization.md` — at explicit human instruction and as a separate action from this change: it is a new advisory refinement candidate, not a modification of any approved artifact, and is not part of this change's diff.)* | `git status` in each downstream project shows no artifact modification attributable to this change; the fixtures file carries the retrospective marking on its face. |
 
 **Explicitly not in scope for these criteria:** whether the obligation is *complied with* in practice.
 That needs downstream features to pass through Stage 4 after this ships, and is the evidence that
@@ -215,7 +216,56 @@ pre-emptively.
 
 ## Implementation Notes
 
-*(pending Step 3)*
+<!-- Factual reporting. The git diff is the source of truth. -->
+
+**Doctrine — `prompts/04-implement.md`.** New item 5 in the Output Format, between the Failure Mapping
+Table and the Review Package; the closing state item renumbers 6 → 7. It carries the semantic
+definition, both exclusions with their reasons, the materiality gate, the five-column table, the
+subordination-and-reconciliation rule, and the traceability-defect-not-implementation-failure
+statement. Opens with *"only if"* and instructs omitting the section entirely when nothing was
+deferred — no empty table, no "none".
+
+Placement is deliberate: the existing Review Package already has a **"Key architectural decisions"**
+field, whose examples (*internal data structure, error propagation strategy*) are exactly the
+`ORDINARY IMPLEMENTATION CHOICE` category. The trace is a different thing — keyed to an upstream
+deferral, carrying interim/superseder — so it sits as its own item and the prompt explicitly routes
+technique choices back to the existing field, rather than the two silently competing.
+
+**Reviewer — `tools/reviewer/src/packet.rs`.** One added line inside `stage_checks("4")`. No other
+match arm touched; no engine, provider, packet-architecture, config, or CLI change.
+
+**Tests.** Two added in `packet.rs`: one asserts the stage-4 checklist asks the question and keeps it
+advisory and semantic; one asserts no other stage carries it. **184 tests pass** (182 before).
+
+**A stale-binary gap the unit tests could not catch.** After the source change, a generated stage-4
+packet still showed only the old checklist line — `scripts/codeos-review.sh` runs the prebuilt
+`tools/reviewer/target/release/codeos-reviewer`, so source changes are invisible until rebuilt. Tests
+passed against source the deployed binary did not contain. Rebuilt with
+`cargo build --release --manifest-path tools/reviewer/Cargo.toml`, then re-verified against a freshly
+generated packet, which now shows both lines. **AC-7 is satisfied by the packet, not by the unit
+test** — the unit test alone would have been false assurance.
+
+**Retrofit (AC-16/17).** `changes/UPG-0063__CHG-20260804-001__retrofit-fixtures.md`, carrying a
+retrospective-examples banner. All three Q0 cases are expressible in five fields with nothing
+invented. `Final / Interim` + `Expected Superseder` are decisive on the PlotSpot vocabulary case
+(interim by the contract's own wording, with nothing today recording it), useful on EA-0001, and
+correctly inert on validation-ordering.
+
+Two limitations **reported rather than accommodated**: `Expected Superseder` is only as precise as the
+deferral it points at (EA-0001's contract says rows are pending without naming what settles them —
+a property of the artifact, not a schema defect, and a sixth field would not fix it); and
+`Where Implemented` line numbers drift, so the durable part is `file:function`.
+
+**Downstream compatibility (AC-15).** `dba-init.sh` scratch run in a fresh git repo: `.codeos`
+symlink resolves, `.codeos/dba-system.md` reachable, and the generated project's
+`.codeos/prompts/04-implement.md` carries the new section.
+
+**Scope (AC-11/13/14).** Changed: `prompts/04-implement.md` (+45/-2), `tools/reviewer/src/packet.rs`
+(+35/-1), this record, the fixtures file. `dba-system.md` byte-unchanged; no other stage prompt
+changed; no `scripts/` or delegation-tooling change.
+
+**Assumptions:** the Stage 4 author reads the approved artifacts closely enough to notice an explicit
+deferral. That is the enforcement model accepted at the Step 1 gate, not an oversight.
 
 ---
 
