@@ -19,14 +19,14 @@ feature_id: UPG-0062
 primary_feature_id: UPG-0062
 change_id: CHG-20260803-002
 slug: architecture-constrained-delegation
-state: IN_PROGRESS      # DRAFT | IN_REVIEW | IN_PROGRESS | BLOCKED | COMPLETE | ABANDONED | SUPERSEDED
-current_step: 2-Acceptance  # 1-Intent | 2-Acceptance | 3-Implement | 4-Reconcile
+state: COMPLETE         # DRAFT | IN_REVIEW | IN_PROGRESS | BLOCKED | COMPLETE | ABANDONED | SUPERSEDED
+current_step: 4-Reconcile  # 1-Intent | 2-Acceptance | 3-Implement | 4-Reconcile
 implements:
   - UPG-0062
 related_features: [UPG-0051, UPG-0058, UPG-0052, UPG-0060, UPG-0032]
-review_series: RVS__UPG-0062__CHG-20260803-002__S2   # S1 ACCEPTED (R1-R3 DO NOT ADVANCE → R4 NO OBJECTION)
+review_series: RVS__UPG-0062__CHG-20260803-002__S4   # S1, S2 ACCEPTED
 review_profile: PROFILE-2   # documentation — no code in this change (Step 0a; re-assigned when scope narrowed at the Step 1 gate)
-review_state: IN_REVIEW # DRAFT | IN_REVIEW | REVIEWED | ACCEPTED  (operational; NOT a round)
+review_state: ACCEPTED  # DRAFT | IN_REVIEW | REVIEWED | ACCEPTED  (operational; NOT a round)
 review_history: reviews/review-log.md
 fixes_findings: []
 follow_up_of: null
@@ -254,4 +254,57 @@ No renegotiation of these numbers after measurement. If the result lands just ou
 
 ## Reconciliation
 
-*(pending Step 4)*
+<!-- Layer D1: advisory verdict, evidence separated from inference. -->
+
+**Outcome: Q1 FAILED. UPG-0062 does not proceed to delegated tooling. Q2 answered independently — the
+governance gap is real and is filed as UPG-0063.**
+
+Full measurement in `changes/UPG-0062__CHG-20260803-002__premise-test-evidence.md`.
+
+**Q1 result against the threshold precommitted at `7fb8c38`:**
+
+| Ratio | Measured | Threshold | Result |
+|---|---|---|---|
+| FID output ÷ Arm B output | 0.619 | ≤ 0.400 | FAIL |
+| FID weighted total ÷ Arm B weighted total | 0.802 | ≤ 0.500 | FAIL |
+
+Producing the design cost 62% of implementing directly. The remaining 38% would have to absorb the
+delegated candidate's reconciliation, which UPG-0060 measured as substantial. Per the precommitted
+rule, a result between 0.50 and 1.0 is *cheaper but not materially cheaper* and counts as a failure.
+No renegotiation.
+
+**Acceptance verification (16 criteria, AC-0 through AC-15):**
+
+| # | Criterion | Result | Evidence |
+|---|---|---|---|
+| 0 | FID marked non-authoritative | PASS | Banner on the artifact; referenced by no approved artifact or registry |
+| 1 | FID from approved artifacts only, frozen before Arm B | PASS | Threshold `7fb8c38` → FID `c879fe6` (sha256 recorded) → Arm B after; ordering is git history |
+| 2 | Every row classified; `SOURCE-DERIVED` rows cite a section | **PARTIAL FAIL** | All 18 rows classified, but FID row A8 cites "existing repository convention", not an approved artifact section. Recorded, not repaired — the FID is frozen and hashed for AC-1; editing it would destroy that integrity. No material effect on Q1 or Q2 (evidence §1d-bis) |
+| 3 | Covers every invariant + falsification scenario | PASS | 8 invariants, 2 falsification scenarios, 2 failure paths, 2 boundary scenarios, Vocabulary Dependency → 10 B-sections |
+| 4 | FID cost measured | PASS | 11,980 B / ~3,238 tok |
+| 5 | Arm B executed in an isolated workspace, measured | PASS | `/tmp/armb-ea0004/`; verbatim `cargo check` output and `src/lib.rs` sha256 in evidence §1b; 19,361 B / ~5,233 tok; not committed |
+| 6 | Verdict stated against a pre-stated threshold | PASS | Threshold committed before any measurement existed |
+| 7 | `NEW DESIGN` share quantified | PASS | 10 of 10 mechanism allocations |
+| 8 | EA-0001 establishes existence, not prevalence | PASS | 4 named mechanisms absent from approved artifacts; the limit is stated explicitly in the evidence |
+| 9 | Q2 determines whether a layer is required; does not design one | PASS | Required; filed as UPG-0063. No mechanism, gate, template, or lifecycle proposed here |
+| 10 | No second architecture authority created | PASS | FID governs nothing; approved artifacts authoritative throughout |
+| 11 | Q1 fails → change closes, no Rust | PASS | `git diff --stat`: no `tools/implementer/` |
+| 12 | CHG-C blocked | PASS | Blocked twice over — Q1 failed, and UPG-0063 must exist first |
+| 13 | No code belongs to this change | PASS | `tools/`, `scripts/`, `prompts/` untouched; Arm B isolated |
+| 14 | No downstream doctrine change, no new gate | PASS | `dba-system.md`, stage prompts, `dba-init.sh` unchanged; `config/delegated-implementation.yaml` still `status: disabled`; UPG-0060 records unmodified |
+| 15 | EA-0004 contamination declared | PASS | Declared in evidence §3 |
+
+**Findings scope-triage:**
+
+| Finding | Triage | Action |
+|---|---|---|
+| S1 R1-R3: scope contamination from uncommitted UPG-0060 work; unevidenced and contradictory bookkeeping | IN-SCOPE BLOCKER | Fixed; root cause was AJ-017 recurring — completed work left uncommitted across a feature boundary |
+| S2 R1-R2: the record contradicted its own narrowed scope in three places | IN-SCOPE BLOCKER | Fixed; the narrowing had been added in one section only |
+| Q1 negative result | NOT A FINDING | The measurement worked. A negative result was an explicitly acceptable outcome |
+| Governance gap discovered | OUT-OF-SCOPE BACKLOG | Filed as UPG-0063; deliberately not solved here per AC-9 |
+
+**What this change is worth.** The delegation hypothesis is dead on cost, and that was settled for the
+price of one design document and one implementation — no Rust engine, no shim rewrite, no pilot
+harness. The sequencing guardrail did its job: UPG-0060 hardened a mechanism before measuring whether
+it was worth having, and this change measured first. The gap it found on the way is likely the more
+valuable output.

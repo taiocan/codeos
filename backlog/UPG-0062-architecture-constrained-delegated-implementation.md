@@ -2,7 +2,7 @@
 feature_id: UPG-0062
 slug: architecture-constrained-delegated-implementation
 title: Architecture-Constrained Delegated Implementation (Stage 4)
-status: IN_PROGRESS
+status: CLOSED   # premise test negative (2026-08-04); no delegated tooling built
 priority: P2
 depends_on: [UPG-0051, UPG-0058, UPG-0052]
 related_features: [UPG-0060, UPG-0032, UPG-0056]
@@ -13,7 +13,18 @@ superseded_by: []
 # Upgrade: architecture-constrained-delegated-implementation
 
 **Priority**: P2
-**Status**: IN_PROGRESS — Step 1 APPROVED (human, 2026-08-04, with a correction to the artifact's status); Step 2 in progress
+**Status**: CLOSED — premise test negative (2026-08-04). No delegated tooling was built.
+
+> **Outcome.** Q1 failed against a threshold precommitted before any measurement: producing EA-0004's
+> Feature Implementation Design from approved artifacts cost **0.619** of implementing directly by
+> output (≤0.40 required) and **0.802** weighted (≤0.50). The saving this feature depended on is not
+> there. UPG-0060's apparent 10:1 leverage did not survive: that feedback was written with a failed
+> candidate in hand and only had to name six deltas, whereas specifying a design from artifacts alone
+> has no such shortcut — the bias AC-1 was written to catch, confirmed.
+>
+> **Q2 outlives the feature.** Ten of ten mechanism allocations were `NEW DESIGN`, and a shipped
+> feature (EA-0001) already carries four such decisions in code alone. Codeos has a real gap between
+> logical architecture and implementation. Filed as **UPG-0063**; deliberately not solved here.
 **Type**: script-tooling + Rust engine (pilot first; no doctrine change proposed)
 
 > **Relationship to UPG-0060.** UPG-0060 is closed and is not reopened by this feature. Its evidence
