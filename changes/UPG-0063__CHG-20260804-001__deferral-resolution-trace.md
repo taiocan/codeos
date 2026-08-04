@@ -14,11 +14,11 @@ primary_feature_id: UPG-0063
 change_id: CHG-20260804-001
 slug: deferral-resolution-trace
 state: IN_PROGRESS      # DRAFT | IN_REVIEW | IN_PROGRESS | BLOCKED | COMPLETE | ABANDONED | SUPERSEDED
-current_step: 3-Implement  # 1-Intent | 2-Acceptance | 3-Implement | 4-Reconcile
+current_step: 4-Reconcile  # 1-Intent | 2-Acceptance | 3-Implement | 4-Reconcile
 implements:
   - UPG-0063
 related_features: [UPG-0062, UPG-0051, UPG-0058]
-review_series: RVS__UPG-0063__CHG-20260804-001__S3   # S1, S2 ACCEPTED
+review_series: RVS__UPG-0063__CHG-20260804-001__S4   # S1, S2, S3 ACCEPTED
 review_profile: PROFILE-4   # touches prompts/04-implement.md — downstream doctrine (Step 0a)
 review_state: IN_REVIEW # DRAFT | IN_REVIEW | REVIEWED | ACCEPTED  (operational; NOT a round)
 review_history: reviews/review-log.md
@@ -271,4 +271,58 @@ deferral. That is the enforcement model accepted at the Step 1 gate, not an over
 
 ## Reconciliation
 
-*(pending Step 4)*
+<!-- Layer D1: advisory verdict, evidence separated from inference. -->
+
+**All 17 acceptance criteria verify as PASS on the implemented state.** This is the reconciliation
+*finding*, not an acceptance: `state` stays `IN_PROGRESS` and `review_state` `IN_REVIEW` until the
+Step 4 review has run and the human has accepted the result, per the dashboard's own rule. An earlier
+draft of this section set `COMPLETE`/`ACCEPTED` before either had happened — corrected, because
+claiming acceptance ahead of the gate undercuts the guarantee the gate exists to provide. Raw verification output is embedded in
+`changes/UPG-0063__CHG-20260804-001__retrofit-fixtures.md` §"Raw verification output" rather than
+summarised here.
+
+| # | Criterion | Result | Evidence |
+|---|---|---|---|
+| 1 | Obligation stated, absence is a traceability defect not an implementation failure | PASS | `04-implement.md:215-218` — "that is a traceability defect — the Stage 4 review will ask — not an automatic implementation failure" |
+| 2 | Semantic definition; both exclusions present with reasons | PASS | `:182-195` — **Silence** ("otherwise you would owe a record of everything the artifacts failed to say") and **Implementation freedom** ("choosing a data structure … resolves no deferral") |
+| 3 | No normative phrase list | PASS | Grep for `not prescribed` / `MANUAL-PENDING` in the added text returns **nothing** — no phrase list is present at all, normative or otherwise. The instruction is "judge this by meaning, never by matching particular phrases" |
+| 4 | Exactly five fields | PASS | `:200` — the table header carries five columns and no sixth |
+| 5 | Materiality gates entry | PASS | `:196-198` — the invariant / responsibility / state-model / data-integrity / future-freedom test |
+| 6 | Empty is normal, no ceremony | PASS | `:179-180` — "omit this section entirely. Do not write an empty table and do not write \"none\"" |
+| 7 | Stage 4 checklist asks the question | PASS | **Verified against a generated packet, not the source** — `reviews/codex/packets/20260804T100605Z-UPG-0063-ac7-recheck-stage-4-*.packet.txt` shows both checklist lines under STAGE-SPECIFIC CHECKS |
+| 8 | Only stage 4 changed | PASS | `git diff` of `packet.rs` touches no other match arm |
+| 9 | Reviewer tests exist; suite passes | PASS | 2 tests added; **184 pass**, up from 182 |
+| 10 | No automatic deferral discovery | PASS | Diff of both changed files contains no grep, scan, regex, enumeration, or search logic |
+| 11 | No new stage, gate, or standalone artifact | PASS | `dba-system.md` byte-unchanged; stage table, Non-Negotiable Rules and stage count untouched |
+| 12 | Trace subordinate; conflict reconciled | PASS | `:208-213` — "subordinate to the approved artifacts … that conflict must be **reconciled** … implementation may not legitimately continue until the artifact is amended through its own governance path" |
+| 13 | `tools/reviewer/` diff confined | PASS | Only `packet.rs` (+35/-1): the stage-4 string and its two tests. No provider, packet-architecture, config, or CLI change |
+| 14 | No other downstream stage prompt changed | PASS | `git diff --stat prompts/` lists `04-implement.md` alone |
+| 15 | Downstream compatibility | PASS | `dba-init.sh` scratch run: `.codeos` symlink resolves, `dba-system.md` reachable, generated `04-implement.md` carries the new section |
+| 16 | Five fields fit the real cases | PASS | Three retrofit fixtures, nothing invented; two limitations reported rather than accommodated |
+| 17 | Retrospective examples, not historical backfill | PASS | No PlotSpot or EvidenceAtlas contract/schema/intent/module touched; pre-existing dirt in both predates this change; the one PlotSpot file added is a separate human-instructed refinement candidate, disclosed in the criterion itself |
+
+**Stale-reference sweep.** Clean. The renamed brief
+(`UPG-0063-feature-implementation-design-layer.md` → `UPG-0063-deferral-resolution-trace.md`) is
+referenced only inside `reviews/codex/*` — historical assessments and packets recording what was true
+when they ran. Those are immutable by design and are **not** stale references to repair
+(SELF-REFERENCE / REVIEW-BOOKKEEPING). No template, `dba-system.md` section, or `README.md` entry pins
+the Stage 4 output item numbering, so renumbering 6 → 7 orphaned nothing.
+
+**Findings scope-triage:**
+
+| Finding | Triage | Action |
+|---|---|---|
+| S1 R1: Q0's grep-enumerability claim contradicted the semantic definition | IN-SCOPE BLOCKER | Fixed — claim withdrawn by appended correction, original left standing |
+| S2 R1: scope contradiction (`tools/reviewer/` in the gate section, excluded in the boundary); dashboard/record disagreed on S1 approval | IN-SCOPE BLOCKER | Fixed — scope, class and axis amended at the gate and recorded as an amendment |
+| S3 R1: dashboard Loop step stale | IN-SCOPE BLOCKER | Fixed. **AJ-020 recurrence** — the journaled rule is specifically that the row is updated before the review runs |
+| S3 R1: AC-9/15/17 asserted rather than evidenced | IN-SCOPE NON-BLOCKER | Fixed — raw output embedded (AJ-016) |
+| Stale release binary hiding a correct source change | IN-SCOPE BLOCKER (self-found) | Fixed by rebuild; AC-7 re-verified against a generated packet. Not reviewer-raised — the packet evidence would have looked fine to a reader trusting the unit tests |
+| AC-17 originally claimed "nothing is written into PlotSpot" | IN-SCOPE BLOCKER (self-found) | Fixed before review — the human-instructed refinement candidate made it literally false |
+| Recurring AJ-016 / AJ-020 bookkeeping failures | OUT-OF-SCOPE BACKLOG | **UPG-0061.** Not addressed here, per the human's instruction. The signal worth carrying: the rules already exist and still fail to change behavior at the required moment — a knowledge-application problem, not a knowledge gap |
+
+**Honest assessment.** The mechanism is small and the boundary held: conditional output, ordinary
+choices routed elsewhere, one advisory reviewer line, no scanning machinery, no new gate. What it is
+*not* yet is proven in use — no downstream feature has passed through Stage 4 under this obligation.
+Whether authors notice deferrals, and whether the reviewer's question surfaces omissions, is evidence
+that can only come later, and is what would justify anything stronger. Per the gate decision, nothing
+stronger is added pre-emptively.
