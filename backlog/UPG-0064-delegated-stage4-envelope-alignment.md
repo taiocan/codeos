@@ -13,7 +13,13 @@ superseded_by: []
 # Upgrade: delegated Stage-4 envelope alignment and governed pilot
 
 **Priority**: P2
-**Status**: IN_PROGRESS — CHG-A at Step 2 (Acceptance Criteria)
+**Status**: IN_PROGRESS — **CHG-A COMPLETE** (accepted 2026-08-05); CHG-B not started
+
+> **CHG-A shipped.** Six caller-declared role flags with zero authority inference; positionals
+> preserved but visibly degraded as ROLE UNSPECIFIED; conflicting roles fail closed pre-network;
+> labels byte-identical into the request; artifact content unmodified. The prompt states each role's
+> authority and carries UPG-0063's deferral rule with an explicit anti-fabrication guard. 47 tests.
+> The mechanism remains `status: disabled` and nothing has been run against a real model.
 **Type**: prompt + script-tooling (CHG-A), then a measured pilot (CHG-B)
 
 ## Problem — an integration defect, not an architecture-design problem
@@ -122,6 +128,12 @@ which is materially stronger evidence than the retrospective Q0 fixtures.
 **Binding precondition (set by CHG-A, human 2026-08-04):** CHG-B must declare **every** governed
 artifact with an explicit role flag. Positionals are compatibility-only and may not be used in the
 pilot — otherwise the experiment would run through the degraded path CHG-A exists to remove.
+
+**CHG-B's first action, before any model is called (AJ-023):** a dry-run invocation in the pilot's
+exact shape — every governed artifact declared by role flag, no positionals — against the stub
+endpoint. CHG-A's Step 4 found that 45 passing tests coexisted with the tool being undrivable in
+precisely that shape, because no test used it. The pilot must not discover this again with a real
+model and real tokens.
 
 **Measured — not "did it compile":** contract compliance; architecture violations; invented
 requirements; missed explicit deferrals; unnecessary design decisions; Codex findings by severity;

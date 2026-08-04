@@ -14,14 +14,14 @@ feature_id: UPG-0064
 primary_feature_id: UPG-0064
 change_id: CHG-20260804-002
 slug: delegated-harness-envelope-alignment
-state: IN_PROGRESS      # DRAFT | IN_REVIEW | IN_PROGRESS | BLOCKED | COMPLETE | ABANDONED | SUPERSEDED
+state: COMPLETE         # DRAFT | IN_REVIEW | IN_PROGRESS | BLOCKED | COMPLETE | ABANDONED | SUPERSEDED
 current_step: 4-Reconcile  # 1-Intent | 2-Acceptance | 3-Implement | 4-Reconcile
 implements:
   - UPG-0064
 related_features: [UPG-0051, UPG-0052, UPG-0063, UPG-0060, UPG-0062]
 review_series: RVS__UPG-0064__CHG-20260804-002__S4   # S1, S2, S3 ACCEPTED
 review_profile: PROFILE-3   # prompt + script-tooling, self-dev only (Step 0a)
-review_state: IN_REVIEW # DRAFT | IN_REVIEW | REVIEWED | ACCEPTED  (operational; NOT a round)
+review_state: ACCEPTED  # DRAFT | IN_REVIEW | REVIEWED | ACCEPTED  (operational; NOT a round)
 review_history: reviews/review-log.md
 fixes_findings: []
 follow_up_of: null
@@ -272,7 +272,7 @@ the existing suite and by `mapfile`-free array handling elsewhere in the script.
 
 <!-- Layer D1: advisory verdict, evidence separated from inference. -->
 
-**All 18 acceptance criteria PASS**, verified from the **full unfiltered** suite output with shell
+**All 18 acceptance criteria PASS. Accepted by the human 2026-08-05**, after S4 R4 returned NO OBJECTION — in that order. Verified from the **full unfiltered** suite output with shell
 syntax validation run first. Per the human's Step 4 instruction, filtered output is not used as
 acceptance evidence — that instruction exists because Step 3 produced a false-green signal exactly
 that way.

@@ -741,3 +741,32 @@ that suppressed manifests, withheld layout, discouraged the needed abstractions,
 iteration. Correcting the harness is therefore a **prerequisite** to any further model comparison, not
 an alternative avenue — a re-test that changes the model without fixing the packet is uninterpretable.
 See `backlog/UPG-0060-deepseek-delegated-implementation.md` for the ordered re-test conditions.
+
+## AJ-023 — A suite tests what its author thought to test; the usage shape a change exists to enable is the one most likely to go untested
+
+*Origin: UPG-0064 / CHG-20260804-002 (delegated Stage-4 envelope alignment), Step 4 R1.*
+
+The change added caller-declared artifact roles so a delegated-implementation pilot could name each
+artifact's authority explicitly. Its acceptance criteria recorded a binding precondition on the
+dependent work: the pilot must declare **every** governed artifact with a role flag and use no
+positional artifacts, so the experiment could not run through the degraded compatibility path.
+
+Forty-five tests passed. The usage check still read `[[ $# -lt 3 ]]`, requiring a positional artifact,
+so a role-flags-only call exited 3. **The tool could not be driven the way the dependent work was
+required to drive it** — the precondition was unsatisfiable by the implementation written to enable
+it. No test caught this, because every test invoked the tool with at least one positional, which was
+the pre-existing shape.
+
+The suite was not weak in general: it covered path safety, protocol robustness, secret non-leakage,
+idempotency, allowlist drift, and mutation-verified two guards. It simply tested the shapes its author
+already had in mind, and the new shape — the one the whole change existed to make possible — was the
+one absent from that set.
+
+**Rule:** when a change exists to enable a specific downstream usage, write a test that invokes it in
+exactly that shape, before believing the change works. Coverage of what the code *does* is not
+coverage of what the change is *for*. The strongest form is a dry run in the dependent work's precise
+invocation, executed as part of the enabling change rather than deferred to the first real use.
+
+Related: AJ-016 (evidence must be embedded, not summarised) and the same change's Step 3 incident, in
+which filtered test output hid a syntax error and produced a false green. Both are the same underlying
+failure — verification aimed at the wrong surface — and both were invisible from inside a passing run.

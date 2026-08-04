@@ -9017,3 +9017,13 @@ Log summary: NO OBJECTION — all 18 criteria are supported; the remaining hash 
 Full assessment: /home/rimo/projects/Codeos/reviews/codex/2026-08-04T202802Z-UPG-0064__CHG-20260804-002-stage-selfdev-step-4-4c9dde1.md (sha256:3ce6a7fb27d4a6ee338a0d02b6c44b060574e2b9a45f308d895f820f3f5686ef)
 Reviewed packet: /home/rimo/projects/Codeos/reviews/codex/packets/20260804T202802Z-UPG-0064__CHG-20260804-002-stage-selfdev-step-4-4c9dde1.packet.txt (sha256:64e4a0abc0d6cbb605dab67d31f2824bdecd847fde177a935fdc9a7c938f1784)
 Human decision: (append with: codeos-reviewer decision UPG-0064__CHG-20260804-002 selfdev-step-4 <DECISION> "<reason>")
+
+## 2026-08-04T23:58:16Z HUMAN DECISION — UPG-0064__CHG-20260804-002 — Stage selfdev-step-4
+Commit at decision: 15daf7c4a3f0d9afb6680c3b686e8b0b1a206761
+Decision: APPROVE_STAGE
+Reason/next: ACCEPTED — CHG-20260804-002 COMPLETE. All 18 acceptance criteria verified from the full unfiltered suite with shell syntax validation run first; 47 tests pass; raw output embedded. S4 R1 found a real functional defect (role-flags-only invocation exited 3, making CHG-B's own precondition unsatisfiable) and a false AC-9 byte-preservation claim; R2 caught provenance that went stale when Step 4 itself changed the script; R3 caught the usage synopsis and a stale preface; R4 NO OBJECTION, evidence A. Human direction: record the missed role-only invocation as a verification-method lesson, but do not keep this change open merely to improve the general testing process. Journaled as AJ-023 and carried into CHG-B as its first action.
+Provenance:
+  assessment: /home/rimo/projects/Codeos/reviews/codex/2026-08-04T202802Z-UPG-0064__CHG-20260804-002-stage-selfdev-step-4-4c9dde1.md
+  review_commit: 4c9dde140fc71f4967b75732fe342947e250b50c  [HEAD_DRIFT: current=15daf7c4a3f0]
+  packet_sha256: [MATCH]
+  coverage_state: FULL_COVERAGE  [OK]
