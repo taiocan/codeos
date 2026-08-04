@@ -271,9 +271,19 @@ jq -r '.messages[1].content' "${D}/request.json" | grep -qF -- "${lbl}" && inreq
 if grep -qF -- "${lbl}" "${D}/packet.txt" && [[ "${inreq}" == "yes" ]]; then
   ok "ROLE label byte-identical in packet.txt and the request actually sent"
 else bad "ROLE label transport" "packet vs request differ"; fi
-if jq -r '.messages[1].content' "${D}/request.json" | grep -qxF "the baseline"; then
-  ok "ROLE labelling leaves artifact content unmodified"
-else bad "ROLE content mutated" "source bytes not verbatim in the request"; fi
+# AC-9: the artifact-content region (after the heading and its generated binding note, up to the
+# next heading) must be byte-identical to the source file. Stronger than "the bytes appear somewhere".
+jq -r '.messages[1].content' "${D}/request.json" > "${WORK}/sent.txt"
+awk '/^--- ARCHITECTURE BASELINE: architecture\/core-baseline\.md ---$/{f=1;skip=1;next} f&&skip{skip=0;next} f&&/^--- /{f=0} f{print}' "${WORK}/sent.txt" > "${WORK}/raw.txt"
+# The packet separates blocks with a leading newline before each heading, so the extracted region
+# carries exactly one trailing blank line belonging to that separator, not to the artifact. Drop
+# precisely one, then require byte equality with the file.
+awk 'NR>1{print prev} {prev=$0} END{if (prev != "") print prev}' "${WORK}/raw.txt" > "${WORK}/extracted.txt"
+if cmp -s "${WORK}/extracted.txt" "${REPO}/architecture/core-baseline.md"; then
+  ok "ROLE content region byte-identical to source file"
+else
+  bad "ROLE content mutated" "extracted region differs from the source file"
+fi
 
 reset_state
 rc=$(run_tool --architecture architecture/nope.md F-0001 4 intents/F-0001.md)
@@ -313,6 +323,16 @@ PR="${CODEOS_ROOT}/prompts/codeos-implementer-task.md"
 if grep -q "Omitting this section is the expected outcome" "${PR}" && grep -q "Do not invent a deferral" "${PR}"; then
   ok "DEFERRAL prompt states absence is expected and forbids fabrication"
 else bad "DEFERRAL no-pressure wording" "prompt lacks the anti-fabrication instruction"; fi
+
+reset_state
+rc=$(run_tool --contract contracts/F-0001_contract.md --architecture architecture/core-baseline.md F-0001 4)
+if [[ "${rc}" == "0" ]]; then ok "ROLE role-flags-only call needs no positional artifact"
+else bad "ROLE role-only call" "rc=${rc} — CHG-B could not avoid the compatibility path"; fi
+
+reset_state
+rc=$(run_tool F-0001 4)
+if [[ "${rc}" == "3" ]]; then ok "ROLE zero artifacts by any route -> exit 3"
+else bad "ROLE zero artifacts" "rc=${rc}"; fi
 
 echo "== Group 1: protocol robustness (criterion 7) =="
 

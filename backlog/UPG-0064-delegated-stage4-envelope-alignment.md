@@ -38,10 +38,11 @@ Three features built a governed envelope around Stage 4:
 | Deferral / deferred | **0** |
 
 Its output contract asks for three loose sections — `contract_satisfaction`, `event_emission`,
-`notes` — and has no notion of a deferral trace. `scripts/codeos-implement.sh` compounds this by
+`notes` — and had no notion of a deferral trace. `scripts/codeos-implement.sh` compounded this by
 labelling every input identically as `--- APPROVED ARTIFACT: <path> ---`, so a behavioral contract and
-an Architecture Baseline are indistinguishable to the model. Only layout exemplars carry a distinct
-label today.
+an Architecture Baseline were indistinguishable to the model; only layout exemplars carried a distinct
+label. *(Stated in past tense: CHG-A corrected both, 2026-08-04. The measurements above are the
+pre-change state that motivated the feature.)*
 
 UPG-0062 planned the prompt rewrite that would have fixed part of this and **closed on cost before
 Step 3**, so it never happened. The envelope was completed; the delegated execution path was never

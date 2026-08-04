@@ -10,11 +10,13 @@
 # exit-code table). It is off by default — see the activation status file below.
 #
 # Usage:
-#   codeos-implement.sh [options] <feature_id> <stage:4|5> <artifact-path> [more artifact-paths...]
+#   codeos-implement.sh [options] <feature_id> <stage:4|5> [artifact-path...]
 #     <feature_id>     the DBA feature id (used only to name the staging directory)
 #     <stage>          4 (implementation) or 5 (tests) — no other value is accepted
-#     <artifact-path>  one or more approved artifacts (intent / contract / event schema; plus the
-#                      Stage 4 output when stage=5). Each must exist.
+#     <artifact-path>  OPTIONAL positional artifacts (intent / contract / event schema; plus the
+#                      Stage 4 output when stage=5). Each must exist. A call may pass none of these
+#                      and declare every artifact through the role flags below instead — that is the
+#                      preferred shape. At least one artifact must arrive by one route or the other.
 #
 #   Options (each must precede the positional arguments):
 #     Artifact ROLE flags — the caller declares each artifact's authority; this tool performs NO
@@ -107,9 +109,12 @@ while [[ $# -gt 0 ]]; do
     *)                   break;;
   esac
 done
-if [[ $# -lt 3 ]]; then
+# feature_id and stage are always required. Artifacts may arrive positionally OR via role flags —
+# a fully role-declared call passes no positional artifact at all, which is the intended shape and
+# the only shape CHG-B's precondition permits.
+if [[ $# -lt 2 ]]; then
   err "usage: codeos-implement.sh [role flags] [--exemplar PATH] [--repair-candidate PATH]"
-  err "                           [--repair-output PATH] <feature_id> <stage:4|5> <artifact-path>..."
+  err "                           [--repair-output PATH] <feature_id> <stage:4|5> [artifact-path...]"
   err "       role flags: --contract --event-schema --architecture --cohort-design --profile"
   exit 3
 fi
@@ -119,6 +124,14 @@ if [[ "${STAGE}" != "4" && "${STAGE}" != "5" ]]; then
   err "stage must be 4 (implementation) or 5 (tests); got '${STAGE}'"
   exit 3
 fi
+# At least one governed artifact must be supplied, by either route. Zero artifacts is a usage error,
+# not a silent run against nothing.
+if [[ ${#ARTIFACTS[@]} -eq 0 && ${#ROLE_CONTRACT[@]} -eq 0 && ${#ROLE_SCHEMA[@]} -eq 0 \
+      && ${#ROLE_ARCH[@]} -eq 0 && ${#ROLE_COHORT[@]} -eq 0 && ${#ROLE_PROFILE[@]} -eq 0 ]]; then
+  err "no artifacts supplied: pass at least one role flag or one positional artifact path"
+  exit 3
+fi
+
 # Candidate files must stay in the stage's area (Stage 4 -> modules/, Stage 5 -> tests/). This
 # backs the "strict path" contract stated in prompts/codeos-implementer-task.md: the model is
 # instructed, and the tool enforces, so a doctrine/config/governance path can never be staged.
