@@ -16,7 +16,62 @@ superseded_by: []
 **Status**: PROPOSED
 **Type**: prompt (+ possible script-tooling)
 
-## Problem
+## Problem — reframed 2026-08-04, after UPG-0060/0062/0063
+
+> **A known procedural rule can exist in the journal and still fail repeatedly, because nothing
+> reliably surfaces or enforces that rule at the exact workflow transition where it must be applied.**
+
+That is the primary problem. The taxonomy below is a secondary, still-useful improvement, but it is
+**not** the main gap and should not be mistaken for the fix.
+
+**Why the reframing.** This feature was originally filed because review effort tracked artifact churn
+rather than risk. Three subsequent features supplied better evidence — and it pointed somewhere else:
+
+- **AJ-020 already contains the right knowledge.** It says, specifically, that the dashboard row must
+  be updated *before* the step review runs. It was written after the same failure occurred twice.
+- **It then failed three more times in UPG-0063 alone**, plus repeatedly in UPG-0062. The rule was
+  correct, specific, and about exactly the transition being got wrong — and it still did not reach the
+  point of action.
+- **AJ-016 behaved identically**: evidence must be embedded, not summarised. Journaled, then violated
+  again in UPG-0063 Step 3.
+
+So the failure is not that the knowledge is missing, badly categorised, or wrongly prioritised. It is
+that a retrospective journal is the wrong delivery mechanism for a rule whose whole content is *"do X
+at moment Y."* Writing it down more clearly, or classifying its violations more precisely, does not
+address that.
+
+**One distinction the evidence forced, and it matters for scope.** Not every recurrence is the same
+kind of failure. UPG-0063 Step 4 produced one that looks superficially like the others but is not:
+the change record asserted `state: COMPLETE` / `review_state: ACCEPTED` before the review had run and
+before the human had accepted. That is not stale bookkeeping — it is **a false governance-state
+assertion**, an artifact claiming the human gate had occurred when it had not. Catching it before
+acceptance preserved the gate's meaning. Any taxonomy this feature produces must keep that separable
+from record drift, because the two warrant completely different responses.
+
+## What this points toward
+
+**Point-of-action safeguards, not more retrospective documentation.** Something that surfaces the
+relevant rule at the transition where it applies — a step-entry checklist, a precondition the tooling
+already knows how to check, a prompt-level reminder at the moment the row is written.
+
+**And a hard proportionality constraint.** Codeos must not become a rigid workflow engine. AJ-021 is
+the standing precedent: a request for an on/off switch grew into a versioned governance framework
+across seven review rounds before a human reset it. The remedy here should be small enough that its
+absence would be the only thing anyone noticed.
+
+Two candidate shapes, neither settled:
+
+- The self-dev step prompt names the two or three rules that actually recur, at the point of each step
+  transition — cheapest possible, no machinery.
+- The reviewer's existing precheck asserts what it can already see (dashboard loop step matches the
+  change record's `current_step`) — mechanical, but only for rules that are mechanically checkable.
+
+**Deliberately not proposed:** enforcing AJ-016/AJ-020 as gates, a rules engine, or a general
+"journal compliance" mechanism.
+
+## Secondary problem — the original filing
+
+
 
 The reviewer's `IN-SCOPE BLOCKER` category currently gives equal weight to things that are not equally
 important:
