@@ -17,7 +17,10 @@ superseded_by: []
 2026-08-08: 203-row disposition of every normative rule in `dba-system.md`. Phase A's second
 sub-step, CHG-20260808-001 (v1 Component Decomposition), is also **COMPLETE**, accepted
 2026-08-08: 6 candidate `v1` component files under `dba/` (175 rows), transcribed from pinned
-`dba-system.md` @ `77599e9` source text. Phase A's next sub-step — a compatibility sweep against
+`dba-system.md` @ `77599e9` source text. **Post-acceptance hygiene fix (2026-08-08, human-authorized,
+no new review round):** `CHG-20260807-001`'s delta table had 7 `source_anchor` line ranges
+corrected in place per `AJ-024` — disposition/target_owner/rationale unchanged for all 7; see the
+delta table's own correction note. Phase A's next sub-step — a compatibility sweep against
 prompts/scripts/templates assuming old semantics — is not started.
 **Type**: downstream-doctrine
 
