@@ -1,0 +1,325 @@
+---
+feature_id: UPG-0065
+slug: modular-dba-configuration-architecture
+title: Modular DBA Configuration Architecture
+status: IN_PROGRESS
+priority: P1
+depends_on: []
+related_features: [UPG-0001, UPG-0051, UPG-0052, UPG-0056, UPG-0057, UPG-0058, UPG-0059]
+supersedes: []
+superseded_by: []
+---
+
+# Upgrade: modular-dba-configuration-architecture — Modular DBA Configuration Architecture
+
+**Priority**: P1
+**Status**: IN_PROGRESS — CHG-20260807-001 (Normative Delta Inventory) **COMPLETE**, accepted
+2026-08-08: 203-row disposition of every normative rule in `dba-system.md`. Phase A's next
+sub-step (decompose `dba-system.md` into candidate `v1` components using this table, per the
+Migration Approach) is not started.
+**Type**: downstream-doctrine
+
+## Problem
+
+`dba-system.md` (792 lines / 7,139 words) mixes several concerns at different authority levels in
+one file — core DBA rules, the Architecture Synthesis Gate, Implementation Profile, review
+mechanics, Controlled Plain English activation, artifact layout, tool invocation. Changing one
+policy today means touching (and re-approving) the whole doctrine, and nothing distinguishes "this
+is what DBA fundamentally guarantees" from "this is how a specific optional mechanism happens to
+be wired up right now."
+
+A concrete lean draft already exists on disk, `dba-system-lean.md` (257 lines), but it is
+**ungoverned**: no backlog entry, no commit message discussing it, no dashboard row. It was swept
+into commit `15daf7c` ("UPG-0064 Step 4 reconciliation") as incidental untracked content, unrelated
+in subject to that change's actual scope (delegated Stage-4 envelope alignment). It currently sits
+as real content with zero traceability.
+
+A naive fix — "just split the file into smaller linked Markdown fragments" — introduces a new risk
+it doesn't solve: **individually-valid components can be jointly contradictory.** For example, a
+doctrine version that batches Stage 4–8 execution into one delivery cycle, paired with a review
+policy that still assumes a human gate after every stage, are each internally coherent but
+mutually inconsistent if combined. A file-split alone has no mechanism to prevent exactly that
+combination from silently becoming "the doctrine."
+
+## Upgrade
+
+Replace "one monolithic doctrine file" with a **versioned configuration system**: independently
+versioned components, assembled only through an explicitly human-approved, immutable
+configuration. Three distinct concepts:
+
+| Concept | Definition |
+|---|---|
+| **Component version** | An immutable version of one independently-evolving DBA element (e.g. `policies/review/v2.md`). Editing means writing `vN+1`; an approved version is never edited in place. |
+| **Configuration version (`DBA-N`)** | An immutable, **explicitly human-approved** combination of specific component versions. |
+| **Active configuration** | The single `DBA-N` currently named by `dba-system.md`. |
+
+### Target layout
+
+```text
+dba/
+├── doctrine/
+│   ├── v1.md                       # candidate, decomposed from dba-system.md
+│   └── v2.md                       # candidate, decomposed from dba-system-lean.md
+├── policies/
+│   ├── review/
+│   │   ├── v1.md                   # dba-system.md's "Default Advisory Review"
+│   │   └── v2.md                   # dba-system-lean.md's "Review Policy"
+│   ├── architecture-synthesis/
+│   │   ├── v1.md                   # dba-system.md's "Multi-Feature Architecture Synthesis Gate"
+│   │   └── v2.md                   # dba-system-lean.md's "Multi-Feature Architecture Gate"
+│   ├── implementation-profile/
+│   │   └── v1.md                   # dba-system.md's "Implementation Profile" — no v2 candidate
+│   │                                #   yet; dba-system-lean.md doesn't address this at all
+│   └── controlled-plain-english/
+│       └── v1.md                   # activation mechanics; full layered content stays in
+│                                    #   patterns/controlled-plain-english.md, referenced
+├── tools/
+│   └── reviewer/
+│       └── v1.md                   # codeos-review.sh invocation mechanics, CPE injection map
+└── configurations/
+    ├── DBA-1.yaml                  # candidate — NOT pre-approved (see Invariants)
+    └── DBA-2.yaml                  # candidate — the lean combination, pending pilot
+```
+
+**Both `dba-system.md` and `dba-system-lean.md` are source documents to decompose**, each into
+*several* components — never a 1:1 file→version mapping. `dba-system-lean.md` alone contains
+doctrine, review-policy, architecture-policy, and writing-style content; decomposing it means
+producing candidate `v2`s for several components, not one monolithic `doctrine/v2.md` that absorbs
+everything.
+
+**Recommended, not yet decided**: `dba-system.md` stays at its current path (repo root; downstream
+`.codeos/dba-system.md`) so no already-onboarded project's symlink breaks, with its role changing
+to the thin active-configuration manifest below. See the open question immediately following this
+sketch — the alternative (a new `dba/dba.md` path) is not ruled out here.
+
+```markdown
+# Active DBA Configuration
+active_configuration: dba/configurations/DBA-1.yaml
+
+All components named in the active configuration are jointly authoritative and must be loaded
+when applicable. Do not load a component version not named by the active configuration.
+```
+
+**Open question, deferred to the change that first creates manifest or component files** (not
+resolved by the normative delta inventory, and not bound to any specific CHG's Step 1): whether to
+keep `dba-system.md` at its current path as the manifest (recommended, backward-compatible) or
+introduce a new `dba/dba.md` path instead.
+
+**Component scope, deliberately not "version everything."** A split is justified only when a
+component has independent authority, independent lifecycle, and a real reason to vary separately.
+Current concrete set: doctrine, review policy, architecture-synthesis policy, implementation-
+profile policy, controlled-plain-english policy, reviewer tool contract. `tools/implementer/` is
+**not** included — no downstream doctrine content describes an implementer tool contract today
+(the delegated-implementer work is self-dev tooling, `UPG-0060`/`UPG-0064`, unrelated to what
+downstream projects load); inventing a placeholder would violate "artifacts on disk are
+authoritative."
+
+**`patterns/` vs. a new `policies/` directory — left open, with a criterion, not a default.** Move
+material to the smallest existing home whose authority and loading semantics are unambiguous. Do
+not invent a new directory taxonomy purely for aesthetics. Directory choice is deferred to the
+change that first creates component files — not decided by the normative delta inventory, and not
+bound to any specific CHG's Step 1.
+
+### Two levels, kept separate: DBA configuration vs. project configuration
+
+This matters concretely for Controlled Plain English and Implementation Profile, both already
+optional, project-toggled mechanisms. `DBA-2` naming `controlled-plain-english-policy: v1` means
+only: *this is the version of the rules that govern CPE, if this project uses CPE.* It does **not**
+mean CPE is enabled. Whether a project actually uses an optional mechanism remains entirely a
+project-local decision:
+
+- **DBA configuration selects the governing policy *version***, applicable if and when a project
+  uses that mechanism.
+- **Project-local configuration** (e.g. `architecture/controlled-plain-english.yaml`,
+  `architecture/implementation-profile.yaml`) **determines whether/how an optional mechanism
+  applies to that project**, unchanged by which `DBA-N` is active.
+
+Modular DBA configuration must not swallow project configuration.
+
+### Architectural invariants
+
+1. **No `DBA-N` carries `approved` status without an explicit human approval of that exact pinned
+   combination — including `DBA-1`.** The current live system was approved incrementally, over
+   many separate change records; that is not the same as approving "`DBA-1` — this exact
+   combination — as a configuration object." `DBA-1` must be (a) constructed as the
+   configuration-equivalent of today's live system, (b) proven semantically equivalent through the
+   delta inventory and compatibility sweep, (c) explicitly approved as the migration baseline, and
+   only then (d) activated. Filing this brief does **not** pre-approve `DBA-1`; both `DBA-1.yaml`
+   and `DBA-2.yaml` above are illustrative candidates only.
+2. **Configuration activation is atomic.** The active pointer names exactly one approved `DBA-N`.
+   Components are never activated individually; there is no partially-migrated state.
+3. **Published component versions are immutable.** A change is always a new `vN+1`. Old
+   configurations remain readable, so a feature's provenance is reconstructible.
+4. **A component split must earn its place** — independent authority, independent lifecycle, a
+   real reason to vary separately.
+5. **Configuration binding is explicit and per-feature.** Every feature must have exactly one
+   explicitly recorded governing `DBA-N`. Changing the globally active configuration must never
+   silently migrate the governing rules of work already in progress; moving in-flight work to a
+   different `DBA-N` requires an explicit human decision and an impact assessment — mirroring how
+   `UPG-0051`'s Architecture Baseline versioning already treats in-flight Stage 4 work under a
+   superseded baseline version. This gives real provenance (`F-0017 → DBA-1`), not just "whatever
+   happened to be globally active later." **Deliberately left open for the change that designs the
+   binding mechanism** (not frozen by this brief, and not bound to any specific CHG's Step 1):
+   exactly when a feature's binding is recorded — Stage 1 entry, Feature Brief
+   acceptance, or some other precise point — and the single canonical location that binding lives.
+   Avoid duplicating it across Intent, the feature registry, and the review log; every other
+   surface derives or references the one canonical record, never restates it.
+
+**Deliberately not included yet**: no cross-component dependency declarations (e.g.
+`review/v3 requires doctrine >= v4`), no compatibility solver. A `DBA-N` configuration is already
+the unit whose combined coherence is reviewed and human-approved — that's sufficient. If
+combinations become numerous enough that this gets hard to reason about by hand, automate later;
+building it now would be premature infrastructure.
+
+### Known normative deltas identified so far — explicitly non-exhaustive
+
+An initial line-by-line comparison already found more disagreement than a first pass surfaced.
+This table is evidence the comparison must be done systematically, not a claim that it's complete:
+
+| Area | `dba-system.md` (candidate v1) | `dba-system-lean.md` (candidate v2) |
+|---|---|---|
+| Authority | Runtime behavior can override intent *text* when more specific | Approved artifacts are authoritative for required behavior; runtime shows only what the system *does* |
+| Stage 4 internal abstractions | "NEVER add abstractions... beyond" what artifacts specify | Normal internal abstractions permitted, provided observable behavior is unchanged |
+| Stage 6 execution | Human runs the implementation | Agent may run representative scenarios when the environment permits |
+| Stage 9 refinement | Human approves each refinement individually | A correction within already-approved behavior may proceed without a new product decision |
+| Architecture governance | Same two artifacts (Core Architecture Baseline + Cohort Logical Design), produced through elaborate registry/version/history/wave-gate mechanics | Same two artifacts, produced through a condensed 4-step draft→approve sequence with no registry/history/versioning machinery |
+| Review persistence | Extensive mandatory logging (Decision Log row, conditional Rationale, conditional AJ entry, always) | Save a review only when its decision changes behavior, architecture, or an accepted risk |
+| Stage transitions (Non-Negotiable Rule #1) | Every stage transition requires explicit human approval | Event Schema approval authorizes Stages 4–8 as one uninterrupted delivery cycle |
+| Independent review | Default at every reviewable gate | Conditional — only on named trigger conditions |
+
+**The mandatory Step-1 deliverable, before drafting any component file**: a complete disposition
+of *every* current normative rule in `dba-system.md`, each classified exactly one of
+`KEEP-IN-CORE` (meaning preserved, stays in doctrine; `target_owner: doctrine`) / `MOVE` (meaning
+preserved, relocates to a named non-doctrine component, or `target_owner: UNRESOLVED` when none
+clearly fits — ownership must be resolved before component drafting begins) / `RETIRE` (redundant,
+duplicated, or already-superseded rules only — any semantic removal is `INTENTIONAL-BEHAVIOR-
+CHANGE` instead) / `INTENTIONAL-BEHAVIOR-CHANGE` (meaning changes, **regardless of whether the
+rule's component also changes** — it still names a `target_owner` for the new form, and requires
+an explicit human decision, never bundled into "adopt `DBA-2`"; intentional deletion with no
+successor is `target_owner: NONE` / `proposed_rule: REMOVED`, distinct from `RETIRE`, which only
+covers zero-semantic-loss removal). Meaning and location are two independent axes: a rule can
+change meaning *and* move components at once, and that combination is always
+`INTENTIONAL-BEHAVIOR-CHANGE`, never `MOVE`. The table above seeds that inventory; it does not
+substitute for it. The inventory is allowed to challenge this brief's own proposed component
+decomposition —
+it is not forced to validate it.
+
+### Migration approach — two decoupled phases, deliberately not confounded
+
+**Phase A — did modularization preserve current DBA?**
+Normative delta inventory (full disposition table) → decompose `dba-system.md` into candidate v1
+components → compatibility sweep against prompts/scripts/templates assuming old semantics → prove
+`DBA-1` semantically equivalent to the live monolith → explicit human approval of `DBA-1` →
+activate the modular architecture with `DBA-1` as the active configuration.
+
+**Phase B — is lean DBA actually better?** (only once Phase A is complete)
+Decompose `dba-system-lean.md` into candidate v2 components → one real downstream pilot comparing
+`DBA-2` against the now-active `DBA-1` → atomic activation of `DBA-2` only on explicit approval.
+
+If `DBA-1` cannot reproduce the current system exactly, fix the modular architecture before judging
+lean DBA at all — the two questions must not be confounded into one measurement.
+
+This is the recommended shape for the eventual loop. Nothing in this filing runs either phase.
+
+## Scope
+
+**In scope for this filing**: this brief and its illustrative candidate mapping;
+`backlog/features.md` and `status/roadmap.md` index rows.
+
+**Out of scope for this filing**: creating the `dba/` tree; writing any `configurations/*.yaml`
+for real; moving any content out of `dba-system.md`; approving `DBA-1` or `DBA-2`; starting the
+4-step self-development loop; deciding the manifest-path or `patterns/`-vs-`policies/` open
+questions.
+
+## Value
+
+Gives the orphaned `dba-system-lean.md` draft a governance home instead of leaving it as untracked
+dead weight in git history. More importantly, reframes the actual opportunity correctly: not
+"shrink one file" but "let DBA policies evolve independently, under an explicit, reviewable,
+approved combination" — which directly serves Codeos's own stated goal of reducing review load and
+keeping evidence integrity, applied to the doctrine that governs every downstream project.
+
+## Risk
+
+Filing this brief is low risk — no code, no doctrine edit, no consumer wired up. The risk lives
+entirely in the eventual implementation, which is exactly why this brief exists: to make the
+combination-validity risk, the two-level (DBA-config vs. project-config) risk, and the in-flight-
+feature-binding risk explicit architectural invariants *before* any component file is drafted,
+rather than discovering them mid-migration.
+
+## Guardrail
+
+- This filing must not edit `dba-system.md`, `dba-system-lean.md`, or create any file under a new
+  `dba/` directory.
+- Whenever the loop does start, it runs at `downstream-doctrine` scope, PROFILE-4 review cadence,
+  per `CLAUDE.md`.
+- Invariant 1 (no pre-approval, including `DBA-1`), Invariant 2 (atomic activation only), and
+  Invariant 5 (explicit per-feature configuration binding) are hard guardrails an implementing
+  agent must not relax or treat as aspirational.
+- Do not build a cross-component dependency solver as part of this UPG (see "Deliberately not
+  included yet" above).
+
+## Related
+
+- **UPG-0001** — Feature Thread traceability already established the immutable-version,
+  explicit-pin discipline this proposal extends from review rounds to doctrine itself.
+- **UPG-0051** — Architecture Baseline versioning is the direct precedent for Invariant 5's
+  in-flight-work handling (a membership/version change doesn't retroactively invalidate
+  already-approved Stage 4 work under an earlier version).
+- **UPG-0052**, **UPG-0058**, **UPG-0059** — Implementation Profile, Cohort Logical Design, and
+  Wave-Gated Batch Review are exactly the sections that would become
+  `policies/implementation-profile` and `policies/architecture-synthesis` components.
+- **UPG-0056**, **UPG-0057** — the Optional Mechanism Status Convention and Controlled Plain
+  English already established the pattern of splitting optional content into `patterns/`; this
+  proposal generalizes and formalizes that pattern into versioned, explicitly-approved components.
+
+## Feature Thread
+
+> Canonical thread rollup for this feature. Compact links/IDs only; full detail lives in the
+> change records and review files. May be maintained manually.
+
+### Changes
+
+| Change ID | File | Purpose | State |
+|---|---|---|---|
+| CHG-20260807-001 | changes/UPG-0065__CHG-20260807-001__normative-delta-inventory.md | Complete per-rule disposition of dba-system.md before any component drafting (Phase A, first sub-step) | COMPLETE |
+
+### Reviews
+
+| Review ID | Change ID | Step | Round | Verdict |
+|---|---|---|---|---|
+| RVS__UPG-0065__CHG-20260807-001__S1 | CHG-20260807-001 | 1-Intent | Codex R1→R3, then 2 rounds of human gate review | Codex R1-R3 DO NOT ADVANCE (MOVE-row location vs. deferred packaging questions; "Step-1 decision" wording falsely bound to this CHG; manifest-path self-contradiction) — all fixed, PROFILE-4 budget exhausted at R3. 1st human review: MOVE definition presupposed the six-component decomposition before the inventory tested it (contra Invariant 4); inventory universe was implicitly anchored to the lean-draft comparison; `RETIRE` undefined against semantic change — all fixed. 2nd human review: `MOVE`'s early and late definitions still contradicted each other; "normative rule" granularity was undefined; `RETIRE` referenced "non-normative" material outside the inventory's own universe — all fixed. **Human verdict: APPROVED — proceed to Step 2** |
+| RVS__UPG-0065__CHG-20260807-001__S2 | CHG-20260807-001 | 2-Acceptance | R1→R6 | Codex R1-R3 DO NOT ADVANCE (taxonomy overlap; weak verification methods; count-vs-1:1 mapping; unpinned commit reference) — all fixed, PROFILE-4's 3-round budget exhausted at R3. 1st human gate review: required a mandatory delta-row schema for checkable traceability, bounded completeness to section granularity, replaced the "and"/"or" test with a semantic independence test, hardened AC-8 — all fixed; **human-authorized confirmatory R4: NO OBJECTION, 0 findings, evidence A.** 2nd human gate review: found the four dispositions conflated the meaning-change and component-location axes, making a rule that both changes meaning and relocates unrepresentable — fixed by adding a `target_owner` field to every non-`RETIRE` row and an explicit precedence (`RETIRE` → `INTENTIONAL-BEHAVIOR-CHANGE` → `KEEP-IN-CORE` → `MOVE`, meaning-change always wins); also tightened AC8 to this change's own diff and `source_anchor` to a pinned line range plus excerpt. Codex R5 DO NOT ADVANCE (the new schema still couldn't represent intentional deletion — no successor form, no target location, and `RETIRE` only covers zero-semantic-loss removal; AC5 checked `target_owner` was non-empty but not that its value was valid) — fixed: added `proposed_rule: REMOVED` / `target_owner: NONE` as a paired special case, and AC5 now enforces the full domain with Invariant-4 rigor matching AC3. Codex R6 DO NOT ADVANCE (AC8's `git diff` against a commit cannot see untracked files, so an untracked forbidden artifact could exist and still pass; one Low SELF-REFERENCE/REVIEW-BOOKKEEPING note on stale round-count comments, optional) — fixed: AC8 now also checks `git status --porcelain --untracked-files=all`, with human attribution required for any forbidden-path hit; bookkeeping updated to R6 in this same pass. |
+| RVS__UPG-0065__CHG-20260807-001__S3 | CHG-20260807-001 | 3-Implement | R1→R3 | Produced the 184-row delta table. R1 DO NOT ADVANCE (missing `source_section` field; several anchors lacked quoted excerpts; `STEP6-EVENTS` retired as a duplicate of `NEVER-DO-8` when it actually stated an independent emission-destination fact `NEVER-DO-8` never covers; `ARTIFACT-CLASS-2` silently dropped the Feature Brief classification the same way; `ARTIFACT-CLASS-3`/`CPE-2`/`FILE-LAYOUT-1` bundled independently-changeable facts; `INTENTIONAL-BEHAVIOR-CHANGE` rows lacked the literal per-row `requires_human_decision: yes` marker) — fixed, table grew 115→131. R2 DO NOT ADVANCE (two of the R1 fixes still bundled facts under one *shared* disposition — a shared disposition doesn't license bundling; `STAGE-TABLE-4` presented two candidate resolutions instead of one `proposed_rule`; a stale cross-reference in `NEVER-DO-8` still said `STEP6-EVENTS` was retired after the R1 fix reversed that) — fixed, table grew 131→147. R3 DO NOT ADVANCE (`FILE-LAYOUT-2g`/`6`/`9` and — the largest single defect — `STAGE-TABLE-1`, which had bundled all 31 Stage-to-file and Artifact-to-template mappings into one row since the very first draft, plus `REVIEW-LOG-1` bundling four independently-approvable logging facts under one disposition, plus a File Layout section-coverage count that directly contradicted its own row listing) — fixed inline, table grew 147→184. **PROFILE-4's 3-round budget exhausted at R3; no automatic R4.** All three rounds found the same underlying gap — inconsistent application of the independent-changeability test during drafting — named explicitly in Implementation Notes rather than treated as three unrelated issues. **Human verdict: APPROVED — proceed to Step 4.** |
+| RVS__UPG-0065__CHG-20260807-001__S4 | CHG-20260807-001 | 4-Reconcile | R1→R3 | Wrote the Reconciliation section: 9 ACs verified, consistency sweep, findings scope-triage. Self-caught before review: brief/dashboard staleness (Step 3 approval hadn't propagated) — fixed. R1 DO NOT ADVANCE (`ARCH-GATE-3`/`OPT-MECH-2`/`IMPL-PROFILE-9` each bundled facts about different subjects; stale File Layout coverage count) — fixed, plus a self-initiated scan found `IMPL-PROFILE-1`/`4` before Codex named them; table grew 184→193. R2 DO NOT ADVANCE (`IMPL-PROFILE-3`/`FILE-LAYOUT-5`/`HUMAN-NAV-2` bundled facts; `OPT-MECH-2c` not a normative rule at all, removed; another stale count) — fixed, 193→198. Per explicit human instruction, further self-initiated audits paused from here — fixing only what named review findings require. R3 DO NOT ADVANCE (`REVIEW-5`/`ARCH-GATE-7`/`IMPL-PROFILE-6` bundled facts; and — more serious — 6 `RETIRE` rows, `ARTIFACT-CLASS-3`/`4`/`5` and `FILE-LAYOUT-2a`/`2c`/`2d`, claimed duplication of content their named target rows never actually stated, the same real content-loss class as `STEP6-EVENTS`; Reconciliation's AC1 claim overstated its own verification method) — fixed, 198→203 (95/61/28/19). **PROFILE-4's 3-round budget exhausted at R3; fixed inline, no automatic R4. Human verdict: APPROVED — CHG-20260807-001 COMPLETE (2026-08-08).** |
+
+### Findings Tracked Inside This Feature
+
+| Finding ID | Review ID | Classification | Resolution |
+|---|---|---|---|
+| (S1 R1) Required `MOVE`-row locations conflicted with the brief's own deferred directory/manifest questions | RVS__…__S1 | IN-SCOPE BLOCKER | Fixed — "authoritative location" defined as logical component identity, resolvable without the two open questions |
+| (S1 R2) Brief's "Step-1 decision" wording bound the manifest/directory questions to this first CHG's own Step 1 | RVS__…__S1 | IN-SCOPE BLOCKER | Fixed — reworded to "deferred to the change that first creates manifest/component files," not tied to any specific CHG's Step 1 |
+| (S1 R3) Brief asserted `dba-system.md`'s path as decided ("stays at its current path") while also calling it an open question | RVS__…__S1 | IN-SCOPE BLOCKER | Fixed — reworded as "Recommended, not yet decided" |
+| (S1, human gate review) "Component identity already fixed by the brief's target layout" presupposed the six-component decomposition before the inventory tested it, contradicting Invariant 4 | — (human direction, not a Codex review finding) | IN-SCOPE BLOCKER | Fixed — `MOVE` now names a *candidate* owner; the inventory may find components should merge, not exist, split, or that a rule stays in the kernel |
+| (S1, human gate review) Inventory completeness was implicitly anchored to the `dba-system.md`-vs-`dba-system-lean.md` seed comparison rather than every current normative rule | — (human direction, not a Codex review finding) | IN-SCOPE BLOCKER | Fixed — added an explicit "Inventory universe" rule: completeness is measured against current `dba-system.md`, the lean draft is comparison evidence only |
+| (S1, human gate review) `RETIRE` had no definition separating it from a semantic behavior removal | — (human direction, not a Codex review finding) | IN-SCOPE NON-BLOCKER | Fixed — `RETIRE` narrowed to redundant/superseded/non-normative material only; any semantic removal is `INTENTIONAL-BEHAVIOR-CHANGE` |
+| (S1, 2nd human gate review) The change record's early `MOVE` definition ("with its new authoritative location named") still contradicted the later `owner: UNRESOLVED` allowance | — (human direction, not a Codex review finding) | IN-SCOPE BLOCKER | Fixed — `MOVE` now uniformly defined as "candidate owner, or `owner: UNRESOLVED`" everywhere it appears, including this brief's own matching definition |
+| (S1, 2nd human gate review) No definition existed for what counts as one "normative rule" — paragraph? sentence? each `must`? | — (human direction, not a Codex review finding) | IN-SCOPE BLOCKER | Fixed — added "Rule granularity": one row per independently meaningful obligation/prohibition/permission/authority rule/gate/lifecycle requirement, not per sentence or paragraph; to be pinned as a Step 2 acceptance criterion |
+| (S1, 2nd human gate review) `RETIRE`'s definition named "non-normative" material, but the inventory universe is explicitly normative rules only | — (human direction, not a Codex review finding) | IN-SCOPE NON-BLOCKER | Fixed — `RETIRE` narrowed further to redundant/duplicated/superseded normative rules only; non-normative prose needs no disposition at all |
+| (S2, human gate review) AC-1 required one-to-one traceability "by source location and meaning" with no mandatory row schema, leaving verification to informal recognition rather than checkable fields | — (human direction, not a Codex review finding) | IN-SCOPE BLOCKER | Fixed — added a mandatory delta-table row schema (`rule_id`/`source_section`/`source_anchor`/`current_rule`/`disposition`/`owner`/`rationale`, plus `proposed_rule`/`requires_human_decision` for behavior changes) |
+| (S2, human gate review) AC-1's "non-normative prose explicitly noted as out of scope" could require accounting for every explanatory sentence in ~7,000 words | — (human direction, not a Codex review finding) | IN-SCOPE BLOCKER | Fixed — completeness now proven at section granularity (`NO NORMATIVE RULES` marker for rule-free sections), not per explanatory sentence |
+| (S2, human gate review) AC-2's granularity check used an "and"/"or" keyword heuristic, which misclassifies atomic multi-clause gates (e.g. one gate requiring three approvals) as multiple rules | — (human direction, not a Codex review finding) | IN-SCOPE BLOCKER | Fixed — replaced with a semantic independence test: a row splits only if some part could change independently while the rest keeps the same meaning and disposition |
+| (S2, human gate review) AC-8 required global `git status` to show only the named files, vulnerable to false failure from unrelated concurrent working-tree changes | — (human direction, not a Codex review finding) | IN-SCOPE NON-BLOCKER | Fixed — replaced with `test ! -d dba` plus a forbidden-path check against this change's own declared file list |
+| (S2, human gate review) Trace header's `review_series` still pointed to `S1` after Step 2 acquired its own review series and rounds | — (human direction, not a Codex review finding) | IN-SCOPE NON-BLOCKER | Fixed — updated to `S2` |
+| (S2, 2nd human gate review) The four dispositions conflated two independent axes (meaning-change vs. component-location), making a rule that both changes meaning and moves components unrepresentable — it couldn't be correctly coded as either `MOVE` (which requires meaning preserved) or `INTENTIONAL-BEHAVIOR-CHANGE` (which had no target-location field) | — (human direction, not a Codex review finding) | IN-SCOPE BLOCKER | Fixed — added `target_owner` field to the row schema (required for `KEEP-IN-CORE`/`MOVE`/`INTENTIONAL-BEHAVIOR-CHANGE`, blank for `RETIRE`); disposition now chosen by an explicit precedence (`RETIRE` → `INTENTIONAL-BEHAVIOR-CHANGE` → `KEEP-IN-CORE` → `MOVE`) where any meaning change takes precedence over `KEEP-IN-CORE`/`MOVE` regardless of whether location also changes |
+| (S2, 2nd human gate review) AC-8's `test ! -d dba` asserted global non-existence — a legitimate unrelated concurrent change creating `dba/` would fail this CHG for something it didn't do | — (human direction, not a Codex review finding) | IN-SCOPE NON-BLOCKER | Fixed — replaced with `git diff 77599e9 --name-only` scoped to this change's own diff against its pinned baseline, not global repository state |
+| (S2, 2nd human gate review) `source_anchor` allowed "excerpt or line range" as alternatives; a pinned line range plus excerpt together gives deterministic relocation | — (human direction, not a Codex review finding) | IN-SCOPE NON-BLOCKER | Fixed — `source_anchor` now requires both a line range pinned to commit `77599e9` and a short quoted excerpt |
+| (S2 R5, Codex) `INTENTIONAL-BEHAVIOR-CHANGE` had no way to represent intentional deletion — a `proposed_rule`+`target_owner` were both mandatory, but a deleted obligation has neither a new form nor a new location, and `RETIRE` is reserved for zero-semantic-loss removal only | RVS__…__S2 | IN-SCOPE BLOCKER | Fixed — added `proposed_rule: REMOVED` / `target_owner: NONE` as a valid paired special case, distinct from both `RETIRE` and an ordinary `INTENTIONAL-BEHAVIOR-CHANGE` |
+| (S2 R5, Codex) AC5 checked only that `target_owner` was non-empty, not that its value was actually in the valid domain, unlike AC3's stronger check for `MOVE` | RVS__…__S2 | IN-SCOPE BLOCKER | Fixed — AC5 now enforces the full domain (`doctrine`/five named components/justified-new-component/`UNRESOLVED`/`NONE`-with-`REMOVED`) with the same Invariant-4 rigor AC3 applies |
+| (S2 R6, Codex) AC8's `git diff <commit>` cannot see untracked files, so an untracked forbidden artifact under `dba/`/`configurations/` could exist while AC8 still passed | RVS__…__S2 | IN-SCOPE BLOCKER | Fixed — AC8 now also runs `git status --porcelain --untracked-files=all` against the forbidden paths; any hit requires explicit human attribution at Reconcile, not silent dismissal |
+| (S2 R6, Codex) Trace-header comment, Reviews-table summary, and Findings-table rounds had each frozen at a different round number (R3/R4/R5) as later rounds ran | RVS__…__S2 | SELF-REFERENCE / REVIEW-BOOKKEEPING | Fixed — all three brought current to R6 in this same pass; optional per Codex, done anyway since these updates were already in progress |
+
+### Follow-up Features
+
+| Feature ID | Reason | Source finding |
+|---|---|---|
