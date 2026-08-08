@@ -1,0 +1,391 @@
+Reviewer task:
+
+SCOPE CONTRACT
+  Assess this artifact against the STATED SCOPE of this stage/PR — the Expected Stage
+  Output below and what the artifacts actually claim — NOT against an ideal final system.
+  A capability the artifacts do not claim to provide is OUT-OF-SCOPE, not a defect.
+  The following are OUT-OF-SCOPE BACKLOG unless THIS artifact explicitly claims to provide
+  them: formal approval-binding enforcement; rollback correctness; COMMIT_BOUND/
+  WORKSPACE_BOUND enforcement; JSON Schema validation; CI validation; exact
+  decision-integrity; per-feature decision ledgers; autonomous approval; enabled hooks.
+
+YOUR TASK — answer these five questions using only the evidence in the packet:
+  1. Acceptance criteria: Does the artifact satisfy each of its stated acceptance criteria?
+     Cite evidence for each criterion (or note its absence).
+  2. Claim support: Are universal or strong claims (all, every, never, always, no X) in the
+     artifact supported by evidence in the packet? Any unverifiable strong claim is a candidate
+     finding only if it affects acceptance, scope, safety, decision integrity, or the artifact's
+     stated guarantees.
+  3. Scope drift: Is there any change beyond the stated scope boundary? (Files not in the
+     "What changes" list; behavior changes not in the intent; downstream doctrine modified
+     rather than read.)
+  4. In-scope blockers: Are there facts that, if left in, would make the artifact wrong,
+     unsafe, or internally contradictory?
+  5. Finding classification: Classify every finding you raise as exactly one of the five
+     TRIAGE RULE categories below.
+
+TRIAGE RULE — classify EVERY finding as exactly one of:
+  IN-SCOPE BLOCKER         breaks the stated goal; creates a FALSE CLAIM in this artifact;
+                           weakens the advisory/read-only/human-gated guarantees; prevents
+                           the work from running; or violates an explicit safety constraint.
+  IN-SCOPE NON-BLOCKER     improves it but is not required for this PR.
+  OUT-OF-SCOPE BACKLOG     valid, but belongs to a future feature / stronger guarantee.
+  REJECTED                 conflicts with the stated scope or Codeos philosophy.
+  SELF-REFERENCE /         review records that are stale because of the previous round's
+  REVIEW-BOOKKEEPING       own existence (causal loop); not a real artifact defect.
+  Base the PR decision ONLY on IN-SCOPE BLOCKER findings. An OUT-OF-SCOPE BACKLOG finding
+  must NOT cause DO NOT ADVANCE unless this artifact FALSELY CLAIMS to solve it.
+
+WHAT NOT TO DO
+  - Do not flag style or wording issues as blockers unless the wording creates a false claim,
+    contradiction, parser breakage, or wrong governance instruction.
+  - Do not re-review unchanged full context when the packet is in delta mode.
+  - Do not treat local-only review history as a blocker unless the artifact falsely
+    claims the review artifacts are committed/durable.
+
+INSTRUCTIONS
+  If this is a resumed session, ignore any earlier-session conclusions unless they are
+  re-established by THIS packet; assess only the evidence above, pinned to this commit.
+  Give a focused assessment of this artifact against the stated scope, acceptance criteria,
+  and evidence in this packet. Rank findings by severity. Suggest a better design only when
+  needed to explain a required fix for an IN-SCOPE BLOCKER.
+
+  CONTROLLED PLAIN ENGLISH (if one of the artifacts under review states "Controlled Plain
+  English status for this review: enabled" or "...: disabled" — this task template never reads
+  any configuration file itself; whoever invokes the review includes that line as one of the
+  reviewed artifacts, the same way any other file is included, when the relevant project has the
+  discipline enabled): Layer D1 (advisory verdict, no invented requirements, evidence separated
+  from inference — the TRIAGE RULE and "based ONLY on in-scope blockers" instructions above
+  already are this) always applies regardless of that value. When the value is `enabled`,
+  additionally write your prose in Layer D2 style — short sentences, common words, direct
+  explanations. This affects wording only; it never changes the footer format below.
+
+  Limit findings to the top 3 IN-SCOPE BLOCKERS. Additional non-blocking observations may be
+  summarized in one short paragraph only if useful.
+
+  For EACH finding emit:
+    Finding: / Severity: High|Medium|Low / Classification: <one of the TRIAGE RULE labels>
+    Evidence: <file/line> / Why: <short> / Required action: fix now|optional fix|backlog|reject
+    Scope reason: <why it does/does not belong to this PR's scope>
+  Then emit:
+    PR decision: ADVANCE | REQUEST CHANGES | DO NOT ADVANCE   (based ONLY on in-scope blockers)
+    Scope drift warning: yes|no — <is anything pulling this PR beyond its stated scope?>
+  Then on the LAST three lines emit exactly (map ADVANCE->NO OBJECTION,
+  REQUEST CHANGES->CHANGES ADVISED, DO NOT ADVANCE->DO NOT ADVANCE):
+    LOG SUMMARY: <NO OBJECTION | CHANGES ADVISED | DO NOT ADVANCE | UNCLASSIFIED> — <single most important point>
+      (use UNCLASSIFIED if you genuinely cannot classify the artifact safely)
+    EVIDENCE: <A|B|C|D|E>
+    HIGHEST-IMPACT UNCERTAINTY: <one sentence — what single thing, if wrong, most affects this assessment>
+
+  Evidence grade — the grade describes what the assessment rests on, not reviewer confidence:
+    A — Directly verified in the artifact, diff, or output shown in the packet
+    B — Verified with multiple direct pieces of evidence, but coverage is not complete
+    C — Partially verified, partially inferred from structure or context
+    D — Mostly inferred from structure or indirect evidence
+    E — Hypothesis or very limited basis — little to no direct evidence
+
+
+PACKET MANIFEST
+  generated: 2026-08-08T09:55:07Z
+  task_prompt: /home/rimo/projects/Codeos/prompts/codeos-reviewer-task.md (5794 bytes)
+  review_content_bytes: 31080
+  estimated_review_tokens: ~7770
+  budget_status: OK
+  packet_mode: full
+  delta_base: none
+  items:
+    - path: backlog/UPG-0065-modular-dba-configuration-architecture.md
+      mode: path_sha_only
+      bytes: 34070
+      sha256: 0b64c540d704d7a968103f32283a8fbc367b096241083f80f9cab0135465d756
+    - path: status/self-development.md
+      mode: path_sha_only
+      bytes: 23383
+      sha256: 7932f6c1d139934d17664545fbdeb0ba2bbcd58fa485c6f516f1ffc1555e0cf6
+    - path: changes/UPG-0065__CHG-20260807-001__delta-table.md
+      mode: path_sha_only
+      bytes: 106725
+      sha256: 7be29d92072335a8b9c18967e252ccb7d1da143b0e45241af64393c250f9e342
+    - path: changes/UPG-0065__CHG-20260808-001__v1-component-decomposition.md
+      mode: full_file
+      bytes: 18115
+      sha256: 922945f1aea57313878abfa824bd9471b9237100831bb5f17b80897b7322fb4f
+    - path: /tmp/codeos-cpe-status.s7FKYy
+      mode: full_file
+      bytes: 156
+      sha256: 5543a308f9534537c6d68f629027f5b74c54896e7f128c9f023b020c473f1ad3
+    - path: (diff)
+      mode: full_file
+      bytes: 12809
+
+REVIEW CONTEXT
+  Feature:                UPG-0065__CHG-20260808-001
+  Stage:                  selfdev-step-2
+  Branch:                 main
+  Base commit:            (no base pin)
+  Review commit:          c7bedf321fe56b47623ad114c61ea6961b632571 (+ uncommitted workspace changes)
+  Current approved stage: n/a (non-numeric stage)
+  Evidence coverage:      FULL_COVERAGE
+  Workspace dirty:        yes (uncommitted changes at review time)
+
+DBA RULES RELEVANT TO THIS STAGE
+  - Human approval is required for every stage transition; you are advisory only.
+  - Memory is not truth — assess only what is provided, pinned to the review commit.
+  - Implementation must trace to approved artifacts; no behavior beyond intent+contract+schema.
+  - No events outside the approved event schema; no hidden behavior.
+
+STAGE-SPECIFIC CHECKS
+  - (no stage-specific checklist for stage selfdev-step-2)
+
+EXPECTED STAGE OUTPUT
+  (no expected-output template for stage)
+
+ARTIFACTS TO REVIEW
+  --- changes/UPG-0065__CHG-20260808-001__v1-component-decomposition.md (sha256: 922945f1aea57313878abfa824bd9471b9237100831bb5f17b80897b7322fb4f, visibility: shown) ---
+    # Self-Development Change: UPG-0065__CHG-20260808-001 — v1-component-decomposition
+    
+    <!--
+    PURPOSE: Second change under UPG-0065 (Modular DBA Configuration Architecture). Decomposes
+    dba-system.md into candidate v1 component files, using the accepted 203-row disposition table
+    from CHG-20260807-001. This is Phase A's second sub-step (see backlog/UPG-0065's "Migration
+    approach"): "decompose dba-system.md into candidate v1 components using this table."
+    Workflow: prompts/codeos-self-dev.md (4-step loop).
+    -->
+    
+    <!-- TRACE HEADER (canonical) -->
+    ```yaml
+    feature_id: UPG-0065
+    primary_feature_id: UPG-0065
+    change_id: CHG-20260808-001
+    slug: v1-component-decomposition
+    state: IN_PROGRESS      # DRAFT | IN_REVIEW | IN_PROGRESS | BLOCKED | COMPLETE | ABANDONED | SUPERSEDED
+    current_step: 2-Acceptance  # 1-Intent | 2-Acceptance | 3-Implement | 4-Reconcile
+    implements:
+      - UPG-0065
+    related_features: []
+    review_series: null     # Step 1's series was RVS__UPG-0065__CHG-20260808-001__S1 (R1/R2 DO NOT ADVANCE, R3 NO OBJECTION, human APPROVED); set again once Step 2's review runs
+    review_profile: PROFILE-4   # downstream-doctrine (Step 0a)
+    review_state: DRAFT     # DRAFT | IN_REVIEW | REVIEWED | ACCEPTED  (operational; NOT a round; resets per step)
+    review_history: reviews/review-log.md
+    fixes_findings: []
+    follow_up_of: null
+    ```
+    
+    <!-- SELF-REFERENCE BOUNDARY: this artifact is itself reviewed, so it must NOT embed the current
+    review round. Reference the stable review SERIES (review_series) + review_state; exact rounds live
+    only in reviews/review-log.md and reviews/codex/*. -->
+    
+    ---
+    
+    ## Change Intent
+    
+    **Why (problem in the toolkit):**
+    
+    `backlog/UPG-0065-modular-dba-configuration-architecture.md`'s Migration Approach names two
+    decoupled phases. Phase A's first sub-step — a complete normative delta inventory of
+    `dba-system.md` — is COMPLETE and accepted (`CHG-20260807-001`, 203 rows: 95 `KEEP-IN-CORE`, 61
+    `MOVE`, 28 `RETIRE`, 19 `INTENTIONAL-BEHAVIOR-CHANGE`, across 6 `target_owner` values). The next
+    named sub-step is: "decompose `dba-system.md` into candidate `v1` components using this table."
+    Without that decomposition, no compatibility sweep against prompts/scripts/templates and no
+    `DBA-1`-equivalence proof (the sub-steps that follow) can be attempted — there is nothing yet to
+    sweep or prove equivalent.
+    
+    **What changes:**
+    
+    Six new candidate `v1` component files, populated from the disposition table's non-`RETIRE` rows,
+    grouped by `target_owner`:
+    
+    - `dba/doctrine/v1.md` — 108 rows (`target_owner: doctrine`)
+    - `dba/policies/review/v1.md` — 20 rows (`target_owner: review policy`)
+    - `dba/policies/architecture-synthesis/v1.md` — 18 rows (`target_owner: architecture-synthesis policy`)
+    - `dba/policies/implementation-profile/v1.md` — 18 rows (`target_owner: implementation-profile policy`)
+    - `dba/policies/controlled-plain-english/v1.md` — 7 rows (`target_owner: controlled-plain-english policy`)
+    - `dba/tools/reviewer/v1.md` — 4 rows (`target_owner: reviewer tool contract`)
+    
+    (108+20+18+18+7+4 = 175 = 95 `KEEP-IN-CORE` + 61 `MOVE` + 19 `INTENTIONAL-BEHAVIOR-CHANGE`; the 28
+    `RETIRE` rows contribute no content to any component — see Scope boundary.)
+    
+    Plus the governance surfaces that track this change:
+    
+    - `changes/UPG-0065__CHG-20260808-001__v1-component-decomposition.md` (this file)
+    - `status/self-development.md` — dashboard row (Feature ID `UPG-0065`, Change ID
+      `CHG-20260808-001`), Loop step updated as the change progresses through the 4-step loop
+    - `backlog/UPG-0065-modular-dba-configuration-architecture.md` — Status line and Feature Thread
+      Changes/Reviews tables updated as this change progresses
+    - `status/roadmap.md` — `UPG-0065` row's "Planned/active change" column gains `CHG-20260808-001`
+    
+    **Manifest-path decision (proposed, for approval at this gate):** the brief deferred this
+    question — `dba-system.md` staying at its current path as the eventual thin manifest vs.
+    introducing a new `dba/dba.md` path — "to the change that first creates manifest or component
+    files." Step 1 review R1 found this change record contradicted that timing: it proposed the first
+    component files while simultaneously calling the manifest-path question still open "until
+    activation," silently pushing the brief's own resolution point further out. Corrected: adopting
+    the brief's own recommended default now — `dba-system.md` keeps its current path (repo root;
+    downstream `.codeos/dba-system.md`), so no already-onboarded project's symlink breaks, with its
+    eventual role changing to the thin active-configuration manifest once `DBA-1` is approved and
+    activated. **Deciding the path now does not execute the change** — `dba-system.md`'s actual
+    content and role stay untouched in this change (see Scope boundary); activation is a later
+    sub-step this change does not reach. Resolving the path now only removes the open question as a
+    blocker to future sub-steps; it does not pre-approve `DBA-1` or violate Invariant 1/2.
+    
+    **Directory-taxonomy decision (proposed, for approval at this gate):** the brief left
+    `patterns/`-vs-`policies/` "open, with a criterion, not a default," deferred to "the change that
+    first creates component files" — this change. Proposed resolution: use the brief's illustrative
+    `dba/policies/<name>/v1.md` and `dba/tools/reviewer/v1.md` layout, not `patterns/`. Rationale
+    against the stated criterion ("the smallest existing home whose authority and loading semantics
+    are unambiguous"): `patterns/` today holds project-toggled structural/writing content
+    (`patterns/controlled-plain-english.md`) that a project may or may not adopt, referenced by
+    policy rather than itself carrying `DBA-N` version-binding semantics. The new components are
+    normative DBA-governance content with exactly that binding semantics (an immutable `vN`, named by
+    a future `DBA-N` configuration) — `patterns/`'s existing loading model doesn't fit, so reusing it
+    would blur rather than clarify authority. `dba/policies/controlled-plain-english/v1.md` itself
+    stays a thin activation-mechanics pointer, per the delta table's `CPE-1` disposition — the full
+    layered content stays at `patterns/controlled-plain-english.md`, referenced, not duplicated or
+    moved.
+    
+    **Scope boundary — what stays the same:**
+    
+    - `dba-system.md` and `dba-system-lean.md` are **not edited**. `dba-system.md` remains the sole
+      file downstream projects load via `.codeos/dba-system.md`, unchanged in content and role. The
+      new `v1` component files are additive only — candidates, not yet wired into anything that
+      supersedes the monolith.
+    - **No `configurations/*.yaml` is created.** Per Invariant 1, no `DBA-N` is drafted as an
+      activatable manifest, proposed for approval, or approved in this change — this change produces
+      component *content*, not a configuration that combines it.
+    - **No compatibility sweep** against prompts/scripts/templates is performed here — that is the
+      Migration Approach's next sub-step, after these files exist.
+    - **`v1` content is frozen to current behavior, not the lean proposal.** For every non-`RETIRE`
+      row — `KEEP-IN-CORE`, `MOVE`, and `INTENTIONAL-BEHAVIOR-CHANGE` alike — the component file
+      places the rule under its `target_owner`. `INTENTIONAL-BEHAVIOR-CHANGE` rows' `proposed_rule`
+      text is **not** used anywhere in this change, regardless of disposition: Phase A's goal is a
+      `DBA-1` semantically equivalent to the live monolith (per the brief's Migration Approach — "if
+      `DBA-1` cannot reproduce the current system exactly, fix the modular architecture before judging
+      lean DBA at all"); adopting any `proposed_rule` now would silently pre-empt the human decision
+      Phase B exists to make, and would violate Invariant 1 (no `DBA-N`, including `DBA-1`, gets
+      pre-approved or altered outside an explicit decision).
+    - **Content source is the full pinned `dba-system.md` text, not the delta table's `current_rule`
+      field.** Corrected after Step 1 review R1 found `current_rule` is sometimes a condensed
+      paraphrase, not the rule's actual wording — e.g. `REVIEWER-TOOL-1`'s `current_rule` is "The
+      exact invocation syntax and worked examples for running the reviewer," a sentence *describing*
+      that the syntax and examples exist, without containing them; `ARCH-GATE-6`'s `current_rule`
+      reduces a six-step procedure with per-stage Row/Column check apparatus to one summary sentence.
+      Copying `current_rule` verbatim into a component file would silently drop exactly the normative
+      detail Phase A must preserve. Each `v1` component's content is therefore transcribed from
+      `dba-system.md` @ commit `77599e9` at the row's pinned `source_anchor` line range — the actual
+      source text, not its summary. `current_rule` is used only as an index during transcription (to
+      locate and group rows by `target_owner`), never as the copied content itself. Step 2 must add an
+      acceptance criterion verifying full text transfer against the pinned source, not against
+      `current_rule`.
+    - `RETIRE` rows (28) are **not represented** in any `v1` component — each is a zero-semantic-loss
+      duplicate whose content already survives in its named owning row elsewhere in the table.
+    - No file moves out of `dba-system.md`; nothing is deleted from it.
+    - The manifest path is decided in this change (see "Manifest-path decision" above: `dba-system.md`
+      keeps its current path), but **not executed** — `dba-system.md` itself is not touched, and it
+      does not become the thin manifest until `DBA-1` is approved and activated, a later sub-step this
+      change does not reach.
+    - `DBA-1` and `DBA-2` are not approved or activated in this change (Invariant 1, Invariant 2).
+    
+    **Class:** downstream-doctrine
+    **Scope axis:** downstream doctrine only
+    **Backlog item:** backlog/UPG-0065-modular-dba-configuration-architecture.md
+    
+    ---
+    
+    ## Acceptance Criteria
+    
+    **Per-component file schema (binding on Step 3, referenced by ACs below).** Each `v1` component
+    file is organized as: rule content blocks in ascending `source_anchor` line order, each headed by
+    its `rule_id`; a closing **Source Traceability** table with columns `rule_id | source_anchor
+    (dba-system.md @ 77599e9) | disposition`, one row per rule the file contains. This is the same
+    discipline the delta table itself enforces (one-to-one, checkable by field, not by informal
+    recognition) applied to the component files.
+    
+    | # | Criterion | How it will be verified |
+    |---|---|---|
+    | 1 | **Completeness — every non-`RETIRE` row placed exactly once.** All 175 rows the accepted delta table disposes as `KEEP-IN-CORE` (95), `MOVE` (61), or `INTENTIONAL-BEHAVIOR-CHANGE` (19) appear in exactly one `v1` component file's Source Traceability table — the file matching the row's `target_owner` (`doctrine`→`dba/doctrine/v1.md`, `review policy`→`dba/policies/review/v1.md`, `architecture-synthesis policy`→`dba/policies/architecture-synthesis/v1.md`, `implementation-profile policy`→`dba/policies/implementation-profile/v1.md`, `controlled-plain-english policy`→`dba/policies/controlled-plain-english/v1.md`, `reviewer tool contract`→`dba/tools/reviewer/v1.md`). No row is missing; no row appears in more than one file. | Extract the full `rule_id` list per `target_owner` from `changes/UPG-0065__CHG-20260807-001__delta-table.md` (grep on disposition, excluding `RETIRE`); extract the full `rule_id` list from each of the 6 files' Source Traceability tables; diff the two sets per component (both directions) — expect empty diffs. Separately confirm no `rule_id` appears in more than one file's table (global uniqueness across all 6). |
+    | 2 | **`RETIRE` exclusion — by content provenance, not just by label.** None of the 28 `RETIRE` `rule_id`s appear in any `v1` component file (label check). Additionally, no `v1` content block is drawn from a `RETIRE` row's pinned `source_anchor` line range — retired source *text* is excluded, not merely its identifier, since retired text could appear unlabeled and still pass a label-only check. | Grep all 6 files for each `RETIRE` `rule_id` (label check, zero matches expected). Separately: for each `RETIRE` row, confirm no `v1` content block's declared `source_anchor` overlaps that row's line range — every included range must belong to a non-`RETIRE` row (this is the same positive-provenance check as AC3/AC4 below, applied to the `RETIRE` set). |
+    | 3 | **Content fidelity is mandatory, not advisory.** Each rule's content block is the complete normative substance of `dba-system.md` @ commit `77599e9`'s pinned `source_anchor` line range — not the delta table's `current_rule` field (Step 1 review found this is sometimes a condensed paraphrase, e.g. `REVIEWER-TOOL-1`, `ARCH-GATE-6`) and not any `proposed_rule` text. A content block that omits, shortens, or rewords away any normative detail present in its pinned range **fails this criterion and must be corrected before Reconcile** — this is a hard requirement, not a flag-with-rationale exception (corrected per Step 2 review R1: the original wording allowed an unexplained gap to pass with a rationale instead of a fix). | For every rule, diff its content block against `git show 77599e9:dba-system.md \| sed -n '<range>p'` for its `source_anchor`. Any gap is fixed before Reconcile, not merely noted — mirroring the false-`RETIRE`-duplicate lesson from `CHG-20260807-001` Step 4 R3 (a "this preserves it" claim must be checked against the actual target content, never assumed). |
+    | 4 | **No lean/proposed content anywhere — checked by meaning, not only by verbatim phrase.** No `v1` component file's content matches the *meaning* of any `INTENTIONAL-BEHAVIOR-CHANGE` row's Part-2 `proposed_rule` (the 19 lean-candidate forms) — a paraphrase that avoids the exact wording still violates this guarantee, so a verbatim-string grep alone is insufficient (corrected per Step 2 review R1). Every `INTENTIONAL-BEHAVIOR-CHANGE` row's `v1` content is its current, pinned-source form only. | Two layers: (a) grep all 6 files for each `proposed_rule`'s distinctive verbatim phrases (fast negative check); (b) for all 19 `INTENTIONAL-BEHAVIOR-CHANGE` rows, read the `v1` content block, the row's pinned source text, and the row's Part 2 `proposed_rule` side by side, and confirm the `v1` content's meaning matches only the current/pinned form — a full read, not sampling, since (a) alone cannot catch paraphrase. |
+    | 5 | **File/path correctness — exactly six files, no more.** `dba/doctrine/v1.md`, `dba/policies/review/v1.md`, `dba/policies/architecture-synthesis/v1.md`, `dba/policies/implementation-profile/v1.md`, `dba/policies/controlled-plain-english/v1.md`, `dba/tools/reviewer/v1.md` exist; no other file exists under `dba/` (tracked or untracked). | `find dba -type f` at Reconcile; expect exactly these 6 paths. `git status --porcelain --untracked-files=all -- dba/` cross-checked against the same list. |
+    | 6 | **Controlled Plain English component stays a thin pointer.** `dba/policies/controlled-plain-english/v1.md` contains only activation-mechanics content (per the delta table's `CPE-1` disposition) and an explicit reference to `patterns/controlled-plain-english.md` for the full layered content — it does not duplicate or move that file's content into `dba/`. | Read `dba/policies/controlled-plain-english/v1.md`; confirm it references `patterns/controlled-plain-english.md` by path and does not reproduce that file's layer definitions. Confirm `patterns/controlled-plain-english.md` itself is untouched (`git diff` empty). |
+    | 7 | **Source-traceability schema present and complete.** Every one of the 6 files ends with a Source Traceability table (per the schema above) covering every rule it contains — no content block without a matching table row, no table row without a matching content block. | Per file: count content-block headings vs. Source Traceability table rows; expect equal counts and matching `rule_id` sets. |
+    | 8 | **Downstream compatibility — no operational surface loads the new components yet.** `dba-system.md` and `dba-system-lean.md` remain byte-identical to commit `77599e9`. No *operational/consumer* surface — `dba-system.md`, `dba-system-lean.md`, `prompts/`, `scripts/` — references or loads the new component paths; the generated project's `.codeos/dba-system.md` symlink target is unaffected, so no downstream project's loaded behavior changes as a result of this change. **Explicitly excluded from this check**: this change record, the backlog brief, `status/self-development.md`, and `status/roadmap.md` — governance/tracking surfaces are expected to name the six paths as planned work; naming a path in bookkeeping is not "wiring it up" (corrected per Step 2 review R1, which found the original unscoped "no file outside `dba/`" wording was already false against this change record's own "What changes" list). | `git diff 77599e9 -- dba-system.md dba-system-lean.md` → expect empty. `grep -rn "dba/doctrine\|dba/policies\|dba/tools" -- prompts/ scripts/ dba-system.md dba-system-lean.md` (operational surfaces only) → expect zero matches. |
+    | 9 | **Scope-boundary guardrails held.** No `configurations/*.yaml` file exists, tracked or untracked. No text in any touched file asserts or implies `DBA-1`/`DBA-2` is approved or activated. | `git status --porcelain --untracked-files=all -- configurations/` and `git diff 77599e9 --name-only -- configurations/` → both expect empty. Grep all touched files for `approved` near `DBA-1`/`DBA-2`/`active_configuration`; any hit is read in context and confirmed non-assertive (e.g. this AC's own text mentioning "not approved" is not a false positive). |
+    | 10 | **Cross-reference consistency.** The change record, the brief's Feature Thread, `status/self-development.md`, `backlog/features.md`, and `status/roadmap.md` agree on this change's current step and state, comparing only the fields each surface actually records. | Grep sweep for `UPG-0065` / `CHG-20260808-001` across all five files at Reconcile; no stale step/state claims (AJ-020 class). |
+    
+    ---
+    
+    ## Implementation Notes
+    
+    _To be filled at Step 3._
+    
+    ---
+    
+    ## Reconciliation
+    
+    _To be filled at Step 4._
+    
+    ---
+
+  --- /tmp/codeos-cpe-status.s7FKYy (sha256: 5543a308f9534537c6d68f629027f5b74c54896e7f128c9f023b020c473f1ad3, visibility: shown) ---
+    Controlled Plain English status for this review: enabled
+    Source: /home/rimo/projects/Codeos/config/writing-discipline.yaml
+    Applicable scope: selfdev-step-2
+
+DIFF TO REVIEW (base->review, secret/size filtered)
+diff --git a/backlog/UPG-0065-modular-dba-configuration-architecture.md b/backlog/UPG-0065-modular-dba-configuration-architecture.md
+index d4aca04..90b8bf8 100644
+--- a/backlog/UPG-0065-modular-dba-configuration-architecture.md
++++ b/backlog/UPG-0065-modular-dba-configuration-architecture.md
+@@ -15,8 +15,8 @@ superseded_by: []
+ **Priority**: P1
+ **Status**: IN_PROGRESS — CHG-20260807-001 (Normative Delta Inventory) **COMPLETE**, accepted
+ 2026-08-08: 203-row disposition of every normative rule in `dba-system.md`. Phase A's next
+-sub-step (decompose `dba-system.md` into candidate `v1` components using this table, per the
+-Migration Approach) is not started.
++sub-step — CHG-20260808-001 (v1 Component Decomposition) — Step 1 **ACCEPTED** (human approved
++2026-08-08). Step 2 (10 acceptance criteria) written, review not yet run.
+ **Type**: downstream-doctrine
+ 
+ ## Problem
+@@ -283,6 +283,7 @@ rather than discovering them mid-migration.
+ | Change ID | File | Purpose | State |
+ |---|---|---|---|
+ | CHG-20260807-001 | changes/UPG-0065__CHG-20260807-001__normative-delta-inventory.md | Complete per-rule disposition of dba-system.md before any component drafting (Phase A, first sub-step) | COMPLETE |
++| CHG-20260808-001 | changes/UPG-0065__CHG-20260808-001__v1-component-decomposition.md | Decompose dba-system.md into 6 candidate v1 component files using the accepted delta table (Phase A, second sub-step) | IN_PROGRESS |
+ 
+ ### Reviews
+ 
+@@ -292,6 +293,7 @@ rather than discovering them mid-migration.
+ | RVS__UPG-0065__CHG-20260807-001__S2 | CHG-20260807-001 | 2-Acceptance | R1→R6 | Codex R1-R3 DO NOT ADVANCE (taxonomy overlap; weak verification methods; count-vs-1:1 mapping; unpinned commit reference) — all fixed, PROFILE-4's 3-round budget exhausted at R3. 1st human gate review: required a mandatory delta-row schema for checkable traceability, bounded completeness to section granularity, replaced the "and"/"or" test with a semantic independence test, hardened AC-8 — all fixed; **human-authorized confirmatory R4: NO OBJECTION, 0 findings, evidence A.** 2nd human gate review: found the four dispositions conflated the meaning-change and component-location axes, making a rule that both changes meaning and relocates unrepresentable — fixed by adding a `target_owner` field to every non-`RETIRE` row and an explicit precedence (`RETIRE` → `INTENTIONAL-BEHAVIOR-CHANGE` → `KEEP-IN-CORE` → `MOVE`, meaning-change always wins); also tightened AC8 to this change's own diff and `source_anchor` to a pinned line range plus excerpt. Codex R5 DO NOT ADVANCE (the new schema still couldn't represent intentional deletion — no successor form, no target location, and `RETIRE` only covers zero-semantic-loss removal; AC5 checked `target_owner` was non-empty but not that its value was valid) — fixed: added `proposed_rule: REMOVED` / `target_owner: NONE` as a paired special case, and AC5 now enforces the full domain with Invariant-4 rigor matching AC3. Codex R6 DO NOT ADVANCE (AC8's `git diff` against a commit cannot see untracked files, so an untracked forbidden artifact could exist and still pass; one Low SELF-REFERENCE/REVIEW-BOOKKEEPING note on stale round-count comments, optional) — fixed: AC8 now also checks `git status --porcelain --untracked-files=all`, with human attribution required for any forbidden-path hit; bookkeeping updated to R6 in this same pass. |
+ | RVS__UPG-0065__CHG-20260807-001__S3 | CHG-20260807-001 | 3-Implement | R1→R3 | Produced the 184-row delta table. R1 DO NOT ADVANCE (missing `source_section` field; several anchors lacked quoted excerpts; `STEP6-EVENTS` retired as a duplicate of `NEVER-DO-8` when it actually stated an independent emission-destination fact `NEVER-DO-8` never covers; `ARTIFACT-CLASS-2` silently dropped the Feature Brief classification the same way; `ARTIFACT-CLASS-3`/`CPE-2`/`FILE-LAYOUT-1` bundled independently-changeable facts; `INTENTIONAL-BEHAVIOR-CHANGE` rows lacked the literal per-row `requires_human_decision: yes` marker) — fixed, table grew 115→131. R2 DO NOT ADVANCE (two of the R1 fixes still bundled facts under one *shared* disposition — a shared disposition doesn't license bundling; `STAGE-TABLE-4` presented two candidate resolutions instead of one `proposed_rule`; a stale cross-reference in `NEVER-DO-8` still said `STEP6-EVENTS` was retired after the R1 fix reversed that) — fixed, table grew 131→147. R3 DO NOT ADVANCE (`FILE-LAYOUT-2g`/`6`/`9` and — the largest single defect — `STAGE-TABLE-1`, which had bundled all 31 Stage-to-file and Artifact-to-template mappings into one row since the very first draft, plus `REVIEW-LOG-1` bundling four independently-approvable logging facts under one disposition, plus a File Layout section-coverage count that directly contradicted its own row listing) — fixed inline, table grew 147→184. **PROFILE-4's 3-round budget exhausted at R3; no automatic R4.** All three rounds found the same underlying gap — inconsistent application of the independent-changeability test during drafting — named explicitly in Implementation Notes rather than treated as three unrelated issues. **Human verdict: APPROVED — proceed to Step 4.** |
+ | RVS__UPG-0065__CHG-20260807-001__S4 | CHG-20260807-001 | 4-Reconcile | R1→R3 | Wrote the Reconciliation section: 9 ACs verified, consistency sweep, findings scope-triage. Self-caught before review: brief/dashboard staleness (Step 3 approval hadn't propagated) — fixed. R1 DO NOT ADVANCE (`ARCH-GATE-3`/`OPT-MECH-2`/`IMPL-PROFILE-9` each bundled facts about different subjects; stale File Layout coverage count) — fixed, plus a self-initiated scan found `IMPL-PROFILE-1`/`4` before Codex named them; table grew 184→193. R2 DO NOT ADVANCE (`IMPL-PROFILE-3`/`FILE-LAYOUT-5`/`HUMAN-NAV-2` bundled facts; `OPT-MECH-2c` not a normative rule at all, removed; another stale count) — fixed, 193→198. Per explicit human instruction, further self-initiated audits paused from here — fixing only what named review findings require. R3 DO NOT ADVANCE (`REVIEW-5`/`ARCH-GATE-7`/`IMPL-PROFILE-6` bundled facts; and — more serious — 6 `RETIRE` rows, `ARTIFACT-CLASS-3`/`4`/`5` and `FILE-LAYOUT-2a`/`2c`/`2d`, claimed duplication of content their named target rows never actually stated, the same real content-loss class as `STEP6-EVENTS`; Reconciliation's AC1 claim overstated its own verification method) — fixed, 198→203 (95/61/28/19). **PROFILE-4's 3-round budget exhausted at R3; fixed inline, no automatic R4. Human verdict: APPROVED — CHG-20260807-001 COMPLETE (2026-08-08).** |
++| RVS__UPG-0065__CHG-20260808-001__S1 | CHG-20260808-001 | 1-Intent | R1→R3 | R1 DO NOT ADVANCE (High: `current_rule` is sometimes a condensed paraphrase — e.g. `REVIEWER-TOOL-1`/`ARCH-GATE-6` — copying it verbatim would drop real normative detail while claiming semantic equivalence; Medium: manifest-path decision deferred past the point the brief itself sets, "the change that first creates component files") — fixed: content source changed to the full pinned `dba-system.md` text at each row's `source_anchor`, `current_rule` used only as an index; manifest path decided now (keeps current `dba-system.md` path), not executed. R2 DO NOT ADVANCE (Medium: the manifest-path fix left a stale Scope-boundary bullet still saying the question "stays open — not decided here," self-contradicting the new decision) — fixed: stale bullet corrected to state the path is decided but not executed. R3 **NO OBJECTION, 0 findings, evidence B**. **Human verdict: APPROVED — proceed to Step 2** (2026-08-08). |
+ 
+ ### Findings Tracked Inside This Feature
+ 
+diff --git a/status/roadmap.md b/status/roadmap.md
+index b828bac..159c745 100644
+--- a/status/roadmap.md
++++ b/status/roadmap.md
+@@ -124,7 +124,7 @@ cheap pilot-adjacent wins early.
+ | UPG-0039 | Resolve the 00b Prompt-Filename Collision (Discovery -> 00a) | P3 | UPG-0007 ✓ | CHG-20260707-003 | COMPLETE |
+ | UPG-0040 | Fix Flaky config::tests Race on CODEOS_REVIEWER_PROVIDER Env Var | P2 | — | CHG-20260707-004 | COMPLETE |
+ | UPG-0041 | Reconcile feature-registry.yaml Schema vs Real-World Drift (FundFlow) | P2 | UPG-0009 ✓, UPG-0023 ✓ | CHG-20260707-005 | COMPLETE |
+-| UPG-0065 | Modular DBA Configuration Architecture | P1 | — | CHG-20260807-001 | IN_PROGRESS |
++| UPG-0065 | Modular DBA Configuration Architecture | P1 | — | CHG-20260807-001, CHG-20260808-001 | IN_PROGRESS |
+ 
+ ---
+ 
+diff --git a/status/self-development.md b/status/self-development.md
+index 07b441b..ca940fc 100644
+--- a/status/self-development.md
++++ b/status/self-development.md
+@@ -88,6 +88,7 @@
+ | UPG-0063 | CHG-20260804-001 | downstream-doctrine + script-tooling | downstream doctrine only | 4-Reconcile | S1 ACCEPTED (R1 DO NOT ADVANCE — Q0 grep-enumerability contradiction → R2 NO OBJECTION; human approved 2026-08-04, accepting the weaker enforcement model + 2 safeguards). S2 written — 16 ACs; scope extended at the gate to a one-line stage-4 reviewer checklist + its test. S2 R1 DO NOT ADVANCE (scope contradiction: gate added `tools/reviewer/` while the record still excluded it; dashboard/record disagreed on S1 approval) → R2 **NO OBJECTION**, evidence A, 0 findings (series RVS__UPG-0063__CHG-20260804-001__S2). S3 implemented — doctrine subsection + one-line advisory stage-4 reviewer check + 2 tests (184 pass); stale-binary gap found and fixed by rebuild; 3 retrofit fixtures validate the 5-field schema; dba-init scratch run clean. S3 R1 DO NOT ADVANCE (dashboard Loop step stale — AJ-020 recurrence) → R2 **NO OBJECTION**, evidence A, 0 findings (series RVS__UPG-0063__CHG-20260804-001__S3). S3 ACCEPTED (human 2026-08-04). ACCEPTED — S1 R1→R2, S2 R1→R2, S3 R1→R2, S4 R1 DO NOT ADVANCE (record claimed COMPLETE/ACCEPTED before the review ran — a false governance-state assertion, categorically distinct from bookkeeping drift) → R2 NO OBJECTION, evidence A, 0 findings. All 17 ACs PASS; sweep clean; AC-7 verified against the deployed Stage-4 path, not source alone | COMPLETE | UPG-0061 |
+ | UPG-0064 | CHG-20260804-002 | prompt + script-tooling | self-dev only | 4-Reconcile | S1 ACCEPTED (R1 DO NOT ADVANCE — record header DRAFT vs dashboard IN_PROGRESS → R2 NO OBJECTION; human approved role option A). S2 written — 18 ACs: six explicit role flags, no authority inference, positionals degraded visibly, 3 pinned mechanical properties, and CHG-B barred from the compatibility path. S2 R1-R2 DO NOT ADVANCE (AC-17 circular — CHG-A acceptance depended on post-CHG-B evidence; state stale in features.md + brief front matter; past-tense verification claim) → R3 **NO OBJECTION**, evidence A, 0 findings (series RVS__UPG-0064__CHG-20260804-002__S2). S3 ACCEPTED (human 2026-08-04). S4 R1-R3 DO NOT ADVANCE — R1 found a **real functional defect** (role-flags-only call exited 3, making CHG-B's precondition unsatisfiable) plus a false AC-9 byte-preservation claim; R2 caught stale provenance after Step 4 itself changed the script; R3 caught the usage synopsis and a stale preface → **R4 NO OBJECTION, evidence A**. All 18 ACs verified from full unfiltered output with syntax validation first; 47 tests pass; raw output embedded. **ACCEPTED 2026-08-05** — all 18 ACs verified, 47 tests, raw output embedded. Journaled as AJ-023 | COMPLETE | — |
+ | UPG-0065 | CHG-20260807-001 | downstream-doctrine | downstream doctrine only | 4-Reconcile | ACCEPTED — S1-S4 all accepted. Delta table: `changes/UPG-0065__CHG-20260807-001__delta-table.md`, 203 rows across all 19 sections of `dba-system.md` (95 KEEP-IN-CORE / 61 MOVE / 28 RETIRE / 19 INTENTIONAL-BEHAVIOR-CHANGE), 11 deltas found beyond the original 8-item seed table. 9 review rounds total across Steps 2-4 (S2 R1-R7, S3 R1-R3, S4 R1-R3) progressively found and fixed bundled rows, false-duplicate RETIRE claims, and stale cross-references — logged in full in the brief's Feature Thread. **Human approved 2026-08-08 — CHG COMPLETE.** Read-only analysis throughout; `dba-system.md`/`dba-system-lean.md` untouched (`77599e9`), no `dba/` tree, no `configurations/*.yaml`, no `DBA-N` approved. | COMPLETE | UPG-0065 (Phase A continues) |
++| UPG-0065 | CHG-20260808-001 | downstream-doctrine | downstream doctrine only | 2-Acceptance | S1 ACCEPTED (series RVS__…__S1; R1/R2 DO NOT ADVANCE — fixed; R3 NO OBJECTION; human APPROVED). S2 written — 10 ACs (completeness, RETIRE exclusion, pinned-source content fidelity, no-lean-content, file/path correctness, CPE thin-pointer, traceability schema, downstream compatibility, scope-boundary guardrails, cross-reference consistency); review not yet run | IN_PROGRESS | — |
+ 
+ <!--
+ Identity   : Feature ID = UPG-#### (stable). Change ID = CHG-YYYYMMDD-NNN (one execution), or a

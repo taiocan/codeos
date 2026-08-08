@@ -770,3 +770,39 @@ invocation, executed as part of the enabling change rather than deferred to the 
 Related: AJ-016 (evidence must be embedded, not summarised) and the same change's Step 3 incident, in
 which filtered test output hid a syntax error and produced a false green. Both are the same underlying
 failure — verification aimed at the wrong surface — and both were invisible from inside a passing run.
+
+---
+
+## AJ-024 — A citation that survived adversarial review can still be wrong; verify the pointer, not just the claim
+
+*Origin: UPG-0065 / CHG-20260808-001 (v1 component decomposition), Step 3 self-check.*
+
+`CHG-20260807-001`'s delta table pinned a `source_anchor` line range to every one of 203 rows,
+across nine adversarial review rounds, specifically to make content relocation deterministic and
+checkable. Step 1 of this follow-on change had already distrusted the table's `current_rule`
+*summary* field, after review found it sometimes paraphrased away real content (e.g. "the exact
+invocation syntax and worked examples" instead of the syntax and examples themselves) — the fix
+was to always transcribe from the pinned line range in the actual source file, never from the
+summary.
+
+That fix did not go far enough. While transcribing `ARCH-GATE-6` — a row whose own summary
+correctly said "a detailed 6-step sequence" — the stated range `L210-233` turned out to cover only
+steps 1-3. Steps 4-6 (`L234-252`, the actual Architecture Synthesis drafting/approval steps, the
+single most consequential part of the gate) sat entirely outside the cited range. Six more rows had
+the same defect at smaller scale — a sentence or list item continuing one to several lines past
+where the citation said it stopped. All were found only because the next change happened to
+transcribe against the live file instead of trusting the range.
+
+**Rule:** a line-range citation is itself a claim, not a fact, no matter how many review rounds
+produced it — pinning a citation to a commit does not verify that the citation is *complete*, only
+that it is *reproducible*. When a citation exists to license copying content later, the consuming
+step must re-derive the boundary from the source at the moment of use (read to the actual end of
+the sentence/clause/list, not the stated end line), not merely trust the earlier artifact's line
+numbers. The failure is invisible from inside the citing document, because the document's own
+`current_rule` summary can independently look correct even when the range beneath it is short —
+exactly what happened here, and the reason nine rounds of review over the citing artifact alone
+never caught it.
+
+Related: AJ-016 and AJ-023, both instances of the same underlying pattern — verification that
+checks the artifact in front of it, rather than the thing that artifact points to, can pass cleanly
+while the pointed-to fact is wrong.
