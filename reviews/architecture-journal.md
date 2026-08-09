@@ -806,3 +806,33 @@ never caught it.
 Related: AJ-016 and AJ-023, both instances of the same underlying pattern — verification that
 checks the artifact in front of it, rather than the thing that artifact points to, can pass cleanly
 while the pointed-to fact is wrong.
+
+---
+
+## AJ-025 — Knowing the staleness rule doesn't prevent violating it; the fix has to be mechanical, applied every round
+
+*Origin: UPG-0065 / CHG-20260808-001 and CHG-20260808-002 (v1 decomposition, compatibility
+sweep), recurring across roughly six separate review rounds.*
+
+AJ-020 already states the rule: update the dashboard row (and, by the same logic, the brief's
+status line and the change record's own trace header) to reflect the current step's actual state
+*before* invoking the reviewer for that step. Across two changes in the same session, the same
+class of staleness was still caught by Codex repeatedly — not because the rule was unknown, but
+because it was applied only at step *boundaries* (write Step N, sync tracking, run review) and not
+at *round* boundaries within a step, and not immediately after a human approval either. Every
+review round that fixes a finding, and every human "Approved," is itself a state change the
+dashboard/brief/trace-header must reflect before the *next* thing happens — not just the first
+review of a step. Awareness of a documented rule is not the same as a habit that fires every time.
+
+A second, related pattern surfaced in the same rounds: an acceptance criterion that claims
+agreement across several tracking files is not actually verified by a reviewer packet unless
+those files' *content* is shown — `--sha-only` proves a file exists at a given hash, not what it
+says. Both `CHG-20260808-001` and `CHG-20260808-002` hit the identical Step 4 R1 finding
+("`backlog/features.md`/`status/roadmap.md` not shown") for this exact reason, back to back.
+
+**Rule:** (1) re-sync every tracking surface named in a cross-reference-consistency criterion
+immediately before *every* review invocation, not once per step — treat "did I just fix something,
+or did the human just approve something" as the trigger, not "did I just start a new step." (2)
+Any acceptance criterion that claims agreement across N named files must include *all* of them as
+full content (not `--sha-only`) in the packet that is meant to prove it — `--sha-only` is for
+unchanged large context, never for a file whose content is itself the evidence.
