@@ -1,0 +1,19 @@
+# DBA-1 — candidate modular configuration
+#
+# Constructed per UPG-0065's Invariant 1(a)-(b): named here as the configuration-equivalent of
+# today's live dba-system.md @ commit 77599e9, and proven semantically equivalent to it in
+# changes/UPG-0065__CHG-20260809-001__equivalence-report.md. This file's existence is NOT an
+# approval act (Invariant 1(c)) and NOT an activation act (Invariant 1(d)) — both remain separate,
+# later, explicit human gates this change does not reach. dba-system.md remains the sole file
+# downstream projects load; nothing reads DBA-1.yaml yet.
+
+doctrine: v1
+review_policy: v1
+architecture_synthesis_policy: v1
+implementation_profile_policy: v1
+controlled_plain_english_policy: v1
+reviewer_tool_contract: v1
+
+status: candidate   # candidate | approved — never approved by this file's own construction
+constructed_at: 2026-08-09
+equivalence_report: changes/UPG-0065__CHG-20260809-001__equivalence-report.md

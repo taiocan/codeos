@@ -1,0 +1,346 @@
+Reviewer task:
+
+SCOPE CONTRACT
+  Assess this artifact against the STATED SCOPE of this stage/PR — the Expected Stage
+  Output below and what the artifacts actually claim — NOT against an ideal final system.
+  A capability the artifacts do not claim to provide is OUT-OF-SCOPE, not a defect.
+  The following are OUT-OF-SCOPE BACKLOG unless THIS artifact explicitly claims to provide
+  them: formal approval-binding enforcement; rollback correctness; COMMIT_BOUND/
+  WORKSPACE_BOUND enforcement; JSON Schema validation; CI validation; exact
+  decision-integrity; per-feature decision ledgers; autonomous approval; enabled hooks.
+
+YOUR TASK — answer these five questions using only the evidence in the packet:
+  1. Acceptance criteria: Does the artifact satisfy each of its stated acceptance criteria?
+     Cite evidence for each criterion (or note its absence).
+  2. Claim support: Are universal or strong claims (all, every, never, always, no X) in the
+     artifact supported by evidence in the packet? Any unverifiable strong claim is a candidate
+     finding only if it affects acceptance, scope, safety, decision integrity, or the artifact's
+     stated guarantees.
+  3. Scope drift: Is there any change beyond the stated scope boundary? (Files not in the
+     "What changes" list; behavior changes not in the intent; downstream doctrine modified
+     rather than read.)
+  4. In-scope blockers: Are there facts that, if left in, would make the artifact wrong,
+     unsafe, or internally contradictory?
+  5. Finding classification: Classify every finding you raise as exactly one of the five
+     TRIAGE RULE categories below.
+
+TRIAGE RULE — classify EVERY finding as exactly one of:
+  IN-SCOPE BLOCKER         breaks the stated goal; creates a FALSE CLAIM in this artifact;
+                           weakens the advisory/read-only/human-gated guarantees; prevents
+                           the work from running; or violates an explicit safety constraint.
+  IN-SCOPE NON-BLOCKER     improves it but is not required for this PR.
+  OUT-OF-SCOPE BACKLOG     valid, but belongs to a future feature / stronger guarantee.
+  REJECTED                 conflicts with the stated scope or Codeos philosophy.
+  SELF-REFERENCE /         review records that are stale because of the previous round's
+  REVIEW-BOOKKEEPING       own existence (causal loop); not a real artifact defect.
+  Base the PR decision ONLY on IN-SCOPE BLOCKER findings. An OUT-OF-SCOPE BACKLOG finding
+  must NOT cause DO NOT ADVANCE unless this artifact FALSELY CLAIMS to solve it.
+
+WHAT NOT TO DO
+  - Do not flag style or wording issues as blockers unless the wording creates a false claim,
+    contradiction, parser breakage, or wrong governance instruction.
+  - Do not re-review unchanged full context when the packet is in delta mode.
+  - Do not treat local-only review history as a blocker unless the artifact falsely
+    claims the review artifacts are committed/durable.
+
+INSTRUCTIONS
+  If this is a resumed session, ignore any earlier-session conclusions unless they are
+  re-established by THIS packet; assess only the evidence above, pinned to this commit.
+  Give a focused assessment of this artifact against the stated scope, acceptance criteria,
+  and evidence in this packet. Rank findings by severity. Suggest a better design only when
+  needed to explain a required fix for an IN-SCOPE BLOCKER.
+
+  CONTROLLED PLAIN ENGLISH (if one of the artifacts under review states "Controlled Plain
+  English status for this review: enabled" or "...: disabled" — this task template never reads
+  any configuration file itself; whoever invokes the review includes that line as one of the
+  reviewed artifacts, the same way any other file is included, when the relevant project has the
+  discipline enabled): Layer D1 (advisory verdict, no invented requirements, evidence separated
+  from inference — the TRIAGE RULE and "based ONLY on in-scope blockers" instructions above
+  already are this) always applies regardless of that value. When the value is `enabled`,
+  additionally write your prose in Layer D2 style — short sentences, common words, direct
+  explanations. This affects wording only; it never changes the footer format below.
+
+  Limit findings to the top 3 IN-SCOPE BLOCKERS. Additional non-blocking observations may be
+  summarized in one short paragraph only if useful.
+
+  For EACH finding emit:
+    Finding: / Severity: High|Medium|Low / Classification: <one of the TRIAGE RULE labels>
+    Evidence: <file/line> / Why: <short> / Required action: fix now|optional fix|backlog|reject
+    Scope reason: <why it does/does not belong to this PR's scope>
+  Then emit:
+    PR decision: ADVANCE | REQUEST CHANGES | DO NOT ADVANCE   (based ONLY on in-scope blockers)
+    Scope drift warning: yes|no — <is anything pulling this PR beyond its stated scope?>
+  Then on the LAST three lines emit exactly (map ADVANCE->NO OBJECTION,
+  REQUEST CHANGES->CHANGES ADVISED, DO NOT ADVANCE->DO NOT ADVANCE):
+    LOG SUMMARY: <NO OBJECTION | CHANGES ADVISED | DO NOT ADVANCE | UNCLASSIFIED> — <single most important point>
+      (use UNCLASSIFIED if you genuinely cannot classify the artifact safely)
+    EVIDENCE: <A|B|C|D|E>
+    HIGHEST-IMPACT UNCERTAINTY: <one sentence — what single thing, if wrong, most affects this assessment>
+
+  Evidence grade — the grade describes what the assessment rests on, not reviewer confidence:
+    A — Directly verified in the artifact, diff, or output shown in the packet
+    B — Verified with multiple direct pieces of evidence, but coverage is not complete
+    C — Partially verified, partially inferred from structure or context
+    D — Mostly inferred from structure or indirect evidence
+    E — Hypothesis or very limited basis — little to no direct evidence
+
+
+PACKET MANIFEST
+  generated: 2026-08-09T03:11:42Z
+  task_prompt: /home/rimo/projects/Codeos/prompts/codeos-reviewer-task.md (5794 bytes)
+  review_content_bytes: 23373
+  estimated_review_tokens: ~5843
+  budget_status: OK
+  packet_mode: full
+  delta_base: none
+  items:
+    - path: backlog/UPG-0065-modular-dba-configuration-architecture.md
+      mode: path_sha_only
+      bytes: 44161
+      sha256: 8ef9e85f2d90341f1d3d878d56f87cc0f3e5db885e3bb474d91c3b93b52d1e88
+    - path: status/self-development.md
+      mode: path_sha_only
+      bytes: 26762
+      sha256: 51b2d1905619a4d89a151220239e75fe234569cd0772a9d14a62795b0f7996b6
+    - path: changes/UPG-0065__CHG-20260807-001__delta-table.md
+      mode: path_sha_only
+      bytes: 109926
+      sha256: 5fd843199d6c1b61a766c136233ac434b82b7bef7d1ef0a54db52f9ed35f75cc
+    - path: changes/UPG-0065__CHG-20260808-002__compatibility-report.md
+      mode: path_sha_only
+      bytes: 19314
+      sha256: c461e01627b4a7fe7d74bb73f638b4dd8415ef31f9ed7a1b939d5dd191678643
+    - path: changes/UPG-0065__CHG-20260809-001__dba1-equivalence-proof.md
+      mode: full_file
+      bytes: 10704
+      sha256: 8cfb648ba8b89d7afa38420e505959c18db79852e7b209333751e8cff0ca735b
+    - path: /tmp/codeos-cpe-status.FzYzPJ
+      mode: full_file
+      bytes: 156
+      sha256: 5543a308f9534537c6d68f629027f5b74c54896e7f128c9f023b020c473f1ad3
+    - path: (diff)
+      mode: full_file
+      bytes: 12513
+
+REVIEW CONTEXT
+  Feature:                UPG-0065__CHG-20260809-001
+  Stage:                  selfdev-step-2
+  Branch:                 main
+  Base commit:            (no base pin)
+  Review commit:          534391a0eed844c6c8943371b02a6a34c64aa255 (+ uncommitted workspace changes)
+  Current approved stage: n/a (non-numeric stage)
+  Evidence coverage:      FULL_COVERAGE
+  Workspace dirty:        yes (uncommitted changes at review time)
+
+DBA RULES RELEVANT TO THIS STAGE
+  - Human approval is required for every stage transition; you are advisory only.
+  - Memory is not truth — assess only what is provided, pinned to the review commit.
+  - Implementation must trace to approved artifacts; no behavior beyond intent+contract+schema.
+  - No events outside the approved event schema; no hidden behavior.
+
+STAGE-SPECIFIC CHECKS
+  - (no stage-specific checklist for stage selfdev-step-2)
+
+EXPECTED STAGE OUTPUT
+  (no expected-output template for stage)
+
+ARTIFACTS TO REVIEW
+  --- changes/UPG-0065__CHG-20260809-001__dba1-equivalence-proof.md (sha256: 8cfb648ba8b89d7afa38420e505959c18db79852e7b209333751e8cff0ca735b, visibility: shown) ---
+    # Self-Development Change: UPG-0065__CHG-20260809-001 — dba1-equivalence-proof
+    
+    <!--
+    PURPOSE: Fourth change under UPG-0065 (Modular DBA Configuration Architecture). Phase A's fourth
+    sub-step (see backlog/UPG-0065's "Migration approach"): "prove DBA-1 semantically equivalent to
+    the live monolith." Constructs the candidate `DBA-1.yaml` configuration (per Invariant 1(a)) and
+    assembles the already-gathered delta-inventory and v1-decomposition evidence into a formal
+    equivalence proof (Invariant 1(b)) — NOT approval (1(c)) and NOT activation (1(d)), both of which
+    stay explicitly out of scope here.
+    Workflow: prompts/codeos-self-dev.md (4-step loop).
+    -->
+    
+    <!-- TRACE HEADER (canonical) -->
+    ```yaml
+    feature_id: UPG-0065
+    primary_feature_id: UPG-0065
+    change_id: CHG-20260809-001
+    slug: dba1-equivalence-proof
+    state: IN_PROGRESS      # DRAFT | IN_REVIEW | IN_PROGRESS | BLOCKED | COMPLETE | ABANDONED | SUPERSEDED
+    current_step: 2-Acceptance  # 1-Intent | 2-Acceptance | 3-Implement | 4-Reconcile
+    implements:
+      - UPG-0065
+    related_features: []
+    review_series: null     # S1: RVS__…__S1 (human APPROVED). Set again once Step 2's review runs
+    review_profile: PROFILE-4   # downstream-doctrine (Step 0a)
+    review_state: DRAFT     # DRAFT | IN_REVIEW | REVIEWED | ACCEPTED  (operational; NOT a round; resets per step)
+    review_history: reviews/review-log.md
+    fixes_findings: []
+    follow_up_of: null
+    ```
+    
+    <!-- SELF-REFERENCE BOUNDARY: this artifact is itself reviewed, so it must NOT embed the current
+    review round. Reference the stable review SERIES (review_series) + review_state; exact rounds live
+    only in reviews/review-log.md and reviews/codex/*. -->
+    
+    ---
+    
+    ## Change Intent
+    
+    **Why (problem in the toolkit):**
+    
+    `backlog/UPG-0065-modular-dba-configuration-architecture.md`'s Migration Approach names Phase A's
+    fourth sub-step, after the normative delta inventory (`CHG-20260807-001`, COMPLETE), the `v1`
+    component decomposition (`CHG-20260808-001`, COMPLETE), and the downstream consumer compatibility
+    sweep (`CHG-20260808-002`, COMPLETE): "prove `DBA-1` semantically equivalent to the live monolith."
+    Invariant 1 in the brief states this proof precedes any approval: "`DBA-1` must be (a) constructed
+    as the configuration-equivalent of today's live system, (b) proven semantically equivalent through
+    the delta inventory and compatibility sweep, (c) explicitly approved as the migration baseline, and
+    only then (d) activated. Filing this brief does not pre-approve `DBA-1`." This change performs (a)
+    and (b) only.
+    
+    Most of the evidence this proof needs already exists, produced across the prior three changes: the
+    delta inventory's complete 203-row disposition, and the `v1` decomposition's own Reconciliation
+    (which already verified completeness, content fidelity, and `RETIRE`-row justification per file).
+    What does not yet exist is (i) the candidate `DBA-1.yaml` configuration object itself — today the
+    six `dba/*/v1.md` files exist but nothing names them as one pinned combination — and (ii) a single
+    assembled argument that ties the existing per-change evidence together into one equivalence claim
+    about the *whole* combination, rather than six separately-verified parts.
+    
+    **What changes:**
+    
+    - `changes/UPG-0065__CHG-20260809-001__dba1-equivalence-proof.md` (this file) — the change record.
+    - `changes/UPG-0065__CHG-20260809-001__equivalence-report.md` (new, created at Step 3) — the
+      assembled equivalence argument, kept as a separate evidence file for the same reason the delta
+      table and compatibility report were: it is the durable analytical deliverable, independently
+      reviewable.
+    - `dba/configurations/DBA-1.yaml` (new, created at Step 3) — the candidate configuration naming
+      all six component versions (`doctrine: v1`, `review policy: v1`, `architecture-synthesis policy:
+      v1`, `implementation-profile policy: v1`, `controlled-plain-english policy: v1`, `reviewer tool
+      contract: v1`), explicitly marked as a candidate, not approved — per Invariant 1, this file's
+      existence is not itself an approval act.
+    - `backlog/UPG-0065-modular-dba-configuration-architecture.md`, `status/self-development.md`,
+      `status/roadmap.md` — Feature Thread / dashboard / wave-plan updated as this change progresses.
+    
+    **Scope boundary — what stays the same:**
+    
+    - `dba-system.md` and `dba-system-lean.md` are not edited. `dba-system.md` remains the sole file
+      downstream projects load, unchanged in content and role.
+    - No file under `prompts/`, `scripts/`, `templates/`, or `patterns/` is edited. The compatibility
+      sweep's three findings (the "Default Advisory Review" 3-way split, the manifest-cascade
+      dependency for `WHOLE-FILE-LOAD` references, and the two pre-existing citation-drift defects)
+      are **referenced** in the equivalence report as known pre-activation dependencies, not resolved
+      here — they concern *consumer-side* compatibility, a precondition for activation (Invariant
+      1(d)), not `DBA-1`'s own *content* equivalence to `dba-system.md` (Invariant 1(b)), which is a
+      different, narrower claim this change scopes itself to.
+    - No `dba/*/v1.md` file's content is edited — the equivalence proof reads them, never writes to
+      them.
+    - **`DBA-1` is not approved or activated.** `DBA-1.yaml` is created with an explicit
+      non-approved status field (e.g. `status: candidate` or `status: proposed`); no human approval of
+      this exact pinned combination happens in this change, per Invariant 1(c)-(d) — that is a
+      separate, later gate this change does not reach.
+    - No `DBA-2`, `dba-system-lean.md` decomposition, or any Phase B work — per the explicit human
+      decision this session to finish Phase A before starting Phase B.
+    - No new component version (`v2` of anything) is drafted.
+    
+    **Class:** downstream-doctrine
+    **Scope axis:** downstream doctrine only
+    **Backlog item:** backlog/UPG-0065-modular-dba-configuration-architecture.md
+    
+    ---
+    
+    ## Acceptance Criteria
+    
+    **`DBA-1.yaml` schema (binding on Step 3).** `dba/configurations/DBA-1.yaml` names each of the
+    six components at the version it currently has (`doctrine: v1`, `review_policy: v1`,
+    `architecture_synthesis_policy: v1`, `implementation_profile_policy: v1`,
+    `controlled_plain_english_policy: v1`, `reviewer_tool_contract: v1`), plus `status: candidate`
+    (never `approved` — Invariant 1), a `constructed_at` date, and a `equivalence_report` field
+    pointing at this change's report file.
+    
+    | # | Criterion | How it will be verified |
+    |---|---|---|
+    | 1 | **Completeness, re-verified fresh, not cited from a prior change.** Every one of the 175 non-`RETIRE` rows in the accepted delta table is present in exactly one `dba/*/v1.md` file's Source Traceability table, matching its `target_owner`; no row missing, no row duplicated across files. | Re-run the per-`target_owner` `comm -23`/`comm -13` diff between the delta table's `rule_id` set and each of the 6 files' Source Traceability tables — the same method `CHG-20260808-001`'s own Reconciliation used, re-executed here as this change's own evidence, not assumed carried over. All six expected empty in both directions. |
+    | 2 | **`RETIRE` exclusion, re-verified fresh.** None of the 28 `RETIRE` `rule_id`s, and none of their transcribed text, appears in any `dba/*/v1.md` file. | Grep all 6 files for each `RETIRE` `rule_id` (label check). Re-confirm the one known sub-line boundary (`CPE-2c`/`CPE-2d`) still excludes the retired clause's actual text. |
+    | 3 | **Content fidelity — full re-verification against the pinned source, not a sample.** Every one of the 175 rows' transcribed content is checked against `dba-system.md` @ commit `77599e9`'s text at its row's (corrected, where applicable) `source_anchor`. This is the load-bearing claim of the whole proof — a sampled or partial check does not satisfy it. | For every row, extract its content block and its declared `source_anchor` range, and diff the block against `git show 77599e9:dba-system.md` for that range. An exact match (accounting only for the already-documented, human-visible formatting choices — e.g. code-fence wrapping for tree fragments — not content differences) is required; any row that doesn't match is a defect, fixed before this AC can PASS, not waived. Full per-row results recorded in the equivalence report, not summarized away. |
+    | 4 | **`INTENTIONAL-BEHAVIOR-CHANGE` rows carry the current form only, re-confirmed.** None of the 19 `INTENTIONAL-BEHAVIOR-CHANGE` rows' `dba/` content matches its own Part-2 `proposed_rule` (by meaning, not just verbatim string) — `DBA-1` represents the system as it is today, not the lean proposal. | Re-read all 19 rows side-by-side (content block / pinned source / Part 2 `proposed_rule`) — the same check `CHG-20260808-001` performed, re-executed as this change's own evidence. Plus a fresh verbatim grep for distinctive `proposed_rule` phrases across all 6 files. |
+    | 5 | **`DBA-1.yaml` is well-formed and explicitly not approved.** The file matches the schema above; `status` is `candidate`, never `approved`; no other field in the file or this change's own prose asserts or implies approval. | Read the file against the schema. Grep this change's own artifacts for `approved` near `DBA-1`; any hit is read in context and confirmed non-assertive. |
+    | 6 | **No approval or activation act.** `dba-system.md` remains the sole file downstream projects load, unchanged in content and role. No file outside `dba/configurations/DBA-1.yaml` is added or modified as part of "activating" anything. | `git diff 77599e9 -- dba-system.md dba-system-lean.md` → expect empty. `git diff -- prompts/ scripts/ templates/ patterns/` → expect empty. |
+    | 7 | **Compatibility sweep findings are referenced, not silently dropped.** The equivalence report explicitly lists `CHG-20260808-002`'s three findings (the "Default Advisory Review" split, the manifest-cascade dependency, the two pre-existing citation-drift defects) and states why each is a consumer-side/activation-time concern that does not bear on `DBA-1`'s own content equivalence to `dba-system.md` — not omitted as if they didn't exist. | Read the equivalence report; confirm all three are named with an explicit statement of why they're out of this proof's scope. |
+    | 8 | **Cross-reference consistency.** The change record, the brief's Feature Thread, `status/self-development.md`, `backlog/features.md`, and `status/roadmap.md` agree on this change's current step and state, comparing only the fields each surface actually records. | Grep sweep for `UPG-0065` / `CHG-20260809-001` across all five files at Reconcile; no stale step/state claims (AJ-020/AJ-025 class). |
+    
+    ---
+    
+    ## Implementation Notes
+    
+    _To be filled at Step 3._
+    
+    ---
+    
+    ## Reconciliation
+    
+    _To be filled at Step 4._
+    
+    ---
+
+  --- /tmp/codeos-cpe-status.FzYzPJ (sha256: 5543a308f9534537c6d68f629027f5b74c54896e7f128c9f023b020c473f1ad3, visibility: shown) ---
+    Controlled Plain English status for this review: enabled
+    Source: /home/rimo/projects/Codeos/config/writing-discipline.yaml
+    Applicable scope: selfdev-step-2
+
+DIFF TO REVIEW (base->review, secret/size filtered)
+diff --git a/backlog/UPG-0065-modular-dba-configuration-architecture.md b/backlog/UPG-0065-modular-dba-configuration-architecture.md
+index 172e4f1..6ab6659 100644
+--- a/backlog/UPG-0065-modular-dba-configuration-architecture.md
++++ b/backlog/UPG-0065-modular-dba-configuration-architecture.md
+@@ -24,8 +24,9 @@ delta table's own correction note. Phase A's third sub-step, CHG-20260808-002 (D
+ Consumer Compatibility Sweep), is also **COMPLETE**, accepted 2026-08-09: a 49-row catalog
+ (`changes/UPG-0065__CHG-20260808-002__compatibility-report.md`) of every `dba-system.md`
+ reference in `prompts/`/`scripts/`/`templates/`/`patterns/`, classifying compatibility with the
+-eventual thin-manifest activation. Phase A's next sub-step — proving `DBA-1` semantically
+-equivalent to the live monolith — is not started.
++eventual thin-manifest activation. Phase A's fourth sub-step — CHG-20260809-001 (`DBA-1`
++Equivalence Proof) — Step 1 **ACCEPTED** (human approved 2026-08-09). Step 2 (8 acceptance
++criteria) written, review not yet run.
+ **Type**: downstream-doctrine
+ 
+ ## Problem
+@@ -294,6 +295,7 @@ rather than discovering them mid-migration.
+ | CHG-20260807-001 | changes/UPG-0065__CHG-20260807-001__normative-delta-inventory.md | Complete per-rule disposition of dba-system.md before any component drafting (Phase A, first sub-step) | COMPLETE |
+ | CHG-20260808-001 | changes/UPG-0065__CHG-20260808-001__v1-component-decomposition.md | Decompose dba-system.md into 6 candidate v1 component files using the accepted delta table (Phase A, second sub-step) | COMPLETE |
+ | CHG-20260808-002 | changes/UPG-0065__CHG-20260808-002__downstream-consumer-compatibility-sweep.md | Catalog every prompts/scripts/templates/patterns reference to dba-system.md; classify compatibility with the future thin-manifest activation (Phase A, third sub-step) | COMPLETE |
++| CHG-20260809-001 | changes/UPG-0065__CHG-20260809-001__dba1-equivalence-proof.md | Construct candidate DBA-1.yaml; assemble delta-inventory + v1-decomposition evidence into a formal semantic-equivalence proof against dba-system.md — not approval, not activation (Phase A, fourth sub-step) | IN_PROGRESS |
+ 
+ ### Reviews
+ 
+@@ -311,6 +313,7 @@ rather than discovering them mid-migration.
+ | RVS__UPG-0065__CHG-20260808-002__S2 | CHG-20260808-002 | 2-Acceptance | R1→R3 | R1 DO NOT ADVANCE (High: AC1's verification diffed the raw report `file` column against the unique grep file list, which would falsely fail a correct report once any file legitimately has 2+ rows) — fixed by deduplicating both sides before diffing, which over-corrected. R2 DO NOT ADVANCE (High: the dedup fix let a file with 3 real occurrences pass with only 1 reported row, since row count per file was explicitly excluded from the criterion; High: AC5's guardrail checks used `git status`/`git diff`, which miss an already-committed `configurations/*.yaml` and miss a new untracked `dba/` file respectively) — fixed: AC1 rewritten to check per `(file, line)` pair via `grep -n`, not file-level presence; AC5 rewritten to a direct filesystem existence check for `configurations/` plus both `git diff` and `git status --untracked-files=all` for `dba/`. R3 DO NOT ADVANCE (High: the brief, dashboard, and this change record's own trace header disagreed on whether Step 2 review had run at all — self-inflicted staleness from not updating tracking surfaces after R1/R2) — fixed. **PROFILE-4's 3-round budget exhausted at R3; fixed inline, no automatic R4.** **Human verdict: APPROVED — proceed to Step 3** (2026-08-08). |
+ | RVS__UPG-0065__CHG-20260808-002__S3 | CHG-20260808-002 | 3-Implement | R1→R3 | Produced a 49-row compatibility report cataloging every `dba-system.md` reference across `prompts/`/`scripts/`/`templates/`/`patterns/`. R1 DO NOT ADVANCE (High: the `STRUCTURAL-POINTER` schema/AC2 only covered `##`-heading citations, but 9 of 34 such rows cite sub-part bolded lead-ins, not headings; High: AC3 was spot-checked on only 5 of 34 rows, not all) — fixed: schema/AC2 split into section-level vs. sub-part granularities, both independently verified; AC3 re-run for all 34 rows, recorded in full. R2 DO NOT ADVANCE (High: brief/dashboard/trace-header still said "review not yet run" after R1 — same staleness pattern as S2's R3; High: report rows 1/33/49 claimed the Controlled Plain English section "maps cleanly" while Implementation Notes correctly called it a near-split; Medium: AC2's verbatim rule was applied inconsistently — "matches closely" for one row, "exact match... but missing X" for another) — fixed: tracking surfaces synced; CPE rows corrected and Finding E added; one explicit core-clause verbatim rule applied uniformly across all 9 sub-part rows. R3 DO NOT ADVANCE (High: Finding B's row list — 12 stated — didn't reconcile with its own two sub-lists, which summed to 15 with row 35 mislabeled; root cause found: rows 8/15/24 do cite the full section name, but the report's own "cited text" column had truncated them with "…", producing miscounts by both Codex and by hand) — fixed: truncation removed, Finding B rewritten with a mechanically grep-verified 12-row list; the identical error was found and fixed proactively in Finding E before being flagged. **PROFILE-4's 3-round budget exhausted at R3; fixed inline, no automatic R4.** **Human verdict: APPROVED — proceed to Step 4** (2026-08-09). |
+ | RVS__UPG-0065__CHG-20260808-002__S4 | CHG-20260808-002 | 4-Reconcile | R1→R2 | Wrote the Reconciliation section: all 6 ACs independently re-verified at Reconcile (not re-trusting Step 3's own claims), consistency sweep, findings scope-triage across all 4 steps. Self-caught before review, ×2: dashboard Loop-step and brief Status line both still described Step 3 as current after human approval — fixed before writing the table. R1 DO NOT ADVANCE (High, Codex: AC6 marked PASS but `backlog/features.md`/`status/roadmap.md` were only `--sha-only` in the packet, not shown as content — the same finding CHG-20260808-001's own Step 4 R1 caught) — fixed: both included in full for R2. R2 **NO OBJECTION, 0 findings, evidence grade C** (lower than this feature's usual A/B — `compatibility-report.md` itself was `--sha-only` this round to fit budget, reducing direct visibility into AC1-AC5's primary evidence; the AC6 fix itself is fully evidenced). Awaiting final human gate decision. |
++| RVS__UPG-0065__CHG-20260809-001__S1 | CHG-20260809-001 | 1-Intent | R1 | R1 **NO OBJECTION**, 0 findings, evidence B. **Human verdict: APPROVED — proceed to Step 2** (2026-08-09). |
+ 
+ ### Findings Tracked Inside This Feature
+ 
+diff --git a/status/roadmap.md b/status/roadmap.md
+index b143d33..2e8e54b 100644
+--- a/status/roadmap.md
++++ b/status/roadmap.md
+@@ -124,7 +124,7 @@ cheap pilot-adjacent wins early.
+ | UPG-0039 | Resolve the 00b Prompt-Filename Collision (Discovery -> 00a) | P3 | UPG-0007 ✓ | CHG-20260707-003 | COMPLETE |
+ | UPG-0040 | Fix Flaky config::tests Race on CODEOS_REVIEWER_PROVIDER Env Var | P2 | — | CHG-20260707-004 | COMPLETE |
+ | UPG-0041 | Reconcile feature-registry.yaml Schema vs Real-World Drift (FundFlow) | P2 | UPG-0009 ✓, UPG-0023 ✓ | CHG-20260707-005 | COMPLETE |
+-| UPG-0065 | Modular DBA Configuration Architecture | P1 | — | CHG-20260807-001, CHG-20260808-001, CHG-20260808-002 | IN_PROGRESS |
++| UPG-0065 | Modular DBA Configuration Architecture | P1 | — | CHG-20260807-001, CHG-20260808-001, CHG-20260808-002, CHG-20260809-001 | IN_PROGRESS |
+ 
+ ---
+ 
+diff --git a/status/self-development.md b/status/self-development.md
+index 2b25b77..4511d73 100644
+--- a/status/self-development.md
++++ b/status/self-development.md
+@@ -90,6 +90,7 @@
+ | UPG-0065 | CHG-20260807-001 | downstream-doctrine | downstream doctrine only | 4-Reconcile | ACCEPTED — S1-S4 all accepted. Delta table: `changes/UPG-0065__CHG-20260807-001__delta-table.md`, 203 rows across all 19 sections of `dba-system.md` (95 KEEP-IN-CORE / 61 MOVE / 28 RETIRE / 19 INTENTIONAL-BEHAVIOR-CHANGE), 11 deltas found beyond the original 8-item seed table. 9 review rounds total across Steps 2-4 (S2 R1-R7, S3 R1-R3, S4 R1-R3) progressively found and fixed bundled rows, false-duplicate RETIRE claims, and stale cross-references — logged in full in the brief's Feature Thread. **Human approved 2026-08-08 — CHG COMPLETE.** Read-only analysis throughout; `dba-system.md`/`dba-system-lean.md` untouched (`77599e9`), no `dba/` tree, no `configurations/*.yaml`, no `DBA-N` approved. **Post-acceptance hygiene fix (2026-08-08, human-authorized, no new review round):** 7 `source_anchor` ranges corrected in place per `AJ-024` (`REVIEW-7`, `REVIEW-LOG-2`, `ARCH-GATE-3a`, `ARCH-GATE-6`, `IMPL-PROFILE-3a`, `IMPL-PROFILE-3c`, `IMPL-PROFILE-9b`) — disposition/target_owner/rationale unchanged for all 7; row counts unchanged (203 total). | COMPLETE | UPG-0065 (Phase A continues) |
+ | UPG-0065 | CHG-20260808-001 | downstream-doctrine | downstream doctrine only | 4-Reconcile | ACCEPTED — S1-S4 all accepted (human-approved 2026-08-08). Produced 6 candidate `v1` component files under `dba/` (175 rows: 108 doctrine, 20 review policy, 18 architecture-synthesis policy, 18 implementation-profile policy, 7 controlled-plain-english policy, 4 reviewer tool contract), transcribed from `dba-system.md` @ `77599e9`'s pinned source text per row (not the delta table's `current_rule` summary). 8 review rounds total across S1-S4 progressively fixed a lossy-summary content-source risk, a manifest-path timing contradiction, label-only RETIRE/lean-content checks, a self-contradictory downstream-compatibility AC, a `CPE-2c`/`CPE-2d` sub-line boundary claim, a CPE thin-pointer path mismatch, a doctrine-file ordering violation, and an unevidenced AC10 claim — logged in full in the brief's Feature Thread. Self-check separately found and corrected 7 `source_anchor` undercounts in the already-ACCEPTED `CHG-20260807-001` delta table (most significantly `ARCH-GATE-6`, missing 3 of 6 procedural steps) — filed as OUT-OF-SCOPE BACKLOG, not fixed in that prior change. Read-only-plus-additive throughout: `dba-system.md`/`dba-system-lean.md` untouched, no `configurations/*.yaml`, no `DBA-N` approved or activated. **Human approved 2026-08-08 — CHG COMPLETE.** | COMPLETE | UPG-0065 (Phase A continues) |
+ | UPG-0065 | CHG-20260808-002 | downstream-doctrine | downstream doctrine only | 4-Reconcile | ACCEPTED — S1-S4 all accepted (human-approved 2026-08-08/09). Produced `changes/UPG-0065__CHG-20260808-002__compatibility-report.md`: 49-row catalog of every `dba-system.md` reference across `prompts/`/`scripts/`/`templates/`/`patterns/` (34 STRUCTURAL-POINTER / 5 WHOLE-FILE-LOAD / 10 GENERIC-MENTION). Found a genuine 3-way split ("Default Advisory Review" spans doctrine + review policy + reviewer tool contract), a near-split ("Multi-Feature Architecture Synthesis Gate" and "Controlled Plain English Writing Discipline" each mostly-but-not-fully map to one file), a manifest-cascade dependency for 5 WHOLE-FILE-LOAD references (most notably `templates/project-CLAUDE.md`'s scaffolded session-start instruction), and 2 pre-existing citation-drift defects unrelated to `v1` decomposition — all filed as OUT-OF-SCOPE BACKLOG evidence for the next Phase A sub-step. 9 review rounds total across S1-S4 (S2's and S3's own 3-round PROFILE-4 budgets both exhausted, fixed inline) progressively caught a mismatched schema/AC coverage gap, a 5-of-34-row sample where all 34 were required, a false "clean mapping" claim, an inconsistent verbatim rule, a row-count/row-list reconciliation error traced to a truncated table column, and — recurring across nearly every round — cross-reference staleness between this feature's own tracking surfaces, journaled as **AJ-025**. Read-only throughout: no consumer file, `dba-system.md`, `dba-system-lean.md`, or `dba/*/v1.md` touched; no `configurations/*.yaml`; no `DBA-N` approved. | COMPLETE | UPG-0065 (Phase A continues) |
++| UPG-0065 | CHG-20260809-001 | downstream-doctrine | downstream doctrine only | 2-Acceptance | S1 ACCEPTED (human-approved). S2 written — 8 ACs (fresh completeness/RETIRE re-verification, full 175-row content-fidelity check — not a sample, IBC-current-form re-check, DBA-1.yaml schema, no-approval guardrail, compatibility-sweep-findings-referenced, cross-reference consistency); review not yet run | IN_PROGRESS | — |
+ 
+ <!--
+ Identity   : Feature ID = UPG-#### (stable). Change ID = CHG-YYYYMMDD-NNN (one execution), or a
