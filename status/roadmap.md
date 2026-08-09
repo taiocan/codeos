@@ -124,7 +124,7 @@ cheap pilot-adjacent wins early.
 | UPG-0039 | Resolve the 00b Prompt-Filename Collision (Discovery -> 00a) | P3 | UPG-0007 ✓ | CHG-20260707-003 | COMPLETE |
 | UPG-0040 | Fix Flaky config::tests Race on CODEOS_REVIEWER_PROVIDER Env Var | P2 | — | CHG-20260707-004 | COMPLETE |
 | UPG-0041 | Reconcile feature-registry.yaml Schema vs Real-World Drift (FundFlow) | P2 | UPG-0009 ✓, UPG-0023 ✓ | CHG-20260707-005 | COMPLETE |
-| UPG-0065 | Modular DBA Configuration Architecture | P1 | — | CHG-20260807-001, CHG-20260808-001, CHG-20260808-002, CHG-20260809-001, CHG-20260809-002 | IN_PROGRESS |
+| UPG-0065 | Modular DBA Configuration Architecture | P1 | — | CHG-20260807-001, CHG-20260808-001, CHG-20260808-002, CHG-20260809-001, CHG-20260809-002, CHG-20260809-003 | IN_PROGRESS |
 
 ---
 

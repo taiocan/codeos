@@ -58,7 +58,51 @@ Loop-step column still read `2-Acceptance` after Step 3 began) — fixed. **COMP
 Invariant 1(c).** `dba/configurations/DBA-1.yaml` is now `status: approved`, `approved_via:
 UPG-0065__CHG-20260809-002`. All 6 ACs PASS at Reconcile — AC2 and AC6's evidence quoted verbatim
 inline in the change record after `--sha-only` packet inclusion proved insufficient twice.
-Activation (1(d)) remains a separate, later, not-yet-started change — `dba-system.md` is unchanged.
+Activation (1(d)) remains a separate, later, **now-started** change. Human decision (2026-08-09):
+activation uses the **minimal-manifest design** — `dba-system.md` becomes a short pointer to the
+active `DBA-N`, not a file that keeps its current section structure as pointers. Split into two
+changes for safety (applying Invariant 2's "no partially-migrated state" spirit to the migration
+*process*, not just the end state): `CHG-20260809-003` (`consumer-citation-migration`, Step 1
+drafted, original scope before the Step 2 correction below) migrated all 34 `STRUCTURAL-POINTER`
+citations + 5 `WHOLE-FILE-LOAD` instructions across 16 consumer files to the correct `dba/*/v1.md`
+locations, while `dba-system.md` stays completely unchanged; the atomic `dba-system.md` swap itself
+is a separate, later, not-yet-filed change, safe only once this one is COMPLETE. R1-R3
+progressively fixed: unsupported "safe/reversible" claims (reworded to two checkable properties —
+plain-revert reversibility, and a direct check that none of the (then) 34+5 retargeted citations
+point at content compromised by `CHG-20260809-001`'s 12 waived defects); stale trace-header review
+metadata after R1 ran; the top-level `state` field left at
+`DRAFT` and a Self-Reference Boundary violation (embedding exact round numbers in the trace
+header) introduced by the prior fix. **PROFILE-4's 3-round budget exhausted at R3; fixed inline,
+no automatic R4. Human verdict: APPROVED — proceed to Step 2** (2026-08-09). **Scope correction
+before Step 2 (self-caught):** the 5 WHOLE-FILE-LOAD rows do not need editing — "read
+dba-system.md" stays valid regardless of file content; Finding C's cascade requirement is solved
+by the later manifest's own text, not consumer-side edits. `templates/project-CLAUDE.md` drops out
+of this change entirely. Scope is now exactly the 34 STRUCTURAL-POINTER rows across 16 files.
+Step 2 written — 5 ACs (simplified from an initial 8-AC draft by merging two redundant checks
+into AC1's own per-file line-level check). R1 DO NOT ADVANCE (High: AC1's grep pattern also
+matched the compatibility report's own legend line; its diff-scope check was repo-wide, falsely
+excluding this change's own record/tracking files; High: AC2's preface incorrectly required
+multi-file citations for Findings B/E, which the report itself calls near-splits that don't
+depend on the minority file — only Finding A is a genuine split; Medium: AC4's untouched-file
+claim used `git diff` only, missing untracked files) — all fixed. R2 DO NOT ADVANCE (High:
+dashboard row still read `1-Intent` and described the pre-correction scope; High: "What changes"
+still said "genuine splits — Findings A, B, E," contradicting the already-corrected AC preface a
+few lines below in the same artifact) — fixed. R3 DO NOT ADVANCE (High: change record's own trace
+header still `null`/`DRAFT` after R1/R2 ran) — fixed. **PROFILE-4's 3-round budget exhausted at
+R3; fixed inline, no automatic R4. Human approved 2026-08-09 — proceeding to Step 3.** Step 3: all
+34 citations retargeted across the 16 files. AC1-AC4 self-verified PASS (34 rows, exactly 16 files
+touched, citation-only edits, `dba-system.md`/`dba/*/v1.md` untouched). R1 DO NOT ADVANCE (High:
+ACs marked PASS with the compatibility report only `--sha-only`; High: dashboard Loop-step column
+stale) — fixed. R2 **NO OBJECTION**, 1 Low bookkeeping note, fixed anyway. **Human approved 2026-08-09 —
+proceeding to Step 4.** Step 4 R1 DO NOT ADVANCE (High: AC1-AC3's Reconciliation evidence was
+weaker than each AC's own stated verification method — fixed by re-running the real per-line/
+per-citation/per-diff checks fresh at Reconcile, not re-citing Step 3; High: this Status line's own
+older paragraph still stated the pre-correction "34+5" scope as current — fixed, marked as
+historical). R2 **NO OBJECTION, 0 findings, evidence B**. All 5 ACs re-verified fresh at Reconcile,
+all PASS. **Human approved 2026-08-09 — CHG-20260809-003 COMPLETE.** All 34 `STRUCTURAL-POINTER`
+citations across 16 consumer files now point at `dba/*/v1.md`; `dba-system.md` remains unchanged.
+First half of activation (Invariant 1(d)) done — the atomic `dba-system.md` swap remains a
+separate, not-yet-filed change.
 **Type**: downstream-doctrine
 
 ## Problem
@@ -329,6 +373,7 @@ rather than discovering them mid-migration.
 | CHG-20260808-002 | changes/UPG-0065__CHG-20260808-002__downstream-consumer-compatibility-sweep.md | Catalog every prompts/scripts/templates/patterns reference to dba-system.md; classify compatibility with the future thin-manifest activation (Phase A, third sub-step) | COMPLETE |
 | CHG-20260809-001 | changes/UPG-0065__CHG-20260809-001__dba1-equivalence-proof.md | Construct candidate DBA-1.yaml; assemble delta-inventory + v1-decomposition evidence into a formal semantic-equivalence proof against dba-system.md — not approval, not activation (Phase A, fourth sub-step) | COMPLETE |
 | CHG-20260809-002 | changes/UPG-0065__CHG-20260809-002__dba1-approval.md | Explicit human approval of DBA-1 as the migration baseline (Invariant 1(c)) — not activation, which stays a separate later change (Phase A, fifth sub-step) | COMPLETE |
+| CHG-20260809-003 | changes/UPG-0065__CHG-20260809-003__consumer-citation-migration.md | Migrate all 34 STRUCTURAL-POINTER citations across 16 consumer files to the correct dba/*/v1.md locations, while dba-system.md stays unchanged — first half of activation (Phase A, sixth sub-step, part 1); the 5 WHOLE-FILE-LOAD rows need no edit (see change record's Scope boundary) | COMPLETE |
 
 ### Reviews
 

@@ -19,7 +19,7 @@ returns the affected feature to its owning Stage 1, 2, or 3 — it is not resolv
 Workflow: .codeos/prompts/03b-architecture-synthesis.md (4-step pipeline, Step 3 drafts this,
 Step 4 approves it together with the Baseline)
 Each step requires explicit human approval.
-See: .codeos/dba-system.md → "Multi-Feature Architecture Synthesis Gate"
+See: .codeos/dba/policies/architecture-synthesis/v1.md
 -->
 
 ## Identity and Version
@@ -37,8 +37,9 @@ See: .codeos/dba-system.md → "Multi-Feature Architecture Synthesis Gate"
 <!-- This file (architecture/cohort-logical-design.md) always holds only the CURRENT approved
 version. When a new version supersedes this one, this file's content moves to
 architecture/history/cohort-logical-design-v<N>.md (named for the version it was current as)
-before being overwritten with the new version — see .codeos/dba-system.md → "Verifying a
-`baseline_version` or `logical_design_version` reference". -->
+before being overwritten with the new version — see
+.codeos/dba/policies/architecture-synthesis/v1.md → "Verifying a `baseline_version` or
+`logical_design_version` reference". -->
 
 **Cohort membership set (this version):**
 
@@ -48,7 +49,7 @@ before being overwritten with the new version — see .codeos/dba-system.md → 
 
 <!-- Membership is versioned the same way the Baseline's is. A material membership change creates
 a new version and requires an impact assessment — see "Cohort, baseline, and logical design
-versioning" in dba-system.md. -->
+versioning" in .codeos/dba/policies/architecture-synthesis/v1.md. -->
 
 ---
 

@@ -50,7 +50,7 @@ One test per named failure in the contract's Failure Classifications table.
 Assert: the correct FAILURE event is emitted with the correct `failure_reason`.
 Assert: system state is unchanged (unless contract specifies otherwise).
 
-Per `.codeos/dba-system.md` → "Contract-to-Implementation Failure Boundary," also verify the
+Per `.codeos/dba/doctrine/v1.md` → "Contract-to-Implementation Failure Boundary," also verify the
 negative direction — these are not optional extras, they are part of what "Failure Mode Tests"
 means for this category:
 - **No masquerading**: trigger a technical/internal error not listed in the Failure
