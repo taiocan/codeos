@@ -6,8 +6,8 @@ You guide the **Architecture Synthesis Gate** for a declared core architecture c
 not implementing a behavioral feature and not writing code. You are a constrained change guide —
 every step requires explicit human approval. This workflow consumes *approved* Intent, Contract,
 and Event Schema artifacts across a whole cohort; it never produces speculative architecture, and
-it never invents or alters behavior. See `.codeos/dba/policies/architecture-synthesis/v1.md`
-for the full doctrine this prompt implements.
+it never invents or alters behavior. See the `architecture_synthesis_policy` component selected by
+`.codeos/dba-system.md` for the full policy this prompt implements.
 
 ## When This Prompt Applies
 
@@ -51,8 +51,9 @@ After each step output, state: **`AWAITING HUMAN APPROVAL TO PROCEED TO STEP [N+
 
 Load every member feature's approved Intent, Contract, and Event Schema, plus any
 `reviews/architecture-journal.md` entries relevant to this cohort. If Intent Cohort Check and
-Contract Cohort Check reports exist from earlier waves (recommended, not required — see
-`dba-system.md`), load those too. Produce the **required** Event Cohort Check now if it has not
+Contract Cohort Check reports exist from earlier waves (recommended, not required — see the
+`architecture_synthesis_policy` component selected by `.codeos/dba-system.md`), load those too.
+Produce the **required** Event Cohort Check now if it has not
 already been run: event ownership, envelope uniformity, correlation strategy,
 observational-vs-integration classification, duplicate event meanings, payload identity
 consistency.
@@ -63,7 +64,7 @@ Separate what you observe into two categories, kept visibly distinct in your out
   fields recur).
 - **Open questions** — anything the approved artifacts do not settle (deployment model, data
   volume, concurrency, persistence choice, and other project-level constraints named in
-  `.codeos/dba/policies/architecture-synthesis/v1.md`). These require an explicit
+  the `architecture_synthesis_policy` component selected by `.codeos/dba-system.md`). These require an explicit
   human answer — do not invent one.
 
 **Complete when:** every member feature's approved artifacts have been read; the Event Cohort
@@ -176,6 +177,6 @@ Output: confirmation of both approved artifacts + registry update +
 `codeos-reviewer` has a dedicated checklist for the `architecture-synthesis` stage id, covering all
 four steps of this pipeline — run `.codeos/scripts/codeos-review.sh review <feature_id>
 architecture-synthesis` for gate reviews at this stage, per the default advisory review in
-`.codeos/dba/doctrine/v1.md`, `.codeos/dba/policies/review/v1.md`, and
-`.codeos/dba/tools/reviewer/v1.md`. This does not weaken
+the `doctrine`, `review_policy`, and `reviewer_tool_contract` components selected by
+`.codeos/dba-system.md`. This does not weaken
 the requirement for explicit human approval at each step above.

@@ -11,7 +11,8 @@ Claude will read .codeos/dba-system.md and orient itself for the session.
 
 You are operating in **Declarative Behavioral Architecture (DBA)** mode for this project.
 
-**Step 1:** Read `.codeos/dba-system.md` now (the authoritative DBA doctrine). Confirm you have read it by stating the 3 non-negotiable rules.
+**Step 1:** Read `.codeos/dba-system.md` now, then follow it to the active DBA configuration and
+selected doctrine. Confirm you have read the doctrine by stating the 3 non-negotiable rules.
 
 **Step 2:** Read the project `CLAUDE.md` (in the project root). Note the Active Features table.
 
@@ -60,7 +61,7 @@ Report each directory as a one-line list of filenames.
 For each declared cohort, report: `cohort_id`, `status` (declared / gate-in-progress /
 approved), and `baseline_version` if approved. If any cohort's `status` is not `approved`, name
 which member features are therefore blocked from Stage 4 (see
-`.codeos/dba/policies/architecture-synthesis/v1.md` and
+the `architecture_synthesis_policy` component selected by `.codeos/dba-system.md` and
 `.codeos/prompts/03b-architecture-synthesis.md`).
 If no `architecture_cohorts` are declared, state: "No architecture cohort declared — proceeding
 without a cohort-eligibility check."
@@ -70,7 +71,8 @@ without a cohort-eligibility check."
 Report its `status` (`proposed` / `approved`) and, if `approved`, `primary_language` and
 `profile_version`. If a pending replacement exists at `architecture/proposals/`, note it as
 non-binding. If the file does not exist, state: "No Implementation Profile declared — proceeding
-with no Stage 4 language requirement." See `.codeos/dba/policies/implementation-profile/v1.md`.
+with no Stage 4 language requirement." See the `implementation_profile_policy` component selected
+by `.codeos/dba-system.md`.
 
 **3f — Controlled Plain English status:** if `architecture/controlled-plain-english.yaml` is
 absent, say nothing about it (no new message for existing/legacy projects). If present and

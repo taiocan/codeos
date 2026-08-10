@@ -39,7 +39,8 @@
 #   their feature memberships must not overlap. A feature with architecture_cohort: null (or the
 #   field absent entirely — both mean the same thing) has no Stage 4 cohort-eligibility check;
 #   this is the default, unaffected state for a registry that predates this field or a feature
-#   never part of a cohort. See .codeos/dba/policies/architecture-synthesis/v1.md.
+#   never part of a cohort. See the architecture_synthesis_policy component selected by
+#   .codeos/dba-system.md.
 #
 # architecture_cohorts[].status values:
 #   declared          — cohort membership set is declared; gate not yet started
@@ -49,7 +50,8 @@
 #                        pre-two-output-model rule (Baseline only) is reinterpreted as this on first
 #                        read after that model changed. A fresh cohort going through the current
 #                        4-step pipeline does not pass through this state — see
-#                        .codeos/dba/policies/architecture-synthesis/v1.md.
+#                        the architecture_synthesis_policy component selected by
+#                        .codeos/dba-system.md.
 #   approved          — both Architecture Baseline (baseline_version) and Cohort Logical Design
 #                        (logical_design_version) approved; cohort members may begin Stage 4 (subject
 #                        to both applicable versions covering them)
@@ -87,7 +89,8 @@ architectural_refinements:
     notes: ""
 
 # architecture_cohorts: OPTIONAL top-level list — only present when at least one core
-# architecture cohort has been declared (see .codeos/dba/policies/architecture-synthesis/v1.md).
+# architecture cohort has been declared (see the architecture_synthesis_policy component selected
+# by .codeos/dba-system.md).
 # Absent entirely for projects with no declared cohort; this is the default and
 # does not affect any existing registry.
 #
@@ -105,8 +108,9 @@ architectural_refinements:
 #                                          # v<version>.md files are provenance records only — a
 #                                          # stale (non-current) value here blocks Stage 4 for this
 #                                          # cohort's members, it is not an alternate valid value
-#                                          # (see .codeos/dba/policies/architecture-synthesis/v1.md
-#                                          # → "Verifying a `baseline_version` or
+#                                          # (see the architecture_synthesis_policy component
+#                                          # selected by .codeos/dba-system.md →
+#                                          # "Verifying a `baseline_version` or
 #                                          # `logical_design_version` reference")
 #     logical_design_version: null        # a single, cohort-level current value — set once status
 #                                          # reaches approved, kept equal to architecture/cohort-

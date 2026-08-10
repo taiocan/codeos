@@ -5,8 +5,8 @@ Paste this at the start of a reviewer LLM session before providing a stage artif
 **This is an optional, supplementary second opinion** — an independent critical-assessor
 pass free to challenge the artifact, the feature, or DBA itself. It does not replace the
 default advisory review (`.codeos/scripts/codeos-review.sh review <feature_id> <stage>`, structured and
-acceptance-criteria-bound) described in `.codeos/dba/doctrine/v1.md`,
-`.codeos/dba/policies/review/v1.md`, and `.codeos/dba/tools/reviewer/v1.md`.
+acceptance-criteria-bound) described by the `doctrine`, `review_policy`, and
+`reviewer_tool_contract` components selected by `.codeos/dba-system.md`.
 Use both when a stage warrants extra scrutiny; use this alone only when the default review
 tooling isn't available and a waiver has been recorded but a human still wants a second read.
 

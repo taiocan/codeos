@@ -6,7 +6,7 @@ adopting a second, incompatible registry shape that had grown independently down
 guide covers what changed and how to update a pre-v2 (unversioned) registry.
 
 Neither the original canonical schema nor any downstream variant was doctrine-authoritative
-before this — `dba-system.md` itself defines no feature-registry status vocabulary. This is a
+before this — the active `doctrine` component defines no feature-registry status vocabulary. This is a
 deliberate template-level schema decision, not a doctrine change.
 
 ---
@@ -44,7 +44,7 @@ status: active   # hypothesized | active | suspended | blocked | complete
 
 `hypothesized` represents a feature produced by Onboarding (Session Type D) whose Stage 1
 Intent is `HYPOTHESIZED_INTENT`, not yet approved — it must pass Stage 1 review before
-advancing (`dba-system.md`'s Artifact Classification table).
+advancing (the active `doctrine` component's Artifact Classification table).
 
 **If your registry encodes the DBA stage directly into the status string** (e.g.
 `stage0-hypothesized`, `stage1`, `stage4`, `complete`) — this is a different, incompatible

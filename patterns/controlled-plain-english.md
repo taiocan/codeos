@@ -7,13 +7,14 @@ language where precision doesn't require otherwise, exact modal verbs and quanti
 does, and protection for literal content (event names, field names, quoted normative text) from
 paraphrase drift. It applies wherever a downstream project or Codeos's own self-development has
 enabled it via the Optional Mechanism Status Convention (`.codeos/templates/conventions.md` →
-"Optional Mechanism Status Convention"; see `.codeos/dba/policies/controlled-plain-english/v1.md`
-for the activation mechanics and call-site map).
+"Optional Mechanism Status Convention"; see the `controlled_plain_english_policy` component
+selected by `.codeos/dba-system.md` for the activation mechanics and call-site map).
 
 **Consulted by:** every Stage 1-10 prompt and `pipeline-reviewer.md` — each check line names which
 layers below apply to it and applies the enabled-but-pattern-unavailable rule (below) directly.
 `codeos-reviewer-task.md` is **not** a consumer of this file — it stays configuration-neutral (see
-"Reviewer Model" and `.codeos/dba/policies/controlled-plain-english/v1.md`'s call-site map): it
+"Reviewer Model" and the `controlled_plain_english_policy` component selected by
+`.codeos/dba-system.md` → "Call-site map"): it
 never reads this pattern or any status
 file itself, and therefore never performs the enabled-but-pattern-unavailable check. It only reacts
 to a status line automatically injected by `scripts/codeos-review.sh` (or `.codeos/scripts/

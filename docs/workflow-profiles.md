@@ -121,7 +121,8 @@ Recommended decision: NO OBJECTION / CHANGES ADVISED / DO NOT ADVANCE
 ```
 
 This checklist is guidance for the reviewer prompt; it is not enforced by the pipeline.
-Reviewer output is advisory and non-gatekeeping at every profile (see `dba-system.md`).
+Reviewer output is advisory and non-gatekeeping at every profile (see the `review_policy`
+component selected through `dba-system.md`).
 
 ---
 
@@ -138,7 +139,7 @@ Reviewer output is advisory and non-gatekeeping at every profile (see `dba-syste
 
 These profiles sit on top of the 9-stage DBA loop. They govern *how commits and PRs are
 structured*, not *what is approved at each gate*. The human-approval gates and reviewer
-cadence defined in `dba-system.md` are unchanged.
+cadence defined by the active `doctrine` and `review_policy` components are unchanged.
 
 Profile selection is a human decision made at the start of a feature, not enforced by any
 tool. If you change your mind mid-feature (e.g. a Profile A feature grows into Profile B

@@ -79,7 +79,7 @@ rule. They could be added with ordinary edits and a review entry, not a pilot.
 - **Critical caveat.** Codeos deliberately keeps the human in *decision* gates; the
   subtlety is distinguishing legitimate decision-approval (good) from chore-piloting (bad).
   The doctrine must draw that line or it will be misread as "approve less."
-- **Overlap.** Reinforces the existing dba-system.md stance ("the human is the author of
+- **Overlap.** Reinforces the active doctrine's stance ("the human is the author of
   intent, not a terminal operator"). Makes an implicit value into a checkable failure mode.
 
 ### 1.4 Non-goals as an explicit intent/contract field

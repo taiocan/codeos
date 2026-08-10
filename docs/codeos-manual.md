@@ -80,16 +80,16 @@ After reading this manual, a reader should be able to:
 ### Source basis
 
 Every normative claim in this manual is grounded in a Codeos repository artifact:
-`dba-system.md` (master system instructions), `README.md`, `terminology.md`, the stage prompts
-in `prompts/`, the artifact templates in `templates/`, the architectural patterns in
-`patterns/`, and `scripts/dba-init.sh`. Major claims are mapped to their source files in
+the active DBA components selected through `dba-system.md`, `README.md`, `terminology.md`, the
+stage prompts in `prompts/`, the artifact templates in `templates/`, the architectural patterns
+in `patterns/`, and `scripts/dba-init.sh`. Major claims are mapped to their source files in
 **Appendix A — Source Map**. This manual distinguishes two kinds of statement: *repo
 facts* (what Codeos requires, traceable to a file) and *interpretation* (this manual's
 reading of why those requirements matter). Interpretation is always marked as such.
 
 A normative convention is used throughout:
 
-- **MUST / NEVER / required** — a rule backed directly by `dba-system.md` or a stage prompt.
+- **MUST / NEVER / required** — a rule backed directly by an active governed component or a stage prompt.
 - **should / may / this manual recommends** — guidance or interpretation that the
   repository does not itself mandate.
 
@@ -97,8 +97,9 @@ A normative convention is used throughout:
 
 # Part I — Definition and Motivation
 
-*Source basis: `README.md` (what this is, the 9-step loop); `dba-system.md` (mode declaration,
-non-negotiable rules, vocabulary); `terminology.md` (DBA/IDA framing); `prompts/00c-onboarding.md`
+*Source basis: `README.md` (what this is, the 9-step loop); the `doctrine` component selected
+through `dba-system.md` (mode declaration, non-negotiable rules, vocabulary); `terminology.md`
+(DBA/IDA framing); `prompts/00c-onboarding.md`
 (intent laundering); `patterns/shared-infrastructure-boundary.md` (vertical drift).*
 
 ## Why Codeos exists
@@ -155,7 +156,7 @@ and what runtime evidence will show whether the truth still holds.
 Codeos is, simultaneously:
 
 - a **methodology** — it prescribes an ordered sequence of stages and human approvals;
-- a **toolkit** — it ships master instructions (`dba-system.md`), stage prompts (`prompts/`),
+- a **toolkit** — it ships governed DBA components selected through `dba-system.md`, stage prompts (`prompts/`),
   artifact templates (`templates/`), architectural patterns (`patterns/`), and an
   initializer (`scripts/dba-init.sh`), symlinked into a project as `.codeos`;
 - a **workflow** — the 9-step DBA loop, plus an alternate 5-step architectural-refinement
@@ -175,7 +176,7 @@ or behavior unless it derives from an approved artifact.
   stage requires an artifact and an approval.
 - **Not ordinary AI pair programming.** The human does not co-write code line by line; the
   human approves intents, contracts, schemas, tests, and refinements.
-- **Not a fully autonomous agent system.** `dba-system.md` forbids autonomous planning,
+- **Not a fully autonomous agent system.** The active doctrine selected through `dba-system.md` forbids autonomous planning,
   self-direction, and multi-step autonomous execution; Claude may not skip stages,
   implement before specification, or advance without explicit approval.
 - **Not merely a documentation standard.** The documents are not commentary beside the
@@ -193,7 +194,8 @@ or behavior unless it derives from an approved artifact.
 
 # Part II — Operating Doctrine
 
-*Source basis: `dba-system.md` (non-negotiable rules, Truth Authority, "What You NEVER Do");
+*Source basis: the `doctrine` component selected through `dba-system.md` (non-negotiable rules,
+Truth Authority, "What You NEVER Do");
 stage prompts `01`–`09` (per-stage roles); `prompts/pipeline-reviewer.md` (reviewer role).*
 
 ## Proof before code
@@ -267,8 +269,8 @@ adding it.
 
 ## The non-negotiable rules
 
-`dba-system.md` states six non-negotiable rules. They are reproduced here in meaning (these are
-repo-backed MUST/NEVER rules):
+The `doctrine` component selected through `dba-system.md` states six non-negotiable rules. They
+are reproduced here in meaning (these are repo-backed MUST/NEVER rules):
 
 1. **Every stage transition requires explicit human approval.** Claude NEVER advances
    without an explicit "APPROVED" / "yes proceed" or equivalent.
@@ -279,7 +281,7 @@ repo-backed MUST/NEVER rules):
 5. Claude NEVER invents hidden behavior — all behavior must trace to an approved artifact.
 6. After producing any stage output, Claude STOPS and states `AWAITING HUMAN APPROVAL`.
 
-`dba-system.md` also enumerates "What You NEVER Do," which restates and extends these:
+The selected `doctrine` component also enumerates "What You NEVER Do," which restates and extends these:
 implement before approval; add abstractions the contracts do not demand; add "just in case"
 error handling not in the contract's failure modes; emit unlisted events; advance without
 approval; suggest full rewrites; add autonomous planning or multi-step autonomous
@@ -292,14 +294,14 @@ gate.
 
 ## Truth Authority and conflict resolution
 
-When intent, runtime evidence, and structural analysis disagree, `dba-system.md` defines an
-authority model. This manual presents it with its exact categories and caveats and does
+When intent, runtime evidence, and structural analysis disagree, the `doctrine` component selected
+through `dba-system.md` defines an authority model. This manual presents it with its exact categories and caveats and does
 **not** reduce it to a simple ranking — the safety caveat in particular inverts what a
 naive ranking would suggest:
 
 1. **Explicit human correction** at any stage gate overrides all other sources.
 2. **Runtime behavior** (observed events) overrides intent *text* when behavior is more
-   specific. Example from `dba-system.md`: schema declares `"string"` but runtime consistently
+   specific. Example from the selected `doctrine` component: schema declares `"string"` but runtime consistently
    emits an integer — this is empirical evidence of intent-text drift, not a runtime error.
 3. **Safety, authorization, and invariant-enforcement logic** always preserves *intent
    primacy*, regardless of runtime behavior. Example: if runtime shows no authorization
@@ -319,7 +321,8 @@ the model.
 
 # Part III — The DBA Loop
 
-*Source basis: `README.md` (Stage Purposes, key constraints); `dba-system.md` (the 9-step loop);
+*Source basis: `README.md` (Stage Purposes, key constraints); the `doctrine` component selected
+through `dba-system.md` (the 9-step loop);
 stage prompts `00-session-start`, `01`–`09`; `templates/` (artifact shapes).*
 
 Codeos has a nine-stage *feature* loop. It also has a Stage 0 *session discipline* that is
@@ -332,7 +335,7 @@ Stage 0 is not part of the feature lifecycle; it is the operating preflight that
 Claude into DBA mode, scopes the session, names forbidden actions, and prevents accidental
 autonomous work. The session-start prompt (`prompts/00-session-start.md`) directs Claude to:
 
-- read `.codeos/dba-system.md` and confirm it by stating the non-negotiable rules;
+- read `.codeos/dba-system.md`, follow it to the selected doctrine, and state the non-negotiable rules;
 - read the project `CLAUDE.md` and note the Active Features table;
 - read `docs/codebase-digest.md` if it exists (structural orientation), or state that none
   was found;
@@ -554,7 +557,8 @@ effects on outside systems). Every event carries six required base fields: `even
 
 # Part IV — The Proof System
 
-*Source basis: `dba-system.md` (vocabulary: Event Spine, Correlation ID, event kinds);
+*Source basis: the `doctrine` component selected through `dba-system.md` (vocabulary: Event Spine,
+Correlation ID, event kinds);
 `prompts/03-event-schema.md`, `06-observe.md`, `07-reconcile.md`, `08-replay.md`,
 `09-refine.md`; `terminology.md` (event JSON shape).*
 
@@ -660,15 +664,16 @@ the system stable: change is bounded and justified rather than sweeping and aest
 
 # Part V — Supporting Machinery and Anti-Drift Architecture
 
-*Source basis: `dba-system.md` (Artifact Classification, Review Logging, Human Navigation,
-Architectural Refinement); `templates/` (review-package, review-file, handoff);
+*Source basis: the active DBA components selected through `dba-system.md` (Artifact Classification,
+Review Logging, Human Navigation, Architectural Refinement); `templates/` (review-package,
+review-file, handoff);
 `prompts/10-arch-refine.md`, `00c-onboarding.md`, `pipeline-reviewer.md`;
 `patterns/shared-infrastructure-boundary.md`; `scripts/dba-init.sh`.*
 
 ## Required vs optional artifacts
 
-Not every artifact blocks progress. `dba-system.md` draws a clear line: **required artifacts
-block stage advancement; optional and recommended artifacts improve decision quality but are
+Not every artifact blocks progress. The selected `doctrine` component draws a clear line:
+**required artifacts block stage advancement; optional and recommended artifacts improve decision quality but are
 never prerequisites.**
 
 - **Required (block advancement):** Intent (before Stage 2), Contract (before Stage 3), Event
@@ -1041,7 +1046,8 @@ is the smallest effective, evidence-backed change.
 
 # Part VII — Evaluation
 
-*Source basis: `dba-system.md`, `README.md` (strengths/constraints); `prompts/pipeline-reviewer.md`
+*Source basis: active DBA components selected through `dba-system.md`, `README.md`
+(strengths/constraints); `prompts/pipeline-reviewer.md`
 (reviewer freedom to challenge DBA itself); user-supplied OAP framing (external).*
 
 ## Strengths
@@ -1130,14 +1136,14 @@ every sentence.
 
 | Manual claim / element | Repository artifact | Path |
 |---|---|---|
-| Codeos = DBA / IDS methodology; symlinkable toolkit | README / master instructions | `README.md`, `dba-system.md` |
-| 9-step loop (Intent → … → Refinement) | Master instructions; README | `dba-system.md`, `README.md` |
-| Six non-negotiable rules; "What You NEVER Do" | Master instructions | `dba-system.md` |
-| Truth Authority model + safety/invariant exception | Master instructions | `dba-system.md` |
-| Artifact Classification (required/recommended/optional) | Master instructions | `dba-system.md` |
-| DBA vocabulary (Event Spine, Correlation ID, event kinds) | Master instructions | `dba-system.md` |
-| Review Logging; Architecture Journal `AJ-NNN` format | Master instructions | `dba-system.md` |
-| Human Navigation (no fake source of truth) | Master instructions | `dba-system.md` |
+| Codeos = DBA / IDS methodology; symlinkable toolkit | README / active DBA components | `README.md`, `dba-system.md` → active configuration |
+| 9-step loop (Intent → … → Refinement) | Doctrine; README | `dba-system.md` → `doctrine`, `README.md` |
+| Six non-negotiable rules; "What You NEVER Do" | Doctrine | `dba-system.md` → `doctrine` |
+| Truth Authority model + safety/invariant exception | Doctrine | `dba-system.md` → `doctrine` |
+| Artifact Classification (required/recommended/optional) | Doctrine | `dba-system.md` → `doctrine` |
+| DBA vocabulary (Event Spine, Correlation ID, event kinds) | Doctrine | `dba-system.md` → `doctrine` |
+| Review Logging; Architecture Journal `AJ-NNN` format | Review policy | `dba-system.md` → `review_policy` |
+| Human Navigation (no fake source of truth) | Doctrine | `dba-system.md` → `doctrine` |
 | Stage 0 session types A/B/C/D; STOP discipline | Session-start prompt | `prompts/00-session-start.md` |
 | Stage 1 intent rules; cross-examination | Stage 1 prompt; template | `prompts/01-intent.md`, `templates/intent.md` |
 | Stage 2 contracts; boundary + falsification scenarios | Stage 2 prompt; template | `prompts/02-contract.md`, `templates/contract.md` |

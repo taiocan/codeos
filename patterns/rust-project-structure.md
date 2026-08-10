@@ -13,9 +13,11 @@ Apply this pattern when:
 - CI is needed and test isolation matters
 
 **Consulted by:** Stage 4 (`.codeos/prompts/04-implement.md`), when the project's approved
-Implementation Profile (`.codeos/dba/policies/implementation-profile/v1.md`) resolves
+Implementation Profile (governed by the `implementation_profile_policy` component selected by
+`.codeos/dba-system.md`) resolves
 `primary_language: rust` for the feature being implemented; and optionally by Architecture
-Synthesis (`.codeos/dba/policies/architecture-synthesis/v1.md`) when a core
+Synthesis (governed by the `architecture_synthesis_policy` component selected by
+`.codeos/dba-system.md`) when a core
 cohort also exists. This pattern's recommendations are always advisory — consulted, never
 overriding an approved Architecture Baseline or another project-specific decision.
 
@@ -305,7 +307,8 @@ binary and inspect the JSONL output. They are integration tests, not unit tests.
 
 ## Error Boundary Convention
 
-Rust realization of `.codeos/dba/doctrine/v1.md`'s Contract-to-Implementation Failure Boundary.
+Rust realization of the `doctrine` component selected by `.codeos/dba-system.md` →
+"Contract-to-Implementation Failure Boundary."
 
 **Internal errors may be as rich as needed.** A feature's internal error type is not constrained
 by this pattern — a hand-written `enum`, `thiserror`, `anyhow`, or any other approach is
@@ -365,7 +368,8 @@ cargo test --workspace
 ```
 
 Exact MSRV, edition, and lint strictness stay project-specific decisions — a project may record
-its actual choices in its Architecture Baseline (see `.codeos/dba/policies/architecture-synthesis/v1.md`)
+its actual choices in its Architecture Baseline (see the `architecture_synthesis_policy` component
+selected by `.codeos/dba-system.md`)
 when one exists, or simply in its own `rust-toolchain.toml`/
 `Cargo.toml` when it doesn't. This pattern does not mandate a specific MSRV, a specific edition,
 or `-D warnings` strictness for every project — only that *if* a project wants a baseline, this

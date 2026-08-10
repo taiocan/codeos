@@ -96,7 +96,7 @@ Fill every field. For `Files changed`: list any files that appear in the post-ch
 | Before Stage 8 — Replay | Confirms test harness is unmodified before replay run |
 | After Stage 9 — Refinement | Confirms no accidental edits occurred during refinement |
 | Before PR / readiness gate | Provides clean pass/fail evidence for merge decision |
-| Reviewer agent — independent evidence | Reviewer reads exact results without needing to re-run — see `.codeos/dba/policies/review/v1.md`'s "Verification round-trip" for when/how this connects to a review round |
+| Reviewer agent — independent evidence | Reviewer reads exact results without needing to re-run — see the `review_policy` component selected by `.codeos/dba-system.md` → "Verification round-trip" for when/how this connects to a review round |
 
 ---
 

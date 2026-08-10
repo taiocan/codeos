@@ -474,21 +474,12 @@ visible `warning: prechecks skipped` to stderr); useful for inspecting draft art
 
 ---
 
-## 12. Downstream usage (DBA projects, not Codeos self-development)
+## 12. Downstream usage
 
-Everything above documents this pipeline from Codeos's own self-development perspective. A
-downstream project — one that ran `dba-init.sh` and loads `.codeos/dba-system.md` — uses the
-exact same `codeos-reviewer` binary and `review`/`decision`/`diagnose` subcommands, with two
-differences:
+A downstream project that ran `dba-init.sh` and loads `.codeos/dba-system.md` uses the same
+`codeos-reviewer` binary and `review`/`decision`/`diagnose` subcommands. Use the Stage IDs and review
+cadence defined by the project's active DBA configuration.
 
-1. **Stage identifiers are the downstream Stage IDs**, not `selfdev-step-N`: `discovery`,
-   `brief`, `onboarding`, `1` through `9`, and `10` — see `dba-system.md`'s "What You Do at
-   Each Stage" table for the full mapping and "Default Advisory Review" for when each is used.
-2. **Cadence is the flat rule in `dba-system.md`'s "Default Advisory Review" section** —
-   round 1 before the gate, rounds 2-3 for fixes/deltas, stop after 3 and escalate to a human.
-   This is a separate, uniform cadence from the review-round-budget table used for triaging
-   Codeos's own toolkit changes (§4d above) — that internal triage system never appears in
-   downstream-facing doctrine or prompts.
 
 **Invoking the shim from a downstream project.** `.codeos/scripts/codeos-review.sh` resolves
 its binary path from the script's own physical location (following the `.codeos` symlink
@@ -541,7 +532,7 @@ advisory reviewer finding under existing authority, never a packet-generation fa
 artifact path that the Rust engine already knows how to embed.
 
 **If reviewer tooling isn't built or configured** for a downstream project, see
-`dba-system.md`'s Review Waiver practice — record a plain reason in that feature's review
+the `review_policy` component selected through `dba-system.md` → "Review Waiver" — record a plain reason in that feature's review
 log and proceed; the human-approval gate (Non-Negotiable Rule #1) still applies regardless.
 
 ---
@@ -569,9 +560,8 @@ and a verification pass never substitutes for the human's decision at the gate �
 adds evidence to it. A verification pass does not itself count against the round-budget table
 in §4d; only the review round that follows it does.
 
-`dba-system.md`'s "Default Advisory Review" section carries the same practice, in the same
-terms, for downstream DBA projects — the two are kept in sync deliberately, not maintained
-independently.
+The `review_policy` component selected through `dba-system.md` carries the same practice, in the
+same terms, for downstream DBA projects — the two are kept in sync deliberately, not maintained independently.
 
 ---
 

@@ -205,8 +205,8 @@ To continue with feature work:
 
 **If this output is carried into a Feature Brief or a Stage 1 Intent**, that handoff gets
 the default advisory review (`.codeos/scripts/codeos-review.sh review <feature_id> discovery`) or an explicit
-Review Waiver — see `.codeos/dba/doctrine/v1.md`, `.codeos/dba/policies/review/v1.md`, and
-`.codeos/dba/tools/reviewer/v1.md` for the default advisory review. This session
+Review Waiver — see the `doctrine`, `review_policy`, and `reviewer_tool_contract` components
+selected by `.codeos/dba-system.md` for the default advisory review. This session
 itself stays optional and non-gating either way; a Discovery session whose output nobody
 carries forward is never reviewed, because there is nothing yet to review.
 

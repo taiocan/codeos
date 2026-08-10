@@ -13,7 +13,7 @@ resolved here.
 
 Workflow: .codeos/prompts/03b-architecture-synthesis.md (4-step pipeline)
 Each step requires explicit human approval.
-See: .codeos/dba/policies/architecture-synthesis/v1.md
+See: the architecture_synthesis_policy component selected by .codeos/dba-system.md
 -->
 
 ## Identity and Version
@@ -30,7 +30,8 @@ See: .codeos/dba/policies/architecture-synthesis/v1.md
 <!-- This file (architecture/core-baseline.md) always holds only the CURRENT approved version.
 When a new version supersedes this one, this file's content moves to
 architecture/history/core-baseline-v<N>.md (named for the version it was current as) before
-being overwritten with the new version — see .codeos/dba/policies/architecture-synthesis/v1.md →
+being overwritten with the new version — see the architecture_synthesis_policy component selected
+by .codeos/dba-system.md →
 "Verifying a `baseline_version` reference" for how registry entries reference a specific version. -->
 
 **Cohort membership set (this version):**
@@ -41,7 +42,7 @@ being overwritten with the new version — see .codeos/dba/policies/architecture
 
 <!-- Membership is versioned. Adding or removing a feature creates a new version and requires
 an impact assessment — see "Cohort and baseline versioning" in
-.codeos/dba/policies/architecture-synthesis/v1.md. Prior Stage 4 work
+the architecture_synthesis_policy component selected by .codeos/dba-system.md. Prior Stage 4 work
 approved under an earlier version is not invalidated merely by a membership change; it is
 reconciled only if the impact assessment finds an actual structural conflict. -->
 

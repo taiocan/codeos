@@ -7,8 +7,8 @@ This project uses **Declarative Behavioral Architecture (DBA)** / **Intent-Drive
 The DBA toolkit is at `.codeos/` (symlinked from `/home/arc/projects/claude/Codeos`).
 
 **At the start of every Claude Code session — read `.codeos/dba-system.md` before doing any
-work; it is the authoritative Codeos DBA doctrine (the full 9-stage operating instructions).**
-1. Read `.codeos/dba-system.md` — authoritative DBA doctrine; read it first, in full
+work; it selects the authoritative Codeos DBA components.**
+1. Read `.codeos/dba-system.md`, its active configuration, and the selected doctrine component
 2. Read `.codeos/prompts/00-session-start.md` — session orientation template (Step 3 generates the Current Verified State: branch, commit, working tree, and registry/filesystem agreement)
 3. Check the Active Features table below for current stage status
 4. Ask what the human wants to work on this session, then STOP and wait

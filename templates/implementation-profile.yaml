@@ -1,7 +1,8 @@
 # Implementation Profile
 #
 # Optional, project-level statement of a preferred implementation language and its scope.
-# Independent of the Architecture Synthesis Gate (see dba-system.md) — works identically for a
+# Independent of the Architecture Synthesis Gate (see the architecture_synthesis_policy component
+# selected through dba-system.md) — works identically for a
 # project with no declared core cohort.
 #
 # Recommended downstream instance path (current version): architecture/implementation-profile.yaml

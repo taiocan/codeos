@@ -31,7 +31,8 @@ entry.
   version` field exactly. A value matching only a file under `architecture/history/` is **stale,
   not valid** for either — treat it the same as a non-`approved` status and **STOP**; historical
   files are a provenance record for already-completed Stage 4 work, never a valid reference for
-  entering Stage 4 now. See `.codeos/dba/policies/architecture-synthesis/v1.md` →
+  entering Stage 4 now. See the `architecture_synthesis_policy` component selected by
+  `.codeos/dba-system.md` →
   "Verifying a `baseline_version` or `logical_design_version` reference."
 
 **Implementation Profile consultation (if `architecture/implementation-profile.yaml` exists):**
@@ -56,8 +57,8 @@ entry.
 - **Profile–Baseline consistency check:** if this feature also has an approved Architecture
   Baseline whose authoritative decisions specify a language for this feature that conflicts with
   the profile's resolution above, and no exception reconciles it — **STOP**. Ineligible,
-  unreconciled contradiction; neither artifact is silently preferred. See
-  `.codeos/dba/policies/implementation-profile/v1.md` → "Profile–Architecture Baseline
+  unreconciled contradiction; neither artifact is silently preferred. See the
+  `implementation_profile_policy` component selected by `.codeos/dba-system.md` → "Profile–Architecture Baseline
   consistency."
 
 **Controlled Plain English check (if `architecture/controlled-plain-english.yaml` exists):** read
@@ -110,7 +111,7 @@ You may ONLY emit events listed in the approved schema. If you discover you need
 You must not create or write to any file or directory other than `events/runtime_events.jsonl` unless the contract's Runtime Artifacts section explicitly names it. If state persistence is needed and not listed in the contract, stop and raise it for contract amendment — do NOT silently create files.
 
 **No speculative error handling — and the Contract-to-Implementation Failure Boundary.**
-Only handle failure modes explicitly listed in the contract's Failure Classifications. Other errors propagate as uncaught exceptions (or, in a language with richer error types, as the internal error type itself — never invented as a classified failure). Two boundaries stay distinct: the *behavioral boundary* (Failure Classifications the contract approves) and the *technical API boundary* (internal/storage/serialization/I/O errors, which may be as rich as the implementation needs). Two separate approvals gate an emitted failure event, not one blended condition: the classification must be named in the approved contract, and, independently, the specific event produced from it must be present in the approved event schema — the schema authorizes event types, not classification names; a contract-approved classification alone does not authorize emitting anything. Every mapping from an internal error to an approved classification is explicit and reviewable — document it in the Failure Mapping Table below, not left implicit in code. See `.codeos/dba/doctrine/v1.md` → "Contract-to-Implementation Failure Boundary" and, for Rust, `.codeos/patterns/rust-project-structure.md` → "Error Boundary Convention."
+Only handle failure modes explicitly listed in the contract's Failure Classifications. Other errors propagate as uncaught exceptions (or, in a language with richer error types, as the internal error type itself — never invented as a classified failure). Two boundaries stay distinct: the *behavioral boundary* (Failure Classifications the contract approves) and the *technical API boundary* (internal/storage/serialization/I/O errors, which may be as rich as the implementation needs). Two separate approvals gate an emitted failure event, not one blended condition: the classification must be named in the approved contract, and, independently, the specific event produced from it must be present in the approved event schema — the schema authorizes event types, not classification names; a contract-approved classification alone does not authorize emitting anything. Every mapping from an internal error to an approved classification is explicit and reviewable — document it in the Failure Mapping Table below, not left implicit in code. See the `doctrine` component selected by `.codeos/dba-system.md` → "Contract-to-Implementation Failure Boundary" and, for Rust, `.codeos/patterns/rust-project-structure.md` → "Error Boundary Convention."
 
 **Implementation must be deterministic.**
 No hidden randomness, no time-based branching not reflected in contracts.
@@ -165,7 +166,8 @@ Structural Risk levels (only populate when a Critical Hub or God Function is tou
 | [EventName] | [file:line] | [when] |
 
 4. Present a **Failure Mapping Table** (see "No speculative error handling" above and
-   `.codeos/dba/doctrine/v1.md` → "Contract-to-Implementation Failure Boundary") — one row per
+   the `doctrine` component selected by `.codeos/dba-system.md` →
+   "Contract-to-Implementation Failure Boundary") — one row per
    approved Failure Classification that this feature's implementation actually maps to:
 
 | Internal Error | Contract Failure Classification | Emitted Event | Mapping Site |

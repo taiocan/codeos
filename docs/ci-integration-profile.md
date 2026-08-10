@@ -106,7 +106,7 @@ grep -RIlE '(api[_-]?key|secret|password|token)\s*[:=]' events/*.jsonl tests/rep
 }
 ```
 This is a starting point, not a substitute for a real secret-scanning tool if your project
-needs one — see `dba-system.md`'s Sanitization Status guidance for the underlying practice.
+needs one — see the active `doctrine` component's Sanitization Status guidance for the underlying practice.
 
 ---
 

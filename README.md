@@ -34,7 +34,8 @@ bash /home/arc/projects/claude/Codeos/scripts/dba-init.sh my-project https://git
 
 **Two CLAUDE.md surfaces.** The toolkit repo and the projects that use it operate in
 different modes, so the doctrine and the toolkit's own operating guide are separate files:
-- `dba-system.md` — the downstream **DBA doctrine** (the full 9-stage loop). Downstream
+- `dba-system.md` — the stable downstream **DBA entrypoint**. It selects the active configuration,
+  which selects the authoritative doctrine, policies, and reviewer tool contract. Downstream
   projects load it via `.codeos/dba-system.md`.
 - `CLAUDE.md` (toolkit repo root) — the **Codeos Self-Development** guide: a leaner,
   intent-driven loop for changing the toolkit itself (prompts, templates, docs, scripts).
@@ -43,7 +44,8 @@ different modes, so the doctrine and the toolkit's own operating guide are separ
 ```
 Codeos/
 ├── CLAUDE.md          — Codeos Self-Development guide (governs toolkit changes)
-├── dba-system.md      — Downstream DBA doctrine (loaded by projects via .codeos/dba-system.md)
+├── dba-system.md      — Downstream DBA entrypoint (loaded via .codeos/dba-system.md)
+├── dba/               — Version-selected doctrine, policies, tool contract, and configuration
 ├── README.md          — This file
 │
 ├── prompts/           — Stage-gated prompts (paste to Claude at each stage)
@@ -112,14 +114,16 @@ Fill in the [BRACKETS] before pasting:
 - "Current feature states" — write "No features started yet" or leave the table blank
 - "This session's scope" — name the first feature; tell Claude not to start any others
 
-**Step 3 — Claude reads the doctrine and the project `CLAUDE.md` and confirms — verify it names both.**
-1. `.codeos/dba-system.md` — master DBA rules and the 9-step loop (Claude reads this; you do not edit it)
+**Step 3 — Claude reads the active DBA components and the project `CLAUDE.md` and confirms — verify it names both.**
+1. `.codeos/dba-system.md` — stable entrypoint to the active DBA configuration and selected components
 2. Project `CLAUDE.md` — the file you just filled in; Claude reads the project intent and conventions
 
 **Step 4 — Paste `prompts/01-intent.md` and describe the first feature.**
 Claude produces `intents/[feature_id].md`. After you approve it, add a row to the Active Features table in project `CLAUDE.md` (Stage 1, status APPROVED) before telling Claude to proceed to Stage 2.
 
-There are no existing artifacts to read at this point — Claude starts from scratch using only `.codeos/dba-system.md` and the project `CLAUDE.md` as context. Do not paste a resumption prompt; go straight to the stage prompt.
+There are no existing project artifacts to read at this point — Claude starts from the active DBA
+components selected through `.codeos/dba-system.md` and the project `CLAUDE.md`. Do not paste a
+resumption prompt; go straight to the stage prompt.
 
 ### Resuming After a Crash or Session Break
 
@@ -140,7 +144,7 @@ Fill in the [BRACKETS] before pasting:
 - "This session's scope" — be explicit about which features are in scope
 
 **Step 3 — Claude reads these two files automatically (verify it confirms both):**
-1. `.codeos/dba-system.md` — master DBA rules, the 9-step loop, and non-negotiable constraints
+1. `.codeos/dba-system.md` — entrypoint to the active DBA configuration and selected rules
 2. Project `CLAUDE.md` — your Active Features table and project-specific conventions
 
 **Step 4 — For each in-progress feature, direct Claude to read the existing approved artifacts.**
