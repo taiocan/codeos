@@ -238,7 +238,9 @@ For a future doctrine version:
 3. Find current adapters with `rg "DOCTRINE ADAPTER: [a-z-]+"`.
 4. Change only adapters whose actual boundary behavior changed.
 5. Version another governed component only if its own normative semantics changed.
-6. Activate the new DBA configuration.
+6. Run `bash scripts/tests/dba-config-boundaries.sh dba/configurations/DBA-N.yaml`. Only after it
+   passes, activate that configuration in `dba-system.md` and verify the pointer names the tested
+   candidate.
 
 ## Reference Material
 

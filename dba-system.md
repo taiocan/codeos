@@ -9,6 +9,33 @@ Active configuration: `.codeos/dba/configurations/DBA-2.yaml`
 The configuration selects the authoritative version of each governed DBA component. Component
 files own their semantics; the configuration only selects which versions are active.
 
+## Component Boundary Contract
+
+A governed Markdown component created or semantically revised under this model begins with exactly
+this two-field responsibility boundary:
+
+```yaml
+---
+component_question: The single question this component answers.
+out_of_scope: The nearest responsibilities this component must not absorb.
+---
+```
+
+The question defines the component's responsibility. `out_of_scope` names likely ownership
+mistakes, not every dependency. Neither field summarizes or overrides the component's rules. No
+other boundary metadata is supported. The unchanged
+`dba/policies/controlled-plain-english/v1.md` component is the sole grandfathered exception; its
+next semantic version must use this contract.
+
+A DBA configuration MUST NOT become active unless it passes the focused boundary-contract test
+immediately before the active-configuration pointer changes:
+
+```bash
+bash scripts/tests/dba-config-boundaries.sh dba/configurations/DBA-N.yaml
+```
+
+After changing the pointer, verify that it names the candidate configuration that passed the test.
+
 At the start of a DBA session:
 
 1. Read the active configuration above.
