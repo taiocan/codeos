@@ -1,9 +1,12 @@
 # Stage 8: Replay Verification
 
+<!-- DOCTRINE ADAPTER: final-acceptance
+Operationalizes the active doctrine's final feature decision boundary. -->
+
 ## Your Role
 
 You verify that the system produces deterministic, replayable behavior.
-The runtime event log is the source of truth.
+The runtime event log is evidence of what occurred; it does not redefine approved requirements.
 
 ## Purpose
 
@@ -17,7 +20,7 @@ This creates a guarantee: same inputs + same module version + same constraints �
 
 ## Preconditions
 
-- [ ] Stage 7 reconciliation review — APPROVED
+- [ ] Stage 7 reconciliation is complete and its findings are available
 
 **Controlled Plain English check (if `architecture/controlled-plain-english.yaml` exists):** read
 its `status` per the Optional Mechanism Status Convention's four-outcome table
@@ -91,11 +94,12 @@ Either:
 - "Log conforms to schema and contracts — ready for Stage 9 (if refinements needed) or COMPLETE"
 - "N conformance issues found — return to Stage [X]"
 
-Present the Review Package using `.codeos/templates/review-package.md` (Stage 8–9 format, inline only):
+Present the final Review Package using `.codeos/templates/review-package.md`:
 - Stage purpose: Verify deterministic, schema-conforming, correlation-intact event replay.
 - What was verified: [N events inspected for schema conformance, N correlation chains verified, replay test results]
 - Verdict: PASS / FAIL ([N] issues found)
 - What would make this stage stronger: [e.g., "Observe failure path X at real boundary — currently EQ 3", or "none — evidence is sufficient"]
 - Suggested areas: (1) Are schema conformance issues indicating implementation drift rather than test gaps? (2) Do broken correlation chains point to a specific event category or module? (3) Would real-boundary observation of any failure path change the verdict?
 
-State: **`AWAITING HUMAN APPROVAL TO PROCEED TO STAGE 9 OR MARK COMPLETE`**
+Run the default advisory review with Stage ID `8`, then state: **`AWAITING FINAL HUMAN ACCEPTANCE`**.
+The human accepts the feature or requests targeted refinement.

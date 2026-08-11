@@ -12,31 +12,17 @@ tooling isn't available and a waiver has been recorded but a human still wants a
 
 ---
 
-## What Is DBA
+## DBA Authority
 
-Declarative Behavioral Architecture (DBA) is a methodology for building software features
-through a structured sequence of gated artifacts. Its core principle: behavior must be
-specified before it is implemented, and every implementation decision must trace to an
-approved specification.
-
-DBA distinguishes three kinds of truth:
-- **Intent** — why the feature exists (actor + outcome, no implementation details)
-- **Contracts** — what can be observed (BDD-style Given/When/Then, verifiable without reading code)
-- **Events** — what the runtime will emit (the complete observable spine of the feature)
-
-These three artifacts are approved in sequence before any code is written. Implementation
-is then constrained to satisfy only what the approved artifacts specify — no more, no less.
+The doctrine selected through `.codeos/dba-system.md` is the only source of DBA semantic
+guarantees. Require it as review evidence when doctrine compliance is in scope; otherwise assess
+the supplied artifacts without inventing or paraphrasing doctrine rules. The reviewer never makes
+a workflow decision.
 
 ## How Stages Gate
 
-DBA has 9 stages. Each stage produces one artifact. Each artifact requires explicit human
-approval before the next stage begins. A feature cannot move from Intent to Contract until
-the human approves the Intent. It cannot move from Contract to Schema until the Contract
-is approved. This sequence is non-negotiable.
-
-The result is a traceable chain: every line of code traces to an event, every event traces
-to a contract clause, every contract clause traces to an intent statement. If something is
-not in the chain, it is not supposed to exist.
+DBA has nine ordered stages. Apply the selected doctrine and its adapters for workflow decisions;
+this reviewer description does not define approval cadence.
 
 ## Stage Summary
 

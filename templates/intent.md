@@ -49,7 +49,7 @@ This feature does NOT:
 
 ---
 
-<!-- METADATA — fill in when status changes -->
+<!-- METADATA — recording behavior is owned by the specification-approval doctrine adapter -->
 status: DRAFT
 feature_id: [feature_id]
 approved_by:

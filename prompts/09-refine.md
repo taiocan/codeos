@@ -72,9 +72,9 @@ List exactly which artifacts change:
 - Implementation in `modules/`?
 - Tests?
 
-### 4. Re-run Affected Stages
-List which stages must be re-run due to this change.
-(A schema change requires re-running stages 4, 5, and 7 at minimum.)
+### 4. Re-run Affected Work
+List the verification that must be repeated. A change to Intent, Contract, or Event Schema
+invalidates package authority and requires joint package review and approval before implementation.
 
 ## What You Produce
 
@@ -94,7 +94,7 @@ For each refinement:
 **Proposed Change:** [what changes and where]
 **Stages to Re-run:** [list]
 
-Present all proposed refinements, then:
+Apply conformance repairs that remain within approved meaning, run proportional verification, then:
 
 Present the Review Package using `.codeos/templates/review-package.md` (Stage 8–9 format, inline only):
 - Stage purpose: Apply the smallest effective changes for observed problems only.
@@ -103,7 +103,7 @@ Present the Review Package using `.codeos/templates/review-package.md` (Stage 8�
 - What would make this stage stronger: [or "none — all observed problems addressed"]
 - Suggested areas: (1) Is each proposed change the smallest effective fix, or could it be narrowed further? (2) Should any proposed change be moved to Stage 10 (Architectural Refinement) instead? (3) Are there observed problems not listed that should be addressed?
 
-State: **`AWAITING HUMAN APPROVAL FOR EACH REFINEMENT`**
+Return the verified result to `.codeos/prompts/08-replay.md`'s `final-acceptance` doctrine adapter.
 
-Human approves each refinement individually before you apply any of them.
-After each approved refinement, re-run the affected stages before moving to the next refinement.
+Apply the escalation and conformance-repair rules from the active doctrine. This prompt does not
+define an additional decision boundary.

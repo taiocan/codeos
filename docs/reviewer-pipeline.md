@@ -1,23 +1,23 @@
 # Codeos Reviewer Pipeline — Manual Advisory Codex Reviewer
 
-*A read-only, advisory, cross-model reviewer for the DBA stage gates. It compresses each
-stage artifact into a critical assessment and an append-only log entry so the human decides
-faster — without ever becoming a gate.*
+*A read-only, advisory, cross-model reviewer for DBA decisions. It compresses relevant
+artifacts and evidence into a critical assessment and an append-only log entry so the human
+decides faster—without the reviewer becoming a gate.*
 
 > **v0 is a manual advisory review logging pilot.** It records review evidence and human
-> decisions, but it does **not** enforce complete approval-integrity or rollback correctness.
+> decisions, but it does **not** enforce complete decision-integrity or rollback correctness.
 > The persisted hashes, packet copy, and `workspace_dirty` flag are **audit aids**, not a formal
-> guarantee that a human approval is bound to an unchanged repository state. The deeper binding
-> model (approval bound to a reproducible reviewed state, decision-time reverification, rollback
-> semantics) is **deferred** — see `backlog/UPG-0015-reviewer-decision-integrity.md`.
+> guarantee that a workflow decision is bound to an unchanged repository state. The deeper binding
+> model (decision bound to a reproducible reviewed state, decision-time reverification, rollback
+> semantics) is **deferred** — see `Archive/self-development/backlog/completed/UPG-0015-reviewer-decision-integrity.md`.
 
 > **The Bash implementation is a manual pilot wrapper.** It validates the workflow but is not the
-> intended long-term review engine; the future typed engine is `backlog/UPG-0018-reviewer-engine-v1.md`.
+> intended long-term review engine; the future typed engine is `Archive/self-development/backlog/completed/UPG-0018-reviewer-engine-v1.md`.
 
 ```yaml
 status: PILOT — manual operation; no Claude Code hooks wired
 scope: implements backlog/UPG-0003-reviewer-decision-brief.md, pulls in UPG-0006 (evidence grade)
-binding: changes no Codeos non-negotiable rule; stage prompts untouched
+binding: changes no Codeos doctrine rule; stage prompts remain authoritative
 guarantees: advisory logging only — NOT approval-integrity or rollback (deferred to backlog)
 ```
 
@@ -25,24 +25,23 @@ guarantees: advisory logging only — NOT approval-integrity or rollback (deferr
 
 ## 0. Architecture at a Glance
 
-**The core rule:** Codex produces advisory evidence; the human gate decides. This is true at
-every step, every profile, and every cadence below — nothing in this document changes it.
+**The core rule:** Codex produces advisory evidence. Invoking the reviewer does not give its
+conclusions approval authority or create an approval gate that the governing workflow does not
+already require.
 
-The system separates into four layers:
+The system separates into three layers:
 
-1. **Human gate** — approves, rejects, or waives advisory review at each step (self-dev) or
-   stage (downstream) transition. The only layer with actual authority (§1, §6).
-2. **Workflow doctrine** — which loop is running: the self-dev 4-step loop (`CLAUDE.md` +
-   `prompts/codeos-self-dev.md`) or the downstream 9-stage DBA doctrine (`dba-system.md`).
-   Each has its own review cadence — see "Two cadences" below and §12.
-3. **Review engine** — builds the packet, applies an evidence mode, calls Codex, records the
-   raw result (§2, §4b, §14).
-4. **Durable records** — change record, backlog feature thread, status dashboard, review log,
-   raw Codex output — each with a distinct owner; see §4e for the split.
+1. **Governing workflow** — decides whether review is optional or required and who makes any
+   resulting decision. Codeos self-development uses review only when useful; downstream DBA review
+   follows the active downstream policy.
+2. **Review engine** — builds the packet, applies an evidence mode, calls Codex, and records the
+   result (§2, §4b, §14).
+3. **Review records** — packet, assessment, and log output produced by the tool. Their existence is
+   evidence, not authority.
 
 ```mermaid
 flowchart TD
-    H[Human gate] --> C[Claude / practitioner<br/>edits artifacts]
+    C[Claude / practitioner<br/>edits artifacts]
     C --> RQ["codeos-reviewer review<br/>(scripts/codeos-review.sh)"]
     RQ --> PB[Packet builder<br/>evidence mode + filters]
     PB --> PM[Packet manifest<br/>coverage_state, hashes, size]
@@ -50,22 +49,16 @@ flowchart TD
     PM -->|EMPTY_PACKET| FG[Fail-closed guard<br/>no Codex call]
     LLM --> RA[reviews/codex/*.md<br/>full assessment]
     RA --> RL[reviews/review-log.md<br/>append-only]
-    RL --> T[Finding triage<br/>§4c / codeos-self-dev.md Step 4]
-    T --> H
-    H -->|APPROVE / decision| NEXT[Next step or stage]
+    RL --> H[Human / practitioner decision]
 ```
 
-**Two cadences, not one.** Self-dev toolkit changes use the `PROFILE-0..5` round-budget table
-(§4d), assigned per `prompts/codeos-self-dev.md`'s Step 0a; downstream DBA projects use the
-flat rule in `dba-system.md`'s "Default Advisory Review" section (round 1 before the gate,
-rounds 2–3 for fixes, stop and escalate after 3), established by
-`changes/UPG-0037__CHG-20260705-002__downstream-default-stage-review.md`. These are
-deliberately separate — see §12 for why they are not unified.
+Codeos self-development has no fixed review cadence. Downstream DBA projects follow the review
+policy named by their active configuration.
 
 ## 1. Roles
 
-- **Claude Code** runs the DBA development loop (Stages 1–9) and STOPs at
-  `AWAITING HUMAN APPROVAL`.
+- **Claude Code** follows the active DBA workflow in downstream projects and `CLAUDE.md` when
+  developing Codeos itself.
 - **Codex** is the independent reviewer, invoked **read-only** (`-s read-only`) by
   `scripts/codeos-review.sh`. Running a different model family gives cross-model adversarial
   review (less self-review circularity); running read-only means it *physically cannot edit
@@ -167,10 +160,10 @@ JSON Schema validation is deferred until pilot use shows it is needed.
   artifact; a `CHANGED` line is flagged (and a warning printed) but **never blocks** the
   decision. **The decision command records the human's choice; it does not enforce approval
   eligibility, refuse approvals, or bind approval to a reproducible reviewed state.** `APPROVE`
-  is the human's word (Non-Negotiable Rule 1). Stronger guarantees — binding approval to a
+  records a human decision. Stronger guarantees — binding approval to a
   durable reviewed state (commit + diff hash + workspace snapshot), decision-time reverification,
   hard stops, and rollback semantics — are **deferred** and tracked in
-  `backlog/UPG-0015-reviewer-decision-integrity.md`.
+  `Archive/self-development/backlog/completed/UPG-0015-reviewer-decision-integrity.md`.
 
 ## 4a. Review artifact durability policy
 
@@ -234,72 +227,24 @@ Universal claims without evidence are the most common source of Codex-flagged fa
 across UPG-0001 and UPG-0029. Running this audit before calling Codex prevents a class of
 blockers that would otherwise cost a full review round.
 
-## 4d. Review-round budget table
-
-| Profile | Applies when | Max rounds/step | Budget-exceeded action |
-|---|---|---|---|
-| PROFILE-0 | `trivial` / direct-edit `backlog-only` | 0 (no review) | — |
-| PROFILE-1 | Escalated `backlog-only` | 2 (Reconcile only) | Fix inline; escalate to human |
-| PROFILE-2 | `documentation` | 2 (per step) | Fix inline; escalate to human |
-| PROFILE-3 | `template` / `prompt` / `script-tooling` | 3 (per step) | Fix inline; escalate to human |
-| PROFILE-4 | `downstream-doctrine` | 3 (per step) | Fix inline; escalate to human |
-| PROFILE-5 | `self-dev-governance` | 3 (per step) | Fix inline; escalate to human |
-
-**Budget-exceeded escalation procedure:**
-1. Fix any remaining in-scope findings inline without running another Codex round.
-2. Append a budget-exhausted entry to `reviews/review-log.md` describing what was fixed and
-   what remains.
-3. Escalate to the human at the gate — present the findings, what was fixed, and what requires
-   human judgment.
-4. Do not run further Codex rounds automatically. The human decides whether any remaining issue
-   warrants another round (which counts against the budget) or can be accepted as-is.
-
-SELF-REFERENCE / REVIEW-BOOKKEEPING findings found at budget exhaustion are always resolved by
-human decision without further review.
-
-## 4e. Durable record ownership at a glance
-
-Ownership is deliberately split across five artifact families — this is the Self-Reference
-Boundary from `backlog/UPG-0001-feature-thread-traceability.md`: reviewed artifacts carry a
-stable `review_series` + `review_state`, never a live round number, because the exact round
-only exists after the packet is built.
-
-```mermaid
-flowchart TD
-    CHG["changes/UPG-####__CHG-*.md<br/>current step, review_series"] --> H
-    BACKLOG["backlog/UPG-####-*.md<br/>Feature Thread rollup"] --> H
-    STATUS["status/self-development.md<br/>operational state (self-dev)"] --> H
-
-    RAW["reviews/codex/*.md<br/>raw assessment"] --> LOG["reviews/review-log.md<br/>append-only rounds + decisions"]
-    LOG --> H[Human decision]
-```
-
-| Record | Owns |
-|---|---|
-| `changes/UPG-####__CHG-*.md` | Current step, trace header, stable `review_series` (never a live round) |
-| `backlog/UPG-####-*.md` | Feature Thread rollup — compact links, not full detail |
-| `status/self-development.md` | Operational state dashboard (self-dev only; downstream projects have no equivalent file) |
-| `reviews/review-log.md` | Exact `REV__…__R<N>` rounds, verdicts, packet hashes, human decisions (append-only, §4) |
-| `reviews/codex/*.md` + `packets/*` | Raw reviewer output and the exact bytes reviewed (§4) |
-
-## 4f. Future direction — not implemented
+## 4d. Future direction — not implemented
 
 No `ReviewRun` record, event ledger, or control-plane component was found by a repo-wide
 search of tracked files as of this change
 (`grep -rn "ReviewRun\|control-plane\|event ledger" --include="*.md" .`). The only matches are
 this paragraph itself (naming the terms in order to say they are absent) and this change's own
-new backlog/change/review files (`backlog/UPG-0044-*.md`, `changes/UPG-0044__*.md`,
+new backlog/change/review files (`Archive/self-development/backlog/completed/UPG-0044-*.md`, `Archive/self-development/changes/UPG-0044__*.md`,
 `reviews/codex/*UPG-0044*.md`) — this section exists only to
 say so explicitly, not to describe a planned design. The deferred, stronger-guarantee work that
 such a component would
 eventually need to satisfy is already tracked, narrowly, in
-`backlog/UPG-0015-reviewer-decision-integrity.md`: binding a human approval to a reproducible
+`Archive/self-development/backlog/completed/UPG-0015-reviewer-decision-integrity.md`: binding a workflow decision to a reproducible
 reviewed state (commit + diff hash + workspace snapshot), decision-time reverification, and
 rollback semantics. That backlog item is the authoritative pointer for this direction; treat
 anything beyond it (a named `ReviewRun` schema, an event ledger, an automated control plane) as
 unapproved and undesigned until a Step 1 change intent says otherwise.
 
-## 4g. Structured findings
+## 4e. Structured findings
 
 Each review round's `Finding:`/`Evidence:`/`Why:`/`Required action:` blocks (§7's TRIAGE RULE
 output shape) are mechanically parsed (`UPG-0047`) into a `findings:` list in the **same**
@@ -330,7 +275,7 @@ rules); this section is a walkthrough, not a second normative source. The five
 `coverage_state` values, worst-to-best, are `EMPTY_PACKET` > `CRITICAL_OMISSION` >
 `SECRET_REDACTION` > `PARTIAL_COVERAGE` > `FULL_COVERAGE`. `EMPTY_PACKET` is **fail-closed**:
 the script exits before any Codex invocation (see §4b's untracked-artifact guard and
-`backlog/UPG-0031-review-delta-mode-fix.md`, which fixed delta mode comparing only to `HEAD`
+`Archive/self-development/backlog/completed/UPG-0031-review-delta-mode-fix.md`, which fixed delta mode comparing only to `HEAD`
 — missing uncommitted fixes — by comparing the base commit to the working tree instead, and
 added this fail-closed guard so an empty diff can never silently reach Codex as reviewable
 content).
@@ -412,7 +357,7 @@ exactly this shape.
 | Advisory concern field (non-gatekeeping words) | **Neutral** | `APPROVE` reserved for the human |
 | Secret/diff filtering | **Positive** | Reduces common credential-leakage risk in the review packet (heuristic, not a guarantee) |
 | Automated hooks | **Risky → kept inert** | Documented (Appendix), not wired |
-| Autonomous stage approval | **Negative — violates rule #1** | Rejected/deferred (Appendix) |
+| Autonomous approval | **Negative — violates human control** | Rejected/deferred (Appendix) |
 
 ## 9. Acceptance criteria (mini-design gate)
 
@@ -480,7 +425,6 @@ A downstream project that ran `dba-init.sh` and loads `.codeos/dba-system.md` us
 `codeos-reviewer` binary and `review`/`decision`/`diagnose` subcommands. Use the Stage IDs and review
 cadence defined by the project's active DBA configuration.
 
-
 **Invoking the shim from a downstream project.** `.codeos/scripts/codeos-review.sh` resolves
 its binary path from the script's own physical location (following the `.codeos` symlink
 through to Codeos), so it works correctly from within a downstream project (fixed by
@@ -533,7 +477,7 @@ artifact path that the Rust engine already knows how to embed.
 
 **If reviewer tooling isn't built or configured** for a downstream project, see
 the `review_policy` component selected through `dba-system.md` → "Review Waiver" — record a plain reason in that feature's review
-log and proceed; the human-approval gate (Non-Negotiable Rule #1) still applies regardless.
+log and proceed; applicable workflow decisions remain owned by their doctrine adapters.
 
 ---
 
@@ -555,10 +499,8 @@ named an unverified claim about their behavior; UPG-0024's Step 2 rounds resolve
 internal-contradiction findings the same way — show more, re-review, resolve.
 
 This is judgment, not automation: the acting agent decides whether an uncertainty is
-checkable and whether running verification is worth the round-trip. It is never mandatory,
-and a verification pass never substitutes for the human's decision at the gate — it only
-adds evidence to it. A verification pass does not itself count against the round-budget table
-in §4d; only the review round that follows it does.
+checkable and whether running verification is worth the round-trip. It is never mandatory and
+adds evidence without acquiring decision authority.
 
 The `review_policy` component selected through `dba-system.md` carries the same practice, in the
 same terms, for downstream DBA projects — the two are kept in sync deliberately, not maintained independently.
@@ -567,7 +509,8 @@ same terms, for downstream DBA projects — the two are kept in sync deliberatel
 
 ## 14. Evidence Modes
 
-The reviewer supports three evidence modes to control packet size and review focus. These modes affect what evidence is included in the review packet; they do not change the reviewer's advisory role or the human approval gate.
+The reviewer supports three evidence modes to control packet size and review focus. These modes
+affect only the evidence included in the packet; they do not create or alter workflow boundaries.
 
 **At a glance:**
 
@@ -635,10 +578,10 @@ Includes only the file path and hash, not file content. **This reduces packet si
 Delta mode and SHA-only can be combined. When both apply, SHA-only paths are included as path/hash references rather than full content or diff.
 
 ```bash
-scripts/codeos-review.sh review UPG-0042 selfdev-step-3 \
+scripts/codeos-review.sh review feature-x implementation \
   --mode delta --base abc123 \
   --sha-only docs/large-reference.md \
-  changes/UPG-0042__CHG-*.md src/packet.rs
+  CLAUDE.md tools/reviewer/src/packet.rs
 ```
 
 ### Preview a plan before reviewing
@@ -652,7 +595,7 @@ same `packet::build()` function `review`/`--print-packet` use, so it cannot desc
 `review` wouldn't actually build.
 
 ```bash
-scripts/codeos-review.sh plan UPG-0042 selfdev-step-1 changes/UPG-0042__CHG-*.md src/packet.rs
+scripts/codeos-review.sh plan feature-x implementation CLAUDE.md tools/reviewer/src/packet.rs
 ```
 
 `plan` never resolves or invokes a provider and never writes to `reviews/` or any other tracked
@@ -702,11 +645,6 @@ fi
 
 ## Appendix B — Rejected / Deferred — Not Approved for Implementation
 
-**Autonomous stage approval.** Letting the reviewer approve stages for "simple" features
-contradicts **non-negotiable rule #1** (every stage transition requires explicit human
-approval) and converts DBA from *synchronous prevention* (the gate blocks a bad transition)
-to *asynchronous detection + rollback* (it happens, is caught later, is reverted). Recorded
-for traceability only. It would separately require: per-feature human opt-in, one commit per
-stage, feature-registry support (#14), a rollback design, low-risk-only scope that **never**
-includes safety/authorization/invariant contracts, a hard stop on any `DO NOT ADVANCE` or
-low-evidence review, and an amendment to the human-approval invariant. Not built toward now.
+**Autonomous workflow decisions.** A reviewer may provide evidence and recommendations, but it
+never completes a doctrine adapter or other workflow boundary. Autonomous decisions are not built
+toward by this pipeline.

@@ -1,5 +1,8 @@
 # OAP Feature-Adoption Candidates for Codeos
 
+> Historical comparison material, not a doctrine consumer. It is not updated when doctrine
+> semantics change; use `dba-system.md` and the selected doctrine for current guarantees.
+
 *A critically-assessed list of the most valuable ideas from Orchestrated Agentic
 Programming (OAP) that would be reasonable to fold into Codeos / DBA **core** at some point
 in the future — independent of whether the full layered integration ever happens.*

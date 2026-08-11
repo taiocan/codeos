@@ -26,12 +26,13 @@ Use the template at `.codeos/templates/handoff.md`.
 
 Review the conversation to determine:
 - Which features or refinements were worked on
-- Which stages were completed and their approval status
+- Which stages and doctrine adapters were completed
 - Which artifacts were created or modified
 
 **Step 2 — Summarize approved decisions, not artifact content.**
 
-Do not copy artifact text. For each artifact approved this session, write 1–3 lines:
+Do not copy artifact text. If the `specification-approval` adapter ran this session, summarize its
+three artifacts in 1–3 lines each:
 - Intent: the WHY and actor-outcome core, not implementation details
 - Contract: the key scenarios and failure modes that were settled
 - Schema: event names and any notable payload decisions

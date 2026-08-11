@@ -1,29 +1,30 @@
 # Stage 3: Event Schema Definition
 
-> **Observation mode check:** If the contract's Runtime Context section declares
-> `observation_mode: external-observation`, skip this stage and proceed to Stage 4.
-> The observation artifact is declared in the contract.
+<!-- DOCTRINE ADAPTER: specification-approval
+Operationalizes the active doctrine's specification decision boundary. -->
+
+> **External-observation check:** If the Contract declares `observation_mode:
+> external-observation`, the Event Schema still exists and states which outcomes are proven by the
+> external observation artifact and that no governed internal events are required.
 
 ## Your Role
 
 You define the event spine that constrains all future implementation.
 This is the **most constraining artifact** in the DBA loop.
 
-Once the event schema is approved:
+Once the Specification Package is approved:
 - Implementation may ONLY emit events listed here
 - Hidden behavior is structurally impossible
-- Any behavior change requires updating the schema first, then re-approval
+- Any behavior change requires updating the owning specification artifact and package reapproval
 
 **The schema must not be stronger than the contract.**
-Every new observable the schema introduces — a new payload field, a new event, an ordering guarantee — must trace to an approved contract clause. If it cannot, either amend the contract first (and get it approved) or remove it from the schema. An event schema that invents observables breaks the contract → schema → implementation derivation chain.
+Every new observable the schema introduces — a new payload field, a new event, an ordering guarantee — must trace to a Contract clause in the same package. If it cannot, revise the Contract and recheck the package or remove it from the schema. An Event Schema that invents observables breaks the derivation chain.
 
 ## Preconditions
 
-You MUST have ALL of these approved before starting:
-- `intents/[feature_id].md` with `status: APPROVED`
-- `contracts/[feature_id]_contract.md` with `status: APPROVED`
-
-Check both. If either is missing or not approved — **STOP** and request it.
+You MUST have Intent and Contract drafts before starting. Neither needs separate approval. Revise
+either draft when schema work exposes an inconsistency; all three remain `DRAFT` until their one
+package approval.
 
 **Controlled Plain English check (if `architecture/controlled-plain-english.yaml` exists):** read
 its `status` per the Optional Mechanism Status Convention's four-outcome table
@@ -36,8 +37,8 @@ error.
 
 ## What You Receive
 
-- Approved intent: `intents/[feature_id].md`
-- Approved contract: `contracts/[feature_id]_contract.md`
+- Current Intent: `intents/[feature_id].md`
+- Current Contract: `contracts/[feature_id]_contract.md`
 
 ## What You Produce
 
@@ -158,23 +159,24 @@ Check each item. Mark each ✓ (passes) or ✗ (fails — state why).
 - [ ] The event flow diagram shows happy path + all failure branches (events only — no processing steps)
 - [ ] The Coverage Check table is complete with no MISSING items
 - [ ] `correlation_id` is in the required base fields
-- [ ] No new observable (payload field, event, ordering guarantee) introduced that is not traceable to an approved contract clause
+- [ ] No new observable (payload field, event, ordering guarantee) introduced that is not traceable to a Contract clause in this package
 - [ ] Validation ordering is not prescribed unless the contract explicitly requires it
 - [ ] Cross-module events relied upon are listed separately from events emitted by this module
 
 If any item is ✗: revise the draft before proceeding to Step 3.
 
 **Step 3 — Output**
-1. Present the verified `events/[feature_id]_schema.md` content
+1. Present the verified Intent, Contract, and Event Schema as one Specification Package
 2. Present the completed checklist (with ✓ / ✗ marks)
 3. Present the Coverage Check table
 4. Explicitly confirm: every contract failure is covered by a FAILURE event
-5. Present the Review Package using `.codeos/templates/review-package.md` (Stage 1–3 format, inline only):
-   - Artifact: `events/[feature_id]_schema.md`
-   - Stage purpose: Define the complete event spine that will constrain all implementation.
-   - Suggested areas: (1) Does every event in the schema trace to an approved contract clause — or did any get added beyond what the contract requires? (2) Are failure events specific enough to support root-cause analysis, or do multiple distinct failure modes collapse into one? (3) Does the event flow diagram accurately represent what Stage 4 will be constrained to implement?
+5. Present the Review Package using `.codeos/templates/review-package.md`:
+   - Artifacts: `intents/[feature_id].md`, `contracts/[feature_id]_contract.md`, and `events/[feature_id]_schema.md`
+   - Stage purpose: Verify that the complete Specification Package is mutually consistent and ready to govern implementation.
+   - Suggested areas: (1) Does every Contract rule trace to Intent? (2) Does every governed event trace to Contract? (3) Do scope, failures, invariants, and terminology agree across all three artifacts?
    - Known tensions: from contract ambiguities or coverage gaps, or "none"
-6. State: **`AWAITING HUMAN APPROVAL TO PROCEED TO STAGE 4`**
+6. Run the default advisory review with Stage ID `3`, then state: **`AWAITING HUMAN APPROVAL OF THE SPECIFICATION PACKAGE`**
 
-**STOP.** Do not write any implementation until the human explicitly approves the schema.
-This is the gate that constrains everything that follows.
+**STOP.** Do not implement until the human explicitly approves the package. Record that one
+decision consistently on all three artifacts using identical `approved_by` and `approved_at`
+metadata. These distributed records represent one approval, not three gates.

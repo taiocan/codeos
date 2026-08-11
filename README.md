@@ -4,10 +4,9 @@ A symlinkable toolkit for developing software using **Declarative Behavioral Arc
 
 ## What This Is
 
-A human-gated AI development workflow where:
-- **Humans define** intent, approve every artifact, and control every stage transition
-- **Claude proposes** contracts, event schemas, implementations, tests, and refinements
-- **Runtime events** become the source of operational truth
+A human-governed AI development workflow where people define governed meaning, Claude produces
+artifacts and implementation evidence, and the selected doctrine supplies the current semantic
+guarantees. README does not duplicate those guarantees.
 
 The 9-step loop:
 ```
@@ -15,7 +14,8 @@ Intent → Contracts → Event Schema → Implementation → Tests →
 Runtime Execution → Reconciliation Review → Replay Verification → Targeted Refinement
 ```
 
-Every step requires explicit human approval before Claude advances.
+Current operational consequences are located by searching for `DOCTRINE ADAPTER` in the stage
+prompts. The doctrine remains authoritative when explanatory text disagrees.
 
 ## Quick Start
 
@@ -37,8 +37,8 @@ different modes, so the doctrine and the toolkit's own operating guide are separ
 - `dba-system.md` — the stable downstream **DBA entrypoint**. It selects the active configuration,
   which selects the authoritative doctrine, policies, and reviewer tool contract. Downstream
   projects load it via `.codeos/dba-system.md`.
-- `CLAUDE.md` (toolkit repo root) — the **Codeos Self-Development** guide: a leaner,
-  intent-driven loop for changing the toolkit itself (prompts, templates, docs, scripts).
+- `CLAUDE.md` (toolkit repo root) — the **Codeos Self-Development** guide: minimal governance for
+  ordinary work, with explicit human control for consequential semantic changes.
   Claude auto-reads it when working in this repo.
 
 ```
@@ -48,7 +48,7 @@ Codeos/
 ├── dba/               — Version-selected doctrine, policies, tool contract, and configuration
 ├── README.md          — This file
 │
-├── prompts/           — Stage-gated prompts (paste to Claude at each stage)
+├── prompts/           — Sequential stage prompts (paste to Claude at each stage)
 │   ├── 00-session-start.md
 │   ├── 01-intent.md
 │   ├── 02-contract.md
@@ -118,8 +118,9 @@ Fill in the [BRACKETS] before pasting:
 1. `.codeos/dba-system.md` — stable entrypoint to the active DBA configuration and selected components
 2. Project `CLAUDE.md` — the file you just filled in; Claude reads the project intent and conventions
 
-**Step 4 — Paste `prompts/01-intent.md` and describe the first feature.**
-Claude produces `intents/[feature_id].md`. After you approve it, add a row to the Active Features table in project `CLAUDE.md` (Stage 1, status APPROVED) before telling Claude to proceed to Stage 2.
+**Step 4 — Draft the Specification Package.**
+Start with `prompts/01-intent.md`, then continue through Contract and Event Schema. Stage 3 owns the
+current `specification-approval` boundary.
 
 There are no existing project artifacts to read at this point — Claude starts from the active DBA
 components selected through `.codeos/dba-system.md` and the project `CLAUDE.md`. Do not paste a
@@ -132,10 +133,10 @@ When starting a fresh session on a project where work is already in progress:
 **Step 1 — Update the project `CLAUDE.md` Active Features table before opening Claude.**
 This table is the only cross-session state record. Verify every row is accurate:
 - Feature ID and description are correct
-- Current Stage reflects the last *approved* stage (not what was in progress when the session ended)
+- Current Stage reflects the last completed stage (not what was in progress when the session ended)
 - Status is one of: `DRAFT` / `APPROVED` / `IN_PROGRESS` / `COMPLETE`
 
-If a feature was mid-stage when the session ended, set its status to `IN_PROGRESS` and its stage to the last *completed and approved* stage number.
+If a feature was mid-stage when the session ended, set its status to `IN_PROGRESS` and its stage to the last completed stage number.
 
 **Step 2 — Open Claude Code in the project directory and paste `prompts/00-session-start.md`.**
 Fill in the [BRACKETS] before pasting:
@@ -156,24 +157,26 @@ Claude will read:
 - `modules/[feature_id]/` — existing implementation (if Stage 4 was completed)
 - `tests/` — existing tests (if Stage 5 was completed)
 
-**Do not ask Claude to rewrite or re-derive any artifact that already has `status: APPROVED`.** Treat approved files as ground truth. The session resumes at the next unapproved stage.
+**Do not ask Claude to rewrite or re-derive unchanged governed artifacts.** Route resumed work
+through the Stage 4 `delivery-entry` adapter, which owns compatibility and entry checks.
 
 **What Claude cannot recover automatically:** any decisions or clarifications that happened only in conversation and were never written into an artifact. If a decision was important, it should have been captured in an artifact at the time. If it wasn't, re-state it explicitly when you resume.
 
 ### For Each Feature
-Work through stages in order, pausing for human approval at each gate:
+Work through stages in order. Decision behavior comes from the selected doctrine and the named
+boundary adapters:
 
-| Stage | File | Purpose | Claude produces | Gate |
+| Stage | File | Purpose | Claude produces | Boundary owner |
 |---|---|---|---|---|
-| 1 | `prompts/01-intent.md` | Capture *why* the feature exists — actor + outcome, no implementation details | `intents/[id].md` | Human approves intent |
-| 2 | `prompts/02-contract.md` | Translate intent into independently testable, observable-only behavioral truth | `contracts/[id]_contract.md` | Human approves contract |
-| 3 | `prompts/03-event-schema.md` | Define the event spine that structurally constrains all future implementation | `events/[id]_schema.md` | Human approves schema |
-| 4 | `prompts/04-implement.md` | Satisfy every contract clause and emit every schema event — nothing more | Code in `modules/` | Human approves implementation |
-| 5 | `prompts/05-tests.md` | Write behavioral truth anchors verifying observable outcomes, not internal structure | Tests in `tests/` | Human approves tests |
-| 6 | `prompts/06-observe.md` | Human runs the system; `runtime_events.jsonl` becomes operational truth | Advisory only | Human confirms events captured |
-| 7 | `prompts/07-reconcile.md` | Structural audit of all six layers (intent → runtime) to surface gaps and mismatches | Reconciliation table | Human approves or directs return |
-| 8 | `prompts/08-replay.md` | Confirm deterministic replayability: schema conformance, complete chains, same inputs → same events | Replay report | Human approves or marks complete |
-| 9 | `prompts/09-refine.md` | Apply the smallest evidence-driven fix — no rewrites, no speculative improvement | Targeted refinement proposals | Human approves each refinement |
+| 1 | `prompts/01-intent.md` | Capture *why* the feature exists — actor + outcome, no implementation details | Draft Intent | — |
+| 2 | `prompts/02-contract.md` | Translate Intent into independently testable behavior | Draft Contract | — |
+| 3 | `prompts/03-event-schema.md` | Complete and cross-check the Specification Package | Draft Event Schema + package review | `specification-approval` adapter |
+| 4 | `prompts/04-implement.md` | Implement governed behavior | Code in `modules/` | `delivery-entry` adapter |
+| 5 | `prompts/05-tests.md` | Verify observable outcomes | Tests in `tests/` | — |
+| 6 | `prompts/06-observe.md` | Capture trustworthy runtime evidence | Runtime evidence | — |
+| 7 | `prompts/07-reconcile.md` | Surface gaps and mismatches | Reconciliation evidence | — |
+| 8 | `prompts/08-replay.md` | Verify replay and conformance | Final review package | `final-acceptance` adapter |
+| 9 | `prompts/09-refine.md` | Apply targeted refinement and return to verification | Targeted refinement | Stage 8 adapter |
 
 ## Stage Purposes
 
@@ -186,24 +189,26 @@ Work through stages in order, pausing for human approval at each gate:
 **Key constraint:** No implementation details, APIs, databases, frameworks, observability mechanics, or feature decomposition. Guarantees must be enforceable and testable. If the intent fills more than one screen it is too broad.
 
 ### Stage 2 — Behavioral Contracts
-**Purpose:** Translate the approved intent into independently testable observable truth. Contracts describe only what can be seen from the outside — emitted events and system state — never internal logic or code structure. Every failure mode gets a named scenario that becomes a failure event in Stage 3.
-**Key constraint:** Every clause must be answerable by looking at emitted events and system state alone. No mention of classes, functions, databases, APIs, or frameworks. All actors must come from the approved intent.
+**Purpose:** Translate the current Intent into independently testable observable truth while both remain open to revision. Contracts describe only what can be seen from the outside — emitted events and system state — never internal logic or code structure.
+**Key constraint:** Intent and Contract remain open to correction while the specification is being completed.
 
 ### Stage 3 — Event Schema
-**Purpose:** Define the complete event spine that structurally constrains all future implementation. Once approved, the implementation may only emit events listed here — hidden behavior becomes architecturally impossible. Any new behavior requires updating the schema first, then re-approval.
+**Purpose:** Define the event spine and verify all three specification artifacts together. This
+stage owns the `specification-approval` adapter.
 **Key constraint:** Every contract scenario maps to at least one event; every named contract failure maps to exactly one FAILURE event. `correlation_id` is mandatory on every event without exception.
 
 ### Stage 4 — Implementation
-**Purpose:** Satisfy every approved contract clause and emit every approved schema event — nothing more. Claude acts as a constrained satisfier, not a creative designer. The first thing wired up is correlation ID propagation and event emission; all behavior is traceable to an approved artifact.
-**Key constraint:** No abstractions, helper layers, or error handling beyond what the contracts explicitly require. If a contract clause cannot be satisfied without adding something unapproved, Claude flags it and stops rather than silently adding it.
+**Purpose:** Satisfy governed specification using normal internal engineering choices. This stage
+owns the `delivery-entry` adapter.
+**Key constraint:** Apply the constraints selected by the active doctrine.
 
 ### Stage 5 — Tests
 **Purpose:** Write behavioral truth anchors that fail if observable behavior deviates from contracts. Tests cover happy paths, every named failure mode, telemetry correctness (correlation IDs, required fields), and idempotency if the contract specifies it. A replay test captures and re-runs the event stream to verify determinism.
 **Key constraint:** Tests must not touch private methods, internal state, or intermediate computations. All assertions use event names exactly as they appear in the approved schema.
 
 ### Stage 6 — Runtime Execution
-**Purpose:** The human runs the implementation; `events/runtime_events.jsonl` becomes the operational source of truth. Claude's role is advisory — helping set up event capture infrastructure if needed. No stage transition happens until the human confirms events are in the log.
-**Key constraint:** `runtime_events.jsonl` is append-only. Claude does not advance to Stage 7 until the human explicitly confirms runtime events are available.
+**Purpose:** Run representative scenarios when permitted and capture evidence of what occurred.
+**Key constraint:** Apply the evidence and authorization rules from the selected doctrine.
 
 ### Stage 7 — Reconciliation Review
 **Purpose:** Perform a structural audit comparing all six layers — intent, contract, event schema, implementation, tests, and runtime events — to surface gaps, mismatches, and missing coverage. Every non-ALIGNED finding names the stage(s) that must be re-run and the minimal targeted fix required.
@@ -215,17 +220,29 @@ Work through stages in order, pausing for human approval at each gate:
 
 ### Stage 9 — Targeted Refinement
 **Purpose:** Apply the smallest effective problem-driven fix to each observed issue. Valid triggers are recurring failures in the event log, reconciliation gaps, replay failures, observability gaps, or human-approved intent evolution. Refinements are ordered by cost — observability changes first, structural changes last.
-**Key constraint:** No redesigns, no rewrites, no improvements not backed by observed evidence. Each refinement is approved individually before it is applied; after each approval, affected stages are re-run before the next refinement is addressed.
+**Key constraint:** Apply the selected doctrine's escalation and verification rules, then return to Stage 8.
 
-## Key Rules
+## Governing Rules
 
-1. Claude NEVER advances stages without explicit human approval
-2. Claude NEVER implements before intent + contract + event schema are approved
-3. Claude NEVER emits events not listed in the approved schema
-4. `events/runtime_events.jsonl` is append-only — never modified, never deleted
-5. Refinements are always targeted and problem-driven — never full rewrites
+Read `dba-system.md` and its selected doctrine. This README describes navigation and stage purpose;
+it does not independently define authority, approval cadence, escalation, or evidence semantics.
+
+The current lifecycle has `specification-approval`, `delivery-entry`, `final-acceptance`, and the
+conditional `architecture-entry` doctrine adapters. This count is descriptive, not an invariant:
+add or remove an adapter only when a genuine execution boundary changes.
+
+For a future doctrine version:
+
+1. Create the new doctrine version.
+2. Identify which doctrine semantics changed.
+3. Find current adapters with `rg "DOCTRINE ADAPTER: [a-z-]+"`.
+4. Change only adapters whose actual boundary behavior changed.
+5. Version another governed component only if its own normative semantics changed.
+6. Activate the new DBA configuration.
 
 ## Reference Material
+
+Current project definitions: `terminology.md`
 
 Prior design sessions and DBA theory: `Archive/`
 

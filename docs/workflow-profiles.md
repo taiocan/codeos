@@ -1,8 +1,8 @@
 # Workflow Profiles
 
-Optional guidance for branch, PR, and CI discipline in DBA projects. The existing Stage 9
-commit-and-push-to-main flow is always valid for small work. Choose a profile when more
-structure helps.
+Optional guidance for branch, PR, and CI discipline in DBA projects. A commit and push after the
+current `final-acceptance` adapter completes is always valid for small work. Choose a profile when
+more structure helps.
 
 ---
 
@@ -38,16 +38,14 @@ Optional: run a reviewer pass before the final commit.
 
 ```
 1. Create feature/<feature_id> from main.
-2. Commit after each approved stage (keeps gate history visible in git log).
-3. Open a draft PR after Stage 3 (approved artifacts) or Stage 5 (approved
-   implementation), whichever comes first.
+2. Commit at useful checkpoints; stage boundaries are convenient but are not approval gates.
+3. Open a draft PR after the `specification-approval` adapter or once implementation begins.
 4. Run CI as soon as implementation and tests exist (Stage 5 or Stage 6).
-5. Merge to main only after Stage 8 (approved; pending runtime) or Stage 9 (complete).
+5. Merge to main only after the `final-acceptance` adapter completes.
 ```
 
-**Why one commit per stage:** each gate becomes a checkpoint. If Stage 7 reveals a
-problem, you can see exactly what was approved at Stage 5 without reading prose. It also
-lets a reviewer diff from any approved gate forward.
+**Why checkpoint commits can help:** if runtime verification reveals a problem, you can
+isolate when it entered the delivery cycle. A commit does not create an approval state.
 
 **Notes:**
 - Use `feature/<feature_id>` as the branch name (e.g. `feature/EVT-0012`).
@@ -62,10 +60,10 @@ Split the feature into up to four sequential PRs, each merged before the next op
 
 | PR | What it contains | Merge gate | Branch |
 |---|---|---|---|
-| PR 1 — Artifacts | Intent, contract, event schema (Stages 1–3) | Stages 1–3 approved | `feature/<feature_id>-artifacts` |
-| PR 2 — Implementation | Code, behavioral tests, telemetry tests (Stages 4–6) | Stages 4–6 approved + CI green | `feature/<feature_id>-implementation` |
-| PR 3 — Runtime evidence | Sanitized fixtures, replay tests, reconciliation reports (Stages 7–8) | Stages 7–8 approved | `feature/<feature_id>-runtime-replay` |
-| PR 4 — Refinement | Only if Stage 9 required a substantive change | Stage 9 approved | `feature/<feature_id>-refinement` |
+| PR 1 — Artifacts | Intent, contract, event schema (Stages 1–3) | `specification-approval` adapter complete | `feature/<feature_id>-artifacts` |
+| PR 2 — Implementation | Code, behavioral tests, telemetry tests (Stages 4–6) | CI green; no intermediate approval | `feature/<feature_id>-implementation` |
+| PR 3 — Runtime evidence | Sanitized fixtures, replay tests, reconciliation reports (Stages 7–8) | Verification evidence complete | `feature/<feature_id>-runtime-replay` |
+| PR 4 — Refinement | Only if Stage 9 required a substantive change | Applicable doctrine adapter complete | `feature/<feature_id>-refinement` |
 
 **Notes:**
 - Not all four PRs are always needed. A feature with no replay evidence skips PR 3.
@@ -86,7 +84,7 @@ When running a reviewer pass in a branch or PR context, give the reviewer agent 
 the following evidence (as available):
 
 ```
-Approved artifacts for the current stage
+Artifacts governed at the specification-approval boundary
 Full git diff of the branch (or PR diff)
 Stage reports (Stage 4 contract, Stage 5 schema, Stage 6 test report, …)
 Test output / CI log
@@ -101,7 +99,7 @@ Diff scope:
   - Any files changed that are not in the approved scope?
 
 Approved artifacts:
-  - Were any approved Stage 1–3 artifacts modified after approval?
+  - Were governed specification artifacts modified after their boundary decision?
 
 Implementation ↔ contract:
   - Does the implementation match the approved contract and event schema?
@@ -138,8 +136,8 @@ component selected through `dba-system.md`).
 ## Relationship to Existing Workflow
 
 These profiles sit on top of the 9-stage DBA loop. They govern *how commits and PRs are
-structured*, not *what is approved at each gate*. The human-approval gates and reviewer
-cadence defined by the active `doctrine` and `review_policy` components are unchanged.
+structured*, not *what is approved*. The human decisions and reviewer cadence defined by
+the active `doctrine` and `review_policy` components are unchanged.
 
 Profile selection is a human decision made at the start of a feature, not enforced by any
 tool. If you change your mind mid-feature (e.g. a Profile A feature grows into Profile B

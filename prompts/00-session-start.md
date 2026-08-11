@@ -12,7 +12,8 @@ Claude will read .codeos/dba-system.md and orient itself for the session.
 You are operating in **Declarative Behavioral Architecture (DBA)** mode for this project.
 
 **Step 1:** Read `.codeos/dba-system.md` now, then follow it to the active DBA configuration and
-selected doctrine. Confirm you have read the doctrine by stating the 3 non-negotiable rules.
+selected doctrine. Confirm the selected configuration path and doctrine title. Do not reconstruct
+doctrine semantics from other prompts or documentation.
 
 **Step 2:** Read the project `CLAUDE.md` (in the project root). Note the Active Features table.
 
@@ -120,7 +121,7 @@ Prompt to load: `.codeos/prompts/00b-feature-brief.md`
 Output: a completed Feature Brief in `backlog/[feature_id].md`, ready to become Stage 1 input.
 
 **B — Feature Stage Work (continuing or starting a feature in the DBA loop)**
-Use when: a feature has an approved intent (or brief) and you are advancing through Stages 1–9.
+Use when: drafting or delivering a feature through the DBA lifecycle.
 Prompt to load: the appropriate stage prompt for the feature's current stage.
 
 **C — Architectural Refinement**
@@ -130,9 +131,9 @@ Prompt to load: `.codeos/prompts/10-arch-refine.md`
 
 **D — Existing Codebase Onboarding**
 Use when: working code exists in `modules/` but has no approved DBA artifacts.
-Goal: produce draft Feature Briefs and Intents for existing modules so they can enter the Stage 1 review queue.
+Goal: produce draft Feature Briefs and Intents for existing modules so they can enter governed specification drafting.
 Prompt to load: `.codeos/prompts/00c-onboarding.md`
-Output: `HYPOTHESIZED_INTENT` draft briefs in `backlog/` and draft intents in `intents/` + registry entries. None are APPROVED — all require Stage 1 review before advancing.
+Output: `HYPOTHESIZED_INTENT` draft briefs in `backlog/` and draft intents in `intents/` + registry entries. Governance is owned by the Stage 3 `specification-approval` adapter.
 
 **E — Solution Discovery** *(optional, advisory)*
 Use when: exploring a new problem domain before writing individual Feature Briefs — to map candidate feature families, shared vocabulary, event hypotheses, configuration needs, and architectural risks.

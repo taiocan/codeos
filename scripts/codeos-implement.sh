@@ -2,8 +2,8 @@
 # codeos-implement.sh — out-of-band, opt-in DeepSeek implementer for DBA Stage 4 (Implementation)
 # and Stage 5 (Tests). It drafts a CANDIDATE only: output is staged under
 # .codeos-state/deepseek-candidates/, never written into modules/ or tests/, and never committed.
-# A human promotes the candidate, and the existing Stage 4/5 human gate, advisory review, and
-# Stage 7 reconciliation apply unchanged. This tool approves nothing.
+# A human controls candidate promotion. Package authority, advisory review, and delivery-cycle
+# verification apply unchanged. This tool approves nothing and adds no approval gate.
 #
 # Companion to scripts/codeos-review.sh: it mirrors that shim's entry-point discipline (git-repo
 # precondition, self-dev-vs-downstream context resolution, fail-closed preconditions, an explicit

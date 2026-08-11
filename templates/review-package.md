@@ -1,8 +1,8 @@
 # Review Package Template
 
-A Review Package is produced inline (in the conversation) at the end of each stage,
-immediately before `AWAITING HUMAN APPROVAL`. It is **not written to disk**. It is a
-convenience view for copy-paste to an external reviewer.
+A Review Package is produced inline when the selected review policy and the applicable doctrine
+adapter call for one. It is **not written to disk**. It is a convenience view for copy-paste to an
+external reviewer and does not define a decision boundary.
 
 **Regenerated packages are convenience views, not historical records.** A package
 regenerated after artifact changes may differ from the one originally reviewed. The
@@ -10,14 +10,14 @@ authoritative record of what was reviewed and decided is in `reviews/[feature_id
 
 ---
 
-## Stage 1–3 Format (Intent, Contract, Schema)
+## Specification Package Format (Intent, Contract, Event Schema)
 
 ```
 ---
-## Review Package — Stage [N]: [feature_id]
+## Review Package — Specification Package: [feature_id]
 
-Artifact: `[path]`
-Stage purpose: [one sentence — what this stage was supposed to produce]
+Artifacts: `intents/[feature_id].md`, `contracts/[feature_id]_contract.md`, `events/[feature_id]_schema.md`
+Purpose: verify mutual consistency and readiness to govern implementation
 
 Suggested areas to examine:
 - [question 1]

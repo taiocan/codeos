@@ -5,11 +5,8 @@ PURPOSE OF THIS FILE:
 Defines the complete event spine for this feature.
 This is the most constraining artifact in the DBA loop.
 
-Once approved, implementation may ONLY emit events listed here.
-No additional events are permitted without:
-1. Updating this schema
-2. Re-approval of the schema
-3. Re-run of affected stages
+Implementation may emit only governed events authorized here. Changes follow the selected doctrine
+through the specification-approval adapter and the applicable verification path.
 
 DERIVED FROM:
 - intents/[feature_id].md (actors, outcomes)
@@ -129,7 +126,7 @@ Also verify before submitting:
 
 ---
 
-<!-- METADATA -->
+<!-- METADATA — recording behavior is owned by the specification-approval doctrine adapter -->
 status: DRAFT
 feature_id: [feature_id]
 approved_by:

@@ -15,12 +15,12 @@
 #
 # Status values (lifecycle / decision state — never encodes stage; see current_stage
 # below for workflow position; keep the two independent):
-#   hypothesized — produced by Onboarding (Session Type D); HYPOTHESIZED_INTENT, not yet
-#                  approved as Stage 1 Intent; must pass Stage 1 review to advance
+#   hypothesized — produced by Onboarding (Session Type D); HYPOTHESIZED_INTENT, not yet through
+#                  the specification-approval adapter
 #   active       — currently progressing through the DBA stage loop
 #   suspended    — work paused; evidence chain preserved
 #   blocked      — blocked by an unresolved dependency or finding
-#   complete     — all required stages approved, no open refinements
+#   complete     — final delivery accepted, no open refinements
 #
 # current_stage values (DBA workflow position — independent of status above):
 #   0    — brief / pre-Stage-1

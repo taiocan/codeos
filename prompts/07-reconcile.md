@@ -18,8 +18,8 @@ You find **mismatches and gaps** between:
 - [ ] `intents/[feature_id].md` — APPROVED
 - [ ] `contracts/[feature_id]_contract.md` — APPROVED
 - [ ] `events/[feature_id]_schema.md` — APPROVED
-- [ ] Implementation in `modules/` — APPROVED
-- [ ] Tests in `tests/` — APPROVED
+- [ ] Implementation in `modules/` — available
+- [ ] Tests in `tests/` — executed with results available
 - [ ] `events/runtime_events.jsonl` — populated from Stage 6
 
 **Controlled Plain English check (if `architecture/controlled-plain-english.yaml` exists):** read
@@ -217,9 +217,10 @@ Present as a brief unnumbered list. Each entry: what was observed, where, and wh
 4. Present the Findings Summary (Step 4)
 5. Present Structural Alignment observations, if any (Step 5)
 6. State recommendation: "All items ALIGNED — ready for Stage 8" or "N gaps/mismatches found — return to Stage [X]"
-7. Present the Review Package using `.codeos/templates/review-package.md` (Stage 7 format, inline only):
+7. Preserve the following reconciliation evidence for final review (inline):
    - Verdict: N ALIGNED / N GAP / N MISMATCH / N MISSING
    - Non-ALIGNED items: one line per item, or "none"
    - Not measured: performance/benchmarks, security audit, and any other explicitly out-of-scope dimension
    - Suggested areas: (1) Do any ALIGNED findings have low evidence quality (EQ 3 or below) that may mask real gaps? (2) Are the GAP sub-types correctly classified — could any MISMATCH be misread as a documentation gap? (3) Are non-ALIGNED items in a priority order that helps the human decide what to address first?
-8. State: **`AWAITING HUMAN APPROVAL TO PROCEED TO STAGE 8 OR RETURN TO EARLIER STAGE`**
+8. If resolution requires changing approved specification meaning or architecture, stop and ask
+   the human. Otherwise hand the reconciliation evidence to `.codeos/prompts/08-replay.md`.

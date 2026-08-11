@@ -1,5 +1,8 @@
 # OAP × Codeos: An Experimental Layered Integration Profile
 
+> Historical comparison material, not a doctrine consumer. It is not updated when doctrine
+> semantics change; use `dba-system.md` and the selected doctrine for current guarantees.
+
 *A neutral proposal for running Orchestrated Agentic Programming (OAP) and Codeos /
 Declarative Behavioral Architecture (DBA) on the same project — and a critical assessment
 of where they reinforce each other and where they fight.*

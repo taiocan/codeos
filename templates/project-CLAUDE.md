@@ -30,14 +30,11 @@ Stages: 1-Intent / 2-Contract / 3-Schema / 4-Implement / 5-Tests / 6-Observe / 7
 
 Status: DRAFT / APPROVED / IN_PROGRESS / COMPLETE
 
-## Human Approval Gates
+## Doctrine Decisions
 
-Every stage output requires explicit human approval before Claude advances.
-
-After presenting any stage output, Claude **STOPS** and states: `AWAITING HUMAN APPROVAL`
-
-Valid approval signals: `APPROVED`, `approved`, `yes proceed`, `lgtm`
-Anything else is treated as a revision request.
+Follow the doctrine selected through `.codeos/dba-system.md`. Operational consequences are encoded
+only by prompts marked `DOCTRINE ADAPTER`; this project file does not define approval cadence,
+authority, or escalation semantics.
 
 ## Runtime Events
 

@@ -1,6 +1,6 @@
 # Codeos: Declarative Behavioral Architecture for Provable AI-Assisted Software Evolution
 
-*A doctrinal manual for human-gated, artifact-constrained, event-verifiable development with Claude Code.*
+*An explanatory manual for human-governed, artifact-constrained, event-verifiable development with Claude Code.*
 
 ---
 
@@ -10,14 +10,12 @@ Codeos is a development toolkit and methodology for tightly controlled, AI-assis
 software evolution. It implements **Declarative Behavioral Architecture (DBA)** — also
 called **Intent-Driven System (IDS)** mode in its own instructions. Its organizing idea
 is simple to state and consequential in practice: software is not built starting from
-code, but from *behavioral truth*. A feature begins as an approved statement of intent,
-becomes a set of observable behavioral contracts, then a constraining event schema, and
-only then is it implemented — and the implementation may contain nothing that does not
-trace back to an approved artifact.
+code, but from governed behavioral artifacts. The selected doctrine defines semantic guarantees;
+stage prompts marked `DOCTRINE ADAPTER` encode only their operational consequences.
 
 This manual presents Codeos as a *method*, not as a prompt collection. It defines the
 method, explains the dangers it answers, walks its full development loop with a single
-worked example, states its non-negotiable rules, and explains its verification machinery
+worked example, states its doctrine kernel, and explains its verification machinery
 — the event spine, reconciliation, and replay.
 
 **One disclaimer governs the entire manual.** Codeos is **not formal verification** in
@@ -30,6 +28,9 @@ assumed. Throughout this manual, words like "proof," "provable," and "verificati
 Where this manual uses interpretive labels for Codeos (for example "proof-before-code" or
 "anti-improvisation system"), those are this manual's framing, not terms the repository
 itself defines.
+
+This manual is not a normative doctrine surface. If it conflicts with the selected doctrine or a
+boundary adapter, those sources prevail and this manual must be corrected.
 
 ---
 
@@ -98,8 +99,8 @@ A normative convention is used throughout:
 # Part I — Definition and Motivation
 
 *Source basis: `README.md` (what this is, the 9-step loop); the `doctrine` component selected
-through `dba-system.md` (mode declaration, non-negotiable rules, vocabulary); `terminology.md`
-(DBA/IDA framing); `prompts/00c-onboarding.md`
+through `dba-system.md` (authority, lifecycle, constraints, human control); `terminology.md`
+(canonical project glossary); `prompts/00c-onboarding.md`
 (intent laundering); `patterns/shared-infrastructure-boundary.md` (vertical drift).*
 
 ## Why Codeos exists
@@ -112,9 +113,8 @@ internal structure, and whether the running system emits any evidence that can b
 later.
 
 Codeos exists to forbid that leap. Its mechanism is not a more powerful model — it is a
-better *structure of truth*. The leap is replaced by an ordered loop in which each step
-produces an artifact and each artifact must be approved by a human before the next step
-begins.
+better *structure of truth*. The leap is replaced by an ordered loop in which each step produces
+artifacts or evidence for the next. Decision semantics come from the selected doctrine.
 
 ## Failure / threat model — the dangers Codeos answers
 
@@ -127,12 +127,12 @@ development:
 
 | Danger | What it looks like | Contained by |
 |---|---|---|
-| **Intent-to-code leap** | AI jumps from a wish straight to an implementation | Non-negotiable rule: no implementation before intent + contract + schema are approved (Stages 1–4 gates) |
+| **Intent-to-code leap** | AI jumps from a wish straight to an implementation | Stage 3 specification adapter and Stage 4 delivery-entry adapter |
 | **Hidden abstractions** | AI adds helper layers, "service" abstractions, speculative generality | Stage 4 constraint: no abstractions the contract does not require |
 | **Unapproved events** | Runtime emits behavior nobody specified | Stage 3 event spine: implementation may emit *only* schema events; extras are structurally visible |
 | **Implementation-asserting tests** | Tests check private methods and internal state, so they pass while behavior is wrong | Stage 5 rule: tests assert observable outcomes only, in event-schema language |
 | **Runtime/schema divergence** | The log contains fields or types the schema never declared | Stage 7 Schema Payload Drift check (MATCH/TYPE_MISMATCH/ABSENT/EXTRA) |
-| **Rubber-stamping** | Human approves artifacts mechanically; gates become theater | Reviewer role as independent critical assessor; per-stage suggested examination areas |
+| **Rubber-stamping** | Human accepts artifacts mechanically; decisions become theater | Independent advisory review at applicable boundary adapters |
 | **Vertical drift** | Domain logic seeps into a shared infrastructure module, coupling features through the hub | `shared-infrastructure-boundary` pattern; Stage 10 Impact Analysis gate |
 | **Fake source of truth** | A generated plain-language summary is edited and silently becomes authoritative | Human Navigation rule: stored summaries carry provenance, are regenerated, are never DBA artifacts |
 
@@ -140,10 +140,9 @@ Each later Part returns to these dangers and shows the stage or rule that addres
 
 ## Core definition
 
-Codeos is a **human-gated, artifact-constrained methodology for AI-assisted software
-evolution**, in which every feature is developed *from* an approved intent *into*
-observable behavioral contracts, *from* contracts *into* an event schema, *from* the
-schema *into* a minimal implementation, *from* the implementation *into* behavioral and
+Codeos is a **human-controlled, artifact-constrained methodology for AI-assisted software
+evolution**, in which every feature is developed through Intent, Contract, and Event Schema,
+*from* governed specification *into* a minimal implementation, *from* implementation into behavioral and
 replay tests, and then *through* runtime observation, reconciliation audit, and a targeted
 refinement loop.
 
@@ -155,7 +154,7 @@ and what runtime evidence will show whether the truth still holds.
 
 Codeos is, simultaneously:
 
-- a **methodology** — it prescribes an ordered sequence of stages and human approvals;
+- a **methodology** — it prescribes an ordered sequence of stages and governed boundaries;
 - a **toolkit** — it ships governed DBA components selected through `dba-system.md`, stage prompts (`prompts/`),
   artifact templates (`templates/`), architectural patterns (`patterns/`), and an
   initializer (`scripts/dba-init.sh`), symlinked into a project as `.codeos`;
@@ -172,13 +171,11 @@ or behavior unless it derives from an approved artifact.
 
 ## What Codeos is NOT
 
-- **Not vibe coding.** It does not rest on a feeling that "the solution looks right." Every
-  stage requires an artifact and an approval.
-- **Not ordinary AI pair programming.** The human does not co-write code line by line; the
-  human approves intents, contracts, schemas, tests, and refinements.
-- **Not a fully autonomous agent system.** The active doctrine selected through `dba-system.md` forbids autonomous planning,
-  self-direction, and multi-step autonomous execution; Claude may not skip stages,
-  implement before specification, or advance without explicit approval.
+- **Not vibe coding.** It does not rest on a feeling that "the solution looks right." Stages
+  produce inspectable artifacts and evidence.
+- **Not ordinary AI pair programming.** Governed boundaries replace conversational improvisation.
+- **Not an open-ended autonomous agent system.** Delivery follows the selected doctrine and its
+  operational adapters rather than agent-defined authority.
 - **Not merely a documentation standard.** The documents are not commentary beside the
   code; they are the superior behavioral truth from which code must be derived.
 - **Not classic test-first development.** Tests matter, but they come *after* intent,
@@ -194,8 +191,8 @@ or behavior unless it derives from an approved artifact.
 
 # Part II — Operating Doctrine
 
-*Source basis: the `doctrine` component selected through `dba-system.md` (non-negotiable rules,
-Truth Authority, "What You NEVER Do");
+*Source basis: the `doctrine` component selected through `dba-system.md` (authority, lifecycle,
+behavioral constraints, human control, escalation);
 stage prompts `01`–`09` (per-stage roles); `prompts/pipeline-reviewer.md` (reviewer role).*
 
 ## Proof before code
@@ -224,12 +221,11 @@ any two links is surfaced rather than hidden.
 
 ## Role of the human
 
-The human is the primary holder of intent and approvals. This does not require the human to
-hand-write every contract, schema, or test. It requires the human to decide when an
-artifact is acceptable and when Claude may advance.
+The human is the primary holder of intent and the decisions assigned by the selected doctrine.
+This does not require the human to hand-write every contract, schema, or test.
 
-A human reviewing each stage should attend to *(this manual recommends the following
-checklist, distilled from the stage prompts)*:
+When a stage is reviewed, this manual recommends the following checklist, distilled from the stage
+prompts:
 
 - **Intent** — does it describe *why*, not *how*? Is the actor a human or business role,
   not "the system"?
@@ -251,71 +247,27 @@ the stage prompts:
 
 - **Stage 1** — intent analyst: help turn a raw description into actor + outcome intent.
   Implements nothing.
-- **Stage 2** — behavioral contract specialist: derive observable contracts from the
-  approved intent.
+- **Stage 2** — behavioral contract specialist: align observable contracts with the current Intent.
 - **Stage 3** — define the event spine.
-- **Stage 4** — *constrained satisfier* (the prompt's own term): implement only what the
-  three approved artifacts require.
+- **Stage 4** — implement governed behavior using normal internal engineering choices.
 - **Stage 5** — write behavioral and replay tests.
 - **Stage 7** — behavioral auditor performing reconciliation (explicitly *not* a code
   reviewer).
 - **Stage 8** — verify replayability.
 - **Stage 9** — propose the smallest evidence-backed fix.
 
-Claude's task is never to create a system by its own judgment, but to stay inside the
-approved chain. When a contract clause cannot be satisfied without adding something
-unapproved, the Stage 4 rule is explicit: Claude flags it and stops, rather than silently
-adding it.
+Claude stays inside the governed artifact chain. When implementation cannot satisfy that chain,
+the Stage 4 adapter applies the active doctrine rather than silently inventing behavior.
 
-## The non-negotiable rules
+## The doctrine kernel
 
-The `doctrine` component selected through `dba-system.md` states six non-negotiable rules. They
-are reproduced here in meaning (these are repo-backed MUST/NEVER rules):
-
-1. **Every stage transition requires explicit human approval.** Claude NEVER advances
-   without an explicit "APPROVED" / "yes proceed" or equivalent.
-2. Claude NEVER implements before intent + contract + event schema are *all* approved.
-3. Claude NEVER adds abstractions, patterns, or behaviors beyond what the current approved
-   artifacts specify.
-4. Claude NEVER emits events not listed in the approved event schema.
-5. Claude NEVER invents hidden behavior — all behavior must trace to an approved artifact.
-6. After producing any stage output, Claude STOPS and states `AWAITING HUMAN APPROVAL`.
-
-The selected `doctrine` component also enumerates "What You NEVER Do," which restates and extends these:
-implement before approval; add abstractions the contracts do not demand; add "just in case"
-error handling not in the contract's failure modes; emit unlisted events; advance without
-approval; suggest full rewrites; add autonomous planning or multi-step autonomous
-execution; or modify `events/runtime_events.jsonl`, which is append-only.
-
-The visible discipline of these rules is the `AWAITING HUMAN APPROVAL` stop. Every stage
-prompt ends by emitting a stop token (for example
-`AWAITING HUMAN APPROVAL TO PROCEED TO STAGE 2`). The stop is not decoration; it is the
-gate.
+The selected doctrine is intentionally small and is the sole semantic authority. Read it through
+`dba-system.md`; this manual does not maintain a parallel summary of its guarantees.
 
 ## Truth Authority and conflict resolution
 
-When intent, runtime evidence, and structural analysis disagree, the `doctrine` component selected
-through `dba-system.md` defines an authority model. This manual presents it with its exact categories and caveats and does
-**not** reduce it to a simple ranking — the safety caveat in particular inverts what a
-naive ranking would suggest:
-
-1. **Explicit human correction** at any stage gate overrides all other sources.
-2. **Runtime behavior** (observed events) overrides intent *text* when behavior is more
-   specific. Example from the selected `doctrine` component: schema declares `"string"` but runtime consistently
-   emits an integer — this is empirical evidence of intent-text drift, not a runtime error.
-3. **Safety, authorization, and invariant-enforcement logic** always preserves *intent
-   primacy*, regardless of runtime behavior. Example: if runtime shows no authorization
-   check was invoked, that is a contract violation — **not** a license to redesign
-   authorization around the observed behavior. This is the critical exception: for
-   safety/authorization/invariant logic, intent wins even over runtime.
-4. **Structural digest observations** (fan-in, god functions, known risk zones) do *not*
-   override behavioral findings. They inform blast-radius estimates and remediation
-   sequencing only — they are advisory.
-
-When a conflict cannot be resolved by these rules, the instruction is to surface it to the
-human rather than silently resolving it. A flattened "human > runtime > intent" summary is
-therefore wrong: it would discard the safety exception, which is the most important part of
-the model.
+Authority and conflict resolution are defined only by the selected doctrine. Operational prompts
+must apply that text rather than this manual's interpretation.
 
 ---
 
@@ -326,8 +278,8 @@ through `dba-system.md` (the 9-step loop);
 stage prompts `00-session-start`, `01`–`09`; `templates/` (artifact shapes).*
 
 Codeos has a nine-stage *feature* loop. It also has a Stage 0 *session discipline* that is
-not a feature stage. The human-gated character of Codeos begins before Stage 1 — in how a
-session is started.
+not a feature stage. Current doctrine consequences appear only at the boundary adapters identified
+in the stage descriptions below.
 
 ## Stage 0 — Session Start / Operating Preflight
 
@@ -335,7 +287,8 @@ Stage 0 is not part of the feature lifecycle; it is the operating preflight that
 Claude into DBA mode, scopes the session, names forbidden actions, and prevents accidental
 autonomous work. The session-start prompt (`prompts/00-session-start.md`) directs Claude to:
 
-- read `.codeos/dba-system.md`, follow it to the selected doctrine, and state the non-negotiable rules;
+- read `.codeos/dba-system.md`, confirm the selected configuration and doctrine, and avoid deriving
+  doctrine semantics from explanatory documents;
 - read the project `CLAUDE.md` and note the Active Features table;
 - read `docs/codebase-digest.md` if it exists (structural orientation), or state that none
   was found;
@@ -359,7 +312,7 @@ Each stage below uses the same mini-template:
 
 - **Purpose** — what the stage establishes.
 - **Primary artifact** — what is produced.
-- **Human gate** — what the human approves before advancing.
+- **Approval** — whether this output participates in a human decision.
 - **Prevented failure mode** — the danger (from Part I) it contains.
 - **Proof produced** — the evidence this stage adds to the chain.
 - **Claude constraints** — what Claude may not do here.
@@ -372,7 +325,7 @@ Each stage below uses the same mini-template:
 - **Primary artifact:** `intents/[feature_id].md` (from `templates/intent.md`): a purpose
   statement, a few actor-outcome statements, stable guarantees, and an explicit scope
   boundary.
-- **Human gate:** Human approves the intent before Stage 2.
+- **Boundary owner:** —; the draft passes to Stage 2.
 - **Prevented failure mode:** the intent-to-code leap, and intent ambiguity that would
   propagate forward.
 - **Proof produced:** an approved, implementation-independent statement of intent — the
@@ -388,13 +341,13 @@ Each stage below uses the same mini-template:
 
 ### Stage 2 — Behavioral Contracts
 
-- **Purpose:** Translate the approved intent into independently testable, observable-only
+- **Purpose:** Translate the current Intent into independently testable, observable-only
   truth.
 - **Primary artifact:** `contracts/[feature_id]_contract.md` (from `templates/contract.md`):
   Given/When/Then scenarios, invariants, an Invariant Falsification Scenarios table,
   pre/postconditions, a Failure Classifications table, and optional Runtime Context and
   Vocabulary Dependency sections.
-- **Human gate:** Human approves the contract before Stage 3.
+- **Boundary owner:** —; the drafts pass to Stage 3.
 - **Prevented failure mode:** implementation-asserting specification — clauses that can only
   be checked by reading code.
 - **Proof produced:** a set of black-box-verifiable behavioral truths, including
@@ -416,8 +369,7 @@ Each stage below uses the same mini-template:
 - **Primary artifact:** `events/[feature_id]_schema.md` (from `templates/event-schema.md`):
   named events with categories and payloads, an event flow diagram, and a Coverage Check
   table mapping every contract failure to a FAILURE event.
-- **Human gate:** Human approves the schema before Stage 4. This is the gate that constrains
-  everything that follows.
+- **Boundary owner:** Stage 3 `specification-approval` doctrine adapter.
 - **Prevented failure mode:** hidden behavior — once approved, implementation may emit only
   the listed events, so undeclared behavior becomes architecturally impossible.
 - **Proof produced:** the closed set of permitted runtime observations, against which the
@@ -425,10 +377,8 @@ Each stage below uses the same mini-template:
 - **Claude constraints:** the schema must not be *stronger* than the contract — every new
   observable (payload field, event, ordering guarantee) must trace to an approved contract
   clause; `correlation_id` is mandatory on every event without exception; validation
-  ordering is not prescribed unless the contract requires it. *Observation-mode note:* if
-  the contract's Runtime Context declares `observation_mode: external-observation`, Stage 3
-  is skipped and evidence comes from test layers or an acceptance artifact instead — this is
-  exceptional; event-emitting features use the schema.
+  ordering is not prescribed unless the Contract requires it. For external observation, the
+  Event Schema records the approved observation source and that no governed internal events apply.
 - **Verification questions:** Does every event trace to an approved contract clause? Are
   failure events specific enough to support root-cause analysis? Does the flow diagram
   accurately represent what Stage 4 will be constrained to implement?
@@ -444,18 +394,15 @@ effects on outside systems). Every event carries six required base fields: `even
   nothing more.
 - **Primary artifact:** code in `modules/[feature_id]/`, plus a Contract Satisfaction Table
   and an Event Emission Table.
-- **Human gate:** Human approves the implementation before Stage 5.
+- **Boundary owner:** Stage 4 `delivery-entry` doctrine adapter; testing adds no new boundary.
 - **Prevented failure mode:** hidden abstractions, unapproved events, speculative error
   handling, undeclared runtime artifacts.
 - **Proof produced:** code in which the first thing wired up is correlation-ID propagation
   and event emission, so all behavior is traceable.
-- **Claude constraints (all repo-backed):** no additional abstractions; no additional
-  events (a needed new event means *stop and request a schema update*); no undeclared
-  runtime artifacts (only `events/runtime_events.jsonl` unless the contract's Runtime
-  Artifacts section names another); no speculative error handling (only contracted failure
-  modes are caught; others propagate); implementation must be deterministic; if the feature
-  consumes a vocabulary, the Representation Ban applies. All three artifacts must be APPROVED
-  before this stage; implementation without all three is a DBA violation.
+- **Claude constraints:** internal helpers, types, validation, technical errors, and established
+  patterns are allowed. They must not change approved behavior, authority, event semantics,
+  architecture, safety, authorization, or integrity. All three specification artifacts must be
+  approved before implementation.
 - **Verification questions:** Are any clauses satisfied in a surprising or fragile way? Does
   the implementation introduce behavior not traceable to intent, contract, or schema? What
   is the most likely Stage 7 gap?
@@ -466,7 +413,7 @@ effects on outside systems). Every event carries six required base fields: `even
   the contracts.
 - **Primary artifact:** `tests/behavioral/[feature_id]_behavior.test.[ext]` and
   `tests/replay/[feature_id]_replay.test.[ext]`, plus a Contract Coverage Table.
-- **Human gate:** Human approves the tests (and runs them) before Stage 6.
+- **Boundary owner:** —; test evidence passes to runtime verification.
 - **Prevented failure mode:** tests that assert internals and pass while behavior is wrong.
 - **Proof produced:** automated behavioral evidence (happy path, every named failure,
   telemetry correctness, idempotency if contracted, one test per invariant-falsification
@@ -484,11 +431,9 @@ effects on outside systems). Every event carries six required base fields: `even
 
 ### Stage 6 — Runtime Execution
 
-- **Purpose:** The human runs the implementation; `events/runtime_events.jsonl` becomes
-  operational truth.
+- **Purpose:** Run the implementation and capture `events/runtime_events.jsonl` as runtime evidence.
 - **Primary artifact:** the populated append-only runtime event log.
-- **Human gate:** the human confirms events are captured ("events captured, ready for Stage
-  7"); Claude does not advance until then.
+- **Boundary owner:** —; record a GAP when evidence cannot be obtained.
 - **Prevented failure mode:** declaring a feature done with no runtime evidence that it
   executed.
 - **Proof produced:** Evidence Level 1 (Direct) observations — real events in the log,
@@ -508,7 +453,7 @@ effects on outside systems). Every event carries six required base fields: `even
   This is the heart of the method (see Part IV).
 - **Primary artifact:** the reconciliation table and Findings Summary, with an optional
   Structural Alignment section.
-- **Human gate:** Human approves, or directs return to an earlier stage.
+- **Boundary owner:** —; route findings using the selected doctrine's escalation rules.
 - **Prevented failure mode:** silent drift — divergence between what was intended,
   specified, built, tested, and observed.
 - **Proof produced:** a per-item status across all layers (see the status vocabulary in Part
@@ -525,7 +470,7 @@ effects on outside systems). Every event carries six required base fields: `even
 - **Purpose:** Confirm the system is deterministically replayable.
 - **Primary artifact:** the replay report (event-log summary, sequence conformance, replay
   test results).
-- **Human gate:** Human approves to proceed to Stage 9 or marks the feature complete.
+- **Boundary owner:** Stage 8 `final-acceptance` doctrine adapter.
 - **Prevented failure mode:** non-determinism and broken or orphaned correlation chains
   hiding behind green unit tests.
 - **Proof produced:** the guarantee that *same inputs + same module version + same
@@ -541,8 +486,7 @@ effects on outside systems). Every event carries six required base fields: `even
 - **Purpose:** Apply the smallest effective, problem-driven fix to each observed issue.
 - **Primary artifact:** refinement records (from `templates/refinement.md`) plus minimal
   diffs and a list of stages to re-run.
-- **Human gate:** the human approves each refinement *individually*; affected stages are
-  re-run before the next refinement is addressed.
+- **Boundary owner:** No additional boundary; verified results return to Stage 8.
 - **Prevented failure mode:** the temptation to answer a bug with a redesign.
 - **Proof produced:** an evidence-linked change with an explicit trigger and a bounded
   re-run set.
@@ -560,12 +504,12 @@ effects on outside systems). Every event carries six required base fields: `even
 *Source basis: the `doctrine` component selected through `dba-system.md` (vocabulary: Event Spine,
 Correlation ID, event kinds);
 `prompts/03-event-schema.md`, `06-observe.md`, `07-reconcile.md`, `08-replay.md`,
-`09-refine.md`; `terminology.md` (event JSON shape).*
+`09-refine.md`; `Archive/terminology.md` (historical event JSON example).*
 
 The strongest claim Codeos makes is operational, not formal. Its three load-bearing
 mechanisms are the event spine, reconciliation, and replay.
 
-## Event Spine as operational truth
+## Event Spine as operational evidence
 
 Every meaningful runtime action must emit an approved event, written as one JSON object per
 line to the append-only `events/runtime_events.jsonl`. The system therefore produces not
@@ -664,7 +608,7 @@ the system stable: change is bounded and justified rather than sweeping and aest
 
 # Part V — Supporting Machinery and Anti-Drift Architecture
 
-*Source basis: the active DBA components selected through `dba-system.md` (Artifact Classification,
+*Source basis: active DBA policies, prompts, and templates (artifact use,
 Review Logging, Human Navigation, Architectural Refinement); `templates/` (review-package,
 review-file, handoff);
 `prompts/10-arch-refine.md`, `00c-onboarding.md`, `pipeline-reviewer.md`;
@@ -672,25 +616,22 @@ review-file, handoff);
 
 ## Required vs optional artifacts
 
-Not every artifact blocks progress. The selected `doctrine` component draws a clear line:
-**required artifacts block stage advancement; optional and recommended artifacts improve decision quality but are
-never prerequisites.**
+Artifact eligibility is enforced by the Stage 4 `delivery-entry` adapter. This manual records only
+the supporting classifications:
 
-- **Required (block advancement):** Intent (before Stage 2), Contract (before Stage 3), Event
-  Schema (before Stage 4).
 - **Recommended:** Feature Registry (`features/registry.yaml`) for multi-feature projects.
 - **Optional:** Feature Brief (`backlog/[id].md`), Codebase Digest
   (`docs/codebase-digest.md`), the Stage 7 Structural Alignment section, Architectural
   Refinement records.
-- **Onboarding-only:** `HYPOTHESIZED_INTENT` drafts from Session Type D, which must pass
-  Stage 1 review before they count as approved.
+- **Onboarding-only:** `HYPOTHESIZED_INTENT` drafts from Session Type D, routed through the Stage 3
+  `specification-approval` adapter.
 
 ## Templates, prompts, and project setup
 
 The toolkit ships fill-in templates for every artifact (intent, contract, event schema,
 feature spec, refinement, arch-refinement, codebase digest, conventions, feature brief,
 feature registry, handoff, project `CLAUDE.md`, review file, review package) and a
-stage-gated prompt for each step.
+sequential prompt for each step.
 
 `scripts/dba-init.sh`, run from a new project root, scaffolds the project: it creates the
 `.codeos` symlink to the toolkit; creates `intents/`, `contracts/`, `events/`, `modules/`,
@@ -710,10 +651,10 @@ alternatives, or DBA itself. Its output uses an **Attention Level** (High / Medi
 a scannability signal — explicitly **not** APPROVED / REVISE / BLOCKING verdicts, which would
 turn the reviewer into a gatekeeper. The human decides what to act on.
 
-At the end of each stage, Claude presents a **Review Package** inline (from
-`templates/review-package.md`): the artifact, the stage purpose, three suggested examination
-areas, and known tensions. Crucially, this package is *not written to disk* — it is a
-convenience view for copy-paste to a reviewer; the authoritative record lives in
+At review points selected by the review policy and applicable adapters, Claude presents a **Review
+Package** inline (from `templates/review-package.md`): the relevant artifacts or evidence, the
+purpose, suggested examination areas, and known tensions. This convenience view is not
+authoritative and is not written to disk; the durable review record lives in
 `reviews/[feature_id].md`.
 
 ## Review logging: decision log and architecture journal
@@ -845,8 +786,8 @@ draft Intent (`status: HYPOTHESIZED_INTENT`), and a registry entry. Its central 
 against **intent laundering** — describing the code's current behavior as if that behavior
 were the intent, converting accidents into stated goals. The remedy is an evidence priority
 (human interview first; then runtime behavior; then tests; source code structure last, and
-least trusted for intent) and a hard rule that drafts are never APPROVED until Stage 1 review
-processes them.
+least trusted for intent). Draft governance is owned by the Stage 3
+`specification-approval` adapter.
 
 ## Human Navigation
 
@@ -876,15 +817,15 @@ maps to a named repo concept — Session Type D.)
 
 # Part VI — Worked Example: Real-Estate Ingestion
 
-*Source basis: `terminology.md` (the real-estate ingestion example and event JSON shape);
+*Source basis: `Archive/terminology.md` (the real-estate ingestion example and event JSON shape);
 `templates/intent.md`, `contract.md`, `event-schema.md`; `prompts/06-observe.md`,
 `07-reconcile.md`, `09-refine.md`.*
 
 > **Provenance disclaimer.** The system and the event names below are **derived from the
-> real-estate ingestion example in `terminology.md`**. That file presents the example as a
+> real-estate ingestion example in `Archive/terminology.md`**. That file presents the example as a
 > conceptual illustration of the DBA model, not as a complete, implemented project. The mini
 > artifacts in this section are of two kinds, marked inline: **[sourced]** elements come
-> directly from `terminology.md`; **[illustrative]** elements are written here to demonstrate
+> directly from `Archive/terminology.md`; **[illustrative]** elements are written here to demonstrate
 > the method's artifact shapes and are *not* existing repository artifacts. Nothing below
 > should be read as a claim that the repository contains a production implementation of this
 > system.
@@ -1008,7 +949,7 @@ Note what the tests do *not* do: they never assert on private functions or inter
 state, only on emitted events and resulting state. The Contract Coverage Table then maps
 every scenario and every invariant-falsification row to exactly one test.
 
-### Stage 6 — A runtime event log line **[shape sourced from `terminology.md`]**
+### Stage 6 — A runtime event log line **[shape sourced from `Archive/terminology.md`]**
 
 ```json
 {"event_id":"evt-001","event_type":"ListingIngested","timestamp":1710000000000,"correlation_id":"listing-flow-777","source_module":"feed_ingestion","payload":{"listing_id":"abc123","source":"agency_x"}}
@@ -1033,7 +974,7 @@ SearchProjectionUpdated` matches the expected flow, the chain is complete (trigg
 terminal BEHAVIORAL event), and re-running the same input yields the same `event_type`
 sequence.
 
-### Stage 9 — A targeted refinement **[sourced from `terminology.md`]**
+### Stage 9 — A targeted refinement **[sourced from `Archive/terminology.md`]**
 
 Runtime metrics reveal `duplicate_detection_accuracy = 82%`; the observed cause is that
 address abbreviations bypass deduplication. The refinement does not redesign the system. It
@@ -1060,7 +1001,8 @@ is the smallest effective, evidence-backed change.
   code or tests but by the events it emits during execution.
 - **Deterministic verification.** Replay tests check that the runtime event sequence stays
   consistent with the schema across runs.
-- **Human control.** Every stage transition requires explicit human approval.
+- **Human control.** Authority and decision boundaries remain explicit in the selected doctrine and
+  its adapters rather than being inferred from agent behavior.
 - **Institutional memory.** Handoffs, review logs, and the architecture journal keep
   important decisions from being lost in conversation history.
 - **Anti-drift architecture.** The shared-infrastructure-boundary pattern names and contains
@@ -1122,9 +1064,9 @@ that evidence systematically: intent, contract, event, implementation, test, run
 reconciliation, replay, and targeted refinement.
 
 That is why Codeos is not merely a set of prompts for Claude Code. It is an attempt to shape
-a discipline of development in which the AI is granted no freedom until a human has
-established what is true — and in which "it works" is not a final claim but the beginning of
-verification.
+a discipline of development in which the human establishes governed meaning while the AI retains
+normal implementation freedom inside that boundary—and in which "it works" is not a final claim
+but the beginning of verification.
 
 ---
 
@@ -1137,13 +1079,13 @@ every sentence.
 | Manual claim / element | Repository artifact | Path |
 |---|---|---|
 | Codeos = DBA / IDS methodology; symlinkable toolkit | README / active DBA components | `README.md`, `dba-system.md` → active configuration |
-| 9-step loop (Intent → … → Refinement) | Doctrine; README | `dba-system.md` → `doctrine`, `README.md` |
-| Six non-negotiable rules; "What You NEVER Do" | Doctrine | `dba-system.md` → `doctrine` |
+| 9-step loop (Intent → … → Refinement) | README and stage prompts | `README.md`, `prompts/` |
+| Authority, package lifecycle, behavioral constraints, human control, escalation | Doctrine | `dba-system.md` → `doctrine` |
 | Truth Authority model + safety/invariant exception | Doctrine | `dba-system.md` → `doctrine` |
-| Artifact Classification (required/recommended/optional) | Doctrine | `dba-system.md` → `doctrine` |
-| DBA vocabulary (Event Spine, Correlation ID, event kinds) | Doctrine | `dba-system.md` → `doctrine` |
+| Operational artifact requirements | Prompts and templates | `prompts/`, `templates/` |
+| DBA vocabulary (Event Spine, Correlation ID, event kinds) | Terminology, prompts, templates | `terminology.md`, `prompts/`, `templates/` |
 | Review Logging; Architecture Journal `AJ-NNN` format | Review policy | `dba-system.md` → `review_policy` |
-| Human Navigation (no fake source of truth) | Doctrine | `dba-system.md` → `doctrine` |
+| Human Navigation (no fake source of truth) | Manual guidance | `docs/codeos-manual.md` |
 | Stage 0 session types A/B/C/D; STOP discipline | Session-start prompt | `prompts/00-session-start.md` |
 | Stage 1 intent rules; cross-examination | Stage 1 prompt; template | `prompts/01-intent.md`, `templates/intent.md` |
 | Stage 2 contracts; boundary + falsification scenarios | Stage 2 prompt; template | `prompts/02-contract.md`, `templates/contract.md` |
@@ -1160,40 +1102,15 @@ every sentence.
 | Review Package is inline, not written to disk | Review-package template | `templates/review-package.md` |
 | Vertical drift; Diagnostic Test; Justification Gate | Pattern | `patterns/shared-infrastructure-boundary.md` |
 | Project scaffolding; directories; git init | Init script | `scripts/dba-init.sh` |
-| Real-estate example; event names; event JSON shape | Terminology | `terminology.md` |
+| Real-estate example; event names; event JSON shape | Historical terminology example | `Archive/terminology.md` |
 | OAP framing and synthesis | External (user-supplied OAP handbook) | not in repository |
 
 ---
 
 # Appendix B — DBA Vocabulary
 
-The canonical vocabulary, as defined in `dba-system.md` and `terminology.md`. These terms are
-repo-backed; this appendix reproduces their meaning for reference.
-
-| Term | Definition |
-|---|---|
-| **Intent** | Why a feature exists. Actor + outcome form. No implementation details. |
-| **Behavioral Contract** | Observable truths derived from intent. BDD Given/When/Then. |
-| **Event Spine** | The complete ordered set of events a feature is permitted to emit. |
-| **Observational Event** | A raw runtime fact (e.g., `RequestReceived`). |
-| **Behavioral Event** | A verified outcome (e.g., `CartItemAdded`). |
-| **Failure Event** | A classified error condition (e.g., `CartItemAddFailed`). |
-| **External Event** | A side effect on an outside system (e.g., `EmailSent`). |
-| **Reconciliation Review** | Structural comparison of all artifacts against each other for gaps and mismatches. |
-| **Replay Verification** | Confirming the runtime event log conforms to schema and contract sequence. |
-| **Targeted Refinement** | The smallest effective change for a specific observed problem — not a rewrite. |
-| **Correlation ID** | A UUID linking all events from a single feature execution chain. |
-| **Shared Infrastructure Module** | A module depended on by ≥2 feature modules providing only mechanical infrastructure (event emission, DTOs, constants, re-exports); never domain logic. |
-| **Vertical Drift** | Accumulation of domain logic in a shared infrastructure module, bypassing lateral isolation even when feature→feature imports are blocked. |
-| **Concept / Canonical / Alias** | The semantic identity reasoned about; its one stable runtime identifier; an alternative input form resolved to the concept before domain logic runs. |
-| **Concept Leak** | A bug where a vocabulary representation escapes the resolution boundary into domain logic. |
-| **Evidence Quality** | Environment-fidelity scale (1 Specification → 5 Production); independent of alignment. |
-| **HYPOTHESIZED_INTENT** | Status of an onboarding draft intent that has not yet passed Stage 1 review. |
-
-Status vocabulary used across the loop: artifact status is one of `DRAFT` / `APPROVED` /
-`IN_PROGRESS` / `COMPLETE` (plus `HYPOTHESIZED_INTENT` for onboarding drafts); reconciliation
-status is one of `ALIGNED` / `GAP (…)` / `MISMATCH` / `MISSING`; payload-drift status is one
-of `MATCH` / `TYPE_MISMATCH` / `ABSENT` / `EXTRA`.
+The canonical project vocabulary is defined once in `terminology.md`. Read that glossary rather
+than maintaining a duplicate definition table here.
 
 ---
 

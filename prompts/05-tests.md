@@ -7,9 +7,9 @@ Tests are behavioral truth anchors — they fail if observable behavior deviates
 
 ## Preconditions
 
-Approved implementation from Stage 4.
+Implementation admitted by the Stage 4 `delivery-entry` adapter.
 
-- [ ] Implementation in `modules/` is approved
+- [ ] Implementation in `modules/` is available for verification
 
 **Controlled Plain English check (if `architecture/controlled-plain-english.yaml` exists):** read
 its `status` per the Optional Mechanism Status Convention's four-outcome table
@@ -228,7 +228,7 @@ Verify before outputting:
 1. Present `tests/behavioral/[feature_id]_behavior.test.[ext]`
 2. Present `tests/replay/[feature_id]_replay.test.[ext]`
 3. Present the Contract Coverage Table (from Step 2) with ✓ / ✗ marks from Step 3
-4. Present the Review Package using `.codeos/templates/review-package.md` (Stage 4–5 format, inline only):
+4. Preserve the following delivery evidence for final review (inline; do not create a new artifact):
    - Artifacts: `tests/behavioral/[feature_id]_behavior.test.[ext]`, `tests/replay/[feature_id]_replay.test.[ext]`
    - Stage purpose: Write behavioral tests that would fail if observable behavior deviates from contracts.
    - Files changed: [list test files created or modified]
@@ -236,6 +236,4 @@ Verify before outputting:
    - What is not covered: [contract clauses classified MANUAL-PENDING or deferred to Stage 6 real-boundary observation]
    - Suggested areas: (1) Do the tests verify observable behavior, or do they inadvertently test internal implementation details? (2) Are the invariant falsification tests set up so they would fail if the named wrong assumption were present? (3) Is there any contract clause technically covered but not actually verifying the right outcome?
    - Known tensions: from implementation decisions or contract boundary cases, or "none"
-5. State: **`AWAITING HUMAN APPROVAL TO PROCEED TO STAGE 6`**
-
-**STOP.** The human must approve tests and run them before Stage 6.
+5. Hand the test evidence to `.codeos/prompts/06-observe.md`.

@@ -54,14 +54,13 @@ TRIAGE RULE
   decision ledgers; autonomous approval; enabled hooks.
 
 REVIEW CONTEXT
-  Feature / Stage / Branch / Base commit / Review commit / Current approved stage /
+  Feature / Stage / Branch / Base commit / Review commit / Preceding stage /
   Evidence coverage (coverage_state) / Workspace dirty
 
 DBA RULES RELEVANT TO THIS STAGE
-  - Human approval is required for every stage transition; you are advisory only.
+  - Your assessment is advisory and never makes a workflow decision.
   - Memory is not truth — assess only the artifacts/diff provided, pinned to the review commit.
-  - Implementation must trace to approved artifacts; no behavior beyond intent+contract+schema.
-  - No events outside the approved event schema; no hidden behavior.
+  - Apply doctrine semantics only when the selected doctrine is included in the review evidence.
 
 STAGE-SPECIFIC CHECKS
   <the Stage-N checklist from backlog/UPG-0003-reviewer-decision-brief.md>

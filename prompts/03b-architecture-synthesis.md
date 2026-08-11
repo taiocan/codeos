@@ -1,10 +1,12 @@
 # Architecture Synthesis Gate
 
+<!-- DOCTRINE ADAPTER: architecture-entry
+Conditional: applies only when the active doctrine or architecture policy requires architecture approval. -->
+
 ## Your Role
 
 You guide the **Architecture Synthesis Gate** for a declared core architecture cohort. You are
-not implementing a behavioral feature and not writing code. You are a constrained change guide —
-every step requires explicit human approval. This workflow consumes *approved* Intent, Contract,
+not implementing a behavioral feature and not writing code. This workflow consumes *approved* Intent, Contract,
 and Event Schema artifacts across a whole cohort; it never produces speculative architecture, and
 it never invents or alters behavior. See the `architecture_synthesis_policy` component selected by
 `.codeos/dba-system.md` for the full policy this prompt implements.
@@ -12,8 +14,8 @@ it never invents or alters behavior. See the `architecture_synthesis_policy` com
 ## When This Prompt Applies
 
 Only when `features/registry.yaml` has an `architecture_cohorts:` entry whose member features
-have all reached approved Stage 3 (Event Schema). If any member feature has not reached approved
-Stage 3, **STOP** — this session cannot proceed; return to the relevant feature's earlier stage
+all have approved Specification Packages. If any member feature lacks package approval, **STOP** —
+this session cannot proceed; return to that feature's specification work
 instead.
 
 If no cohort is declared, this prompt does not apply — proceed directly from Stage 3 to Stage 4
@@ -44,8 +46,8 @@ file → **STOP** and report a configuration error.
 
 ## The Synthesis Pipeline
 
-Each step below requires explicit human approval before the next.
-After each step output, state: **`AWAITING HUMAN APPROVAL TO PROCEED TO STEP [N+1]`**
+Steps 1–3 form one drafting sequence. They do not add intermediate approval gates. Step 4 presents
+the two architecture artifacts for their single joint approval.
 
 ### Step 1 — Cohort Evidence Review
 
@@ -70,7 +72,7 @@ Separate what you observe into two categories, kept visibly distinct in your out
 **Complete when:** every member feature's approved artifacts have been read; the Event Cohort
 Check is produced; derived observations and open questions are kept separate.
 
-Output: Cohort Evidence Review + **`AWAITING HUMAN APPROVAL TO PROCEED TO STEP 2`**
+Output: Cohort Evidence Review; continue to Step 2.
 
 ---
 
@@ -93,7 +95,7 @@ explicit decision, and record the decision (not your own inference) in the basel
 **Complete when:** every authoritative decision has a stated human answer (not an assumption);
 every derived view names its source artifacts; the cohort membership set and version are stated.
 
-Output: Draft Baseline + **`AWAITING HUMAN APPROVAL TO PROCEED TO STEP 3`**
+Output: Draft Baseline; continue to Step 3.
 
 ---
 
@@ -139,7 +141,7 @@ integration style) — reference it, don't duplicate it.
 applicable to this cohort" where genuinely out of scope, not silently omitted); no behavioral
 decision has been resolved inline.
 
-Output: Draft Cohort Logical Design + **`AWAITING HUMAN APPROVAL TO PROCEED TO STEP 4`**
+Output: Draft Cohort Logical Design; continue to Step 4.
 
 ---
 
@@ -161,14 +163,14 @@ Once the human approves both:
   `architecture/history/cohort-logical-design-v<version>.md` first.
 - Update the cohort's `features/registry.yaml` entry: `status: approved`, `baseline_version` and
   `logical_design_version` both set to their approved versions.
-- Cohort members may now begin Stage 4, in the dependency order the baseline and logical design
+- Cohort members may now begin implementation, in the dependency order the baseline and logical design
   recommend.
 
 **Complete when:** both artifacts reflect `approved` status and version; the registry cohort entry
 is updated to match both fields; any superseded versions are archived, not deleted.
 
-Output: confirmation of both approved artifacts + registry update +
-**`AWAITING HUMAN APPROVAL — ARCHITECTURE SYNTHESIS APPROVED`**
+Before activation, state: **`AWAITING HUMAN APPROVAL OF THE ARCHITECTURE BASELINE AND LOGICAL DESIGN`**.
+After approval, output confirmation of both approved artifacts and the registry update.
 
 ---
 
@@ -176,7 +178,6 @@ Output: confirmation of both approved artifacts + registry update +
 
 `codeos-reviewer` has a dedicated checklist for the `architecture-synthesis` stage id, covering all
 four steps of this pipeline — run `.codeos/scripts/codeos-review.sh review <feature_id>
-architecture-synthesis` for gate reviews at this stage, per the default advisory review in
-the `doctrine`, `review_policy`, and `reviewer_tool_contract` components selected by
-`.codeos/dba-system.md`. This does not weaken
-the requirement for explicit human approval at each step above.
+architecture-synthesis` for review at this boundary, per the selected `review_policy` and
+`reviewer_tool_contract`. Decision behavior is owned by this `architecture-entry` adapter and the
+selected `architecture_synthesis_policy`.

@@ -2,10 +2,10 @@
 
 <!--
 PURPOSE OF THIS FILE:
-Defines observable truths derived from the approved intent.
+Defines observable truths aligned with the Intent in the same Specification Package.
 Contracts describe OBSERVABLE behavior, not internal logic.
 Every clause must be independently testable.
-This file must be APPROVED before Stage 4 (implementation) begins.
+Its governance transition is owned by the specification-approval doctrine adapter.
 
 DERIVED FROM: intents/[feature_id].md
 -->
@@ -186,7 +186,7 @@ Exhaustive list of named failure modes. Every failure here needs:
 
 ---
 
-<!-- METADATA -->
+<!-- METADATA — recording behavior is owned by the specification-approval doctrine adapter -->
 status: DRAFT
 feature_id: [feature_id]
 approved_by:

@@ -5,11 +5,11 @@ Descriptive v0 shapes for the on-disk artifacts produced by `scripts/codeos-revi
 and refers here for exact shapes.
 
 > **v0 is a manual advisory review *logging* pilot.** These schemas describe what the pilot writes
-> so the evidence is self-describing and auditable. They are **not** an approval-integrity contract:
+> so the evidence is self-describing and auditable. They are **not** a decision-integrity contract:
 > the hashes, packet copy, and `workspace_dirty` flag are **audit aids**, not a guarantee that a
-> human approval is bound to an unchanged repository state. Binding approval to a reproducible
+> workflow decision is bound to an unchanged repository state. Binding a decision to a reproducible
 > reviewed state (commit + diff hash + workspace snapshot, decision-time reverification, rollback)
-> is **deferred** — see `backlog/UPG-0015-reviewer-decision-integrity.md`.
+> is **deferred** — see `Archive/self-development/backlog/completed/UPG-0015-reviewer-decision-integrity.md`.
 
 ## Schema authority
 
@@ -151,7 +151,8 @@ Reason/next: <text>
 Entries are **append-only**; a decision is never written into a prior entry. The decision command
 **records** the human's choice — it does not enforce eligibility or refuse approvals. The artifact
 integrity block is a **best-effort audit aid**: a `CHANGED` line is flagged (and a warning printed),
-but it never blocks the decision. `APPROVE` is the human's word (Non-Negotiable Rule 1).
+but it never blocks the decision. Workflow decisions remain owned by the applicable doctrine
+adapters; this schema does not define them.
 
 ## Lightweight validation (v0)
 

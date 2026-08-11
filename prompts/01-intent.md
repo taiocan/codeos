@@ -101,8 +101,8 @@ Call out explicitly:
 Answer each ambiguity called out here, and each open question from Step 3's cross-examination, in
 one of three forms — never a forced, manufactured answer: (a) a proposed answer with a one-line
 rationale; (b) bounded alternatives with a recommendation; or (c) no defensible proposal yet, with
-the missing decision or evidence named explicitly. The human confirms or overrides (a)/(b) at the
-gate; (c) is a legitimate outcome, not a drafting failure.
+the missing decision or evidence named explicitly. The human confirms or overrides (a)/(b) during
+package review; (c) is a legitimate outcome, not a drafting failure.
 
 ## Output Sequence
 
@@ -149,11 +149,6 @@ If any answer is "unclear from the draft": mark it as an open question in Step 4
 4. List any ambiguities you detected and questions for the human, each answered in one of the
    three forms from Ambiguity Detection (proposed answer + rationale; bounded alternatives +
    recommendation; or no defensible proposal + the missing decision/evidence named)
-5. Present the Review Package using `.codeos/templates/review-package.md` (Stage 1–3 format, inline only):
-   - Artifact: `intents/[feature_id].md`
-   - Stage purpose: Establish implementation-independent actor-outcome intent.
-   - Suggested areas: (1) Is the primary actor a specific human role, or has the feature been misattributed to a system? (2) Do the stable guarantees name the one thing this feature must never fail to do? (3) Is the scope boundary explicit enough that a future stage cannot silently expand it?
-   - Known tensions: from feature brief open questions, or "none"
-6. State: **`AWAITING HUMAN APPROVAL TO PROCEED TO STAGE 2`**
-
-**STOP.** Do not proceed to Stage 2 until the human explicitly approves.
+5. Save the Intent with `status: DRAFT`. It remains open to revision while the Contract and Event
+   Schema are drafted.
+6. Hand the current Intent draft to Stage 2.

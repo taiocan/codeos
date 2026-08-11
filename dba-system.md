@@ -4,7 +4,7 @@
 > `.codeos/dba-system.md`. Codeos toolkit self-development is governed separately by the repository
 > root `CLAUDE.md`.
 
-Active configuration: `.codeos/dba/configurations/DBA-1.yaml`
+Active configuration: `.codeos/dba/configurations/DBA-2.yaml`
 
 The configuration selects the authoritative version of each governed DBA component. Component
 files own their semantics; the configuration only selects which versions are active.
@@ -24,3 +24,7 @@ under that key by the active configuration.
 Unversioned canonical resources are not selected through this configuration. Continue to use their
 normal paths, including `.codeos/prompts/`, `.codeos/templates/`, `.codeos/patterns/`,
 `.codeos/scripts/`, `.codeos/tools/`, and `.codeos/terminology.md`.
+
+The selected doctrine is the sole source of DBA semantic guarantees. Operational consequences may
+be encoded only at genuine execution boundaries marked `DOCTRINE ADAPTER`; other consumers refer
+to the doctrine or an adapter instead of restating its semantics.

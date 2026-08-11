@@ -124,7 +124,7 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
 
     let branch = git_branch(&opts.repo_root)?;
     let review_sha = git_rev_parse("HEAD", &opts.repo_root)?;
-    let approved_stage = if opts.stage.parse::<u32>().is_ok() {
+    let preceding_stage = if opts.stage.parse::<u32>().is_ok() {
         let n: u32 = opts.stage.parse().unwrap();
         format!("{}", n.saturating_sub(1))
     } else {
@@ -372,22 +372,21 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
 
     let dirty_note = if workspace_dirty { " (+ uncommitted workspace changes)" } else { "" };
     content.push_str(&format!(
-        "\nREVIEW CONTEXT\n  Feature:                {feature}\n  Stage:                  {stage}\n  Branch:                 {branch}\n  Base commit:            {base_sha}\n  Review commit:          {review_sha}{dirty_note}\n  Current approved stage: {approved_stage}\n  Evidence coverage:      {coverage}\n  Workspace dirty:        {dirty_text}\n",
+        "\nREVIEW CONTEXT\n  Feature:                {feature}\n  Stage:                  {stage}\n  Branch:                 {branch}\n  Base commit:            {base_sha}\n  Review commit:          {review_sha}{dirty_note}\n  Preceding stage:         {preceding_stage}\n  Evidence coverage:      {coverage}\n  Workspace dirty:        {dirty_text}\n",
         feature = opts.feature,
         stage = opts.stage,
         branch = branch,
         base_sha = if base_sha.is_empty() { "(no base pin)".to_string() } else { base_sha.clone() },
         review_sha = review_sha,
-        approved_stage = approved_stage,
+        preceding_stage = preceding_stage,
         coverage = coverage_state.as_str(),
         dirty_text = if workspace_dirty { "yes (uncommitted changes at review time)" } else { "no" },
     ));
 
     content.push_str("\nDBA RULES RELEVANT TO THIS STAGE\n");
-    content.push_str("  - Human approval is required for every stage transition; you are advisory only.\n");
+    content.push_str("  - Your assessment is advisory and never makes a workflow decision.\n");
     content.push_str("  - Memory is not truth — assess only what is provided, pinned to the review commit.\n");
-    content.push_str("  - Implementation must trace to approved artifacts; no behavior beyond intent+contract+schema.\n");
-    content.push_str("  - No events outside the approved event schema; no hidden behavior.\n");
+    content.push_str("  - Apply doctrine semantics only when the selected doctrine is included in the review evidence.\n");
     if matches!(coverage_state, CoverageState::PartialCoverage | CoverageState::SecretRedaction | CoverageState::CriticalOmission) {
         content.push_str("  - COVERAGE IS PARTIAL: some content was excluded/redacted (see below). You are\n");
         content.push_str("    seeing an incomplete evidence set — do not issue NO OBJECTION on this basis.\n");
@@ -660,12 +659,12 @@ pub fn sha256_str(s: &str) -> String {
 
 fn stage_expected(stage: &str) -> &'static str {
     match stage {
-        "discovery" => "Solution Discovery — candidate feature topology, shared vocabulary, event/config hypotheses, architectural risks, explicit non-decisions; every item labeled CANDIDATE/HYPOTHESIZED; non-authoritative banner present; only reviewed when carried into a Feature Brief or Stage 1 Intent.",
+        "discovery" => "Solution Discovery — candidate feature topology, shared vocabulary, event/config hypotheses, architectural risks, explicit non-decisions; every item labeled CANDIDATE/HYPOTHESIZED; non-authoritative banner present; carried claims are reviewed at the next applicable review point.",
         "brief" => "Feature Brief — problem, upgrade, bounded scope, proposed artifact(s), value/risk/guardrail; a candidate for Stage 1, not yet approved; no implementation detail.",
-        "onboarding" => "Onboarding (Session Type D) — HYPOTHESIZED_INTENT drafts + codebase digest derived from evidence only; explicitly labeled draft, not APPROVED; must pass Stage 1 review before advancing.",
+        "onboarding" => "Onboarding (Session Type D) — HYPOTHESIZED_INTENT drafts + codebase digest derived from evidence only; explicitly labeled draft, not APPROVED; promotion follows the specification-approval adapter.",
         "1" => "Intent — actor+outcome statements, stable guarantees, explicit scope boundary; NO implementation detail.",
         "2" => "Behavioral contract — observable Given/When/Then scenarios, named failure modes, invariants; independently testable; no white-box claims.",
-        "3" => "Event schema — named events with payloads, event flow, coverage map of contract scenarios to events; no speculative telemetry.",
+        "3" => "Specification Package — Intent, Contract, and Event Schema reviewed together for mutual consistency; every Contract rule traces to Intent, every governed event traces to Contract, and scope, failures, invariants, and terminology agree.",
         "4" => "Implementation — code satisfying every contract clause; emits only schema events; contract-satisfaction + event-emission tables; nothing untraceable.",
         "5" => "Tests — one behavioral test per contract scenario incl. failures; replay tests for schema conformance + chain integrity; coverage table.",
         "6" => "Runtime evidence — events in runtime_events.jsonl; correlation chains intact; bounded/sanitized; unexpected/missing events reported.",
@@ -685,7 +684,7 @@ fn stage_checks(stage: &str) -> String {
         "onboarding" => "  - hypothesized intents clearly labeled as drafts, not approved; digest derived from observed evidence only, no invented behavior; clear path to Stage 1 promotion named.".to_string(),
         "1" => "  - actor/outcome clarity; no implementation detail; scope boundary explicit; stable guarantees clear; ambiguity flagged.".to_string(),
         "2" => "  - every intent outcome has observable contract coverage; failure paths named; invariants testable; no white-box claims.".to_string(),
-        "3" => "  - every relevant contract scenario has event coverage; event names stable; required fields clear; no speculative telemetry.".to_string(),
+        "3" => "  - Intent, Contract, and Event Schema are all present; every Contract rule traces to Intent; every governed event traces to Contract; scope, exclusions, actors, failures, invariants, and terminology agree across the complete package; no speculative telemetry.".to_string(),
         "4" => "  - code traces to approved contract/schema only; no unapproved events; no hidden behavior; no unrelated files; report complete.\n  - did implementation resolve any question an approved artifact EXPLICITLY deferred? if so, is each material resolution recorded in a Deferral -> Resolution Trace (source deferral, resolution, where implemented, final/interim, expected superseder)? judge deferral by meaning, not by phrase; a missing record is a traceability finding, not an implementation failure.".to_string(),
         "5" => "  - behavior tested not private internals; failure paths tested; event/telemetry tests present; replay tests where applicable.".to_string(),
         "6" => "  - runtime evidence captured; event log bounded/sanitized; correlation chains visible; unexpected/missing events reported.".to_string(),
@@ -763,13 +762,37 @@ mod tests {
     }
 
     #[test]
-    fn stage_expected_numeric_1_to_9_unchanged_by_extension() {
+    fn stage_expected_numeric_1_to_9_all_have_templates() {
         for stage in ["1", "2", "3", "4", "5", "6", "7", "8", "9"] {
             let text = stage_expected(stage);
             assert_ne!(
                 text, "(no expected-output template for stage)",
                 "numeric stage '{}' must still have its existing expected-output text", stage
             );
+        }
+    }
+
+    #[test]
+    fn stage_3_reviews_the_complete_specification_package() {
+        let expected = stage_expected("3");
+        let checks = stage_checks("3");
+        assert!(expected.contains("Specification Package"));
+        assert!(expected.contains("Intent, Contract, and Event Schema"));
+        assert!(checks.contains("every Contract rule traces to Intent"));
+        assert!(checks.contains("every governed event traces to Contract"));
+        assert!(checks.contains("agree across the complete package"));
+    }
+
+    #[test]
+    fn numeric_reviewer_checks_do_not_define_doctrine_decisions() {
+        for stage in ["1", "2", "3", "4", "5", "6", "7", "8", "9"] {
+            let text = format!("{}\n{}", stage_expected(stage), stage_checks(stage)).to_lowercase();
+            for duplicated_rule in ["human approval", "final acceptance", "intermediate gate"] {
+                assert!(
+                    !text.contains(duplicated_rule),
+                    "stage {stage} independently defines doctrine rule {duplicated_rule}: {text}"
+                );
+            }
         }
     }
 

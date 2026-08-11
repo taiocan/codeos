@@ -33,7 +33,8 @@ Change ID: ___
 - Commit SHA: ___
 - Working tree: ___ (clean / dirty — describe any pending changes)
 - Active feature: ___
-- Current approved stage: ___
+- `delivery-entry` adapter complete: ___ (yes / no)
+- Last completed stage: ___
 
 ---
 

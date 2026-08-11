@@ -10,7 +10,7 @@
 # A superseded (no longer current) version lives at:      architecture/history/implementation-profile-v<N>.yaml
 #
 # LIFECYCLE — status values:
-#   proposed   — non-binding. No Stage 4 language requirement is imposed while a profile is only
+#   proposed   — non-binding. No implementation language requirement is imposed while a profile is only
 #                proposed, whether it's a first-ever profile at the current path or a pending
 #                replacement under proposals/. A profile becomes approved only following an
 #                explicit human approval decision; setting status: approved (below) RECORDS that

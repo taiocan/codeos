@@ -2,8 +2,8 @@
 
 ## Your Role
 
-This stage is primarily **human-executed** — you run the implementation and observe what happens.
-Claude's role here is advisory: help set up observation infrastructure if needed.
+Run representative scenarios when the environment permits. If an action is designated as
+controlled, obtain human authorization before running it. Never fabricate runtime evidence.
 
 **Controlled Plain English check (if `architecture/controlled-plain-english.yaml` exists):** read
 its `status` per the Optional Mechanism Status Convention's four-outcome table
@@ -15,9 +15,9 @@ regardless). Malformed status file → **STOP** and report a configuration error
 
 ## What Happens in This Stage
 
-1. Human runs the implementation (or automated tests)
+1. The agent or human runs the implementation (or automated tests) as permitted
 2. System emits events to `events/runtime_events.jsonl`
-3. The event log becomes operational truth
+3. The event log becomes verification evidence for what occurred
 
 ## The Runtime Event Log
 
@@ -71,10 +71,5 @@ the reason and classify the row in Stage 7 as **GAP (runtime evidence)**. The go
 
 ## Handoff to Stage 7
 
-Once the system has been run and `events/runtime_events.jsonl` contains data, Stage 7 (Reconciliation Review) can begin.
-
-Human signals readiness: "events captured, ready for Stage 7" or equivalent.
-
-Claude does not advance to Stage 7 until the human confirms runtime events are available.
-
-State when advisory work is done: **`STAGE 6 COMPLETE — AWAITING HUMAN CONFIRMATION OF RUNTIME EVENT CAPTURE`**
+Once representative evidence is available, hand it to `.codeos/prompts/07-reconcile.md`. If
+evidence cannot be obtained, record the reason as a GAP and do not invent it.

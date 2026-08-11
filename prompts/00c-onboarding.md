@@ -176,7 +176,7 @@ For each **feature** module (from Step 4), using the interview answers:
 Fill from the interview answers. Mark:
 - Status: `HYPOTHESIZED_INTENT`
 - Note: "Onboarding draft — produced from code observation + human interview.
-  Requires Stage 1 review before this feature can be treated as a DBA feature."
+  Enters governance through the Stage 3 `specification-approval` adapter."
 
 Any section not resolved by the interview: write `[unknown — to be confirmed in Stage 1]`.
 
@@ -185,7 +185,8 @@ Save to: `backlog/[module_name]-onboarding.md`
 **Draft 2: Intent** (`.codeos/templates/intent.md` format)
 
 Derive from the interview answers, applying all Intent Rules from `01-intent.md`.
-This is a DRAFT — it must go through Stage 1 review before it is APPROVED.
+This is a DRAFT. Its governance transition is owned by the Stage 3
+`specification-approval` adapter.
 
 Mark: `status: HYPOTHESIZED_INTENT`
 
@@ -200,7 +201,7 @@ Save to: `intents/[module_name].md`
 - feature_id: [module_name]
   description: "[one-sentence description from interview]"
   type: F
-  status: stage0-hypothesized  # onboarding draft — Stage 1 review required
+  status: stage0-hypothesized  # onboarding draft — not yet through specification-approval
   artifacts:
     intent: intents/[module_name].md   # HYPOTHESIZED_INTENT — not APPROVED
     contract: ""                        # to be produced in Stage 2
@@ -209,7 +210,7 @@ Save to: `intents/[module_name].md`
     behavioral:
       - tests/behavioral/[module_name]_behavior.*  # existing tests if present
     replay: []
-  notes: "ONBOARDING: draft artifacts from code analysis — Stage 1 review required before advancing"
+  notes: "ONBOARDING: draft artifacts from code analysis — route through specification-approval"
 ```
 
 ### Step 6 — Gaps table
@@ -238,16 +239,16 @@ Then state:
 These are `HYPOTHESIZED_INTENT` artifacts. They are NOT equivalent to APPROVED DBA
 artifacts and must not be used to gate stage advancement.
 
-To advance each module to Stage 1:
+To advance each module into governed specification drafting:
 1. Save the draft brief to `backlog/[module]-onboarding.md`
 2. Save the draft intent to `intents/[module].md` (status: `HYPOTHESIZED_INTENT`)
 3. Add the registry entries to `features/registry.yaml`
 4. Start a new session (Session Type B), load the onboarding draft intent,
-   and load `01-intent.md` to run the full Stage 1 review
-5. Stage 1 will either approve the draft or revise it before it becomes `APPROVED`
+   and load `01-intent.md` to revise the Intent draft
+5. Continue through Contract and Event Schema drafting; approve all three together only when they
+   are mutually consistent
 
-**Do not advance to Stage 2 (Contracts) until Stage 1 produces an APPROVED intent.**
-The onboarding draft does not bypass Stage 1.
+The onboarding draft does not bypass the Stage 3 `specification-approval` adapter.
 
 **`AWAITING HUMAN REVIEW OF DRAFT ARTIFACTS`**
 
@@ -256,7 +257,7 @@ The onboarding draft does not bypass Stage 1.
 ## What You Do NOT Do
 
 - Produce behavioral contracts or event schemas — Stages 2 and 3 handle those
-- Mark any artifact `APPROVED` — only the Stage 1 review can do that
+- Mark any artifact `APPROVED` outside the Stage 3 `specification-approval` adapter
 - Suggest refactoring or restructuring existing code
 - Infer intent from code alone — you must interview the human first
 - Produce intents for more than three modules per session

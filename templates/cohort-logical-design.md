@@ -18,7 +18,8 @@ returns the affected feature to its owning Stage 1, 2, or 3 — it is not resolv
 
 Workflow: .codeos/prompts/03b-architecture-synthesis.md (4-step pipeline, Step 3 drafts this,
 Step 4 approves it together with the Baseline)
-Each step requires explicit human approval.
+Decision behavior is owned by the conditional `architecture-entry` doctrine adapter and the
+selected architecture policy; this template defines no additional boundary.
 See: the architecture_synthesis_policy component selected by .codeos/dba-system.md
 -->
 
