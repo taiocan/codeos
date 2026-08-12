@@ -390,7 +390,7 @@ is a reasonable Rust-idiomatic starting point.
 This pattern lives in the language pattern layer. It does not change:
 - The 9-step DBA loop
 - The required base fields for events (those are in `CLAUDE.md`)
-- The approval gates at each stage
+- The human decisions defined by the active doctrine
 - The append-only constraint on `events/runtime_events.jsonl`
 
 It only specifies how to organize Rust code to implement what the methodology requires.

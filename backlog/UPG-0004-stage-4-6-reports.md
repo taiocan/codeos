@@ -131,7 +131,7 @@ evidence chain that reconciliation (Stage 7) consumes.
 
 | Change ID | File | Purpose | State |
 |---|---|---|---|
-| CHG-20260630-001 | changes/UPG-0004__CHG-20260630-001__stage-4-6-report-template.md | Create templates/stage-4-6-report.md | COMPLETE |
+| CHG-20260630-001 | Archive/self-development/changes/UPG-0004__CHG-20260630-001__stage-4-6-report-template.md | Create templates/stage-4-6-report.md | COMPLETE |
 
 ### Reviews
 

@@ -44,18 +44,18 @@ enum Commands {
     ///
     /// Examples:
     ///   # Round 1: full review
-    ///   codeos-reviewer review UPG-0042 selfdev-step-1 \
-    ///     changes/UPG-0042__CHG-*.md src/packet.rs
+    ///   codeos-reviewer review feature-x implementation \
+    ///     CLAUDE.md tools/reviewer/src/packet.rs
     ///
     ///   # Round 2+: delta review after fixes
-    ///   codeos-reviewer review UPG-0042 selfdev-step-1 \
+    ///   codeos-reviewer review feature-x implementation \
     ///     --mode delta --base abc123 \
-    ///     changes/UPG-0042__CHG-*.md src/packet.rs
+    ///     CLAUDE.md tools/reviewer/src/packet.rs
     ///
     ///   # Large unchanged context file; reduces evidence for that path
-    ///   codeos-reviewer review UPG-0042 selfdev-step-3 \
+    ///   codeos-reviewer review feature-x implementation \
     ///     --sha-only tests/smoke.rs \
-    ///     changes/UPG-0042__CHG-*.md src/packet.rs
+    ///     CLAUDE.md tools/reviewer/src/packet.rs
     Review {
         feature: String,
         stage: String,
@@ -67,8 +67,8 @@ enum Commands {
     /// `review`.
     ///
     /// Examples:
-    ///   codeos-reviewer plan UPG-0042 selfdev-step-1 changes/UPG-0042__CHG-*.md src/packet.rs
-    ///   codeos-reviewer plan UPG-0042 selfdev-step-1 --mode delta --base abc123 changes/UPG-0042__CHG-*.md
+    ///   codeos-reviewer plan feature-x implementation CLAUDE.md tools/reviewer/src/packet.rs
+    ///   codeos-reviewer plan feature-x implementation --mode delta --base abc123 CLAUDE.md
     Plan {
         feature: String,
         stage: String,

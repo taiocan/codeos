@@ -1,8 +1,9 @@
 # Codeos Architecture Journal
 
-Cross-cutting institutional memory for the Codeos toolkit. One `AJ-NNN` entry per insight that
-will still matter months from now to someone who has forgotten the change that produced it.
-Append-only — supersede with a new entry, never rewrite. See `CLAUDE.md` → Review Logging.
+Optional, cross-cutting institutional memory for the Codeos toolkit. Add an `AJ-NNN` entry only
+when an important consequential decision or engineering insight will still matter months from now
+and its governing artifact plus Git do not preserve it adequately. PROTECTED work does not require
+an entry. Existing entries are historical; supersede rather than rewrite them.
 
 ---
 

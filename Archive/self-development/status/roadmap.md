@@ -1,12 +1,9 @@
 # Codeos Implementation Roadmap
 
 > **This is mutable planning state, not Codeos doctrine.** [`../backlog/features.md`](../backlog/features.md)
-> is the authoritative `UPG-#### → file` map (identity); **this file is authoritative for
-> *order*** — it sequences that catalog into dependency-aware waves and tracks current reality.
-> **Each feature still requires its own self-dev change and explicit human approval before
-> implementation** — appearing in a wave here is *not* authorization. Live per-change status lives
-> in [`self-development.md`](self-development.md); per-change detail in
-> `../changes/UPG-####__CHG-YYYYMMDD-NNN__slug.md`.
+> is the authoritative `UPG-#### → file` map (identity); this file sequences that catalog into
+> dependency-aware waves and records planning context. Self-development work is governed by
+> [`../CLAUDE.md`](../CLAUDE.md). Historical `CHG-*` references remain as execution history.
 
 Roadmap rows are keyed by **`UPG-####`** (the stable feature id). `Planned/active change` names the
 `CHG-*` once one exists; change ids are execution detail, not feature identity. Some work landed
@@ -131,9 +128,6 @@ cheap pilot-adjacent wins early.
 ## Immediate next pickups
 
 Waves 1–5 complete. Wave 5: UPG-0018 SUPERSEDED by UPG-0032; UPG-0019 COMPLETE 2026-07-06 (CHG-20260706-001); UPG-0020 COMPLETE 2026-07-03 (CHG-20260703-002); UPG-0021 COMPLETE 2026-07-03 (CHG-20260703-003); UPG-0022 COMPLETE 2026-07-03 (CHG-20260703-004); UPG-0023 COMPLETE 2026-07-06 (CHG-20260704-001); UPG-0024 COMPLETE 2026-07-06 (CHG-20260706-002); UPG-0025 COMPLETE 2026-07-07 (CHG-20260706-003); UPG-0026 COMPLETE 2026-07-07 (CHG-20260707-001). UPG-0028 COMPLETE 2026-07-07 (backlog-only, closed as substantially resolved by UPG-0027/UPG-0001, no CHG). UPG-0038 COMPLETE 2026-07-07 (CHG-20260707-002). UPG-0039 COMPLETE 2026-07-07 (CHG-20260707-003). UPG-0040 COMPLETE 2026-07-07 (CHG-20260707-004). UPG-0041 COMPLETE 2026-07-10 (CHG-20260707-005).
-
-Each is taken as its own self-dev change (a fresh `CHG-*`) via the 4-step loop, with human
-approval at every gate.
 
 ---
 

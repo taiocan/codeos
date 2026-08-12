@@ -1,5 +1,9 @@
 # Codeos Toolkit Stack Manifest
 
+> **Historical snapshot.** This status and reconciliation mechanism was retired from Codeos
+> self-development. The content below records the former mechanism and creates no current
+> documentation, approval, or reconciliation requirement.
+>
 > This file records the current observed stack and dependency-policy status for Codeos
 > self-development. It is not an independent approval authority. If it conflicts with the
 > self-dev workflow, `CLAUDE.md` and the approved change record govern.

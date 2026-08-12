@@ -59,7 +59,7 @@ trace (UPG-0063). Running a pilot today would hand the delegate a feature contai
 deferral, never tell it that deferrals exist or that resolving one incurs an obligation, and then
 measure whether it recorded the trace. It would not. That is a harness defect reported as a model
 defect — the precise error UPG-0060 made, documented and corrected in
-`changes/UPG-0060__CHG-20260803-002__premise-test-evidence.md`. Repeating it on the strength of our own
+`Archive/self-development/changes/UPG-0062__CHG-20260803-002__premise-test-evidence.md`. Repeating it on the strength of our own
 write-up would be worse than making it the first time.
 
 ## Why the question is worth reopening at all

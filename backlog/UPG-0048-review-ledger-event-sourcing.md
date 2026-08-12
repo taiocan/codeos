@@ -19,10 +19,10 @@ superseded_by: []
 ## Problem
 
 Today `reviews/review-log.md` is simultaneously an append-only durable record *and* the
-human-readable presentation of that record. `status/self-development.md` is a similarly
+human-readable presentation of that record. `Archive/self-development/status/self-development.md` is a similarly
 hand-maintained projection of the same underlying facts (which change is at which step, which
 review series accepted what). Keeping these in sync is currently a manual discipline enforced by
-`prompts/codeos-self-dev.md`'s step instructions ("Activate the row," "mark COMPLETE") — reliable
+`Archive/self-development/retired-process/codeos-self-dev.md`'s step instructions ("Activate the row," "mark COMPLETE") — reliable
 so far, but it is manual work that scales linearly with review volume, and any file could in
 principle drift from the others since nothing mechanically ties them together.
 
@@ -46,7 +46,7 @@ doing — it may turn out the lighter upgrades already remove most of the pain t
 An illustrative sketch (**not an approved schema**) — an append-only `reviews/review-events.jsonl`
 recording atomic events (`review_planned`, `packet_built`, `review_completed`,
 `finding_recorded`, `human_decision`), with `reviews/review-log.md` and
-`status/self-development.md` becoming *generated projections* rather than hand-maintained files.
+`Archive/self-development/status/self-development.md` becoming *generated projections* rather than hand-maintained files.
 
 ```json
 {"type":"review_completed","review_id":"REV__...","concern":"NO_OBJECTION","evidence":"B"}
@@ -61,7 +61,7 @@ classified retroactively" as a precedent for non-destructive cutover).
 
 ### 3. Generation vs. append-only tension
 
-`status/self-development.md`'s own header already states "Mutable — maintained by the 4-step
+`Archive/self-development/status/self-development.md`'s own header already states "Mutable — maintained by the 4-step
 self-development loop" — i.e., it is *expected* to be hand-edited today. Moving to
 generated-projection would change that expectation. Whether a generated dashboard can still
 support the kind of manual annotation the current file sometimes carries (see rows with
@@ -70,7 +70,7 @@ historical/legacy notes) needs a concrete answer before this is more than a sket
 ## Scope
 
 Deliberately unscoped beyond "explore whether `reviews/review-log.md` and
-`status/self-development.md` should become generated projections of an append-only event log."
+`Archive/self-development/status/self-development.md` should become generated projections of an append-only event log."
 Any real implementation of this item should itself go through Step 1 Intent with a much narrower,
 concretely-bounded scope than this brief states — this brief is the parking lot for the idea, not
 an implementation plan.
@@ -86,7 +86,7 @@ of it):
 ## Value
 
 Very high, long-term, *if* review volume grows enough that manual dashboard maintenance becomes
-the bottleneck. At current volume (per `status/self-development.md`'s row count), the manual
+the bottleneck. At current volume (per `Archive/self-development/status/self-development.md`'s row count), the manual
 discipline has held up reliably — this is insurance against future scale, not a fix for a
 present, felt problem.
 
@@ -130,7 +130,7 @@ If ever implemented, this upgrade must:
   Review OS," explicitly flagged by the human themselves as "probably too much for now" in favor
   of the lighter "Option 2 — Review Control Plane Lite" (`UPG-0046`/`UPG-0047`). See
   `reviews/review-log.md` and
-  `changes/UPG-0044__CHG-20260712-001__reviewer-pipeline-architecture-refresh.md`.
+  `Archive/self-development/changes/UPG-0044__CHG-20260712-001__reviewer-pipeline-architecture-refresh.md`.
 
 ## Feature Thread
 

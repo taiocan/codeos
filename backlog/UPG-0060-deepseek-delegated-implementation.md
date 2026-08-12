@@ -86,7 +86,7 @@ approves anything — Non-Negotiable Rule #1 (the human decides at the gate) is 
 **In scope (CHG-A):** `scripts/codeos-implement.sh`, `prompts/codeos-implementer-task.md`, a self-dev
 activation status file `config/delegated-implementation.yaml` (scaffolded at `status: disabled`), this
 brief, the CHG-A change record, and lifecycle bookkeeping (`backlog/features.md`,
-`status/self-development.md`, `status/roadmap.md`). One captured pilot run with token/quality evidence.
+`Archive/self-development/status/self-development.md`, `Archive/self-development/status/roadmap.md`). One captured pilot run with token/quality evidence.
 
 **In scope (CHG-B, contingent):** an optional-mechanism section in `dba-system.md`; downstream status
 file scaffolding in `scripts/dba-init.sh` at `status: disabled`; advisory notes in
@@ -156,8 +156,8 @@ project.
 
 | Change ID | File | Purpose | State |
 |---|---|---|---|
-| CHG-20260802-001 | `changes/UPG-0060__CHG-20260802-001__deepseek-implement-tool.md` | Build and pilot the out-of-band DeepSeek Stage 4/5 implementer tool (CHG-A) | COMPLETE (accepted 2026-08-03) |
-| CHG-20260803-001 | `changes/UPG-0060__CHG-20260803-001__implementer-harness-correction.md` | Correct the delegation harness — re-test **condition 0**: permit build manifests, supply a layout exemplar, stop instructing against required abstractions, emit plain source instead of JSON-escaped, allow one bounded repair iteration | COMPLETE (accepted 2026-08-03; 33 tests, 4 mutations verified) |
+| CHG-20260802-001 | `Archive/self-development/changes/UPG-0060__CHG-20260802-001__deepseek-implement-tool.md` | Build and pilot the out-of-band DeepSeek Stage 4/5 implementer tool (CHG-A) | COMPLETE (accepted 2026-08-03) |
+| CHG-20260803-001 | `Archive/self-development/changes/UPG-0060__CHG-20260803-001__implementer-harness-correction.md` | Correct the delegation harness — re-test **condition 0**: permit build manifests, supply a layout exemplar, stop instructing against required abstractions, emit plain source instead of JSON-escaped, allow one bounded repair iteration | COMPLETE (accepted 2026-08-03; 33 tests, 4 mutations verified) |
 | (planned) CHG-B | — | Wire the mechanism into `dba-system.md` + prompts as an optional, off-by-default mechanism — was contingent on the CHG-B gate measurement below | **NOT DONE** — gate returned NOT NET-POSITIVE; human decision 2026-08-03. Re-openable only after condition 0 + a re-test clearing all three axes |
 
 ### CHG-B Gate — realistic-feature net-token measurement
@@ -172,7 +172,7 @@ abandon the feature.
 | Item | Value |
 |---|---|
 | Target feature | EvidenceAtlas `EA-0003` corpus_construction (Stage 3 approved; Stage 4 next) |
-| Evidence file | `changes/UPG-0060__CHG-B-GATE__realistic-feature-evidence.md` |
+| Evidence file | `Archive/self-development/changes/UPG-0060__CHG-B-GATE__realistic-feature-evidence.md` |
 | Delegate result | DeepSeek 28,437 tokens; candidate does not compile as delivered; 8 confirmed contract/schema violations after minimum repair |
 | Claude-only comparator | Same feature, same artifacts: compiles clean first try, 10/10 approved-contract scenario tests pass |
 | Verdict | **NOT NET-POSITIVE** — Arm A = Arm B + ~5.4K Claude input tokens + 28,437 DeepSeek tokens, saving zero Claude output tokens |

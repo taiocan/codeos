@@ -678,8 +678,8 @@ mod tests {
 
     #[test]
     fn parse_findings_corpus_regression_check() {
-        // Runs the parser against every real historical assessment file in this repo's own
-        // reviews/codex/ — not a synthetic fixture. Deliberately avoids a hardcoded exact
+        // Runs the parser against every real historical assessment file in this repo's archive,
+        // not a synthetic fixture. Deliberately avoids a hardcoded exact
         // finding count (the corpus grows with every review round, including this test's own
         // future runs); instead it asserts the invariant that actually matters: every
         // `Finding:` line in the real (pre-echo) region is accounted for as either parsed or
@@ -698,7 +698,7 @@ mod tests {
         // and going unsupported) without being brittle to this already-understood residual.
         let mut repo_root = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         repo_root.pop(); repo_root.pop(); // tools/reviewer -> Codeos/
-        let codex_dir = repo_root.join("reviews/codex");
+        let codex_dir = repo_root.join("Archive/self-development/reviews/codex");
 
         let mut total_finding_lines = 0usize;
         let mut total_parsed = 0usize;
@@ -723,7 +723,7 @@ mod tests {
             files_checked += 1;
         }
 
-        assert!(files_checked > 0, "expected to find historical assessment files under reviews/codex/");
+        assert!(files_checked > 0, "expected historical assessments in the self-development archive");
         assert!(total_finding_lines > 0, "expected at least some real Finding: lines in the corpus");
         assert_eq!(
             total_parsed + total_unparsed, total_finding_lines,

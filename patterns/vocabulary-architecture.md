@@ -20,31 +20,8 @@ If none of these apply to your feature, this pattern is not required.
 
 ## Core Definitions
 
-**Concept**: The semantic identity the system reasons about — independent of any string
-representation. Concepts are the unit of domain logic. Two items are the same kind if
-they share the same concept, regardless of what string was used to express them.
-
-**Canonical**: The single stable runtime identifier chosen by the vocabulary to name a
-concept. Unique and authoritative within the system. Not "just another representation":
-there must be exactly one canonical per concept at runtime. If two canonicals can
-identify the same concept, the vocabulary is broken. Implementations may represent
-canonicals as strings, integers, typed enumerations, or UUIDs — the constraint is
-uniqueness and stability, not form.
-
-**Alias**: An alternative input form accepted for compatibility, migration, or user
-preference. Aliases are translated to their concept before any domain logic runs. An
-alias must never appear in business logic below the resolution boundary.
-
-**Resolution**: Mapping any input form (alias or canonical string) to its concept.
-Resolution is owned by one module — the vocabulary owner — and exposed as an API. All
-other modules call this API; they never perform resolution themselves.
-
-**Vocabulary owner**: The module that defines concepts, accepts aliases, exposes the
-resolution API, and validates the vocabulary. One owner per vocabulary.
-
-**Vocabulary consumer**: Any module that operates on vocabulary-defined concepts by
-calling the resolution API. Consumers never inspect aliases, hardcode canonical strings,
-or perform their own resolution.
+The canonical meanings of Concept, Canonical, Alias, Resolution, Vocabulary owner, and Vocabulary
+consumer are defined in `.codeos/terminology.md`. This pattern specifies how those terms are applied.
 
 ---
 

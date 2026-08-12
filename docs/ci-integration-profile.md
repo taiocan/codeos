@@ -76,7 +76,7 @@ clippy`, `eslint`, `mypy`, `ruff`) — no Codeos-specific guidance needed here.
 
 **What it checks:** every event name actually emitted (sampled from a runtime log or replay
 fixture) appears in the feature's approved event schema. An emitted name that isn't in the
-schema is exactly the "hidden behavior" DBA's Non-Negotiable Rules prohibit.
+schema is exactly the hidden behavior prohibited by the active DBA doctrine.
 
 **Illustrative CI step (sketch, not a shipped tool):**
 ```bash
@@ -113,7 +113,7 @@ needs one — see the active `doctrine` component's Sanitization Status guidance
 ## 7. Stack manifest reconciliation if dependency/config changed
 
 **What it checks:** if a dependency or config file changed (`Cargo.toml`, `package.json`,
-`Dockerfile`, `config/*.yaml`, etc. — see `status/stack-manifest.md`'s watched-file list),
+`Dockerfile`, `config/*.yaml`, etc. — see `templates/stack-manifest.md`'s watched-file list),
 a `stack-reconciliation-report.md` instance is present in the same diff.
 
 **This one has an already-built, concrete mechanism** — no sketch needed:

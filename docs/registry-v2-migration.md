@@ -43,8 +43,8 @@ status: active   # hypothesized | active | suspended | blocked | complete
 ```
 
 `hypothesized` represents a feature produced by Onboarding (Session Type D) whose Stage 1
-Intent is `HYPOTHESIZED_INTENT`, not yet approved — it must pass Stage 1 review before
-advancing (the active `doctrine` component's Artifact Classification table).
+Intent is `HYPOTHESIZED_INTENT`, not yet approved — it must enter a mutually consistent
+Specification Package and receive the package's single approval before implementation.
 
 **If your registry encodes the DBA stage directly into the status string** (e.g.
 `stage0-hypothesized`, `stage1`, `stage4`, `complete`) — this is a different, incompatible

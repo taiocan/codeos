@@ -20,9 +20,9 @@ superseded_by: []
 
 Stage-specific review policy — which stage requires review, what its expected output looks like,
 what its checklist is, what cadence applies (self-dev `PROFILE-0..5` per
-`prompts/codeos-self-dev.md` Step 0a, vs. downstream's flat R1/R2/R3 per `dba-system.md`'s
+`Archive/self-development/retired-process/codeos-self-dev.md` Step 0a, vs. downstream's flat R1/R2/R3 per `dba-system.md`'s
 "Default Advisory Review") — currently lives partly in Rust (`tools/reviewer/src/` stage/packet
-logic), partly in `prompts/codeos-self-dev.md` and `dba-system.md` prose, and partly in
+logic), partly in `Archive/self-development/retired-process/codeos-self-dev.md` and `dba-system.md` prose, and partly in
 `prompts/codeos-reviewer-task.md`'s packet-injected checklist text. A doctrine change to *what a
 stage expects* (e.g. `UPG-0037`'s introduction of default downstream review, or any future
 addition of a new self-dev step or downstream stage) currently requires touching Rust source,
@@ -98,7 +98,7 @@ Rust + prose change; this upgrade would make the *next* one like it cheaper, not
 broken today.
 
 Trade-offs: introduces a second source of truth (policy file vs. doctrine prose in
-`dba-system.md`/`prompts/codeos-self-dev.md`) that must be kept in sync, trading "change requires
+`dba-system.md`/`Archive/self-development/retired-process/codeos-self-dev.md`) that must be kept in sync, trading "change requires
 touching Rust" for "change requires touching Rust AND a policy file AND doctrine prose" unless
 the doctrine prose itself is generated from the policy file (a further, likely out-of-scope,
 escalation).
@@ -133,7 +133,7 @@ The policy registry, if built, must:
 - **UPG-0045**: Review Plan Preview — a plausible consumer of policy data (resolving required
   artifacts per stage), though not a hard dependency in either direction.
 - Proposed by the human during a 2026-07-12 review-architecture discussion (see
-  `reviews/review-log.md` and `changes/UPG-0044__CHG-20260712-001__reviewer-pipeline-architecture-refresh.md`).
+  `reviews/review-log.md` and `Archive/self-development/changes/UPG-0044__CHG-20260712-001__reviewer-pipeline-architecture-refresh.md`).
 
 ## Feature Thread
 

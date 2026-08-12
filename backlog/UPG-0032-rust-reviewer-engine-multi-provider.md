@@ -188,7 +188,7 @@ the human gate.
 
 | Change ID | File | Purpose | State |
 |---|---|---|---|
-| CHG-20260702-001 | `changes/UPG-0032__CHG-20260702-001__rust-reviewer-engine.md` | Full Rust implementation: provider trait, CodexProvider, typed packet, precheck, CLI drop-in replacement for codeos-review.sh | IN_PROGRESS |
+| CHG-20260702-001 | `Archive/self-development/changes/UPG-0032__CHG-20260702-001__rust-reviewer-engine.md` | Full Rust implementation: provider trait, CodexProvider, typed packet, precheck, CLI drop-in replacement for codeos-review.sh | IN_PROGRESS |
 
 ### Reviews
 

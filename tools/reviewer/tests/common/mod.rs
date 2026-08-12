@@ -11,14 +11,37 @@ use tempfile::TempDir;
 pub fn setup_temp_git_repo() -> (TempDir, String) {
     let dir = tempfile::tempdir().expect("tempdir");
     let p = dir.path();
-    Command::new("git").args(["init"]).current_dir(p).output().expect("git init");
-    Command::new("git").args(["config", "user.email", "test@codeos.test"]).current_dir(p).output().ok();
-    Command::new("git").args(["config", "user.name", "Codeos Test"]).current_dir(p).output().ok();
+    Command::new("git")
+        .args(["init"])
+        .current_dir(p)
+        .output()
+        .expect("git init");
+    Command::new("git")
+        .args(["config", "user.email", "test@codeos.test"])
+        .current_dir(p)
+        .output()
+        .ok();
+    Command::new("git")
+        .args(["config", "user.name", "Codeos Test"])
+        .current_dir(p)
+        .output()
+        .ok();
     std::fs::write(p.join("tracked.md"), "# tracked\n").expect("write tracked");
-    Command::new("git").args(["add", "tracked.md"]).current_dir(p).output().expect("git add");
-    Command::new("git").args(["commit", "-m", "initial"]).current_dir(p).output().expect("git commit");
-    let sha_out = Command::new("git").args(["rev-parse", "HEAD"]).current_dir(p)
-        .output().expect("git rev-parse");
+    Command::new("git")
+        .args(["add", "tracked.md"])
+        .current_dir(p)
+        .output()
+        .expect("git add");
+    Command::new("git")
+        .args(["commit", "-m", "initial"])
+        .current_dir(p)
+        .output()
+        .expect("git commit");
+    let sha_out = Command::new("git")
+        .args(["rev-parse", "HEAD"])
+        .current_dir(p)
+        .output()
+        .expect("git rev-parse");
     let sha = String::from_utf8_lossy(&sha_out.stdout).trim().to_string();
     (dir, sha)
 }
@@ -33,7 +56,8 @@ pub fn binary() -> PathBuf {
 /// Path to the Codeos repository root (two levels up from tools/reviewer).
 pub fn repo_root() -> PathBuf {
     let mut p = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    p.pop(); p.pop(); // tools/reviewer -> Codeos/
+    p.pop();
+    p.pop(); // tools/reviewer -> Codeos/
     p
 }
 
@@ -66,9 +90,20 @@ pub fn run_in_dir(repo_path: &std::path::Path, args: &[&str]) -> (i32, String, S
 /// Helper: add a new commit with an extra file to the temp repo.
 pub fn add_extra_commit(repo_path: &std::path::Path, filename: &str, content: &str) -> String {
     std::fs::write(repo_path.join(filename), content).expect("write extra file");
-    Command::new("git").args(["add", filename]).current_dir(repo_path).output().expect("git add");
-    Command::new("git").args(["commit", "-m", "extra"]).current_dir(repo_path).output().expect("git commit");
-    let out = Command::new("git").args(["rev-parse", "HEAD"]).current_dir(repo_path)
-        .output().expect("git rev-parse");
+    Command::new("git")
+        .args(["add", filename])
+        .current_dir(repo_path)
+        .output()
+        .expect("git add");
+    Command::new("git")
+        .args(["commit", "-m", "extra"])
+        .current_dir(repo_path)
+        .output()
+        .expect("git commit");
+    let out = Command::new("git")
+        .args(["rev-parse", "HEAD"])
+        .current_dir(repo_path)
+        .output()
+        .expect("git rev-parse");
     String::from_utf8_lossy(&out.stdout).trim().to_string()
 }
