@@ -57,17 +57,7 @@ ls tests/     2>/dev/null || echo "(none)"
 ```
 Report each directory as a one-line list of filenames.
 
-**3d — Architecture cohort state (if `features/registry.yaml` declares any `architecture_cohorts`):**
-
-For each declared cohort, report: `cohort_id`, `status` (declared / gate-in-progress /
-approved), and `baseline_version` if approved. If any cohort's `status` is not `approved`, name
-which member features are therefore blocked from Stage 4 (see
-the `architecture_synthesis_policy` component selected by `.codeos/dba-system.md` and
-`.codeos/prompts/03b-architecture-synthesis.md`).
-If no `architecture_cohorts` are declared, state: "No architecture cohort declared — proceeding
-without a cohort-eligibility check."
-
-**3e — Implementation Profile status (if `architecture/implementation-profile.yaml` exists):**
+**3d — Implementation Profile status (if `architecture/implementation-profile.yaml` exists):**
 
 Report its `status` (`proposed` / `approved`) and, if `approved`, `primary_language` and
 `profile_version`. If a pending replacement exists at `architecture/proposals/`, note it as
@@ -75,7 +65,7 @@ non-binding. If the file does not exist, state: "No Implementation Profile decla
 with no Stage 4 language requirement." See the `implementation_profile_policy` component selected
 by `.codeos/dba-system.md`.
 
-After completing 3a–3e, state:
+After completing 3a–3d, state:
 `CURRENT STATE VERIFIED — Branch: <branch>, Commit: <sha>, Tree: <clean|dirty>, Feature: <id|none>, Stage: <N|unknown>`
 
 **Repair-Before-Next-Feature check:** Before proceeding to Step 4, check whether the

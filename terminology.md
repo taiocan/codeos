@@ -546,6 +546,7 @@ See: `.codeos/patterns/vocabulary-architecture.md` for the full pattern referenc
 | **Concept** | The semantic identity the system reasons about, independent of any string representation. The unit of domain logic. |
 | **Canonical** | The single stable runtime identifier chosen by the vocabulary to name a concept. Unique and authoritative — not merely "another representation." There is exactly one canonical per concept. |
 | **Alias** | An alternative input form accepted for compatibility, migration, or user preference. Resolved to a concept before domain logic runs; never appears in business logic. |
+| **Architecture Scope** | The single artifact for one project-level architectural scope. Its filename identifies the scope; it owns feature membership, structural decisions, and recorded human approval and cannot invent or alter behavior. |
 | **Resolution** | Mapping any input form (alias or canonical string) to its concept via the vocabulary module's API. |
 | **Vocabulary owner** | The module that defines concepts, accepts aliases, and exposes the resolution API. Exactly one owner per vocabulary. |
 | **Vocabulary consumer** | Any module that operates on vocabulary-defined concepts by calling the resolution API. Consumers never inspect aliases or hardcode canonical strings. |

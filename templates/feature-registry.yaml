@@ -33,31 +33,6 @@
 #   failed  — last run failed (requires resolution before advancing)
 #   na      — not applicable at the current stage
 #
-# architecture_cohort (optional, additive — schema_version stays 2):
-#   null, or the cohort_id of the ONE architecture_cohorts entry below this feature belongs to.
-#   A feature belongs to at most one active cohort; a project may declare multiple cohorts, but
-#   their feature memberships must not overlap. A feature with architecture_cohort: null (or the
-#   field absent entirely — both mean the same thing) has no Stage 4 cohort-eligibility check;
-#   this is the default, unaffected state for a registry that predates this field or a feature
-#   never part of a cohort. See the architecture_synthesis_policy component selected by
-#   .codeos/dba-system.md.
-#
-# architecture_cohorts[].status values:
-#   declared          — cohort membership set is declared; gate not yet started
-#   gate-in-progress  — Intent/Contract/Event Cohort Checks and/or synthesis underway (drafting the
-#                        Baseline and/or the Cohort Logical Design; neither is approved yet)
-#   baseline-approved — compatibility-only landing state: a cohort that reached `approved` under the
-#                        pre-two-output-model rule (Baseline only) is reinterpreted as this on first
-#                        read after that model changed. A fresh cohort going through the current
-#                        4-step pipeline does not pass through this state — see
-#                        the architecture_synthesis_policy component selected by
-#                        .codeos/dba-system.md.
-#   approved          — both Architecture Baseline (baseline_version) and Cohort Logical Design
-#                        (logical_design_version) approved; cohort members may begin Stage 4 (subject
-#                        to both applicable versions covering them)
-#   Stage 4 treats `declared`, `gate-in-progress`, and `baseline-approved` identically — all three
-#   block Stage 4 for member features exactly the same way; only `approved` unblocks it.
-
 schema_version: 2
 
 features:
@@ -77,9 +52,6 @@ features:
     replay_status: na             # pending | passed | failed | na
     blockers: []                  # structured list of blocking issues; empty if none — see notes below for free-form context
     notes: ""                     # free-form context or next action; does not replace structured blockers above
-    # architecture_cohort: null    # OPTIONAL — omitted here deliberately: this example feature is
-                                    # not part of any cohort. Uncomment and set to a cohort_id
-                                    # below only when this feature is declared into one.
 
 architectural_refinements:
   - refine_id: example_refine
@@ -87,42 +59,3 @@ architectural_refinements:
     status: step2  # step1 | step2 | step3 | step4 | step5 | complete
     artifact: refinements/arch/example_refine.md
     notes: ""
-
-# architecture_cohorts: OPTIONAL top-level list — only present when at least one core
-# architecture cohort has been declared (see the architecture_synthesis_policy component selected
-# by .codeos/dba-system.md).
-# Absent entirely for projects with no declared cohort; this is the default and
-# does not affect any existing registry.
-#
-# architecture_cohorts:
-#   - cohort_id: example_cohort
-#     member_features: [F-0001, F-0002]   # each listed feature's own architecture_cohort field
-#                                          # must equal this cohort_id — no feature may appear in
-#                                          # more than one cohort's member_features list
-#     status: declared                    # declared | gate-in-progress | baseline-approved | approved
-#     baseline_version: null              # a single, cohort-level current value — set once status
-#                                          # reaches approved (or, for a cohort mid-transition to the
-#                                          # two-output model, at baseline-approved), and kept equal
-#                                          # to architecture/core-baseline.md's current version at
-#                                          # all times. Historical architecture/history/core-baseline-
-#                                          # v<version>.md files are provenance records only — a
-#                                          # stale (non-current) value here blocks Stage 4 for this
-#                                          # cohort's members, it is not an alternate valid value
-#                                          # (see the architecture_synthesis_policy component
-#                                          # selected by .codeos/dba-system.md →
-#                                          # "Verifying a `baseline_version` or
-#                                          # `logical_design_version` reference")
-#     logical_design_version: null        # a single, cohort-level current value — set once status
-#                                          # reaches approved, kept equal to architecture/cohort-
-#                                          # logical-design.md's current version at all times, with
-#                                          # the same staleness rule as baseline_version above. Stays
-#                                          # null while status is declared, gate-in-progress, or
-#                                          # baseline-approved — a Logical Design is not yet approved
-#                                          # in any of those states.
-#     declared_by: ""
-#     declared_at: ""
-#     # No free-form `notes` field here, deliberately: this registry entry is an index only —
-#     # membership, gate status, and version references. Rationale, open questions, and any other
-#     # structural context belong in architecture/core-baseline.md or architecture/cohort-logical-
-#     # design.md themselves (Open Architectural Risks / Revisit Triggers), never smuggled into the
-#     # registry as free text.

@@ -171,3 +171,8 @@ If any item is ✗: revise the draft before proceeding to Step 3.
 **STOP.** Do not implement until the human explicitly approves the package. Record that one
 decision consistently on all three artifacts using identical `approved_by` and `approved_at`
 metadata. These distributed records represent one approval, not three gates.
+
+After package approval and before Stage 4, assess whether implementation would otherwise settle an
+unresolved project-level or cross-feature structural decision. If yes or genuinely uncertain, use
+`.codeos/prompts/03b-architecture-synthesis.md`; if no, no architecture artifact is required. This
+assessment creates no registry field or separate artifact.

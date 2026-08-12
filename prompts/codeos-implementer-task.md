@@ -39,8 +39,7 @@ you how that artifact binds you.
 |---|---|
 | `BEHAVIORAL CONTRACT` | The behavior your implementation must satisfy |
 | `EVENT SCHEMA` | The events you must emit, and only these |
-| `ARCHITECTURE BASELINE` | Binding architectural constraint. **Follow it. It is not behavior to invent, extend, or improve** |
-| `COHORT LOGICAL DESIGN` | Binding shared design constraint, same standing as the Baseline |
+| `PROJECT ARCHITECTURE` | Binding architectural constraint. **Follow it. It is not behavior to invent, extend, or improve** |
 | `IMPLEMENTATION PROFILE` | Binding implementation constraint — language and scope |
 
 **Not authoritative:**
@@ -48,7 +47,7 @@ you how that artifact binds you.
 | Label | What it is |
 |---|---|
 | `LAYOUT EXEMPLAR` | A real file showing this repository's conventions. Context only — do not implement it, modify it, or copy its domain behavior |
-| `APPROVED ARTIFACT (ROLE UNSPECIFIED)` | Supporting context whose authority the caller did not declare. It **does not** replace a Behavioral Contract, Event Schema, Architecture Baseline, Cohort Logical Design, or Implementation Profile when that role has been declared separately |
+| `APPROVED ARTIFACT (ROLE UNSPECIFIED)` | Supporting context whose authority the caller did not declare. It **does not** replace a Behavioral Contract, Event Schema, Project Architecture, or Implementation Profile when that role has been declared separately |
 
 If a binding architectural constraint and your preferred approach disagree, the constraint wins. If
 you believe a constraint is wrong or makes the contract unsatisfiable, say so in `notes` and emit

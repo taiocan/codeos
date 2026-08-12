@@ -1,0 +1,12 @@
+schema_version: 2
+features:
+  - feature_id: F-0001
+    architecture_cohort: example
+  - feature_id: F-0002
+    architecture_cohort: example
+architecture_cohorts:
+  - cohort_id: example
+    member_features: [F-0001, F-0002]
+    status: approved
+    baseline_version: 1
+    logical_design_version: 1

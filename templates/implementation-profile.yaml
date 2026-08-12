@@ -1,9 +1,7 @@
 # Implementation Profile
 #
 # Optional, project-level statement of a preferred implementation language and its scope.
-# Independent of the Architecture Synthesis Gate (see the architecture_synthesis_policy component
-# selected through dba-system.md) — works identically for a
-# project with no declared core cohort.
+# Uses only `all` or explicit feature ids; applicability is not derived from other artifacts.
 #
 # Recommended downstream instance path (current version): architecture/implementation-profile.yaml
 # A pending, not-yet-approved replacement lives at:       architecture/proposals/implementation-profile-v<N>.yaml
@@ -32,38 +30,27 @@
 #
 # APPLIES_TO — resolvable selectors only, never free text (Stage 4 must be able to mechanically
 # check membership):
-#   scope: all           — applies to every feature in the project
-#   scope: feature_ids    — applies only to the features listed in feature_ids
-#   scope: cohort_ids      — applies only to features whose architecture_cohort (see
-#                           features/registry.yaml) is one of the listed cohort_ids
-# Populate only the list matching the active scope kind; leave the other list empty. A
-# populated-but-unused list (e.g. cohort_ids non-empty while scope: feature_ids) is itself an
-# invalid profile.
+#   scope: all         — applies to every feature in the project; feature_ids must be empty
+#   scope: feature_ids — applies only to the listed features; list must be non-empty
 #
-# EXCEPTIONS — same selector model, per exception entry:
-#   scope: feature_id — id names one F-#### this exception covers
-#   scope: cohort_id   — id names one cohort_id this exception covers
+# EXCEPTIONS — feature selector only:
+#   scope: feature_id — id names one feature this exception covers
 # rationale is required and must be non-empty. Exceptions are considered only for a feature
-# already within applies_to's resolved scope. A feature-level exception overrides a matching
-# cohort-level exception (more specific). Multiple matching exceptions at the SAME specificity
-# that disagree make the profile invalid for that feature — Stage 4 treats this as ineligible,
-# not resolved arbitrarily.
+# already within applies_to's resolved scope. Multiple matching exceptions that disagree make the
+# profile invalid for that feature.
 #
-# No baseline-defined-component selector exists yet — a possible future extension, not built here.
-
 profile_id: implementation-profile   # stable identifier across all versions of this profile
 profile_version: 1                   # increments with each new (proposed) version
 status: proposed                     # proposed | approved | superseded
 primary_language: rust
 
 applies_to:
-  scope: all              # all | feature_ids | cohort_ids
-  feature_ids: []          # populated only when scope: feature_ids
-  cohort_ids: []           # populated only when scope: cohort_ids
+  scope: all              # all | feature_ids
+  feature_ids: []         # populated only when scope: feature_ids
 
 exceptions: []
 # exceptions:
-#   - scope: feature_id    # feature_id | cohort_id
+#   - scope: feature_id
 #     id: "F-0003"
 #     language: python
 #     rationale: "Vendor SDK has no viable Rust client; isolated to this feature only."

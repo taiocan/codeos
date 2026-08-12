@@ -24,8 +24,7 @@
 #     not declare is a role the model is not told about.
 #       --contract PATH        BEHAVIORAL CONTRACT   — behavior that must be satisfied
 #       --event-schema PATH    EVENT SCHEMA          — events that must be emitted correctly
-#       --architecture PATH    ARCHITECTURE BASELINE — binding architectural constraint
-#       --cohort-design PATH   COHORT LOGICAL DESIGN — binding shared design constraint
+#       --architecture PATH    PROJECT ARCHITECTURE  — binding architectural constraint
 #       --profile PATH         IMPLEMENTATION PROFILE— binding implementation constraint
 #     Positional <artifact-path> arguments remain supported for backward compatibility and are
 #     labelled APPROVED ARTIFACT (ROLE UNSPECIFIED). They never silently satisfy a declared role.
@@ -85,7 +84,7 @@ REPAIR_CANDIDATES=()
 REPAIR_OUTPUTS=()
 # One array per declared role. Deliberately flat and explicit: the value here is that a reader can
 # see exactly which roles exist, not that the plumbing is shared.
-ROLE_CONTRACT=(); ROLE_SCHEMA=(); ROLE_ARCH=(); ROLE_COHORT=(); ROLE_PROFILE=()
+ROLE_CONTRACT=(); ROLE_SCHEMA=(); ROLE_ARCH=(); ROLE_PROFILE=()
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --contract)          [[ $# -ge 2 ]] || { err "--contract requires a path"; exit 3; }
@@ -94,8 +93,6 @@ while [[ $# -gt 0 ]]; do
                          ROLE_SCHEMA+=("$2"); shift 2;;
     --architecture)      [[ $# -ge 2 ]] || { err "--architecture requires a path"; exit 3; }
                          ROLE_ARCH+=("$2"); shift 2;;
-    --cohort-design)     [[ $# -ge 2 ]] || { err "--cohort-design requires a path"; exit 3; }
-                         ROLE_COHORT+=("$2"); shift 2;;
     --profile)           [[ $# -ge 2 ]] || { err "--profile requires a path"; exit 3; }
                          ROLE_PROFILE+=("$2"); shift 2;;
     --exemplar)          [[ $# -ge 2 ]] || { err "--exemplar requires a path"; exit 3; }
@@ -115,7 +112,7 @@ done
 if [[ $# -lt 2 ]]; then
   err "usage: codeos-implement.sh [role flags] [--exemplar PATH] [--repair-candidate PATH]"
   err "                           [--repair-output PATH] <feature_id> <stage:4|5> [artifact-path...]"
-  err "       role flags: --contract --event-schema --architecture --cohort-design --profile"
+  err "       role flags: --contract --event-schema --architecture --profile"
   exit 3
 fi
 FEATURE="$1"; STAGE="$2"; shift 2
@@ -127,7 +124,7 @@ fi
 # At least one governed artifact must be supplied, by either route. Zero artifacts is a usage error,
 # not a silent run against nothing.
 if [[ ${#ARTIFACTS[@]} -eq 0 && ${#ROLE_CONTRACT[@]} -eq 0 && ${#ROLE_SCHEMA[@]} -eq 0 \
-      && ${#ROLE_ARCH[@]} -eq 0 && ${#ROLE_COHORT[@]} -eq 0 && ${#ROLE_PROFILE[@]} -eq 0 ]]; then
+      && ${#ROLE_ARCH[@]} -eq 0 && ${#ROLE_PROFILE[@]} -eq 0 ]]; then
   err "no artifacts supplied: pass at least one role flag or one positional artifact path"
   exit 3
 fi
@@ -188,7 +185,7 @@ for a in "${ARTIFACTS[@]}"; do
   [[ -f "${a}" ]] || { err "artifact path does not exist: ${a}"; exit 7; }
 done
 for a in ${ROLE_CONTRACT[@]+"${ROLE_CONTRACT[@]}"} ${ROLE_SCHEMA[@]+"${ROLE_SCHEMA[@]}"} \
-         ${ROLE_ARCH[@]+"${ROLE_ARCH[@]}"} ${ROLE_COHORT[@]+"${ROLE_COHORT[@]}"} \
+         ${ROLE_ARCH[@]+"${ROLE_ARCH[@]}"} \
          ${ROLE_PROFILE[@]+"${ROLE_PROFILE[@]}"}; do
   [[ -f "${a}" ]] || { err "artifact path does not exist: ${a}"; exit 7; }
 done
@@ -212,8 +209,7 @@ _check_role() {
 }
 _check_role "BEHAVIORAL CONTRACT"    ${ROLE_CONTRACT[@]+"${ROLE_CONTRACT[@]}"}
 _check_role "EVENT SCHEMA"           ${ROLE_SCHEMA[@]+"${ROLE_SCHEMA[@]}"}
-_check_role "ARCHITECTURE BASELINE"  ${ROLE_ARCH[@]+"${ROLE_ARCH[@]}"}
-_check_role "COHORT LOGICAL DESIGN"  ${ROLE_COHORT[@]+"${ROLE_COHORT[@]}"}
+_check_role "PROJECT ARCHITECTURE"   ${ROLE_ARCH[@]+"${ROLE_ARCH[@]}"}
 _check_role "IMPLEMENTATION PROFILE" ${ROLE_PROFILE[@]+"${ROLE_PROFILE[@]}"}
 _check_role "LAYOUT EXEMPLAR"        ${EXEMPLARS[@]+"${EXEMPLARS[@]}"}
 
@@ -276,18 +272,16 @@ NONCE="$(head -c 8 /dev/urandom | od -An -tx1 | tr -d ' \n')"
     ${ROLE_CONTRACT[@]+"${ROLE_CONTRACT[@]}"}
   _emit_role "EVENT SCHEMA" "binding — the events you must emit, and only these" \
     ${ROLE_SCHEMA[@]+"${ROLE_SCHEMA[@]}"}
-  _emit_role "ARCHITECTURE BASELINE" "binding architectural constraint — follow it; it is not behavior to invent" \
+  _emit_role "PROJECT ARCHITECTURE" "binding architectural constraint — follow it; it is not behavior to invent" \
     ${ROLE_ARCH[@]+"${ROLE_ARCH[@]}"}
-  _emit_role "COHORT LOGICAL DESIGN" "binding shared design constraint — follow it; it is not behavior to invent" \
-    ${ROLE_COHORT[@]+"${ROLE_COHORT[@]}"}
   _emit_role "IMPLEMENTATION PROFILE" "binding implementation constraint — language and scope" \
     ${ROLE_PROFILE[@]+"${ROLE_PROFILE[@]}"}
   # Positional artifacts: supported, but visibly degraded. They never stand in for a declared role.
   for a in "${ARTIFACTS[@]}"; do
     printf '\n--- APPROVED ARTIFACT (ROLE UNSPECIFIED): %s ---\n' "${a}"
     printf '    (supporting context only — the caller did not declare an authority role for this\n'
-    printf '     artifact. It does not replace a Behavioral Contract, Event Schema, Architecture\n'
-    printf '     Baseline, Cohort Logical Design, or Implementation Profile.)\n'
+    printf '     artifact. It does not replace a Behavioral Contract, Event Schema,\n'
+    printf '     Project Architecture, or Implementation Profile.)\n'
     cat "${a}"
   done
   # Layout exemplars are context, never specification. They are labeled distinctly from approved

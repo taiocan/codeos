@@ -16,9 +16,8 @@ Use this workflow (not the 9-step DBA loop) when the change is:
 - Build system or CI changes
 - File and directory layout normalization
 - Naming convention normalization across existing modules
-- A structural-only correction to an already-approved Architecture Baseline
-  (`architecture/core-baseline.md`, see the `architecture_synthesis_policy` component selected by
-  `.codeos/dba-system.md`)
+- A structural-only correction to applicable approved project architecture (see the
+  `architecture_synthesis_policy` component selected by `.codeos/dba-system.md`)
   — eligible here only when no feature's behavior changes; a correction that
   would change behavior is not a refinement, it returns the affected feature to its earlier stage
 

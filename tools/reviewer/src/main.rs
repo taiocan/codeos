@@ -146,6 +146,12 @@ enum Commands {
         #[arg(long)]
         registry: Option<String>,
     },
+    /// Deterministically read and validate Architecture Scope metadata
+    InspectArchitectureScopes {
+        /// Resolve one feature to zero or one Architecture Scope
+        #[arg(long)]
+        feature: Option<String>,
+    },
 }
 
 fn main() {
@@ -213,6 +219,12 @@ fn run() -> i32 {
             },
             &repo_root,
         );
+    }
+
+    // This is a deterministic reader hosted by the existing binary. It invokes no reviewer and
+    // produces no verdict or approval.
+    if let Commands::InspectArchitectureScopes { feature } = &cli.command {
+        return cmd::inspect_architecture_scopes::run(feature.as_deref(), &repo_root);
     }
 
     // Resolve config
@@ -311,6 +323,7 @@ fn run() -> i32 {
         Commands::GenerateAdrCandidates { .. } => EXIT_SUCCESS,
         Commands::GenerateApprovalDashboard { .. } => EXIT_SUCCESS,
         Commands::GenerateReleaseEvidence { .. } => EXIT_SUCCESS,
+        Commands::InspectArchitectureScopes { .. } => EXIT_SUCCESS,
     }
 }
 

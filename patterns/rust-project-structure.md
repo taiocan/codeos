@@ -17,9 +17,9 @@ Implementation Profile (governed by the `implementation_profile_policy` componen
 `.codeos/dba-system.md`) resolves
 `primary_language: rust` for the feature being implemented; and optionally by Architecture
 Synthesis (governed by the `architecture_synthesis_policy` component selected by
-`.codeos/dba-system.md`) when a core
-cohort also exists. This pattern's recommendations are always advisory — consulted, never
-overriding an approved Architecture Baseline or another project-specific decision.
+`.codeos/dba-system.md`) when applicable. This pattern's recommendations are always advisory —
+consulted, never overriding applicable approved project architecture or another project-specific
+decision.
 
 ---
 
@@ -356,7 +356,7 @@ error variant(s) it maps from and the event it produces.
 ## Recommended Toolchain/Lint Baseline
 
 This is a **recommendation**, not mandatory project configuration — no Implementation Profile or
-Architecture Baseline requires every Rust project to adopt these identically. A reasonable
+approved project architecture requires every Rust project to adopt these identically. A reasonable
 starting point:
 
 ```text
@@ -368,11 +368,10 @@ cargo test --workspace
 ```
 
 Exact MSRV, edition, and lint strictness stay project-specific decisions — a project may record
-its actual choices in its Architecture Baseline (see the `architecture_synthesis_policy` component
-selected by `.codeos/dba-system.md`)
-when one exists, or simply in its own `rust-toolchain.toml`/
+its actual choices in applicable project architecture (see the `architecture_synthesis_policy`
+component selected by `.codeos/dba-system.md`) or simply in its own `rust-toolchain.toml`/
 `Cargo.toml` when it doesn't. This pattern does not mandate a specific MSRV, a specific edition,
-or `-D warnings` strictness for every project — only that *if* a project wants a baseline, this
+or `-D warnings` strictness for every project — only that *if* a project wants a recorded standard, this
 is a reasonable Rust-idiomatic starting point.
 
 ---

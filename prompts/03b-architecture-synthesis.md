@@ -1,175 +1,63 @@
 # Architecture Synthesis Gate
 
 <!-- DOCTRINE ADAPTER: architecture-entry
-Conditional: applies only when the active doctrine or architecture policy requires architecture approval. -->
+Conditional: applies only when the selected architecture policy requires architecture approval. -->
 
 ## Your Role
 
-You guide the **Architecture Synthesis Gate** for a declared core architecture cohort. You are
-not implementing a behavioral feature and not writing code. This workflow consumes *approved* Intent, Contract,
-and Event Schema artifacts across a whole cohort; it never produces speculative architecture, and
-it never invents or alters behavior. See the `architecture_synthesis_policy` component selected by
-`.codeos/dba-system.md` for the full policy this prompt implements.
+Guide Architecture Synthesis for one project-level scope. Produce one concise architecture artifact;
+do not implement features, invent behavior, or create additional workflow state. Read the selected
+`architecture_synthesis_policy` component before proceeding.
 
-## When This Prompt Applies
+## Applicability and Preconditions
 
-Only when `features/registry.yaml` has an `architecture_cohorts:` entry whose member features
-all have approved Specification Packages. If any member feature lacks package approval, **STOP** —
-this session cannot proceed; return to that feature's specification work
-instead.
+Use this prompt when implementation would otherwise settle an unresolved project-level or
+cross-feature structural decision. If no such decision exists, do not create an architecture
+artifact.
 
-If no cohort is declared, this prompt does not apply — proceed directly from Stage 3 to Stage 4
-for each feature independently.
+Identify every affected feature. Each must have an approved, mutually consistent Intent, Contract,
+and Event Schema before architecture can be approved. A draft scope may be started earlier, but
+unapproved feature material is not architectural authority.
 
----
+Run `.codeos/scripts/codeos-review.sh inspect-architecture-scopes` and stop if inspection fails.
+Reuse the existing matching scope when one exists; otherwise create `architecture/scopes/` if
+needed and use `.codeos/templates/architecture-scope.md` to draft
+`architecture/scopes/<scope-id>.md`. The filename is the scope identity.
 
-## Preconditions
+## Synthesis
 
-Verify before starting:
+Read the approved Specification Packages for all scope members and any relevant approved project
+architecture. Review them together for conflicting responsibility or data ownership, dependency
+direction, lifecycle or failure assumptions, integration contracts, and event semantics.
 
-- [ ] `features/registry.yaml` declares the cohort, listing every member feature.
-- [ ] Every member feature's `intents/`, `contracts/`, and `events/` artifacts are `APPROVED`.
-- [ ] No member feature's registry entry is missing an `architecture_cohort` value that should
-  point here.
+Use the selected architecture policy's synthesis reasoning frame. Record only
+architecture-significant answers; do not reproduce the frame as mandatory sections, a matrix, or a
+disposable check report. Every governed architectural component must have one clear owned
+responsibility. Record interfaces, state, runtime placement, constraints, and feature applicability
+only when material.
 
-If any check fails, **STOP** and report the specific gap. Do not proceed on a partial cohort.
+For each material decision, state enough rationale or authority to show that it comes from approved
+requirements or an explicit human architectural decision. Do not mechanically map every paragraph
+to a source.
 
----
+If a question is behavioral or would create a new quality requirement, name the affected feature and
+return it to Intent, Contract, or Event Schema. If responsibility overlaps, dependency direction
+conflicts, data authority is unclear, or integration assumptions contradict, keep `approval: null`
+and present the conflict for human resolution.
 
-## The Synthesis Pipeline
+## Approval
 
-Steps 1–3 form one drafting sequence. They do not add intermediate approval gates. Step 4 presents
-the two architecture artifacts for their single joint approval.
+Present the complete scope artifact for one explicit human approval. Before approval, state:
 
-### Step 1 — Cohort Evidence Review
+`AWAITING HUMAN APPROVAL OF THE ARCHITECTURE SCOPE`
 
-Load every member feature's approved Intent, Contract, and Event Schema, plus any
-`reviews/architecture-journal.md` entries relevant to this cohort. If Intent Cohort Check and
-Contract Cohort Check reports exist from earlier waves (recommended, not required — see the
-`architecture_synthesis_policy` component selected by `.codeos/dba-system.md`), load those too.
-Produce the **required** Event Cohort Check now if it has not
-already been run: event ownership, envelope uniformity, correlation strategy,
-observational-vs-integration classification, duplicate event meanings, payload identity
-consistency.
+After approval, record non-empty `approval.by` and `approval.at`. Any later material edit to the
+architecture or membership first resets `approval` to `null`. Do not update a registry, numeric
+version, pointer, hash, or history file. Git preserves prior approved revisions.
 
-Separate what you observe into two categories, kept visibly distinct in your output:
-- **Derived observations** — mechanical facts read directly from the approved artifacts (which
-  feature owns which canonical artifact, which events cross feature boundaries, which metadata
-  fields recur).
-- **Open questions** — anything the approved artifacts do not settle (deployment model, data
-  volume, concurrency, persistence choice, and other project-level constraints named in
-  the `architecture_synthesis_policy` component selected by `.codeos/dba-system.md`). These require an explicit
-  human answer — do not invent one.
+A material later change to membership or architecture first sets `approval: null`, then uses this
+same synthesis and approval boundary. Reassess completed work only where targeted impact analysis
+finds an actual conflict.
 
-**Complete when:** every member feature's approved artifacts have been read; the Event Cohort
-Check is produced; derived observations and open questions are kept separate.
-
-Output: Cohort Evidence Review; continue to Step 2.
-
----
-
-### Step 2 — Draft Baseline
-
-Using `.codeos/templates/architecture-baseline.md`, produce a draft `architecture/core-baseline.md`:
-
-- **Authoritative decisions** section: structural choices requiring explicit human sign-off
-  (crate/workspace topology, dependency direction, shared-infrastructure boundaries, integration
-  style — is the event log observational-only, or does something read it to continue
-  processing?).
-- **Derived views** section: the ownership matrix, dependency graph, and event producer/consumer
-  matrix from Step 1 — each one marked regenerable, with provenance back to its source artifact.
-- Cohort membership set for this version, with the version identifier.
-- Open architectural risks and explicit revisit triggers.
-
-Do **not** resolve open questions from Step 1 yourself — present them to the human for an
-explicit decision, and record the decision (not your own inference) in the baseline.
-
-**Complete when:** every authoritative decision has a stated human answer (not an assumption);
-every derived view names its source artifacts; the cohort membership set and version are stated.
-
-Output: Draft Baseline; continue to Step 3.
-
----
-
-### Step 3 — Draft Cohort Logical Design
-
-Using `.codeos/templates/cohort-logical-design.md`, produce a draft
-`architecture/cohort-logical-design.md`, consuming the draft baseline from Step 2 plus the same
-cohort evidence from Step 1. This elaborates the logical detail the baseline deliberately leaves
-unresolved — the shared structure independently-implemented Stage 4 features need fixed once, in
-common, rather than inventing locally:
-
-1. **Logical ERD** — entities, relationships, cardinality.
-2. **Entity/aggregate ownership** — which feature owns which canonical entity or aggregate.
-3. **Identity and key strategy** — for shared/canonical entities specifically; local per-feature
-   types may still be decided at Stage 4.
-4. **Revision/supersession model** — the shared pattern (e.g. `logical_record_id` /
-   `revision_id` / `revision_number` / `supersedes_revision_id`), if the draft baseline or approved
-   artifacts already establish append-only/revision-based persistence.
-5. **Module interface map** — what each module boundary exposes and consumes.
-6. **Command/query responsibilities** — operation categories and ownership.
-7. **Transaction boundaries** — which operations must be atomic, and which module owns the
-   transaction.
-8. **Validation ownership** — which module validates each shared invariant.
-9. **Event-emission rules** — timing relative to validation and transaction commit.
-10. **Read-model design** — ownership, source-of-truth relationship, refresh semantics.
-11. **Indexing and spatial principles** — required access paths and indexing policy at the
-    principle level (not final index definitions).
-12. **Migration strategy** — ordering, ownership, compatibility, rollback policy, at the strategy
-    level (not concrete migration scripts).
-13. **Integration-test obligations** — named boundaries requiring integration coverage; the tests
-    themselves belong to Stage 5.
-14. **Mapping** from each of the 13 design elements above to the approved feature artifact(s) it
-    derives from.
-
-Exactly like Step 2, do **not** resolve any behavioral gap here — if a design question turns out to
-be a behavioral decision (e.g. whether one record may cover multiple referenced entities, or
-inventing a new status value), name the affected feature and stage and stop; present the question
-to the human rather than deciding it in the logical design. Do not restate or re-decide anything
-the draft baseline already settled (topology, dependency direction, persistence technology,
-integration style) — reference it, don't duplicate it.
-
-**Complete when:** every one of the 14 numbered items above is addressed (explicitly marked "not
-applicable to this cohort" where genuinely out of scope, not silently omitted); no behavioral
-decision has been resolved inline.
-
-Output: Draft Cohort Logical Design; continue to Step 4.
-
----
-
-### Step 4 — Approval and Activation
-
-Present both the draft baseline (Step 2) and the draft logical design (Step 3) together for a
-single final human review. If any behavioral gap was discovered during synthesis — something the
-cohort's approved artifacts don't actually support — **do not patch it in either artifact**. Name
-the affected feature and the specific stage (Intent, Contract, or Event Schema) it must return to,
-and stop; neither artifact can be approved while a member feature has an unresolved behavioral gap.
-
-Once the human approves both:
-- Write `architecture/core-baseline.md` with `status: approved` and its version identifier. If it
-  supersedes an earlier approved version, first move the superseded file to
-  `architecture/history/core-baseline-v<version>.md` — named for the exact version it was current
-  as — then write the new version. This file always holds only the current version.
-- Write `architecture/cohort-logical-design.md` with `status: approved` and its version identifier,
-  the same way — superseded versions move to
-  `architecture/history/cohort-logical-design-v<version>.md` first.
-- Update the cohort's `features/registry.yaml` entry: `status: approved`, `baseline_version` and
-  `logical_design_version` both set to their approved versions.
-- Cohort members may now begin implementation, in the dependency order the baseline and logical design
-  recommend.
-
-**Complete when:** both artifacts reflect `approved` status and version; the registry cohort entry
-is updated to match both fields; any superseded versions are archived, not deleted.
-
-Before activation, state: **`AWAITING HUMAN APPROVAL OF THE ARCHITECTURE BASELINE AND LOGICAL DESIGN`**.
-After approval, output confirmation of both approved artifacts and the registry update.
-
----
-
-## Reviewer Note
-
-`codeos-reviewer` has a dedicated checklist for the `architecture-synthesis` stage id, covering all
-four steps of this pipeline — run `.codeos/scripts/codeos-review.sh review <feature_id>
-architecture-synthesis` for review at this boundary, per the selected `review_policy` and
-`reviewer_tool_contract`. Decision behavior is owned by this `architecture-entry` adapter and the
-selected `architecture_synthesis_policy`.
+Architecture review is advisory and optional. Use it only when the identified architectural risk
+justifies independent review; it does not create another gate or persisted review state.

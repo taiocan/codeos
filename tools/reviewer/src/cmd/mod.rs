@@ -5,5 +5,6 @@ pub mod generate_adr_candidates;
 pub mod generate_approval_dashboard;
 pub mod generate_release_evidence;
 pub mod generate_report;
+pub mod inspect_architecture_scopes;
 pub mod plan;
 pub mod review;

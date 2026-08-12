@@ -212,22 +212,21 @@ fi
 
 # ── UPG-0064: caller-declared artifact roles ────────────────────────────────────────────────────
 echo "== UPG-0064: artifact authority roles =="
-mkdir -p "${REPO}/architecture" "${REPO}/contracts" "${REPO}/events"
+mkdir -p "${REPO}/architecture/scopes" "${REPO}/contracts" "${REPO}/events"
 printf 'the contract\n'  > "${REPO}/contracts/F-0001_contract.md"
 printf 'the schema\n'    > "${REPO}/events/F-0001_schema.md"
-printf 'the baseline\n'  > "${REPO}/architecture/core-baseline.md"
-printf 'the cohort\n'    > "${REPO}/architecture/cohort-logical-design.md"
+printf 'the architecture\n' > "${REPO}/architecture/scopes/source-intelligence.md"
 printf 'the profile\n'   > "${REPO}/architecture/implementation-profile.yaml"
 
 fixture '<<<CODEOS:{N}:FILE:modules/thing/src/lib.rs>>>
 x
 <<<CODEOS:{N}:ENDFILE>>>'
 reset_state; enable_mech
-rc=$(run_tool --contract contracts/F-0001_contract.md --event-schema events/F-0001_schema.md --architecture architecture/core-baseline.md --cohort-design architecture/cohort-logical-design.md --profile architecture/implementation-profile.yaml F-0001 4 intents/F-0001.md)
+rc=$(run_tool --contract contracts/F-0001_contract.md --event-schema events/F-0001_schema.md --architecture architecture/scopes/source-intelligence.md --profile architecture/implementation-profile.yaml F-0001 4 intents/F-0001.md)
 P="$(latest_stage_dir)/packet.txt"
 if [[ "${rc}" == "0" ]]; then
   miss=""
-  for lbl in "BEHAVIORAL CONTRACT: contracts/F-0001_contract.md" "EVENT SCHEMA: events/F-0001_schema.md" "ARCHITECTURE BASELINE: architecture/core-baseline.md" "COHORT LOGICAL DESIGN: architecture/cohort-logical-design.md" "IMPLEMENTATION PROFILE: architecture/implementation-profile.yaml"; do
+  for lbl in "BEHAVIORAL CONTRACT: contracts/F-0001_contract.md" "EVENT SCHEMA: events/F-0001_schema.md" "PROJECT ARCHITECTURE: architecture/scopes/source-intelligence.md" "IMPLEMENTATION PROFILE: architecture/implementation-profile.yaml"; do
     grep -qF -- "${lbl}" "${P}" || miss="${miss} [${lbl}]"
   done
   if [[ -z "${miss}" ]]; then ok "ROLE each declared artifact is labelled with its authority"
@@ -240,11 +239,11 @@ else
 fi
 
 reset_state
-rc=$(run_tool F-0001 4 architecture/core-baseline.md)
+rc=$(run_tool F-0001 4 architecture/scopes/source-intelligence.md)
 P2="$(latest_stage_dir)/packet.txt"
 inferred=no
-grep -q 'ARCHITECTURE BASELINE: architecture/core-baseline.md' "${P2}" && inferred=yes
-if grep -q 'APPROVED ARTIFACT (ROLE UNSPECIFIED): architecture/core-baseline.md' "${P2}" && [[ "${inferred}" == "no" ]]; then
+grep -q 'PROJECT ARCHITECTURE: architecture/scopes/source-intelligence.md' "${P2}" && inferred=yes
+if grep -q 'APPROVED ARTIFACT (ROLE UNSPECIFIED): architecture/scopes/source-intelligence.md' "${P2}" && [[ "${inferred}" == "no" ]]; then
   ok "ROLE no authority inferred from a conventional path"
 else
   bad "ROLE inference" "a positional baseline-looking path acquired a role (inferred=${inferred})"
@@ -263,9 +262,9 @@ if [[ "${rc}" == "0" ]]; then ok "ROLE same path twice under one role is not a c
 else bad "ROLE duplicate same-role" "rc=${rc}"; fi
 
 reset_state
-rc=$(run_tool --architecture architecture/core-baseline.md F-0001 4 intents/F-0001.md)
+rc=$(run_tool --architecture architecture/scopes/source-intelligence.md F-0001 4 intents/F-0001.md)
 D="$(latest_stage_dir)"
-lbl='--- ARCHITECTURE BASELINE: architecture/core-baseline.md ---'
+lbl='--- PROJECT ARCHITECTURE: architecture/scopes/source-intelligence.md ---'
 inreq=no
 jq -r '.messages[1].content' "${D}/request.json" | grep -qF -- "${lbl}" && inreq=yes
 if grep -qF -- "${lbl}" "${D}/packet.txt" && [[ "${inreq}" == "yes" ]]; then
@@ -274,12 +273,12 @@ else bad "ROLE label transport" "packet vs request differ"; fi
 # AC-9: the artifact-content region (after the heading and its generated binding note, up to the
 # next heading) must be byte-identical to the source file. Stronger than "the bytes appear somewhere".
 jq -r '.messages[1].content' "${D}/request.json" > "${WORK}/sent.txt"
-awk '/^--- ARCHITECTURE BASELINE: architecture\/core-baseline\.md ---$/{f=1;skip=1;next} f&&skip{skip=0;next} f&&/^--- /{f=0} f{print}' "${WORK}/sent.txt" > "${WORK}/raw.txt"
+awk '/^--- PROJECT ARCHITECTURE: architecture\/scopes\/source-intelligence\.md ---$/{f=1;skip=1;next} f&&skip{skip=0;next} f&&/^--- /{f=0} f{print}' "${WORK}/sent.txt" > "${WORK}/raw.txt"
 # The packet separates blocks with a leading newline before each heading, so the extracted region
 # carries exactly one trailing blank line belonging to that separator, not to the artifact. Drop
 # precisely one, then require byte equality with the file.
 awk 'NR>1{print prev} {prev=$0} END{if (prev != "") print prev}' "${WORK}/raw.txt" > "${WORK}/extracted.txt"
-if cmp -s "${WORK}/extracted.txt" "${REPO}/architecture/core-baseline.md"; then
+if cmp -s "${WORK}/extracted.txt" "${REPO}/architecture/scopes/source-intelligence.md"; then
   ok "ROLE content region byte-identical to source file"
 else
   bad "ROLE content mutated" "extracted region differs from the source file"
@@ -325,7 +324,7 @@ if grep -q "Omitting this section is the expected outcome" "${PR}" && grep -q "D
 else bad "DEFERRAL no-pressure wording" "prompt lacks the anti-fabrication instruction"; fi
 
 reset_state
-rc=$(run_tool --contract contracts/F-0001_contract.md --architecture architecture/core-baseline.md F-0001 4)
+rc=$(run_tool --contract contracts/F-0001_contract.md --architecture architecture/scopes/source-intelligence.md F-0001 4)
 if [[ "${rc}" == "0" ]]; then ok "ROLE role-flags-only call needs no positional artifact"
 else bad "ROLE role-only call" "rc=${rc} — CHG-B could not avoid the compatibility path"; fi
 

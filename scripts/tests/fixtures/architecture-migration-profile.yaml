@@ -1,0 +1,13 @@
+profile_id: implementation-profile
+profile_version: 1
+status: approved
+primary_language: rust
+applies_to:
+  scope: cohort_ids
+  feature_ids: []
+  cohort_ids: [example]
+exceptions:
+  - scope: cohort_id
+    id: example
+    language: rust
+    rationale: shared architecture

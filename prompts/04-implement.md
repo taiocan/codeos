@@ -25,49 +25,45 @@ Existing unchanged DBA-1 approvals remain valid even when their metadata differs
 specification artifact changed after its earlier approval, the package is unapproved until all
 three are reviewed together and record one new approval decision.
 
-**Cohort eligibility check (if `features/registry.yaml` exists):** read this feature's registry
-entry.
-- If `architecture_cohort` is absent or `null` — no further check; proceed.
-- If it names a cohort: find that cohort's `architecture_cohorts` entry. If `status` is not
-  `approved` — including `declared`, `gate-in-progress`, or the compatibility state
-  `baseline-approved`, all three of which block Stage 4 identically — or the entry (or either of
-  its `baseline_version`/`logical_design_version`) is missing entirely — **STOP**. This feature is
-  not eligible for Stage 4 yet; report the specific gap and point to
-  `.codeos/prompts/03b-architecture-synthesis.md` rather than proceeding.
-- If `approved`: verify **both** referenced versions — `baseline_version` equals
-  `architecture/core-baseline.md`'s current `Baseline version` field exactly, **and**
-  `logical_design_version` equals `architecture/cohort-logical-design.md`'s current `Logical design
-  version` field exactly. A value matching only a file under `architecture/history/` is **stale,
-  not valid** for either — treat it the same as a non-`approved` status and **STOP**; historical
-  files are a provenance record for already-completed Stage 4 work, never a valid reference for
-  entering Stage 4 now. See the `architecture_synthesis_policy` component selected by
-  `.codeos/dba-system.md` →
-  "Verifying a `baseline_version` or `logical_design_version` reference."
+**Architecture eligibility check:** run:
+
+```bash
+.codeos/scripts/codeos-review.sh inspect-architecture-scopes --feature [feature_id]
+```
+
+If inspection reports malformed metadata or conflicting membership, **STOP**. Apply the selected
+`architecture_synthesis_policy` to the reported facts:
+
+- No matching scope — assess whether implementation would settle an unresolved project-level or
+  cross-feature structural decision. If no, proceed. If yes or uncertain, **STOP** and use
+  `.codeos/prompts/03b-architecture-synthesis.md`.
+- One matching draft scope — **STOP** and return to Architecture Synthesis.
+- One matching approved scope — proceed under its binding decisions.
+
+The inspector is a deterministic reader, not an approval or architectural-sufficiency authority.
+The scope file remains the authority for membership, decisions, and recorded approval.
 
 **Implementation Profile consultation (if `architecture/implementation-profile.yaml` exists):**
 - Absent, or `status: proposed` at the current path — no profile is binding; proceed with no
   language requirement. (A pending `architecture/proposals/` replacement is never consulted
   here.)
 - `status: approved` — verify `profile_version` matches the file at the current path exactly (not
-  a `proposals/` or `history/` file — same current-only rule as the cohort baseline check above).
+  a `proposals/` or `history/` file).
   Resolve whether this feature is in scope via `applies_to.scope`:
   - `all` — in scope.
   - `feature_ids` — in scope iff this feature's id is listed.
-  - `cohort_ids` — in scope iff this feature's `architecture_cohort` (from `features/registry.yaml`)
-    is listed.
   - Not in scope — no requirement applies; proceed.
-  - In scope — check for a matching exception. A feature-level exception overrides a matching
-    cohort-level exception (more specific). Multiple matching exceptions at the *same*
-    specificity that disagree — **STOP**, the profile is invalid for this feature. Otherwise: the
-    matched exception's `language` is binding if one applies; else `primary_language` is binding.
+  - In scope — check for a matching feature exception. Multiple matching exceptions that disagree —
+    **STOP**, the profile is invalid for this feature. Otherwise, the matched exception's `language`
+    is binding if one applies; else `primary_language` is binding.
     If the binding language has an applicable Codeos pattern (e.g. `rust` →
     `.codeos/patterns/rust-project-structure.md`), consult it — advisory only, never overriding an
-    approved Architecture Baseline or another project-specific decision.
-- **Profile–Baseline consistency check:** if this feature also has an approved Architecture
-  Baseline whose authoritative decisions specify a language for this feature that conflicts with
+    applicable approved project architecture or another project-specific decision.
+- **Profile–Architecture consistency check:** if applicable approved project architecture specifies
+  a language for this feature that conflicts with
   the profile's resolution above, and no exception reconciles it — **STOP**. Ineligible,
   unreconciled contradiction; neither artifact is silently preferred. See the
-  `implementation_profile_policy` component selected by `.codeos/dba-system.md` → "Profile–Architecture Baseline
+  `implementation_profile_policy` component selected by `.codeos/dba-system.md` → "Profile–Architecture
   consistency."
 
 ## What You Receive
