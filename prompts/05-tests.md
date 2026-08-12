@@ -11,14 +11,6 @@ Implementation admitted by the Stage 4 `delivery-entry` adapter.
 
 - [ ] Implementation in `modules/` is available for verification
 
-**Controlled Plain English check (if `architecture/controlled-plain-english.yaml` exists):** read
-its `status` per the Optional Mechanism Status Convention's four-outcome table
-(`.codeos/templates/conventions.md`). Absent or `disabled` → proceed unaffected. `enabled` → read
-`.codeos/patterns/controlled-plain-english.md`; if missing/unreadable, **STOP** and report a
-pattern-access error; otherwise apply **factual reporting** (not Layer B) — this stage verifies
-already-decided behavior, it does not specify new requirements (Layer C1 always applies
-regardless). Malformed status file → **STOP** and report a configuration error.
-
 ## What You Produce
 
 Two test files per feature:

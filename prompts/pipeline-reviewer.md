@@ -59,15 +59,6 @@ wrong but is technically outside the stage under review, report it.
 The human will decide what to act on. Your job is to surface what matters, not to gate
 what proceeds.
 
-**Controlled Plain English check (if `architecture/controlled-plain-english.yaml` exists):** read
-its `status` per the Optional Mechanism Status Convention's four-outcome table
-(`.codeos/templates/conventions.md`). Absent or `disabled` → proceed unaffected. `enabled` → read
-`.codeos/patterns/controlled-plain-english.md`; if missing/unreadable, **STOP** and report a
-pattern-access error; otherwise apply **Layer D1 always, Layer D2 when enabled** to this
-assessment's prose (Layer C1 always applies regardless of the toggle). Malformed status file →
-**STOP** and report a configuration error. This check does not alter the Output Format below —
-the assessment still ends with the Observations section.
-
 ---
 
 ## Typical Assessment Areas

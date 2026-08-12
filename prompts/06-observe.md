@@ -5,14 +5,6 @@
 Run representative scenarios when the environment permits. If an action is designated as
 controlled, obtain human authorization before running it. Never fabricate runtime evidence.
 
-**Controlled Plain English check (if `architecture/controlled-plain-english.yaml` exists):** read
-its `status` per the Optional Mechanism Status Convention's four-outcome table
-(`.codeos/templates/conventions.md`). Absent or `disabled` → proceed unaffected. `enabled` → read
-`.codeos/patterns/controlled-plain-english.md`; if missing/unreadable, **STOP** and report a
-pattern-access error; otherwise apply **factual reporting** (not Layer B) to any observation summary
-you write — this stage reports what was observed, it does not specify (Layer C1 always applies
-regardless). Malformed status file → **STOP** and report a configuration error.
-
 ## What Happens in This Stage
 
 1. The agent or human runs the implementation (or automated tests) as permitted

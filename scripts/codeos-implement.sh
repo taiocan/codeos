@@ -45,7 +45,7 @@
 #   if any external tool outside it appears, so this comment cannot silently drift from the code.
 #
 # Activation (Optional Mechanism Status Convention, UPG-0056): a one-line status file, resolved by
-# context the same way codeos-review.sh resolves its writing-discipline file —
+# context from the caller's repository root —
 #   self-dev    (caller git root == this repo): config/delegated-implementation.yaml
 #   downstream  (caller git root != this repo): architecture/delegated-implementation.yaml
 # Four outcomes: absent -> disabled; exact "status: disabled" -> disabled; exact "status: enabled"

@@ -43,6 +43,7 @@ different modes, so the doctrine and the toolkit's own operating guide are separ
 
 ```
 Codeos/
+├── AGENTS.md          — Codex route to CLAUDE.md
 ├── CLAUDE.md          — Codeos Self-Development guide (governs toolkit changes)
 ├── dba-system.md      — Downstream DBA entrypoint (loaded via .codeos/dba-system.md)
 ├── dba/               — Version-selected doctrine, policies, tool contract, and configuration
@@ -66,6 +67,7 @@ Codeos/
 │   ├── event-schema.md
 │   ├── feature-spec.md
 │   ├── refinement.md
+│   ├── project-AGENTS.md
 │   └── project-CLAUDE.md
 │
 ├── scripts/
@@ -79,6 +81,7 @@ Codeos/
 ```
 myproject/
 ├── .codeos -> /home/arc/projects/claude/Codeos   (symlink)
+├── AGENTS.md          — Codex route to CLAUDE.md
 ├── CLAUDE.md          — Project-level instructions; references .codeos/dba-system.md
 ├── intents/           — Feature intents (one .md per feature)
 ├── contracts/         — Behavioral contracts (one .md per feature)

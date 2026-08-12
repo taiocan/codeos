@@ -7,7 +7,7 @@
 # What it does:
 #   1. Creates .codeos symlink → Codeos toolkit
 #   2. Creates project directory structure
-#   3. Generates CLAUDE.md from template
+#   3. Generates CLAUDE.md and AGENTS.md from templates
 #   4. Generates docs/conventions.md
 #   5. Initializes git repo (if not already one)
 #   6. Adds git remote (if remote URL provided)
@@ -101,7 +101,19 @@ else
     echo "[ok]   CLAUDE.md (from template)"
 fi
 
-# ── 6. Naming conventions ───────────────────────────────────────────────────
+# ── 6. Project AGENTS.md ────────────────────────────────────────────────────
+
+PROJECT_AGENTS="$PROJECT_DIR/AGENTS.md"
+AGENTS_TEMPLATE="$CODEOS_PATH/templates/project-AGENTS.md"
+
+if [ -f "$PROJECT_AGENTS" ]; then
+    echo "[skip] AGENTS.md already exists"
+else
+    cp "$AGENTS_TEMPLATE" "$PROJECT_AGENTS"
+    echo "[ok]   AGENTS.md (from template)"
+fi
+
+# ── 7. Naming conventions ───────────────────────────────────────────────────
 
 CONVENTIONS="$PROJECT_DIR/docs/conventions.md"
 if [ -f "$CONVENTIONS" ]; then
@@ -111,7 +123,7 @@ else
     echo "[ok]   docs/conventions.md (from template)"
 fi
 
-# ── 7. Codebase digest placeholder ─────────────────────────────────────────
+# ── 8. Codebase digest placeholder ─────────────────────────────────────────
 
 DIGEST="$PROJECT_DIR/docs/codebase-digest.md"
 if [ -f "$DIGEST" ]; then
@@ -122,7 +134,7 @@ else
     echo "[ok]   docs/codebase-digest.md (template — complete after first implementation)"
 fi
 
-# ── 8. Implementation Profile ────────────────────────────────────────────────
+# ── 9. Implementation Profile ────────────────────────────────────────────────
 
 ARCH_DIR="$PROJECT_DIR/architecture"
 PROFILE="$ARCH_DIR/implementation-profile.yaml"
@@ -134,18 +146,6 @@ else
     mkdir -p "$ARCH_DIR"
     cp "$PROFILE_TEMPLATE" "$PROFILE"
     echo "[ok]   architecture/implementation-profile.yaml (from template — status: proposed, non-binding)"
-fi
-
-# ── 9. Controlled Plain English status ───────────────────────────────────────
-
-CPE_STATUS="$ARCH_DIR/controlled-plain-english.yaml"
-
-if [ -f "$CPE_STATUS" ]; then
-    echo "[skip] architecture/controlled-plain-english.yaml already exists"
-else
-    mkdir -p "$ARCH_DIR"
-    printf 'status: enabled\n' > "$CPE_STATUS"
-    echo "[ok]   architecture/controlled-plain-english.yaml (status: enabled)"
 fi
 
 # ── 10. Git init ────────────────────────────────────────────────────────────
@@ -213,8 +213,4 @@ echo "Implementation Profile (architecture/implementation-profile.yaml):"
 echo "  Scaffolded as a non-binding proposal (status: proposed, primary_language: rust)."
 echo "  Edit it, or leave it as-is, then have a human explicitly approve it before"
 echo "  Stage 4 relies on it. See implementation_profile_policy via .codeos/dba-system.md."
-echo ""
-echo "Controlled Plain English (architecture/controlled-plain-english.yaml):"
-echo "  Scaffolded as status: enabled by default. Set it to status: disabled to turn"
-echo "  it off. See controlled_plain_english_policy via .codeos/dba-system.md."
 echo ""

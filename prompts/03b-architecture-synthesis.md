@@ -34,14 +34,6 @@ Verify before starting:
 
 If any check fails, **STOP** and report the specific gap. Do not proceed on a partial cohort.
 
-**Controlled Plain English check (if `architecture/controlled-plain-english.yaml` exists):** read
-its `status` per the Optional Mechanism Status Convention's four-outcome table
-(`.codeos/templates/conventions.md`). Absent or `disabled` → proceed unaffected. `enabled` → read
-`.codeos/patterns/controlled-plain-english.md`; if missing/unreadable, **STOP** and report a
-pattern-access error; otherwise apply Layer B to the Baseline's and Cohort Logical Design's
-Authoritative/Logical Design Decisions prose (Layer C1 always applies regardless). Malformed status
-file → **STOP** and report a configuration error.
-
 ---
 
 ## The Synthesis Pipeline

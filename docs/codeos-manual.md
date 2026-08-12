@@ -630,14 +630,14 @@ the supporting classifications:
 
 The toolkit ships fill-in templates for every artifact (intent, contract, event schema,
 feature spec, refinement, arch-refinement, codebase digest, conventions, feature brief,
-feature registry, handoff, project `CLAUDE.md`, review file, review package) and a
+feature registry, handoff, project `AGENTS.md` and `CLAUDE.md`, review file, review package) and a
 sequential prompt for each step.
 
 `scripts/dba-init.sh`, run from a new project root, scaffolds the project: it creates the
 `.codeos` symlink to the toolkit; creates `intents/`, `contracts/`, `events/`, `modules/`,
 `tests/behavioral/`, `tests/replay/`, `docs/`, `features/`, `backlog/`, and
 `refinements/arch/`; seeds `features/registry.yaml`, an empty `events/runtime_events.jsonl`,
-a project `CLAUDE.md`, `docs/conventions.md`, and a codebase-digest placeholder; initializes
+a project `AGENTS.md` and `CLAUDE.md`, `docs/conventions.md`, and a codebase-digest placeholder; initializes
 git on branch `main`; and optionally adds a remote. The human then fills in the project
 intent and conventions and pastes `prompts/00-session-start.md` to begin.
 

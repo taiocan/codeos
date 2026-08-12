@@ -75,14 +75,7 @@ non-binding. If the file does not exist, state: "No Implementation Profile decla
 with no Stage 4 language requirement." See the `implementation_profile_policy` component selected
 by `.codeos/dba-system.md`.
 
-**3f — Controlled Plain English status:** if `architecture/controlled-plain-english.yaml` is
-absent, say nothing about it (no new message for existing/legacy projects). If present and
-`status: disabled`, report "Controlled Plain English: disabled." If present and `status: enabled`,
-report "Controlled Plain English: enabled." If present but malformed (anything other than exactly
-`status: enabled` or `status: disabled`), **STOP** and report a configuration error — do not
-continue the session-start sequence past this point.
-
-After completing 3a–3f, state:
+After completing 3a–3e, state:
 `CURRENT STATE VERIFIED — Branch: <branch>, Commit: <sha>, Tree: <clean|dirty>, Feature: <id|none>, Stage: <N|unknown>`
 
 **Repair-Before-Next-Feature check:** Before proceeding to Step 4, check whether the

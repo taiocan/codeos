@@ -70,15 +70,6 @@ entry.
   `implementation_profile_policy` component selected by `.codeos/dba-system.md` → "Profile–Architecture Baseline
   consistency."
 
-**Controlled Plain English check (if `architecture/controlled-plain-english.yaml` exists):** read
-its `status` per the Optional Mechanism Status Convention's four-outcome table
-(`.codeos/templates/conventions.md`). Absent or `disabled` → proceed unaffected. `enabled` → read
-`.codeos/patterns/controlled-plain-english.md`; if missing/unreadable, **STOP** and report a
-pattern-access error; otherwise apply **factual reporting** (not Layer B) to this stage's Review
-Package free text and Known Tensions disclosure — this is an implementation-evidence report, not a
-specification (Layer C1 always applies regardless of the toggle). Malformed status file → **STOP**
-and report a configuration error.
-
 ## What You Receive
 
 - Approved intent: `intents/[feature_id].md`

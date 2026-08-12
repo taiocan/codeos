@@ -9,14 +9,6 @@ Your job: help the human produce a clean, minimal, implementation-independent in
 
 None — this is the first stage. No prior artifacts required.
 
-**Controlled Plain English check (if `architecture/controlled-plain-english.yaml` exists):** read
-its `status` per the Optional Mechanism Status Convention's four-outcome table
-(`.codeos/templates/conventions.md`). Absent or `disabled` → proceed unaffected. `enabled` → read
-`.codeos/patterns/controlled-plain-english.md`; if missing/unreadable, **STOP** and report a
-pattern-access error (never fall back to memory); otherwise apply Layer B to this Intent's prose
-(Layer C1 always applies regardless of the toggle). Malformed status file → **STOP** and report a
-configuration error.
-
 ## What You Receive
 
 The human's description of what they want a feature to do. Preferred form: a completed

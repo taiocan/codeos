@@ -26,15 +26,6 @@ You MUST have Intent and Contract drafts before starting. Neither needs separate
 either draft when schema work exposes an inconsistency; all three remain `DRAFT` until their one
 package approval.
 
-**Controlled Plain English check (if `architecture/controlled-plain-english.yaml` exists):** read
-its `status` per the Optional Mechanism Status Convention's four-outcome table
-(`.codeos/templates/conventions.md`). Absent or `disabled` → proceed unaffected. `enabled` → read
-`.codeos/patterns/controlled-plain-english.md`; if missing/unreadable, **STOP** and report a
-pattern-access error; otherwise apply Layer B to this schema's purpose/invariant/cardinality prose.
-**Layer C1 always protects event names, field names, and enum values from an approved Event
-Schema**, regardless of the toggle. Malformed status file → **STOP** and report a configuration
-error.
-
 ## What You Receive
 
 - Current Intent: `intents/[feature_id].md`

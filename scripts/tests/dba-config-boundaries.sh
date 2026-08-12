@@ -5,9 +5,6 @@ set -uo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 CODEOS_ROOT="$(cd "${HERE}/../.." && pwd -P)"
-# DBA-2 reuses this unchanged legacy component; its next semantic version is not exempt.
-LEGACY_EXCEPTION="dba/policies/controlled-plain-english/v1.md"
-
 fail() {
   printf 'DBA boundary check failed: %s\n' "$1" >&2
   exit 1
@@ -29,7 +26,6 @@ mapfile -t COMPONENTS < <(
 [[ ${#COMPONENTS[@]} -gt 0 ]] || fail "candidate configuration selects no Markdown components: $1"
 
 checked=0
-exempted=0
 
 for selection in "${COMPONENTS[@]}"; do
   key="${selection%%|*}"
@@ -37,11 +33,6 @@ for selection in "${COMPONENTS[@]}"; do
   component="${CODEOS_ROOT}/${path}"
 
   [[ -f "${component}" ]] || fail "${key} selects missing file: ${path}"
-
-  if [[ "${path}" == "${LEGACY_EXCEPTION}" ]]; then
-    exempted=$((exempted + 1))
-    continue
-  fi
 
   mapfile -t header < <(sed -n '1,4p' "${component}")
   [[ ${#header[@]} -eq 4 ]] || fail "${key} (${path}) has no complete four-line boundary contract"
@@ -55,4 +46,4 @@ for selection in "${COMPONENTS[@]}"; do
   checked=$((checked + 1))
 done
 
-printf 'DBA boundary contract OK: %s (%d checked, %d legacy exception)\n' "$1" "${checked}" "${exempted}"
+printf 'DBA boundary contract OK: %s (%d checked)\n' "$1" "${checked}"

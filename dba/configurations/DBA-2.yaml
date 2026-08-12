@@ -7,7 +7,6 @@ doctrine: dba/doctrine/v2.md
 review_policy: dba/policies/review/v2.md
 architecture_synthesis_policy: dba/policies/architecture-synthesis/v2.md
 implementation_profile_policy: dba/policies/implementation-profile/v2.md
-controlled_plain_english_policy: dba/policies/controlled-plain-english/v1.md
 reviewer_tool_contract: dba/tools/reviewer/v2.md
 
 status: approved

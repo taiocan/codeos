@@ -9,6 +9,8 @@ Active configuration: `.codeos/dba/configurations/DBA-2.yaml`
 The configuration selects the authoritative version of each governed DBA component. Component
 files own their semantics; the configuration only selects which versions are active.
 
+Only the active DBA configuration is supported. Inactive configurations are historical records.
+
 ## Component Boundary Contract
 
 A governed Markdown component created or semantically revised under this model begins with exactly
@@ -23,9 +25,7 @@ out_of_scope: The nearest responsibilities this component must not absorb.
 
 The question defines the component's responsibility. `out_of_scope` names likely ownership
 mistakes, not every dependency. Neither field summarizes or overrides the component's rules. No
-other boundary metadata is supported. The unchanged
-`dba/policies/controlled-plain-english/v1.md` component is the sole grandfathered exception; its
-next semantic version must use this contract.
+other boundary metadata is supported.
 
 A DBA configuration MUST NOT become active unless it passes the focused boundary-contract test
 immediately before the active-configuration pointer changes:
@@ -44,9 +44,8 @@ At the start of a DBA session:
 4. Read each other selected component when its policy or tool applies to the current work.
 
 All selected components are jointly authoritative. A reference to `doctrine`, `review_policy`,
-`architecture_synthesis_policy`, `implementation_profile_policy`,
-`controlled_plain_english_policy`, or `reviewer_tool_contract` means the component file selected
-under that key by the active configuration.
+`architecture_synthesis_policy`, `implementation_profile_policy`, or `reviewer_tool_contract`
+means the component file selected under that key by the active configuration.
 
 Unversioned canonical resources are not selected through this configuration. Continue to use their
 normal paths, including `.codeos/prompts/`, `.codeos/templates/`, `.codeos/patterns/`,

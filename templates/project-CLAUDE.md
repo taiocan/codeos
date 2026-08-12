@@ -2,6 +2,12 @@
 
 This project uses **Declarative Behavioral Architecture (DBA)** / **Intent-Driven System (IDS)** methodology.
 
+## Minimum Complexity
+
+Use the smallest solution, change, artifact, and response that satisfies the current need. Prefer
+deletion, reuse, and one clear path. Do not obtain simplicity by changing exact meaning, names or
+literals, normative strength, quantities, or unresolved decisions.
+
 ## Toolkit
 
 The DBA toolkit is at `.codeos/` (symlinked from `/home/arc/projects/claude/Codeos`).
