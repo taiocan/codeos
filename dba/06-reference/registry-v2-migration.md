@@ -1,3 +1,8 @@
+---
+component_question: How should an existing feature registry be migrated to the version 2 schema?
+out_of_scope: Feature lifecycle semantics, registry-tool implementation, architecture records, and future schema versions.
+---
+
 # Feature Registry Schema v2 Migration Guide
 
 `dba/05-guidance/templates/feature-registry.yaml`'s schema was revised (`UPG-0041`, 2026-07) to add a
@@ -42,9 +47,9 @@ status: active   # active | suspended | complete | blocked
 status: active   # hypothesized | active | suspended | blocked | complete
 ```
 
-`hypothesized` represents a feature produced by Onboarding (Session Type D) whose Stage 1
-Intent is `HYPOTHESIZED_INTENT`, not yet approved — it must enter a mutually consistent
-Specification Package and receive the package's single approval before implementation.
+`hypothesized` represents a draft feature registered before Specification Package approval. Its
+normal draft Intent must enter a mutually consistent package and receive the package's single
+approval before implementation.
 
 **If your registry encodes the DBA stage directly into the status string** (e.g.
 `stage0-hypothesized`, `stage1`, `stage4`, `complete`) — this is a different, incompatible
@@ -56,7 +61,7 @@ Split it back into the two separate fields v2 keeps distinct:
 | `stage0-hypothesized` | `hypothesized` | `0` (or `null`) |
 | `stage0` | `active` | `0` |
 | `stage1` … `stage9` | `active` | `1` … `9` |
-| `complete` | `complete` | (leave as-is, or `10` if you track a final stage) |
+| `complete` | `complete` | `9` or `null` |
 
 Do **not** recombine stage and status into one string in v2 — `status` is lifecycle/decision
 state; `current_stage` is DBA workflow position. Keeping them independent is what lets a
@@ -70,7 +75,7 @@ possibly re-deriving its value per the table above. If your registry only had a
 stage-encoded status string, split it out per step 2.
 
 ```yaml
-current_stage: 1   # 0 | 1–10 | null
+current_stage: 1   # 0 | 1–9 | null
 ```
 
 ## 4. Keep (or add) `slug`

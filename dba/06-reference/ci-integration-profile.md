@@ -1,3 +1,8 @@
+---
+component_question: How may downstream projects map existing DBA evidence into optional CI checks?
+out_of_scope: Mandatory Codeos gates, CI vendor configuration, feature requirements, and installation automation.
+---
+
 # CI Integration Profile
 
 > **Optional, illustrative, not enforced.** Nothing in this document is required by Codeos.
@@ -9,6 +14,10 @@ Local evidence (a passing behavioral test suite, a clean replay run) can silentl
 from what CI actually checks if CI was never told what DBA-specific evidence exists to check
 in the first place. This document closes that gap by naming, for each evidence type Codeos
 already produces, what a corresponding CI gate could look like.
+
+Sections 2, 3, 5, and 6 apply only to features whose Contract selects `events`. A feature using
+`external-observation` should run the verification for its declared observation artifact instead;
+this profile does not define a second CI taxonomy for that path.
 
 Related but distinct: [`workflow-profiles.md`](workflow-profiles.md) covers branch/PR
 discipline (when to branch, when to split a PR). This document covers what CI *checks* once

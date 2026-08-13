@@ -1,3 +1,8 @@
+---
+component_question: What do recurring project-specific Codeos terms mean authoritatively?
+out_of_scope: Ordinary technical vocabulary, workflow instructions, historical definitions, and downstream project glossaries.
+---
+
 # Codeos Terminology
 
 This is the canonical lookup and definition source for recurring, project-specific Codeos terms.
@@ -9,7 +14,7 @@ Ordinary technical vocabulary does not belong here. Git preserves the history of
 |---|---|
 | **Alias** | An alternative input form accepted for compatibility, migration, or user preference and resolved before domain logic runs. |
 | **Architecture Scope** | The single artifact for one project-level architectural scope. Its filename identifies the scope; it owns feature membership, structural decisions, and recorded human approval and cannot invent or alter behavior. |
-| **Artifact status** | The lifecycle value of a governed artifact: `DRAFT`, `APPROVED`, `IN_PROGRESS`, or `COMPLETE`; onboarding Intent may also use `HYPOTHESIZED_INTENT`. |
+| **Artifact status** | The lifecycle value of a governed artifact: `DRAFT`, `APPROVED`, `IN_PROGRESS`, or `COMPLETE`. |
 | **Behavioral Contract** | Observable truths derived from Intent, normally expressed as Given/When/Then conditions. |
 | **Behavioral Event** | A runtime event representing a verified outcome. |
 | **Behavioral invariant** | A condition that must remain true in externally observable behavior, independent of internal implementation structure. |
@@ -21,10 +26,10 @@ Ordinary technical vocabulary does not belong here. Git preserves the history of
 | **Correlation ID** | The UUID linking all runtime events from one feature execution chain. |
 | **Declarative Behavioral Architecture (DBA)** | The Codeos model, also called Intent-Driven System (IDS), that carries human intent through behavioral contracts, implementation, runtime evidence, reconciliation, replay, and targeted refinement. |
 | **Event Spine** | The complete ordered set of events a feature is permitted to emit. |
-| **Evidence Quality** | Environment fidelity independent of semantic alignment: 1 Specification, 2 Static, 3 Simulated, 4 Real boundary, 5 Production. |
+| **Evidence source** | The strongest direct basis for a reconciliation result: `runtime`, `test`, `static`, or `none`. It is not a confidence or quality score. |
+| **Reconciliation status** | One of `ALIGNED`, `GAP`, `MISMATCH`, or `MISSING`. The row note explains the specific issue; status names do not encode gap subtypes. |
 | **External Event** | A runtime event representing a side effect on a system outside the governed boundary. |
 | **Failure Event** | A runtime event representing a classified error condition. |
-| **HYPOTHESIZED_INTENT** | The status of an onboarding Intent draft that has not yet passed through the specification-approval adapter. |
 | **Implementation Profile** | An approved project-level statement of preferred implementation language and scope that implementation must consult. |
 | **Intent** | Why a feature exists, expressed as actor and desired outcome without implementation details. |
 | **NORMAL** | The default Codeos self-development classification for work that does not reasonably risk an approved consequential boundary. |

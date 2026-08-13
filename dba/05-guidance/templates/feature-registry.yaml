@@ -15,8 +15,7 @@
 #
 # Status values (lifecycle / decision state — never encodes stage; see current_stage
 # below for workflow position; keep the two independent):
-#   hypothesized — produced by Onboarding (Session Type D); HYPOTHESIZED_INTENT, not yet through
-#                  the specification-approval adapter
+#   hypothesized — draft feature registered before Specification Package approval
 #   active       — currently progressing through the DBA stage loop
 #   suspended    — work paused; evidence chain preserved
 #   blocked      — blocked by an unresolved dependency or finding
@@ -24,7 +23,7 @@
 #
 # current_stage values (DBA workflow position — independent of status above):
 #   0    — brief / pre-Stage-1
-#   1–10 — current DBA stage
+#   1–9  — current DBA stage
 #   null — not yet placed in the normal stage flow
 #
 # reconciliation_status / replay_status values:
@@ -42,7 +41,7 @@ features:
     type: F                       # F (feature) | R (refinement of an existing feature)
     status: active                # hypothesized | active | suspended | blocked | complete
     branch: feature/example       # git branch tracking this feature
-    current_stage: 1              # 0 | 1–10 | null — see current_stage values above
+    current_stage: 1              # 0 | 1–9 | null — see current_stage values above
     intent: null                  # path to approved intent artifact, or null
     contract: null                # path to approved contract artifact, or null
     event_schema: null            # path to approved event schema artifact, or null
@@ -52,10 +51,3 @@ features:
     replay_status: na             # pending | passed | failed | na
     blockers: []                  # structured list of blocking issues; empty if none — see notes below for free-form context
     notes: ""                     # free-form context or next action; does not replace structured blockers above
-
-architectural_refinements:
-  - refine_id: example_refine
-    description: "Brief description of the structural change"
-    status: step2  # step1 | step2 | step3 | step4 | step5 | complete
-    artifact: refinements/arch/example_refine.md
-    notes: ""

@@ -1,7 +1,8 @@
 const PREAMBLE: &str = "\
 > [INFERRED] fields were populated automatically by extracting risk bullets from the source\n\
 > document — verify before submitting. [FILL] fields require human or model authorship.\n\
-> ADR candidates are non-authoritative until routed through Stage 1–3 or Stage 10.";
+> ADR candidates are non-authoritative until routed through the Specification Package,\n\
+> an architecture scope, normal engineering, or no action.";
 
 const RISKS_HEADING: &str = "## Architectural Risks";
 
@@ -72,8 +73,9 @@ Options: [FILL]\n\
 Risk if deferred: [FILL]\n\
 Does this affect behavior: [FILL]\n\
 Recommended route: [FILL]\n\
-- Stage 1–3\n\
-- Stage 10\n\
+- Specification Package / refinement\n\
+- architecture scope\n\
+- normal engineering\n\
 - no action yet\n",
             n = i + 1,
             risk = risk,

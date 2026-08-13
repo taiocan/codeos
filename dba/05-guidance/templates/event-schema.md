@@ -8,6 +8,10 @@ This is the most constraining artifact in the DBA loop.
 Implementation may emit only governed events authorized here. Changes follow the selected doctrine
 through the specification-approval adapter and the applicable verification path.
 
+Every Specification Package contains this artifact. In `external-observation` mode it records that
+the feature defines no governed internal events and maps Contract outcomes to the declared external
+observation artifact.
+
 DERIVED FROM:
 - intents/[feature_id].md (actors, outcomes)
 - contracts/[feature_id]_contract.md (state transitions, failure modes)
@@ -16,6 +20,19 @@ DERIVED FROM:
 ## Naming Convention
 
 See `docs/conventions.md` (source: `.codeos/dba/05-guidance/templates/conventions.md`).
+
+## Observation Mode
+
+**Mode:** `events` | `external-observation`
+
+For `events`, complete the event sections below. For `external-observation`, state:
+
+- Governed internal events: `none`
+- Observation artifact: [exact Contract reference]
+- Outcome coverage: [Contract outcome → observable evidence]
+
+Then remove Required Base Fields, Event Definitions, Event Flow, and Cross-module events as
+inapplicable; retain the Coverage Check using Contract outcomes instead of failures/events.
 
 ## Required Base Fields (all events)
 
@@ -33,15 +50,6 @@ Every event must include these fields:
 ```
 
 `correlation_id` is mandatory and must propagate through the entire execution chain.
-
-## Design Notes
-
-<!--
-Record implementation context, timing, and rationale here.
-This section is for implementers — it is NOT part of the observable event contract.
-Put here: processing loops, ordering assumptions, cross-module timing, architectural decisions.
-Do NOT put these in Event Definitions or the Event Flow diagram.
--->
 
 ## Event Definitions
 
@@ -108,14 +116,15 @@ If none, state "none".
 ## Coverage Check
 
 <!--
-Every failure in contracts/[feature_id]_contract.md must appear here as a FAILURE event.
-Every new payload field or event must trace to an approved contract clause.
+In `events` mode, every governed failure that uses an event signal must appear here as an authorized
+FAILURE event and every event/payload field must trace to the Contract. In
+`external-observation` mode, map every Contract outcome to the declared observation evidence.
 Fill this table before submitting for approval.
 -->
 
-| Contract Failure | Event Here | Status |
+| Contract Requirement | Governed Event / Observation Evidence | Status |
 |---|---|---|
-| [failure_name from contract] | [FailureEventName] | COVERED / MISSING |
+| [scenario, outcome, or failure] | [EventName or external evidence] | COVERED / MISSING |
 
 <!--
 Also verify before submitting:

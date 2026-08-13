@@ -1,3 +1,8 @@
+---
+component_question: How is the advisory reviewer pipeline designed to collect evidence and preserve human authority?
+out_of_scope: Review policy, approval decisions, substantive feature correctness, and authoritative artifact schemas.
+---
+
 # Codeos Reviewer Pipeline — Manual Advisory Codex Reviewer
 
 *A read-only, advisory, cross-model reviewer for DBA decisions. It compresses relevant
@@ -66,9 +71,8 @@ policy named by their active configuration.
 - **The human** decides. The reviewer recommends with non-gatekeeping vocabulary; `APPROVE`
   is reserved for the human.
 
-This inherits the stance of `dba/03-prompts/review/pipeline-reviewer.md` (the interactive Reviewer
-Activation Package). This pipeline is the *automated* path; `dba/03-prompts/review/reviewer-automated.md`
-documents the prompt/packet convention.
+The optional `dba/03-prompts/review/pipeline-reviewer.md` provides a broader supplementary review
+stance. The automated path is defined by the task prompt and reviewer implementation below.
 
 ## 2. The minimal prompt, the rich packet
 
@@ -76,10 +80,9 @@ The static reviewer task — five focused questions, what-not-to-do guidance, fi
 triage rule, and required output shape — is defined in `dba/03-prompts/review/codeos-reviewer-task.md`
 and injected at the top of every packet by `dba/04-tools/reviewer/codeos-review.sh`. What makes the
 review *DBA-specific* rather than generic is the **evidence packet** that follows: review
-context (feature/stage/branch/base+review SHA), the DBA rules relevant to the stage, the
-stage-specific checklist (sourced from `maintenance/backlog/UPG-0003-reviewer-decision-brief.md`), the
-expected stage output, the artifact contents with hashes, and the secret-filtered diff. See
-`dba/03-prompts/review/reviewer-automated.md` for the full packet shape.
+context (feature/stage/branch/base+review SHA), stage-specific checks owned by the reviewer
+implementation, expected stage output, artifact contents with hashes, and the secret-filtered diff.
+The saved packet is the authoritative representation of the exact packet shape.
 
 Immediately after the reviewer task template and before `REVIEW CONTEXT`, every packet
 includes a **`PACKET MANIFEST`** section listing each artifact with its inclusion mode

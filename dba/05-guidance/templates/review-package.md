@@ -43,7 +43,7 @@ Stage purpose: [one sentence]
 
 Files changed: [list]
 Key architectural decisions: [decisions not fully determined by prior approved artifacts]
-What is not covered yet: [explicit list — gaps, MANUAL-PENDING items, deferred paths]
+What is not covered yet: [explicit list — gaps or deferred paths]
 
 Suggested areas to examine:
 - [question 1]

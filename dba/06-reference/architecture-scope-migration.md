@@ -1,3 +1,8 @@
+---
+component_question: How should a downstream project migrate legacy architecture cohorts into current scope artifacts?
+out_of_scope: Architecture approval, new architecture design, ongoing scope management, and migration-tool implementation.
+---
+
 # One-Time Architecture Scope Migration
 
 The lean Architecture Synthesis policy does not read the legacy registry/cohort schema. Convert a

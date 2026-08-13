@@ -1,3 +1,8 @@
+---
+component_question: What shapes and coverage rules describe the reviewer pipeline artifacts?
+out_of_scope: Review timing, approval authority, pipeline operation, feature semantics, and future schema versions.
+---
+
 # Reviewer Pipeline — Artifact Schemas + Coverage Rules (v0)
 
 Descriptive v0 shapes for the on-disk artifacts produced by `dba/04-tools/reviewer/codeos-review.sh`, plus the
@@ -69,8 +74,8 @@ critical/empty state, the REVIEW log flags **MANUAL SECURITY REVIEW REQUIRED**.
 
 ## 1. Review packet (text sent to Codex; canonical copy under `reviews/codex/packets/`)
 
-`Critically assess:` then: the **Scope Contract + Triage Rule** (so the reviewer classifies findings
-by scope — see `dba/03-prompts/review/reviewer-automated.md`); **REVIEW CONTEXT** (`Feature`, `Stage`, `Branch`,
+The task from `dba/03-prompts/review/codeos-reviewer-task.md`, including its scope and triage rules,
+then **REVIEW CONTEXT** (`Feature`, `Stage`, `Branch`,
 `Base commit`, `Review commit` — the packet text may append a human-readable `(+ uncommitted
 workspace changes)` marker; the persisted `review_commit` field is the pure SHA — `Current approved
 stage`, `Evidence coverage` = `coverage_state`, `Workspace dirty`); **DBA RULES**; **STAGE-SPECIFIC

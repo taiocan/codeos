@@ -49,8 +49,9 @@ Approved artifacts used: [FILL]\n\
 Files changed: {files_changed}\n\n\
 Files inspected but not changed: [FILL]\n\n\
 Contract clauses implemented: [FILL]\n\n\
-Schema events emitted: [FILL]\n\n\
-Correlation ID propagation: [FILL]\n\n\
+Observation mode: [FILL]\n\n\
+Governed events emitted / external observation preserved: [FILL]\n\n\
+Correlation ID propagation (events mode): [FILL]\n\n\
 Runtime artifacts touched: [FILL]\n\n\
 Unimplemented clauses: [FILL]\n\n\
 Assumptions: [FILL]\n\n\
@@ -103,8 +104,8 @@ Approved artifacts used: [FILL]\n\n\
 Behavioral tests added: [FILL]\n\n\
 Failure-mode tests added: [FILL]\n\n\
 Invariant tests added: [FILL]\n\n\
-Telemetry/event tests added: [FILL]\n\n\
-Replay tests added: [FILL]\n\n\
+Observation-mode tests added: [FILL]\n\n\
+Replay tests added (events mode): [FILL]\n\n\
 Tests run: {tests_run}\n\n\
 Tests passed: {tests_passed}\n\n\
 Tests failed: {tests_failed}\n\n\
@@ -121,7 +122,12 @@ Why gaps are acceptable or not acceptable: [FILL]\n",
 }
 
 fn fill4() -> (String, String, String, String) {
-    ("[FILL]".into(), "[FILL]".into(), "[FILL]".into(), "[FILL]".into())
+    (
+        "[FILL]".into(),
+        "[FILL]".into(),
+        "[FILL]".into(),
+        "[FILL]".into(),
+    )
 }
 
 fn parse_test_counts(path: &str) -> (String, String, String, String) {
@@ -197,16 +203,16 @@ Feature: {feature}\n\n\
 How the system was run: [FILL]\n\n\
 Input fixture/scenario: [FILL]\n\n\
 Runtime command: [FILL]\n\n\
-Runtime log path: [FILL]\n\n\
-Events captured: {events_captured}\n\n\
-Unexpected events: [FILL]\n\n\
-Missing expected events: [FILL]\n\n\
-Correlation chains observed: [FILL]\n\n\
+Observation mode: [FILL]\n\n\
+Observation artifact/path: [FILL]\n\n\
+Evidence captured: {events_captured}\n\n\
+Unexpected or missing observations: [FILL]\n\n\
+Correlation chains observed (events mode): [FILL]\n\n\
 Sanitization status: [FILL]\n\n\
 Raw logs committed: [FILL]\n\
 - yes/no: [FILL]\n\
 - if yes, why safe: [FILL]\n\n\
-Derived replay fixtures produced: [FILL]\n\n\
+Derived replay fixtures produced (events mode): [FILL]\n\n\
 Ready for reconciliation: [FILL]\n\n\
 Known runtime gaps: [FILL]\n",
         feature = feature_val,

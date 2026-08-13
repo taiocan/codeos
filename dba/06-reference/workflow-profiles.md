@@ -1,3 +1,8 @@
+---
+component_question: How may a project choose branch, pull-request, and CI structure for DBA delivery?
+out_of_scope: Mandatory workflow gates, DBA lifecycle semantics, repository hosting setup, and feature behavior.
+---
+
 # Workflow Profiles
 
 Optional guidance for branch, PR, and CI discipline in DBA projects. A commit and push after the
@@ -61,12 +66,13 @@ Split the feature into up to four sequential PRs, each merged before the next op
 | PR | What it contains | Merge gate | Branch |
 |---|---|---|---|
 | PR 1 — Artifacts | Intent, contract, event schema (Stages 1–3) | `specification-approval` adapter complete | `feature/<feature_id>-artifacts` |
-| PR 2 — Implementation | Code, behavioral tests, telemetry tests (Stages 4–6) | CI green; no intermediate approval | `feature/<feature_id>-implementation` |
-| PR 3 — Runtime evidence | Sanitized fixtures, replay tests, reconciliation reports (Stages 7–8) | Verification evidence complete | `feature/<feature_id>-runtime-replay` |
+| PR 2 — Implementation | Code and observation-mode-appropriate tests (Stages 4–6) | CI green; no intermediate approval | `feature/<feature_id>-implementation` |
+| PR 3 — Runtime evidence | Sanitized event or external-observation evidence and reconciliation (Stages 7–8) | Verification evidence complete | `feature/<feature_id>-runtime-verification` |
 | PR 4 — Refinement | Only if Stage 9 required a substantive change | Applicable doctrine adapter complete | `feature/<feature_id>-refinement` |
 
 **Notes:**
-- Not all four PRs are always needed. A feature with no replay evidence skips PR 3.
+- Not all four PRs are always needed. Combine PR 3 with PR 2 when the evidence remains small and
+  independently reviewable.
 - Each PR should be reviewable in isolation; the reviewer agent gets the diff for that
   PR only, not the full feature history.
 - If PR 2 reveals a design issue, go back to PR 1 (already merged) via a follow-up

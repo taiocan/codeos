@@ -1,97 +1,43 @@
-# Stage 8: Replay Verification
+---
+component_question: How should recorded evidence verify deterministic approved behavior before final acceptance?
+out_of_scope: Defining new behavior, implementing fixes, changing event schemas, and making the acceptance decision.
+---
 
-<!-- DOCTRINE ADAPTER: final-acceptance
-Operationalizes the active doctrine's final feature decision boundary. -->
+# Stage 8: Replay Verification and Final Acceptance
 
-## Your Role
-
-You verify that the system produces deterministic, replayable behavior.
-The runtime event log is evidence of what occurred; it does not redefine approved requirements.
+<!-- DOCTRINE ADAPTER: final-acceptance -->
 
 ## Purpose
 
-Replay verification confirms:
-1. Every event in `events/runtime_events.jsonl` conforms to the approved schema
-2. The event sequence matches the expected flow from the contracts
-3. Correlation IDs form complete, unbroken chains
-4. Re-running the same inputs against the same implementation produces the same events
+Verify repeatable conformance to the approved Specification Package and present the delivery result
+for final human acceptance.
 
-This creates a guarantee: same inputs + same module version + same constraints → same resulting truth.
+## Inputs / Prerequisites
 
-## Preconditions
+Read the Stage 7 reconciliation and resolve or explicitly carry every non-`ALIGNED` item. Read the
+Contract's observation mode and applicable replay or external-observation tests.
 
-- [ ] Stage 7 reconciliation is complete and its findings are available
+## Task
 
-- [ ] `events/runtime_events.jsonl` — populated
-- [ ] Replay tests in `tests/replay/` — present
+- In `events` mode, verify schema conformance, governed event sequence, correlation chains, and
+  deterministic payload content. A chain may contain one event when that event validly represents
+  the complete governed outcome.
+- Compare repeat runs using governed sequence and deterministic payload semantics. Ignore generated
+  IDs, timestamps, and other nondeterministic envelope fields unless the Contract governs them.
+- In `external-observation` mode, rerun the declared verification and compare the governed
+  observable outcomes; do not require an event log or event replay.
+- Report nondeterminism, missing fixtures, and environment limitations. Runtime evidence never
+  amends approved requirements.
 
-## What You Verify
+## Applicable Checks
 
-### 1. Schema Conformance
+Use the selected review policy at this final decision boundary. Build the final inline Review
+Package from the current template and available evidence.
 
-For every event in `runtime_events.jsonl`:
-- `event_type` appears in the approved schema
-- All required base fields present (`event_id`, `event_type`, `timestamp`, `correlation_id`, `source_module`)
-- Payload fields match the schema definition
+## Output / Next Action
 
-### 2. Event Sequence Conformance
+Present the verification result, remaining gaps, and advisory review or waiver, then state:
 
-Does the observed event sequence in the log match the expected flow from the event schema?
-Flag any:
-- Events occurring out of expected order
-- Events that appear without their prerequisite events
-- Terminal events (BEHAVIORAL or FAILURE) missing from chains
+`AWAITING FINAL HUMAN ACCEPTANCE`
 
-### 3. Correlation Chain Integrity
-
-For each unique `correlation_id` in the log:
-- Does the chain start with an OBSERVATIONAL or trigger event?
-- Does the chain end with either a BEHAVIORAL (success) or FAILURE event?
-- Are there orphaned events (correlation_id that appears only once)?
-
-### 4. Determinism Check
-
-Run the replay tests in `tests/replay/`:
-- Do they pass against the current log?
-- Does re-running the system produce a new log consistent with the schema?
-
-## Replay Report
-
-### Event Log Summary
-
-| Metric | Value |
-|---|---|
-| Total events in log | N |
-| Events matching schema | N |
-| Events NOT in schema | N (list them) |
-| Unique correlation chains | N |
-| Complete chains (start + end) | N |
-| Broken chains | N (list correlation_ids) |
-
-### Sequence Conformance
-
-| Expected Flow Step | Observed in Log | Status |
-|---|---|---|
-| [EventA → EventB] | [yes/no] | PASS / FAIL |
-
-### Replay Test Results
-
-| Test | Result | Notes |
-|---|---|---|
-| [test name] | PASS / FAIL | |
-
-### Conclusion
-
-Either:
-- "Log conforms to schema and contracts — ready for Stage 9 (if refinements needed) or COMPLETE"
-- "N conformance issues found — return to Stage [X]"
-
-Present the final Review Package using `.codeos/dba/05-guidance/templates/review-package.md`:
-- Stage purpose: Verify deterministic, schema-conforming, correlation-intact event replay.
-- What was verified: [N events inspected for schema conformance, N correlation chains verified, replay test results]
-- Verdict: PASS / FAIL ([N] issues found)
-- What would make this stage stronger: [e.g., "Observe failure path X at real boundary — currently EQ 3", or "none — evidence is sufficient"]
-- Suggested areas: (1) Are schema conformance issues indicating implementation drift rather than test gaps? (2) Do broken correlation chains point to a specific event category or module? (3) Would real-boundary observation of any failure path change the verdict?
-
-Run the default advisory review with Stage ID `8`, then state: **`AWAITING FINAL HUMAN ACCEPTANCE`**.
-The human accepts the feature or requests targeted refinement.
+The human accepts the feature or requests targeted refinement through `09-refine.md`.

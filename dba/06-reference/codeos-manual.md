@@ -1,3 +1,8 @@
+---
+component_question: How does Codeos combine human approval, behavioral artifacts, implementation, and runtime evidence?
+out_of_scope: Authoritative component semantics, project-specific requirements, tool implementation, and vendor-specific setup.
+---
+
 # Codeos: Declarative Behavioral Architecture for Provable AI-Assisted Software Evolution
 
 *An explanatory manual for human-governed, artifact-constrained, event-verifiable development with Claude Code.*
@@ -133,7 +138,7 @@ development:
 | **Implementation-asserting tests** | Tests check private methods and internal state, so they pass while behavior is wrong | Stage 5 rule: tests assert observable outcomes only, in event-schema language |
 | **Runtime/schema divergence** | The log contains fields or types the schema never declared | Stage 7 Schema Payload Drift check (MATCH/TYPE_MISMATCH/ABSENT/EXTRA) |
 | **Rubber-stamping** | Human accepts artifacts mechanically; decisions become theater | Independent advisory review at applicable boundary adapters |
-| **Vertical drift** | Domain logic seeps into a shared infrastructure module, coupling features through the hub | `shared-infrastructure-boundary` pattern; Stage 10 Impact Analysis gate |
+| **Vertical drift** | Domain logic seeps into a shared infrastructure module, coupling features through the hub | `shared-infrastructure-boundary` pattern applied at the relevant implementation or architecture boundary |
 | **Fake source of truth** | A generated plain-language summary is edited and silently becomes authoritative | Human Navigation rule: stored summaries carry provenance, are regenerated, are never DBA artifacts |
 
 Each later Part returns to these dangers and shows the stage or rule that addresses it.
@@ -158,16 +163,16 @@ Codeos is, simultaneously:
 - a **toolkit** — it ships governed DBA components selected through `dba-system.md`, stage prompts (`dba/03-prompts/workflow/`),
   artifact templates (`dba/05-guidance/templates/`), architectural patterns (`dba/05-guidance/patterns/`), and an
   initializer (`dba/04-tools/initializer/dba-init.sh`), symlinked into a project as `.codeos`;
-- a **workflow** — the 9-step DBA loop, plus an alternate 5-step architectural-refinement
-  loop;
+- a **workflow** — the 9-step DBA lifecycle plus entry paths for discovery, onboarding, and
+  project-level architecture work;
 - an **architectural discipline** — it treats event schemas, contracts, and runtime events
   as part of the architecture, not as adjunct documentation;
 - an **audit system** — it enables structural comparison of what was intended, specified,
   implemented, tested, and actually observed at runtime.
 
 This manual additionally characterizes Codeos as an **anti-improvisation system**
-*(interpretation)*: the AI may not add abstractions, events, helper layers, error handling,
-or behavior unless it derives from an approved artifact.
+*(interpretation)*: the AI may use ordinary internal engineering choices, but may not invent
+governed behavior, events, authority, or architecture beyond approved artifacts.
 
 ## What Codeos is NOT
 
@@ -292,13 +297,8 @@ autonomous work. The session-start prompt (`dba/03-prompts/workflow/00-session-s
 - read the project `CLAUDE.md` and note the Active Features table;
 - read `docs/codebase-digest.md` if it exists (structural orientation), or state that none
   was found;
-- determine and confirm the **session type**:
-  - **A — Feature Brief** (new feature discovery → `00b-feature-brief.md`);
-  - **B — Feature Stage Work** (advancing a feature through Stages 1–9);
-  - **C — Architectural Refinement** (structural, non-behavioral change →
-    `10-arch-refine.md`);
-  - **D — Existing Codebase Onboarding** (working code with no DBA artifacts →
-    `00c-onboarding.md`);
+- classify the target work and select the applicable feature, onboarding, exploration,
+  architecture-synthesis, or normal-engineering path;
 - read `features/registry.yaml` if present and report feature status;
 - absorb the session context (today's goal, scope, session-specific forbidden actions);
 - then **STOP** and wait for the human to begin.
@@ -390,15 +390,15 @@ effects on outside systems). Every event carries six required base fields: `even
 
 ### Stage 4 — Implementation
 
-- **Purpose:** Satisfy every approved contract clause and emit every approved schema event —
-  nothing more.
+- **Purpose:** Satisfy every approved contract clause and, in event mode, emit only approved schema
+  events.
 - **Primary artifact:** code in `modules/[feature_id]/`, plus a Contract Satisfaction Table
   and an Event Emission Table.
 - **Boundary owner:** Stage 4 `delivery-entry` doctrine adapter; testing adds no new boundary.
 - **Prevented failure mode:** hidden abstractions, unapproved events, speculative error
   handling, undeclared runtime artifacts.
-- **Proof produced:** code in which the first thing wired up is correlation-ID propagation
-  and event emission, so all behavior is traceable.
+- **Proof produced:** code traceable to every Contract clause and to the approved event or external
+  observation boundary.
 - **Claude constraints:** internal helpers, types, validation, technical errors, and established
   patterns are allowed. They must not change approved behavior, authority, event semantics,
   architecture, safety, authorization, or integrity. All three specification artifacts must be
@@ -411,75 +411,65 @@ effects on outside systems). Every event carries six required base fields: `even
 
 - **Purpose:** Write behavioral truth anchors that fail if observable behavior deviates from
   the contracts.
-- **Primary artifact:** `tests/behavioral/[feature_id]_behavior.test.[ext]` and
-  `tests/replay/[feature_id]_replay.test.[ext]`, plus a Contract Coverage Table.
+- **Primary artifact:** behavioral tests and, in event mode, replay tests, plus a Contract Coverage
+  mapping.
 - **Boundary owner:** —; test evidence passes to runtime verification.
 - **Prevented failure mode:** tests that assert internals and pass while behavior is wrong.
-- **Proof produced:** automated behavioral evidence (happy path, every named failure,
-  telemetry correctness, idempotency if contracted, one test per invariant-falsification
-  row) and a replay test that asserts schema conformance, correlation-chain integrity, and a
-  deterministic event sequence.
-- **Claude constraints:** tests must not touch private methods, internal state, or
-  intermediate computations; all assertions use event names exactly as they appear in the
-  approved schema. The determinism assertion runs the feature twice and asserts the same
-  `event_type` sequence.
+- **Proof produced:** automated evidence for applicable Contract scenarios, failures, and
+  invariants, plus event replay or declared external-observation verification.
+- **Claude constraints:** tests must not touch private methods, internal state, or intermediate
+  computations. Replay compares governed sequence and deterministic payload content, not generated
+  identifiers or timestamps unless contracted.
 - **Verification questions:** Do the tests verify observable behavior or internal details?
   Would each invariant-falsification test actually fail if the named wrong assumption were
   present? Is any clause technically covered but not verifying the right outcome?
 
-## Stages 6–9: Runtime Execution → Reconciliation → Replay → Targeted Refinement
+## Stages 6–9: Runtime Evidence → Reconciliation → Final Verification → Targeted Refinement
 
 ### Stage 6 — Runtime Execution
 
-- **Purpose:** Run the implementation and capture `events/runtime_events.jsonl` as runtime evidence.
-- **Primary artifact:** the populated append-only runtime event log.
+- **Purpose:** Run representative scenarios and capture evidence through the Contract's observation
+  mode.
+- **Primary artifact:** runtime event evidence or the declared external observation artifact.
 - **Boundary owner:** —; record a GAP when evidence cannot be obtained.
 - **Prevented failure mode:** declaring a feature done with no runtime evidence that it
   executed.
-- **Proof produced:** Evidence Level 1 (Direct) observations — real events in the log,
-  including failure paths reproduced via runtime fixtures where practical.
-- **Claude constraints:** Claude's role is advisory (help set up event capture);
-  `runtime_events.jsonl` is append-only — never modified or deleted. Where direct
-  observation of a failure path is impractical (cloud outages, third-party failures,
-  production-only infrastructure), the reason is documented and the row is later classified
-  `GAP (runtime evidence)` rather than forced.
+- **Proof produced:** direct observation of representative outcomes and failures where practical.
+- **Claude constraints:** Stage 6 collects evidence and never adds instrumentation or changes prior
+  evidence. Where direct observation is impractical, record the reason as a reconciliation GAP.
 - **Verification questions:** Do event types match the schema? Are correlation chains
   intact? Are there any unexpected events?
 
 ### Stage 7 — Reconciliation Review
 
-- **Purpose:** A structural audit comparing six layers — intent, contract, event schema,
-  implementation, tests, runtime events — to surface gaps, mismatches, and missing coverage.
+- **Purpose:** Compare applicable specification, implementation, test, and runtime-observation
+  layers to surface gaps, mismatches, and missing requirements.
   This is the heart of the method (see Part IV).
 - **Primary artifact:** the reconciliation table and Findings Summary, with an optional
   Structural Alignment section.
 - **Boundary owner:** —; route findings using the selected doctrine's escalation rules.
 - **Prevented failure mode:** silent drift — divergence between what was intended,
   specified, built, tested, and observed.
-- **Proof produced:** a per-item status across all layers (see the status vocabulary in Part
-  IV), plus a Schema Payload Drift table and an Evidence Quality grading.
-- **Claude constraints:** this is not a code review and never suggests rewrites; status is
-  exactly one of ALIGNED / GAP(...) / MISMATCH / MISSING; structural observations are
-  advisory and do not change verdicts.
-- **Verification questions:** Do any ALIGNED findings have low evidence quality that masks a
-  real gap? Are GAP sub-types correctly classified? Are non-ALIGNED items prioritized to
-  help the human decide what to address first?
+- **Proof produced:** status `ALIGNED`, `GAP`, `MISMATCH`, or `MISSING`, an evidence source
+  (`runtime`, `test`, `static`, or `none`), and a plain explanation for each item.
+- **Claude constraints:** this is not a general code review; structural observations are advisory
+  and do not change behavioral statuses.
+- **Verification questions:** Is each status supported by its evidence? Does every GAP say what is
+  absent without inventing a subtype taxonomy?
 
-### Stage 8 — Replay Verification
+### Stage 8 — Final Verification
 
-- **Purpose:** Confirm the system is deterministically replayable.
-- **Primary artifact:** the replay report (event-log summary, sequence conformance, replay
-  test results).
+- **Purpose:** Confirm repeatable conformance through event replay or the declared external
+  observation.
+- **Primary artifact:** final verification evidence and the inline Review Package.
 - **Boundary owner:** Stage 8 `final-acceptance` doctrine adapter.
-- **Prevented failure mode:** non-determinism and broken or orphaned correlation chains
-  hiding behind green unit tests.
-- **Proof produced:** the guarantee that *same inputs + same module version + same
-  constraints → same resulting events*; every event conforms to schema; every chain starts
-  with a trigger/observational event and ends with a BEHAVIORAL or FAILURE event.
-- **Claude constraints:** out-of-order events, events without prerequisites, and event types
-  absent from the schema are conformance failures that must be resolved.
-- **Verification questions:** Do schema-conformance issues indicate implementation drift
-  rather than test gaps? Do broken chains point to a specific module or event category?
+- **Prevented failure mode:** nondeterminism or observation drift hiding behind green tests.
+- **Proof produced:** repeatable governed outcomes under the same inputs, implementation, and
+  constraints, through event replay or external observation as applicable.
+- **Claude constraints:** generated IDs and timestamps are excluded from determinism comparisons
+  unless contracted. A valid governed outcome may form a single-event chain.
+- **Verification questions:** Does the selected observation mode prove repeatable governed
+  outcomes? Are nondeterminism, missing fixtures, and environment limits explicit?
 
 ### Stage 9 — Targeted Refinement
 
@@ -490,12 +480,11 @@ effects on outside systems). Every event carries six required base fields: `even
 - **Prevented failure mode:** the temptation to answer a bug with a redesign.
 - **Proof produced:** an evidence-linked change with an explicit trigger and a bounded
   re-run set.
-- **Claude constraints:** valid triggers only — RECURRING_FAILURE, RECONCILIATION_GAP,
-  REPLAY_FAILURE, OBSERVABILITY_GAP, or HUMAN_APPROVED_EVOLUTION. Forbidden triggers:
-  elegance, theoretical improvement, "better architecture," single non-recurring incidents.
-  Refinements are ordered by cost — observability first, structural last.
-- **Verification questions:** Is each change the smallest effective fix? Should any be moved
-  to Stage 10 (architectural refinement) instead? Are there observed problems not addressed?
+- **Claude constraints:** use concrete evidence or explicit human evolution authority; a single
+  safety, authorization, or integrity failure is sufficient. Do not use a fixed refinement-cost
+  taxonomy in place of identifying the actual smallest fix.
+- **Verification questions:** Is each change the smallest effective fix, routed through the correct
+  behavioral or architecture authority?
 
 ---
 
@@ -507,13 +496,14 @@ Correlation ID, event kinds);
 `09-refine.md`; `maintenance/archive/terminology.md` (historical event JSON example).*
 
 The strongest claim Codeos makes is operational, not formal. Its three load-bearing
-mechanisms are the event spine, reconciliation, and replay.
+mechanisms are the approved observation boundary, reconciliation, and final verification.
 
 ## Event Spine as operational evidence
 
-Every meaningful runtime action must emit an approved event, written as one JSON object per
-line to the append-only `events/runtime_events.jsonl`. The system therefore produces not
-only a result but a trail from which what happened can be reconstructed.
+In `events` observation mode, governed runtime actions emit approved events, commonly written as
+one JSON object per line to `events/runtime_events.jsonl`. In `external-observation` mode, the
+Contract instead names the artifact that proves its outcomes and the Event Schema records that no
+governed internal events are required.
 
 Every event carries the six required base fields:
 
@@ -546,36 +536,21 @@ This is the gap between "the tests are green" and "the system is demonstrably tr
 
 ## Reconciliation — the heart of the method
 
-Stage 7 is not a code review. It is a structural audit across six layers: intent → contract
-→ schema → implementation → tests → runtime events. The reconciliation table uses a fixed
-column structure and one status per row.
+Stage 7 is not a general code review. It compares the applicable layers from Intent through runtime
+observation. Each row separates result, evidence source, and explanation.
 
 **Status vocabulary (exact):**
 
-- **ALIGNED** — all layers agree.
-- **GAP (implementation)** — specified but not implemented or not tested.
-- **GAP (runtime evidence)** — implemented and tested, but the path was never observed at
-  runtime.
-- **GAP (observability)** — behavior may be occurring but cannot be proven from events
-  alone.
-- **GAP (documentation)** — artifact text does not match implemented reality; no code change
-  needed.
-- **GAP (evidence quality)** — a test passes but the evidence level is below the contract's
-  declared minimum; real-boundary or production observation is still required.
-- **MISMATCH** — two layers disagree (contract says X, runtime shows Y).
-- **MISSING** — a required artifact or event is absent.
+- **ALIGNED** — applicable layers agree.
+- **GAP** — a required layer or strength of evidence is incomplete; the note says what is absent.
+- **MISMATCH** — two applicable layers disagree.
+- **MISSING** — a required artifact, Contract item, or Event-Schema item is absent.
 
-Reconciliation also runs a **Schema Payload Drift** check, comparing observed event payloads
-against the schema field by field, with statuses MATCH / TYPE_MISMATCH / ABSENT / EXTRA. An
-ABSENT required base field defaults to MISSING; an EXTRA field is always a documentation gap
-(undeclared payload evolution).
-
-Two independent axes of evidence are tracked. The **runtime evidence level** (1 Direct, 2
-Indirect, 3 Test, 4 Static, 5 None) records *where* the evidence came from; level 5 makes a
-row MISSING. Separately, the **Evidence Quality scale** (1 Specification, 2 Static, 3
-Simulated, 4 Real boundary, 5 Production) records *environment fidelity*. The key principle:
-alignment and evidence quality are independent — a test can pass (ALIGNED) yet sit at
-Evidence Quality 3 when the contract requires level 4, producing a `GAP (evidence quality)`.
+Evidence source is exactly `runtime`, `test`, `static`, or `none`; it is not a score. When the
+Contract requires a particular environment, the note records the observed environment and a weaker
+environment produces a GAP. Event mode also compares observed payload shape with the Event Schema,
+describing absent, extra, or incompatible fields in the row note rather than creating another
+status vocabulary.
 
 The crucial reframing *(repo-backed in spirit, stated here as interpretation)*: when Stage 7
 finds a GAP, MISMATCH, or MISSING, that is not a failure of the process — it is the method
@@ -583,13 +558,10 @@ working. The system detected drift before it hid inside the code as "working" fu
 
 ## Replay verification
 
-Replay verification is the second half of the evidence regime. The runtime log is useful not
-only as a journal but as repeatable evidence. Given the same inputs and the same approved
-schema, the event history must conform to the schema, correlation chains must be complete
-(start with a trigger/observational event, end with a BEHAVIORAL or FAILURE event), and the
-event sequence must match the contract's expected flow. Replay therefore checks not only
-*that* something happened but that it happened in a way that can be understood, repeated, and
-compared.
+Replay verification checks repeatable governed outcomes. Event mode compares authorized sequence
+and deterministic payload content; external-observation mode reruns the declared verification.
+Generated identifiers and timestamps are ignored unless the Contract governs them, and a
+single-event chain is valid when it completely represents the governed outcome.
 
 Codeos's own scope note matters here: replay tests invoke the real feature and assert
 conformance and determinism; they do **not** re-inject the JSONL back through a replay engine
@@ -609,9 +581,9 @@ the system stable: change is bounded and justified rather than sweeping and aest
 # Part V — Supporting Machinery and Anti-Drift Architecture
 
 *Source basis: active DBA policies, prompts, and templates (artifact use,
-Review Logging, Human Navigation, Architectural Refinement); `dba/05-guidance/templates/` (review-package,
+Review Logging and Human Navigation); `dba/05-guidance/templates/` (review-package,
 review-file, handoff);
-`dba/03-prompts/workflow/10-arch-refine.md`, `00c-onboarding.md`, `pipeline-reviewer.md`;
+`dba/03-prompts/workflow/00c-onboarding.md`, `pipeline-reviewer.md`;
 `dba/05-guidance/patterns/shared-infrastructure-boundary.md`; `dba/04-tools/initializer/dba-init.sh`.*
 
 ## Required vs optional artifacts
@@ -621,22 +593,21 @@ the supporting classifications:
 
 - **Recommended:** Feature Registry (`features/registry.yaml`) for multi-feature projects.
 - **Optional:** Feature Brief (`backlog/[id].md`), Codebase Digest
-  (`docs/codebase-digest.md`), the Stage 7 Structural Alignment section, Architectural
-  Refinement records.
-- **Onboarding-only:** `HYPOTHESIZED_INTENT` drafts from Session Type D, routed through the Stage 3
-  `specification-approval` adapter.
+  (`docs/codebase-digest.md`), and the Stage 7 Structural Alignment section.
+- **Onboarding:** normal draft Feature Brief and Intent inputs, registered through the normal
+  registry model and routed into the Specification Package workflow.
 
 ## Templates, prompts, and project setup
 
 The toolkit ships fill-in templates for every artifact (intent, contract, event schema,
-feature spec, refinement, arch-refinement, codebase digest, conventions, feature brief,
+feature spec, refinement, codebase digest, conventions, feature brief,
 feature registry, handoff, project `AGENTS.md` and `CLAUDE.md`, review file, review package) and a
 sequential prompt for each step.
 
 `dba/04-tools/initializer/dba-init.sh`, run from a new project root, scaffolds the project: it creates the
 `.codeos` symlink to the toolkit; creates `intents/`, `contracts/`, `events/`, `modules/`,
 `tests/behavioral/`, `tests/replay/`, `docs/`, `features/`, `backlog/`, and
-`refinements/arch/`; seeds `features/registry.yaml`, an empty `events/runtime_events.jsonl`,
+supporting directories; seeds `features/registry.yaml`, an empty `events/runtime_events.jsonl`,
 a project `AGENTS.md` and `CLAUDE.md`, `docs/conventions.md`, and a codebase-digest placeholder; initializes
 git on branch `main`; and optionally adds a remote. The human then fills in the project
 intent and conventions and pastes `dba/03-prompts/workflow/00-session-start.md` to begin.
@@ -675,15 +646,12 @@ primarily traceability artifacts. Log fidelity rule: preserve the reviewer's cor
 close to verbatim; compress context, never the insight. Human overrides exist ("do not log
 this review," "journal this," "do not journal this").
 
-## Architectural Refinement (Stage 10) and anti-drift
+## Structural change routing and anti-drift
 
-Some changes alter no contract and emit no event — workspace restructuring, shared-library
-extraction, dependency consolidation, test infrastructure, naming normalization. For these,
-Codeos provides an alternate **5-step architectural-refinement loop** (`dba/03-prompts/workflow/10-arch-refine.md`):
-**Scope Intent → Impact Analysis → Implement → Verify → Reconcile**, each with a human
-approval gate. The deciding rule: a change is *behavioral* (and so belongs to the 9-step loop
-or Stage 9) if it would change any row in a feature's contract or event schema; otherwise it
-is architectural.
+Codeos does not maintain a separate structural-change lifecycle. A change to approved behavior
+returns to the affected Specification Package or targeted refinement. A change that establishes or
+alters a project-level architectural boundary uses the applicable architecture policy. Other
+behavior-neutral structural maintenance follows the project's normal engineering process.
 
 The most subtle structural danger Codeos names is **vertical drift**, addressed by the
 `shared-infrastructure-boundary` pattern. Workspace topology can enforce *lateral* isolation
@@ -694,8 +662,8 @@ while the topology looks intact. The hub becomes "a God module from below." The 
 of the domain vocabulary — need this?"* If no, the addition encodes domain knowledge and
 does not belong in the hub. A genuine exception passes a **Justification Gate**: write one
 sentence explaining why it cannot live in a feature module; if that sentence is hard to
-write, the addition is drift. Stage 10's Impact Analysis applies this test before
-implementation, catching drift at the design gate rather than at reconciliation.
+write, the addition is drift. Apply this test at the implementation or architecture boundary where
+the proposed dependency is decided.
 
 ## The patterns library
 
@@ -748,7 +716,7 @@ When a feature calls an external AI/LLM to generate candidates and then applies 
 to filter them, a behavioral event reporting `proposal_count: 8` is ambiguous: it is
 consistent with "the LLM generated 12 and the filter rejected 4" *and* with "the LLM
 generated exactly 8 and the filter never fired." Runtime observation cannot tell them apart —
-a textbook `GAP (observability)` in Stage 7 terms: the post-generation-filtering invariant is
+a textbook `GAP` in Stage 7 terms: the post-generation-filtering invariant is
 structurally and test-verified but never *observed*. The pattern's fix is minimal and stays
 inside the rules: add a `generated_count` field beside `proposal_count`, with the schema
 invariant `generated_count >= proposal_count`. The gap closes with no new event type and no
@@ -778,11 +746,11 @@ as a whole embodies a Codeos stance *(interpretation)*: architectural knowledge 
 as conditional, auditable patterns with explicit "when this does and does not apply" sections,
 rather than as universal mandates.
 
-## Onboarding existing code (Session Type D)
+## Onboarding existing code
 
-For working code that has no DBA artifacts, Session Type D (`dba/03-prompts/workflow/00c-onboarding.md`)
-bootstraps the minimum needed to enter the pipeline: per module, a draft Feature Brief, a
-draft Intent (`status: HYPOTHESIZED_INTENT`), and a registry entry. Its central warning is
+For working code that has no DBA artifacts, `dba/03-prompts/workflow/00c-onboarding.md`
+bootstraps the minimum needed to enter the pipeline: normal draft Feature Brief and Intent inputs
+and a conforming registry entry. Its central warning is
 against **intent laundering** — describing the code's current behavior as if that behavior
 were the intent, converting accidents into stated goals. The remedy is an evidence priority
 (human interview first; then runtime behavior; then tests; source code structure last, and
@@ -801,17 +769,10 @@ quietly becoming a fake source of truth.
 
 ## Adoption levels
 
-*This manual recommends* thinking about adoption as a gradient, not an all-or-nothing
-commitment. (These levels are this manual's practical guidance; only the onboarding level
-maps to a named repo concept — Session Type D.)
-
-- **Light** — intent + contract + behavioral tests. Captures the discipline of stating
-  observable truth before coding, without the full event/replay machinery.
-- **Standard** — the full 9-step loop with the event spine.
-- **Strict** — the full loop plus event spine, replay verification, review packages, and the
-  architecture journal. Appropriate for production-critical or high-ambiguity-cost domains.
-- **Existing-code onboarding** — Session Type D to bring legacy modules under governance
-  before advancing them through Stage 1.
+Codeos's governed workflow is not divided into adoption tiers. Every feature uses the complete
+Specification Package and nine-stage lifecycle. The Contract selects governed events or external
+observation; optional reviews and durable records apply only when their owning policies require
+them. Existing-code onboarding produces normal draft inputs and then enters that same workflow.
 
 ---
 
@@ -957,10 +918,10 @@ every scenario and every invariant-falsification row to exactly one test.
 
 ### Stage 7 — A reconciliation table row **[illustrative]**
 
-| Item | Intent | Contract | Schema | Impl | Tests | Runtime (evidence) | Status |
-|---|---|---|---|---|---|---|---|
-| Dedup resolves to one canonical listing | ✓ | ✓ | ✓ | ✓ | ✓ | 1 (Direct) | ALIGNED |
-| Deleted listing never searchable | ✓ | ✓ | ✓ | ✓ | ✓ | 3 (Test) | GAP (runtime evidence) |
+| Item | Intent | Contract | Schema | Impl | Tests | Runtime | Status | Evidence | Note |
+|---|---|---|---|---|---|---|---|---|---|
+| Dedup resolves to one canonical listing | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ALIGNED | runtime | observed directly |
+| Deleted listing never searchable | ✓ | ✓ | ✓ | ✓ | ✓ | — | GAP | test | not observed at runtime |
 
 The second row shows the method working: the behavior is implemented and tested, but the
 deletion path was never observed at runtime, so the gap is surfaced rather than assumed
@@ -1086,18 +1047,18 @@ every sentence.
 | DBA vocabulary (Event Spine, Correlation ID, event kinds) | Terminology, prompts, templates | `dba/05-guidance/terminology.md`, `dba/03-prompts/workflow/`, `dba/05-guidance/templates/` |
 | Review Logging; Architecture Journal `AJ-NNN` format | Review policy | `dba-system.md` → `review_policy` |
 | Human Navigation (no fake source of truth) | Manual guidance | `dba/06-reference/codeos-manual.md` |
-| Stage 0 session types A/B/C/D; STOP discipline | Session-start prompt | `dba/03-prompts/workflow/00-session-start.md` |
+| Stage 0 target classification and STOP discipline | Session-start prompt | `dba/03-prompts/workflow/00-session-start.md` |
 | Stage 1 intent rules; cross-examination | Stage 1 prompt; template | `dba/03-prompts/workflow/01-intent.md`, `dba/05-guidance/templates/intent.md` |
 | Stage 2 contracts; boundary + falsification scenarios | Stage 2 prompt; template | `dba/03-prompts/workflow/02-contract.md`, `dba/05-guidance/templates/contract.md` |
 | Stage 3 event spine; six base fields; categories; observation mode | Stage 3 prompt; template | `dba/03-prompts/workflow/03-event-schema.md`, `dba/05-guidance/templates/event-schema.md` |
 | Stage 4 constrained satisfier; no extra events/abstractions | Stage 4 prompt | `dba/03-prompts/workflow/04-implement.md` |
 | Stage 5 behavioral + replay tests; determinism assertion | Stage 5 prompt | `dba/03-prompts/workflow/05-tests.md` |
 | Stage 6 append-only log; runtime fixtures | Stage 6 prompt | `dba/03-prompts/workflow/06-observe.md` |
-| Stage 7 statuses; Schema Payload Drift; Evidence Quality scale | Stage 7 prompt | `dba/03-prompts/workflow/07-reconcile.md` |
+| Stage 7 statuses and evidence sources | Stage 7 prompt | `dba/03-prompts/workflow/07-reconcile.md` |
 | Stage 8 replay guarantee; chain integrity; scope note | Stage 8 prompt | `dba/03-prompts/workflow/08-replay.md` |
-| Stage 9 valid/forbidden triggers; cost order | Stage 9 prompt | `dba/03-prompts/workflow/09-refine.md` |
-| Stage 10 5-step architectural refinement loop | Arch-refine prompt | `dba/03-prompts/workflow/10-arch-refine.md` |
-| Session Type D onboarding; intent laundering; evidence priority | Onboarding prompt | `dba/03-prompts/workflow/00c-onboarding.md` |
+| Stage 9 evidence-backed minimal-change routing | Stage 9 prompt | `dba/03-prompts/workflow/09-refine.md` |
+| Structural change routing | Doctrine and architecture policy | `dba/01-doctrine/v2.md`, `dba/02-policies/architecture-synthesis/v2.md` |
+| Existing-code onboarding; intent laundering; evidence priority | Onboarding prompt | `dba/03-prompts/workflow/00c-onboarding.md` |
 | Reviewer = independent critical assessor; Attention Level | Reviewer package | `dba/03-prompts/review/pipeline-reviewer.md` |
 | Review Package is inline, not written to disk | Review-package template | `dba/05-guidance/templates/review-package.md` |
 | Vertical drift; Diagnostic Test; Justification Gate | Pattern | `dba/05-guidance/patterns/shared-infrastructure-boundary.md` |

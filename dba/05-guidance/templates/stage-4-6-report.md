@@ -32,9 +32,11 @@ Files inspected but not changed:
 
 Contract clauses implemented:
 
-Schema events emitted:
+Observation mode:
 
-Correlation ID propagation:
+Governed events emitted / external observation preserved:
+
+Correlation ID propagation (events mode):
 
 Runtime artifacts touched:
 
@@ -67,9 +69,9 @@ Failure-mode tests added:
 
 Invariant tests added:
 
-Telemetry/event tests added:
+Observation-mode tests added:
 
-Replay tests added:
+Replay tests added (events mode):
 
 Tests run:
 
@@ -102,15 +104,15 @@ Input fixture/scenario:
 
 Runtime command:
 
-Runtime log path:
+Observation mode:
 
-Events captured:
+Observation artifact/path:
 
-Unexpected events:
+Evidence captured:
 
-Missing expected events:
+Unexpected or missing observations:
 
-Correlation chains observed:
+Correlation chains observed (events mode):
 
 Sanitization status:
 
@@ -118,7 +120,7 @@ Raw logs committed:
 - yes/no:
 - if yes, why safe:
 
-Derived replay fixtures produced:
+Derived replay fixtures produced (events mode):
 
 Ready for reconciliation:
 

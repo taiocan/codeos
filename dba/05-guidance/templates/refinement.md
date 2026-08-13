@@ -3,26 +3,23 @@
 <!--
 PURPOSE OF THIS FILE:
 Records the history of targeted behavioral refinements for this feature.
-Each entry must be problem-driven — triggered by observed operational evidence.
+Each entry must be problem-driven — triggered by evidence or an explicit human evolution decision.
 
 REFINEMENT TRIGGERS (only these justify a refinement):
-1. Recurring failure — same failure mode appearing repeatedly in runtime_events.jsonl
-2. Reconciliation gap — identified in a Stage 7 reconciliation report
-3. Replay failure — identified in a Stage 8 replay report
-4. Observability gap — behavior occurring but cannot be diagnosed
-5. Human-approved evolution — new requirement that extends (not replaces) intent
+1. Observed behavioral failure
+2. Reconciliation GAP, MISMATCH, or MISSING result
+3. Final-verification failure
+4. Observability gap
+5. Human-approved evolution
 
 FORBIDDEN TRIGGERS:
 - Theoretical improvements not backed by observation
 - Architecture changes for elegance or future-proofing
-- Single incidents that haven't recurred
+- Unapproved scope expansion
 
-REFINEMENT COST ORDER (prefer cheapest):
-1. Observability refinement — add metric, improve event, add correlation field
-2. Behavioral refinement — clarify ambiguous contract clause
-3. Reliability refinement — add idempotency, retry limit, transaction boundary
-4. Performance refinement — only after measured bottleneck
-5. Structural refinement — split module, isolate workflow (most expensive, rare)
+A single safety, authorization, or integrity failure is sufficient evidence; recurrence is not
+required. Choose the smallest effective change for the actual cause, without a fixed type or cost
+ordering.
 -->
 
 ---
@@ -31,8 +28,8 @@ REFINEMENT COST ORDER (prefer cheapest):
 
 ### Trigger
 
-<!-- Which of the 5 valid triggers applies? -->
-Trigger type: RECURRING_FAILURE | RECONCILIATION_GAP | REPLAY_FAILURE | OBSERVABILITY_GAP | HUMAN_APPROVED_EVOLUTION
+Trigger: [observed failure, reconciliation result, final-verification failure, observability gap,
+or human-approved evolution]
 
 ### Observed Problem
 
@@ -41,16 +38,13 @@ Trigger type: RECURRING_FAILURE | RECONCILIATION_GAP | REPLAY_FAILURE | OBSERVAB
 ### Evidence
 
 ```
-[Paste relevant runtime_events.jsonl lines or reconciliation table rows]
+[Paste the smallest relevant runtime/external-observation evidence, test result, reconciliation
+row, or human decision]
 ```
 
 ### Root Cause
 
 [The specific behavioral mechanism that caused the problem — not a guess]
-
-### Refinement Type
-
-OBSERVABILITY | BEHAVIORAL | RELIABILITY | PERFORMANCE | STRUCTURAL
 
 ### Minimal Change
 
@@ -67,12 +61,14 @@ Artifacts changed:
 ### Stages Re-run
 
 <!-- List which DBA stages were re-run due to this refinement and in what order -->
-- [ ] Stage 2: Contracts (if intent changed)
-- [ ] Stage 3: Event Schema (if contracts changed)
-- [ ] Stage 4: Implementation (if schema changed)
+- [ ] Stage 1: Intent (if approved meaning changed)
+- [ ] Stage 2: Contract (if observable behavior changed)
+- [ ] Stage 3: Event Schema and package approval (if any Specification Package artifact changed)
+- [ ] Stage 4: Implementation (if conformance work is required)
 - [ ] Stage 5: Tests (always, if implementation changed)
+- [ ] Stage 6: Runtime Evidence (when representative execution is applicable)
 - [ ] Stage 7: Reconciliation Review
-- [ ] Stage 8: Replay Verification
+- [ ] Stage 8: Final Verification
 
 ### Validation
 

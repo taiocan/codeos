@@ -1,5 +1,5 @@
 use crate::precheck::redact_secrets;
-use anyhow::{Context, Result, bail};
+use anyhow::{bail, Context, Result};
 use sha2::{Digest, Sha256};
 use std::path::Path;
 use std::process::Command;
@@ -7,8 +7,14 @@ use std::process::Command;
 const SIZE_LIMIT_BYTES: u64 = 256 * 1024;
 
 const PATH_EXCLUDES: &[&str] = &[
-    "*.env", ".env*", "*.pem", "*.key", "secrets/*", "credentials/*",
-    "*runtime_events*.jsonl", "*.log",
+    "*.env",
+    ".env*",
+    "*.pem",
+    "*.key",
+    "secrets/*",
+    "credentials/*",
+    "*runtime_events*.jsonl",
+    "*.log",
 ];
 
 #[derive(Debug, Clone, PartialEq)]
@@ -23,21 +29,21 @@ pub enum CoverageState {
 impl CoverageState {
     pub fn as_str(&self) -> &'static str {
         match self {
-            CoverageState::FullCoverage     => "FULL_COVERAGE",
-            CoverageState::PartialCoverage  => "PARTIAL_COVERAGE",
-            CoverageState::SecretRedaction  => "SECRET_REDACTION",
+            CoverageState::FullCoverage => "FULL_COVERAGE",
+            CoverageState::PartialCoverage => "PARTIAL_COVERAGE",
+            CoverageState::SecretRedaction => "SECRET_REDACTION",
             CoverageState::CriticalOmission => "CRITICAL_OMISSION",
-            CoverageState::EmptyPacket      => "EMPTY_PACKET",
+            CoverageState::EmptyPacket => "EMPTY_PACKET",
         }
     }
 
     /// Severity floor for effective_concern escalation.
     pub fn concern_floor(&self) -> u8 {
         match self {
-            CoverageState::FullCoverage                             => 0,
+            CoverageState::FullCoverage => 0,
             CoverageState::SecretRedaction | CoverageState::PartialCoverage => 1,
-            CoverageState::EmptyPacket                              => 2,
-            CoverageState::CriticalOmission                         => 3,
+            CoverageState::EmptyPacket => 2,
+            CoverageState::CriticalOmission => 3,
         }
     }
 }
@@ -132,7 +138,10 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
     };
 
     let base_sha = load_base_sha(
-        &opts.feature, &opts.stage, &opts.repo_root, opts.delta_base.as_deref()
+        &opts.feature,
+        &opts.stage,
+        &opts.repo_root,
+        opts.delta_base.as_deref(),
     )?;
 
     // Build diff
@@ -155,7 +164,11 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
     let mut keep_files: Vec<String> = Vec::new();
     for f in &changed_files {
         if is_path_excluded(f) || is_oversize(f) {
-            excluded_paths.push((f.clone(), "path/size excluded".to_string(), "diff".to_string()));
+            excluded_paths.push((
+                f.clone(),
+                "path/size excluded".to_string(),
+                "diff".to_string(),
+            ));
         } else {
             keep_files.push(f.clone());
         }
@@ -177,7 +190,11 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
     let (redacted_diff, mut redaction_count) = redact_secrets(&filtered_diff);
     let mut secret_flag = redaction_count > 0;
     if secret_flag {
-        excluded_paths.push(("(diff)".to_string(), "secret-like content redacted".to_string(), "diff".to_string()));
+        excluded_paths.push((
+            "(diff)".to_string(),
+            "secret-like content redacted".to_string(),
+            "diff".to_string(),
+        ));
     }
 
     let diff_bytes = redacted_diff.len() as u64;
@@ -213,25 +230,50 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
     // Full / delta artifacts
     for a in &opts.artifacts {
         if !Path::new(a).exists() {
-            artifacts_block.push_str(&format!("  --- {} (visibility: missing — not shown) ---\n\n", a));
-            artifacts.push(ArtifactEntry { path: a.clone(), sha256: String::new(), visibility: "missing".to_string(), bytes: 0 });
+            artifacts_block.push_str(&format!(
+                "  --- {} (visibility: missing — not shown) ---\n\n",
+                a
+            ));
+            artifacts.push(ArtifactEntry {
+                path: a.clone(),
+                sha256: String::new(),
+                visibility: "missing".to_string(),
+                bytes: 0,
+            });
             manifest_full.push_str(&format!(
                 "    - path: {}\n      mode: omitted_with_reason\n      reason: requested artifact missing\n", a
             ));
             artifact_excluded = true;
-            excluded_paths.push((a.clone(), "requested artifact missing".to_string(), "artifact".to_string()));
+            excluded_paths.push((
+                a.clone(),
+                "requested artifact missing".to_string(),
+                "artifact".to_string(),
+            ));
             continue;
         }
 
         let bytes = std::fs::metadata(a).map(|m| m.len()).unwrap_or(0);
         if bytes > SIZE_LIMIT_BYTES {
-            artifacts_block.push_str(&format!("  --- {} (visibility: oversize_omitted — over size limit, not shown) ---\n\n", a));
-            artifacts.push(ArtifactEntry { path: a.clone(), sha256: String::new(), visibility: "oversize_omitted".to_string(), bytes });
+            artifacts_block.push_str(&format!(
+                "  --- {} (visibility: oversize_omitted — over size limit, not shown) ---\n\n",
+                a
+            ));
+            artifacts.push(ArtifactEntry {
+                path: a.clone(),
+                sha256: String::new(),
+                visibility: "oversize_omitted".to_string(),
+                bytes,
+            });
             manifest_full.push_str(&format!(
-                "    - path: {}\n      mode: omitted_with_reason\n      reason: over size limit\n", a
+                "    - path: {}\n      mode: omitted_with_reason\n      reason: over size limit\n",
+                a
             ));
             artifact_excluded = true;
-            excluded_paths.push((a.clone(), "requested artifact over size limit".to_string(), "artifact".to_string()));
+            excluded_paths.push((
+                a.clone(),
+                "requested artifact over size limit".to_string(),
+                "artifact".to_string(),
+            ));
             continue;
         }
 
@@ -247,15 +289,28 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
                 );
             }
             let changed = !git_diff_quiet(base, a, &opts.repo_root)?;
-            let vis = if changed { "delta_diff" } else { "path_sha_only" };
+            let vis = if changed {
+                "delta_diff"
+            } else {
+                "path_sha_only"
+            };
             artifacts_block.push_str(&format!(
-                "  --- {} (mode: {}, sha256: {}, bytes: {}) ---\n\n", a, vis, sha, bytes
+                "  --- {} (mode: {}, sha256: {}, bytes: {}) ---\n\n",
+                a, vis, sha, bytes
             ));
-            artifacts.push(ArtifactEntry { path: a.clone(), sha256: sha.clone(), visibility: vis.to_string(), bytes });
+            artifacts.push(ArtifactEntry {
+                path: a.clone(),
+                sha256: sha.clone(),
+                visibility: vis.to_string(),
+                bytes,
+            });
             manifest_full.push_str(&format!(
-                "    - path: {}\n      mode: {}\n      bytes: {}\n      sha256: {}\n", a, vis, bytes, sha
+                "    - path: {}\n      mode: {}\n      bytes: {}\n      sha256: {}\n",
+                a, vis, bytes, sha
             ));
-            if changed { delta_diff_count += 1; }
+            if changed {
+                delta_diff_count += 1;
+            }
             shown_count += 1;
         } else {
             let raw = std::fs::read_to_string(a)
@@ -264,7 +319,11 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
             let vis = if rc > 0 {
                 secret_flag = true;
                 redaction_count += rc;
-                excluded_paths.push((a.clone(), "secret value redacted in place".to_string(), "artifact".to_string()));
+                excluded_paths.push((
+                    a.clone(),
+                    "secret value redacted in place".to_string(),
+                    "artifact".to_string(),
+                ));
                 manifest_full.push_str(&format!(
                     "    - path: {}\n      mode: full_file\n      bytes: {}\n      sha256: {}\n      note: secret value redacted in place\n",
                     a, bytes, sha
@@ -272,15 +331,22 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
                 "shown_redacted"
             } else {
                 manifest_full.push_str(&format!(
-                    "    - path: {}\n      mode: full_file\n      bytes: {}\n      sha256: {}\n", a, bytes, sha
+                    "    - path: {}\n      mode: full_file\n      bytes: {}\n      sha256: {}\n",
+                    a, bytes, sha
                 ));
                 "shown"
             };
             let indented: String = redacted.lines().map(|l| format!("    {}\n", l)).collect();
             artifacts_block.push_str(&format!(
-                "  --- {} (sha256: {}, visibility: {}) ---\n{}\n", a, sha, vis, indented
+                "  --- {} (sha256: {}, visibility: {}) ---\n{}\n",
+                a, sha, vis, indented
             ));
-            artifacts.push(ArtifactEntry { path: a.clone(), sha256: sha, visibility: vis.to_string(), bytes });
+            artifacts.push(ArtifactEntry {
+                path: a.clone(),
+                sha256: sha,
+                visibility: vis.to_string(),
+                bytes,
+            });
             review_content_bytes += bytes;
             file_contributors.push((a.clone(), bytes));
             shown_count += 1;
@@ -293,33 +359,39 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
     }
 
     // Coverage state (most severe wins)
-    let coverage_state = if (opts.delta_mode && delta_diff_count == 0 && redacted_diff.trim().is_empty())
-        || (!opts.delta_mode && shown_count == 0 && redacted_diff.trim().is_empty())
-    {
-        CoverageState::EmptyPacket
-    } else if artifact_excluded {
-        CoverageState::CriticalOmission
-    } else if secret_flag {
-        CoverageState::SecretRedaction
-    } else if !excluded_paths.is_empty() {
-        CoverageState::PartialCoverage
-    } else {
-        CoverageState::FullCoverage
-    };
+    let coverage_state =
+        if (opts.delta_mode && delta_diff_count == 0 && redacted_diff.trim().is_empty())
+            || (!opts.delta_mode && shown_count == 0 && redacted_diff.trim().is_empty())
+        {
+            CoverageState::EmptyPacket
+        } else if artifact_excluded {
+            CoverageState::CriticalOmission
+        } else if secret_flag {
+            CoverageState::SecretRedaction
+        } else if !excluded_paths.is_empty() {
+            CoverageState::PartialCoverage
+        } else {
+            CoverageState::FullCoverage
+        };
 
     // workspace_dirty check
     let workspace_dirty = git_is_dirty(&opts.repo_root);
 
     // Budget check (warning only)
     let budget = std::env::var("CODEOS_PACKET_BUDGET_BYTES")
-        .ok().and_then(|v| v.parse::<u64>().ok()).unwrap_or(50_000);
+        .ok()
+        .and_then(|v| v.parse::<u64>().ok())
+        .unwrap_or(50_000);
     if review_content_bytes > budget {
         // Enhanced warning: show overage, top contributors, and actionable suggestions
         let overage_multiple = (review_content_bytes as f64 / budget as f64).ceil() as u64;
         let budget_kb = budget / 1024;
         let packet_kb = review_content_bytes / 1024;
 
-        eprintln!("warning: packet is {} KB ({}× over {} KB budget)", packet_kb, overage_multiple, budget_kb);
+        eprintln!(
+            "warning: packet is {} KB ({}× over {} KB budget)",
+            packet_kb, overage_multiple, budget_kb
+        );
 
         // Sort contributors by size (descending) and show top 3
         let mut sorted_contributors = file_contributors.clone();
@@ -336,7 +408,10 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
         }
 
         eprintln!("  suggest for R2+:");
-        eprintln!("    codeos-reviewer review {} {} --mode delta --base <last-review-commit> <artifacts>", opts.feature, opts.stage);
+        eprintln!(
+            "    codeos-reviewer review {} {} --mode delta --base <last-review-commit> <artifacts>",
+            opts.feature, opts.stage
+        );
         eprintln!("  optional:");
         eprintln!("    use --sha-only <path> only for large unchanged context files that are not the primary artifact under review; this reduces review evidence");
     }
@@ -344,7 +419,10 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
     // Stage-specific checks
     let checks = stage_checks(&opts.stage);
     let expected = stage_expected(&opts.stage);
-    let task_prompt_path = format!("{}/dba/03-prompts/review/codeos-reviewer-task.md", opts.toolkit_root);
+    let task_prompt_path = format!(
+        "{}/dba/03-prompts/review/codeos-reviewer-task.md",
+        opts.toolkit_root
+    );
     let task_prompt = std::fs::read_to_string(&task_prompt_path)
         .with_context(|| format!("reviewer task template not found: {}", task_prompt_path))?;
 
@@ -354,13 +432,18 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
     content.push('\n');
 
     let budget_status = if review_content_bytes > budget {
-        format!("WARNING — {} bytes exceeds CODEOS_PACKET_BUDGET_BYTES={}", review_content_bytes, budget)
+        format!(
+            "WARNING — {} bytes exceeds CODEOS_PACKET_BUDGET_BYTES={}",
+            review_content_bytes, budget
+        )
     } else {
         "OK".to_string()
     };
 
     let now = chrono::Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string();
-    let task_prompt_bytes = std::fs::metadata(&task_prompt_path).map(|m| m.len()).unwrap_or(0);
+    let task_prompt_bytes = std::fs::metadata(&task_prompt_path)
+        .map(|m| m.len())
+        .unwrap_or(0);
     let estimated_tokens = review_content_bytes / 4;
 
     content.push_str(&format!(
@@ -370,7 +453,11 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
         diff_mode = if opts.delta_mode { "delta_diff" } else { "full_file" },
     ));
 
-    let dirty_note = if workspace_dirty { " (+ uncommitted workspace changes)" } else { "" };
+    let dirty_note = if workspace_dirty {
+        " (+ uncommitted workspace changes)"
+    } else {
+        ""
+    };
     content.push_str(&format!(
         "\nREVIEW CONTEXT\n  Feature:                {feature}\n  Stage:                  {stage}\n  Branch:                 {branch}\n  Base commit:            {base_sha}\n  Review commit:          {review_sha}{dirty_note}\n  Preceding stage:         {preceding_stage}\n  Evidence coverage:      {coverage}\n  Workspace dirty:        {dirty_text}\n",
         feature = opts.feature,
@@ -385,11 +472,22 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
 
     content.push_str("\nDBA RULES RELEVANT TO THIS STAGE\n");
     content.push_str("  - Your assessment is advisory and never makes a workflow decision.\n");
-    content.push_str("  - Memory is not truth — assess only what is provided, pinned to the review commit.\n");
+    content.push_str(
+        "  - Memory is not truth — assess only what is provided, pinned to the review commit.\n",
+    );
     content.push_str("  - Apply doctrine semantics only when the selected doctrine is included in the review evidence.\n");
-    if matches!(coverage_state, CoverageState::PartialCoverage | CoverageState::SecretRedaction | CoverageState::CriticalOmission) {
-        content.push_str("  - COVERAGE IS PARTIAL: some content was excluded/redacted (see below). You are\n");
-        content.push_str("    seeing an incomplete evidence set — do not issue NO OBJECTION on this basis.\n");
+    if matches!(
+        coverage_state,
+        CoverageState::PartialCoverage
+            | CoverageState::SecretRedaction
+            | CoverageState::CriticalOmission
+    ) {
+        content.push_str(
+            "  - COVERAGE IS PARTIAL: some content was excluded/redacted (see below). You are\n",
+        );
+        content.push_str(
+            "    seeing an incomplete evidence set — do not issue NO OBJECTION on this basis.\n",
+        );
     }
 
     content.push_str(&format!("\nSTAGE-SPECIFIC CHECKS\n{}\n", checks));
@@ -400,7 +498,8 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
     if opts.delta_mode {
         let base = opts.delta_base.as_deref().unwrap_or("HEAD");
         content.push_str(&format!(
-            "DELTA DIFF ({}->working tree, artifact paths only, secret/size filtered)\n", base
+            "DELTA DIFF ({}->working tree, artifact paths only, secret/size filtered)\n",
+            base
         ));
     } else {
         content.push_str("DIFF TO REVIEW (base->review, secret/size filtered)\n");
@@ -408,7 +507,10 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
 
     let excluded_summary: Vec<String> = excluded_paths.iter().map(|(p, _, _)| p.clone()).collect();
     if !excluded_summary.is_empty() {
-        content.push_str(&format!("  [excluded/redacted: {}] manual security review required\n", excluded_summary.join(", ")));
+        content.push_str(&format!(
+            "  [excluded/redacted: {}] manual security review required\n",
+            excluded_summary.join(", ")
+        ));
     }
     content.push_str(&redacted_diff);
 
@@ -424,7 +526,8 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
                 Err(e) => {
                     // Fail-closed: mark the section as unavailable rather than silently showing empty.
                     content.push_str(&format!(
-                        "[ERROR: git diff failed — full context diff unavailable: {}]\n", e
+                        "[ERROR: git diff failed — full context diff unavailable: {}]\n",
+                        e
                     ));
                 }
                 Ok(full_raw) => {
@@ -449,7 +552,10 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
                     } else if full_total > remaining {
                         // Clip at a line boundary within the budget.
                         let head = &full_redacted[..remaining as usize];
-                        let cutpoint = head.rfind('\n').map(|n| n + 1).unwrap_or(remaining as usize);
+                        let cutpoint = head
+                            .rfind('\n')
+                            .map(|n| n + 1)
+                            .unwrap_or(remaining as usize);
                         content.push_str(&full_redacted[..cutpoint]);
                         content.push_str(&format!(
                             "\n[CLIPPED: full diff exceeded packet budget — showing first {} of {} bytes]\n",
@@ -463,7 +569,11 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
         }
     }
 
-    let final_base_sha = if base_sha.is_empty() { "(no base pin)".to_string() } else { base_sha };
+    let final_base_sha = if base_sha.is_empty() {
+        "(no base pin)".to_string()
+    } else {
+        base_sha
+    };
 
     Ok(ReviewPacket {
         feature: opts.feature.clone(),
@@ -510,7 +620,9 @@ fn git_rev_parse(rev: &str, repo_root: &str) -> Result<String> {
 
 fn git_diff_range(base: &str, paths: &[String], repo_root: &str) -> Result<String> {
     let mut args = vec!["diff", base, "--"];
-    for p in paths { args.push(p); }
+    for p in paths {
+        args.push(p);
+    }
     let out = Command::new("git")
         .args(&args)
         .current_dir(repo_root)
@@ -521,7 +633,9 @@ fn git_diff_range(base: &str, paths: &[String], repo_root: &str) -> Result<Strin
 
 fn git_diff_names(base: &str, paths: &[String], repo_root: &str) -> Result<Vec<String>> {
     let mut args = vec!["diff", "--name-only", base, "--"];
-    for p in paths { args.push(p); }
+    for p in paths {
+        args.push(p);
+    }
     args.extend_from_slice(&[":(exclude)reviews", ":(exclude).codeos-state"]);
     let out = Command::new("git")
         .args(&args)
@@ -546,8 +660,15 @@ fn git_diff_head(repo_root: &str) -> Result<String> {
 
 fn git_diff_names_head(repo_root: &str) -> Result<Vec<String>> {
     let out = Command::new("git")
-        .args(["diff", "--name-only", "HEAD", "--", ".",
-               ":(exclude)reviews", ":(exclude).codeos-state"])
+        .args([
+            "diff",
+            "--name-only",
+            "HEAD",
+            "--",
+            ".",
+            ":(exclude)reviews",
+            ":(exclude).codeos-state",
+        ])
         .current_dir(repo_root)
         .output()
         .context("git diff --name-only HEAD")?;
@@ -560,8 +681,14 @@ fn git_diff_names_head(repo_root: &str) -> Result<Vec<String>> {
 
 fn git_diff_head_paths(paths: &[String], repo_root: &str) -> Result<String> {
     let mut args = vec!["diff", "HEAD", "--"];
-    for p in paths { args.push(p); }
-    let out = Command::new("git").args(&args).current_dir(repo_root).output().context("git diff HEAD paths")?;
+    for p in paths {
+        args.push(p);
+    }
+    let out = Command::new("git")
+        .args(&args)
+        .current_dir(repo_root)
+        .output()
+        .context("git diff HEAD paths")?;
     Ok(String::from_utf8_lossy(&out.stdout).into_owned())
 }
 
@@ -585,18 +712,37 @@ fn git_is_tracked(path: &str, repo_root: &str) -> bool {
 
 fn git_is_dirty(repo_root: &str) -> bool {
     Command::new("git")
-        .args(["status", "--porcelain=v1", "--untracked-files=all", "--",
-               ".", ":(exclude)reviews", ":(exclude).codeos-state"])
+        .args([
+            "status",
+            "--porcelain=v1",
+            "--untracked-files=all",
+            "--",
+            ".",
+            ":(exclude)reviews",
+            ":(exclude).codeos-state",
+        ])
         .current_dir(repo_root)
         .output()
         .map(|o| !o.stdout.is_empty())
         .unwrap_or(false)
 }
 
-fn load_base_sha(feature: &str, stage: &str, repo_root: &str, delta_base: Option<&str>) -> Result<String> {
-    if let Some(b) = delta_base { return Ok(b.to_string()); }
-    let ss = format!("{}/.codeos-state/stage-start/{}/stage-{}.json", repo_root, feature, stage);
-    if !Path::new(&ss).exists() { return Ok(String::new()); }
+fn load_base_sha(
+    feature: &str,
+    stage: &str,
+    repo_root: &str,
+    delta_base: Option<&str>,
+) -> Result<String> {
+    if let Some(b) = delta_base {
+        return Ok(b.to_string());
+    }
+    let ss = format!(
+        "{}/.codeos-state/stage-start/{}/stage-{}.json",
+        repo_root, feature, stage
+    );
+    if !Path::new(&ss).exists() {
+        return Ok(String::new());
+    }
     let content = std::fs::read_to_string(&ss)
         .with_context(|| format!("could not read stage-start file {}", ss))?;
     for line in content.lines() {
@@ -605,18 +751,25 @@ fn load_base_sha(feature: &str, stage: &str, repo_root: &str, delta_base: Option
                 if let Some(after_colon) = rest.splitn(2, ':').nth(1) {
                     let trimmed = after_colon.trim();
                     if trimmed.starts_with('"') {
-                        let val: String = trimmed.chars().skip(1).take_while(|&c| c != '"').collect();
-                        if !val.is_empty() { return Ok(val); }
+                        let val: String =
+                            trimmed.chars().skip(1).take_while(|&c| c != '"').collect();
+                        if !val.is_empty() {
+                            return Ok(val);
+                        }
                     }
                 }
             }
         }
     }
-    anyhow::bail!("{} exists but has no valid base_commit (malformed provenance) — aborting.", ss);
+    anyhow::bail!(
+        "{} exists but has no valid base_commit (malformed provenance) — aborting.",
+        ss
+    );
 }
 
 fn is_path_excluded(path: &str) -> bool {
-    let name = Path::new(path).file_name()
+    let name = Path::new(path)
+        .file_name()
         .and_then(|n| n.to_str())
         .unwrap_or(path);
     for pat in PATH_EXCLUDES {
@@ -644,8 +797,8 @@ fn is_oversize(path: &str) -> bool {
 }
 
 pub fn sha256_file(path: &str) -> Result<String> {
-    let bytes = std::fs::read(path)
-        .with_context(|| format!("could not read file for SHA: {}", path))?;
+    let bytes =
+        std::fs::read(path).with_context(|| format!("could not read file for SHA: {}", path))?;
     let mut hasher = Sha256::new();
     hasher.update(&bytes);
     Ok(hex::encode(hasher.finalize()))
@@ -661,17 +814,16 @@ fn stage_expected(stage: &str) -> &'static str {
     match stage {
         "discovery" => "Solution Discovery — candidate feature topology, shared vocabulary, event/config hypotheses, architectural risks, explicit non-decisions; every item labeled CANDIDATE/HYPOTHESIZED; non-authoritative banner present; carried claims are reviewed at the next applicable review point.",
         "brief" => "Feature Brief — problem, upgrade, bounded scope, proposed artifact(s), value/risk/guardrail; a candidate for Stage 1, not yet approved; no implementation detail.",
-        "onboarding" => "Onboarding (Session Type D) — HYPOTHESIZED_INTENT drafts + codebase digest derived from evidence only; explicitly labeled draft, not APPROVED; promotion follows the specification-approval adapter.",
+        "onboarding" => "Onboarding — normal draft Feature Brief and Intent inputs derived from observation plus human intent; registry entry follows the current schema; work continues through the normal Specification Package flow.",
         "1" => "Intent — actor+outcome statements, stable guarantees, explicit scope boundary; NO implementation detail.",
         "2" => "Behavioral contract — observable Given/When/Then scenarios, named failure modes, invariants; independently testable; no white-box claims.",
-        "3" => "Specification Package — Intent, Contract, and Event Schema reviewed together for mutual consistency; every Contract rule traces to Intent, every governed event traces to Contract, and scope, failures, invariants, and terminology agree.",
-        "4" => "Implementation — code satisfying every contract clause; emits only schema events; contract-satisfaction + event-emission tables; nothing untraceable.",
-        "5" => "Tests — one behavioral test per contract scenario incl. failures; replay tests for schema conformance + chain integrity; coverage table.",
-        "6" => "Runtime evidence — events in runtime_events.jsonl; correlation chains intact; bounded/sanitized; unexpected/missing events reported.",
-        "7" => "Reconciliation — Intent->Contract->Schema->Impl->Tests->Runtime with ALIGNED/GAP/MISMATCH/MISSING per item, supported by evidence.",
-        "8" => "Replay — schema conformance + correlation chain integrity + determinism check; nondeterminism explained; missing fixtures reported.",
+        "3" => "Specification Package — Intent, Contract, and Event Schema reviewed together for mutual consistency; observation mode is explicit; every Contract rule traces to Intent and every governed event traces to Contract.",
+        "4" => "Implementation — code satisfying every Contract clause under the approved event or external-observation boundary; nothing governed is untraceable.",
+        "5" => "Tests — applicable Contract scenarios and falsifiers covered through behavioral tests plus event replay or declared external-observation verification.",
+        "6" => "Runtime evidence — representative bounded/sanitized evidence captured through the Contract's observation mode; unavailable evidence reported.",
+        "7" => "Reconciliation — applicable layers compared using ALIGNED/GAP/MISMATCH/MISSING, evidence source runtime/test/static/none, and a plain explanatory note.",
+        "8" => "Final verification — repeatable governed outcomes checked through event replay or external observation; nondeterminism and missing fixtures reported.",
         "9" => "Refinement — smallest effective change per observed trigger; no redesign disguised as refinement; affected artifacts named.",
-        "10" => "Architectural Refinement — Scope->Impact->Implement->Verify->Reconcile for structural changes with no behavioral contract or event schema; smallest effective change, no full rewrite.",
         _ => "(no expected-output template for stage)",
     }
 }
@@ -680,17 +832,16 @@ fn stage_checks(stage: &str) -> String {
     match stage {
         "discovery" => "  - every item labeled CANDIDATE/HYPOTHESIZED, not approved; non-authoritative banner present; no intent/contract/schema language; out-of-scope findings recorded as backlog candidates, not acted on.".to_string(),
         "brief" => "  - problem clearly stated; scope explicitly bounded; no implementation detail; ready to become a Stage 1 Intent; value/risk/guardrail present.".to_string(),
-        "onboarding" => "  - hypothesized intents clearly labeled as drafts, not approved; digest derived from observed evidence only, no invented behavior; clear path to Stage 1 promotion named.".to_string(),
+        "onboarding" => "  - normal draft inputs and registry shape used; observed behavior is not laundered into intent; infrastructure is not registered as a feature; normal Specification Package route named.".to_string(),
         "1" => "  - actor/outcome clarity; no implementation detail; scope boundary explicit; stable guarantees clear; ambiguity flagged.".to_string(),
         "2" => "  - every intent outcome has observable contract coverage; failure paths named; invariants testable; no white-box claims.".to_string(),
-        "3" => "  - Intent, Contract, and Event Schema are all present; every Contract rule traces to Intent; every governed event traces to Contract; scope, exclusions, actors, failures, invariants, and terminology agree across the complete package; no speculative telemetry.".to_string(),
+        "3" => "  - Intent, Contract, and Event Schema are all present; observation mode is explicit; every Contract rule traces to Intent; every governed event traces to Contract; external-observation mode invents no placeholder events.".to_string(),
         "4" => "  - code traces to approved contract/schema only; no unapproved events; no hidden behavior; no unrelated files; report complete.\n  - did implementation resolve any question an approved artifact EXPLICITLY deferred? if so, is each material resolution recorded in a Deferral -> Resolution Trace (source deferral, resolution, where implemented, final/interim, expected superseder)? judge deferral by meaning, not by phrase; a missing record is a traceability finding, not an implementation failure.".to_string(),
-        "5" => "  - behavior tested not private internals; failure paths tested; event/telemetry tests present; replay tests where applicable.".to_string(),
-        "6" => "  - runtime evidence captured; event log bounded/sanitized; correlation chains visible; unexpected/missing events reported.".to_string(),
-        "7" => "  - ALIGNED/GAP/MISMATCH/MISSING judgments supported; no weak evidence hidden behind fluent summary; gaps routed to right action.".to_string(),
-        "8" => "  - replay actually checks event sequence + schema conformance; nondeterminism explained; missing fixtures reported.".to_string(),
+        "5" => "  - behavior tested rather than private internals; applicable failures and invariants covered; observation-mode-specific verification present.".to_string(),
+        "6" => "  - evidence captured without changing implementation; event or external-observation evidence bounded/sanitized; unavailable paths reported.".to_string(),
+        "7" => "  - only ALIGNED/GAP/MISMATCH/MISSING used; evidence source is runtime/test/static/none; each note supports the result and routes the gap.".to_string(),
+        "8" => "  - verification follows observation mode; determinism excludes generated envelope fields unless contracted; missing fixtures reported.".to_string(),
         "9" => "  - trigger valid; proposed fix minimal; no redesign disguised as refinement; affected artifacts identified.".to_string(),
-        "10" => "  - genuinely structural (no contract/schema change); impact assessed before implementing; verification is real, not just described; no full rewrite disguised as refinement.".to_string(),
         _ => format!("  - (no stage-specific checklist for stage {})", stage),
     }
 }
@@ -716,7 +867,10 @@ mod tests {
     fn coverage_state_str_values() {
         assert_eq!(CoverageState::FullCoverage.as_str(), "FULL_COVERAGE");
         assert_eq!(CoverageState::EmptyPacket.as_str(), "EMPTY_PACKET");
-        assert_eq!(CoverageState::CriticalOmission.as_str(), "CRITICAL_OMISSION");
+        assert_eq!(
+            CoverageState::CriticalOmission.as_str(),
+            "CRITICAL_OMISSION"
+        );
     }
 
     #[test]
@@ -739,22 +893,24 @@ mod tests {
 
     #[test]
     fn stage_expected_new_downstream_identifiers_are_real_not_placeholder() {
-        for stage in ["discovery", "brief", "onboarding", "10"] {
+        for stage in ["discovery", "brief", "onboarding"] {
             let text = stage_expected(stage);
             assert_ne!(
                 text, "(no expected-output template for stage)",
-                "stage '{}' must have real expected-output text", stage
+                "stage '{}' must have real expected-output text",
+                stage
             );
         }
     }
 
     #[test]
     fn stage_checks_new_downstream_identifiers_are_real_not_placeholder() {
-        for stage in ["discovery", "brief", "onboarding", "10"] {
+        for stage in ["discovery", "brief", "onboarding"] {
             let text = stage_checks(stage);
             assert!(
                 !text.contains("no stage-specific checklist"),
-                "stage '{}' must have real checklist text", stage
+                "stage '{}' must have real checklist text",
+                stage
             );
         }
     }
@@ -765,9 +921,19 @@ mod tests {
             let text = stage_expected(stage);
             assert_ne!(
                 text, "(no expected-output template for stage)",
-                "numeric stage '{}' must still have its existing expected-output text", stage
+                "numeric stage '{}' must still have its existing expected-output text",
+                stage
             );
         }
+    }
+
+    #[test]
+    fn stage_10_has_no_current_reviewer_protocol() {
+        assert_eq!(
+            stage_expected("10"),
+            "(no expected-output template for stage)"
+        );
+        assert!(stage_checks("10").contains("no stage-specific checklist"));
     }
 
     #[test]
@@ -778,7 +944,8 @@ mod tests {
         assert!(expected.contains("Intent, Contract, and Event Schema"));
         assert!(checks.contains("every Contract rule traces to Intent"));
         assert!(checks.contains("every governed event traces to Contract"));
-        assert!(checks.contains("agree across the complete package"));
+        assert!(checks.contains("observation mode is explicit"));
+        assert!(checks.contains("external-observation mode invents no placeholder events"));
     }
 
     #[test]
@@ -799,17 +966,32 @@ mod tests {
         // UPG-0063: the Stage 4 reviewer asks the question actively rather than relying on the
         // implementation author remembering the obligation.
         let text = stage_checks("4");
-        assert!(text.contains("EXPLICITLY deferred"), "must ask about explicit deferrals: {text}");
-        assert!(text.contains("Deferral -> Resolution Trace"), "must name the trace: {text}");
-        assert!(text.contains("final/interim"), "must ask for the interim marker: {text}");
-        assert!(text.contains("expected superseder"), "must ask what supersedes an interim: {text}");
+        assert!(
+            text.contains("EXPLICITLY deferred"),
+            "must ask about explicit deferrals: {text}"
+        );
+        assert!(
+            text.contains("Deferral -> Resolution Trace"),
+            "must name the trace: {text}"
+        );
+        assert!(
+            text.contains("final/interim"),
+            "must ask for the interim marker: {text}"
+        );
+        assert!(
+            text.contains("expected superseder"),
+            "must ask what supersedes an interim: {text}"
+        );
         // Advisory, not a behavioral gate.
         assert!(
             text.contains("traceability finding, not an implementation failure"),
             "must keep the finding advisory: {text}"
         );
         // Judged semantically — the checklist must not hand the reviewer a phrase list.
-        assert!(text.contains("by meaning, not by phrase"), "must forbid phrase-matching: {text}");
+        assert!(
+            text.contains("by meaning, not by phrase"),
+            "must forbid phrase-matching: {text}"
+        );
         // The pre-existing Stage 4 checks survive.
         assert!(text.contains("code traces to approved contract/schema only"));
     }
@@ -818,7 +1000,18 @@ mod tests {
     fn stage_4_deferral_question_is_scoped_to_stage_4_only() {
         // No other stage's checklist mentions the trace.
         for stage in [
-            "discovery", "brief", "onboarding", "1", "2", "3", "5", "6", "7", "8", "9", "10",
+            "discovery",
+            "brief",
+            "onboarding",
+            "1",
+            "2",
+            "3",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "10",
         ] {
             assert!(
                 !stage_checks(stage).contains("Deferral -> Resolution Trace"),

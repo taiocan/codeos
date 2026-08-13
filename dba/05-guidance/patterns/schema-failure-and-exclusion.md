@@ -1,3 +1,8 @@
+---
+component_question: When should schema failures use dual events and vocabulary exclusions remain explicit?
+out_of_scope: Universal feature requirements, schema ownership outside these cases, and implementation-specific error handling.
+---
+
 # Conventions: Schema Failure and Vocabulary Exclusion
 
 Architectural conventions established during LucidPM R7–R10.

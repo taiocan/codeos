@@ -1,3 +1,8 @@
+---
+component_question: When should AI-mediated filtering expose generated and surviving result counts?
+out_of_scope: General AI integration, filter implementation, unrelated observability, and universal feature requirements.
+---
+
 # Pattern: AI-Mediated Filtering Observability
 
 ## When This Pattern Applies
@@ -26,7 +31,7 @@ Runtime observation cannot distinguish them. The contract invariant "filtering e
 post-generation" is structurally verified (code exists) and test-verified (deterministic
 mock), but never *observed* at runtime.
 
-This is a **GAP (observability)** in Stage 7 terms: the behavior may be occurring but
+This is a **GAP** in Stage 7 terms: the behavior may be occurring but
 cannot be proven from emitted events alone.
 
 ---

@@ -72,8 +72,8 @@ myproject/
 ├── intents/           — Feature intents (one .md per feature)
 ├── contracts/         — Behavioral contracts (one .md per feature)
 ├── events/
-│   ├── event_schema.md            — Event definitions
-│   └── runtime_events.jsonl       — Append-only runtime log
+│   ├── [feature_id]_schema.md      — Governed events or external-observation mapping
+│   └── runtime_events.jsonl        — Append-only log for features using events mode
 ├── modules/           — Implementation code
 ├── tests/
 │   ├── behavioral/    — Behavioral outcome tests
@@ -97,11 +97,8 @@ Open it and complete:
 - **Language/runtime, test framework, event prefix** — the project-specific conventions block at the bottom
 - Leave the Active Features table empty — you add rows as features are created and approved
 
-**Step 2 — Open Claude Code in the project directory and paste `.codeos/dba/03-prompts/workflow/00-session-start.md`.**
-Fill in the [BRACKETS] before pasting:
-- "Today's goal" — the first feature you want to start (e.g., "Start Stage 1 Intent for user_login")
-- "Current feature states" — write "No features started yet" or leave the table blank
-- "This session's scope" — name the first feature; tell Claude not to start any others
+**Step 2 — Open Claude Code in the project directory and use
+`.codeos/dba/03-prompts/workflow/00-session-start.md`.** Name the target feature or structural task.
 
 **Step 3 — Claude reads the active DBA components and the project `CLAUDE.md` and confirms — verify it names both.**
 1. `.codeos/dba-system.md` — stable entrypoint to the active DBA configuration and selected components
@@ -119,25 +116,15 @@ resumption prompt; go straight to the stage prompt.
 
 When starting a fresh session on a project where work is already in progress:
 
-**Step 1 — Update the project `CLAUDE.md` Active Features table before opening Claude.**
-This table is the only cross-session state record. Verify every row is accurate:
-- Feature ID and description are correct
-- Current Stage reflects the last completed stage (not what was in progress when the session ended)
-- Status is one of: `DRAFT` / `APPROVED` / `IN_PROGRESS` / `COMPLETE`
+**Step 1 — Open Claude Code in the project directory and use
+`.codeos/dba/03-prompts/workflow/00-session-start.md`.** Name the target feature or task. The prompt
+reads its matching registry entry and live artifacts; do not copy repository state into the prompt.
 
-If a feature was mid-stage when the session ended, set its status to `IN_PROGRESS` and its stage to the last completed stage number.
-
-**Step 2 — Open Claude Code in the project directory and paste `.codeos/dba/03-prompts/workflow/00-session-start.md`.**
-Fill in the [BRACKETS] before pasting:
-- "Today's goal" — what you want to complete this session
-- "Current feature states" — copy from the Active Features table you just updated
-- "This session's scope" — be explicit about which features are in scope
-
-**Step 3 — Claude reads these two files automatically (verify it confirms both):**
+**Step 2 — Claude reads these two files (verify it confirms both):**
 1. `.codeos/dba-system.md` — entrypoint to the active DBA configuration and selected rules
 2. Project `CLAUDE.md` — your Active Features table and project-specific conventions
 
-**Step 4 — For each in-progress feature, direct Claude to read the existing approved artifacts.**
+**Step 3 — For each in-progress feature, direct Claude to read the existing approved artifacts.**
 Tell Claude which feature to resume, then say: "Read the existing artifacts for [feature_id] before proceeding."
 Claude will read:
 - `intents/[feature_id].md` — approved intent (do not re-derive)
@@ -170,7 +157,9 @@ boundary adapters:
 ## Stage Purposes
 
 ### Stage 0 — Session Start
-**Purpose:** Orient Claude to DBA mode before any work begins. The human fills in today's goal, the current stage and status of every active feature, and any session-specific forbidden actions. Claude reads both `.codeos/dba-system.md` and the project `CLAUDE.md`, then stops and waits for the human to begin.
+**Purpose:** Orient Claude from live repository state, classify the target work, and select the
+applicable workflow. Claude reads the active DBA entrypoint, project instructions, and only the
+registry entry and artifacts relevant to the target.
 **Key constraint:** Claude does not produce artifacts, write code, or analyze anything until the human explicitly says to proceed.
 
 ### Stage 1 — Intent
@@ -178,13 +167,19 @@ boundary adapters:
 **Key constraint:** No implementation details, APIs, databases, frameworks, observability mechanics, or feature decomposition. Guarantees must be enforceable and testable. If the intent fills more than one screen it is too broad.
 
 ### Stage 2 — Behavioral Contracts
-**Purpose:** Translate the current Intent into independently testable observable truth while both remain open to revision. Contracts describe only what can be seen from the outside — emitted events and system state — never internal logic or code structure.
-**Key constraint:** Intent and Contract remain open to correction while the specification is being completed.
+**Purpose:** Translate the current Intent into independently testable observable truth while both
+remain open to revision. The Contract also selects `events` or `external-observation` and names any
+external observation artifact.
+**Key constraint:** Contracts define observable behavior, not internal logic, code structure, or
+unapproved event semantics.
 
 ### Stage 3 — Event Schema
-**Purpose:** Define the event spine and verify all three specification artifacts together. This
-stage owns the `specification-approval` adapter.
-**Key constraint:** Every contract scenario maps to at least one event; every named contract failure maps to exactly one FAILURE event. `correlation_id` is mandatory on every event without exception.
+**Purpose:** Complete the third Specification Package artifact and verify all three artifacts
+together. In `events` mode it defines governed events; in `external-observation` mode it records
+that no governed internal events apply and maps outcomes to the Contract's observation artifact.
+This stage owns the `specification-approval` adapter.
+**Key constraint:** Governed events must trace to the Contract. External-observation mode must not
+invent placeholder events.
 
 ### Stage 4 — Implementation
 **Purpose:** Satisfy governed specification using normal internal engineering choices. This stage
@@ -192,24 +187,38 @@ owns the `delivery-entry` adapter.
 **Key constraint:** Apply the constraints selected by the active doctrine.
 
 ### Stage 5 — Tests
-**Purpose:** Write behavioral truth anchors that fail if observable behavior deviates from contracts. Tests cover happy paths, every named failure mode, telemetry correctness (correlation IDs, required fields), and idempotency if the contract specifies it. A replay test captures and re-runs the event stream to verify determinism.
-**Key constraint:** Tests must not touch private methods, internal state, or intermediate computations. All assertions use event names exactly as they appear in the approved schema.
+**Purpose:** Write behavioral truth anchors that fail if observable behavior deviates from the
+Contract. Event mode includes event and replay checks; external-observation mode verifies its
+declared artifact.
+**Key constraint:** Tests assert observable outcomes, not private methods, internal state, or
+intermediate computations.
 
 ### Stage 6 — Runtime Execution
-**Purpose:** Run representative scenarios when permitted and capture evidence of what occurred.
-**Key constraint:** Apply the evidence and authorization rules from the selected doctrine.
+**Purpose:** Run representative scenarios when permitted and capture evidence through the
+Contract's observation mode.
+**Key constraint:** Stage 6 never changes implementation or prior evidence and never fabricates an
+unavailable observation.
 
 ### Stage 7 — Reconciliation Review
-**Purpose:** Perform a structural audit comparing all six layers — intent, contract, event schema, implementation, tests, and runtime events — to surface gaps, mismatches, and missing coverage. Every non-ALIGNED finding names the stage(s) that must be re-run and the minimal targeted fix required.
-**Key constraint:** This is not a code review and does not suggest rewrites. Status is one of ALIGNED, GAP, MISMATCH, or MISSING — nothing else.
+**Purpose:** Compare the applicable layers from Intent through runtime or external observation and
+surface incomplete, disagreeing, or absent coverage.
+**Key constraint:** Status is exactly `ALIGNED | GAP | MISMATCH | MISSING`; evidence source is
+exactly `runtime | test | static | none`; the note explains the issue without subtype taxonomies or
+scores.
 
 ### Stage 8 — Replay Verification
-**Purpose:** Confirm the system is deterministically replayable. Every runtime event must conform to the approved schema, correlation chains must be complete (start + end), and re-running the same inputs must produce events consistent with the schema. The replay tests in `tests/replay/` are the executable form of this guarantee.
-**Key constraint:** Broken correlation chains, out-of-order events, and event types absent from the schema are all conformance failures that must be resolved before proceeding.
+**Purpose:** Verify repeatable governed outcomes before final human acceptance. Event mode checks
+schema, sequence, correlation, and deterministic payload content; external-observation mode reruns
+its declared verification.
+**Key constraint:** Generated identifiers, timestamps, and other nondeterministic envelope fields
+are ignored unless contracted. A valid governed outcome may be a single-event chain.
 
 ### Stage 9 — Targeted Refinement
-**Purpose:** Apply the smallest effective problem-driven fix to each observed issue. Valid triggers are recurring failures in the event log, reconciliation gaps, replay failures, observability gaps, or human-approved intent evolution. Refinements are ordered by cost — observability changes first, structural changes last.
-**Key constraint:** Apply the selected doctrine's escalation and verification rules, then return to Stage 8.
+**Purpose:** Apply the smallest effective change justified by an observed problem or explicit human
+evolution decision.
+**Key constraint:** Use the actual cause, not a fixed refinement taxonomy or cost order. One safety,
+authorization, or integrity failure is sufficient evidence. Return through reconciliation and final
+verification.
 
 ## Governing Rules
 

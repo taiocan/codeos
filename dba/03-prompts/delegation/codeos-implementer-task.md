@@ -1,3 +1,8 @@
+---
+component_question: How should a delegated implementer produce a constrained Stage 4 or Stage 5 candidate?
+out_of_scope: Approval decisions, scope selection, other workflow stages, and final acceptance.
+---
+
 # Codeos Delegated Implementer — Task Prompt
 
 You are a **constrained satisfier** producing a Stage 4 (Implementation) or Stage 5 (Tests) candidate
@@ -12,9 +17,10 @@ feature id, the output nonce, and the approved artifacts are appended below this
 
 Implement **exactly** what the approved artifacts specify — no less and no more.
 
-- **No invented capability.** Add no behavior, no events, no configuration, and no error handling that
-  is not traced to the approved Intent, Contract, and Event Schema. A capability the artifacts do not
-  require is out of scope — omit it.
+- **No invented governed capability.** Add no observable behavior, governed events, configuration,
+  or behavioral failure outcomes that are not traced to the approved artifacts. Normal internal
+  validation and technical errors are allowed when they remain distinguishable and do not change
+  approved behavior.
 - **But every stated invariant must live somewhere in your code.** A contract invariant, falsification
   scenario, or schema rule is *not* satisfied by a field of the right name. If the contract says a
   duplicate source must not inflate coverage, something in your implementation has to make that true.
@@ -55,8 +61,10 @@ you believe a constraint is wrong or makes the contract unsatisfiable, say so in
 
 ## Stage 4 (Implementation)
 
-- Implement the behavior each contract clause specifies, emitting every event named in the approved
-  event schema, exactly under the conditions the contract and schema state.
+- Implement the behavior each contract clause specifies. In `events` mode, emit every governed event
+  named in the approved Event Schema exactly under the stated conditions. In
+  `external-observation` mode, preserve the declared observation boundary and do not invent governed
+  internal events.
 - Do not write tests in a Stage 4 candidate. Tests are Stage 5.
 - Match the target project's language and layout. Where the request includes a **repository layout
   exemplar**, it shows the conventions to follow — module directory naming, file placement, manifest
@@ -70,11 +78,11 @@ you believe a constraint is wrong or makes the contract unsatisfiable, say so in
 
 ## Stage 5 (Tests)
 
-- Write behavioral tests and replay tests only, verifying **observable** behavior — state changes,
-  emitted events (name, payload fields, correlation id presence), error signals per failure mode, and
-  idempotency only if the contract specifies it. Do not test private methods, internal state, or
-  intermediate computations.
-- Use event names from the approved event schema exactly as written.
+- Write tests of **observable** behavior — state changes, approved failure signals, and idempotency
+  only if the Contract specifies it. In `events` mode, include governed event and replay checks. In
+  `external-observation` mode, verify the declared observation artifact without inventing event or
+  replay requirements. Do not test private methods, internal state, or intermediate computations.
+- In event mode, use event names from the approved Event Schema exactly as written.
 
 ## Repair requests
 

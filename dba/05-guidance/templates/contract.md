@@ -26,7 +26,7 @@ And [additional observable outcome if needed]
 ```gherkin
 Given [precondition]
 When [trigger with failure condition]
-Then [failure event is emitted]
+Then [approved failure signal is observable]
 And [system state is unchanged OR specific known state]
 ```
 
@@ -35,7 +35,7 @@ And [system state is unchanged OR specific known state]
 ```gherkin
 Given [precondition]
 When [trigger with failure condition]
-Then [failure event is emitted]
+Then [approved failure signal is observable]
 And [system state is unchanged OR specific known state]
 ```
 
@@ -47,9 +47,9 @@ Every failure in the table must have a scenario.
 ## Runtime Context
 
 <!--
-Complete only if this feature executes inside a specific environment or crosses
-a process/OS/network/sandbox boundary. Delete section entirely if not applicable
-(standard Rust CLI running in user's shell).
+Observation mode is required for every Contract. Complete the other fields only when the feature
+executes inside a specific environment or crosses a process/OS/network/sandbox boundary; otherwise
+delete those inapplicable lines, not this section.
 -->
 
 **Execution environment:** [e.g. Electron renderer sandbox, Docker container, browser]
@@ -57,15 +57,14 @@ a process/OS/network/sandbox boundary. Delete section entirely if not applicable
 **Environment assumptions:** [e.g. lucid available on PATH, project path accessible by OS]
 **Environment-sensitive behavior:** [e.g. path resolution, settings persistence, command registration]
 **Observation mode:** `events` | `external-observation`
-  - `events` — domain events emitted to runtime_events.jsonl; proceed to Stage 3 normally
-  - `external-observation` — feature emits no domain events; evidence comes from test layers,
-    acceptance checklist, or logs; declare the observation artifact below; skip Stage 3 event schema
+  - `events` — governed events provide runtime evidence
+  - `external-observation` — no governed internal events are required; evidence comes from the
+    declared observation artifact below
   - Observation artifacts are exceptional. Use runtime_events.jsonl whenever events exist.
     Do not invent per-feature observation documents for event-emitting features.
 **Observation artifact:** [if external-observation only: e.g. plugin/ACCEPTANCE.md, verification ladder output]
-**Minimum runtime evidence:** [lowest evidence level acceptable for declaring the feature VERIFIED;
-  e.g. "3 — mock tests sufficient" or "4 — must execute in real Logseq Desktop";
-  individual Stage 7 rows may require higher levels than this floor]
+**Minimum observation environment:** [only when required: e.g. "must execute in real Logseq Desktop";
+  otherwise delete this line]
 
 ## Invariants
 
@@ -143,15 +142,16 @@ What must be true AFTER successful execution.
 ## Runtime Artifacts
 
 <!--
-Files and directories this feature creates or modifies at runtime, beyond the shared
-event log. List every artifact explicitly, or state "none beyond events/runtime_events.jsonl".
+Files and directories this feature creates or modifies at runtime. In `events` mode, include the
+shared event log; in `external-observation` mode, include the declared observation artifact when the
+feature creates or updates it. List every artifact explicitly or state "none".
 This section must be completed before Stage 4 begins — undeclared files created during
 implementation are a DBA violation.
 -->
 
 | Artifact | Path | Lifecycle |
 |---|---|---|
-| (none beyond events/runtime_events.jsonl) | — | — |
+| (none) | — | — |
 
 ### Cross-module signals relied upon
 
@@ -173,10 +173,11 @@ and SchemaAliasCollisionDetected as separate rows rather than a generic "SchemaI
 ## Failure Classifications
 
 <!--
-Exhaustive list of named failure modes. Every failure here needs:
+Exhaustive list of named governed failure modes. Every failure here needs:
 1. A scenario above
-2. An event in the event schema
-3. A test in tests/behavioral/
+2. An observable signal declared below
+3. Event-Schema coverage appropriate to the Contract's observation mode
+4. A behavioral test
 -->
 
 | Failure Name | Trigger Condition | Observable Signal |

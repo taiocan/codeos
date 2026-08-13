@@ -1,3 +1,8 @@
+---
+component_question: How should the automated reviewer assess a supplied artifact against its stated scope?
+out_of_scope: Review timing, approval authority, artifact mutation, and reviewer pipeline configuration.
+---
+
 Reviewer task:
 
 SCOPE CONTRACT

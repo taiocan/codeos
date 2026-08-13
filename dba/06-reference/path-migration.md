@@ -1,3 +1,8 @@
+---
+component_question: How should downstream references be updated after the Codeos internal path reorganization?
+out_of_scope: Compatibility aliases, unrelated project migrations, component semantics, and automated migration tooling.
+---
+
 # Codeos Internal Path Migration
 
 `.codeos/dba-system.md` remains the stable downstream entrypoint. Codeos-owned internal paths were

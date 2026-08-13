@@ -1,3 +1,8 @@
+---
+component_question: How should configurable domain vocabulary be owned and consumed consistently across modules?
+out_of_scope: Feature-specific behavior, universal normalization rules, storage design, and architecture approval mechanics.
+---
+
 # Pattern: Vocabulary-Centric Architecture
 
 ## When This Pattern Applies

@@ -1,3 +1,8 @@
+---
+component_question: How should shared infrastructure responsibilities be separated from feature modules?
+out_of_scope: Feature behavior, universal module layouts, technology selection, and architecture approval mechanics.
+---
+
 # Pattern: Shared Infrastructure Boundary
 
 ## When This Pattern Applies
@@ -129,10 +134,9 @@ Test and written justification.
 
 ---
 
-## Relationship to Architectural Refinement
+## Applying the Boundary
 
-When a proposed architectural refinement adds to a shared infrastructure module, the
-Diagnostic Test must be applied at Step 2 (Impact Analysis) before implementation
-begins. See `dba/03-prompts/workflow/10-arch-refine.md`, Step 2, item 6.
-
-This catches vertical drift at the design gate, not after the fact during reconciliation.
+Apply the Diagnostic Test before adding to shared infrastructure. If the addition establishes or
+changes a project-level responsibility boundary for governed features, record it through the
+applicable architecture scope. Otherwise treat the work as normal engineering and preserve affected
+feature behavior with proportional verification.

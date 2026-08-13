@@ -9,7 +9,7 @@ about what the system should do — only about where modification is dangerous.
 
 WHEN TO PRODUCE:
 Complete this after your first working implementation is in place.
-Update it after any Stage 9 or Stage 10 change that touches hubs, god functions,
+Update it after any behavioral refinement, architecture change, or ordinary maintenance that touches hubs, god functions,
 or module dependency relationships (see Maintenance Trigger below).
 
 HOW TO POPULATE:
@@ -24,7 +24,7 @@ boundaries). The Known High-Risk Zones section exists precisely for this reason.
 Never let metrics override human architectural knowledge.
 
 MAINTENANCE TRIGGER:
-Any Stage 9 refinement or Stage 10 architectural refinement that modifies a
+Any governed refinement, architecture change, or ordinary maintenance task that modifies a
 listed hub, god function, or module dependency relationship must either:
   (a) update this file and refresh last_verified_commit, or
   (b) explicitly state in the refinement log why no digest update is required.

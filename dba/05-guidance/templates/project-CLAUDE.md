@@ -44,8 +44,9 @@ authority, or escalation semantics.
 
 ## Runtime Events
 
-All runtime events are appended to: `events/runtime_events.jsonl`
-This file is **append-only**. Claude must never delete or modify existing lines.
+When a Contract selects `events` observation mode, governed runtime events are appended to
+`events/runtime_events.jsonl`. This file is **append-only**; never delete or modify existing lines.
+For `external-observation`, use only the artifact declared by the approved Contract.
 
 ## Project-Specific Conventions
 

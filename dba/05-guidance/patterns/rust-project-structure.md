@@ -1,3 +1,8 @@
+---
+component_question: What Rust-specific project structures support DBA implementation and evidence?
+out_of_scope: Core DBA lifecycle semantics, non-Rust layouts, feature architecture, and mandatory project requirements.
+---
+
 # Pattern: Rust DBA Project Structure
 
 ## When This Pattern Applies
