@@ -21,13 +21,13 @@ prompts. The doctrine remains authoritative when explanatory text disagrees.
 
 ```bash
 # In a new project directory:
-bash /home/arc/projects/claude/Codeos/scripts/dba-init.sh [project-name] [remote-url]
+bash /path/to/Codeos/dba/04-tools/initializer/dba-init.sh [project-name] [remote-url]
 
 # Example:
-bash /home/arc/projects/claude/Codeos/scripts/dba-init.sh my-project https://github.com/user/my-project.git
+bash /path/to/Codeos/dba/04-tools/initializer/dba-init.sh my-project https://github.com/user/my-project.git
 
 # Then in Claude Code:
-# Paste the contents of .codeos/prompts/00-session-start.md
+# Paste the contents of .codeos/dba/03-prompts/workflow/00-session-start.md
 ```
 
 ## Directory Structure
@@ -46,34 +46,20 @@ Codeos/
 ├── AGENTS.md          — Codex route to CLAUDE.md
 ├── CLAUDE.md          — Codeos Self-Development guide (governs toolkit changes)
 ├── dba-system.md      — Downstream DBA entrypoint (loaded via .codeos/dba-system.md)
-├── dba/               — Version-selected doctrine, policies, tool contract, and configuration
 ├── README.md          — This file
-│
-├── prompts/           — Sequential stage prompts (paste to Claude at each stage)
-│   ├── 00-session-start.md
-│   ├── 01-intent.md
-│   ├── 02-contract.md
-│   ├── 03-event-schema.md
-│   ├── 04-implement.md
-│   ├── 05-tests.md
-│   ├── 06-observe.md
-│   ├── 07-reconcile.md
-│   ├── 08-replay.md
-│   └── 09-refine.md
-│
-├── templates/         — Fill-in-the-blank templates for each artifact
-│   ├── intent.md
-│   ├── contract.md
-│   ├── event-schema.md
-│   ├── feature-spec.md
-│   ├── refinement.md
-│   ├── project-AGENTS.md
-│   └── project-CLAUDE.md
-│
-├── scripts/
-│   └── dba-init.sh    — Scaffolds a new project (args: [project-name] [remote-url])
-│
-└── Archive/           — Prior design artifacts and reference material
+├── dba/               — Downstream DBA package
+│   ├── 00-entry/      — Active configuration selection
+│   ├── 01-doctrine/   — Fundamental DBA guarantees
+│   ├── 02-policies/   — Conditional governance mechanisms
+│   ├── 03-prompts/    — Workflow, review, and delegation instructions
+│   ├── 04-tools/      — Contracts and implementations grouped by capability
+│   ├── 05-guidance/   — Templates, patterns, and terminology
+│   └── 06-reference/  — Explanatory and migration documentation
+└── maintenance/       — Codeos self-development
+    ├── backlog/
+    ├── reviews/
+    ├── config/
+    └── archive/
 ```
 
 ## Per-Project Structure (created by dba-init.sh)
@@ -99,7 +85,7 @@ myproject/
 ## The DBA Development Loop
 
 ### Before Every Session
-Paste `prompts/00-session-start.md` to orient Claude.
+Paste `.codeos/dba/03-prompts/workflow/00-session-start.md` to orient Claude.
 
 ### Starting a New Project for the First Time
 
@@ -111,7 +97,7 @@ Open it and complete:
 - **Language/runtime, test framework, event prefix** — the project-specific conventions block at the bottom
 - Leave the Active Features table empty — you add rows as features are created and approved
 
-**Step 2 — Open Claude Code in the project directory and paste `prompts/00-session-start.md`.**
+**Step 2 — Open Claude Code in the project directory and paste `.codeos/dba/03-prompts/workflow/00-session-start.md`.**
 Fill in the [BRACKETS] before pasting:
 - "Today's goal" — the first feature you want to start (e.g., "Start Stage 1 Intent for user_login")
 - "Current feature states" — write "No features started yet" or leave the table blank
@@ -122,7 +108,7 @@ Fill in the [BRACKETS] before pasting:
 2. Project `CLAUDE.md` — the file you just filled in; Claude reads the project intent and conventions
 
 **Step 4 — Draft the Specification Package.**
-Start with `prompts/01-intent.md`, then continue through Contract and Event Schema. Stage 3 owns the
+Start with `.codeos/dba/03-prompts/workflow/01-intent.md`, then continue through Contract and Event Schema. Stage 3 owns the
 current `specification-approval` boundary.
 
 There are no existing project artifacts to read at this point — Claude starts from the active DBA
@@ -141,7 +127,7 @@ This table is the only cross-session state record. Verify every row is accurate:
 
 If a feature was mid-stage when the session ended, set its status to `IN_PROGRESS` and its stage to the last completed stage number.
 
-**Step 2 — Open Claude Code in the project directory and paste `prompts/00-session-start.md`.**
+**Step 2 — Open Claude Code in the project directory and paste `.codeos/dba/03-prompts/workflow/00-session-start.md`.**
 Fill in the [BRACKETS] before pasting:
 - "Today's goal" — what you want to complete this session
 - "Current feature states" — copy from the Active Features table you just updated
@@ -171,15 +157,15 @@ boundary adapters:
 
 | Stage | File | Purpose | Claude produces | Boundary owner |
 |---|---|---|---|---|
-| 1 | `prompts/01-intent.md` | Capture *why* the feature exists — actor + outcome, no implementation details | Draft Intent | — |
-| 2 | `prompts/02-contract.md` | Translate Intent into independently testable behavior | Draft Contract | — |
-| 3 | `prompts/03-event-schema.md` | Complete and cross-check the Specification Package | Draft Event Schema + package review | `specification-approval` adapter |
-| 4 | `prompts/04-implement.md` | Implement governed behavior | Code in `modules/` | `delivery-entry` adapter |
-| 5 | `prompts/05-tests.md` | Verify observable outcomes | Tests in `tests/` | — |
-| 6 | `prompts/06-observe.md` | Capture trustworthy runtime evidence | Runtime evidence | — |
-| 7 | `prompts/07-reconcile.md` | Surface gaps and mismatches | Reconciliation evidence | — |
-| 8 | `prompts/08-replay.md` | Verify replay and conformance | Final review package | `final-acceptance` adapter |
-| 9 | `prompts/09-refine.md` | Apply targeted refinement and return to verification | Targeted refinement | Stage 8 adapter |
+| 1 | `.codeos/dba/03-prompts/workflow/01-intent.md` | Capture *why* the feature exists — actor + outcome, no implementation details | Draft Intent | — |
+| 2 | `.codeos/dba/03-prompts/workflow/02-contract.md` | Translate Intent into independently testable behavior | Draft Contract | — |
+| 3 | `.codeos/dba/03-prompts/workflow/03-event-schema.md` | Complete and cross-check the Specification Package | Draft Event Schema + package review | `specification-approval` adapter |
+| 4 | `.codeos/dba/03-prompts/workflow/04-implement.md` | Implement governed behavior | Code in `modules/` | `delivery-entry` adapter |
+| 5 | `.codeos/dba/03-prompts/workflow/05-tests.md` | Verify observable outcomes | Tests in `tests/` | — |
+| 6 | `.codeos/dba/03-prompts/workflow/06-observe.md` | Capture trustworthy runtime evidence | Runtime evidence | — |
+| 7 | `.codeos/dba/03-prompts/workflow/07-reconcile.md` | Surface gaps and mismatches | Reconciliation evidence | — |
+| 8 | `.codeos/dba/03-prompts/workflow/08-replay.md` | Verify replay and conformance | Final review package | `final-acceptance` adapter |
+| 9 | `.codeos/dba/03-prompts/workflow/09-refine.md` | Apply targeted refinement and return to verification | Targeted refinement | Stage 8 adapter |
 
 ## Stage Purposes
 
@@ -241,17 +227,17 @@ For a future doctrine version:
 3. Find current adapters with `rg "DOCTRINE ADAPTER: [a-z-]+"`.
 4. Change only adapters whose actual boundary behavior changed.
 5. Version another governed component only if its own normative semantics changed.
-6. Run `bash scripts/tests/dba-config-boundaries.sh dba/configurations/DBA-N.yaml`. Only after it
+6. Run `bash dba/04-tools/configuration/dba-config-boundaries.sh dba/00-entry/configurations/DBA-N.yaml`. Only after it
    passes, activate that configuration in `dba-system.md` and verify the pointer names the tested
    candidate.
 
 ## Reference Material
 
-Current project definitions: `terminology.md`
+Current project definitions: `dba/05-guidance/terminology.md`
 
-Prior design sessions and DBA theory: `Archive/`
+Prior design sessions and DBA theory: `maintenance/archive/`
 
-- `Archive/intent.md` — Loop description and minimal stack
-- `Archive/terminology.md` — DBA terminology with worked examples
-- `Archive/intent-S0.md` through `intent-S7.md` — Stage-by-stage philosophy
-- `Archive/S1-intent/intent-examples.md` — Complete loop walkthrough (counter example)
+- `maintenance/archive/initial-intent.md` — Early loop description and minimal stack
+- `maintenance/archive/terminology.md` — DBA terminology with worked examples
+- `maintenance/archive/intent-S0.md` through `intent-S7.md` — Stage-by-stage philosophy
+- `maintenance/archive/S1-intent/intent-examples.md` — Complete loop walkthrough (counter example)

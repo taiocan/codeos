@@ -152,7 +152,7 @@ the governing artifact and Git already provide sufficient traceability.
 
 ## Terminology
 
-`terminology.md` is the canonical glossary for recurring, project-specific terms whose ambiguity
+`dba/05-guidance/terminology.md` is the canonical glossary for recurring, project-specific terms whose ambiguity
 could affect behavior, architecture, authority, lifecycle, or responsibility. Ordinary technical
 vocabulary does not require terminology governance.
 

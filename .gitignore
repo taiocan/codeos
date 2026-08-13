@@ -15,4 +15,4 @@
 
 # Codeos reviewer pipeline — runtime state (sessions, stage-start) and pilot/test assessments
 .codeos-state/
-reviews/codex/_scratch/
+maintenance/reviews/codex/_scratch/

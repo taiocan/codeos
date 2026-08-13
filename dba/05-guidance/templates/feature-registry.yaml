@@ -1,0 +1,61 @@
+# Feature Registry
+#
+# Schema version 2 (UPG-0041). If your registry doesn't declare `schema_version: 2`, it
+# predates this schema — see dba/06-reference/registry-v2-migration.md before editing further.
+#
+# This file is an index, not a truth source. Filesystem, git state, and approved
+# DBA artifacts take precedence over any entry here. If this registry disagrees
+# with actual state, correct the registry — do not use registry entries to override
+# actual artifacts.
+#
+# Human-maintained. Update whenever a feature advances a stage or changes status.
+#
+# Recommended downstream instance path: features/registry.yaml
+# (Copy this template to features/registry.yaml in your downstream project.)
+#
+# Status values (lifecycle / decision state — never encodes stage; see current_stage
+# below for workflow position; keep the two independent):
+#   hypothesized — produced by Onboarding (Session Type D); HYPOTHESIZED_INTENT, not yet through
+#                  the specification-approval adapter
+#   active       — currently progressing through the DBA stage loop
+#   suspended    — work paused; evidence chain preserved
+#   blocked      — blocked by an unresolved dependency or finding
+#   complete     — final delivery accepted, no open refinements
+#
+# current_stage values (DBA workflow position — independent of status above):
+#   0    — brief / pre-Stage-1
+#   1–10 — current DBA stage
+#   null — not yet placed in the normal stage flow
+#
+# reconciliation_status / replay_status values:
+#   pending — not yet run
+#   passed  — last run passed
+#   failed  — last run failed (requires resolution before advancing)
+#   na      — not applicable at the current stage
+#
+schema_version: 2
+
+features:
+  - feature_id: F-0001           # stable feature identifier — F-#### format, see .codeos/dba/05-guidance/templates/conventions.md → Feature IDs
+    slug: example-feature         # required — feature_id is stable identity, slug is the readable label
+    description: "Brief description of what this feature does"
+    type: F                       # F (feature) | R (refinement of an existing feature)
+    status: active                # hypothesized | active | suspended | blocked | complete
+    branch: feature/example       # git branch tracking this feature
+    current_stage: 1              # 0 | 1–10 | null — see current_stage values above
+    intent: null                  # path to approved intent artifact, or null
+    contract: null                # path to approved contract artifact, or null
+    event_schema: null            # path to approved event schema artifact, or null
+    pr: null                      # pull request URL or null
+    last_commit: null             # last known commit SHA or null
+    reconciliation_status: na     # pending | passed | failed | na
+    replay_status: na             # pending | passed | failed | na
+    blockers: []                  # structured list of blocking issues; empty if none — see notes below for free-form context
+    notes: ""                     # free-form context or next action; does not replace structured blockers above
+
+architectural_refinements:
+  - refine_id: example_refine
+    description: "Brief description of the structural change"
+    status: step2  # step1 | step2 | step3 | step4 | step5 | complete
+    artifact: refinements/arch/example_refine.md
+    notes: ""

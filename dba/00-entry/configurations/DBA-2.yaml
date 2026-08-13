@@ -1,0 +1,14 @@
+# DBA-2 — lean Specification Package configuration
+#
+# Component paths are relative to the Codeos toolkit root. Component files own their semantics;
+# this configuration only selects their authoritative versions.
+
+doctrine: dba/01-doctrine/v2.md
+review_policy: dba/02-policies/review/v2.md
+architecture_synthesis_policy: dba/02-policies/architecture-synthesis/v2.md
+implementation_profile_policy: dba/02-policies/implementation-profile/v2.md
+reviewer_tool_contract: dba/04-tools/reviewer/contract/v2.md
+
+status: approved
+approved_at: 2026-08-10
+approved_via: UPG-0065
