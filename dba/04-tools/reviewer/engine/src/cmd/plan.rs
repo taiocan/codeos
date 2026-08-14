@@ -10,7 +10,7 @@ use std::path::Path;
 /// Reuses `review`'s own validation (delta-mode `--base` checks, missing-artifact guards,
 /// prechecks) and `packet::build()` (the exact function `review`/`--print-packet` call) so the
 /// preview cannot drift from what a real review would see. Never resolves a provider, never
-/// invokes one, never writes to `reviews/` or any other tracked file.
+/// invokes one, never writes to `.codeos/05-review/reviews/` or any other tracked file.
 pub fn run(args: ReviewArgs, cfg: &Config) -> Result<i32> {
     if args.artifacts.is_empty() {
         eprintln!("plan: provide at least one artifact path");

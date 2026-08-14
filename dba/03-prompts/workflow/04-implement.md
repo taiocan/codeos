@@ -14,11 +14,12 @@ Implementation Profile constraints, without adding governed behavior.
 
 ## Inputs / Prerequisites
 
-Read the selected doctrine, architecture and Implementation Profile policies, all three approved
-specification artifacts, and applicable approved architecture. Verify the package records one valid
-approval and has not materially changed since. Run the architecture inspector for the feature and
-stop on invalid metadata, draft membership, conflicting membership, or an unresolved project-level
-decision.
+Read the selected doctrine, architecture and Implementation Profile policies. Load the three
+approved Specification Package artifact types and applicable approved architecture from the
+canonical locations defined by the Downstream Project Layout Contract. Verify the package records
+one valid approval and has not materially changed since. Run the architecture inspector for the
+feature and stop on invalid metadata, draft membership, conflicting membership, or an unresolved
+project-level decision.
 
 Resolve an approved Implementation Profile only as its policy specifies. Consult a language pattern
 when applicable; project architecture and approved behavior remain authoritative.
@@ -50,6 +51,7 @@ for inline delivery evidence rather than restating its format here.
 
 ## Output / Next Action
 
-Present the implementation, Contract satisfaction mapping, applicable event mapping, failure
-mapping, and any genuine deferral trace. Continue directly to `05-tests.md` without an intermediate
-approval unless the human requests one.
+Implement in the project's native source layout. Present the changed paths, implementation,
+Contract satisfaction mapping, applicable event mapping, failure mapping, and any genuine deferral
+trace. This stage creates no separate workflow artifact. Continue directly to `05-tests.md` without
+an intermediate approval unless the human requests one.

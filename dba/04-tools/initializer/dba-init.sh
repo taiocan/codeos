@@ -1,216 +1,132 @@
 #!/usr/bin/env bash
-# dba-init.sh — Initialize a new DBA/IDS project
-#
-# Usage (from new project root):
-#   bash /path/to/Codeos/dba/04-tools/initializer/dba-init.sh [project-name] [remote-url]
-#
-# What it does:
-#   1. Creates .codeos symlink → Codeos toolkit
-#   2. Creates project directory structure
-#   3. Generates CLAUDE.md and AGENTS.md from templates
-#   4. Generates docs/conventions.md
-#   5. Initializes git repo (if not already one)
-#   6. Adds git remote (if remote URL provided)
-
+# Initialize the minimum project-local Codeos structure.
 set -euo pipefail
 
-# Resolve paths
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CODEOS_PATH="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 PROJECT_DIR="$PWD"
 PROJECT_NAME="${1:-$(basename "$PROJECT_DIR")}"
 REMOTE_URL="${2:-}"
+CODEOS_DIR="$PROJECT_DIR/.codeos"
+TOOLKIT_LINK="$CODEOS_DIR/toolkit"
+ROOT_CLAUDE="$PROJECT_DIR/CLAUDE.md"
+ROOT_AGENTS="$PROJECT_DIR/AGENTS.md"
+ROOT_CLAUDE_TEMPLATE="$CODEOS_PATH/dba/05-guidance/templates/project-root-CLAUDE.md"
+ROOT_AGENTS_TEMPLATE="$CODEOS_PATH/dba/05-guidance/templates/project-AGENTS.md"
+PROJECT_CLAUDE="$CODEOS_DIR/00-project/CLAUDE.md"
 
-echo ""
+fail() {
+    echo "[error] $*" >&2
+    exit 1
+}
+
 echo "DBA Project Init"
-echo "================"
 echo "Project name : $PROJECT_NAME"
 echo "Project dir  : $PROJECT_DIR"
 echo "Toolkit path : $CODEOS_PATH"
-if [ -n "$REMOTE_URL" ]; then
-echo "Remote URL   : $REMOTE_URL"
+
+# Preflight discovery surfaces before changing the project. Existing files are never merged or
+# overwritten. A current adapter is safe to preserve; anything else needs a human migration.
+if [[ -f "$ROOT_CLAUDE" ]] && ! cmp -s "$ROOT_CLAUDE" "$ROOT_CLAUDE_TEMPLATE"; then
+    fail "CLAUDE.md already exists and is not the Codeos discovery adapter; preserve it and migrate its substantive instructions manually to .codeos/00-project/CLAUDE.md (see $CODEOS_PATH/dba/06-reference/downstream-upgrade.md)"
 fi
-echo ""
+if [[ -e "$ROOT_CLAUDE" && ! -f "$ROOT_CLAUDE" ]]; then
+    fail "CLAUDE.md exists but is not a regular file"
+fi
+if [[ -f "$ROOT_AGENTS" ]] && ! cmp -s "$ROOT_AGENTS" "$ROOT_AGENTS_TEMPLATE"; then
+    fail "AGENTS.md already exists and is not the Codeos root adapter; preserve it and migrate it manually (see $CODEOS_PATH/dba/06-reference/downstream-upgrade.md)"
+fi
+if [[ -e "$ROOT_AGENTS" && ! -f "$ROOT_AGENTS" ]]; then
+    fail "AGENTS.md exists but is not a regular file"
+fi
 
-# ── 1. Symlink ─────────────────────────────────────────────────────────────
+if [[ -L "$CODEOS_DIR" ]]; then
+    fail ".codeos is a legacy toolkit symlink; migrate it to the project-local layout first (see $CODEOS_PATH/dba/06-reference/downstream-upgrade.md)"
+fi
+if [[ -e "$CODEOS_DIR" && ! -d "$CODEOS_DIR" ]]; then
+    fail ".codeos exists but is not a directory"
+fi
+if [[ -L "$TOOLKIT_LINK" ]]; then
+    if [[ ! -e "$TOOLKIT_LINK/dba-system.md" || ! -d "$TOOLKIT_LINK/dba/00-entry" ]]; then
+        fail ".codeos/toolkit is broken or does not point to a valid Codeos toolkit; repair it explicitly"
+    fi
+elif [[ -e "$TOOLKIT_LINK" ]]; then
+    fail ".codeos/toolkit exists but is not a symlink"
+fi
+if [[ -e "$PROJECT_CLAUDE" && ! -f "$PROJECT_CLAUDE" ]]; then
+    fail ".codeos/00-project/CLAUDE.md exists but is not a regular file"
+fi
+if [[ -e "$PROJECT_DIR/.gitignore" && ! -f "$PROJECT_DIR/.gitignore" ]]; then
+    fail ".gitignore exists but is not a regular file"
+fi
 
-if [ -L "$PROJECT_DIR/.codeos" ]; then
-    echo "[skip] .codeos symlink already exists"
-elif [ -e "$PROJECT_DIR/.codeos" ]; then
-    echo "[warn] .codeos exists but is not a symlink — skipping"
+mkdir -p \
+    "$CODEOS_DIR/00-project" \
+    "$CODEOS_DIR/01-specification/intents" \
+    "$CODEOS_DIR/01-specification/contracts" \
+    "$CODEOS_DIR/01-specification/event-schemas"
+
+if [[ -L "$TOOLKIT_LINK" ]]; then
+    echo "[skip] .codeos/toolkit already points to a valid toolkit"
 else
-    ln -s "$CODEOS_PATH" "$PROJECT_DIR/.codeos"
-    echo "[ok]   .codeos → $CODEOS_PATH"
+    ln -s "$CODEOS_PATH" "$TOOLKIT_LINK"
+    echo "[ok]   .codeos/toolkit -> $CODEOS_PATH"
 fi
 
-# ── 2. Directory structure ──────────────────────────────────────────────────
-
-DIRS=(
-    "intents"
-    "contracts"
-    "events"
-    "modules"
-    "tests/behavioral"
-    "tests/replay"
-    "docs"
-    "features"
-    "backlog"
-)
-
-for dir in "${DIRS[@]}"; do
-    if [ -d "$PROJECT_DIR/$dir" ]; then
-        echo "[skip] $dir/ already exists"
-    else
-        mkdir -p "$PROJECT_DIR/$dir"
-        echo "[ok]   $dir/"
+GITIGNORE="$PROJECT_DIR/.gitignore"
+IGNORE_RULES=("/.codeos/toolkit" "/.codeos-state/")
+MISSING_IGNORE_RULES=()
+for ignore_rule in "${IGNORE_RULES[@]}"; do
+    if [[ ! -f "$GITIGNORE" ]] || ! grep -Fxq "$ignore_rule" "$GITIGNORE"; then
+        MISSING_IGNORE_RULES+=("$ignore_rule")
     fi
 done
-
-# ── 3. Feature registry ────────────────────────────────────────────────────
-
-REGISTRY="$PROJECT_DIR/features/registry.yaml"
-REGISTRY_TEMPLATE="$CODEOS_PATH/dba/05-guidance/templates/feature-registry.yaml"
-
-if [ -f "$REGISTRY" ]; then
-    echo "[skip] features/registry.yaml already exists"
+if (( ${#MISSING_IGNORE_RULES[@]} > 0 )); then
+    if [[ -s "$GITIGNORE" ]]; then
+        printf '\n' >> "$GITIGNORE"
+    fi
+    printf '%s\n' "${MISSING_IGNORE_RULES[@]}" >> "$GITIGNORE"
+    echo "[ok]   .gitignore ignores the toolkit mount and operational state"
 else
-    cp "$REGISTRY_TEMPLATE" "$REGISTRY"
-    echo "[ok]   features/registry.yaml (from template — edit to replace example entries)"
+    echo "[skip] .gitignore already ignores the toolkit mount and operational state"
 fi
 
-# ── 4. Runtime event log ────────────────────────────────────────────────────
-
-EVENTS_LOG="$PROJECT_DIR/events/runtime_events.jsonl"
-if [ -f "$EVENTS_LOG" ]; then
-    echo "[skip] events/runtime_events.jsonl already exists"
+if [[ -f "$PROJECT_CLAUDE" ]]; then
+    echo "[skip] .codeos/00-project/CLAUDE.md already exists"
 else
-    touch "$EVENTS_LOG"
-    echo "[ok]   events/runtime_events.jsonl"
+    sed "s/\[PROJECT_NAME\]/$PROJECT_NAME/g" \
+        "$CODEOS_PATH/dba/05-guidance/templates/project-CLAUDE.md" > "$PROJECT_CLAUDE"
+    echo "[ok]   .codeos/00-project/CLAUDE.md"
 fi
 
-# ── 5. Project CLAUDE.md ────────────────────────────────────────────────────
-
-PROJECT_CLAUDE="$PROJECT_DIR/CLAUDE.md"
-TEMPLATE="$CODEOS_PATH/dba/05-guidance/templates/project-CLAUDE.md"
-
-if [ -f "$PROJECT_CLAUDE" ]; then
-    echo "[skip] CLAUDE.md already exists"
+if [[ -f "$ROOT_CLAUDE" ]]; then
+    echo "[skip] CLAUDE.md already contains the Codeos discovery adapter"
 else
-    sed "s/\[PROJECT_NAME\]/$PROJECT_NAME/g" "$TEMPLATE" > "$PROJECT_CLAUDE"
-    echo "[ok]   CLAUDE.md (from template)"
+    cp "$ROOT_CLAUDE_TEMPLATE" "$ROOT_CLAUDE"
+    echo "[ok]   CLAUDE.md"
 fi
 
-# ── 6. Project AGENTS.md ────────────────────────────────────────────────────
-
-PROJECT_AGENTS="$PROJECT_DIR/AGENTS.md"
-AGENTS_TEMPLATE="$CODEOS_PATH/dba/05-guidance/templates/project-AGENTS.md"
-
-if [ -f "$PROJECT_AGENTS" ]; then
-    echo "[skip] AGENTS.md already exists"
+if [[ -f "$ROOT_AGENTS" ]]; then
+    echo "[skip] AGENTS.md already contains the Codeos root adapter"
 else
-    cp "$AGENTS_TEMPLATE" "$PROJECT_AGENTS"
-    echo "[ok]   AGENTS.md (from template)"
+    cp "$ROOT_AGENTS_TEMPLATE" "$ROOT_AGENTS"
+    echo "[ok]   AGENTS.md"
 fi
 
-# ── 7. Naming conventions ───────────────────────────────────────────────────
-
-CONVENTIONS="$PROJECT_DIR/docs/conventions.md"
-if [ -f "$CONVENTIONS" ]; then
-    echo "[skip] docs/conventions.md already exists"
-else
-    cp "$CODEOS_PATH/dba/05-guidance/templates/conventions.md" "$CONVENTIONS"
-    echo "[ok]   docs/conventions.md (from template)"
-fi
-
-# ── 8. Codebase digest placeholder ─────────────────────────────────────────
-
-DIGEST="$PROJECT_DIR/docs/codebase-digest.md"
-if [ -f "$DIGEST" ]; then
-    echo "[skip] docs/codebase-digest.md already exists"
-else
-    cp "$CODEOS_PATH/dba/05-guidance/templates/codebase-digest.md" "$DIGEST"
-    sed -i "s/\[PROJECT_NAME\]/$PROJECT_NAME/g" "$DIGEST"
-    echo "[ok]   docs/codebase-digest.md (template — complete after first implementation)"
-fi
-
-# ── 9. Implementation Profile ────────────────────────────────────────────────
-
-ARCH_DIR="$PROJECT_DIR/architecture"
-PROFILE="$ARCH_DIR/implementation-profile.yaml"
-PROFILE_TEMPLATE="$CODEOS_PATH/dba/05-guidance/templates/implementation-profile.yaml"
-
-if [ -f "$PROFILE" ]; then
-    echo "[skip] architecture/implementation-profile.yaml already exists"
-else
-    mkdir -p "$ARCH_DIR"
-    cp "$PROFILE_TEMPLATE" "$PROFILE"
-    echo "[ok]   architecture/implementation-profile.yaml (from template — status: proposed, non-binding)"
-fi
-
-# ── 10. Git init ────────────────────────────────────────────────────────────
-
-if [ -d "$PROJECT_DIR/.git" ]; then
+if [[ -d "$PROJECT_DIR/.git" ]]; then
     echo "[skip] git repo already exists"
 else
-    git -C "$PROJECT_DIR" init -b main
-    echo "[ok]   git init (branch: main)"
+    git -C "$PROJECT_DIR" init -b main >/dev/null
+    echo "[ok]   git init"
 fi
 
-# ── 11. Git remote ────────────────────────────────────────────────────────
-
-if [ -n "$REMOTE_URL" ]; then
+if [[ -n "$REMOTE_URL" ]]; then
     if git -C "$PROJECT_DIR" remote get-url origin &>/dev/null; then
         echo "[skip] git remote 'origin' already set"
     else
         git -C "$PROJECT_DIR" remote add origin "$REMOTE_URL"
-        echo "[ok]   git remote origin → $REMOTE_URL"
+        echo "[ok]   git remote origin -> $REMOTE_URL"
     fi
 fi
 
-# ── 12. Reviewer config ───────────────────────────────────────────────────
-
-REVIEWER_TOML="$PROJECT_DIR/reviewer.toml"
-REVIEWER_TEMPLATE="$CODEOS_PATH/dba/05-guidance/templates/reviewer.toml"
-
-if [ -f "$REVIEWER_TOML" ]; then
-    echo "[skip] reviewer.toml already exists"
-elif [ -f "$REVIEWER_TEMPLATE" ]; then
-    cp "$REVIEWER_TEMPLATE" "$REVIEWER_TOML"
-    echo "[ok]   reviewer.toml (from template — edit to change provider)"
-else
-    echo "[warn] reviewer.toml template not found at $REVIEWER_TEMPLATE — skipping"
-fi
-
-# ── 13. Done ──────────────────────────────────────────────────────────────
-
-echo ""
-echo "Done. Project initialized."
-echo ""
-echo "Next steps:"
-echo "  1. Open CLAUDE.md and fill in the project intent"
-echo "  2. Edit features/registry.yaml — replace the example entry with real features"
-echo "  3. Start Claude Code: claude"
-echo "  4. Tell Claude: 'Read .codeos/dba-system.md' (the active DBA entrypoint)"
-echo "  5. Paste .codeos/dba/03-prompts/workflow/00-session-start.md to begin"
-echo ""
-echo "Workflow choices (from 00-session-start.md):"
-echo "  Feature Brief (new feature discovery)"
-echo "  Feature Stage Work (Stages 1–9)"
-echo "  Architecture Synthesis (project-level governed boundary)"
-echo "  Existing Codebase Onboarding (working code, no DBA artifacts)"
-echo "  Ordinary structural maintenance uses the project's normal engineering process"
-echo ""
-echo "To create your first feature brief:"
-echo "  cp .codeos/dba/05-guidance/templates/feature-brief.md backlog/[feature_id].md"
-echo "  # Complete the brief, then use it as Stage 1 input"
-echo ""
-echo "Optional — Codebase Digest (structural orientation for Claude):"
-echo "  Complete docs/codebase-digest.md after your first implementation is in place."
-echo "  Claude will read it at session start (Step 2b). Generate from openlore,"
-echo "  static analysis, or manual inspection. See dba/05-guidance/templates/codebase-digest.md."
-echo ""
-echo "Implementation Profile (architecture/implementation-profile.yaml):"
-echo "  Scaffolded as a non-binding proposal (status: proposed, primary_language: rust)."
-echo "  Edit it, or leave it as-is, then have a human explicitly approve it before"
-echo "  Stage 4 relies on it. See implementation_profile_policy via .codeos/dba-system.md."
-echo ""
+echo "Done. Fill in .codeos/00-project/CLAUDE.md, then use .codeos/toolkit/dba/03-prompts/workflow/01-intent.md."

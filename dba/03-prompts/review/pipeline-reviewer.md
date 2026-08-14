@@ -9,7 +9,7 @@ out_of_scope: Default automated review mechanics, approval authority, lifecycle 
 
 Provide an optional independent second opinion that may challenge the artifact, feature framing,
 architecture, or DBA itself. This does not replace the default advisory review selected by
-`.codeos/dba-system.md` and never makes a workflow decision.
+`.codeos/toolkit/dba-system.md` and never makes a workflow decision.
 
 ## Inputs
 

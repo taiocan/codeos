@@ -25,7 +25,7 @@ struct ReviewerToml {
 /// Resolve config. Precedence (highest to lowest):
 ///   1. `cli_provider` argument (--provider flag)
 ///   2. `CODEOS_REVIEWER_PROVIDER` environment variable
-///   3. `reviewer.toml` in .codeos/ (downstream) or toolkit root (self-dev)
+///   3. `.codeos/05-review/reviewer.toml` downstream or `reviewer.toml` at the toolkit root
 ///   4. Compiled-in default: "codex"
 pub fn resolve(cli_provider: Option<&str>, repo_root: &Path) -> Result<Config> {
     let (provider_name, provider_source) = resolve_provider(cli_provider, repo_root)?;
@@ -39,7 +39,7 @@ pub fn resolve(cli_provider: Option<&str>, repo_root: &Path) -> Result<Config> {
     let review_root = if self_development {
         repo_root.join("maintenance/reviews")
     } else {
-        repo_root.join("reviews")
+        repo_root.join(".codeos/05-review/reviews")
     };
 
     Ok(Config {
@@ -98,29 +98,25 @@ fn validate_provider_name(name: &str) -> Result<()> {
 }
 
 fn find_reviewer_toml(repo_root: &Path) -> Option<PathBuf> {
-    // Project root takes priority (.codeos/ is a symlink to a shared toolkit, not project-local)
-    let at_root = repo_root.join("reviewer.toml");
-    if at_root.exists() {
-        return Some(at_root);
-    }
-    // Toolkit fallback: .codeos/reviewer.toml resolves into the toolkit for downstream projects,
-    // or stays at repo root for self-dev. Only used if no project-root file exists.
-    let codeos = repo_root.join(".codeos/reviewer.toml");
-    if codeos.exists() && !codeos.is_symlink() {
-        return Some(codeos);
-    }
-    None
+    let self_development = repo_root.join("dba-system.md").is_file()
+        && repo_root.join("dba/00-entry").is_dir();
+    let path = if self_development {
+        repo_root.join("reviewer.toml")
+    } else {
+        repo_root.join(".codeos/05-review/reviewer.toml")
+    };
+    path.exists().then_some(path)
 }
 
 fn find_toolkit_root(repo_root: &Path) -> PathBuf {
-    // Downstream: .codeos/ symlink points to toolkit
-    let codeos = repo_root.join(".codeos");
-    if codeos.is_symlink() {
-        if let Ok(target) = std::fs::read_link(&codeos) {
+    // Downstream: .codeos is project-local and its toolkit child is the shared mount.
+    let toolkit = repo_root.join(".codeos/toolkit");
+    if toolkit.is_symlink() {
+        if let Ok(target) = std::fs::read_link(&toolkit) {
             if target.is_absolute() {
                 return target;
             }
-            return repo_root.join(target);
+            return repo_root.join(".codeos").join(target);
         }
     }
     // Self-dev: repo_root is the toolkit root
@@ -174,8 +170,10 @@ mod tests {
     fn env_var_overrides_toml() {
         let _guard = ENV_VAR_LOCK.lock().unwrap_or_else(|e| e.into_inner());
         let dir = tmp_repo();
-        // Write reviewer.toml with gemini
-        fs::write(dir.path().join("reviewer.toml"), "provider = \"gemini\"\n").expect("write toml");
+        let config_dir = dir.path().join(".codeos/05-review");
+        fs::create_dir_all(&config_dir).expect("create config dir");
+        fs::write(config_dir.join("reviewer.toml"), "provider = \"gemini\"\n")
+            .expect("write toml");
         std::env::set_var("CODEOS_REVIEWER_PROVIDER", "opencode");
         let cfg = resolve(None, dir.path()).expect("resolve");
         assert_eq!(cfg.provider_name, "opencode");
@@ -188,7 +186,10 @@ mod tests {
         let _guard = ENV_VAR_LOCK.lock().unwrap_or_else(|e| e.into_inner());
         let dir = tmp_repo();
         std::env::remove_var("CODEOS_REVIEWER_PROVIDER");
-        fs::write(dir.path().join("reviewer.toml"), "provider = \"opencode\"\n").expect("write toml");
+        let config_dir = dir.path().join(".codeos/05-review");
+        fs::create_dir_all(&config_dir).expect("create config dir");
+        fs::write(config_dir.join("reviewer.toml"), "provider = \"opencode\"\n")
+            .expect("write toml");
         let cfg = resolve(None, dir.path()).expect("resolve");
         assert_eq!(cfg.provider_name, "opencode");
         assert_eq!(cfg.provider_source, "reviewer.toml");

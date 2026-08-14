@@ -34,7 +34,8 @@ required. Do not improve unrelated code or disguise redesign as refinement.
 
 ## Output / Next Action
 
-Fill the current refinement template only when a durable refinement record adds value; otherwise
-use the governing artifact changes and Git as the record. Present trigger, evidence, root cause,
-minimal change, affected authority, and verification route. Return the verified result to the
-final-acceptance adapter in `08-replay.md`.
+Create `.codeos/04-refinement/<feature-id>-<slug>.md` from the optional refinement template only
+when a durable refinement record adds value; otherwise use the governing artifact changes and Git
+as the record and keep this result inline. Present trigger, evidence, root cause, minimal change,
+affected authority, and verification route. Return the verified result to the final-acceptance
+adapter in `08-replay.md`.

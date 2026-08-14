@@ -46,7 +46,7 @@
 # Activation (Optional Mechanism Status Convention, UPG-0056): a one-line status file, resolved by
 # context from the caller's repository root —
 #   self-dev    (caller git root == this repo): maintenance/config/delegated-implementation.yaml
-#   downstream  (caller git root != this repo): architecture/delegated-implementation.yaml
+#   downstream  (caller git root != this repo): .codeos/02-architecture/delegated-implementation.yaml
 # Four outcomes: absent -> disabled; exact "status: disabled" -> disabled; exact "status: enabled"
 # -> enabled; anything else -> configuration error. The tool runs ONLY when the value is enabled.
 #
@@ -143,7 +143,7 @@ for dep in curl jq; do
 done
 
 # ── Resolve this script's repo (CODEOS_ROOT) and the caller's repo (CALLER_ROOT) ────────────────
-# pwd -P (physical) follows the .codeos symlink when invoked from a downstream project, matching
+# pwd -P (physical) follows the .codeos/toolkit symlink when invoked downstream, matching
 # dba/04-tools/reviewer/codeos-review.sh. The caller's own git root distinguishes self-dev from downstream.
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 CODEOS_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd -P)"
@@ -152,7 +152,7 @@ CALLER_ROOT="$(cd "$(git rev-parse --show-toplevel)" && pwd -P)"
 if [[ "${CALLER_ROOT}" == "${CODEOS_ROOT}" ]]; then
   STATUS_FILE="${CODEOS_ROOT}/maintenance/config/delegated-implementation.yaml"
 else
-  STATUS_FILE="${CALLER_ROOT}/architecture/delegated-implementation.yaml"
+  STATUS_FILE="${CALLER_ROOT}/.codeos/02-architecture/delegated-implementation.yaml"
 fi
 
 # ── 4/5. activation status (four-outcome, per UPG-0056; parse identical to codeos-review.sh) ─────

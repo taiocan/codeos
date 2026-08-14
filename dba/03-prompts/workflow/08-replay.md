@@ -40,4 +40,5 @@ Present the verification result, remaining gaps, and advisory review or waiver, 
 
 `AWAITING FINAL HUMAN ACCEPTANCE`
 
-The human accepts the feature or requests targeted refinement through `09-refine.md`.
+The review package and verification result remain inline; this workflow creates no separate durable
+report. The human accepts the feature or requests targeted refinement through `09-refine.md`.

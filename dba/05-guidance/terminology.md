@@ -14,7 +14,6 @@ Ordinary technical vocabulary does not belong here. Git preserves the history of
 |---|---|
 | **Alias** | An alternative input form accepted for compatibility, migration, or user preference and resolved before domain logic runs. |
 | **Architecture Scope** | The single artifact for one project-level architectural scope. Its filename identifies the scope; it owns feature membership, structural decisions, and recorded human approval and cannot invent or alter behavior. |
-| **Artifact status** | The lifecycle value of a governed artifact: `DRAFT`, `APPROVED`, `IN_PROGRESS`, or `COMPLETE`. |
 | **Behavioral Contract** | Observable truths derived from Intent, normally expressed as Given/When/Then conditions. |
 | **Behavioral Event** | A runtime event representing a verified outcome. |
 | **Behavioral invariant** | A condition that must remain true in externally observable behavior, independent of internal implementation structure. |
@@ -30,17 +29,16 @@ Ordinary technical vocabulary does not belong here. Git preserves the history of
 | **Reconciliation status** | One of `ALIGNED`, `GAP`, `MISMATCH`, or `MISSING`. The row note explains the specific issue; status names do not encode gap subtypes. |
 | **External Event** | A runtime event representing a side effect on a system outside the governed boundary. |
 | **Failure Event** | A runtime event representing a classified error condition. |
+| **Feature ID** | The stable `F-####` identity assigned when an Intent is created. It is never reused; partial Specification Packages remain valid identities. |
 | **Implementation Profile** | An approved project-level statement of preferred implementation language and scope that implementation must consult. |
 | **Intent** | Why a feature exists, expressed as actor and desired outcome without implementation details. |
 | **NORMAL** | The default Codeos self-development classification for work that does not reasonably risk an approved consequential boundary. |
 | **Normalize-on-read** | A vocabulary strategy that stores the original representation and resolves it at every comparison site. |
 | **Normalize-on-write** | A vocabulary strategy that resolves input at ingestion and stores Concept identity. |
 | **Observational Event** | A runtime event representing a raw observed fact. |
-| **Payload-drift status** | The comparison result for an observed payload field: `MATCH`, `TYPE_MISMATCH`, `ABSENT`, or `EXTRA`. |
 | **Protected invariant** | The condition identified before a PROTECTED semantic change that must remain true after implementation. |
 | **PROTECTED semantic change** | An intentional Codeos change that could alter approved behavior or authority, project architecture, persistent compatibility, safety or integrity, or human-control boundaries. |
 | **Reconciliation Review** | A structural comparison of governed artifacts for gaps, mismatches, and missing evidence. |
-| **Reconciliation status** | The alignment result for a reconciliation item: `ALIGNED`, `GAP`, `MISMATCH`, or `MISSING`. |
 | **Replay Verification** | Confirmation that a runtime event log conforms to its approved schema and contract sequence. |
 | **Representation Ban Rule** | Domain logic must not store, compare, branch on, or pattern-match vocabulary representations; it uses resolved Concept identity. |
 | **Resolution** | Mapping an Alias or canonical representation to its Concept through the vocabulary owner's API. |

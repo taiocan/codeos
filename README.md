@@ -27,7 +27,7 @@ bash /path/to/Codeos/dba/04-tools/initializer/dba-init.sh [project-name] [remote
 bash /path/to/Codeos/dba/04-tools/initializer/dba-init.sh my-project https://github.com/user/my-project.git
 
 # Then in Claude Code:
-# Paste the contents of .codeos/dba/03-prompts/workflow/00-session-start.md
+# Paste the contents of .codeos/toolkit/dba/03-prompts/workflow/00-session-start.md
 ```
 
 ## Directory Structure
@@ -36,7 +36,7 @@ bash /path/to/Codeos/dba/04-tools/initializer/dba-init.sh my-project https://git
 different modes, so the doctrine and the toolkit's own operating guide are separate files:
 - `dba-system.md` — the stable downstream **DBA entrypoint**. It selects the active configuration,
   which selects the authoritative doctrine, policies, and reviewer tool contract. Downstream
-  projects load it via `.codeos/dba-system.md`.
+  projects load it via `.codeos/toolkit/dba-system.md`.
 - `CLAUDE.md` (toolkit repo root) — the **Codeos Self-Development** guide: minimal governance for
   ordinary work, with explicit human control for consequential semantic changes.
   Claude auto-reads it when working in this repo.
@@ -45,7 +45,7 @@ different modes, so the doctrine and the toolkit's own operating guide are separ
 Codeos/
 ├── AGENTS.md          — Codex route to CLAUDE.md
 ├── CLAUDE.md          — Codeos Self-Development guide (governs toolkit changes)
-├── dba-system.md      — Downstream DBA entrypoint (loaded via .codeos/dba-system.md)
+├── dba-system.md      — Downstream DBA entrypoint (loaded via .codeos/toolkit/dba-system.md)
 ├── README.md          — This file
 ├── dba/               — Downstream DBA package
 │   ├── 00-entry/      — Active configuration selection
@@ -54,7 +54,7 @@ Codeos/
 │   ├── 03-prompts/    — Workflow, review, and delegation instructions
 │   ├── 04-tools/      — Contracts and implementations grouped by capability
 │   ├── 05-guidance/   — Templates, patterns, and terminology
-│   └── 06-reference/  — Explanatory and migration documentation
+│   └── 06-reference/  — Non-authoritative migration guidance
 └── maintenance/       — Codeos self-development
     ├── backlog/
     ├── reviews/
@@ -66,50 +66,50 @@ Codeos/
 
 ```
 myproject/
-├── .codeos -> /home/arc/projects/claude/Codeos   (symlink)
-├── AGENTS.md          — Codex route to CLAUDE.md
-├── CLAUDE.md          — Project-level instructions; references .codeos/dba-system.md
-├── intents/           — Feature intents (one .md per feature)
-├── contracts/         — Behavioral contracts (one .md per feature)
-├── events/
-│   ├── [feature_id]_schema.md      — Governed events or external-observation mapping
-│   └── runtime_events.jsonl        — Append-only log for features using events mode
-├── modules/           — Implementation code
-├── tests/
-│   ├── behavioral/    — Behavioral outcome tests
-│   └── replay/        — Replay verification tests
-└── docs/
-    └── conventions.md — Naming conventions
+├── AGENTS.md                    — Codex route to root CLAUDE.md
+├── CLAUDE.md                    — Discovery adapter
+├── events/                      — Runtime evidence, created only when needed
+├── source and tests             — Project-native layout
+└── .codeos/                     — Durable project-local DBA state
+    ├── 00-project/CLAUDE.md     — Canonical project instructions
+    ├── 01-specification/
+    │   ├── intents/
+    │   ├── contracts/
+    │   └── event-schemas/
+    └── toolkit -> /path/to/Codeos  — Ignored machine-local mount
 ```
+
+Architecture, discovery, refinement, review, runtime-evidence, and operational-state paths are
+created only when the project actually needs them. The full canonical location model is owned by
+the Downstream Project Layout Contract in `dba-system.md`.
 
 ## The DBA Development Loop
 
 ### Before Every Session
-Paste `.codeos/dba/03-prompts/workflow/00-session-start.md` to orient Claude.
+Paste `.codeos/toolkit/dba/03-prompts/workflow/00-session-start.md` to orient Claude.
 
 ### Starting a New Project for the First Time
 
 After running `dba-init.sh` (with an optional project name and remote URL), follow these steps before opening Claude:
 
-**Step 1 — Fill in the project `CLAUDE.md` that the script generated.**
+**Step 1 — Fill in `.codeos/00-project/CLAUDE.md` that the script generated.**
 Open it and complete:
-- **Project intent** — one paragraph describing what this project exists to do, in actor + outcome language (not implementation details)
-- **Language/runtime, test framework, event prefix** — the project-specific conventions block at the bottom
-- Leave the Active Features table empty — you add rows as features are created and approved
+- **Project intent** — one paragraph describing what this project exists to do
+- **Project constraints** — only durable constraints not already owned elsewhere; delete when empty
 
 **Step 2 — Open Claude Code in the project directory and use
-`.codeos/dba/03-prompts/workflow/00-session-start.md`.** Name the target feature or structural task.
+`.codeos/toolkit/dba/03-prompts/workflow/00-session-start.md`.** Name the target feature or structural task.
 
 **Step 3 — Claude reads the active DBA components and the project `CLAUDE.md` and confirms — verify it names both.**
-1. `.codeos/dba-system.md` — stable entrypoint to the active DBA configuration and selected components
-2. Project `CLAUDE.md` — the file you just filled in; Claude reads the project intent and conventions
+1. `.codeos/toolkit/dba-system.md` — stable entrypoint and downstream layout owner
+2. `.codeos/00-project/CLAUDE.md` — the canonical project instructions you just filled in
 
 **Step 4 — Draft the Specification Package.**
-Start with `.codeos/dba/03-prompts/workflow/01-intent.md`, then continue through Contract and Event Schema. Stage 3 owns the
+Start with `.codeos/toolkit/dba/03-prompts/workflow/01-intent.md`, then continue through Contract and Event Schema. Stage 3 owns the
 current `specification-approval` boundary.
 
 There are no existing project artifacts to read at this point — Claude starts from the active DBA
-components selected through `.codeos/dba-system.md` and the project `CLAUDE.md`. Do not paste a
+components selected through `.codeos/toolkit/dba-system.md` and the canonical project instructions. Do not paste a
 resumption prompt; go straight to the stage prompt.
 
 ### Resuming After a Crash or Session Break
@@ -117,21 +117,20 @@ resumption prompt; go straight to the stage prompt.
 When starting a fresh session on a project where work is already in progress:
 
 **Step 1 — Open Claude Code in the project directory and use
-`.codeos/dba/03-prompts/workflow/00-session-start.md`.** Name the target feature or task. The prompt
-reads its matching registry entry and live artifacts; do not copy repository state into the prompt.
+`.codeos/toolkit/dba/03-prompts/workflow/00-session-start.md`.** Name the target feature or task. The prompt
+reads the matching live artifacts; do not copy repository state into the prompt.
 
 **Step 2 — Claude reads these two files (verify it confirms both):**
-1. `.codeos/dba-system.md` — entrypoint to the active DBA configuration and selected rules
-2. Project `CLAUDE.md` — your Active Features table and project-specific conventions
+1. `.codeos/toolkit/dba-system.md` — entrypoint to the active DBA configuration and layout contract
+2. `.codeos/00-project/CLAUDE.md` — project intent and durable project constraints
 
 **Step 3 — For each in-progress feature, direct Claude to read the existing approved artifacts.**
 Tell Claude which feature to resume, then say: "Read the existing artifacts for [feature_id] before proceeding."
 Claude will read:
-- `intents/[feature_id].md` — approved intent (do not re-derive)
-- `contracts/[feature_id]_contract.md` — approved contract (do not re-derive)
-- `events/[feature_id]_schema.md` — approved event schema (do not re-derive)
-- `modules/[feature_id]/` — existing implementation (if Stage 4 was completed)
-- `tests/` — existing tests (if Stage 5 was completed)
+- `.codeos/01-specification/intents/[feature_id].md` — approved Intent
+- `.codeos/01-specification/contracts/[feature_id]_contract.md` — approved Contract
+- `.codeos/01-specification/event-schemas/[feature_id]_schema.md` — approved Event Schema
+- project-native implementation and tests, when present
 
 **Do not ask Claude to rewrite or re-derive unchanged governed artifacts.** Route resumed work
 through the Stage 4 `delivery-entry` adapter, which owns compatibility and entry checks.
@@ -144,22 +143,22 @@ boundary adapters:
 
 | Stage | File | Purpose | Claude produces | Boundary owner |
 |---|---|---|---|---|
-| 1 | `.codeos/dba/03-prompts/workflow/01-intent.md` | Capture *why* the feature exists — actor + outcome, no implementation details | Draft Intent | — |
-| 2 | `.codeos/dba/03-prompts/workflow/02-contract.md` | Translate Intent into independently testable behavior | Draft Contract | — |
-| 3 | `.codeos/dba/03-prompts/workflow/03-event-schema.md` | Complete and cross-check the Specification Package | Draft Event Schema + package review | `specification-approval` adapter |
-| 4 | `.codeos/dba/03-prompts/workflow/04-implement.md` | Implement governed behavior | Code in `modules/` | `delivery-entry` adapter |
-| 5 | `.codeos/dba/03-prompts/workflow/05-tests.md` | Verify observable outcomes | Tests in `tests/` | — |
-| 6 | `.codeos/dba/03-prompts/workflow/06-observe.md` | Capture trustworthy runtime evidence | Runtime evidence | — |
-| 7 | `.codeos/dba/03-prompts/workflow/07-reconcile.md` | Surface gaps and mismatches | Reconciliation evidence | — |
-| 8 | `.codeos/dba/03-prompts/workflow/08-replay.md` | Verify replay and conformance | Final review package | `final-acceptance` adapter |
-| 9 | `.codeos/dba/03-prompts/workflow/09-refine.md` | Apply targeted refinement and return to verification | Targeted refinement | Stage 8 adapter |
+| 1 | `.codeos/toolkit/dba/03-prompts/workflow/01-intent.md` | Capture *why* the feature exists — actor + outcome, no implementation details | Intent in `01-specification/intents/` | — |
+| 2 | `.codeos/toolkit/dba/03-prompts/workflow/02-contract.md` | Translate Intent into independently testable behavior | Contract in `01-specification/contracts/` | — |
+| 3 | `.codeos/toolkit/dba/03-prompts/workflow/03-event-schema.md` | Complete and cross-check the Specification Package | Event Schema in `01-specification/event-schemas/` | `specification-approval` adapter |
+| 4 | `.codeos/toolkit/dba/03-prompts/workflow/04-implement.md` | Implement governed behavior | Project-native code | `delivery-entry` adapter |
+| 5 | `.codeos/toolkit/dba/03-prompts/workflow/05-tests.md` | Verify observable outcomes | Project-native tests | — |
+| 6 | `.codeos/toolkit/dba/03-prompts/workflow/06-observe.md` | Capture trustworthy runtime evidence | Runtime evidence | — |
+| 7 | `.codeos/toolkit/dba/03-prompts/workflow/07-reconcile.md` | Surface gaps and mismatches | Inline reconciliation | — |
+| 8 | `.codeos/toolkit/dba/03-prompts/workflow/08-replay.md` | Verify replay and conformance | Inline final review package | `final-acceptance` adapter |
+| 9 | `.codeos/toolkit/dba/03-prompts/workflow/09-refine.md` | Apply targeted refinement and return to verification | Optional durable refinement | Stage 8 adapter |
 
 ## Stage Purposes
 
 ### Stage 0 — Session Start
 **Purpose:** Orient Claude from live repository state, classify the target work, and select the
 applicable workflow. Claude reads the active DBA entrypoint, project instructions, and only the
-registry entry and artifacts relevant to the target.
+artifacts relevant to the target. Incomplete Specification Packages are normal work in progress.
 **Key constraint:** Claude does not produce artifacts, write code, or analyze anything until the human explicitly says to proceed.
 
 ### Stage 1 — Intent
@@ -243,6 +242,9 @@ For a future doctrine version:
 ## Reference Material
 
 Current project definitions: `dba/05-guidance/terminology.md`
+
+Migration from supported legacy downstream layouts:
+`dba/06-reference/downstream-upgrade.md`
 
 Prior design sessions and DBA theory: `maintenance/archive/`
 

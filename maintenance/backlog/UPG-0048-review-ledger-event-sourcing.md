@@ -18,7 +18,7 @@ superseded_by: []
 
 ## Problem
 
-Today `reviews/review-log.md` is simultaneously an append-only durable record *and* the
+Today `.codeos/05-review/reviews/review-log.md` is simultaneously an append-only durable record *and* the
 human-readable presentation of that record. `maintenance/archive/self-development/status/self-development.md` is a similarly
 hand-maintained projection of the same underlying facts (which change is at which step, which
 review series accepted what). Keeping these in sync is currently a manual discipline enforced by
@@ -43,9 +43,9 @@ doing — it may turn out the lighter upgrades already remove most of the pain t
 
 ### 2. Event log shape and source-of-truth boundary
 
-An illustrative sketch (**not an approved schema**) — an append-only `reviews/review-events.jsonl`
+An illustrative sketch (**not an approved schema**) — an append-only `.codeos/05-review/reviews/review-events.jsonl`
 recording atomic events (`review_planned`, `packet_built`, `review_completed`,
-`finding_recorded`, `human_decision`), with `reviews/review-log.md` and
+`finding_recorded`, `human_decision`), with `.codeos/05-review/reviews/review-log.md` and
 `maintenance/archive/self-development/status/self-development.md` becoming *generated projections* rather than hand-maintained files.
 
 ```json
@@ -54,7 +54,7 @@ recording atomic events (`review_planned`, `packet_built`, `review_completed`,
 ```
 
 If pursued, this needs an explicit answer to: what happens to the *existing* several thousand
-lines of `reviews/review-log.md` history (backfill into events retroactively? leave pre-migration
+lines of `.codeos/05-review/reviews/review-log.md` history (backfill into events retroactively? leave pre-migration
 history as-is and start the event log fresh from a cutover point? — the latter is far cheaper and
 matches how `UPG-0029`'s durability policy already handles "pre-policy entries were not committed,
 classified retroactively" as a precedent for non-destructive cutover).
@@ -69,7 +69,7 @@ historical/legacy notes) needs a concrete answer before this is more than a sket
 
 ## Scope
 
-Deliberately unscoped beyond "explore whether `reviews/review-log.md` and
+Deliberately unscoped beyond "explore whether `.codeos/05-review/reviews/review-log.md` and
 `maintenance/archive/self-development/status/self-development.md` should become generated projections of an append-only event log."
 Any real implementation of this item should itself go through Step 1 Intent with a much narrower,
 concretely-bounded scope than this brief states — this brief is the parking lot for the idea, not
@@ -77,7 +77,7 @@ an implementation plan.
 
 Out of scope for this brief (and likely for whatever narrower change eventually implements part
 of it):
-- Migrating historical `reviews/review-log.md` content into the new event format as a hard
+- Migrating historical `.codeos/05-review/reviews/review-log.md` content into the new event format as a hard
   requirement — see "cutover, not backfill" note above.
 - Any change to the human-gated approval model — events record decisions, they do not make them.
 - Doing this before `UPG-0046` and `UPG-0047` ship and prove out (or fail to prove out) the
@@ -101,7 +101,7 @@ cleaner.
 Deciding hastily risks:
 - Building a general-purpose event-sourcing system as a solo side-project inside a toolkit repo,
   disproportionate to the actual review volume it serves.
-- Breaking the append-only-and-human-readable guarantee that makes `reviews/review-log.md`
+- Breaking the append-only-and-human-readable guarantee that makes `.codeos/05-review/reviews/review-log.md`
   trustworthy today, in exchange for a generation pipeline that itself becomes a new source of
   bugs (a generator that mis-renders a projection is a worse failure mode than a human typo in a
   hand-written log, because it looks authoritative).
@@ -111,9 +111,9 @@ Deciding hastily risks:
 ## Guardrail
 
 If ever implemented, this upgrade must:
-- Preserve every append-only and durability guarantee in `dba/06-reference/reviewer-pipeline.md` §4/§4a — the
+- Preserve every append-only and integrity guarantee in `dba/04-tools/reviewer/contract/v2.md` — the
   event log itself must be at least as durable and human-auditable as today's
-  `reviews/review-log.md`.
+  `.codeos/05-review/reviews/review-log.md`.
 - Never make the event log (or its generated projections) authoritative over the human's decision
   — same rule as `UPG-0046`/`UPG-0047`, restated because this item raises the stakes the most.
 - Not be started before `UPG-0046` and `UPG-0047` (its likely prerequisites) have shipped and been
@@ -129,7 +129,7 @@ If ever implemented, this upgrade must:
 - Proposed by the human during a 2026-07-12 review-architecture discussion as "Option 3 — Full
   Review OS," explicitly flagged by the human themselves as "probably too much for now" in favor
   of the lighter "Option 2 — Review Control Plane Lite" (`UPG-0046`/`UPG-0047`). See
-  `reviews/review-log.md` and
+  `.codeos/05-review/reviews/review-log.md` and
   `maintenance/archive/self-development/changes/UPG-0044__CHG-20260712-001__reviewer-pipeline-architecture-refresh.md`.
 
 ## Feature Thread

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # codeos-review.sh — thin shim delegating to the compiled Rust binary.
-# Subcommands: review / plan / decision / diagnose / stage-start / check-drift /
-#              inspect-architecture-scopes / generate-*
+# Subcommands: review / plan / decision / diagnose / stage-start /
+#              inspect-architecture-scopes
 # (see: codeos-reviewer --help)
 # To build: cargo build --release --manifest-path dba/04-tools/reviewer/engine/Cargo.toml
 #
@@ -15,9 +15,9 @@ set -euo pipefail
 git rev-parse --show-toplevel >/dev/null 2>&1 || { echo "error: not inside a git repository" >&2; exit 1; }
 
 # Resolve the binary relative to this script's own physical location (following the
-# .codeos symlink when invoked from a downstream project), not the calling repo's git
+# nested .codeos/toolkit symlink when invoked from a downstream project), not the calling repo's git
 # root — git rev-parse --show-toplevel from within a downstream project resolves to that
-# project's own root, not through .codeos to Codeos, which is where the binary actually
+# project's own root, not through .codeos/toolkit to Codeos, which is where the binary actually
 # lives. pwd -P (physical) is required, not plain pwd, to resolve through the symlink
 # rather than preserve its logical name.
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"

@@ -7,7 +7,7 @@ Contracts describe OBSERVABLE behavior, not internal logic.
 Every clause must be independently testable.
 Its governance transition is owned by the specification-approval doctrine adapter.
 
-DERIVED FROM: intents/[feature_id].md
+DERIVED FROM: .codeos/01-specification/intents/[feature_id].md
 -->
 
 ## Scenarios
@@ -81,7 +81,7 @@ What must ALWAYS be true, regardless of inputs or execution path.
 Complete only if this feature owns or consumes vocabulary-defined concepts
 (types, statuses, or domain concepts defined by a configurable schema).
 Delete this section entirely if not applicable.
-Reference: .codeos/dba/05-guidance/patterns/vocabulary-architecture.md
+Reference: .codeos/toolkit/dba/05-guidance/patterns/vocabulary-architecture.md
 DO NOT state a resolution strategy here — that is a Stage 4 implementation choice.
 -->
 
@@ -192,5 +192,5 @@ status: DRAFT
 feature_id: [feature_id]
 approved_by:
 approved_at:
-derived_from_intent: intents/[feature_id].md
-derived_event_schema: events/[feature_id]_schema.md
+derived_from_intent: .codeos/01-specification/intents/[feature_id].md
+derived_event_schema: .codeos/01-specification/event-schemas/[feature_id]_schema.md

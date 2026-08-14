@@ -12,9 +12,9 @@ internal implementation.
 
 ## Inputs / Prerequisites
 
-Read the current Intent and `.codeos/dba/05-guidance/templates/contract.md`; the template owns the
-Contract shape. Keep both artifacts in `DRAFT` and revise Intent if Contract work exposes a product
-gap.
+Read the current Intent from its canonical location and
+`.codeos/toolkit/dba/05-guidance/templates/contract.md`; the template owns the Contract shape. Keep
+both artifacts in `DRAFT` and revise Intent if Contract work exposes a product gap.
 
 ## Task
 
@@ -48,5 +48,5 @@ unapproved event requirement appears.
 
 ## Output / Next Action
 
-Present `contracts/[feature_id]_contract.md` as `DRAFT`, list unresolved Intent questions, and hand
-the current Intent and Contract to `03-event-schema.md`.
+Create `.codeos/01-specification/contracts/[feature_id]_contract.md` as `DRAFT`, present it, list
+unresolved Intent questions, and hand the current Intent and Contract to `03-event-schema.md`.

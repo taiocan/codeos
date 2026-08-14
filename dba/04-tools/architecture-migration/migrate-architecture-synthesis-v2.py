@@ -105,6 +105,10 @@ def main() -> int:
     ).returncode != 0:
         fail(f"not a Git repository: {project}")
 
+    codeos_dir = project / ".codeos"
+    if codeos_dir.is_symlink() or not codeos_dir.is_dir():
+        fail("establish the real project-local .codeos directory before architecture migration")
+
     registry_path = project / "features/registry.yaml"
     baseline_path = project / "architecture/core-baseline.md"
     logical_path = project / "architecture/cohort-logical-design.md"
@@ -183,7 +187,7 @@ def main() -> int:
     if not decisions or not logical_decisions:
         fail("cannot find both legacy architecture decision sections")
 
-    scope_path = project / f"architecture/scopes/{scope_id}.md"
+    scope_path = project / f".codeos/02-architecture/scopes/{scope_id}.md"
     if scope_path.exists():
         fail(f"target already exists: {scope_path.relative_to(project)}")
 
@@ -200,9 +204,11 @@ def main() -> int:
         f"## Preserved shared logical decisions\n\n{logical_decisions}\n"
     )
 
-    profile_path = project / "architecture/implementation-profile.yaml"
-    profile = load_yaml(profile_path) if profile_path.is_file() else None
-    profile_changed = False
+    legacy_profile_path = project / "architecture/implementation-profile.yaml"
+    profile_path = project / ".codeos/02-architecture/implementation-profile.yaml"
+    if legacy_profile_path.is_file() and profile_path.exists():
+        fail(f"target already exists: {profile_path.relative_to(project)}")
+    profile = load_yaml(legacy_profile_path) if legacy_profile_path.is_file() else None
     if profile is not None:
         applies = profile.get("applies_to")
         if not isinstance(applies, dict):
@@ -220,13 +226,11 @@ def main() -> int:
             applies["scope"] = "feature_ids"
             applies["feature_ids"] = list(registry_members)
             applies.pop("cohort_ids", None)
-            profile_changed = True
         elif selector in {"all", "feature_ids"}:
             if cohort_ids:
                 fail("Implementation Profile has populated unused cohort_ids")
             if "cohort_ids" in applies:
                 applies.pop("cohort_ids")
-                profile_changed = True
         else:
             fail(f"unsupported Implementation Profile selector during migration: {selector!r}")
 
@@ -287,9 +291,8 @@ def main() -> int:
                 add_exception(feature_id, exception)
         if migrated_exceptions != exceptions:
             profile["exceptions"] = migrated_exceptions
-            profile_changed = True
-    if profile_changed and not tracked(project, profile_path):
-        fail("Implementation Profile needs selector migration but is not committed; commit it first")
+    if profile is not None and not tracked(project, legacy_profile_path):
+        fail("Implementation Profile is not committed; commit it before migration")
 
     legacy_history = sorted((project / "architecture/history").glob("core-baseline-v*.md"))
     legacy_history += sorted((project / "architecture/history").glob("cohort-logical-design-v*.md"))
@@ -310,8 +313,10 @@ def main() -> int:
             feature.pop("architecture_cohort", None)
     registry.pop("architecture_cohorts", None)
     atomic_write(registry_path, yaml.safe_dump(registry, sort_keys=False))
-    if profile_changed:
+    if profile is not None:
+        profile_path.parent.mkdir(parents=True, exist_ok=True)
         atomic_write(profile_path, yaml.safe_dump(profile, sort_keys=False))
+        legacy_profile_path.unlink()
     for path in [baseline_path, logical_path, *legacy_history]:
         path.unlink()
     print(f"migrated to {scope_path.relative_to(project)}; legacy state removed")

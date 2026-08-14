@@ -636,7 +636,10 @@ fn git_diff_names(base: &str, paths: &[String], repo_root: &str) -> Result<Vec<S
     for p in paths {
         args.push(p);
     }
-    args.extend_from_slice(&[":(exclude)reviews", ":(exclude).codeos-state"]);
+    args.extend_from_slice(&[
+        ":(exclude).codeos/05-review/reviews",
+        ":(exclude).codeos-state",
+    ]);
     let out = Command::new("git")
         .args(&args)
         .current_dir(repo_root)
@@ -666,7 +669,7 @@ fn git_diff_names_head(repo_root: &str) -> Result<Vec<String>> {
             "HEAD",
             "--",
             ".",
-            ":(exclude)reviews",
+            ":(exclude).codeos/05-review/reviews",
             ":(exclude).codeos-state",
         ])
         .current_dir(repo_root)
@@ -718,7 +721,7 @@ fn git_is_dirty(repo_root: &str) -> bool {
             "--untracked-files=all",
             "--",
             ".",
-            ":(exclude)reviews",
+            ":(exclude).codeos/05-review/reviews",
             ":(exclude).codeos-state",
         ])
         .current_dir(repo_root)
@@ -813,8 +816,8 @@ pub fn sha256_str(s: &str) -> String {
 fn stage_expected(stage: &str) -> &'static str {
     match stage {
         "discovery" => "Solution Discovery — candidate feature topology, shared vocabulary, event/config hypotheses, architectural risks, explicit non-decisions; every item labeled CANDIDATE/HYPOTHESIZED; non-authoritative banner present; carried claims are reviewed at the next applicable review point.",
-        "brief" => "Feature Brief — problem, upgrade, bounded scope, proposed artifact(s), value/risk/guardrail; a candidate for Stage 1, not yet approved; no implementation detail.",
-        "onboarding" => "Onboarding — normal draft Feature Brief and Intent inputs derived from observation plus human intent; registry entry follows the current schema; work continues through the normal Specification Package flow.",
+        "brief" => "Optional discovery brief — one problem decomposed into candidate feature outcomes and boundaries; no feature IDs, lifecycle state, approval, or implementation detail.",
+        "onboarding" => "Onboarding — draft Intent inputs derived from observation plus human intent; existing partial packages are valid and work continues through the normal Specification Package flow.",
         "1" => "Intent — actor+outcome statements, stable guarantees, explicit scope boundary; NO implementation detail.",
         "2" => "Behavioral contract — observable Given/When/Then scenarios, named failure modes, invariants; independently testable; no white-box claims.",
         "3" => "Specification Package — Intent, Contract, and Event Schema reviewed together for mutual consistency; observation mode is explicit; every Contract rule traces to Intent and every governed event traces to Contract.",
@@ -831,12 +834,12 @@ fn stage_expected(stage: &str) -> &'static str {
 fn stage_checks(stage: &str) -> String {
     match stage {
         "discovery" => "  - every item labeled CANDIDATE/HYPOTHESIZED, not approved; non-authoritative banner present; no intent/contract/schema language; out-of-scope findings recorded as backlog candidates, not acted on.".to_string(),
-        "brief" => "  - problem clearly stated; scope explicitly bounded; no implementation detail; ready to become a Stage 1 Intent; value/risk/guardrail present.".to_string(),
-        "onboarding" => "  - normal draft inputs and registry shape used; observed behavior is not laundered into intent; infrastructure is not registered as a feature; normal Specification Package route named.".to_string(),
+        "brief" => "  - shared problem clear; candidate outcomes and boundaries are distinct; no IDs, lifecycle state, approval, or implementation detail; each accepted candidate can proceed independently to Intent.".to_string(),
+        "onboarding" => "  - normal draft Intent inputs used; observed behavior is not laundered into intent; infrastructure is not treated as a feature; normal Specification Package route named.".to_string(),
         "1" => "  - actor/outcome clarity; no implementation detail; scope boundary explicit; stable guarantees clear; ambiguity flagged.".to_string(),
         "2" => "  - every intent outcome has observable contract coverage; failure paths named; invariants testable; no white-box claims.".to_string(),
         "3" => "  - Intent, Contract, and Event Schema are all present; observation mode is explicit; every Contract rule traces to Intent; every governed event traces to Contract; external-observation mode invents no placeholder events.".to_string(),
-        "4" => "  - code traces to approved contract/schema only; no unapproved events; no hidden behavior; no unrelated files; report complete.\n  - did implementation resolve any question an approved artifact EXPLICITLY deferred? if so, is each material resolution recorded in a Deferral -> Resolution Trace (source deferral, resolution, where implemented, final/interim, expected superseder)? judge deferral by meaning, not by phrase; a missing record is a traceability finding, not an implementation failure.".to_string(),
+        "4" => "  - code traces to approved contract/schema only; no unapproved events; no hidden behavior; no unrelated files; evidence is sufficient for the next stage.\n  - did implementation resolve any question an approved artifact EXPLICITLY deferred? if so, is each material resolution recorded in a Deferral -> Resolution Trace (source deferral, resolution, where implemented, final/interim, expected superseder)? judge deferral by meaning, not by phrase; a missing record is a traceability finding, not an implementation failure.".to_string(),
         "5" => "  - behavior tested rather than private internals; applicable failures and invariants covered; observation-mode-specific verification present.".to_string(),
         "6" => "  - evidence captured without changing implementation; event or external-observation evidence bounded/sanitized; unavailable paths reported.".to_string(),
         "7" => "  - only ALIGNED/GAP/MISMATCH/MISSING used; evidence source is runtime/test/static/none; each note supports the result and routes the gap.".to_string(),

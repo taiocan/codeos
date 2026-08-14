@@ -10,19 +10,20 @@ out_of_scope: Changing governed artifacts, granting approvals, executing the nex
 Produce a navigation aid for the next session. A handoff is not a DBA artifact and does not
 override live repository state.
 
-## Inputs
+## Inputs / Prerequisites
 
 Review the conversation and current repository state for work performed, decisions made, rejected
 paths, and unresolved questions.
 
 ## Task
 
-Fill `.codeos/dba/05-guidance/templates/handoff.md` without copying governed artifact content.
-Summarize approved decisions briefly, record rejected directions, list at most five open questions,
-and recommend exactly one next action with a reason.
+From live artifacts and Git, summarize the target, current authoritative state, approved decisions
+that matter for resumption, unresolved questions, and exactly one next action. Reference governed
+artifacts rather than copying their content. Do not create a handoff file unless the human
+explicitly asks to persist one.
 
 ## Output / Next Action
 
-Present one completed handoff ready to save as
-`handoffs/[YYYY-MM-DD]-[short-description].md`. State that live artifacts and the registry must be
-verified before acting on it. Do not perform additional stage work from this prompt.
+Present the concise navigation summary inline and state that live artifacts must be verified when
+work resumes. This prompt creates no durable project artifact. Do not perform additional stage
+work from this prompt.

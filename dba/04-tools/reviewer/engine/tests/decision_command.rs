@@ -28,7 +28,7 @@ fn write_fake_assessment(
     packet_sha_override: Option<&str>, // None = use real sha of packet content
     review_commit: &str,
 ) -> (String, String) {
-    let codex_dir = repo_path.join("reviews/codex");
+    let codex_dir = repo_path.join(".codeos/05-review/reviews/codex");
     let packets_dir = codex_dir.join("packets");
     std::fs::create_dir_all(&packets_dir).expect("create codex/packets dir");
 
@@ -64,7 +64,7 @@ fn write_malformed_assessment(
     feature: &str,
     stage: &str,
 ) {
-    let codex_dir = repo_path.join("reviews/codex");
+    let codex_dir = repo_path.join(".codeos/05-review/reviews/codex");
     std::fs::create_dir_all(&codex_dir).expect("create codex dir");
     let filename = format!("20260101T000000Z-{}-stage-{}-abcdef1.md", feature, stage);
     // No YAML frontmatter — just body text, so parse_assessment_frontmatter returns None.
@@ -79,7 +79,7 @@ fn write_partial_frontmatter_assessment(
     stage: &str,
     review_commit: &str,
 ) {
-    let codex_dir = repo_path.join("reviews/codex");
+    let codex_dir = repo_path.join(".codeos/05-review/reviews/codex");
     std::fs::create_dir_all(&codex_dir).expect("create codex dir");
     let filename = format!("20260101T000000Z-{}-stage-{}-abcdef2.md", feature, stage);
     // Has review_commit but no coverage_state — partial provenance.
@@ -93,7 +93,7 @@ fn write_partial_frontmatter_assessment(
 
 /// Write a minimal review log file so the decision command can append to it.
 fn setup_review_log(repo_path: &std::path::Path) -> std::path::PathBuf {
-    let reviews_dir = repo_path.join("reviews");
+    let reviews_dir = repo_path.join(".codeos/05-review/reviews");
     std::fs::create_dir_all(&reviews_dir).expect("create reviews dir");
     let log_path = reviews_dir.join("review-log.md");
     if !log_path.exists() {
@@ -420,7 +420,7 @@ fn smoke_decision_packet_missing_records_provenance_unverifiable() {
     let head_sha = String::from_utf8_lossy(&head.stdout).trim().to_string();
 
     // Write assessment that references a packet file that does NOT exist.
-    let codex_dir = p.join("reviews/codex");
+    let codex_dir = p.join(".codeos/05-review/reviews/codex");
     std::fs::create_dir_all(&codex_dir).expect("create codex dir");
     let content = format!(
         "---\nreviewed:\n  feature: FEAT\n  stage: my-stage\n  review_commit: {}\n  coverage_state: FULL_COVERAGE\n  reviewed_packet: packets/missing-packet.txt\n  reviewed_packet_sha256: abc123\n---\n",
@@ -455,7 +455,7 @@ fn smoke_decision_no_stored_sha_warns_and_records_provenance_unverifiable() {
         .output().expect("git rev-parse");
     let head_sha = String::from_utf8_lossy(&head.stdout).trim().to_string();
 
-    let codex_dir = p.join("reviews/codex");
+    let codex_dir = p.join(".codeos/05-review/reviews/codex");
     std::fs::create_dir_all(codex_dir.join("packets")).expect("create packets dir");
     let packet_path = "packets/real-packet.txt";
     std::fs::write(codex_dir.join(packet_path), "packet content").expect("write packet");

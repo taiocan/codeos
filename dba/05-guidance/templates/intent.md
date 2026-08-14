@@ -1,4 +1,4 @@
-# Intent: [feature_id]
+# Intent: [feature_id] — [short name]
 
 <!--
 PURPOSE OF THIS FILE:
@@ -54,4 +54,4 @@ status: DRAFT
 feature_id: [feature_id]
 approved_by:
 approved_at:
-derived_contracts: contracts/[feature_id]_contract.md
+derived_contracts: .codeos/01-specification/contracts/[feature_id]_contract.md

@@ -13,8 +13,8 @@ pub struct ParsedReview {
     pub highest_impact_uncertainty: String,
 }
 
-/// The exact five TRIAGE RULE labels (`dba/03-prompts/review/codeos-reviewer-task.md`, `dba/06-reference/reviewer-pipeline.md`
-/// §7) — the only values `parse_findings` accepts as a valid `Classification:`. A `Finding:` line
+/// The exact five TRIAGE RULE labels from `dba/03-prompts/review/codeos-reviewer-task.md` — the
+/// only values `parse_findings` accepts as a valid `Classification:`. A `Finding:` line
 /// with any other value is treated as malformed (AC-2), not silently accepted.
 const CANONICAL_CLASSIFICATIONS: [&str; 5] = [
     "IN-SCOPE BLOCKER",
@@ -429,7 +429,7 @@ pub fn validate_schema(
 
     if !errs.is_empty() {
         anyhow::bail!(
-            "v0 schema validation failed (fail-closed): {}\nreview NOT logged. See dba/06-reference/reviewer-artifact-schemas.md",
+            "assessment validation failed (fail-closed): {}\nreview NOT logged",
             errs.join(" ")
         );
     }

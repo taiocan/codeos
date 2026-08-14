@@ -1,37 +1,40 @@
-# Reviews: [feature_id]
+# Review-Process Measurement
 
-## Decision Log
+> Optional, non-authoritative analytical evidence. The reviewer tool owns automated review records;
+> the applicable doctrine boundary owns approval. This file evaluates the review process and is
+> neither a reviewer log nor a feature-status artifact.
 
-| Stage | Review Summary | Outcome |
-|---|---|---|
-| [S1 Intent] | [key insight — not the process] | [outcome] |
+Create an instance only when measuring review effectiveness or cost will inform a concrete process
+decision. Do not create one for every feature or review.
+When saved, use `.codeos/05-review/measurements/<name>.md`.
 
-<!--
-Decision Log rows are append-only. Original findings and decisions are never rewritten.
-Superseded decisions are addressed by adding a new row, not by editing the old one.
-Record the insight, not the workflow:
-  Bad:  S7 — Reviewer suggested revision. Human accepted.
-  Good: S7 — Reviewer identified vertical drift as the real risk, not crate count. Shared-infrastructure pattern created.
-If a finding belongs in the Architecture Journal, keep this entry brief and add a reference:
-  S7 — Vertical drift risk identified. See AJ-014.
--->
+## Measurement Scope
 
----
+Period or experiment: [bounded measurement scope]
 
-## Decision Rationale
+Tool-owned record references: [existing review/change identifiers or paths]
 
-<!--
-Create a section here only when the decision would be difficult to reconstruct from
-artifact history alone — a reframing, an architectural pivot, a rejected direction.
-Do NOT create sections for wording revisions, contract clarifications, or any change
-the diff already explains. Most stages do not get a section.
-No duplication between the table above and these sections.
--->
+Question being evaluated: [the process question this analysis answers]
 
-### S[N] — [Stage Name]
+## Derived Measures
 
-Review context: [5–10 lines: known tensions, what was at stake, the artifact version under review]
+Derivation: [query or calculation against tool-owned records]
 
-Reviewer finding: [the key insight or reframing — verbatim where possible]
+Result: [rounds, findings, rework, elapsed effort, or other relevant measure]
 
-Human decision: [what was decided and why]
+Do not manually synchronize values that can be recalculated from the authoritative records.
+
+## Evaluation
+
+Useful findings: [human assessment, referencing existing finding identifiers where needed]
+
+False or irrelevant findings: [human assessment, referencing existing identifiers where needed]
+
+Rework or review cost: [effect on the work]
+
+Effectiveness conclusion: [what was learned about the review process]
+
+Process action: [specific change justified by the measurement, or none]
+
+Do not copy or independently maintain finding bodies, verdicts, approval state, feature lifecycle
+state, or review history. Reference the tool-owned record when that context is required.

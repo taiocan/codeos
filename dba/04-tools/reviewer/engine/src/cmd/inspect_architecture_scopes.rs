@@ -114,16 +114,16 @@ pub fn run(feature: Option<&str>, repo_root: &Path) -> i32 {
 }
 
 fn inspect(repo_root: &Path) -> Result<Vec<Scope>, String> {
-    let directory = repo_root.join("architecture/scopes");
+    let directory = repo_root.join(".codeos/02-architecture/scopes");
     if !directory.exists() {
         return Ok(Vec::new());
     }
     if !directory.is_dir() {
-        return Err("architecture/scopes exists but is not a directory".to_string());
+        return Err(".codeos/02-architecture/scopes exists but is not a directory".to_string());
     }
 
     let mut paths = fs::read_dir(&directory)
-        .map_err(|error| format!("cannot read architecture/scopes: {error}"))?
+        .map_err(|error| format!("cannot read .codeos/02-architecture/scopes: {error}"))?
         .filter_map(|entry| match entry {
             Ok(entry) => {
                 let path = entry.path();
@@ -131,7 +131,7 @@ fn inspect(repo_root: &Path) -> Result<Vec<Scope>, String> {
                     .then_some(Ok(path))
             }
             Err(error) => Some(Err(format!(
-                "cannot read architecture/scopes entry: {error}"
+                "cannot read .codeos/02-architecture/scopes entry: {error}"
             ))),
         })
         .collect::<Result<Vec<_>, _>>()?;

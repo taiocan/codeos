@@ -59,10 +59,9 @@ review:
   max_rounds: 2   # PROFILE-2; profile-derived, not hardcoded per-stage
 ```
 
-Note the self-dev round-budget already lives in one place (`dba/06-reference/reviewer-pipeline.md` §4d's
-table, keyed by *profile*, not by individual stage) — any policy registry design must not
-regress that "one table, profile-keyed" structure into 30+ near-duplicate per-stage files that
-each restate the same profile's budget.
+The active downstream round budget already has one owner (`dba/02-policies/review/v2.md`'s
+Review Round Limit). Any policy-registry design must not duplicate that limit across per-stage
+files.
 
 ### 3. Downstream compatibility
 
@@ -70,7 +69,7 @@ each restate the same profile's budget.
 (`downstream-doctrine` triage class, per `CLAUDE.md`) — any change that moves downstream stage
 policy into an external registry is `downstream-doctrine` or `both` scope, requiring the
 downstream-compatibility acceptance criteria `CLAUDE.md` mandates for that class (generated
-project still loads `.codeos/dba-system.md`; stage tables and prompt filenames move together).
+project still loads `.codeos/toolkit/dba-system.md`; stage tables and prompt filenames move together).
 This is a materially higher-rigor path than a self-dev-only change and should be scoped
 accordingly — likely worth splitting into a self-dev-only first slice (externalize self-dev step
 policy only) before touching downstream stage policy at all.
@@ -108,8 +107,8 @@ escalation).
 Deciding hastily risks:
 - Externalizing control-flow logic that should stay in Rust, turning YAML files into a shadow
   programming language (a well-known anti-pattern in policy-registry designs).
-- Fragmenting the existing "one table, profile-keyed" round-budget structure
-  (`dba/06-reference/reviewer-pipeline.md` §4d) into per-stage duplicate files that drift from each other.
+- Fragmenting the active policy-owned round budget into per-stage duplicate files that drift from
+  each other.
 - Under-scoping the downstream-doctrine rigor this requires if it ever touches `dba-system.md`'s
   stage table (see "Downstream compatibility" above).
 
@@ -118,8 +117,7 @@ Deciding hastily risks:
 The policy registry, if built, must:
 - Only move genuinely data-shaped content (checklist text, cadence numbers, expected-output
   strings) — packet-construction control flow stays in Rust.
-- Preserve the existing profile-keyed round-budget table structure (`dba/06-reference/reviewer-pipeline.md`
-  §4d) rather than fragmenting it per-stage.
+- Preserve `dba/02-policies/review/v2.md` as the single owner of the active downstream round budget.
 - Treat any downstream-doctrine-touching slice as `downstream-doctrine`/`both` scope under
   `CLAUDE.md`, with the full downstream-compatibility acceptance criteria that class requires —
   never as an incidental side effect of a self-dev-only change.
@@ -133,7 +131,7 @@ The policy registry, if built, must:
 - **UPG-0045**: Review Plan Preview — a plausible consumer of policy data (resolving required
   artifacts per stage), though not a hard dependency in either direction.
 - Proposed by the human during a 2026-07-12 review-architecture discussion (see
-  `reviews/review-log.md` and `maintenance/archive/self-development/changes/UPG-0044__CHG-20260712-001__reviewer-pipeline-architecture-refresh.md`).
+  `.codeos/05-review/reviews/review-log.md` and `maintenance/archive/self-development/changes/UPG-0044__CHG-20260712-001__reviewer-pipeline-architecture-refresh.md`).
 
 ## Feature Thread
 

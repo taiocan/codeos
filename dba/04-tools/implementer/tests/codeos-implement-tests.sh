@@ -36,12 +36,12 @@ export DEEPSEEK_API_KEY="canary-value-for-leak-assertion-not-a-credential"
 
 # ── a downstream-context repo (caller root != CODEOS_ROOT) ───────────────────────────────────────
 REPO="${WORK}/proj"
-mkdir -p "${REPO}/architecture" "${REPO}/intents"
+mkdir -p "${REPO}/.codeos/01-specification/intents" "${REPO}/.codeos/02-architecture"
 git -C "${REPO}" init -q 2>/dev/null || { cd "${REPO}" && git init -q; }
-printf 'approved intent\n' > "${REPO}/intents/F-0001.md"
-printf 'status: enabled\n' > "${REPO}/architecture/delegated-implementation.yaml"
-enable_mech()  { printf 'status: enabled\n'  > "${REPO}/architecture/delegated-implementation.yaml"; }
-disable_mech() { printf 'status: disabled\n' > "${REPO}/architecture/delegated-implementation.yaml"; }
+printf 'approved intent\n' > "${REPO}/.codeos/01-specification/intents/F-0001.md"
+printf 'status: enabled\n' > "${REPO}/.codeos/02-architecture/delegated-implementation.yaml"
+enable_mech()  { printf 'status: enabled\n'  > "${REPO}/.codeos/02-architecture/delegated-implementation.yaml"; }
+disable_mech() { printf 'status: disabled\n' > "${REPO}/.codeos/02-architecture/delegated-implementation.yaml"; }
 
 fixture() { printf '%s\n' "$1" > "${WORK}/fixture.txt"; export CODEOS_STUB_FIXTURE="${WORK}/fixture.txt"; }
 
@@ -86,7 +86,7 @@ none
 <<<CODEOS:{N}:ENDSECTION>>>'
 start_stub
 reset_state; enable_mech
-rc=$(run_tool F-0001 4 intents/F-0001.md)
+rc=$(run_tool F-0001 4 .codeos/01-specification/intents/F-0001.md)
 SD="$(latest_stage_dir)"
 if [[ "${rc}" == "0" && -f "${SD}/candidate/modules/thing/Cargo.toml" ]]; then
   got="$(cat "${SD}/candidate/modules/thing/Cargo.toml")"
@@ -146,12 +146,12 @@ printf 'exemplar module layout\n' > "${REPO}/exemplar.rs"
 printf 'error[E0599]: no method named foo\n' > "${REPO}/build-output.txt"
 reset_state
 rc=$(run_tool --exemplar exemplar.rs --repair-candidate exemplar.rs --repair-output build-output.txt \
-      F-0001 4 intents/F-0001.md)
+      F-0001 4 .codeos/01-specification/intents/F-0001.md)
 SD2="$(latest_stage_dir)"
 if [[ "${rc}" == "0" ]]; then
   p="${SD2}/packet.txt"
   grep -q 'LAYOUT EXEMPLAR (context only' "${p}" && e1=1 || e1=0
-  grep -q 'APPROVED ARTIFACT (ROLE UNSPECIFIED): intents/F-0001.md' "${p}" && e2=1 || e2=0
+  grep -q 'APPROVED ARTIFACT (ROLE UNSPECIFIED): .codeos/01-specification/intents/F-0001.md' "${p}" && e2=1 || e2=0
   grep -q 'REPAIR REQUEST — this is a retry' "${p}" && e3=1 || e3=0
   grep -q 'FEEDBACK (build/test output' "${p}" && e4=1 || e4=0
   [[ "${e1}${e2}" == "11" ]] && ok "C3 exemplar labeled distinctly from approved artifacts" \
@@ -201,9 +201,9 @@ ok
 <<<CODEOS:{N}:ENDFILE>>>'
 reset_state; enable_mech
 python3 -c "print('# filler line to grow the packet past the 128 KiB single-argument limit\n' * 4000)" \
-  > "${REPO}/intents/BIG.md"
-big=$(wc -c < "${REPO}/intents/BIG.md")
-rc=$(run_tool F-0001 4 intents/F-0001.md intents/BIG.md)
+  > "${REPO}/.codeos/01-specification/intents/BIG.md"
+big=$(wc -c < "${REPO}/.codeos/01-specification/intents/BIG.md")
+rc=$(run_tool F-0001 4 .codeos/01-specification/intents/F-0001.md .codeos/01-specification/intents/BIG.md)
 if [[ "${rc}" == "0" && -f "$(latest_stage_dir)/candidate/modules/thing/src/lib.rs" ]]; then
   ok "REG packet of ${big} bytes (>128 KiB) builds and runs"
 else
@@ -212,26 +212,29 @@ fi
 
 # ── UPG-0064: caller-declared artifact roles ────────────────────────────────────────────────────
 echo "== UPG-0064: artifact authority roles =="
-mkdir -p "${REPO}/architecture/scopes" "${REPO}/contracts" "${REPO}/events"
-printf 'the contract\n'  > "${REPO}/contracts/F-0001_contract.md"
-printf 'the schema\n'    > "${REPO}/events/F-0001_schema.md"
-printf 'the architecture\n' > "${REPO}/architecture/scopes/source-intelligence.md"
-printf 'the profile\n'   > "${REPO}/architecture/implementation-profile.yaml"
+mkdir -p \
+  "${REPO}/.codeos/01-specification/contracts" \
+  "${REPO}/.codeos/01-specification/event-schemas" \
+  "${REPO}/.codeos/02-architecture/scopes"
+printf 'the contract\n'  > "${REPO}/.codeos/01-specification/contracts/F-0001_contract.md"
+printf 'the schema\n'    > "${REPO}/.codeos/01-specification/event-schemas/F-0001_schema.md"
+printf 'the architecture\n' > "${REPO}/.codeos/02-architecture/scopes/source-intelligence.md"
+printf 'the profile\n'   > "${REPO}/.codeos/02-architecture/implementation-profile.yaml"
 
 fixture '<<<CODEOS:{N}:FILE:modules/thing/src/lib.rs>>>
 x
 <<<CODEOS:{N}:ENDFILE>>>'
 reset_state; enable_mech
-rc=$(run_tool --contract contracts/F-0001_contract.md --event-schema events/F-0001_schema.md --architecture architecture/scopes/source-intelligence.md --profile architecture/implementation-profile.yaml F-0001 4 intents/F-0001.md)
+rc=$(run_tool --contract .codeos/01-specification/contracts/F-0001_contract.md --event-schema .codeos/01-specification/event-schemas/F-0001_schema.md --architecture .codeos/02-architecture/scopes/source-intelligence.md --profile .codeos/02-architecture/implementation-profile.yaml F-0001 4 .codeos/01-specification/intents/F-0001.md)
 P="$(latest_stage_dir)/packet.txt"
 if [[ "${rc}" == "0" ]]; then
   miss=""
-  for lbl in "BEHAVIORAL CONTRACT: contracts/F-0001_contract.md" "EVENT SCHEMA: events/F-0001_schema.md" "PROJECT ARCHITECTURE: architecture/scopes/source-intelligence.md" "IMPLEMENTATION PROFILE: architecture/implementation-profile.yaml"; do
+  for lbl in "BEHAVIORAL CONTRACT: .codeos/01-specification/contracts/F-0001_contract.md" "EVENT SCHEMA: .codeos/01-specification/event-schemas/F-0001_schema.md" "PROJECT ARCHITECTURE: .codeos/02-architecture/scopes/source-intelligence.md" "IMPLEMENTATION PROFILE: .codeos/02-architecture/implementation-profile.yaml"; do
     grep -qF -- "${lbl}" "${P}" || miss="${miss} [${lbl}]"
   done
   if [[ -z "${miss}" ]]; then ok "ROLE each declared artifact is labelled with its authority"
   else bad "ROLE labelling" "missing:${miss}"; fi
-  if grep -q 'APPROVED ARTIFACT (ROLE UNSPECIFIED): intents/F-0001.md' "${P}"; then
+  if grep -q 'APPROVED ARTIFACT (ROLE UNSPECIFIED): .codeos/01-specification/intents/F-0001.md' "${P}"; then
     ok "ROLE positional stays ROLE UNSPECIFIED alongside declared roles"
   else bad "ROLE positional" "positional not labelled unspecified"; fi
 else
@@ -239,32 +242,32 @@ else
 fi
 
 reset_state
-rc=$(run_tool F-0001 4 architecture/scopes/source-intelligence.md)
+rc=$(run_tool F-0001 4 .codeos/02-architecture/scopes/source-intelligence.md)
 P2="$(latest_stage_dir)/packet.txt"
 inferred=no
-grep -q 'PROJECT ARCHITECTURE: architecture/scopes/source-intelligence.md' "${P2}" && inferred=yes
-if grep -q 'APPROVED ARTIFACT (ROLE UNSPECIFIED): architecture/scopes/source-intelligence.md' "${P2}" && [[ "${inferred}" == "no" ]]; then
+grep -q 'PROJECT ARCHITECTURE: .codeos/02-architecture/scopes/source-intelligence.md' "${P2}" && inferred=yes
+if grep -q 'APPROVED ARTIFACT (ROLE UNSPECIFIED): .codeos/02-architecture/scopes/source-intelligence.md' "${P2}" && [[ "${inferred}" == "no" ]]; then
   ok "ROLE no authority inferred from a conventional path"
 else
   bad "ROLE inference" "a positional baseline-looking path acquired a role (inferred=${inferred})"
 fi
 
 reset_state
-rc=$(run_tool --contract contracts/F-0001_contract.md --architecture contracts/F-0001_contract.md F-0001 4 intents/F-0001.md)
+rc=$(run_tool --contract .codeos/01-specification/contracts/F-0001_contract.md --architecture .codeos/01-specification/contracts/F-0001_contract.md F-0001 4 .codeos/01-specification/intents/F-0001.md)
 staged=$(find "$(latest_stage_dir)/candidate" -type f 2>/dev/null | wc -l)
 if [[ "${rc}" == "12" && "${staged}" == "0" ]]; then
   ok "ROLE conflicting roles on one path -> exit 12, nothing staged"
 else bad "ROLE conflict" "rc=${rc} staged=${staged}"; fi
 
 reset_state
-rc=$(run_tool --contract contracts/F-0001_contract.md --contract contracts/F-0001_contract.md F-0001 4 intents/F-0001.md)
+rc=$(run_tool --contract .codeos/01-specification/contracts/F-0001_contract.md --contract .codeos/01-specification/contracts/F-0001_contract.md F-0001 4 .codeos/01-specification/intents/F-0001.md)
 if [[ "${rc}" == "0" ]]; then ok "ROLE same path twice under one role is not a conflict"
 else bad "ROLE duplicate same-role" "rc=${rc}"; fi
 
 reset_state
-rc=$(run_tool --architecture architecture/scopes/source-intelligence.md F-0001 4 intents/F-0001.md)
+rc=$(run_tool --architecture .codeos/02-architecture/scopes/source-intelligence.md F-0001 4 .codeos/01-specification/intents/F-0001.md)
 D="$(latest_stage_dir)"
-lbl='--- PROJECT ARCHITECTURE: architecture/scopes/source-intelligence.md ---'
+lbl='--- PROJECT ARCHITECTURE: .codeos/02-architecture/scopes/source-intelligence.md ---'
 inreq=no
 jq -r '.messages[1].content' "${D}/request.json" | grep -qF -- "${lbl}" && inreq=yes
 if grep -qF -- "${lbl}" "${D}/packet.txt" && [[ "${inreq}" == "yes" ]]; then
@@ -273,19 +276,19 @@ else bad "ROLE label transport" "packet vs request differ"; fi
 # AC-9: the artifact-content region (after the heading and its generated binding note, up to the
 # next heading) must be byte-identical to the source file. Stronger than "the bytes appear somewhere".
 jq -r '.messages[1].content' "${D}/request.json" > "${WORK}/sent.txt"
-awk '/^--- PROJECT ARCHITECTURE: architecture\/scopes\/source-intelligence\.md ---$/{f=1;skip=1;next} f&&skip{skip=0;next} f&&/^--- /{f=0} f{print}' "${WORK}/sent.txt" > "${WORK}/raw.txt"
+awk '/^--- PROJECT ARCHITECTURE: \.codeos\/02-architecture\/scopes\/source-intelligence\.md ---$/{f=1;skip=1;next} f&&skip{skip=0;next} f&&/^--- /{f=0} f{print}' "${WORK}/sent.txt" > "${WORK}/raw.txt"
 # The packet separates blocks with a leading newline before each heading, so the extracted region
 # carries exactly one trailing blank line belonging to that separator, not to the artifact. Drop
 # precisely one, then require byte equality with the file.
 awk 'NR>1{print prev} {prev=$0} END{if (prev != "") print prev}' "${WORK}/raw.txt" > "${WORK}/extracted.txt"
-if cmp -s "${WORK}/extracted.txt" "${REPO}/architecture/scopes/source-intelligence.md"; then
+if cmp -s "${WORK}/extracted.txt" "${REPO}/.codeos/02-architecture/scopes/source-intelligence.md"; then
   ok "ROLE content region byte-identical to source file"
 else
   bad "ROLE content mutated" "extracted region differs from the source file"
 fi
 
 reset_state
-rc=$(run_tool --architecture architecture/nope.md F-0001 4 intents/F-0001.md)
+rc=$(run_tool --architecture .codeos/02-architecture/nope.md F-0001 4 .codeos/01-specification/intents/F-0001.md)
 if [[ "${rc}" == "7" ]]; then ok "ROLE missing role artifact -> exit 7"
 else bad "ROLE missing" "rc=${rc}"; fi
 
@@ -297,7 +300,7 @@ x
 schema validation ordering | first-failure-wins | lib.rs:record | FINAL | -
 <<<CODEOS:{N}:ENDSECTION>>>'
 reset_state
-rc=$(run_tool F-0001 4 intents/F-0001.md)
+rc=$(run_tool F-0001 4 .codeos/01-specification/intents/F-0001.md)
 D="$(latest_stage_dir)"
 if [[ "${rc}" == "0" ]] && grep -q "first-failure-wins" "${D}/deferral_resolution.txt" 2>/dev/null; then
   ok "DEFERRAL section parses and is staged when present"
@@ -310,7 +313,7 @@ x
 nothing was deferred
 <<<CODEOS:{N}:ENDSECTION>>>'
 reset_state
-rc=$(run_tool F-0001 4 intents/F-0001.md)
+rc=$(run_tool F-0001 4 .codeos/01-specification/intents/F-0001.md)
 D="$(latest_stage_dir)"
 sidecar=no
 [[ -f "${D}/deferral_resolution.txt" ]] && sidecar=yes
@@ -324,7 +327,7 @@ if grep -q "Omitting this section is the expected outcome" "${PR}" && grep -q "D
 else bad "DEFERRAL no-pressure wording" "prompt lacks the anti-fabrication instruction"; fi
 
 reset_state
-rc=$(run_tool --contract contracts/F-0001_contract.md --architecture architecture/scopes/source-intelligence.md F-0001 4)
+rc=$(run_tool --contract .codeos/01-specification/contracts/F-0001_contract.md --architecture .codeos/02-architecture/scopes/source-intelligence.md F-0001 4)
 if [[ "${rc}" == "0" ]]; then ok "ROLE role-flags-only call needs no positional artifact"
 else bad "ROLE role-only call" "rc=${rc} — CHG-B could not avoid the compatibility path"; fi
 
@@ -342,7 +345,7 @@ fixture '<<<CODEOS:{N}:FILE:modules/thing/src/lib.rs>>>
 pub fn after() {}
 <<<CODEOS:{N}:ENDFILE>>>'
 reset_state
-rc=$(run_tool F-0001 4 intents/F-0001.md)
+rc=$(run_tool F-0001 4 .codeos/01-specification/intents/F-0001.md)
 SD3="$(latest_stage_dir)"
 f="${SD3}/candidate/modules/thing/src/lib.rs"
 if [[ "${rc}" == "0" && -f "${f}" ]] && grep -q 'deadbeefdeadbeef' "${f}" && grep -q 'pub fn after' "${f}"; then
@@ -358,7 +361,7 @@ content
 more
 <<<CODEOS:{N}:ENDFILE>>>'
 reset_state
-rc=$(run_tool F-0001 4 intents/F-0001.md)
+rc=$(run_tool F-0001 4 .codeos/01-specification/intents/F-0001.md)
 SD4="$(latest_stage_dir)"
 staged=$(find "${SD4}/candidate" -type f 2>/dev/null | wc -l)
 [[ "${rc}" == "11" && "${staged}" == "0" ]] \
@@ -369,7 +372,7 @@ staged=$(find "${SD4}/candidate" -type f 2>/dev/null | wc -l)
 fixture '<<<CODEOS:{N}:FILE:modules/thing/src/a.rs>>>
 never closed'
 reset_state
-rc=$(run_tool F-0001 4 intents/F-0001.md)
+rc=$(run_tool F-0001 4 .codeos/01-specification/intents/F-0001.md)
 staged=$(find "$(latest_stage_dir)/candidate" -type f 2>/dev/null | wc -l)
 [[ "${rc}" == "11" && "${staged}" == "0" ]] \
   && ok "C7c unterminated block -> exit 11, nothing staged" \
@@ -383,7 +386,7 @@ one
 two
 <<<CODEOS:{N}:ENDFILE>>>'
 reset_state
-rc=$(run_tool F-0001 4 intents/F-0001.md)
+rc=$(run_tool F-0001 4 .codeos/01-specification/intents/F-0001.md)
 staged=$(find "$(latest_stage_dir)/candidate" -type f 2>/dev/null | wc -l)
 [[ "${rc}" == "11" && "${staged}" == "0" ]] \
   && ok "C7d duplicate path -> exit 11, nothing staged" \
@@ -392,7 +395,7 @@ staged=$(find "$(latest_stage_dir)/candidate" -type f 2>/dev/null | wc -l)
 # 7e: no file blocks at all fails closed.
 fixture 'I could not do this task, sorry.'
 reset_state
-rc=$(run_tool F-0001 4 intents/F-0001.md)
+rc=$(run_tool F-0001 4 .codeos/01-specification/intents/F-0001.md)
 [[ "${rc}" == "11" ]] && ok "C7e no file blocks -> exit 11" || bad "C7e no file blocks" "rc=${rc}"
 
 echo "== Group 2: preserved CHG-A properties =="
@@ -407,7 +410,7 @@ fine
 bad
 <<<CODEOS:{N}:ENDFILE>>>"
   reset_state
-  rc=$(run_tool F-0001 4 intents/F-0001.md)
+  rc=$(run_tool F-0001 4 .codeos/01-specification/intents/F-0001.md)
   staged=$(find "$(latest_stage_dir)/candidate" -type f 2>/dev/null | wc -l)
   [[ "${rc}" == "8" && "${staged}" == "0" ]] \
     && ok "C11 ${label} path rejected (exit 8), nothing staged" \
@@ -422,7 +425,7 @@ The approved contract does not specify the failure taxonomy.
 blocked
 <<<CODEOS:{N}:ENDSECTION>>>'
 reset_state
-rc=$(run_tool F-0001 4 intents/F-0001.md)
+rc=$(run_tool F-0001 4 .codeos/01-specification/intents/F-0001.md)
 [[ "${rc}" == "0" && -f "$(latest_stage_dir)/candidate/CANDIDATE_BLOCKED.md" ]] \
   && ok "C12 CANDIDATE_BLOCKED.md escape hatch works" \
   || bad "C12 escape hatch" "rc=${rc}"
@@ -432,7 +435,7 @@ fixture '<<<CODEOS:{N}:FILE:modules/thing/src/lib.rs>>>
 x
 <<<CODEOS:{N}:ENDFILE>>>'
 reset_state
-r1=$(run_tool F-0001 4 intents/F-0001.md); r2=$(run_tool F-0001 4 intents/F-0001.md)
+r1=$(run_tool F-0001 4 .codeos/01-specification/intents/F-0001.md); r2=$(run_tool F-0001 4 .codeos/01-specification/intents/F-0001.md)
 dirs=$(find "${REPO}/.codeos-state/deepseek-candidates" -mindepth 2 -maxdepth 2 -type d | wc -l)
 [[ "${r1}" == "0" && "${r2}" == "0" && "${dirs}" == "2" ]] \
   && ok "C15 two runs -> two distinct staging dirs" \
@@ -455,33 +458,33 @@ rc=$( (cd "${WORK}" && bash "${TOOL}" F-0001 4 x.md) >/dev/null 2>&1; echo $?)
 [[ "${rc}" == "1" ]] && ok "C10 non-git dir -> exit 1" || bad "C10 non-git" "rc=${rc}"
 
 rc=$(run_tool F-0001); [[ "${rc}" == "3" ]] && ok "C10 missing args -> exit 3" || bad "C10 missing args" "rc=${rc}"
-rc=$(run_tool F-0001 6 intents/F-0001.md); [[ "${rc}" == "3" ]] && ok "C10 stage=6 -> exit 3" || bad "C10 stage 6" "rc=${rc}"
+rc=$(run_tool F-0001 6 .codeos/01-specification/intents/F-0001.md); [[ "${rc}" == "3" ]] && ok "C10 stage=6 -> exit 3" || bad "C10 stage 6" "rc=${rc}"
 
 disable_mech
-rc=$(run_tool F-0001 4 intents/F-0001.md); [[ "${rc}" == "4" ]] && ok "C10 status:disabled -> exit 4" || bad "C10 disabled" "rc=${rc}"
-rm -f "${REPO}/architecture/delegated-implementation.yaml"
-rc=$(run_tool F-0001 4 intents/F-0001.md); [[ "${rc}" == "4" ]] && ok "C10 status file absent -> exit 4" || bad "C10 absent" "rc=${rc}"
-printf 'status: sometimes\n' > "${REPO}/architecture/delegated-implementation.yaml"
-rc=$(run_tool F-0001 4 intents/F-0001.md); [[ "${rc}" == "5" ]] && ok "C10 malformed status -> exit 5" || bad "C10 malformed" "rc=${rc}"
+rc=$(run_tool F-0001 4 .codeos/01-specification/intents/F-0001.md); [[ "${rc}" == "4" ]] && ok "C10 status:disabled -> exit 4" || bad "C10 disabled" "rc=${rc}"
+rm -f "${REPO}/.codeos/02-architecture/delegated-implementation.yaml"
+rc=$(run_tool F-0001 4 .codeos/01-specification/intents/F-0001.md); [[ "${rc}" == "4" ]] && ok "C10 status file absent -> exit 4" || bad "C10 absent" "rc=${rc}"
+printf 'status: sometimes\n' > "${REPO}/.codeos/02-architecture/delegated-implementation.yaml"
+rc=$(run_tool F-0001 4 .codeos/01-specification/intents/F-0001.md); [[ "${rc}" == "5" ]] && ok "C10 malformed status -> exit 5" || bad "C10 malformed" "rc=${rc}"
 
 enable_mech
 rc=$( (cd "${REPO}" && DEEPSEEK_API_KEY= CODEOS_DEEPSEEK_URL="http://127.0.0.1:${PORT}/x" \
-        bash "${TOOL}" F-0001 4 intents/F-0001.md) >/dev/null 2>&1; echo $?)
+        bash "${TOOL}" F-0001 4 .codeos/01-specification/intents/F-0001.md) >/dev/null 2>&1; echo $?)
 [[ "${rc}" == "6" ]] && ok "C10 unset key -> exit 6 (pre-network)" || bad "C10 unset key" "rc=${rc}"
-rc=$(run_tool F-0001 4 intents/nope.md); [[ "${rc}" == "7" ]] && ok "C10 missing artifact -> exit 7" || bad "C10 missing artifact" "rc=${rc}"
+rc=$(run_tool F-0001 4 .codeos/01-specification/intents/nope.md); [[ "${rc}" == "7" ]] && ok "C10 missing artifact -> exit 7" || bad "C10 missing artifact" "rc=${rc}"
 
 echo "== Group 2: new exit codes (criterion 18) =="
-rc=$(run_tool --exemplar nope.rs F-0001 4 intents/F-0001.md)
+rc=$(run_tool --exemplar nope.rs F-0001 4 .codeos/01-specification/intents/F-0001.md)
 [[ "${rc}" == "9" ]] && ok "C18 missing exemplar -> exit 9" || bad "C18 exemplar" "rc=${rc}"
-rc=$(run_tool --repair-output nope.txt F-0001 4 intents/F-0001.md)
+rc=$(run_tool --repair-output nope.txt F-0001 4 .codeos/01-specification/intents/F-0001.md)
 [[ "${rc}" == "10" ]] && ok "C18 missing repair input -> exit 10" || bad "C18 repair input" "rc=${rc}"
-rc=$(run_tool --bogus F-0001 4 intents/F-0001.md)
+rc=$(run_tool --bogus F-0001 4 .codeos/01-specification/intents/F-0001.md)
 [[ "${rc}" == "3" ]] && ok "C18 unknown option -> exit 3" || bad "C18 unknown option" "rc=${rc}"
 
 # API/transport error still exit 8.
 start_stub 500
 reset_state
-rc=$(run_tool F-0001 4 intents/F-0001.md)
+rc=$(run_tool F-0001 4 .codeos/01-specification/intents/F-0001.md)
 [[ "${rc}" == "8" ]] && ok "C10 HTTP 500 -> exit 8" || bad "C10 transport error" "rc=${rc}"
 
 # ── criterion 17: mechanism still off by default in the Codeos repo itself ───────────────────────

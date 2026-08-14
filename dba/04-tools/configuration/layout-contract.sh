@@ -37,11 +37,50 @@ active_paths=(
 )
 
 if rg -n -S \
-  --glob '!path-migration.md' \
-  '\.codeos/(prompts|scripts|templates|patterns|tools)(/|`)|\.codeos/terminology\.md|dba/(configurations|doctrine|policies|tools)/' \
+  --glob '!downstream-upgrade.md' \
+  '\.codeos/(dba-system\.md|dba/|(prompts|scripts|templates|patterns|tools)(/|`)|terminology\.md)|dba/(configurations|doctrine|policies|tools)/' \
   "${active_paths[@]}"; then
   fail "an active file references a legacy toolkit path"
 fi
+
+canonical_paths=(
+  '.codeos/00-project/CLAUDE.md'
+  '.codeos/01-specification/intents/<feature-id>.md'
+  '.codeos/01-specification/contracts/<feature-id>_contract.md'
+  '.codeos/01-specification/event-schemas/<feature-id>_schema.md'
+  '.codeos/02-architecture/scopes/<scope-id>.md'
+  '.codeos/02-architecture/implementation-profile.yaml'
+  '.codeos/00-discovery/<topic-slug>.md'
+  '.codeos/04-refinement/<feature-id>-<slug>.md'
+  '.codeos/05-review/reviewer.toml'
+  '.codeos/05-review/reviews/'
+  '.codeos/05-review/measurements/<name>.md'
+  '.codeos/toolkit'
+  '.codeos-state/'
+  'events/runtime_events.jsonl'
+)
+
+for path in "${canonical_paths[@]}"; do
+  grep -Fq "$path" "${CODEOS_ROOT}/dba-system.md" || \
+    fail "downstream layout owner omits canonical path: ${path}"
+done
+
+declare -A producer_outputs=(
+  [00a-solution-discovery.md]='.codeos/00-discovery/<topic-slug>.md'
+  [00b-feature-brief.md]='.codeos/00-discovery/<topic-slug>.md'
+  [00c-onboarding.md]='.codeos/01-specification/intents/<feature-id>.md'
+  [01-intent.md]='.codeos/01-specification/intents/[feature_id].md'
+  [02-contract.md]='.codeos/01-specification/contracts/[feature_id]_contract.md'
+  [03-event-schema.md]='.codeos/01-specification/event-schemas/[feature_id]_schema.md'
+  [03b-architecture-synthesis.md]='.codeos/02-architecture/scopes/<scope-id>.md'
+  [09-refine.md]='.codeos/04-refinement/<feature-id>-<slug>.md'
+)
+
+for prompt in "${!producer_outputs[@]}"; do
+  path="${CODEOS_ROOT}/dba/03-prompts/workflow/${prompt}"
+  grep -Fq "${producer_outputs[${prompt}]}" "$path" || \
+    fail "artifact-producing prompt omits canonical output: ${prompt}"
+done
 
 declare -A adapters=(
   [specification-approval]="dba/03-prompts/workflow/03-event-schema.md"

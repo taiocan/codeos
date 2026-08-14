@@ -1,7 +1,6 @@
 //! Shared test helpers for codeos-reviewer integration tests.
 //!
-//! These helpers are used across multiple test files (review, decision, check-drift,
-//! generate-dashboard, generate-release-evidence).
+//! These helpers are used across reviewer command tests.
 
 use std::path::PathBuf;
 use std::process::Command;

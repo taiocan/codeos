@@ -13,13 +13,15 @@ the feature defines no governed internal events and maps Contract outcomes to th
 observation artifact.
 
 DERIVED FROM:
-- intents/[feature_id].md (actors, outcomes)
-- contracts/[feature_id]_contract.md (state transitions, failure modes)
+- .codeos/01-specification/intents/[feature_id].md (actors, outcomes)
+- .codeos/01-specification/contracts/[feature_id]_contract.md (state transitions, failure modes)
 -->
 
 ## Naming Convention
 
-See `docs/conventions.md` (source: `.codeos/dba/05-guidance/templates/conventions.md`).
+Use exact, stable event names in `<Entity><Action><Outcome>` form. Failure events normally end in
+`Failed`, `Rejected`, or `Timeout`. Project-specific exceptions belong in project instructions or
+approved artifacts, not in a synchronized conventions copy.
 
 ## Observation Mode
 
@@ -50,6 +52,8 @@ Every event must include these fields:
 ```
 
 `correlation_id` is mandatory and must propagate through the entire execution chain.
+When the project uses `events/runtime_events.jsonl`, append one event per line and never rewrite
+existing evidence.
 
 ## Event Definitions
 
@@ -79,7 +83,7 @@ Categories:
 ### [FailureEventName]
 
 - category: FAILURE
-- emitted when: [failure condition from contracts/[feature_id]_contract.md]
+- emitted when: [failure condition from .codeos/01-specification/contracts/[feature_id]_contract.md]
 - payload:
   - `failure_reason`: `string` — [snake_case reason code]
   - `[field_name]`: `[type]` — [description]
@@ -140,5 +144,5 @@ status: DRAFT
 feature_id: [feature_id]
 approved_by:
 approved_at:
-derived_from_intent: intents/[feature_id].md
-derived_from_contract: contracts/[feature_id]_contract.md
+derived_from_intent: .codeos/01-specification/intents/[feature_id].md
+derived_from_contract: .codeos/01-specification/contracts/[feature_id]_contract.md

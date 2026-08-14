@@ -10,9 +10,9 @@ out_of_scope: Inventing requirements, approving new behavior, changing the codeb
 Turn observed existing behavior and explicit human intent into normal draft inputs for the
 Specification Package workflow. Onboarding is an entry path, not a separate lifecycle.
 
-## Inputs
+## Inputs / Prerequisites
 
-Read the current Feature Brief, Intent, and registry templates. Select at most three related modules
+Read the current Intent template through `.codeos/toolkit/`. Select at most three related modules
 with the human. For each, inspect relevant source, tests, and available runtime evidence.
 
 ## Task
@@ -22,10 +22,11 @@ with the human. For each, inspect relevant source, tests, and available runtime 
 2. Interview the human for the beneficiary, meaningful outcome, required guarantees, and scope.
    Never promote code accidents or legacy tests into intent without confirmation.
 3. Classify the observed module:
-   - a feature or part of a feature → produce normal draft Feature Brief and Intent inputs;
+   - a feature or part of a feature → produce normal draft Intent inputs;
    - shared infrastructure → record a short infrastructure note, not a feature.
-4. Assign the normal feature identifier and register the feature using the current registry
-   template. The templates own all exact fields, statuses, paths, and values.
+4. Assign the next feature identifier by scanning existing Intent, Contract, Event Schema filenames
+   and architecture-scope membership. Existing partial packages are valid; stop only on a genuine
+   identity conflict.
 5. Apply the current Intent prompt to the draft and name unresolved questions without inventing
    answers.
 
@@ -34,5 +35,6 @@ Profile, or register infrastructure as a feature.
 
 ## Output / Next Action
 
-For each feature, present the normal draft Feature Brief, draft Intent, conforming registry entry,
-and unresolved questions. Hand control to the ordinary Stage 1–3 Specification Package workflow.
+For each feature, create the draft Intent at
+`.codeos/01-specification/intents/<feature-id>.md`, present it with unresolved questions, and hand
+control to the ordinary Stage 1–3 Specification Package workflow.

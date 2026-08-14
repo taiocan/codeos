@@ -70,7 +70,7 @@ pub fn run(args: ReviewArgs, cfg: &Config, provider_name: &str) -> Result<i32> {
     }
 
     let review_log_path = if args.scratch {
-        let scratch = cfg.codex_dir.join("_scratch");
+        let scratch = cfg.state_dir.join("reviewer-scratch");
         if let Err(e) = std::fs::create_dir_all(&scratch) {
             eprintln!("error: could not create scratch dir {}: {}", scratch.display(), e);
             return Ok(crate::EXIT_WRITE);
@@ -231,7 +231,11 @@ pub fn run(args: ReviewArgs, cfg: &Config, provider_name: &str) -> Result<i32> {
     let (findings, unparsed_findings_count) = assessment::parse_findings(&raw.text, &review_id);
 
     // Save packet
-    let outdir = if args.scratch { cfg.codex_dir.join("_scratch") } else { cfg.codex_dir.clone() };
+    let outdir = if args.scratch {
+        cfg.state_dir.join("reviewer-scratch")
+    } else {
+        cfg.codex_dir.clone()
+    };
     let packets_dir = outdir.join("packets");
     if let Err(e) = std::fs::create_dir_all(&packets_dir) {
         eprintln!("error: could not create packets dir {}: {}", packets_dir.display(), e);

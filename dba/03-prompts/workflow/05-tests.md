@@ -11,8 +11,9 @@ Test approved observable behavior without coupling tests to private implementati
 
 ## Inputs / Prerequisites
 
-Read the approved Contract and Event Schema plus the Stage 4 implementation. The Contract owns
-observation mode, scenarios, failures, invariants, and any minimum environment requirement.
+Load the approved Contract and Event Schema types through the Downstream Project Layout Contract,
+then read the Stage 4 implementation. The Contract owns observation mode, scenarios, failures,
+invariants, and any minimum environment requirement.
 
 ## Task
 
@@ -44,5 +45,6 @@ delivery evidence.
 
 ## Output / Next Action
 
-Present the test changes, results, coverage mapping, and explicitly uncovered runtime behavior.
-Hand the evidence to `06-observe.md`.
+Add tests in the project's native test layout. Present changed paths, results, coverage mapping,
+and explicitly uncovered runtime behavior. This stage creates no separate workflow artifact. Hand
+the evidence to `06-observe.md`.

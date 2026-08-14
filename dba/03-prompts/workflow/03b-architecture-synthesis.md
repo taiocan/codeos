@@ -17,9 +17,9 @@ Read the selected architecture-synthesis and review policies. Use this prompt on
 otherwise establish or change an unresolved project-level boundary. Ordinary behavior-neutral,
 architecture-insignificant maintenance uses the project's normal engineering process.
 
-Identify affected governed features and their approved Specification Packages. Run the architecture
-scope inspector, stop on invalid or duplicate membership, and reuse a matching scope or draft the
-current architecture-scope template.
+Identify affected governed features and their approved Specification Packages through the
+Downstream Project Layout Contract. Run the architecture scope inspector, stop on invalid or
+duplicate membership, and reuse a matching scope or draft the current architecture-scope template.
 
 ## Task
 
@@ -38,9 +38,14 @@ architecture decision boundary.
 
 ## Output / Next Action
 
-Present one complete scope artifact and state:
+Create or revise `.codeos/02-architecture/scopes/<scope-id>.md` using the current
+architecture-scope template. Keep `approval: null` while architectural issues remain unresolved,
+present the complete artifact, and state:
 
 `AWAITING HUMAN APPROVAL OF THE ARCHITECTURE SCOPE`
 
-After explicit approval, record `approval.by` and `approval.at`. Any later material change first
-returns approval to `null` and repeats this boundary; reassess only affected work.
+After explicit approval, record `approval.by` and `approval.at`, then route eligible affected
+feature work to `04-implement.md`. If synthesis or reassessment exposes a behavioral gap, return it
+to the affected Specification Package as described above; if another prerequisite remains
+unresolved, do not route that work to Stage 4. Any later material change first returns approval to
+`null` and repeats this boundary; reassess only affected work.

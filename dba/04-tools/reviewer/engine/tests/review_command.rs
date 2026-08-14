@@ -6,11 +6,14 @@ mod common;
 use common::{setup_temp_git_repo, add_extra_commit, run, run_in_dir, repo_root, binary};
 use std::process::Command;
 
-/// Helper: create a .codeos symlink pointing to repo root in a temp test repo.
+/// Helper: create the project-local .codeos directory and nested toolkit mount.
 fn setup_codeos_symlink(repo_path: &std::path::Path) {
     let target = repo_root();
-    std::os::unix::fs::symlink(&target, repo_path.join(".codeos"))
-        .expect("create .codeos symlink");
+    std::fs::create_dir_all(repo_path.join(".codeos")).expect("create .codeos directory");
+    std::os::unix::fs::symlink(&target, repo_path.join(".codeos/toolkit"))
+        .expect("create toolkit symlink");
+    std::fs::write(repo_path.join(".git/info/exclude"), "/.codeos/toolkit\n")
+        .expect("ignore toolkit symlink");
 }
 
 #[test]

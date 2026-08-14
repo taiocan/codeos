@@ -1,15 +1,52 @@
 # Codeos DBA System — Active Configuration
 
 > This is the stable downstream entrypoint for Codeos DBA. Project instructions load it through
-> `.codeos/dba-system.md`. Codeos toolkit self-development is governed separately by the repository
+> `.codeos/toolkit/dba-system.md`. Codeos toolkit self-development is governed separately by the repository
 > root `CLAUDE.md`.
 
-Active configuration: `.codeos/dba/00-entry/configurations/DBA-2.yaml`
+Active configuration: `.codeos/toolkit/dba/00-entry/configurations/DBA-2.yaml`
 
 The configuration selects the authoritative version of each governed DBA component. Component
 files own their semantics; the configuration only selects which versions are active.
 
 Only the active DBA configuration is supported. Inactive configurations are historical records.
+
+## Downstream Project Layout Contract
+
+`.codeos/` is the project-local home for durable DBA information. `.codeos/toolkit` is the single
+machine-local symlink to the shared Codeos toolkit and is ignored by Git. Project source, tests,
+and runtime-produced evidence remain outside `.codeos/`.
+
+Canonical durable locations are:
+
+| Capability | Location | Creation |
+|---|---|---|
+| Project instructions | `.codeos/00-project/CLAUDE.md` | Required |
+| Intent | `.codeos/01-specification/intents/<feature-id>.md` | Required per feature |
+| Contract | `.codeos/01-specification/contracts/<feature-id>_contract.md` | Required per feature |
+| Event Schema | `.codeos/01-specification/event-schemas/<feature-id>_schema.md` | Required per feature |
+| Architecture Scope | `.codeos/02-architecture/scopes/<scope-id>.md` | Only when architecture synthesis applies |
+| Implementation Profile | `.codeos/02-architecture/implementation-profile.yaml` | Only when adopted |
+| Saved discovery | `.codeos/00-discovery/<topic-slug>.md` | Only when it has durable value |
+| Refinement record | `.codeos/04-refinement/<feature-id>-<slug>.md` | Only when it has durable value |
+| Reviewer configuration | `.codeos/05-review/reviewer.toml` | Only when defaults are overridden |
+| Automated review records | `.codeos/05-review/reviews/` | Created and owned by the reviewer tool |
+| Review measurement | `.codeos/05-review/measurements/<name>.md` | Only when it has durable value |
+
+Implementation Profile replacement may additionally use
+`.codeos/02-architecture/proposals/implementation-profile-v<N>.yaml` and
+`.codeos/02-architecture/history/implementation-profile-v<N>.yaml` as specified by the selected
+Implementation Profile policy. These directories are not a general architecture lifecycle.
+
+Root `CLAUDE.md` and `AGENTS.md` are small, real discovery adapters. Runtime event evidence remains
+at `events/runtime_events.jsonl` when used. Implementation and tests use project-native paths.
+`.codeos-state/` is non-authoritative, ignored operational state and is created only when a tool
+needs cross-command state.
+
+This section is the sole semantic owner of canonical downstream locations. Workflow prompts name
+canonical output paths for operational clarity; consumers load artifact types from this contract
+without independently redefining the layout. Templates and tools implement these locations, and
+the layout contract check enforces them.
 
 ## Component Boundary Contract
 
@@ -39,7 +76,7 @@ After changing the pointer, verify that it names the candidate configuration tha
 At the start of a DBA session:
 
 1. Read the active configuration above.
-2. Treat its component paths as relative to the `.codeos/` toolkit root.
+2. Treat its component paths as relative to the `.codeos/toolkit/` root.
 3. Read the `doctrine` component fully.
 4. Read each other selected component when its policy or tool applies to the current work.
 
@@ -48,8 +85,8 @@ All selected components are jointly authoritative. A reference to `doctrine`, `r
 means the component file selected under that key by the active configuration.
 
 Unversioned canonical resources are not selected through this configuration. Continue to use their
-normal paths under `.codeos/dba/03-prompts/`, `.codeos/dba/04-tools/`, and
-`.codeos/dba/05-guidance/`.
+normal paths under `.codeos/toolkit/dba/03-prompts/`, `.codeos/toolkit/dba/04-tools/`, and
+`.codeos/toolkit/dba/05-guidance/`.
 
 The selected doctrine is the sole source of DBA semantic guarantees. Operational consequences may
 be encoded only at genuine execution boundaries marked `DOCTRINE ADAPTER`; other consumers refer
@@ -61,7 +98,7 @@ This index is descriptive navigation, not a second authority source:
 
 | Boundary | Owning prompt |
 |---|---|
-| `specification-approval` | `.codeos/dba/03-prompts/workflow/03-event-schema.md` |
-| `delivery-entry` | `.codeos/dba/03-prompts/workflow/04-implement.md` |
-| `final-acceptance` | `.codeos/dba/03-prompts/workflow/08-replay.md` |
-| `architecture-entry` | `.codeos/dba/03-prompts/workflow/03b-architecture-synthesis.md` |
+| `specification-approval` | `.codeos/toolkit/dba/03-prompts/workflow/03-event-schema.md` |
+| `delivery-entry` | `.codeos/toolkit/dba/03-prompts/workflow/04-implement.md` |
+| `final-acceptance` | `.codeos/toolkit/dba/03-prompts/workflow/08-replay.md` |
+| `architecture-entry` | `.codeos/toolkit/dba/03-prompts/workflow/03b-architecture-synthesis.md` |

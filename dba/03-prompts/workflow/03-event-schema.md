@@ -14,9 +14,10 @@ Specification Package for explicit human approval.
 
 ## Inputs / Prerequisites
 
-Read the current Intent and Contract, the selected doctrine and review policy, and
-`.codeos/dba/05-guidance/templates/event-schema.md`. All three specification artifacts remain
-`DRAFT` until one package approval.
+Read the current Intent and Contract from the canonical locations defined by the Downstream Project
+Layout Contract, the selected doctrine and review policy, and
+`.codeos/toolkit/dba/05-guidance/templates/event-schema.md`. All three specification artifacts
+remain `DRAFT` until one package approval.
 
 ## Task
 
@@ -41,8 +42,9 @@ Contract. Apply the selected review policy at this decision boundary.
 
 ## Output / Next Action
 
-Present the complete Specification Package and a concise review package using the current template.
-Run or waive advisory review as the selected review policy permits, then state:
+Create `.codeos/01-specification/event-schemas/[feature_id]_schema.md`, then present the complete
+Specification Package and a concise review package using the current template. Run or waive
+advisory review as the selected review policy permits, then state:
 
 `AWAITING HUMAN APPROVAL OF THE SPECIFICATION PACKAGE`
 

@@ -12,8 +12,9 @@ human actor can achieve, what must remain true, and what is excluded.
 
 ## Inputs / Prerequisites
 
-Read `.codeos/dba/05-guidance/templates/intent.md`; it owns the artifact structure and core writing
-rules. Use the confirmed Feature Brief when present, otherwise the human's description.
+Read `.codeos/toolkit/dba/05-guidance/templates/intent.md`; it owns the artifact structure and core
+writing rules. Use an optional confirmed discovery brief when present, otherwise the human's
+description. Resolve existing artifacts through the Downstream Project Layout Contract.
 
 ## Task
 
@@ -30,6 +31,9 @@ rules. Use the confirmed Feature Brief when present, otherwise the human's descr
 - Surface unclear actors, vague outcomes, implicit constraints, excessive scope, and unresolved
   terms. Offer a reasoned proposal or bounded alternatives when possible; otherwise name the
   missing decision or evidence.
+- For a new feature, allocate the next `F-####` after scanning IDs in Intent, Contract, Event
+  Schema filenames and architecture-scope membership. Partial packages are normal. Stop only when
+  incompatible artifacts claim the same identity; never require later-stage artifacts to exist.
 
 ## Applicable Checks
 
@@ -40,5 +44,5 @@ human.
 
 ## Output / Next Action
 
-Present the completed `intents/[feature_id].md` as `DRAFT`, followed by only unresolved ambiguities.
-Keep it open to revision and hand it to `02-contract.md`.
+Create `.codeos/01-specification/intents/[feature_id].md` as `DRAFT` and present it followed by only
+unresolved ambiguities. Keep it open to revision and hand it to `02-contract.md`.

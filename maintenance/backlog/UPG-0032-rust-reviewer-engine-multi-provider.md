@@ -69,7 +69,7 @@ Provider implementations: `CodexProvider` (wraps `codex exec`). Future add-ons:
 `OpenCodeProvider`, `GeminiProvider`, `KimiProvider`. Each lives in its own module; adding a
 new provider does not touch packet construction, precheck, or log-append logic.
 
-Provider selection: `.codeos/reviewer.toml` or env var `CODEOS_REVIEWER_PROVIDER=opencode`.
+Provider selection: `.codeos/05-review/reviewer.toml` or env var `CODEOS_REVIEWER_PROVIDER=opencode`.
 CLI flag `--provider` overrides for one-off use.
 
 ### Typed packet and precheck
@@ -90,28 +90,28 @@ The reviewer must work in both contexts without code duplication:
 - Config: `dba/04-tools/reviewer/codeos-review.sh` → replaced by the Rust CLI directly.
 
 **Context B — downstream DBA projects** (the 9-stage loop):
-- Working directory: the downstream project root (which has `.codeos/` symlinked to the
-  toolkit).
+- Working directory: the downstream project root, where `.codeos/` is project-local and
+  `.codeos/toolkit` is the shared-toolkit mount.
 - Stage labels: `stage-1` through `stage-9` (and `stage-10` for arch-refine).
-- Review policy: loaded from `.codeos/dba/03-prompts/review/codeos-reviewer-task.md` (same file via symlink).
-- Config: `.codeos/reviewer.toml` in the downstream project.
-- The Rust CLI must auto-discover `.codeos/` from the current working directory (or accept
+- Review policy: loaded from `.codeos/toolkit/dba/03-prompts/review/codeos-reviewer-task.md` (same file via symlink).
+- Config: `.codeos/05-review/reviewer.toml` in the downstream project.
+- The Rust CLI must resolve `.codeos/toolkit` from the current working directory (or accept
   `--toolkit-root` for explicit override).
 
 **Shared invariants** (both contexts):
 - Reviewer is advisory, read-only, non-gatekeeping — unchanged.
 - Human approval required at every gate — unchanged.
 - Assessment YAML frontmatter format — unchanged (backward-compatible with existing reviews).
-- Review log format (`reviews/review-log.md`) — unchanged.
+- Review log format (`.codeos/05-review/reviews/review-log.md`) — unchanged.
 - Review series ID model (`RVS__<feature>__S<N>`, `REV__…__R<N>`) — generated consistently.
 
-**`dba-init.sh` integration:** project initialization writes a minimal `.codeos/reviewer.toml`
-(provider = `codex` by default) so new projects get reviewer config out of the box.
+**`dba-init.sh` integration:** reviewer configuration remains optional. A project that overrides
+the built-in provider creates `.codeos/05-review/reviewer.toml` from the current template.
 
 ### Stage-specific checklists
 
 Per-stage policy (currently inline `case` statements in the Bash script) moves to data:
-`.codeos/reviewer-policy/stage-N.toml` (or YAML). The Rust engine loads the policy for the
+`.codeos/05-review/reviewer-policy/stage-N.toml` (or YAML). The Rust engine loads the policy for the
 active stage and injects it into the packet preamble. New stages or checklist updates require
 only a data file change, not a code change.
 
@@ -136,9 +136,9 @@ Lays the groundwork for UPG-0015 decision-integrity without changing the Markdow
 | Provider trait + Codex impl | Autonomous review triggering, CI hooks |
 | `OpenCodeProvider`, `GeminiProvider`, `KimiProvider` stubs | Per-stage policy file content (separate change) |
 | Precheck as pure Rust functions with unit tests | GUI / TUI |
-| `.codeos/reviewer.toml` provider config | Changes to assessment YAML frontmatter |
+| `.codeos/05-review/reviewer.toml` provider config | Changes to assessment YAML frontmatter |
 | Auto-discovery of `.codeos/` for downstream context | Per-feature decision ledgers (UPG-0015) |
-| `dba-init.sh` writes default `reviewer.toml` | |
+| Optional downstream `reviewer.toml` override | Initializer-owned default reviewer configuration |
 | Drop-in CLI replacement for `codeos-review.sh` | |
 
 `dba/04-tools/reviewer/codeos-review.sh` is reduced to a thin shim calling the Rust binary, or removed
@@ -160,7 +160,7 @@ workflow; this is the natural next step.
 | Rust toolchain required to build | Ship compiled binary alongside the repo; keep Bash shim as fallback during migration |
 | Behavior regression vs Bash | Parallel operation period; gate the switch on passing all current smoke tests against same inputs |
 | Over-engineering provider trait | Keep the trait minimal — only what `codex` currently needs; provider stubs can be empty impls |
-| dba-init.sh coupling | Minimal coupling — init only writes `reviewer.toml`; no binary compilation at init time |
+| Configuration discovery drift | Keep the downstream override path aligned with the layout contract; initialization does not create reviewer configuration |
 
 ## Timing
 

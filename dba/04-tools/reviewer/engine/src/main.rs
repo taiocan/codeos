@@ -16,7 +16,6 @@ pub const EXIT_CONFIG: i32 = 2;
 pub const EXIT_PROVIDER: i32 = 3;
 pub const EXIT_PACKET: i32 = 4;
 pub const EXIT_WRITE: i32 = 5;
-pub const EXIT_DRIFT: i32 = 6;
 
 #[derive(Parser)]
 #[command(name = "codeos-reviewer", version = "0.1.0")]
@@ -97,55 +96,6 @@ enum Commands {
         #[arg(long)]
         base: Option<String>,
     },
-    /// Detect stack/config drift — exits 6 if watched dependency/config files changed without a reconciliation report
-    CheckDrift {
-        /// Git ref to diff against (default: main)
-        #[arg(long, default_value = "main")]
-        base: String,
-        /// Prefix output with STRICT MODE (same exit behaviour)
-        #[arg(long)]
-        strict: bool,
-    },
-    /// Generate a Stage 4/5/6 report skeleton with mechanically inferred fields
-    GenerateReport {
-        /// Report stage: 4, 5, or 6
-        #[arg(long)]
-        stage: String,
-        /// Feature id (e.g. UPG-0021) to populate the Feature field
-        #[arg(long)]
-        feature: Option<String>,
-        /// Git ref to diff against for Stage 4 Files changed (git diff --name-only <base>..HEAD)
-        #[arg(long)]
-        base: Option<String>,
-        /// Path to a cargo test output file to parse Stage 5 test counts from
-        #[arg(long = "test-output")]
-        test_output: Option<String>,
-        /// Path to a JSONL events file to count for Stage 6 Events captured
-        #[arg(long)]
-        events: Option<String>,
-    },
-    /// Extract "## Architectural Risks" bullets from a 00b Solution Discovery doc into
-    /// non-authoritative ADR candidate skeletons
-    GenerateAdrCandidates {
-        /// Path to the 00b Solution Discovery source document
-        #[arg(long)]
-        source: String,
-    },
-    /// Generate a human approval dashboard from a feature-registry.yaml file
-    GenerateApprovalDashboard {
-        /// Path to the feature registry YAML file
-        #[arg(long)]
-        registry: String,
-    },
-    /// Generate a pre-release evidence package skeleton for a feature
-    GenerateReleaseEvidence {
-        /// Feature id (e.g. UPG-0024) to populate the Feature field
-        #[arg(long)]
-        feature: String,
-        /// Optional path to a feature-registry.yaml file to enrich PR / Approved artifacts
-        #[arg(long)]
-        registry: Option<String>,
-    },
     /// Deterministically read and validate Architecture Scope metadata
     InspectArchitectureScopes {
         /// Resolve one feature to zero or one Architecture Scope
@@ -178,48 +128,6 @@ fn run() -> i32 {
             return EXIT_CONFIG;
         }
     };
-
-    // Dispatch check-drift before config resolution — needs no provider config.
-    if let Commands::CheckDrift { base, strict } = &cli.command {
-        return cmd::check_drift::run(base, *strict, &repo_root);
-    }
-
-    // Dispatch generate-report before config resolution — needs no provider config.
-    if let Commands::GenerateReport { stage, feature, base, test_output, events } = &cli.command {
-        let args = cmd::generate_report::GenerateReportArgs {
-            stage,
-            feature: feature.as_deref(),
-            base: base.as_deref(),
-            test_output: test_output.as_deref(),
-            events: events.as_deref(),
-        };
-        return cmd::generate_report::run(args, &repo_root);
-    }
-
-    // Dispatch generate-adr-candidates before config resolution — needs no provider config.
-    if let Commands::GenerateAdrCandidates { source } = &cli.command {
-        return cmd::generate_adr_candidates::run(cmd::generate_adr_candidates::GenerateAdrCandidatesArgs {
-            source,
-        });
-    }
-
-    // Dispatch generate-approval-dashboard before config resolution — needs no provider config.
-    if let Commands::GenerateApprovalDashboard { registry } = &cli.command {
-        return cmd::generate_approval_dashboard::run(cmd::generate_approval_dashboard::GenerateApprovalDashboardArgs {
-            registry,
-        });
-    }
-
-    // Dispatch generate-release-evidence before config resolution — needs no provider config.
-    if let Commands::GenerateReleaseEvidence { feature, registry } = &cli.command {
-        return cmd::generate_release_evidence::run(
-            cmd::generate_release_evidence::GenerateReleaseEvidenceArgs {
-                feature,
-                registry: registry.as_deref(),
-            },
-            &repo_root,
-        );
-    }
 
     // This is a deterministic reader hosted by the existing binary. It invokes no reviewer and
     // produces no verdict or approval.
@@ -318,11 +226,6 @@ fn run() -> i32 {
         }
 
         // Handled above before config resolution; unreachable here.
-        Commands::CheckDrift { .. } => EXIT_SUCCESS,
-        Commands::GenerateReport { .. } => EXIT_SUCCESS,
-        Commands::GenerateAdrCandidates { .. } => EXIT_SUCCESS,
-        Commands::GenerateApprovalDashboard { .. } => EXIT_SUCCESS,
-        Commands::GenerateReleaseEvidence { .. } => EXIT_SUCCESS,
         Commands::InspectArchitectureScopes { .. } => EXIT_SUCCESS,
     }
 }

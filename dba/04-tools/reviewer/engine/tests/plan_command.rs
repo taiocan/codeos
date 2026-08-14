@@ -10,14 +10,17 @@ mod common;
 use common::{add_extra_commit, binary, repo_root, run_in_dir, setup_temp_git_repo};
 use std::process::Command;
 
-/// Create a .codeos symlink pointing to repo root in a temp test repo, so `packet::build()`
+/// Create the project-local .codeos directory and toolkit mount, so `packet::build()`
 /// can find `dba/03-prompts/review/codeos-reviewer-task.md` via `toolkit_root`. Duplicated from
 /// `review_command.rs` (private there, not shared) rather than promoting it into
 /// `tests/common/mod.rs`, to keep this change's touched-file scope to this new test file only.
 fn setup_codeos_symlink(repo_path: &std::path::Path) {
     let target = repo_root();
-    std::os::unix::fs::symlink(&target, repo_path.join(".codeos"))
-        .expect("create .codeos symlink");
+    std::fs::create_dir_all(repo_path.join(".codeos")).expect("create .codeos directory");
+    std::os::unix::fs::symlink(&target, repo_path.join(".codeos/toolkit"))
+        .expect("create toolkit symlink");
+    std::fs::write(repo_path.join(".git/info/exclude"), "/.codeos/toolkit\n")
+        .expect("ignore toolkit symlink");
 }
 
 #[test]
@@ -147,20 +150,14 @@ fn smoke_plan_never_invokes_codex_or_mutates_tree() {
     // `plan` must never reach that code path.
     assert!(!stdout.contains("review logged:"), "plan must never invoke/log a real review: {}", stdout);
 
-    // No reviews/codex artifacts should appear anywhere under the temp repo.
-    let found_reviews_dir = walk_for_reviews_dir(dir.path());
-    assert!(!found_reviews_dir, "plan must not create a reviews/ directory: {:?}", dir.path());
-}
-
-fn walk_for_reviews_dir(root: &std::path::Path) -> bool {
-    std::fs::read_dir(root)
-        .map(|entries| {
-            entries.filter_map(|e| e.ok()).any(|e| {
-                let name = e.file_name();
-                name == "reviews" || name == ".codeos-state"
-            })
-        })
-        .unwrap_or(false)
+    assert!(
+        !dir.path().join(".codeos/05-review/reviews").exists(),
+        "plan must not create durable review records"
+    );
+    assert!(
+        !dir.path().join(".codeos-state").exists(),
+        "plan must not create operational state"
+    );
 }
 
 #[test]

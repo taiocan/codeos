@@ -12,9 +12,9 @@ evidence. Report disagreement without rewriting requirements from observed behav
 
 ## Inputs / Prerequisites
 
-Read the approved Intent, Contract, and Event Schema; implementation; executed test results; Stage 6
-evidence; and applicable architecture. Use the Contract's observation mode to select event or
-external evidence.
+Load the approved Specification Package and applicable Architecture Scope types through the
+Downstream Project Layout Contract, then read implementation, executed test results, and Stage 6
+evidence. Use the Contract's observation mode to select event or external evidence.
 
 ## Task
 
@@ -55,6 +55,7 @@ Use this exact table shape:
 
 ## Output / Next Action
 
-Present the table and summarize non-`ALIGNED` rows with the minimum route to resolve each. If a fix
-requires changed approved meaning or project-level architecture, stop for human governance.
-Otherwise hand the evidence to `08-replay.md`.
+Present the table inline and summarize non-`ALIGNED` rows with the minimum route to resolve each.
+This workflow creates no separate durable reconciliation file. If a fix requires changed approved
+meaning or project-level architecture, stop for human governance. Otherwise hand the evidence to
+`08-replay.md`.

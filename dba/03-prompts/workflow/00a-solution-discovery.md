@@ -7,10 +7,10 @@ out_of_scope: Approving feature behavior, deciding architecture, producing speci
 
 ## Purpose
 
-Explore an unfamiliar domain before individual Feature Briefs exist. This is optional,
+Explore an unfamiliar domain before feature boundaries or Intents exist. This is optional,
 non-authoritative planning; it is not a stage or approval gate.
 
-## Inputs
+## Inputs / Prerequisites
 
 Agree with the human on the domain and which of these areas matter: problem framing, candidate
 feature groups, shared vocabulary, event or configuration hypotheses, architectural risks, and
@@ -32,6 +32,8 @@ Produce a concise planning document beginning with:
 > This document is non-authoritative planning material. It does not approve features,
 > architecture, contracts, schemas, events, or implementation. Approved DBA artifacts prevail.
 
-Include only explored areas and an explicit non-decisions/backlog section. There is no required
-path. If content is later incorporated into governed artifacts, review occurs at the next
-applicable review point under the selected review policy.
+Include only explored areas and an explicit non-decisions/backlog section. The result is inline and
+has no required path. Save it at `.codeos/00-discovery/<topic-slug>.md` only when the human
+explicitly requests persistence and the reasoning has durable value. If content is later
+incorporated into governed artifacts, review occurs at the next applicable review point under the
+selected review policy.

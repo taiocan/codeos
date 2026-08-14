@@ -5,7 +5,7 @@ use std::fs;
 use std::path::Path;
 
 fn write_scope(root: &Path, name: &str, metadata: &str) {
-    let directory = root.join("architecture/scopes");
+    let directory = root.join(".codeos/02-architecture/scopes");
     fs::create_dir_all(&directory).expect("create scope directory");
     fs::write(
         directory.join(format!("{name}.md")),
@@ -30,7 +30,7 @@ fn absent_directory_and_unmatched_feature_are_valid() {
 #[test]
 fn shipped_scope_template_matches_the_inspector_contract() {
     let (repo, _) = setup_temp_git_repo();
-    let directory = repo.path().join("architecture/scopes");
+    let directory = repo.path().join(".codeos/02-architecture/scopes");
     fs::create_dir_all(&directory).expect("create scope directory");
     fs::copy(
         repo_root().join("dba/05-guidance/templates/architecture-scope.md"),
@@ -65,7 +65,7 @@ fn reports_draft_and_approved_scopes_deterministically() {
     assert!(stdout.contains("state: approved"));
     assert!(stdout.contains("state: draft"));
     assert!(stdout.contains("resolution: approved"));
-    assert!(stdout.contains("path: architecture/scopes/alpha.md"));
+    assert!(stdout.contains("path: .codeos/02-architecture/scopes/alpha.md"));
 }
 
 #[test]
@@ -113,7 +113,7 @@ fn rejects_duplicate_membership_across_scopes() {
 #[test]
 fn rejects_missing_front_matter() {
     let (repo, _) = setup_temp_git_repo();
-    let directory = repo.path().join("architecture/scopes");
+    let directory = repo.path().join(".codeos/02-architecture/scopes");
     fs::create_dir_all(&directory).expect("create scope directory");
     fs::write(directory.join("broken.md"), "# no front matter\n").expect("write scope");
 

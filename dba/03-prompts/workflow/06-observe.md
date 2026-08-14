@@ -11,8 +11,9 @@ Execute representative scenarios when permitted and preserve truthful evidence o
 
 ## Inputs / Prerequisites
 
-Read the approved Contract to determine observation mode and any controlled actions or minimum
-environment. Read the Event Schema when mode is `events`.
+Load the approved Contract and, when applicable, Event Schema types through the Downstream Project
+Layout Contract. Use them to determine observation mode, controlled actions, and any minimum
+environment.
 
 ## Task
 
@@ -33,4 +34,6 @@ according to its owning artifact's rules; use isolated new evidence when a clean
 ## Output / Next Action
 
 Report scenarios executed, evidence collected, failures, skipped/blocked paths, and environment
-limits. Hand available evidence and explicit gaps to `07-reconcile.md`.
+limits inline. Runtime evidence remains at its Contract-owned location, with
+`events/runtime_events.jsonl` as the shared default; this workflow creates no separate durable
+report. Hand available evidence and explicit gaps to `07-reconcile.md`.

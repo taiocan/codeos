@@ -8,7 +8,7 @@ trap 'rm -rf "${WORK}"' EXIT
 fail() { printf 'FAIL: %s\n' "$1" >&2; exit 1; }
 make_project() {
   local root="$1"
-  mkdir -p "${root}/features" "${root}/architecture"
+  mkdir -p "${root}/features" "${root}/architecture" "${root}/.codeos"
   git -C "${root}" init -q -b main
   git -C "${root}" config user.email test@example.com
   git -C "${root}" config user.name Test
@@ -24,9 +24,9 @@ cp "${FIXTURES}/architecture-migration-profile.yaml" "${PROJECT}/architecture/im
 git -C "${PROJECT}" add . && git -C "${PROJECT}" commit -qm legacy
 
 python3 "${CODEOS_ROOT}/dba/04-tools/architecture-migration/migrate-architecture-synthesis-v2.py" "${PROJECT}" >/dev/null
-[[ ! -e "${PROJECT}/architecture/scopes/example.md" ]] || fail "dry run mutated project"
+[[ ! -e "${PROJECT}/.codeos/02-architecture/scopes/example.md" ]] || fail "dry run mutated project"
 python3 "${CODEOS_ROOT}/dba/04-tools/architecture-migration/migrate-architecture-synthesis-v2.py" "${PROJECT}" --apply >/dev/null
-SCOPE="${PROJECT}/architecture/scopes/example.md"
+SCOPE="${PROJECT}/.codeos/02-architecture/scopes/example.md"
 [[ -f "${SCOPE}" ]] || fail "scope was not created"
 grep -q '^features:$' "${SCOPE}" || fail "membership was not preserved"
 grep -q '^approval:$' "${SCOPE}" || fail "approval was not preserved"
@@ -34,8 +34,9 @@ grep -q '^approval:$' "${SCOPE}" || fail "approval was not preserved"
 grep -q 'Workspace owns dependency direction.' "${SCOPE}" || fail "baseline decision was not preserved"
 grep -q 'Records use stable ids.' "${SCOPE}" || fail "logical decision was not preserved"
 [[ ! -e "${PROJECT}/architecture/core-baseline.md" && ! -e "${PROJECT}/architecture/cohort-logical-design.md" ]] || fail "legacy artifacts remain"
+[[ ! -e "${PROJECT}/architecture/implementation-profile.yaml" ]] || fail "legacy profile remains"
 ! grep -q 'architecture_cohort' "${PROJECT}/features/registry.yaml" || fail "legacy registry state remains"
-python3 - "${PROJECT}/architecture/implementation-profile.yaml" <<'PY'
+python3 - "${PROJECT}/.codeos/02-architecture/implementation-profile.yaml" <<'PY'
 import sys, yaml
 profile = yaml.safe_load(open(sys.argv[1], encoding="utf-8"))
 assert profile["applies_to"] == {"scope": "feature_ids", "feature_ids": ["F-0001", "F-0002"]}

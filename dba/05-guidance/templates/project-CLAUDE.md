@@ -1,56 +1,20 @@
-# [PROJECT_NAME] — CLAUDE.md
+# [PROJECT_NAME]
 
-This project uses **Declarative Behavioral Architecture (DBA)** / **Intent-Driven System (IDS)** methodology.
+This is the canonical project-specific instruction document. The root `CLAUDE.md` discovery
+adapter loads it. For DBA mechanics, read `.codeos/toolkit/dba-system.md`; it selects the
+authoritative doctrine, policies, prompts, tools, and guidance.
 
 ## Minimum Complexity
 
-Use the smallest solution, change, artifact, and response that satisfies the current need. Prefer
-deletion, reuse, and one clear path. Do not obtain simplicity by changing exact meaning, names or
-literals, normative strength, quantities, or unresolved decisions.
-
-## Toolkit
-
-The DBA toolkit is at `.codeos/` (symlinked from `/home/arc/projects/claude/Codeos`).
-
-**At the start of every Claude Code session — read `.codeos/dba-system.md` before doing any
-work; it selects the authoritative Codeos DBA components.**
-1. Read `.codeos/dba-system.md`, its active configuration, and the selected doctrine component
-2. Read `.codeos/dba/03-prompts/workflow/00-session-start.md` — session orientation template (Step 3 generates the Current Verified State: branch, commit, working tree, and registry/filesystem agreement)
-3. Check the Active Features table below for current stage status
-4. Ask what the human wants to work on this session, then STOP and wait
+Use the smallest solution and artifact set that preserves exact approved meaning. Prefer deletion,
+reuse, and one clear path; add machinery only for a concrete correctness, safety, compatibility,
+integrity, or human-control need.
 
 ## Project Intent
 
-<!-- Human fills in after running dba-init.sh — what this project exists to do -->
-[Project intent goes here]
+[Why this project exists and which human outcomes it enables.]
 
-## Active Features
+## Project Constraints
 
-<!-- Human maintains this table — update stage and status as work progresses -->
-
-| Feature ID | Description | Current Stage | Status |
-|---|---|---|---|
-| | | | |
-
-Stages: 1-Intent / 2-Contract / 3-Schema / 4-Implement / 5-Tests / 6-Observe / 7-Reconcile / 8-Replay / 9-Refine
-
-Status: DRAFT / APPROVED / IN_PROGRESS / COMPLETE
-
-## Doctrine Decisions
-
-Follow the doctrine selected through `.codeos/dba-system.md`. Operational consequences are encoded
-only by prompts marked `DOCTRINE ADAPTER`; this project file does not define approval cadence,
-authority, or escalation semantics.
-
-## Runtime Events
-
-When a Contract selects `events` observation mode, governed runtime events are appended to
-`events/runtime_events.jsonl`. This file is **append-only**; never delete or modify existing lines.
-For `external-observation`, use only the artifact declared by the approved Contract.
-
-## Project-Specific Conventions
-
-<!-- Human fills in any project-specific event prefixes, module names, tech stack -->
-Language/runtime: [e.g., Rust, Python, Node.js]
-Test framework: [e.g., cargo test, pytest, vitest]
-Event prefix: [e.g., all events prefixed with ProjectName]
+[Only durable project-specific constraints that are not already owned by source, configuration,
+approved DBA artifacts, or applicable architecture. Delete this section when none exist.]

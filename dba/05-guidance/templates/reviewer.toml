@@ -1,17 +1,5 @@
-# Codeos reviewer configuration
-# Written by dba-init.sh to .codeos/reviewer.toml in the downstream project.
-# Override individual fields; omit to use defaults.
-#
-# Config precedence (highest to lowest):
-#   1. --provider CLI flag
-#   2. CODEOS_REVIEWER_PROVIDER env var
-#   3. This file (.codeos/reviewer.toml or reviewer.toml at repo root)
-#   4. Built-in default (codex)
-
-# Reviewer provider. Supported values: codex | open-code | gemini | kimi
-# Other values are rejected at startup (fail-closed).
+# Optional reviewer overrides. Omit this file to use built-in defaults.
+# Canonical downstream path: .codeos/05-review/reviewer.toml
+# Supported providers: codex | open-code | gemini | kimi
 provider = "codex"
-
-# Reasoning effort passed to the provider. Provider-specific semantics.
-# codex: "high" | "medium" | "low" (default: "high")
 reasoning_effort = "high"

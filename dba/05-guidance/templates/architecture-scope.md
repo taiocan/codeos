@@ -7,7 +7,7 @@ approval: null
 
 <!--
 One authoritative architecture artifact for a project-level structural scope.
-Recommended path: architecture/scopes/[scope-id].md
+Canonical path: .codeos/02-architecture/scopes/[scope-id].md
 
 The filename owns scope identity; front matter owns membership and approval. Git owns history.
 Replace this guidance with only the architecture-significant decisions needed by the scope. The

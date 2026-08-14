@@ -16,9 +16,9 @@ SUPPORTED_PATHS=(
   "${CODEOS_ROOT}/dba-system.md"
   "${CODEOS_ROOT}/dba/00-entry/configurations/DBA-2.yaml"
   "${CODEOS_ROOT}/dba/04-tools/reviewer/contract/v2.md"
-  "${CODEOS_ROOT}/dba/06-reference/reviewer-pipeline.md"
   "${CODEOS_ROOT}/dba/03-prompts"
   "${CODEOS_ROOT}/dba/04-tools/reviewer/codeos-review.sh"
+  "${CODEOS_ROOT}/dba/04-tools/reviewer/engine/src"
   "${CODEOS_ROOT}/dba/04-tools/initializer/dba-init.sh"
   "${CODEOS_ROOT}/dba/05-guidance/templates"
 )
@@ -42,25 +42,29 @@ mkdir -p "${PROJECT_ROOT}"
 
 [[ -f "${PROJECT_ROOT}/CLAUDE.md" ]] || fail "initializer did not create CLAUDE.md"
 [[ -f "${PROJECT_ROOT}/AGENTS.md" ]] || fail "initializer did not create AGENTS.md"
+cmp -s "${PROJECT_ROOT}/CLAUDE.md" "${CODEOS_ROOT}/dba/05-guidance/templates/project-root-CLAUDE.md" || \
+  fail "generated root CLAUDE.md differs from its adapter template"
 cmp -s "${PROJECT_ROOT}/AGENTS.md" "${CODEOS_ROOT}/dba/05-guidance/templates/project-AGENTS.md" || \
   fail "generated AGENTS.md differs from its template"
-[[ ! -e "${PROJECT_ROOT}/architecture/controlled-plain-english.yaml" ]] || \
+[[ ! -e "${PROJECT_ROOT}/.codeos/02-architecture/controlled-plain-english.yaml" ]] || \
   fail "initializer created a retired CPE status file"
 
 printf 'owned CLAUDE\n' > "${PROJECT_ROOT}/CLAUDE.md"
 printf 'owned AGENTS\n' > "${PROJECT_ROOT}/AGENTS.md"
-(
+if (
   cd "${PROJECT_ROOT}"
-  bash "${CODEOS_ROOT}/dba/04-tools/initializer/dba-init.sh" example >/dev/null
-)
+  bash "${CODEOS_ROOT}/dba/04-tools/initializer/dba-init.sh" example >/dev/null 2>&1
+); then
+  fail "initializer accepted ambiguous root instructions"
+fi
 [[ "$(cat "${PROJECT_ROOT}/CLAUDE.md")" == "owned CLAUDE" ]] || fail "initializer overwrote CLAUDE.md"
 [[ "$(cat "${PROJECT_ROOT}/AGENTS.md")" == "owned AGENTS" ]] || fail "initializer overwrote AGENTS.md"
 
 WRAPPER_ROOT="${TEST_ROOT}/toolkit"
 STUB_BIN="${TEST_ROOT}/bin"
-mkdir -p "${WRAPPER_ROOT}/dba/04-tools/reviewer" "${STUB_BIN}" "${PROJECT_ROOT}/architecture"
+mkdir -p "${WRAPPER_ROOT}/dba/04-tools/reviewer" "${STUB_BIN}" "${PROJECT_ROOT}/.codeos/02-architecture"
 cp "${CODEOS_ROOT}/dba/04-tools/reviewer/codeos-review.sh" "${WRAPPER_ROOT}/dba/04-tools/reviewer/codeos-review.sh"
-printf 'not: valid\n' > "${PROJECT_ROOT}/architecture/controlled-plain-english.yaml"
+printf 'not: valid\n' > "${PROJECT_ROOT}/.codeos/02-architecture/controlled-plain-english.yaml"
 cat > "${STUB_BIN}/codeos-reviewer" <<'EOF'
 #!/usr/bin/env bash
 printf '%s\n' "$@" > "${REVIEW_ARGS_FILE}"
