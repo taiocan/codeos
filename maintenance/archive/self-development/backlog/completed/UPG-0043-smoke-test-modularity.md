@@ -2,7 +2,7 @@
 feature_id: UPG-0043
 slug: smoke-test-modularity
 title: Split Monolithic Smoke Test File by Tool Area
-status: PROPOSED
+status: COMPLETED
 priority: P3
 depends_on: []
 related_features: [UPG-0042]
@@ -12,8 +12,11 @@ superseded_by: []
 
 # Upgrade: smoke-test-modularity — Split Monolithic Smoke Test File by Tool Area
 
+> Completed 2026-08-14. Reviewer integration tests are capability-owned, share only small fixture
+> helpers, and no longer depend on a monolithic smoke implementation-detail suite.
+
 **Priority**: P3
-**Status**: PROPOSED
+**Status**: COMPLETED
 **Type**: script-tooling
 
 ## Problem

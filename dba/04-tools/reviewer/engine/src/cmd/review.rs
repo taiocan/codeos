@@ -1,78 +1,149 @@
 use crate::assessment;
+use crate::codex;
 use crate::config::Config;
 use crate::log as review_log;
-use crate::packet::{self, PacketBuildOptions};
+use crate::packet::{self, PacketBuildOptions, ReviewPacket};
 use crate::precheck;
-use crate::provider::{self, ProviderConfig};
-use anyhow::{Result, bail};
-use std::path::Path;
+use anyhow::Result;
+use std::path::{Path, PathBuf};
 
-pub struct ReviewArgs {
+#[derive(Clone)]
+pub struct EvidenceArgs {
     pub feature: String,
     pub stage: String,
     pub artifacts: Vec<String>,
     pub sha_only: Vec<String>,
     pub guard_clean: Vec<String>,
-    pub fresh: bool,
-    pub scratch: bool,
-    pub print_only: bool,
+    pub base: Option<String>,
     pub skip_prechecks: bool,
-    pub delta_mode: bool,
-    pub delta_base: Option<String>,
 }
 
-pub fn run(args: ReviewArgs, cfg: &Config, provider_name: &str) -> Result<i32> {
-    if args.artifacts.is_empty() {
-        eprintln!("review: provide at least one artifact path");
-        return Ok(crate::EXIT_USAGE);
-    }
+pub struct ReviewArgs {
+    pub evidence: EvidenceArgs,
+    pub fresh: bool,
+    pub scratch: bool,
+}
 
-    // Validate delta mode
-    if args.delta_mode {
-        match &args.delta_base {
-            None => {
-                eprintln!("review: --mode delta requires --base <sha>");
-                return Ok(crate::EXIT_USAGE);
-            }
-            Some(base) => {
-                if !base.chars().all(|c| c.is_ascii_hexdigit()) || base.len() < 7 {
-                    eprintln!("review: --base value is not a valid hex SHA: '{}'", base);
-                    return Ok(crate::EXIT_USAGE);
-                }
-                // Verify commit exists
-                let git_status = std::process::Command::new("git")
-                    .args(["rev-parse", "--verify", &format!("{}^{{commit}}", base)])
-                    .current_dir(&cfg.repo_root)
-                    .status();
-                match git_status {
-                    Err(e) => {
-                        eprintln!("error: could not run git to verify --base commit: {}", e);
-                        return Ok(crate::EXIT_CONFIG);
-                    }
-                    Ok(s) if !s.success() => {
-                        eprintln!("review: --base '{}' does not resolve to a valid commit", base);
-                        return Ok(crate::EXIT_USAGE);
-                    }
-                    Ok(_) => {}
-                }
-            }
+pub struct PreparedReview {
+    pub args: EvidenceArgs,
+    pub packet: ReviewPacket,
+}
+
+pub struct PrepareFailure {
+    pub code: i32,
+    pub message: String,
+}
+
+impl PrepareFailure {
+    fn usage(message: impl Into<String>) -> Self {
+        Self {
+            code: crate::EXIT_USAGE,
+            message: message.into(),
         }
     }
 
-    // Conflict check: same path in both positional and --sha-only
-    for so in &args.sha_only {
-        for a in &args.artifacts {
-            if a == so {
-                eprintln!("review: path '{}' passed both as positional artifact and --sha-only; pass as one or the other", so);
-                return Ok(crate::EXIT_USAGE);
-            }
+    fn packet(message: impl Into<String>) -> Self {
+        Self {
+            code: crate::EXIT_PACKET,
+            message: message.into(),
         }
+    }
+
+    fn config(message: impl Into<String>) -> Self {
+        Self {
+            code: crate::EXIT_CONFIG,
+            message: message.into(),
+        }
+    }
+}
+
+/// Apply the validation, evidence selection, prechecks, and packet construction shared by
+/// `plan` and `review`. Callers differ only after this preparation succeeds.
+pub fn prepare(
+    mut args: EvidenceArgs,
+    cfg: &Config,
+) -> std::result::Result<PreparedReview, PrepareFailure> {
+    validate_identifier("feature", &args.feature)?;
+    validate_identifier("stage", &args.stage)?;
+
+    args.artifacts = normalize_paths(&args.artifacts, cfg, true, "artifact")?;
+    args.sha_only = normalize_paths(&args.sha_only, cfg, true, "--sha-only")?;
+    args.guard_clean = normalize_paths(&args.guard_clean, cfg, false, "--guard-clean")?;
+
+    for path in &args.sha_only {
+        if args.artifacts.contains(path) {
+            return Err(PrepareFailure::usage(format!(
+                "path '{path}' was passed both as an artifact and --sha-only"
+            )));
+        }
+    }
+
+    if let Some(base) = args.base.as_deref() {
+        args.base = Some(resolve_base(base, cfg)?);
+    }
+
+    if !args.skip_prechecks {
+        for artifact in &args.artifacts {
+            let content = std::fs::read_to_string(artifact).map_err(|error| {
+                PrepareFailure::packet(format!("could not read artifact {artifact}: {error}"))
+            })?;
+            precheck::check_no_unfilled_placeholders(Path::new(artifact), &content)
+                .map_err(|error| PrepareFailure::packet(error.to_string()))?;
+            precheck::check_no_forbidden_fields(Path::new(artifact), &content)
+                .map_err(|error| PrepareFailure::packet(error.to_string()))?;
+            precheck::check_draft_markers(Path::new(artifact), &content);
+        }
+        for path in &args.guard_clean {
+            precheck::check_guard_clean(Path::new(path))
+                .map_err(|error| PrepareFailure::packet(error.to_string()))?;
+        }
+    }
+
+    let packet = packet::build(&PacketBuildOptions {
+        feature: args.feature.clone(),
+        stage: args.stage.clone(),
+        artifacts: args.artifacts.clone(),
+        sha_only_paths: args.sha_only.clone(),
+        delta_mode: args.base.is_some(),
+        delta_base: args.base.clone(),
+        repo_root: cfg.repo_root.to_string_lossy().into_owned(),
+        toolkit_root: cfg.toolkit_root.to_string_lossy().into_owned(),
+    })
+    .map_err(|error| PrepareFailure::packet(format!("error building packet: {error}")))?;
+
+    Ok(PreparedReview { args, packet })
+}
+
+pub fn run(args: ReviewArgs, cfg: &Config) -> Result<i32> {
+    let prepared = match prepare(args.evidence, cfg) {
+        Ok(prepared) => prepared,
+        Err(failure) => {
+            eprintln!("error: {}", failure.message);
+            return Ok(failure.code);
+        }
+    };
+    let evidence = prepared.args;
+    let review_packet = prepared.packet;
+
+    if matches!(
+        review_packet.coverage_state,
+        crate::packet::CoverageState::EmptyPacket
+    ) {
+        eprintln!("error: review packet is empty (EMPTY_PACKET) — no reviewable content found.");
+        if evidence.base.is_some() {
+            eprintln!("       Ensure tracked artifacts changed since --base, or omit --base for a full review.");
+        }
+        eprintln!("       Inspect the evidence with plan before rerunning.");
+        return Ok(crate::EXIT_PACKET);
     }
 
     let review_log_path = if args.scratch {
         let scratch = cfg.state_dir.join("reviewer-scratch");
-        if let Err(e) = std::fs::create_dir_all(&scratch) {
-            eprintln!("error: could not create scratch dir {}: {}", scratch.display(), e);
+        if let Err(error) = std::fs::create_dir_all(&scratch) {
+            eprintln!(
+                "error: could not create scratch dir {}: {error}",
+                scratch.display()
+            );
             return Ok(crate::EXIT_WRITE);
         }
         scratch.join("review-log.md")
@@ -80,294 +151,222 @@ pub fn run(args: ReviewArgs, cfg: &Config, provider_name: &str) -> Result<i32> {
         cfg.review_log.clone()
     };
 
-    // Fail-closed on missing positional artifacts (AC-3: exit 4 for artifact-not-found)
-    for a in &args.artifacts {
-        if !Path::new(a).exists() {
-            eprintln!("error: artifact not found: {}", a);
-            return Ok(crate::EXIT_PACKET);
-        }
-    }
-
-    // Missing --sha-only path is a bad CLI argument (exit 1, not packet error 4)
-    for so in &args.sha_only {
-        if !Path::new(so).exists() {
-            eprintln!("error: --sha-only path not found: {}", so);
-            return Ok(crate::EXIT_USAGE);
-        }
-    }
-
-    // Prechecks
-    if !args.skip_prechecks {
-        for a in &args.artifacts {
-            let content = match std::fs::read_to_string(a) {
-                Ok(c) => c,
-                Err(e) => {
-                    eprintln!("error: could not read artifact {}: {}", a, e);
-                    return Ok(crate::EXIT_PACKET);
-                }
-            };
-            if let Err(e) = precheck::check_no_unfilled_placeholders(Path::new(a), &content) {
-                eprintln!("{}", e);
-                return Ok(crate::EXIT_PACKET);
-            }
-            if let Err(e) = precheck::check_no_forbidden_fields(Path::new(a), &content) {
-                eprintln!("{}", e);
-                return Ok(crate::EXIT_PACKET);
-            }
-            precheck::check_draft_markers(Path::new(a), &content);
-        }
-        for gc in &args.guard_clean {
-            if let Err(e) = precheck::check_guard_clean(Path::new(gc)) {
-                eprintln!("{}", e);
-                return Ok(crate::EXIT_PACKET);
-            }
-        }
-    }
-
-    // Build packet
-    let build_opts = PacketBuildOptions {
-        feature: args.feature.clone(),
-        stage: args.stage.clone(),
-        artifacts: args.artifacts.clone(),
-        sha_only_paths: args.sha_only.clone(),
-        delta_mode: args.delta_mode,
-        delta_base: args.delta_base.clone(),
-        fresh_session: args.fresh,
-        repo_root: cfg.repo_root.to_string_lossy().into_owned(),
-        toolkit_root: cfg.toolkit_root.to_string_lossy().into_owned(),
-    };
-
-    let review_packet = match packet::build(&build_opts) {
-        Ok(p) => p,
-        Err(e) => {
-            eprintln!("error building packet: {}", e);
-            return Ok(crate::EXIT_PACKET);
-        }
-    };
-
-    if args.print_only {
-        print!("{}", review_packet.content());
-        if matches!(review_packet.coverage_state, crate::packet::CoverageState::EmptyPacket) {
-            return Ok(crate::EXIT_PACKET);
-        }
-        return Ok(crate::EXIT_SUCCESS);
-    }
-
-    // Fail-closed on empty packet
-    if matches!(review_packet.coverage_state, crate::packet::CoverageState::EmptyPacket) {
-        eprintln!("error: review packet is empty (EMPTY_PACKET) — no reviewable content found.");
-        if args.delta_mode {
-            eprintln!("       Delta mode: ensure tracked artifacts have working-tree changes since --base,");
-            eprintln!("       or use --mode full with explicit artifact paths.");
-        }
-        eprintln!("       Inspect the packet with --print-packet before rerunning.");
-        return Ok(crate::EXIT_PACKET);
-    }
-
-    // Compute review_id before any Codex invocation (AC-10: fail closed on an unreadable log,
-    // never guess a round). A missing log or zero prior matches both correctly yield round 1.
-    let round = match review_log::compute_review_round(&review_log_path, &args.feature, &args.stage) {
-        Ok(r) => r,
-        Err(e) => {
-            eprintln!("error: could not determine review round: {}", e);
+    let round = match review_log::compute_review_round(
+        &review_log_path,
+        &evidence.feature,
+        &evidence.stage,
+    ) {
+        Ok(round) => round,
+        Err(error) => {
+            eprintln!("error: could not determine review round: {error}");
             return Ok(crate::EXIT_WRITE);
         }
     };
-    let review_id = review_log::format_review_id(&args.feature, &args.stage, round);
+    let review_id = review_log::format_review_id(&evidence.feature, &evidence.stage, round);
 
-    // Resolve provider and invoke
-    let prov = match provider::resolve_provider(provider_name) {
-        Ok(p) => p,
-        Err(e) => {
-            eprintln!("error: {}", e);
-            return Ok(crate::EXIT_CONFIG);
-        }
-    };
-
-    let prov_cfg = ProviderConfig {
-        provider_name: provider_name.to_string(),
-        reasoning_effort: cfg.reasoning_effort.clone(),
-        repo_root: cfg.repo_root.to_string_lossy().into_owned(),
-        sessions_dir: cfg.sessions_dir.to_string_lossy().into_owned(),
-    };
-
-    // Read-only invariant: snapshot working tree before invoke (AC-1); compare after.
-    // Non-zero git exit (e.g. not a git repo) yields None — check silently skipped (AC-4).
-    let pre_invoke_status = std::process::Command::new("git")
-        .args(["status", "--porcelain"])
-        .current_dir(&cfg.repo_root)
-        .output()
-        .ok()
-        .filter(|o| o.status.success())
-        .map(|o| o.stdout);
-
-    let invoke_result = prov.invoke(&review_packet, &prov_cfg);
-
-    // Post-invoke check runs regardless of invoke success or failure (AC-2/AC-3/AC-4).
-    if let Some(pre) = pre_invoke_status {
-        let post_status = std::process::Command::new("git")
-            .args(["status", "--porcelain"])
-            .current_dir(&cfg.repo_root)
-            .output()
-            .ok()
-            .filter(|o| o.status.success());
-        if let Some(post) = post_status {
-            if post.stdout != pre {
-                eprintln!("WARNING: working tree changed during review — reviewer should be read-only");
-            }
+    let pre_invoke_status = git_status(&cfg.repo_root);
+    let invoke_result = codex::invoke(&review_packet, cfg, args.fresh);
+    if let (Some(before), Some(after)) = (pre_invoke_status, git_status(&cfg.repo_root)) {
+        if before != after {
+            eprintln!("WARNING: working tree changed during review — reviewer should be read-only");
         }
     }
-
     let raw = match invoke_result {
-        Ok(r) => r,
-        Err(e) => {
-            eprintln!("error: provider invocation failed: {}", e);
+        Ok(raw) => raw,
+        Err(error) => {
+            eprintln!("error: Codex invocation failed: {error}");
             return Ok(crate::EXIT_PROVIDER);
         }
     };
 
-    // Parse review output
     let parsed = assessment::parse_review_output(&raw.text, &review_packet.coverage_state);
     let (findings, unparsed_findings_count) = assessment::parse_findings(&raw.text, &review_id);
-
-    // Save packet
     let outdir = if args.scratch {
         cfg.state_dir.join("reviewer-scratch")
     } else {
         cfg.codex_dir.clone()
     };
     let packets_dir = outdir.join("packets");
-    if let Err(e) = std::fs::create_dir_all(&packets_dir) {
-        eprintln!("error: could not create packets dir {}: {}", packets_dir.display(), e);
+    if let Err(error) = std::fs::create_dir_all(&packets_dir) {
+        eprintln!(
+            "error: could not create packets dir {}: {error}",
+            packets_dir.display()
+        );
         return Ok(crate::EXIT_WRITE);
     }
 
-    let ts_clean = chrono::Utc::now().format("%Y%m%dT%H%M%SZ").to_string();
+    let timestamp = chrono::Utc::now().format("%Y%m%dT%H%M%SZ").to_string();
     let short_sha = &review_packet.review_sha[..7.min(review_packet.review_sha.len())];
-    let packet_filename = format!("{}-{}-stage-{}-{}.packet.txt", ts_clean, args.feature, args.stage, short_sha);
-    let packet_saved = packets_dir.join(&packet_filename);
-    if let Err(e) = std::fs::write(&packet_saved, review_packet.content()) {
-        eprintln!("error: could not write packet file {}: {}", packet_saved.display(), e);
+    let packet_saved = packets_dir.join(format!(
+        "{}-{}-stage-{}-{}.packet.txt",
+        timestamp, evidence.feature, evidence.stage, short_sha
+    ));
+    if let Err(error) = std::fs::write(&packet_saved, review_packet.content()) {
+        eprintln!(
+            "error: could not write packet file {}: {error}",
+            packet_saved.display()
+        );
         return Ok(crate::EXIT_WRITE);
     }
-    let packet_saved_str = match packet_saved.to_str() {
-        Some(s) => s,
+    let packet_path = match packet_saved.to_str() {
+        Some(path) => path,
         None => {
-            eprintln!("error: packet path contains non-UTF-8 characters: {}", packet_saved.display());
+            eprintln!(
+                "error: packet path contains non-UTF-8 characters: {}",
+                packet_saved.display()
+            );
             return Ok(crate::EXIT_WRITE);
         }
     };
-    let packet_hash = match packet::sha256_file(packet_saved_str) {
-        Ok(h) => h,
-        Err(e) => {
-            eprintln!("error: could not hash packet file: {}", e);
+    let packet_hash = match packet::sha256_file(packet_path) {
+        Ok(hash) => hash,
+        Err(error) => {
+            eprintln!("error: could not hash packet file: {error}");
             return Ok(crate::EXIT_WRITE);
         }
     };
 
-    // Pre-compute expected assessment path for diagnostic use on write failure
-    let assessment_filename = format!("{}-{}-stage-{}-{}.md", ts_clean, args.feature, args.stage, short_sha);
-    let expected_assessment_path = outdir.join(&assessment_filename);
-
-    // Schema validation (fail-closed)
-    if let Err(e) = assessment::validate_schema(&review_packet, &parsed, &packet_hash) {
-        eprintln!("error: {}", e);
+    if let Err(error) = assessment::validate_schema(&review_packet, &parsed, &packet_hash) {
+        eprintln!("error: {error}");
         return Ok(crate::EXIT_PACKET);
     }
-
-    // Write assessment
     let (assessment_file, assessment_hash) = match assessment::write_assessment(
-        &review_id, &findings, unparsed_findings_count,
-        &review_packet, &raw, &parsed, &outdir, &packet_saved, &packet_hash
+        &review_id,
+        &findings,
+        unparsed_findings_count,
+        &review_packet,
+        &raw,
+        &parsed,
+        &outdir,
+        &packet_saved,
+        &packet_hash,
     ) {
-        Ok(r) => r,
-        Err(e) => {
-            eprintln!("error: assessment write failed: {}", e);
+        Ok(result) => result,
+        Err(error) => {
+            eprintln!("error: assessment write failed: {error}");
             eprintln!("  packet was written to: {}", packet_saved.display());
-            eprintln!("  assessment target: {} (not written)", expected_assessment_path.display());
             return Ok(crate::EXIT_WRITE);
         }
     };
 
-    // Append to log
-    if let Err(e) = review_log::append_review(
-        &review_log_path, &review_id, &review_packet, &raw, &parsed,
-        &assessment_file, &assessment_hash, &packet_saved, &packet_hash,
+    if let Err(error) = review_log::append_review(
+        &review_log_path,
+        &review_id,
+        &review_packet,
+        &raw,
+        &parsed,
+        &assessment_file,
+        &assessment_hash,
+        &packet_saved,
+        &packet_hash,
     ) {
-        eprintln!("error: log append failed: {}", e);
+        eprintln!("error: log append failed: {error}");
         eprintln!("  assessment was written to: {}", assessment_file.display());
         eprintln!("  packet was written to: {}", packet_saved.display());
-        eprintln!("  log target: {} (not updated)", review_log_path.display());
         return Ok(crate::EXIT_WRITE);
     }
 
-    // Print summary (matches Bash script stdout format)
     println!("review logged: {}", review_log_path.display());
-    println!("  review_id: {}", review_id);
-    println!("  codex concern: {}   effective concern: {}   evidence: {}",
-        parsed.codex_concern, parsed.effective_concern, parsed.evidence);
-    println!("  effort: {}   elapsed: {}ms   reconnects: {}",
-        raw.effort, raw.elapsed_ms, raw.reconnect_count);
-    println!("  coverage: {} (redactions: {})",
-        review_packet.coverage_state.as_str(), review_packet.redaction_count);
+    println!("  review_id: {review_id}");
+    println!(
+        "  codex concern: {}   effective concern: {}   evidence: {}",
+        parsed.codex_concern, parsed.effective_concern, parsed.evidence
+    );
+    println!(
+        "  effort: {}   elapsed: {}ms   reconnects: {}",
+        raw.effort, raw.elapsed_ms, raw.reconnect_count
+    );
+    println!(
+        "  coverage: {} (redactions: {})",
+        review_packet.coverage_state.as_str(),
+        review_packet.redaction_count
+    );
     println!("  assessment: {}", assessment_file.display());
     println!("  packet: {}", packet_saved.display());
-
     Ok(crate::EXIT_SUCCESS)
 }
 
-/// Parse the trailing args after feature and stage from the review subcommand.
-pub fn parse_rest(rest: &[String]) -> Result<(Vec<String>, Vec<String>, Vec<String>, bool, bool, bool, bool, bool, Option<String>)> {
-    let mut artifacts = Vec::new();
-    let mut sha_only = Vec::new();
-    let mut guard_clean = Vec::new();
-    let mut fresh = false;
-    let mut scratch = false;
-    let mut print_only = false;
-    let mut skip_prechecks = false;
-    let mut delta_mode = false;
-    let mut delta_base: Option<String> = None;
-
-    let mut i = 0;
-    while i < rest.len() {
-        match rest[i].as_str() {
-            "--fresh" => { fresh = true; i += 1; }
-            "--scratch" => { scratch = true; i += 1; }
-            "--print-packet" | "--dry-run" => { print_only = true; i += 1; }
-            "--skip-prechecks" => { skip_prechecks = true; i += 1; }
-            "--sha-only" => {
-                if i + 1 >= rest.len() { bail!("review: --sha-only requires a PATH argument"); }
-                sha_only.push(rest[i+1].clone());
-                i += 2;
-            }
-            "--guard-clean" => {
-                if i + 1 >= rest.len() { bail!("review: --guard-clean requires a PATH argument"); }
-                guard_clean.push(rest[i+1].clone());
-                i += 2;
-            }
-            "--mode" => {
-                if i + 1 >= rest.len() { bail!("review: --mode requires an argument (full or delta)"); }
-                match rest[i+1].as_str() {
-                    "full" => delta_mode = false,
-                    "delta" => delta_mode = true,
-                    other => bail!("review: --mode must be 'full' or 'delta', got '{}'", other),
-                }
-                i += 2;
-            }
-            "--base" => {
-                if i + 1 >= rest.len() { bail!("review: --base requires a SHA argument"); }
-                delta_base = Some(rest[i+1].clone());
-                i += 2;
-            }
-            arg if arg.starts_with('-') => {
-                bail!("review: unknown argument '{}'", arg);
-            }
-            path => {
-                artifacts.push(path.to_string());
-                i += 1;
-            }
-        }
+fn validate_identifier(label: &str, value: &str) -> std::result::Result<(), PrepareFailure> {
+    let mut characters = value.chars();
+    let valid = characters
+        .next()
+        .is_some_and(|character| character.is_ascii_alphanumeric())
+        && characters.all(|character| {
+            character.is_ascii_alphanumeric() || matches!(character, '.' | '_' | '-')
+        });
+    if valid {
+        Ok(())
+    } else {
+        Err(PrepareFailure::usage(format!(
+            "{label} must start with an ASCII letter or digit and contain only letters, digits, '.', '_', or '-'"
+        )))
     }
+}
 
-    Ok((artifacts, sha_only, guard_clean, fresh, scratch, print_only, skip_prechecks, delta_mode, delta_base))
+fn normalize_paths(
+    paths: &[String],
+    cfg: &Config,
+    require_file: bool,
+    label: &str,
+) -> std::result::Result<Vec<String>, PrepareFailure> {
+    let root = cfg.repo_root.canonicalize().map_err(|error| {
+        PrepareFailure::config(format!("could not resolve repository root: {error}"))
+    })?;
+    paths
+        .iter()
+        .map(|path| normalize_path(path, &root, require_file, label))
+        .collect()
+}
+
+fn normalize_path(
+    supplied: &str,
+    root: &Path,
+    require_file: bool,
+    label: &str,
+) -> std::result::Result<String, PrepareFailure> {
+    let absolute = PathBuf::from(supplied).canonicalize().map_err(|error| {
+        PrepareFailure::packet(format!(
+            "{label} path does not resolve: {supplied}: {error}"
+        ))
+    })?;
+    if require_file && !absolute.is_file() {
+        return Err(PrepareFailure::packet(format!(
+            "{label} path is not a regular file: {supplied}"
+        )));
+    }
+    let relative = absolute.strip_prefix(root).map_err(|_| {
+        PrepareFailure::packet(format!(
+            "{label} path resolves outside the repository: {supplied}"
+        ))
+    })?;
+    relative
+        .to_str()
+        .map(|path| path.to_string())
+        .ok_or_else(|| {
+            PrepareFailure::packet(format!("{label} path is not valid UTF-8: {supplied}"))
+        })
+}
+
+fn resolve_base(base: &str, cfg: &Config) -> std::result::Result<String, PrepareFailure> {
+    let output = std::process::Command::new("git")
+        .args(["rev-parse", "--verify", &format!("{base}^{{commit}}")])
+        .current_dir(&cfg.repo_root)
+        .output()
+        .map_err(|error| PrepareFailure::config(format!("could not run git: {error}")))?;
+    if !output.status.success() {
+        return Err(PrepareFailure::usage(format!(
+            "--base '{base}' does not resolve to a commit"
+        )));
+    }
+    Ok(String::from_utf8_lossy(&output.stdout).trim().to_string())
+}
+
+fn git_status(repo_root: &Path) -> Option<Vec<u8>> {
+    std::process::Command::new("git")
+        .args(["status", "--porcelain"])
+        .current_dir(repo_root)
+        .output()
+        .ok()
+        .filter(|output| output.status.success())
+        .map(|output| output.stdout)
 }

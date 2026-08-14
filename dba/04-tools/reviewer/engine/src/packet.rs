@@ -115,7 +115,6 @@ pub struct PacketBuildOptions {
     pub sha_only_paths: Vec<String>,
     pub delta_mode: bool,
     pub delta_base: Option<String>,
-    pub fresh_session: bool,
     pub repo_root: String,
     pub toolkit_root: String,
 }
@@ -137,12 +136,7 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
         "n/a (non-numeric stage)".to_string()
     };
 
-    let base_sha = load_base_sha(
-        &opts.feature,
-        &opts.stage,
-        &opts.repo_root,
-        opts.delta_base.as_deref(),
-    )?;
+    let base_sha = opts.delta_base.clone().unwrap_or_default();
 
     // Build diff
     let (_raw_diff, changed_files) = if opts.delta_mode {
@@ -284,7 +278,7 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
             // fail-closed: untracked files can't be compared to a base commit; clear diagnostic.
             if !git_is_tracked(a, &opts.repo_root) {
                 bail!(
-                    "artifact is untracked; delta review cannot compare it to base: {}\n       Stage the file, commit it, or rerun with --mode full for explicit artifacts.",
+                    "artifact is untracked; delta review cannot compare it to base: {}\n       Stage and commit the file, or omit --base for a full review.",
                     a
                 );
             }
@@ -409,7 +403,7 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
 
         eprintln!("  suggest for R2+:");
         eprintln!(
-            "    codeos-reviewer review {} {} --mode delta --base <last-review-commit> <artifacts>",
+            "    codeos-reviewer review {} {} --base <last-review-commit> <artifacts>",
             opts.feature, opts.stage
         );
         eprintln!("  optional:");
@@ -728,46 +722,6 @@ fn git_is_dirty(repo_root: &str) -> bool {
         .output()
         .map(|o| !o.stdout.is_empty())
         .unwrap_or(false)
-}
-
-fn load_base_sha(
-    feature: &str,
-    stage: &str,
-    repo_root: &str,
-    delta_base: Option<&str>,
-) -> Result<String> {
-    if let Some(b) = delta_base {
-        return Ok(b.to_string());
-    }
-    let ss = format!(
-        "{}/.codeos-state/stage-start/{}/stage-{}.json",
-        repo_root, feature, stage
-    );
-    if !Path::new(&ss).exists() {
-        return Ok(String::new());
-    }
-    let content = std::fs::read_to_string(&ss)
-        .with_context(|| format!("could not read stage-start file {}", ss))?;
-    for line in content.lines() {
-        if line.contains("\"base_commit\"") {
-            if let Some(rest) = line.splitn(2, "\"base_commit\"").nth(1) {
-                if let Some(after_colon) = rest.splitn(2, ':').nth(1) {
-                    let trimmed = after_colon.trim();
-                    if trimmed.starts_with('"') {
-                        let val: String =
-                            trimmed.chars().skip(1).take_while(|&c| c != '"').collect();
-                        if !val.is_empty() {
-                            return Ok(val);
-                        }
-                    }
-                }
-            }
-        }
-    }
-    anyhow::bail!(
-        "{} exists but has no valid base_commit (malformed provenance) — aborting.",
-        ss
-    );
 }
 
 fn is_path_excluded(path: &str) -> bool {

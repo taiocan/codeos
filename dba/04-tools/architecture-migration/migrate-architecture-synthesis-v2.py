@@ -97,13 +97,17 @@ def main() -> int:
     args = parser.parse_args()
     project = Path(args.project).resolve()
 
-    if subprocess.run(
+    root_result = subprocess.run(
         ["git", "-C", str(project), "rev-parse", "--show-toplevel"],
-        stdout=subprocess.DEVNULL,
+        stdout=subprocess.PIPE,
         stderr=subprocess.DEVNULL,
+        text=True,
         check=False,
-    ).returncode != 0:
+    )
+    if root_result.returncode != 0:
         fail(f"not a Git repository: {project}")
+    if Path(root_result.stdout.strip()).resolve() != project:
+        fail("project path is inside a different Git repository; pass its repository root")
 
     codeos_dir = project / ".codeos"
     if codeos_dir.is_symlink() or not codeos_dir.is_dir():

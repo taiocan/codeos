@@ -2,9 +2,9 @@
 # Initialize the minimum project-local Codeos structure.
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CODEOS_PATH="$(cd "$SCRIPT_DIR/../../.." && pwd)"
-PROJECT_DIR="$PWD"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+CODEOS_PATH="$(cd "$SCRIPT_DIR/../../.." && pwd -P)"
+PROJECT_DIR="$(pwd -P)"
 PROJECT_NAME="${1:-$(basename "$PROJECT_DIR")}"
 REMOTE_URL="${2:-}"
 CODEOS_DIR="$PROJECT_DIR/.codeos"
@@ -19,6 +19,20 @@ fail() {
     echo "[error] $*" >&2
     exit 1
 }
+
+[[ "$PROJECT_NAME" != *$'\n'* && "$PROJECT_NAME" != *$'\r'* ]] || \
+    fail "project name must be a single line"
+
+# Git itself is the authority for repositories and linked worktrees. Initializing inside an
+# existing repository would silently create a nested repository, so reject it before mutation.
+PROJECT_HAS_GIT=false
+if git_root_raw="$(git -C "$PROJECT_DIR" rev-parse --show-toplevel 2>/dev/null)"; then
+    GIT_ROOT="$(cd "$git_root_raw" && pwd -P)"
+    if [[ "$GIT_ROOT" != "$PROJECT_DIR" ]]; then
+        fail "project directory is inside an existing Git repository at $GIT_ROOT; initialize the repository root instead"
+    fi
+    PROJECT_HAS_GIT=true
+fi
 
 echo "DBA Project Init"
 echo "Project name : $PROJECT_NAME"
@@ -94,7 +108,10 @@ fi
 if [[ -f "$PROJECT_CLAUDE" ]]; then
     echo "[skip] .codeos/00-project/CLAUDE.md already exists"
 else
-    sed "s/\[PROJECT_NAME\]/$PROJECT_NAME/g" \
+    escaped_project_name="${PROJECT_NAME//\\/\\\\}"
+    escaped_project_name="${escaped_project_name//&/\\&}"
+    escaped_project_name="${escaped_project_name//|/\\|}"
+    sed "s|\[PROJECT_NAME\]|$escaped_project_name|g" \
         "$CODEOS_PATH/dba/05-guidance/templates/project-CLAUDE.md" > "$PROJECT_CLAUDE"
     echo "[ok]   .codeos/00-project/CLAUDE.md"
 fi
@@ -113,7 +130,7 @@ else
     echo "[ok]   AGENTS.md"
 fi
 
-if [[ -d "$PROJECT_DIR/.git" ]]; then
+if [[ "$PROJECT_HAS_GIT" == true ]]; then
     echo "[skip] git repo already exists"
 else
     git -C "$PROJECT_DIR" init -b main >/dev/null

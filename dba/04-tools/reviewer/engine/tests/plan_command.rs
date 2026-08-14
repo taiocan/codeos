@@ -3,8 +3,7 @@
 //! `plan` previews what `review` would send — resolved artifacts, evidence mode, packet size
 //! vs. budget — without invoking Codex or writing anything. These tests cover: normal output,
 //! EMPTY_PACKET reporting, delta mode, sha-only mode, a missing-artifact/precheck-failure case,
-//! oversized-packet warning content, no-Codex/no-mutation, and output parity with
-//! `--print-packet`'s underlying packet metadata.
+//! oversized-packet warning content and no-Codex/no-mutation behavior.
 
 mod common;
 use common::{add_extra_commit, binary, repo_root, run_in_dir, setup_temp_git_repo};
@@ -27,9 +26,15 @@ fn setup_codeos_symlink(repo_path: &std::path::Path) {
 fn smoke_plan_full_mode_basic() {
     let (dir, _base_sha) = setup_temp_git_repo();
     setup_codeos_symlink(dir.path());
-    let (code, stdout, stderr) =
-        run_in_dir(dir.path(), &["plan", "UPG-SMOKE-TEST", "selfdev-step-3", "tracked.md"]);
-    assert_eq!(code, 0, "plan on a real tracked artifact should exit 0; stderr: {}", stderr);
+    let (code, stdout, stderr) = run_in_dir(
+        dir.path(),
+        &["plan", "UPG-SMOKE-TEST", "selfdev-step-3", "tracked.md"],
+    );
+    assert_eq!(
+        code, 0,
+        "plan on a real tracked artifact should exit 0; stderr: {}",
+        stderr
+    );
     assert!(stdout.contains("review plan: UPG-SMOKE-TEST selfdev-step-3"));
     assert!(stdout.contains("mode: full"));
     assert!(stdout.contains("coverage: FULL_COVERAGE"));
@@ -43,10 +48,23 @@ fn smoke_plan_missing_artifact_exits_packet() {
     let (dir, _base_sha) = setup_temp_git_repo();
     let (code, _stdout, stderr) = run_in_dir(
         dir.path(),
-        &["plan", "UPG-SMOKE-TEST", "selfdev-step-3", "does-not-exist.md"],
+        &[
+            "plan",
+            "UPG-SMOKE-TEST",
+            "selfdev-step-3",
+            "does-not-exist.md",
+        ],
     );
-    assert_eq!(code, 4, "missing artifact must exit EXIT_PACKET (4); stderr: {}", stderr);
-    assert!(stderr.contains("not found"), "stderr should explain the missing artifact: {}", stderr);
+    assert_eq!(
+        code, 4,
+        "missing artifact must exit EXIT_PACKET (4); stderr: {}",
+        stderr
+    );
+    assert!(
+        stderr.contains("does not resolve"),
+        "stderr should explain the missing artifact: {}",
+        stderr
+    );
 }
 
 #[test]
@@ -57,13 +75,24 @@ fn smoke_plan_empty_packet_delta_mode_no_diff() {
     let (code, stdout, stderr) = run_in_dir(
         dir.path(),
         &[
-            "plan", "UPG-SMOKE-TEST", "selfdev-step-3",
-            "--mode", "delta", "--base", &base_sha,
+            "plan",
+            "UPG-SMOKE-TEST",
+            "selfdev-step-3",
+            "--base",
+            &base_sha,
             "tracked.md",
         ],
     );
-    assert_eq!(code, 4, "EMPTY_PACKET must exit EXIT_PACKET (4); stderr: {}", stderr);
-    assert!(stdout.contains("EMPTY_PACKET"), "plan should report EMPTY_PACKET: {}", stdout);
+    assert_eq!(
+        code, 4,
+        "EMPTY_PACKET must exit EXIT_PACKET (4); stderr: {}",
+        stderr
+    );
+    assert!(
+        stdout.contains("EMPTY_PACKET"),
+        "plan should report EMPTY_PACKET: {}",
+        stdout
+    );
 }
 
 #[test]
@@ -76,15 +105,26 @@ fn smoke_plan_delta_mode_reports_changed_file() {
     let (code, stdout, stderr) = run_in_dir(
         dir.path(),
         &[
-            "plan", "UPG-SMOKE-TEST", "selfdev-step-3",
-            "--mode", "delta", "--base", &base_sha,
+            "plan",
+            "UPG-SMOKE-TEST",
+            "selfdev-step-3",
+            "--base",
+            &base_sha,
             "tracked.md",
         ],
     );
-    assert_eq!(code, 0, "delta plan with a real change should exit 0; stderr: {}", stderr);
+    assert_eq!(
+        code, 0,
+        "delta plan with a real change should exit 0; stderr: {}",
+        stderr
+    );
     assert!(stdout.contains("mode: delta"));
     assert!(stdout.contains(&format!("base: {}", base_sha)));
-    assert!(stdout.contains("delta_diff"), "changed artifact should be reported as delta_diff: {}", stdout);
+    assert!(
+        stdout.contains("delta_diff"),
+        "changed artifact should be reported as delta_diff: {}",
+        stdout
+    );
 }
 
 #[test]
@@ -92,16 +132,39 @@ fn smoke_plan_sha_only_mode() {
     let (dir, _base_sha) = setup_temp_git_repo();
     setup_codeos_symlink(dir.path());
     std::fs::write(dir.path().join("other.md"), "# other\ncontent here\n").expect("write other.md");
-    Command::new("git").args(["add", "other.md"]).current_dir(dir.path()).output().expect("git add");
-    Command::new("git").args(["commit", "-m", "add other"]).current_dir(dir.path()).output().expect("git commit");
+    Command::new("git")
+        .args(["add", "other.md"])
+        .current_dir(dir.path())
+        .output()
+        .expect("git add");
+    Command::new("git")
+        .args(["commit", "-m", "add other"])
+        .current_dir(dir.path())
+        .output()
+        .expect("git commit");
 
     let (code, stdout, stderr) = run_in_dir(
         dir.path(),
-        &["plan", "UPG-SMOKE-TEST", "selfdev-step-3", "--sha-only", "tracked.md", "other.md"],
+        &[
+            "plan",
+            "UPG-SMOKE-TEST",
+            "selfdev-step-3",
+            "--sha-only",
+            "tracked.md",
+            "other.md",
+        ],
     );
     assert_eq!(code, 0, "sha-only plan should exit 0; stderr: {}", stderr);
-    assert!(stdout.contains("tracked.md (path_sha_only"), "sha-only artifact should be reported as path_sha_only: {}", stdout);
-    assert!(stdout.contains("other.md (shown"), "positional artifact should still be shown in full: {}", stdout);
+    assert!(
+        stdout.contains("tracked.md (path_sha_only"),
+        "sha-only artifact should be reported as path_sha_only: {}",
+        stdout
+    );
+    assert!(
+        stdout.contains("other.md (shown"),
+        "positional artifact should still be shown in full: {}",
+        stdout
+    );
 }
 
 #[test]
@@ -109,7 +172,10 @@ fn smoke_plan_oversized_packet_warning_content() {
     // A very small budget guarantees the real repo's own packet.rs source exceeds it.
     let out = Command::new(binary())
         .args([
-            "plan", "UPG-SMOKE-TEST", "selfdev-step-3", "--skip-prechecks",
+            "plan",
+            "UPG-SMOKE-TEST",
+            "selfdev-step-3",
+            "--skip-prechecks",
             "dba/04-tools/reviewer/engine/src/packet.rs",
         ])
         .current_dir(common::repo_root())
@@ -118,11 +184,22 @@ fn smoke_plan_oversized_packet_warning_content() {
         .expect("run plan with tiny budget");
     let stdout = String::from_utf8_lossy(&out.stdout).into_owned();
     let code = out.status.code().unwrap_or(-1);
-    assert_eq!(code, 0, "over-budget full-coverage plan should still exit 0");
-    assert!(stdout.contains("WARNING: packet is"), "over-budget plan must include a WARNING line: {}", stdout);
-    assert!(stdout.contains("largest inputs:"), "over-budget plan must rank contributors: {}", stdout);
+    assert_eq!(
+        code, 0,
+        "over-budget full-coverage plan should still exit 0"
+    );
     assert!(
-        stdout.contains("--mode delta --base <last-review-commit>"),
+        stdout.contains("WARNING: packet is"),
+        "over-budget plan must include a WARNING line: {}",
+        stdout
+    );
+    assert!(
+        stdout.contains("largest inputs:"),
+        "over-budget plan must rank contributors: {}",
+        stdout
+    );
+    assert!(
+        stdout.contains("--base <last-review-commit>"),
         "over-budget plan must suggest the exact delta-mode command: {}",
         stdout
     );
@@ -135,20 +212,34 @@ fn smoke_plan_never_invokes_codex_or_mutates_tree() {
     // Snapshot AFTER the symlink setup, so the pre-existing untracked `.codeos` entry is
     // present in both `before` and `after` — the assertion below is about what `plan` itself
     // changes, not about the test fixture's own setup.
-    let before = Command::new("git").args(["status", "--porcelain"]).current_dir(dir.path())
-        .output().expect("git status before").stdout;
+    let before = Command::new("git")
+        .args(["status", "--porcelain"])
+        .current_dir(dir.path())
+        .output()
+        .expect("git status before")
+        .stdout;
 
-    let (code, stdout, stderr) =
-        run_in_dir(dir.path(), &["plan", "UPG-SMOKE-TEST", "selfdev-step-3", "tracked.md"]);
+    let (code, stdout, stderr) = run_in_dir(
+        dir.path(),
+        &["plan", "UPG-SMOKE-TEST", "selfdev-step-3", "tracked.md"],
+    );
     assert_eq!(code, 0, "stderr: {}", stderr);
 
-    let after = Command::new("git").args(["status", "--porcelain"]).current_dir(dir.path())
-        .output().expect("git status after").stdout;
+    let after = Command::new("git")
+        .args(["status", "--porcelain"])
+        .current_dir(dir.path())
+        .output()
+        .expect("git status after")
+        .stdout;
     assert_eq!(before, after, "plan must not change the working tree");
 
     // `review` only prints "review logged:" after a real Codex invocation + log append;
     // `plan` must never reach that code path.
-    assert!(!stdout.contains("review logged:"), "plan must never invoke/log a real review: {}", stdout);
+    assert!(
+        !stdout.contains("review logged:"),
+        "plan must never invoke/log a real review: {}",
+        stdout
+    );
 
     assert!(
         !dir.path().join(".codeos/05-review/reviews").exists(),
@@ -161,90 +252,26 @@ fn smoke_plan_never_invokes_codex_or_mutates_tree() {
 }
 
 #[test]
-fn smoke_plan_output_parity_with_print_packet() {
-    let (dir, _base_sha) = setup_temp_git_repo();
-    setup_codeos_symlink(dir.path());
-
-    let (print_code, print_stdout, print_stderr) = run_in_dir(
-        dir.path(),
-        &["review", "UPG-SMOKE-TEST", "selfdev-step-3", "--print-packet", "tracked.md"],
-    );
-    assert_eq!(print_code, 0, "print-packet stderr: {}", print_stderr);
-
-    let (plan_code, plan_stdout, plan_stderr) =
-        run_in_dir(dir.path(), &["plan", "UPG-SMOKE-TEST", "selfdev-step-3", "tracked.md"]);
-    assert_eq!(plan_code, 0, "plan stderr: {}", plan_stderr);
-
-    // Both must agree on coverage state.
-    assert!(print_stdout.contains("Evidence coverage:      FULL_COVERAGE"));
-    assert!(plan_stdout.contains("coverage: FULL_COVERAGE"));
-
-    // Both must agree on the exact review_content_bytes value.
-    let print_bytes = extract_after(&print_stdout, "review_content_bytes: ")
-        .expect("print-packet manifest should report review_content_bytes");
-    let plan_bytes = extract_after(&plan_stdout, "review_content_bytes: ")
-        .expect("plan summary should report review_content_bytes");
-    // plan's line is "review_content_bytes: <N> / budget ..." — take digits only.
-    let plan_bytes_num: String = plan_bytes.chars().take_while(|c| c.is_ascii_digit()).collect();
-    let print_bytes_num: String = print_bytes.chars().take_while(|c| c.is_ascii_digit()).collect();
-    assert_eq!(
-        print_bytes_num, plan_bytes_num,
-        "plan and --print-packet must agree on review_content_bytes: print={} plan={}",
-        print_stdout, plan_stdout
-    );
-
-    // Both must agree on tracked.md's individual byte count (per-artifact parity, not just
-    // the aggregate total).
-    let manifest_entry_bytes = extract_manifest_bytes_for(&print_stdout, "tracked.md")
-        .expect("print-packet manifest should have a bytes: line for tracked.md");
-    let plan_entry_bytes = extract_plan_artifact_bytes(&plan_stdout, "tracked.md")
-        .expect("plan summary should have a per-artifact bytes entry for tracked.md");
-    assert_eq!(
-        manifest_entry_bytes, plan_entry_bytes,
-        "plan and --print-packet must agree on tracked.md's byte count: print={} plan={}",
-        print_stdout, plan_stdout
-    );
-}
-
-#[test]
 fn smoke_plan_idempotent_output() {
     let (dir, _base_sha) = setup_temp_git_repo();
     setup_codeos_symlink(dir.path());
 
-    let (code1, stdout1, stderr1) =
-        run_in_dir(dir.path(), &["plan", "UPG-SMOKE-TEST", "selfdev-step-3", "tracked.md"]);
+    let (code1, stdout1, stderr1) = run_in_dir(
+        dir.path(),
+        &["plan", "UPG-SMOKE-TEST", "selfdev-step-3", "tracked.md"],
+    );
     assert_eq!(code1, 0, "stderr: {}", stderr1);
 
-    let (code2, stdout2, stderr2) =
-        run_in_dir(dir.path(), &["plan", "UPG-SMOKE-TEST", "selfdev-step-3", "tracked.md"]);
+    let (code2, stdout2, stderr2) = run_in_dir(
+        dir.path(),
+        &["plan", "UPG-SMOKE-TEST", "selfdev-step-3", "tracked.md"],
+    );
     assert_eq!(code2, 0, "stderr: {}", stderr2);
 
     // plan's summary embeds no generation timestamp (unlike the full packet's own
     // `PACKET MANIFEST` section), so two runs with unchanged repo state must be byte-identical.
-    assert_eq!(stdout1, stdout2, "plan output must be idempotent across repeated runs");
-}
-
-fn extract_after<'a>(haystack: &'a str, marker: &str) -> Option<&'a str> {
-    haystack.find(marker).map(|i| &haystack[i + marker.len()..])
-}
-
-/// Find the `bytes: N` line immediately associated with `- path: <artifact>` in a
-/// `--print-packet` manifest and return N.
-fn extract_manifest_bytes_for(haystack: &str, artifact: &str) -> Option<u64> {
-    let path_marker = format!("path: {}\n", artifact);
-    let after_path = extract_after(haystack, &path_marker)?;
-    let bytes_str = extract_after(after_path, "bytes: ")?;
-    let digits: String = bytes_str.chars().take_while(|c| c.is_ascii_digit()).collect();
-    digits.parse().ok()
-}
-
-/// Find the `<artifact> (<visibility>, N bytes)` line in a `plan` summary and return N.
-fn extract_plan_artifact_bytes(haystack: &str, artifact: &str) -> Option<u64> {
-    let marker = format!("{} (", artifact);
-    let after = extract_after(haystack, &marker)?;
-    // after looks like "shown, 12 bytes)\n..." — find the last ", " before " bytes)".
-    let comma_idx = after.find(", ")?;
-    let rest = &after[comma_idx + 2..];
-    let digits: String = rest.chars().take_while(|c| c.is_ascii_digit()).collect();
-    digits.parse().ok()
+    assert_eq!(
+        stdout1, stdout2,
+        "plan output must be idempotent across repeated runs"
+    );
 }

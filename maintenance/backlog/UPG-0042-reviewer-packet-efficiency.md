@@ -4,8 +4,8 @@ slug: reviewer-packet-efficiency
 title: Reduce Reviewer Packet Bloat for Large Stable Files
 status: PROPOSED
 priority: P2
-depends_on: [UPG-0027, UPG-0032]
-related_features: [UPG-0043]
+depends_on: [UPG-0027]
+related_features: []
 supersedes: []
 superseded_by: []
 ---
@@ -115,7 +115,7 @@ Should subsequent review rounds of the same step automatically use delta mode un
 - Review assessment prompt to handle different evidence modes
 - Documentation of when to use which evidence mode
 
-May require UPG-0043 (split monolithic smoke.rs) as a complementary fix if smoke.rs keeps growing.
+The test split proposed by UPG-0043 is complete; this feature no longer depends on test-file layout.
 
 ## Value
 
@@ -164,9 +164,9 @@ Changed behavior must never be hidden behind hash-only or excessive summarizatio
 
 ## Related
 
-- **UPG-0043**: Split monolithic smoke.rs (complementary fix)
+- **UPG-0043**: Completed test ownership split (archived)
 - **UPG-0027**: Lean review runner (established packet architecture)
-- **UPG-0032**: Rust reviewer engine (packet consumer)
+- **UPG-0032**: Rust reviewer engine lineage (archived; current reviewer is Codex-only)
 
 ## Feature Thread
 

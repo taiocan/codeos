@@ -1,5 +1,5 @@
 use crate::packet::{CoverageState, ReviewPacket};
-use crate::provider::RawAssessment;
+use crate::codex::CodexResult;
 use anyhow::{Context, Result};
 use regex::Regex;
 use std::path::{Path, PathBuf};
@@ -310,7 +310,7 @@ pub fn write_assessment(
     findings: &[Finding],
     unparsed_findings_count: usize,
     packet: &ReviewPacket,
-    raw: &RawAssessment,
+    raw: &CodexResult,
     parsed: &ParsedReview,
     outdir: &Path,
     packet_saved: &Path,
@@ -441,8 +441,8 @@ mod tests {
     use super::*;
     use crate::packet::CoverageState;
 
-    fn make_raw(text: &str) -> RawAssessment {
-        crate::provider::RawAssessment {
+    fn make_raw(text: &str) -> CodexResult {
+        crate::codex::CodexResult {
             text: text.to_string(),
             session_id: "test-session".to_string(),
             elapsed_ms: 1000,
@@ -506,7 +506,6 @@ mod tests {
             sha_only_paths: vec![],
             delta_mode: false,
             delta_base: None,
-            fresh_session: false,
             repo_root: repo_root.to_string_lossy().into_owned(),
             toolkit_root: toolkit_root.to_string_lossy().into_owned(),
         };

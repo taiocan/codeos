@@ -1,5 +1,3 @@
 # Optional reviewer overrides. Omit this file to use built-in defaults.
 # Canonical downstream path: .codeos/05-review/reviewer.toml
-# Supported providers: codex | open-code | gemini | kimi
-provider = "codex"
 reasoning_effort = "high"

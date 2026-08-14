@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # codeos-review.sh — thin shim delegating to the compiled Rust binary.
-# Subcommands: review / plan / decision / diagnose / stage-start /
+# Subcommands: review / plan / decision / diagnose /
 #              inspect-architecture-scopes
 # (see: codeos-reviewer --help)
 # To build: cargo build --release --manifest-path dba/04-tools/reviewer/engine/Cargo.toml

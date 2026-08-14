@@ -1,6 +1,6 @@
 use crate::assessment::ParsedReview;
 use crate::packet::ReviewPacket;
-use crate::provider::RawAssessment;
+use crate::codex::CodexResult;
 use anyhow::{Context, Result};
 use std::path::Path;
 
@@ -25,7 +25,7 @@ const LOG_HEADER: &str = "# Codeos Review Log (append-only, v0)
 Append-only record of automated advisory reviews and the human decisions that follow them.
 Entries are NEVER edited — a human decision is a separately appended entry. The reviewer is
 advisory and read-only; APPROVE belongs to the human. The reviewer tool is the authoritative
-owner of automated review records; see dba/04-tools/reviewer/contract/v2.md.
+owner of automated review records; see dba/04-tools/reviewer/contract/v3.md.
 ";
 
 /// Initialize the log file if it does not exist.
@@ -85,7 +85,7 @@ pub fn append_review(
     log_path: &Path,
     review_id: &str,
     packet: &ReviewPacket,
-    raw: &RawAssessment,
+    raw: &CodexResult,
     parsed: &ParsedReview,
     assessment_file: &Path,
     assessment_hash: &str,
@@ -642,15 +642,14 @@ mod tests {
             sha_only_paths: vec![],
             delta_mode: false,
             delta_base: None,
-            fresh_session: false,
             repo_root: repo_root.to_string_lossy().into_owned(),
             toolkit_root: toolkit_root.to_string_lossy().into_owned(),
         };
         crate::packet::build(&opts).expect("build packet")
     }
 
-    fn test_raw() -> crate::provider::RawAssessment {
-        crate::provider::RawAssessment {
+    fn test_raw() -> crate::codex::CodexResult {
+        crate::codex::CodexResult {
             text: "LOG SUMMARY: NO OBJECTION — ok\nEVIDENCE: A\nHIGHEST-IMPACT UNCERTAINTY: none\n".to_string(),
             session_id: "test-session".to_string(),
             elapsed_ms: 1,

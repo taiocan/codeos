@@ -40,6 +40,22 @@ Review existing root files manually. If either contains project-owned instructio
 content in the canonical project document before replacing the root file. Do not use an automatic
 merge. If ownership or intended meaning is unclear, stop and obtain a human decision.
 
+## Convert Legacy Architecture Synthesis
+
+Do this before moving durable architecture artifacts: the bounded converter deliberately accepts
+only the committed legacy registry, Architecture Baseline, Cohort Logical Design, and Implementation
+Profile at their legacy locations.
+
+```bash
+python3 .codeos/toolkit/dba/04-tools/architecture-migration/migrate-architecture-synthesis-v2.py .
+python3 .codeos/toolkit/dba/04-tools/architecture-migration/migrate-architecture-synthesis-v2.py . --apply
+```
+
+The first command is a non-mutating preview. The second writes current Architecture Scope and
+Implementation Profile artifacts under `.codeos/02-architecture/` and removes only the validated
+legacy inputs. Resolve ambiguity or an existing target explicitly; never delete a target merely to
+force migration through. Projects that never used those legacy artifacts skip this conversion.
+
 ## Migrate Durable Artifacts
 
 Create destinations only for capabilities the project already uses, then move known Codeos-owned
@@ -69,19 +85,14 @@ Update paths recorded inside Intent, Contract, and Event Schema artifacts after 
 the three artifacts as one Specification Package and verify their approval record and mutual
 consistency after the path-only migration.
 
-## Legacy Architecture Conversion
+## Migrate Reviewer Configuration
 
-Projects that still use the retired registry, Architecture Baseline, and Cohort Logical Design run
-the architecture migration only after establishing the real `.codeos/` and valid toolkit mount:
-
-```bash
-python3 .codeos/toolkit/dba/04-tools/architecture-migration/migrate-architecture-synthesis-v2.py .
-python3 .codeos/toolkit/dba/04-tools/architecture-migration/migrate-architecture-synthesis-v2.py . --apply
-```
-
-The tool reads the committed legacy root artifacts and writes the current Architecture Scope and
-Implementation Profile locations under `.codeos/02-architecture/`. Resolve conflicts explicitly;
-never delete a target to force migration through.
+The reviewer is Codex-only. In `.codeos/05-review/reviewer.toml`, remove any `provider` key and keep
+only an optional `reasoning_effort` value. Remove `CODEOS_REVIEWER_PROVIDER` from project automation.
+The retired `--provider`, `--mode`, `--print-packet`, `--dry-run`, and `stage-start` interfaces have
+no compatibility aliases: use `plan` to inspect evidence, omit `--base` for full evidence, and pass
+`--base <ref>` for delta evidence. Unknown configuration keys fail clearly so stale automation is
+found during upgrade rather than silently preserved.
 
 ## Update References and Verify
 

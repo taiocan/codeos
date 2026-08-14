@@ -43,6 +43,29 @@ if rg -n -S \
   fail "an active file references a legacy toolkit path"
 fi
 
+# Retired mechanisms must not re-enter the supported runtime/configuration surface. Historical
+# records remain valid outside this list; this is an active-layout invariant, not a history scan.
+supported_runtime_paths=(
+  "${CODEOS_ROOT}/dba-system.md"
+  "${CODEOS_ROOT}/dba/00-entry/configurations/DBA-2.yaml"
+  "${CODEOS_ROOT}/dba/03-prompts"
+  "${CODEOS_ROOT}/dba/04-tools/initializer"
+  "${CODEOS_ROOT}/dba/04-tools/reviewer"
+  "${CODEOS_ROOT}/dba/05-guidance/templates"
+)
+if rg -n -S \
+  --glob '!tests/**' \
+  'Controlled Plain English|controlled-plain-english|controlled_plain_english|writing-discipline|codeos-cpe-status|CPE_STATUS|CPE_CONFIG|Layer [ABCD][12]?' \
+  "${supported_runtime_paths[@]}"; then
+  fail "a retired mechanism is referenced by the supported runtime/configuration surface"
+fi
+for retired_path in \
+  maintenance/config/writing-discipline.yaml \
+  dba/05-guidance/patterns/controlled-plain-english.md \
+  dba/02-policies/controlled-plain-english/v1.md; do
+  [[ ! -e "${CODEOS_ROOT}/${retired_path}" ]] || fail "retired active artifact remains: ${retired_path}"
+done
+
 canonical_paths=(
   '.codeos/00-project/CLAUDE.md'
   '.codeos/01-specification/intents/<feature-id>.md'

@@ -11,7 +11,10 @@ use common::run;
 fn smoke_help_exits_zero() {
     let (code, stdout, _) = run(&["--help"]);
     assert_eq!(code, 0, "help should exit 0");
-    assert!(stdout.contains("codeos-reviewer"), "help should mention binary name");
+    assert!(
+        stdout.contains("codeos-reviewer"),
+        "help should mention binary name"
+    );
 }
 
 #[test]
@@ -24,6 +27,7 @@ fn smoke_help_omits_retired_convenience_commands() {
         "generate-adr-candidates",
         "generate-approval-dashboard",
         "generate-release-evidence",
+        "stage-start",
     ] {
         assert!(
             !stdout.contains(retired),
@@ -43,7 +47,10 @@ fn smoke_retired_command_fails_as_unknown() {
 fn smoke_diagnose_exits_zero() {
     let (code, stdout, _) = run(&["diagnose"]);
     assert_eq!(code, 0, "diagnose should exit 0");
-    assert!(stdout.contains("provider:"), "diagnose should output provider");
+    assert!(
+        stdout.contains("reviewer:") && stdout.contains("codex"),
+        "diagnose should identify Codex: {stdout}"
+    );
 }
 
 #[test]
@@ -54,27 +61,15 @@ fn smoke_diagnose_with_feature_and_stage() {
 }
 
 #[test]
-fn smoke_provider_override_unknown() {
-    // An unknown provider via --provider flag should exit with EXIT_CONFIG (2) or EXIT_PROVIDER (3)
-    let (code, _, stderr) = run(&[
-        "--provider", "nonexistent-provider-xyz",
-        "review", "UPG-SMOKE", "selfdev-step-0",
-        "--print-packet", "--skip-prechecks",
-        "CLAUDE.md",
-    ]);
-    // With --print-packet, provider is never invoked; config resolution may still reject it
-    // Accept either success (provider not resolved yet) or config error
-    let _ = (code, stderr);
+fn smoke_provider_override_is_retired() {
+    let (code, _, stderr) = run(&["--provider", "nonexistent-provider-xyz", "diagnose"]);
+    assert_ne!(code, 0);
+    assert!(stderr.contains("unexpected argument"), "{stderr}");
 }
 
 #[test]
-fn smoke_diagnose_shows_provider_source() {
+fn smoke_diagnose_shows_reasoning_source() {
     let (code, stdout, _) = run(&["diagnose"]);
     assert_eq!(code, 0);
-    // Should mention where provider came from
-    assert!(
-        stdout.contains("source:") || stdout.contains("default") || stdout.contains("codex"),
-        "diagnose should show provider source: {}",
-        stdout
-    );
+    assert!(stdout.contains("reasoning_effort:"), "{stdout}");
 }

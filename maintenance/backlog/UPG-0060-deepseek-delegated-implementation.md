@@ -5,7 +5,7 @@ title: DeepSeek-Delegated Implementation for Stages 4-5
 status: PILOTED   # negative result — CHG-A COMPLETE and shipped off by default; CHG-B NOT DONE (2026-08-03)
 priority: P2
 depends_on: [UPG-0056]
-related_features: [UPG-0032, UPG-0057]
+related_features: [UPG-0057, UPG-0064]
 supersedes: []
 superseded_by: []
 ---
@@ -93,8 +93,8 @@ file scaffolding in `dba/04-tools/initializer/dba-init.sh` at `status: disabled`
 `dba/03-prompts/workflow/04-implement.md` and `dba/03-prompts/workflow/05-tests.md`; downstream-compatibility acceptance criteria and a
 grep cross-reference sweep.
 
-**Out of scope:** any change to the Rust reviewer engine (`dba/04-tools/reviewer/engine/`) — adding an HTTP DeepSeek
-provider there is a possible future consolidation, decided when concrete, not here; any new mandatory
+**Out of scope:** any change to the Rust reviewer engine (`dba/04-tools/reviewer/engine/`) — combining
+the bounded implementer experiment with the read-only Codex reviewer is a separate future decision, not here; any new mandatory
 human-approval gate; any new Stage ID; any Non-Negotiable Rule change; automatic promotion of a
 candidate into `modules/`/`tests/` or any auto-commit; Stage 6 (Observation is human-run runtime
 execution — there is no implementation to delegate); enabling the mechanism by default anywhere.
@@ -142,8 +142,8 @@ project.
   activation gate consumes; `depends_on`.
 - **UPG-0057** (Controlled Plain English) — precedent for a two-CHG feature and for an optional
   mechanism documented as activation-mechanics-only in `dba-system.md` with no new gate.
-- **UPG-0032** (Rust Reviewer Engine, multi-provider) — the reviewer's provider abstraction and the
-  place a future consolidation could host a DeepSeek provider; explicitly out of scope here.
+- **UPG-0064** (Delegated Stage-4 Envelope Alignment) — owns the later, explicit decision about
+  whether the bounded implementer experiment should continue; reviewer consolidation remains out of scope.
 - Backlog thesis items 1 ("reduce human review load" / token load) and 2 ("make Stage 4–6 execution
   transparent") in `backlog/features.md`.
 
@@ -199,7 +199,7 @@ without first fixing the packet is uninterpretable.**
 > the same contract comprehension as implementing the feature. DeepSeek executes a precise
 > architectural specification well; it does not derive one. Totals: 73,211 DeepSeek tokens across two
 > runs, and the candidate still needed a manual `Hash` derive to compile. The narrower hypothesis —
-> delegated execution of an *already-approved* architecture — is carried forward as **UPG-0062**,
+> delegated execution of an *already-approved* architecture — is carried forward as **UPG-0064**,
 > which treats this evidence as prior evidence and does not reopen this feature.
 >
 > The original freeze text, now discharged, read: no further DeepSeek infrastructure changes until a

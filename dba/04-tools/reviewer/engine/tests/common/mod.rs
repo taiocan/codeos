@@ -6,6 +6,84 @@ use std::path::PathBuf;
 use std::process::Command;
 use tempfile::TempDir;
 
+pub struct FakeCodex {
+    pub dir: TempDir,
+    pub args_log: PathBuf,
+    pub packet_log: PathBuf,
+}
+
+/// A deterministic stand-in for the external Codex CLI. It implements only the stable
+/// `exec` surface the reviewer consumes and keeps all captures outside the project repo.
+pub fn setup_fake_codex() -> FakeCodex {
+    use std::os::unix::fs::PermissionsExt;
+
+    let dir = tempfile::tempdir().expect("fake codex tempdir");
+    let script = dir.path().join("codex");
+    std::fs::write(
+        &script,
+        r#"#!/usr/bin/env bash
+set -euo pipefail
+if [[ "${1:-}" == "--version" ]]; then
+  printf '%s\n' 'codex-cli fake-1.0'
+  exit 0
+fi
+printf '%s\n' "$*" > "${CODEOS_FAKE_ARGS:?}"
+output_file=''
+while (( $# )); do
+  case "$1" in
+    -o|--output-last-message)
+      output_file="$2"
+      shift 2
+      ;;
+    *) shift ;;
+  esac
+done
+cat > "${CODEOS_FAKE_PACKET:?}"
+case "${CODEOS_FAKE_MODE:-success}" in
+  failure) printf '%s\n' 'simulated Codex failure' >&2; exit 9 ;;
+  malformed) printf '%s\n' 'not-json'; exit 0 ;;
+  mutate) printf '%s\n' 'fake reviewer mutation' >> "${CODEOS_FAKE_REPO:?}/tracked.md" ;;
+esac
+printf '%s\n' 'LOG SUMMARY: NO OBJECTION — fixture review' 'EVIDENCE: A' 'HIGHEST-IMPACT UNCERTAINTY: none' > "$output_file"
+printf '{"type":"thread.started","thread_id":"%s"}\n' "${CODEOS_FAKE_SESSION:-fake-session}"
+"#,
+    )
+    .expect("write fake codex");
+    let mut permissions = std::fs::metadata(&script).unwrap().permissions();
+    permissions.set_mode(0o755);
+    std::fs::set_permissions(&script, permissions).unwrap();
+    FakeCodex {
+        args_log: dir.path().join("args.log"),
+        packet_log: dir.path().join("packet.log"),
+        dir,
+    }
+}
+
+pub fn run_with_fake_codex(
+    repo_path: &std::path::Path,
+    fake: &FakeCodex,
+    args: &[&str],
+    mode: &str,
+) -> (i32, String, String) {
+    let old_path = std::env::var("PATH").unwrap_or_default();
+    let path = format!("{}:{old_path}", fake.dir.path().display());
+    let out = Command::new(binary())
+        .args(args)
+        .current_dir(repo_path)
+        .env("PATH", path)
+        .env("CODEOS_FAKE_ARGS", &fake.args_log)
+        .env("CODEOS_FAKE_PACKET", &fake.packet_log)
+        .env("CODEOS_FAKE_MODE", mode)
+        .env("CODEOS_FAKE_REPO", repo_path)
+        .output()
+        .expect("run binary with fake Codex");
+    (
+        out.status.code().unwrap_or(-1),
+        String::from_utf8_lossy(&out.stdout).into_owned(),
+        String::from_utf8_lossy(&out.stderr).into_owned(),
+    )
+}
+
 /// Create a minimal git repo in a temp directory and return (TempDir, base_sha).
 pub fn setup_temp_git_repo() -> (TempDir, String) {
     let dir = tempfile::tempdir().expect("tempdir");

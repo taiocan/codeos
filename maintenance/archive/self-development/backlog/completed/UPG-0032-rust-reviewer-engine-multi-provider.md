@@ -2,7 +2,7 @@
 feature_id: UPG-0032
 slug: rust-reviewer-engine-multi-provider
 title: Rust Reviewer Engine with Multi-Provider Support
-status: IN_PROGRESS
+status: SUPERSEDED
 priority: P2
 depends_on: [UPG-0027]
 related_features: [UPG-0015, UPG-0003, UPG-0018]
@@ -12,8 +12,12 @@ superseded_by: []
 
 # Upgrade: rust-reviewer-engine-multi-provider — Rust Reviewer Engine with Multi-Provider Support
 
+> Archived 2026-08-14. The Rust reviewer engine and downstream support shipped, but the speculative
+> multi-provider layer was removed in favor of one narrow Codex boundary. A second provider remains
+> a future decision only if a concrete need appears.
+
 **Priority**: P2 (rises to P1 if a second provider is needed near-term)
-**Status**: IN_PROGRESS
+**Status**: SUPERSEDED
 **Type**: script-tooling
 **Supersedes**: UPG-0018 (Typed reviewer engine to replace the Bash pilot)
 **Related**: UPG-0003 (reviewer pilot), UPG-0015 (decision-integrity), UPG-0027 (packet architecture)

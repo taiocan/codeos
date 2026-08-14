@@ -1,8 +1,8 @@
 use crate::config::Config;
 
-pub fn run(feature: Option<&str>, stage: Option<&str>, cfg: &Config, provider_source: &str) {
+pub fn run(feature: Option<&str>, stage: Option<&str>, cfg: &Config) {
     println!("codeos-reviewer diagnostic");
-    println!("  provider:        {} (source: {})", cfg.provider_name, provider_source);
+    println!("  reviewer:        codex");
     println!("  reasoning_effort: {}", cfg.reasoning_effort);
     println!("  repo_root:       {}", cfg.repo_root.display());
     println!("  toolkit_root:    {}", cfg.toolkit_root.display());
@@ -16,13 +16,10 @@ pub fn run(feature: Option<&str>, stage: Option<&str>, cfg: &Config, provider_so
         if sess_file.exists() {
             println!("  session file:    {} (exists)", sess_file.display());
         } else {
-            println!("  session file:    {} (not found — fresh session will be created)", sess_file.display());
-        }
-        let stage_start = cfg.stage_start_dir.join(f).join(format!("stage-{}.json", s));
-        if stage_start.exists() {
-            println!("  stage-start:     {} (exists)", stage_start.display());
-        } else {
-            println!("  stage-start:     {} (not found — no base pin)", stage_start.display());
+            println!(
+                "  session file:    {} (not found — fresh session will be created)",
+                sess_file.display()
+            );
         }
     }
 }

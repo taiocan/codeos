@@ -23,7 +23,10 @@ cp "${FIXTURES}/architecture-migration-logical.md" "${PROJECT}/architecture/coho
 cp "${FIXTURES}/architecture-migration-profile.yaml" "${PROJECT}/architecture/implementation-profile.yaml"
 git -C "${PROJECT}" add . && git -C "${PROJECT}" commit -qm legacy
 
+dry_run_before="$(git -C "${PROJECT}" status --porcelain=v1 --untracked-files=all)"
 python3 "${CODEOS_ROOT}/dba/04-tools/architecture-migration/migrate-architecture-synthesis-v2.py" "${PROJECT}" >/dev/null
+dry_run_after="$(git -C "${PROJECT}" status --porcelain=v1 --untracked-files=all)"
+[[ "${dry_run_before}" == "${dry_run_after}" ]] || fail "dry run changed repository state"
 [[ ! -e "${PROJECT}/.codeos/02-architecture/scopes/example.md" ]] || fail "dry run mutated project"
 python3 "${CODEOS_ROOT}/dba/04-tools/architecture-migration/migrate-architecture-synthesis-v2.py" "${PROJECT}" --apply >/dev/null
 SCOPE="${PROJECT}/.codeos/02-architecture/scopes/example.md"
@@ -52,6 +55,28 @@ cp "${FIXTURES}/architecture-migration-logical.md" "${BAD}/architecture/cohort-l
 git -C "${BAD}" add . && git -C "${BAD}" commit -qm ambiguous
 if python3 "${CODEOS_ROOT}/dba/04-tools/architecture-migration/migrate-architecture-synthesis-v2.py" "${BAD}" >/dev/null 2>&1; then
   fail "ambiguous membership was accepted"
+fi
+
+TARGET="${WORK}/target-exists"
+make_project "${TARGET}"
+cp "${FIXTURES}/architecture-migration-registry.yaml" "${TARGET}/features/registry.yaml"
+cp "${FIXTURES}/architecture-migration-baseline.md" "${TARGET}/architecture/core-baseline.md"
+cp "${FIXTURES}/architecture-migration-logical.md" "${TARGET}/architecture/cohort-logical-design.md"
+mkdir -p "${TARGET}/.codeos/02-architecture/scopes"
+printf 'project-owned target\n' > "${TARGET}/.codeos/02-architecture/scopes/example.md"
+git -C "${TARGET}" add . && git -C "${TARGET}" commit -qm target
+if python3 "${CODEOS_ROOT}/dba/04-tools/architecture-migration/migrate-architecture-synthesis-v2.py" "${TARGET}" --apply >/dev/null 2>&1; then
+  fail "existing migration target was overwritten"
+fi
+grep -Fxq 'project-owned target' "${TARGET}/.codeos/02-architecture/scopes/example.md" || fail "existing target changed"
+
+UNCOMMITTED="${WORK}/uncommitted"
+make_project "${UNCOMMITTED}"
+cp "${FIXTURES}/architecture-migration-registry.yaml" "${UNCOMMITTED}/features/registry.yaml"
+cp "${FIXTURES}/architecture-migration-baseline.md" "${UNCOMMITTED}/architecture/core-baseline.md"
+cp "${FIXTURES}/architecture-migration-logical.md" "${UNCOMMITTED}/architecture/cohort-logical-design.md"
+if python3 "${CODEOS_ROOT}/dba/04-tools/architecture-migration/migrate-architecture-synthesis-v2.py" "${UNCOMMITTED}" >/dev/null 2>&1; then
+  fail "uncommitted legacy input was accepted"
 fi
 
 printf 'architecture scope migration tests: PASS\n'
