@@ -152,9 +152,10 @@ the governing artifact and Git already provide sufficient traceability.
 
 ## Terminology
 
-`dba/05-guidance/terminology.md` is the canonical glossary for recurring, project-specific terms whose ambiguity
-could affect behavior, architecture, authority, lifecycle, or responsibility. Ordinary technical
-vocabulary does not require terminology governance.
+`dba/05-guidance/terminology.md` is the canonical glossary for recurring CodeOS-specific terms
+whose ambiguity could affect behavior, architecture, authority, lifecycle, or responsibility.
+Downstream projects use `.codeos/00-project/terminology.md` only when they have shared specialized
+project meanings. Ordinary technical vocabulary does not require terminology governance.
 
 Before introducing or materially relying on such a term, check the glossary. If the term is absent,
 ambiguous, or used differently, notify the human and propose one definition within the current

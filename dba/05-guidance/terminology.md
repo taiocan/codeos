@@ -30,6 +30,7 @@ Ordinary technical vocabulary does not belong here. Git preserves the history of
 | **External Event** | A runtime event representing a side effect on a system outside the governed boundary. |
 | **Failure Event** | A runtime event representing a classified error condition. |
 | **Feature ID** | The stable `F-####` identity assigned when an Intent is created. It is never reused; partial Specification Packages remain valid identities. |
+| **Full-Solution Concept** | An optional, non-authoritative whole-solution recommendation that compares consequential alternatives, identifies important validation needs, and promotes justified commitments only through their existing authoritative owners. |
 | **Implementation Profile** | An approved project-level statement of preferred implementation language and scope that implementation must consult. |
 | **Intent** | Why a feature exists, expressed as actor and desired outcome without implementation details. |
 | **NORMAL** | The default Codeos self-development classification for work that does not reasonably risk an approved consequential boundary. |

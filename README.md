@@ -71,7 +71,9 @@ myproject/
 ├── events/                      — Runtime evidence, created only when needed
 ├── source and tests             — Project-native layout
 └── .codeos/                     — Durable project-local DBA state
-    ├── 00-project/CLAUDE.md     — Canonical project instructions
+    ├── 00-project/
+    │   ├── CLAUDE.md            — Canonical project instructions
+    │   └── terminology.md       — Optional shared project terminology, created when needed
     ├── 01-specification/
     │   ├── intents/
     │   ├── contracts/
@@ -96,6 +98,10 @@ After running `dba-init.sh` (with an optional project name and remote URL), foll
 Open it and complete:
 - **Project intent** — one paragraph describing what this project exists to do
 - **Project constraints** — only durable constraints not already owned elsewhere; delete when empty
+
+Do not create a project glossary by default. When the first specialized term needs one stable
+meaning across features, create `.codeos/00-project/terminology.md` from
+`.codeos/toolkit/dba/05-guidance/templates/project-terminology.md`.
 
 **Step 2 — Open Claude Code in the project directory and use
 `.codeos/toolkit/dba/03-prompts/workflow/00-session-start.md`.** Name the target feature or structural task.

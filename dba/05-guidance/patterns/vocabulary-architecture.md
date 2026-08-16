@@ -6,7 +6,9 @@ out_of_scope: Feature behavior, mandatory storage strategy, architecture approva
 # Pattern: Vocabulary Architecture
 
 Use when configurable types, statuses, roles, relationships, or other concepts must mean the same
-thing across modules. Canonical term definitions live in `../terminology.md`.
+thing across modules. Shared downstream project meanings live in
+`.codeos/00-project/terminology.md` when that optional glossary exists. CodeOS/DBA meanings remain
+owned by `../terminology.md` in the toolkit.
 
 ## Rules
 

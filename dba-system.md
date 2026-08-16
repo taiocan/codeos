@@ -22,12 +22,14 @@ Canonical durable locations are:
 | Capability | Location | Creation |
 |---|---|---|
 | Project instructions | `.codeos/00-project/CLAUDE.md` | Required |
+| Project terminology | `.codeos/00-project/terminology.md` | Only when shared project-specific terminology exists |
 | Intent | `.codeos/01-specification/intents/<feature-id>.md` | Required per feature |
 | Contract | `.codeos/01-specification/contracts/<feature-id>_contract.md` | Required per feature |
 | Event Schema | `.codeos/01-specification/event-schemas/<feature-id>_schema.md` | Required per feature |
 | Architecture Scope | `.codeos/02-architecture/scopes/<scope-id>.md` | Only when architecture synthesis applies |
 | Implementation Profile | `.codeos/02-architecture/implementation-profile.yaml` | Only when adopted |
 | Saved discovery | `.codeos/00-discovery/<topic-slug>.md` | Only when it has durable value |
+| Full-Solution Concept | `.codeos/00-discovery/solution-concept.md` | Only when whole-solution reasoning has durable value |
 | Refinement record | `.codeos/04-refinement/<feature-id>-<slug>.md` | Only when it has durable value |
 | Reviewer configuration | `.codeos/05-review/reviewer.toml` | Only when defaults are overridden |
 | Automated review records | `.codeos/05-review/reviews/` | Created and owned by the reviewer tool |

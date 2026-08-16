@@ -14,7 +14,8 @@ perform stage work from this prompt.
 
 1. Read `.codeos/toolkit/dba-system.md`, its active configuration, and the selected doctrine. Read another
    selected component only when it applies to the requested work.
-2. Read the project `CLAUDE.md`.
+2. Read the project `CLAUDE.md`. If `.codeos/00-project/terminology.md` exists, read it as the
+   canonical glossary for shared project-specific meanings. Its absence is valid.
 3. Run:
 
    ```bash
@@ -38,6 +39,8 @@ Classify the requested work and load one workflow:
 - Existing feature work → the applicable Stage 1–9 prompt
 - Existing code without DBA inputs → `00c-onboarding.md`
 - Optional domain exploration before feature boundaries or Intents → `00a-solution-discovery.md`
+- Optional whole-solution exploration before consequential commitments →
+  `00-full-solution-concept.md`
 - Project-level architecture decision → `03b-architecture-synthesis.md`
 - Behavior-neutral, architecture-insignificant maintenance → the project's normal engineering
   process outside DBA

@@ -68,12 +68,14 @@ done
 
 canonical_paths=(
   '.codeos/00-project/CLAUDE.md'
+  '.codeos/00-project/terminology.md'
   '.codeos/01-specification/intents/<feature-id>.md'
   '.codeos/01-specification/contracts/<feature-id>_contract.md'
   '.codeos/01-specification/event-schemas/<feature-id>_schema.md'
   '.codeos/02-architecture/scopes/<scope-id>.md'
   '.codeos/02-architecture/implementation-profile.yaml'
   '.codeos/00-discovery/<topic-slug>.md'
+  '.codeos/00-discovery/solution-concept.md'
   '.codeos/04-refinement/<feature-id>-<slug>.md'
   '.codeos/05-review/reviewer.toml'
   '.codeos/05-review/reviews/'
@@ -89,6 +91,7 @@ for path in "${canonical_paths[@]}"; do
 done
 
 declare -A producer_outputs=(
+  [00-full-solution-concept.md]='.codeos/00-discovery/solution-concept.md'
   [00a-solution-discovery.md]='.codeos/00-discovery/<topic-slug>.md'
   [00b-feature-brief.md]='.codeos/00-discovery/<topic-slug>.md'
   [00c-onboarding.md]='.codeos/01-specification/intents/<feature-id>.md'

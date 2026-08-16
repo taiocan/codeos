@@ -4,6 +4,9 @@ This is the canonical project-specific instruction document. The root `CLAUDE.md
 adapter loads it. For DBA mechanics, read `.codeos/toolkit/dba-system.md`; it selects the
 authoritative doctrine, policies, prompts, tools, and guidance.
 
+When `.codeos/00-project/terminology.md` exists, it owns recurring project-wide specialized
+meanings. Feature-local definitions remain in their owning Intents.
+
 ## Minimum Complexity
 
 Use the smallest solution and artifact set that preserves exact approved meaning. Prefer deletion,

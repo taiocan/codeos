@@ -14,7 +14,8 @@ human actor can achieve, what must remain true, and what is excluded.
 
 Read `.codeos/toolkit/dba/05-guidance/templates/intent.md`; it owns the artifact structure and core
 writing rules. Use an optional confirmed discovery brief when present, otherwise the human's
-description. Resolve existing artifacts through the Downstream Project Layout Contract.
+description. Resolve existing artifacts through the Downstream Project Layout Contract. When
+`.codeos/00-project/terminology.md` exists, consult it before defining terms.
 
 ## Task
 
@@ -25,7 +26,15 @@ description. Resolve existing artifacts through the Downstream Project Layout Co
   of Intent.
 - Name only compatibility behavior this feature actually owns; avoid promising that all existing
   behavior remains unchanged.
-- Define repeated anchor terms whose ambiguity could change later Contract meaning.
+- Reuse project-wide terms exactly as defined by the project glossary. Define only feature-local
+  terms in the Intent, including legitimate narrower refinements that do not contradict the shared
+  meaning.
+- When a new specialized meaning must remain consistent across features, propose one project-wide
+  definition. After the human confirms it, create or update
+  `.codeos/00-project/terminology.md` from the project-terminology template and use that meaning in
+  the Intent. Do not create a glossary for ordinary language or a feature-local term.
+- Do not duplicate an existing approved Intent definition into the glossary merely for
+  normalization. Promote it only during a later substantive revision of the affected package.
 - When configurable domain vocabulary is involved, identify its owner or consumer and the concepts
   relied upon; consult the vocabulary pattern only when applicable.
 - Surface unclear actors, vague outcomes, implicit constraints, excessive scope, and unresolved

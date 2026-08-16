@@ -26,7 +26,8 @@ grep -Fxq '/.codeos-state/' "${PROJECT}/.gitignore" || fail 'operational state i
 grep -Fxq '# a&b/c\d' "${PROJECT}/.codeos/00-project/CLAUDE.md" || fail 'project name substitution was unsafe'
 
 for path in \
-  .codeos/00-discovery .codeos/02-architecture .codeos/04-refinement .codeos/05-review \
+  .codeos/00-project/terminology.md .codeos/00-discovery .codeos/02-architecture \
+  .codeos/04-refinement .codeos/05-review \
   .codeos-state features backlog modules tests docs events/runtime_events.jsonl; do
   [[ ! -e "${PROJECT}/${path}" ]] || fail "initializer created optional ${path}"
 done
