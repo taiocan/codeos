@@ -124,3 +124,49 @@ The final `rg` must return no active legacy references. Inspect the complete Git
 project tests, and run the Architecture Scope inspector when scopes exist. Do not add aliases,
 fallback lookup, or dual-path detection. Exact execution of historical behavior requires checking
 out the corresponding historical Codeos revision.
+
+## Adopt DBA-3
+
+DBA-3 moves no paths, so an existing project needs no file migration. Three things change:
+
+1. **Create a Solution Charter.** Run `00-charter.md` and obtain approval before the next
+   Specification Package approval. Existing approved packages stay valid; they simply record which
+   Charter outcomes they serve at their next substantive revision.
+2. **Move project purpose out of project instructions.** `.codeos/00-project/CLAUDE.md` no longer
+   owns project intent or project constraints. Move that content into the Charter's Problem, Vision,
+   Scope and Boundary, and System Constraints sections, and keep only durable working agreements in
+   the instruction file.
+3. **Record quality requirements where they now belong.** A feature-specific quality requirement
+   goes in that feature's Contract with a verification method; a cross-cutting one becomes a Charter
+   System Constraint with a verification route. Do not retrofit them into completed features
+   speculatively — add them at the next substantive revision of the affected artifact.
+
+Targeted refinement also narrows: it repairs implementations that do not satisfy approved behavior
+and no longer routes requirement or architecture changes. Those return to their owning authority
+under the doctrine's re-entry rule.
+
+## The Twelve Reasoning Levels
+
+Non-authoritative orientation for readers mapping DBA onto the general engineering decomposition
+Problem → Vision → Outcomes → Scope → Requirements → Architecture → Design → Specification →
+Implementation → Verification → Operation → Learning. The governing rule is the doctrine's: each
+decision has an owning level, and a lower level must not silently redefine a decision owned above it.
+
+| # | Level | Owner in DBA |
+|---|---|---|
+| 1 | Problem | Solution Charter |
+| 2 | Vision | Solution Charter |
+| 3 | Outcomes | Solution Charter (solution) and Intent (feature) |
+| 4 | Scope & Constraints | Solution Charter (solution) and Intent (feature) |
+| 5 | Requirements | Behavioral Contract, including its quality requirements; Charter System Constraints for cross-cutting ones |
+| 6 | Architecture | Architecture Scope, under the architecture-synthesis policy |
+| 7 | Design | Architecture Scope where the decision crosses boundaries or is costly to reverse; implementation otherwise |
+| 8 | Detailed Specification | Behavioral Contract and Event Schema |
+| 9 | Implementation | Stage 4, under any approved Implementation Profile |
+| 10 | Verification | Stages 5, 7, and 8 |
+| 11 | Operation | Development evidence at Stage 6; Operational Observation after acceptance |
+| 12 | Learning | The re-entry rule, the Learning Register, and targeted refinement |
+
+These are levels of reasoning, not required documents. A small project expresses several levels in
+one artifact; the conditional artifacts in the Downstream Project Layout Contract exist for exactly
+that reason.

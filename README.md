@@ -8,11 +8,17 @@ A human-governed AI development workflow where people define governed meaning, C
 artifacts and implementation evidence, and the selected doctrine supplies the current semantic
 guarantees. README does not duplicate those guarantees.
 
-The 9-step loop:
+An approved **Solution Charter** governs why the solution exists, what success means, where its
+boundary lies, and which obligations apply across it. Feature work then runs the 9-step loop:
+
 ```
 Intent → Contracts → Event Schema → Implementation → Tests →
 Runtime Execution → Reconciliation Review → Replay Verification → Targeted Refinement
 ```
+
+After acceptance, a fact from real system use is an **Operational Observation**. It returns to the
+earliest governed authority whose truth must change — the Charter, a Specification Package, a new
+Intent, architecture, or targeted refinement — and never changes approved behavior by itself.
 
 Current operational consequences are located by searching for `DOCTRINE ADAPTER` in the stage
 prompts. The doctrine remains authoritative when explanatory text disagrees.
@@ -73,6 +79,8 @@ myproject/
 └── .codeos/                     — Durable project-local DBA state
     ├── 00-project/
     │   ├── CLAUDE.md            — Canonical project instructions
+    │   ├── charter.md           — Solution Charter, before the first package approval
+    │   ├── learnings.md         — Optional Learning Register, created when needed
     │   └── terminology.md       — Optional shared project terminology, created when needed
     ├── 01-specification/
     │   ├── intents/
@@ -95,9 +103,9 @@ Paste `.codeos/toolkit/dba/03-prompts/workflow/00-session-start.md` to orient Cl
 After running `dba-init.sh` (with an optional project name and remote URL), follow these steps before opening Claude:
 
 **Step 1 — Fill in `.codeos/00-project/CLAUDE.md` that the script generated.**
-Open it and complete:
-- **Project intent** — one paragraph describing what this project exists to do
-- **Project constraints** — only durable constraints not already owned elsewhere; delete when empty
+Open it and complete **Working agreements** — only durable instructions about how work is carried
+out here that are not owned elsewhere; delete the section when empty. Project purpose and
+constraints do not go here; they belong to the Solution Charter created in Step 4.
 
 Do not create a project glossary by default. When the first specialized term needs one stable
 meaning across features, create `.codeos/00-project/terminology.md` from
@@ -110,9 +118,15 @@ meaning across features, create `.codeos/00-project/terminology.md` from
 1. `.codeos/toolkit/dba-system.md` — stable entrypoint and downstream layout owner
 2. `.codeos/00-project/CLAUDE.md` — the canonical project instructions you just filled in
 
-**Step 4 — Draft the Specification Package.**
-Start with `.codeos/toolkit/dba/03-prompts/workflow/01-intent.md`, then continue through Contract and Event Schema. Stage 3 owns the
-current `specification-approval` boundary.
+**Step 4 — Establish the Solution Charter.**
+Use `.codeos/toolkit/dba/03-prompts/workflow/00-charter.md` to write and approve
+`.codeos/00-project/charter.md`. It owns the `purpose-approval` boundary and must be approved before
+the first Specification Package approval.
+
+**Step 5 — Draft the Specification Package.**
+Start with `.codeos/toolkit/dba/03-prompts/workflow/01-intent.md`, recording which Charter outcomes
+the feature serves, then continue through Contract and Event Schema. Stage 3 owns the current
+`specification-approval` boundary.
 
 There are no existing project artifacts to read at this point — Claude starts from the active DBA
 components selected through `.codeos/toolkit/dba-system.md` and the canonical project instructions. Do not paste a
@@ -149,6 +163,7 @@ boundary adapters:
 
 | Stage | File | Purpose | Claude produces | Boundary owner |
 |---|---|---|---|---|
+| 0 | `.codeos/toolkit/dba/03-prompts/workflow/00-charter.md` | Establish solution purpose, outcomes, boundary, and System Constraints | Charter in `00-project/` | `purpose-approval` adapter |
 | 1 | `.codeos/toolkit/dba/03-prompts/workflow/01-intent.md` | Capture *why* the feature exists — actor + outcome, no implementation details | Intent in `01-specification/intents/` | — |
 | 2 | `.codeos/toolkit/dba/03-prompts/workflow/02-contract.md` | Translate Intent into independently testable behavior | Contract in `01-specification/contracts/` | — |
 | 3 | `.codeos/toolkit/dba/03-prompts/workflow/03-event-schema.md` | Complete and cross-check the Specification Package | Event Schema in `01-specification/event-schemas/` | `specification-approval` adapter |
@@ -173,10 +188,12 @@ artifacts relevant to the target. Incomplete Specification Packages are normal w
 
 ### Stage 2 — Behavioral Contracts
 **Purpose:** Translate the current Intent into independently testable observable truth while both
-remain open to revision. The Contract also selects `events` or `external-observation` and names any
-external observation artifact.
+remain open to revision. The Contract also selects `events` or `external-observation`, names any
+external observation artifact, and owns this feature's quality requirements.
 **Key constraint:** Contracts define observable behavior, not internal logic, code structure, or
-unapproved event semantics.
+unapproved event semantics. Every quality requirement declares a verification method, and every
+threshold states its workload, operating context, and rationale. Cross-cutting obligations belong to
+the Charter's System Constraints instead.
 
 ### Stage 3 — Event Schema
 **Purpose:** Complete the third Specification Package artifact and verify all three artifacts
@@ -202,7 +219,8 @@ intermediate computations.
 **Purpose:** Run representative scenarios when permitted and capture evidence through the
 Contract's observation mode.
 **Key constraint:** Stage 6 never changes implementation or prior evidence and never fabricates an
-unavailable observation.
+unavailable observation. Everything it produces is development evidence — pre-acceptance proof of
+the candidate implementation, distinct from a post-acceptance Operational Observation.
 
 ### Stage 7 — Reconciliation Review
 **Purpose:** Compare the applicable layers from Intent through runtime or external observation and
@@ -219,20 +237,22 @@ its declared verification.
 are ignored unless contracted. A valid governed outcome may be a single-event chain.
 
 ### Stage 9 — Targeted Refinement
-**Purpose:** Apply the smallest effective change justified by an observed problem or explicit human
-evolution decision.
-**Key constraint:** Use the actual cause, not a fixed refinement taxonomy or cost order. One safety,
-authorization, or integrity failure is sufficient evidence. Return through reconciliation and final
-verification.
+**Purpose:** Repair an implementation that does not satisfy already-approved behavior, using the
+smallest effective change.
+**Key constraint:** Stage 9 never redefines intended behavior, requirements, or architecture — those
+return to their owning authority under the re-entry rule. Use the actual cause, not a fixed
+refinement taxonomy or cost order. One safety, authorization, or integrity failure is sufficient
+evidence. Return through reconciliation and final verification.
 
 ## Governing Rules
 
 Read `dba-system.md` and its selected doctrine. This README describes navigation and stage purpose;
 it does not independently define authority, approval cadence, escalation, or evidence semantics.
 
-The current lifecycle has `specification-approval`, `delivery-entry`, `final-acceptance`, and the
-conditional `architecture-entry` doctrine adapters. This count is descriptive, not an invariant:
-add or remove an adapter only when a genuine execution boundary changes.
+The current lifecycle has `purpose-approval`, `specification-approval`, `delivery-entry`,
+`final-acceptance`, and the conditional `architecture-entry` doctrine adapters. This count is
+descriptive, not an invariant: add or remove an adapter only when a genuine execution boundary
+changes.
 
 For a future doctrine version:
 

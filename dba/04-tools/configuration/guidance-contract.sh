@@ -10,12 +10,14 @@ expected_guidance=(
   patterns/shared-infrastructure-boundary.md
   patterns/vocabulary-architecture.md
   templates/architecture-scope.md
+  templates/charter.md
   templates/contract.md
   templates/event-schema.md
   templates/feature-brief.md
   templates/full-solution-concept.md
   templates/implementation-profile.yaml
   templates/intent.md
+  templates/learning-register.md
   templates/project-AGENTS.md
   templates/project-CLAUDE.md
   templates/project-root-CLAUDE.md

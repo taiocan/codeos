@@ -9,6 +9,10 @@ out_of_scope: Changing code or specifications, reconciliation judgments, replay 
 
 Execute representative scenarios when permitted and preserve truthful evidence of what occurred.
 
+Everything this stage produces is development evidence: it proves the candidate implementation
+before acceptance. A fact arising from real system use after acceptance is an Operational
+Observation and does not belong to this stage.
+
 ## Inputs / Prerequisites
 
 Load the approved Contract and, when applicable, Event Schema types through the Downstream Project

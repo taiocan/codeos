@@ -75,6 +75,30 @@ What must ALWAYS be true, regardless of inputs or execution path.
 - [invariant — always true]
 - [invariant — always true]
 
+## Quality Requirements
+
+<!--
+How well this feature must behave. Admission test: it applies specifically to THIS feature, AND it
+states something observable or verifiable. A cross-cutting obligation belongs in the Solution
+Charter's System Constraints instead; delete this section when the feature has none.
+
+Every entry declares its verification method. Automated tests apply where the requirement is
+testable; otherwise use measurement, analysis, inspection, review, or operational evidence.
+Stage 5 writes tests for the testable ones and records the method for the rest, Stage 7 records the
+evidence the method produced, and Stage 8 replays verification where replay is the method.
+
+Every threshold states its workload, operating context, and rationale. A deliberately new target
+needs no prior evidence, but an unexplained number is not a requirement.
+
+Keep the requirement separate from its architectural consequence:
+  Requirement: search responds within 500 ms for a 10,000-plot municipality on a warm cache.
+  Consequence (belongs to architecture): queries must avoid scanning the complete plot corpus.
+-->
+
+| Requirement | Workload and operating context | Rationale | Verification method |
+|---|---|---|---|
+| [observable or verifiable quality this feature must exhibit] | [the conditions under which it must hold] | [why this level] | [test \| measurement \| analysis \| inspection \| review \| operational evidence] |
+
 ## Vocabulary Dependency
 
 <!--

@@ -18,8 +18,9 @@ evidence. Use the Contract's observation mode to select event or external eviden
 
 ## Task
 
-Create one row for every Contract requirement and every governed event when event mode applies.
-Trace each row across the layers that apply and use only:
+Create one row for every Contract requirement, every Contract quality requirement, every Charter
+System Constraint this feature's implementation can affect, and every governed event when event mode
+applies. Trace each row across the layers that apply and use only:
 
 - Status: `ALIGNED`, `GAP`, `MISMATCH`, or `MISSING`
 - Evidence: `runtime`, `test`, `static`, or `none`
@@ -33,6 +34,12 @@ Meanings:
 - `MISMATCH`: two applicable layers disagree.
 - `MISSING`: a required artifact, Contract item, or Event-Schema item is absent.
 
+For a quality requirement or System Constraint, record the evidence its declared verification method
+actually produced. A method other than testing is legitimate: `static` covers analysis, inspection,
+and review, and `runtime` covers measurement and operational evidence. Use `GAP` when the method has
+not yet been carried out, and state the method in the Note. Do not downgrade a requirement to
+`ALIGNED` because it is hard to test.
+
 Do not encode gap causes as additional statuses. State implementation, test, runtime,
 observability, or environment-quality concerns in the Note. When the Contract declares a minimum
 environment, record the observed environment plainly and use `GAP` if it is insufficient; do not
@@ -45,7 +52,7 @@ runtime evidence is a `GAP` with `evidence: none`, not `MISSING`, when all requi
 ## Applicable Checks
 
 Confirm Intent-to-Contract coverage, Contract-to-Event-Schema consistency where applicable,
-implementation conformance, test coverage, and runtime evidence. Structural observations may be
+implementation conformance, test coverage, quality-requirement verification, and runtime evidence. Structural observations may be
 noted separately when they affect future change cost, but they do not alter behavioral statuses.
 
 Use this exact table shape:

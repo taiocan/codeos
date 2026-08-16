@@ -13,13 +13,17 @@ human actor can achieve, what must remain true, and what is excluded.
 ## Inputs / Prerequisites
 
 Read `.codeos/toolkit/dba/05-guidance/templates/intent.md`; it owns the artifact structure and core
-writing rules. Use an optional confirmed discovery brief when present, otherwise the human's
+writing rules. Read the approved Solution Charter at `.codeos/00-project/charter.md`; a feature
+Intent requires one. Use an optional confirmed discovery brief when present, otherwise the human's
 description. Resolve existing artifacts through the Downstream Project Layout Contract. When
 `.codeos/00-project/terminology.md` exists, consult it before defining terms.
 
 ## Task
 
 - Express purpose and outcomes from the human actor's perspective.
+- Record in `serves_outcomes` the Charter outcomes this feature contributes to. If the feature
+  serves no approved outcome or falls outside the Charter's scope boundary, stop and route the
+  question to `00-charter.md` rather than widening the solution silently.
 - State stable guarantees as enforceable, testable invariants; they need not use actor/outcome
   grammar when that would obscure the invariant.
 - Keep mechanisms, implementation technology, observability, workflow steps, and architecture out
@@ -47,7 +51,8 @@ description. Resolve existing artifacts through the Downstream Project Layout Co
 ## Applicable Checks
 
 Apply the template rules and confirm that outcomes are actor-centered, guarantees are testable,
-scope is explicit, and no mechanism or observability detail leaked into the artifact. Revise
+scope is explicit, `serves_outcomes` names existing Charter outcomes, and no mechanism or
+observability detail leaked into the artifact. Revise
 mechanical failures before presenting the draft; leave genuine product decisions visible for the
 human.
 

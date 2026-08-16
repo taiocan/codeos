@@ -11,14 +11,10 @@ When saved, use `.codeos/04-refinement/<feature-id>-<slug>.md`.
 [Observed failure, reconciliation/replay finding, observability gap, or explicit human evolution
 decision, with the smallest supporting evidence.]
 
-## Root Cause and Minimal Change
+## Root Cause and Minimal Repair
 
-[Supported root cause and the smallest effective correction.]
-
-## Authority Affected
-
-[Specification Package, architecture scope, conformance-only implementation, or ordinary
-maintenance.]
+[Supported root cause and the smallest effective correction. Confirm the approved artifacts remain
+correct — a refinement never redefines intended behavior, requirements, or architecture.]
 
 ## Verification Route
 

@@ -47,7 +47,7 @@ fi
 # records remain valid outside this list; this is an active-layout invariant, not a history scan.
 supported_runtime_paths=(
   "${CODEOS_ROOT}/dba-system.md"
-  "${CODEOS_ROOT}/dba/00-entry/configurations/DBA-2.yaml"
+  "${CODEOS_ROOT}/dba/00-entry/configurations/DBA-3.yaml"
   "${CODEOS_ROOT}/dba/03-prompts"
   "${CODEOS_ROOT}/dba/04-tools/initializer"
   "${CODEOS_ROOT}/dba/04-tools/reviewer"
@@ -68,6 +68,8 @@ done
 
 canonical_paths=(
   '.codeos/00-project/CLAUDE.md'
+  '.codeos/00-project/charter.md'
+  '.codeos/00-project/learnings.md'
   '.codeos/00-project/terminology.md'
   '.codeos/01-specification/intents/<feature-id>.md'
   '.codeos/01-specification/contracts/<feature-id>_contract.md'
@@ -91,6 +93,7 @@ for path in "${canonical_paths[@]}"; do
 done
 
 declare -A producer_outputs=(
+  [00-charter.md]='.codeos/00-project/charter.md'
   [00-full-solution-concept.md]='.codeos/00-discovery/solution-concept.md'
   [00a-solution-discovery.md]='.codeos/00-discovery/<topic-slug>.md'
   [00b-feature-brief.md]='.codeos/00-discovery/<topic-slug>.md'
@@ -109,6 +112,7 @@ for prompt in "${!producer_outputs[@]}"; do
 done
 
 declare -A adapters=(
+  [purpose-approval]="dba/03-prompts/workflow/00-charter.md"
   [specification-approval]="dba/03-prompts/workflow/03-event-schema.md"
   [delivery-entry]="dba/03-prompts/workflow/04-implement.md"
   [final-acceptance]="dba/03-prompts/workflow/08-replay.md"
@@ -123,9 +127,9 @@ for adapter in "${!adapters[@]}"; do
 done
 
 adapter_count="$(rg -l 'DOCTRINE ADAPTER: [a-z-]+' "${CODEOS_ROOT}/dba/03-prompts" | wc -l)"
-[[ "${adapter_count}" -eq 4 ]] || fail "expected 4 doctrine adapter owners, found ${adapter_count}"
+[[ "${adapter_count}" -eq 5 ]] || fail "expected 5 doctrine adapter owners, found ${adapter_count}"
 
 bash "${CODEOS_ROOT}/dba/04-tools/configuration/dba-config-boundaries.sh" \
-  dba/00-entry/configurations/DBA-2.yaml >/dev/null
+  dba/00-entry/configurations/DBA-3.yaml >/dev/null
 
 printf 'Codeos layout contract OK\n'

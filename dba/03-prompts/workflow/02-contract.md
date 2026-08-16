@@ -12,7 +12,7 @@ internal implementation.
 
 ## Inputs / Prerequisites
 
-Read the current Intent from its canonical location and
+Read the current Intent from its canonical location, the approved Solution Charter, and
 `.codeos/toolkit/dba/05-guidance/templates/contract.md`; the template owns the Contract shape. Keep
 both artifacts in `DRAFT` and revise Intent if Contract work exposes a product gap.
 
@@ -33,6 +33,18 @@ both artifacts in `DRAFT` and revise Intent if Contract work exposes a product g
   - `events` when governed internal events provide runtime evidence;
   - `external-observation` only when outcomes are proven through a named external observation
     artifact and no governed internal events are required.
+- Record a quality requirement here only when it applies specifically to this feature and states
+  something observable or verifiable. A cross-cutting obligation belongs to the Charter's System
+  Constraints; route it there instead of restating it.
+- Give every quality requirement a verification method. Use automated tests where the requirement is
+  testable; otherwise name measurement, analysis, inspection, review, or operational evidence. A
+  requirement with no method is not admissible.
+- State workload, operating context, and rationale for every threshold. A deliberately new target
+  needs no prior evidence; an unexplained number is not a requirement.
+- Keep the requirement separate from its architectural consequence. State what must be true, not the
+  mechanism that would achieve it.
+- Record how this feature demonstrates conformance with any Charter System Constraint its
+  implementation can affect. Do not copy the constraint text.
 - Identify exact cross-module signals only when behavior depends on them.
 - Apply the vocabulary pattern only when Stage 1 identified a vocabulary dependency; keep
   resolution strategy out of the Contract.
@@ -43,7 +55,8 @@ actionable unknown and return to Stage 1.
 ## Applicable Checks
 
 Confirm that every Intent outcome has observable coverage, every governed failure is defined,
-invariants have genuine falsifiers, observation mode is explicit, and no internal mechanism or
+invariants have genuine falsifiers, observation mode is explicit, every quality requirement has a
+verification method and every threshold its context and rationale, and no internal mechanism or
 unapproved event requirement appears.
 
 ## Output / Next Action

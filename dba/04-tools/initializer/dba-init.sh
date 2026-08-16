@@ -146,4 +146,4 @@ if [[ -n "$REMOTE_URL" ]]; then
     fi
 fi
 
-echo "Done. Fill in .codeos/00-project/CLAUDE.md, then use .codeos/toolkit/dba/03-prompts/workflow/01-intent.md."
+echo "Done. Fill in .codeos/00-project/CLAUDE.md, then use .codeos/toolkit/dba/03-prompts/workflow/00-charter.md to establish and approve the Solution Charter before the first Specification Package."

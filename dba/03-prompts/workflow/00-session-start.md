@@ -14,7 +14,8 @@ perform stage work from this prompt.
 
 1. Read `.codeos/toolkit/dba-system.md`, its active configuration, and the selected doctrine. Read another
    selected component only when it applies to the requested work.
-2. Read the project `CLAUDE.md`. If `.codeos/00-project/terminology.md` exists, read it as the
+2. Read the project `CLAUDE.md` and, when it exists, the approved Solution Charter at
+   `.codeos/00-project/charter.md`. If `.codeos/00-project/terminology.md` exists, read it as the
    canonical glossary for shared project-specific meanings. Its absence is valid.
 3. Run:
 
@@ -34,6 +35,13 @@ perform stage work from this prompt.
 
 Classify the requested work and load one workflow:
 
+- No approved Solution Charter yet, or a change to solution purpose, outcomes, scope, or a System
+  Constraint → `00-charter.md`
+- A post-acceptance Operational Observation → classify it and route to the earliest governed
+  authority whose truth must change: Charter revision, the affected Specification Package, a new
+  Intent, the applicable architecture policy, or `09-refine.md` for a conformance defect. Record it
+  in the Learning Register only when it is material, unresolved, and not yet routable. An
+  observation is evidence and never changes approved behavior by itself.
 - New feature with a clear boundary → `01-intent.md`
 - A problem requiring decomposition into several features → optional `00b-feature-brief.md`
 - Existing feature work → the applicable Stage 1–9 prompt
@@ -55,6 +63,7 @@ Report only:
 
 - active configuration and doctrine;
 - branch, commit, and whether the tree is clean or dirty;
+- whether an approved Solution Charter exists;
 - target feature/task and the relevant artifacts that currently exist;
 - selected workflow and expected output;
 - any concrete blocker or authority conflict.

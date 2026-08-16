@@ -49,9 +49,16 @@ This feature does NOT:
 
 ---
 
-<!-- METADATA — recording behavior is owned by the specification-approval doctrine adapter -->
+<!--
+METADATA — recording behavior is owned by the specification-approval doctrine adapter.
+`serves_outcomes` names the approved Solution Charter outcomes this feature contributes to. It is
+how a later outcome change identifies the features it may affect, so keep it accurate and non-empty.
+Changes to Charter scope, boundary, or System Constraints are NOT discoverable this way and require
+an explicit impact assessment.
+-->
 status: DRAFT
 feature_id: [feature_id]
+serves_outcomes: [O-1]
 approved_by:
 approved_at:
 derived_contracts: .codeos/01-specification/contracts/[feature_id]_contract.md

@@ -26,6 +26,9 @@ Contract's observation mode and applicable replay or external-observation tests.
   IDs, timestamps, and other nondeterministic envelope fields unless the Contract governs them.
 - In `external-observation` mode, rerun the declared verification and compare the governed
   observable outcomes; do not require an event log or event replay.
+- Replay a quality requirement or System Constraint only where replay is its declared verification
+  method. Otherwise carry forward the evidence its method produced, or report it as an outstanding
+  gap.
 - Report nondeterminism, missing fixtures, and environment limitations. Runtime evidence never
   amends approved requirements.
 
@@ -42,3 +45,8 @@ Present the verification result, remaining gaps, and advisory review or waiver, 
 
 The review package and verification result remain inline; this workflow creates no separate durable
 report. The human accepts the feature or requests targeted refinement through `09-refine.md`.
+
+Acceptance ends the delivery cycle and opens the post-acceptance path. From that point, a fact
+arising from real system use is an Operational Observation: classify it at session start and return
+it to the earliest governed authority whose truth must change. Evidence produced before acceptance
+remains development evidence and is not an Operational Observation.

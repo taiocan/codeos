@@ -23,11 +23,17 @@ duplicate membership, and reuse a matching scope or draft the current architectu
 
 ## Task
 
-- Review approved feature requirements and applicable architecture together.
+- Review approved feature requirements, Charter System Constraints, and applicable architecture
+  together.
 - Record only material project-level responsibilities, dependencies, state ownership, integration,
   runtime placement, constraints, and feature obligations.
 - Derive decisions from approved requirements or explicit human architectural decisions.
-- Return behavioral or new quality requirements to the affected Specification Package.
+- Treat approved quality requirements and System Constraints as inputs. Record the structural
+  consequences they force; never originate a new one here.
+- Leave decisions that are local to one component and reasonably reversible to implementation.
+- Return a missing requirement to its owning source: a behavioral gap to the affected Specification
+  Package, a feature-specific quality requirement to that feature's Contract, and a cross-cutting
+  quality requirement or other System Constraint to the Solution Charter.
 - Keep `approval: null` while responsibility, dependency direction, data authority, lifecycle, or
   integration conflicts remain unresolved.
 

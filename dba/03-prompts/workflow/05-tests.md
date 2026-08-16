@@ -19,6 +19,12 @@ invariants, and any minimum environment requirement.
 
 - Add behavioral tests covering every applicable Contract scenario, governed failure, and invariant
   falsifier. Test Contract notes only when they state observable requirements.
+- Write automated tests for every Contract quality requirement whose declared verification method is
+  a test, exercising it under the stated workload and operating context. For a requirement verified
+  by measurement, analysis, inspection, review, or operational evidence, record the method and what
+  it must show instead of fabricating a test that does not prove it.
+- Do the same for any Charter System Constraint this feature's implementation can affect, using the
+  conformance route the Contract recorded.
 - Verify state changes and approved failure signals without asserting private methods, intermediate
   computations, or uncontracted ordering.
 - Verify that internal technical errors do not masquerade as approved behavioral failures.
@@ -39,8 +45,8 @@ semantics.
 
 ## Applicable Checks
 
-Build a Contract coverage mapping with no required behavior silently omitted. Confirm each test
-would fail under the wrong behavior it claims to detect. Use the Review Package template for inline
+Build a Contract coverage mapping with no required behavior or quality requirement silently
+omitted. Confirm each test would fail under the wrong behavior it claims to detect. Use the Review Package template for inline
 delivery evidence.
 
 ## Output / Next Action

@@ -4,7 +4,7 @@
 > `.codeos/toolkit/dba-system.md`. Codeos toolkit self-development is governed separately by the repository
 > root `CLAUDE.md`.
 
-Active configuration: `.codeos/toolkit/dba/00-entry/configurations/DBA-2.yaml`
+Active configuration: `.codeos/toolkit/dba/00-entry/configurations/DBA-3.yaml`
 
 The configuration selects the authoritative version of each governed DBA component. Component
 files own their semantics; the configuration only selects which versions are active.
@@ -22,6 +22,8 @@ Canonical durable locations are:
 | Capability | Location | Creation |
 |---|---|---|
 | Project instructions | `.codeos/00-project/CLAUDE.md` | Required |
+| Solution Charter | `.codeos/00-project/charter.md` | Required before the first Specification Package approval |
+| Learning Register | `.codeos/00-project/learnings.md` | Only when a material unresolved observation exists |
 | Project terminology | `.codeos/00-project/terminology.md` | Only when shared project-specific terminology exists |
 | Intent | `.codeos/01-specification/intents/<feature-id>.md` | Required per feature |
 | Contract | `.codeos/01-specification/contracts/<feature-id>_contract.md` | Required per feature |
@@ -100,6 +102,7 @@ This index is descriptive navigation, not a second authority source:
 
 | Boundary | Owning prompt |
 |---|---|
+| `purpose-approval` | `.codeos/toolkit/dba/03-prompts/workflow/00-charter.md` |
 | `specification-approval` | `.codeos/toolkit/dba/03-prompts/workflow/03-event-schema.md` |
 | `delivery-entry` | `.codeos/toolkit/dba/03-prompts/workflow/04-implement.md` |
 | `final-acceptance` | `.codeos/toolkit/dba/03-prompts/workflow/08-replay.md` |

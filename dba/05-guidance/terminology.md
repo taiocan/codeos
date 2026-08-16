@@ -24,6 +24,7 @@ Ordinary technical vocabulary does not belong here. Git preserves the history of
 | **Consequential conformance repair** | A change that restores already-approved behavior where an incorrect repair could have consequential effects; it is not a new semantic decision. |
 | **Correlation ID** | The UUID linking all runtime events from one feature execution chain. |
 | **Declarative Behavioral Architecture (DBA)** | The Codeos model, also called Intent-Driven System (IDS), that carries human intent through behavioral contracts, implementation, runtime evidence, reconciliation, replay, and targeted refinement. |
+| **Development Evidence** | Evidence produced before acceptance to prove the candidate implementation. Contrast with Operational Observation. |
 | **Event Spine** | The complete ordered set of events a feature is permitted to emit. |
 | **Evidence source** | The strongest direct basis for a reconciliation result: `runtime`, `test`, `static`, or `none`. It is not a confidence or quality score. |
 | **Reconciliation status** | One of `ALIGNED`, `GAP`, `MISMATCH`, or `MISSING`. The row note explains the specific issue; status names do not encode gap subtypes. |
@@ -33,19 +34,26 @@ Ordinary technical vocabulary does not belong here. Git preserves the history of
 | **Full-Solution Concept** | An optional, non-authoritative whole-solution recommendation that compares consequential alternatives, identifies important validation needs, and promotes justified commitments only through their existing authoritative owners. |
 | **Implementation Profile** | An approved project-level statement of preferred implementation language and scope that implementation must consult. |
 | **Intent** | Why a feature exists, expressed as actor and desired outcome without implementation details. |
+| **Learning Register** | An optional queue of material, unresolved post-acceptance observations that could change governed engineering truth. It is evidence, never authority, and is not an operational log. |
 | **NORMAL** | The default Codeos self-development classification for work that does not reasonably risk an approved consequential boundary. |
 | **Normalize-on-read** | A vocabulary strategy that stores the original representation and resolves it at every comparison site. |
 | **Normalize-on-write** | A vocabulary strategy that resolves input at ingestion and stores Concept identity. |
 | **Observational Event** | A runtime event representing a raw observed fact. |
+| **Operational Observation** | A fact arising after acceptance, from real system use, that may affect governed engineering truth. It is evidence and cannot change approved behavior by itself. |
+| **Outcome** | A measurable result the solution must create, identified as `O-#` in the Solution Charter. An outcome is not a feature. |
 | **Protected invariant** | The condition identified before a PROTECTED semantic change that must remain true after implementation. |
 | **PROTECTED semantic change** | An intentional Codeos change that could alter approved behavior or authority, project architecture, persistent compatibility, safety or integrity, or human-control boundaries. |
+| **Quality Requirement** | A governed statement of how well the solution must behave, declared with a verification method. Feature-specific ones belong to the Behavioral Contract; cross-cutting ones are System Constraints. Architecture may respond to them but never originates them. |
 | **Reconciliation Review** | A structural comparison of governed artifacts for gaps, mismatches, and missing evidence. |
+| **Re-entry Rule** | Post-acceptance learning returns to the earliest governed authority whose truth must change. |
 | **Replay Verification** | Confirmation that a runtime event log conforms to its approved schema and contract sequence. |
 | **Representation Ban Rule** | Domain logic must not store, compare, branch on, or pattern-match vocabulary representations; it uses resolved Concept identity. |
 | **Resolution** | Mapping an Alias or canonical representation to its Concept through the vocabulary owner's API. |
 | **Shared Infrastructure Module** | A module used by at least two feature modules that provides only mechanical infrastructure and contains no domain logic. |
+| **Solution Charter** | The single approved artifact defining a solution's problem, vision, measurable outcomes, scope boundary, and System Constraints. It governs purpose; it does not define feature behavior. |
 | **Specification Package** | The Intent, Contract, and Event Schema considered together by the specification-approval adapter. Decision semantics come only from the selected doctrine. |
-| **Targeted Refinement** | The smallest effective change for a specific observed problem, not a rewrite. |
+| **System Constraint** | A Charter-owned obligation applying across features or solution-wide, each with a verification route. The broader category: cross-cutting quality requirements are one type, alongside regulatory, interoperability, deployment, and externally imposed technology constraints. |
+| **Targeted Refinement** | The smallest effective repair of an implementation that does not satisfy already-approved behavior. It never redefines intended behavior, requirements, or architecture. |
 | **Vertical Drift** | Accumulation of domain logic in shared infrastructure, bypassing feature-isolation boundaries. |
 | **Vocabulary consumer** | A module that uses vocabulary-defined Concepts through the resolution API without interpreting representations itself. |
 | **Vocabulary owner** | The single module that defines Concepts, accepts Aliases, validates the vocabulary, and exposes Resolution. |
