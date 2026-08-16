@@ -11,7 +11,7 @@ pub fn run(feature: Option<&str>, stage: Option<&str>, cfg: &Config) {
     println!("  state_dir:       {}", cfg.state_dir.display());
     if let (Some(f), Some(s)) = (feature, stage) {
         println!("  feature:         {}", f);
-        println!("  stage:           {}", s);
+        println!("  workflow/stage:  {}", s);
         let sess_file = cfg.sessions_dir.join(format!("{}.json", f));
         if sess_file.exists() {
             println!("  session file:    {} (exists)", sess_file.display());

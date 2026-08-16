@@ -1,10 +1,10 @@
-# Feature Discovery Brief: [topic]
+# Feature Decomposition: [topic]
 
 <!--
-Optional, non-governed discovery material. Use only when one problem needs decomposition into
-multiple features or the discovery reasoning has durable value. Simple work proceeds directly to
-an Intent. This brief has no feature ID, status, approval, or lifecycle gate and never overrides an
-Intent, Contract, or Event Schema.
+Optional, non-governed decomposition material. Use only when one problem needs decomposition into
+multiple features or the boundary reasoning has durable value. Simple work proceeds directly to
+an Intent. This decomposition has no feature ID, status, approval, or lifecycle gate and never
+overrides an Intent, Contract, or Event Schema.
 
 Canonical path when saved: .codeos/00-discovery/[topic-slug].md
 -->

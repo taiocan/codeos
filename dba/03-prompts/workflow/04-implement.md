@@ -34,6 +34,8 @@ when applicable; project architecture and approved behavior remain authoritative
   map only authorized failures to authorized events or signals.
 - Use normal helpers, types, validation, logging, and established patterns when they preserve all
   governed boundaries.
+- Make local, reasonably reversible design decisions inside approved architectural boundaries;
+  do not promote those choices into project-level architecture.
 - Identify affected structural chokepoints before editing and use verification proportional to
   their risk.
 - Stop when implementation would require changing approved behavior, event semantics, architecture,

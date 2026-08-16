@@ -28,6 +28,7 @@ struct Cli {
 #[derive(Args, Clone)]
 struct EvidenceCli {
     feature: String,
+    #[arg(value_name = "WORKFLOW_OR_STAGE")]
     stage: String,
     /// Include a path and hash but omit its content.
     #[arg(long = "sha-only", value_name = "PATH")]
@@ -67,6 +68,7 @@ enum Commands {
     /// Append a human decision associated with an automated review.
     Decision {
         feature: String,
+        #[arg(value_name = "WORKFLOW_OR_STAGE")]
         stage: String,
         verdict: String,
         reason: String,
@@ -76,6 +78,7 @@ enum Commands {
     /// Show resolved reviewer configuration and state.
     Diagnose {
         feature: Option<String>,
+        #[arg(value_name = "WORKFLOW_OR_STAGE")]
         stage: Option<String>,
     },
     /// Deterministically read and validate Architecture Scope metadata.

@@ -13,8 +13,7 @@ expected_guidance=(
   templates/charter.md
   templates/contract.md
   templates/event-schema.md
-  templates/feature-brief.md
-  templates/full-solution-concept.md
+  templates/feature-decomposition.md
   templates/implementation-profile.yaml
   templates/intent.md
   templates/learning-register.md
@@ -32,13 +31,27 @@ expected_guidance=(
 mapfile -t actual_guidance < <(cd "${CODEOS_ROOT}/dba/05-guidance" && find . -type f -printf '%P\n' | LC_ALL=C sort)
 [[ "${actual_guidance[*]}" == "${expected_guidance[*]}" ]] || fail 'unexpected active guidance inventory'
 
-SESSION_START="${CODEOS_ROOT}/dba/03-prompts/workflow/00-session-start.md"
+SESSION_START="${CODEOS_ROOT}/dba/03-prompts/workflow/support-session-orientation.md"
 INTENT_PROMPT="${CODEOS_ROOT}/dba/03-prompts/workflow/01-intent.md"
+FRAMING_PROMPT="${CODEOS_ROOT}/dba/03-prompts/workflow/support-solution-framing.md"
+CHARTER_PROMPT="${CODEOS_ROOT}/dba/03-prompts/workflow/support-solution-charter.md"
+ARCHITECTURE_PROMPT="${CODEOS_ROOT}/dba/03-prompts/workflow/support-architecture-synthesis.md"
+IMPLEMENT_PROMPT="${CODEOS_ROOT}/dba/03-prompts/workflow/04-implement.md"
 rg -q 'partially drafted Specification Package is normal' "${SESSION_START}" || fail 'partial packages are not accepted'
 rg -q 'terminology.md.*exists' "${SESSION_START}" || fail 'optional project terminology is not loaded'
 rg -q 'Its absence is valid' "${SESSION_START}" || fail 'project terminology became mandatory'
 rg -q 'architecture-scope membership' "${INTENT_PROMPT}" || fail 'feature-id allocation does not scan every identity owner'
 rg -q 'incompatible artifacts claim the same identity' "${INTENT_PROMPT}" || fail 'identity-conflict boundary is missing'
 rg -q 'Define only feature-local' "${INTENT_PROMPT}" || fail 'Intent terminology ownership is unclear'
+rg -q 'when promoted into and approved in the Solution Charter' "${FRAMING_PROMPT}" || \
+  fail 'Solution Framing promotion boundary is missing'
+rg -q 'MUST NOT resolve that concern into components' "${FRAMING_PROMPT}" || \
+  fail 'Solution Framing architecture boundary is missing'
+rg -q 'only their promotion into an approved Charter makes them' "${CHARTER_PROMPT}" || \
+  fail 'Solution Charter promotion boundary is missing'
+rg -q 'Stage 4 owns local implementation design' "${ARCHITECTURE_PROMPT}" || \
+  fail 'Architecture Synthesis design boundary is missing'
+rg -q 'local, reasonably reversible design decisions' "${IMPLEMENT_PROMPT}" || \
+  fail 'Stage 4 local design ownership is missing'
 
 printf 'guidance contract: PASS\n'

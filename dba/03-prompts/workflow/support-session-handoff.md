@@ -3,7 +3,7 @@ component_question: How should a DBA session handoff be produced from the curren
 out_of_scope: Changing governed artifacts, granting approvals, executing the next stage, and implementation work.
 ---
 
-# DBA Session End: Handoff Generation
+# Session Handoff
 
 ## Purpose
 

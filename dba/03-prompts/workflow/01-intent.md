@@ -23,7 +23,7 @@ description. Resolve existing artifacts through the Downstream Project Layout Co
 - Express purpose and outcomes from the human actor's perspective.
 - Record in `serves_outcomes` the Charter outcomes this feature contributes to. If the feature
   serves no approved outcome or falls outside the Charter's scope boundary, stop and route the
-  question to `00-charter.md` rather than widening the solution silently.
+  question to `support-solution-charter.md` rather than widening the solution silently.
 - State stable guarantees as enforceable, testable invariants; they need not use actor/outcome
   grammar when that would obscure the invariant.
 - Keep mechanisms, implementation technology, observability, workflow steps, and architecture out

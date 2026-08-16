@@ -31,7 +31,6 @@ Ordinary technical vocabulary does not belong here. Git preserves the history of
 | **External Event** | A runtime event representing a side effect on a system outside the governed boundary. |
 | **Failure Event** | A runtime event representing a classified error condition. |
 | **Feature ID** | The stable `F-####` identity assigned when an Intent is created. It is never reused; partial Specification Packages remain valid identities. |
-| **Full-Solution Concept** | An optional, non-authoritative whole-solution recommendation that compares consequential alternatives, identifies important validation needs, and promotes justified commitments only through their existing authoritative owners. |
 | **Implementation Profile** | An approved project-level statement of preferred implementation language and scope that implementation must consult. |
 | **Intent** | Why a feature exists, expressed as actor and desired outcome without implementation details. |
 | **Learning Register** | An optional queue of material, unresolved post-acceptance observations that could change governed engineering truth. It is evidence, never authority, and is not an operational log. |
@@ -51,6 +50,7 @@ Ordinary technical vocabulary does not belong here. Git preserves the history of
 | **Resolution** | Mapping an Alias or canonical representation to its Concept through the vocabulary owner's API. |
 | **Shared Infrastructure Module** | A module used by at least two feature modules that provides only mechanical infrastructure and contains no domain logic. |
 | **Solution Charter** | The single approved artifact defining a solution's problem, vision, measurable outcomes, scope boundary, and System Constraints. It governs purpose; it does not define feature behavior. |
+| **Solution Framing** | Optional, non-authoritative exploration of a solution's problem, vision, candidate outcomes, scope, and candidate constraints. It may identify open architecture concerns but cannot approve solution meaning or decide architecture. |
 | **Specification Package** | The Intent, Contract, and Event Schema considered together by the specification-approval adapter. Decision semantics come only from the selected doctrine. |
 | **System Constraint** | A Charter-owned obligation applying across features or solution-wide, each with a verification route. The broader category: cross-cutting quality requirements are one type, alongside regulatory, interoperability, deployment, and externally imposed technology constraints. |
 | **Targeted Refinement** | The smallest effective repair of an implementation that does not satisfy already-approved behavior. It never redefines intended behavior, requirements, or architecture. |

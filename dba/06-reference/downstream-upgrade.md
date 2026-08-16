@@ -125,11 +125,31 @@ project tests, and run the Architecture Scope inspector when scopes exist. Do no
 fallback lookup, or dual-path detection. Exact execution of historical behavior requires checking
 out the corresponding historical Codeos revision.
 
+## Rename Support Workflows
+
+Support workflows use descriptive filenames so they cannot be mistaken for governed Stage IDs.
+Update active references atomically; the old paths have no aliases.
+
+| Retired path | Active path |
+|---|---|
+| `workflow/00a-solution-discovery.md` | `workflow/support-solution-framing.md` |
+| `workflow/00-charter.md` | `workflow/support-solution-charter.md` |
+| `workflow/00b-feature-brief.md` | `workflow/support-feature-decomposition.md` |
+| `workflow/00c-onboarding.md` | `workflow/support-existing-codebase-intake.md` |
+| `workflow/03b-architecture-synthesis.md` | `workflow/support-architecture-synthesis.md` |
+| `workflow/00-session-start.md` | `workflow/support-session-orientation.md` |
+| `workflow/00-session-end.md` | `workflow/support-session-handoff.md` |
+| `templates/feature-brief.md` | `templates/feature-decomposition.md` |
+
+Reviewer support identifiers change with their workflows: `discovery` becomes `framing`, `brief`
+becomes `decomposition`, and `onboarding` becomes `intake`. Historical review records retain their
+original identifiers.
+
 ## Adopt DBA-3
 
 DBA-3 moves no paths, so an existing project needs no file migration. Three things change:
 
-1. **Create a Solution Charter.** Run `00-charter.md` and obtain approval before the next
+1. **Create a Solution Charter.** Run `support-solution-charter.md` and obtain approval before the next
    Specification Package approval. Existing approved packages stay valid; they simply record which
    Charter outcomes they serve at their next substantive revision.
 2. **Move project purpose out of project instructions.** `.codeos/00-project/CLAUDE.md` no longer

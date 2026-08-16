@@ -10,15 +10,15 @@ out_of_scope: Feature behavior, architecture decisions, implementation, verifica
 ## Purpose
 
 Establish the one approved statement of why the solution exists, what success means, where its
-boundary lies, and which obligations apply across it. A Charter must be approved before the first
-Specification Package approval.
+boundary lies, and which obligations apply across it. This support workflow owns that approval
+boundary; a Charter must be approved before the first Specification Package approval.
 
 ## Inputs / Prerequisites
 
 Read the selected doctrine and `.codeos/toolkit/dba/05-guidance/templates/charter.md`. Use the
-human's description, relevant discovery, an existing Full-Solution Concept, and explicit human
-decisions. A Concept may propose Charter content, but only the approved Charter governs it; do not
-synchronize the Concept afterwards.
+human's description, relevant Solution Framing, and explicit human decisions. Framing may propose
+outcomes, scope, and constraints, but only their promotion into an approved Charter makes them
+governed truth; do not synchronize framing material afterwards.
 
 When revising an existing Charter, read the current artifact first and treat its approved content
 as binding until the replacement is approved.

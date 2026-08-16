@@ -3,12 +3,12 @@ component_question: How should an existing codebase be observed and bootstrapped
 out_of_scope: Inventing requirements, approving new behavior, changing the codebase, and completing delivery stages.
 ---
 
-# Existing Codebase Onboarding
+# Existing-Codebase Intake
 
 ## Purpose
 
 Turn observed existing behavior and explicit human intent into normal draft inputs for the
-Specification Package workflow. Onboarding is an entry path, not a separate lifecycle.
+Specification Package workflow. Intake is an entry path, not a separate lifecycle.
 
 ## Inputs / Prerequisites
 

@@ -3,7 +3,7 @@ component_question: How should a DBA working session be initialized and oriented
 out_of_scope: Performing workflow stages, changing approved artifacts, making approval decisions, and implementation.
 ---
 
-# DBA Session Start
+# Session Orientation
 
 ## Purpose
 
@@ -36,20 +36,20 @@ perform stage work from this prompt.
 Classify the requested work and load one workflow:
 
 - No approved Solution Charter yet, or a change to solution purpose, outcomes, scope, or a System
-  Constraint → `00-charter.md`
+  Constraint → `support-solution-charter.md`
 - A post-acceptance Operational Observation → classify it and route to the earliest governed
   authority whose truth must change: Charter revision, the affected Specification Package, a new
   Intent, the applicable architecture policy, or `09-refine.md` for a conformance defect. Record it
   in the Learning Register only when it is material, unresolved, and not yet routable. An
   observation is evidence and never changes approved behavior by itself.
 - New feature with a clear boundary → `01-intent.md`
-- A problem requiring decomposition into several features → optional `00b-feature-brief.md`
+- A problem requiring decomposition into several features → optional
+  `support-feature-decomposition.md`
 - Existing feature work → the applicable Stage 1–9 prompt
-- Existing code without DBA inputs → `00c-onboarding.md`
-- Optional domain exploration before feature boundaries or Intents → `00a-solution-discovery.md`
-- Optional whole-solution exploration before consequential commitments →
-  `00-full-solution-concept.md`
-- Project-level architecture decision → `03b-architecture-synthesis.md`
+- Existing code without DBA inputs → `support-existing-codebase-intake.md`
+- Optional solution-level exploration before consequential commitments →
+  `support-solution-framing.md`
+- Project-level architecture decision → `support-architecture-synthesis.md`
 - Behavior-neutral, architecture-insignificant maintenance → the project's normal engineering
   process outside DBA
 

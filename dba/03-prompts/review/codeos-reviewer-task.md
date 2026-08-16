@@ -6,7 +6,8 @@ out_of_scope: Review timing, approval authority, artifact mutation, and reviewer
 Reviewer task:
 
 SCOPE CONTRACT
-  Assess this artifact against the STATED SCOPE of this stage/PR — the Expected Stage
+  Assess this artifact against the STATED SCOPE of this workflow/stage/PR — the Expected
+  Workflow/Stage
   Output below and what the artifacts actually claim — NOT against an ideal final system.
   A capability the artifacts do not claim to provide is OUT-OF-SCOPE, not a defect.
   The following are OUT-OF-SCOPE BACKLOG unless THIS artifact explicitly claims to provide

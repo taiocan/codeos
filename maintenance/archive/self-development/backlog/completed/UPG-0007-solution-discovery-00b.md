@@ -2,7 +2,7 @@
 feature_id: UPG-0007
 slug: solution-discovery-00b
 title: Expanded 00b Solution Discovery / Feature Topology Stage
-status: PROPOSED
+status: SUPERSEDED
 priority: P0
 depends_on: []
 related_features: []
@@ -13,11 +13,16 @@ superseded_by: []
 # Upgrade: solution-discovery-00b — Expanded 00b Solution Discovery / Feature Topology Stage
 
 **Priority**: P0
-**Status**: PROPOSED
+**Status**: SUPERSEDED
 **Type**: toolkit-upgrade
 **Related**: config-discovery, 00b-adr-generator
 
 ## Problem
+
+This proposal was superseded on 2026-08-16 by the approved Solution Framing simplification. The
+active workflow keeps only problem, vision, candidate outcomes, scope, candidate constraints, and
+open architecture concerns; Feature Decomposition and Architecture Synthesis retain their separate
+responsibilities.
 
 Codeos is strong once a feature enters Stage 1. But before Stage 1, there is a need to
 brainstorm possible features, common vocabulary, event families, configuration needs,

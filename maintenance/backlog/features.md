@@ -8,7 +8,6 @@ implemented changes; this file is planning context, not workflow state or implem
 |---|---|---|---|---|
 | UPG-0003 | [UPG-0003-reviewer-decision-brief.md](UPG-0003-reviewer-decision-brief.md) | Reviewer Agent for Stage Gate Decision Briefs | P0 | PILOTED |
 | UPG-0004 | [UPG-0004-stage-4-6-reports.md](UPG-0004-stage-4-6-reports.md) | Structured Stage 4-6 Reports | P0 | PROPOSED |
-| UPG-0007 | [UPG-0007-solution-discovery-00b.md](UPG-0007-solution-discovery-00b.md) | Expanded 00b Solution Discovery / Feature Topology Stage | P0 | PROPOSED |
 | UPG-0042 | [UPG-0042-reviewer-packet-efficiency.md](UPG-0042-reviewer-packet-efficiency.md) | Reduce Reviewer Packet Bloat for Large Stable Files | P2 | PROPOSED |
 | UPG-0048 | [UPG-0048-review-ledger-event-sourcing.md](UPG-0048-review-ledger-event-sourcing.md) | Review Ledger Event Sourcing | P3 | PROPOSED |
 | UPG-0049 | [UPG-0049-external-review-policy-registry.md](UPG-0049-external-review-policy-registry.md) | External Review Policy Registry | P3 | PROPOSED |

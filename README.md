@@ -33,7 +33,7 @@ bash /path/to/Codeos/dba/04-tools/initializer/dba-init.sh [project-name] [remote
 bash /path/to/Codeos/dba/04-tools/initializer/dba-init.sh my-project https://github.com/user/my-project.git
 
 # Then in Claude Code:
-# Paste the contents of .codeos/toolkit/dba/03-prompts/workflow/00-session-start.md
+# Paste the contents of .codeos/toolkit/dba/03-prompts/workflow/support-session-orientation.md
 ```
 
 ## Directory Structure
@@ -89,14 +89,15 @@ myproject/
     └── toolkit -> /path/to/Codeos  — Ignored machine-local mount
 ```
 
-Architecture, discovery, refinement, review, runtime-evidence, and operational-state paths are
+Architecture, framing, refinement, review, runtime-evidence, and operational-state paths are
 created only when the project actually needs them. The full canonical location model is owned by
 the Downstream Project Layout Contract in `dba-system.md`.
 
 ## The DBA Development Loop
 
 ### Before Every Session
-Paste `.codeos/toolkit/dba/03-prompts/workflow/00-session-start.md` to orient Claude.
+Use the Session Orientation support workflow at
+`.codeos/toolkit/dba/03-prompts/workflow/support-session-orientation.md`.
 
 ### Starting a New Project for the First Time
 
@@ -112,14 +113,17 @@ meaning across features, create `.codeos/00-project/terminology.md` from
 `.codeos/toolkit/dba/05-guidance/templates/project-terminology.md`.
 
 **Step 2 — Open Claude Code in the project directory and use
-`.codeos/toolkit/dba/03-prompts/workflow/00-session-start.md`.** Name the target feature or structural task.
+`.codeos/toolkit/dba/03-prompts/workflow/support-session-orientation.md`.** Name the target feature or structural task.
 
 **Step 3 — Claude reads the active DBA components and the project `CLAUDE.md` and confirms — verify it names both.**
 1. `.codeos/toolkit/dba-system.md` — stable entrypoint and downstream layout owner
 2. `.codeos/00-project/CLAUDE.md` — the canonical project instructions you just filled in
 
+If the solution itself is still unclear, use the optional, non-authoritative Solution Framing
+workflow at `.codeos/toolkit/dba/03-prompts/workflow/support-solution-framing.md` before Step 4.
+
 **Step 4 — Establish the Solution Charter.**
-Use `.codeos/toolkit/dba/03-prompts/workflow/00-charter.md` to write and approve
+Use `.codeos/toolkit/dba/03-prompts/workflow/support-solution-charter.md` to write and approve
 `.codeos/00-project/charter.md`. It owns the `purpose-approval` boundary and must be approved before
 the first Specification Package approval.
 
@@ -137,7 +141,7 @@ resumption prompt; go straight to the stage prompt.
 When starting a fresh session on a project where work is already in progress:
 
 **Step 1 — Open Claude Code in the project directory and use
-`.codeos/toolkit/dba/03-prompts/workflow/00-session-start.md`.** Name the target feature or task. The prompt
+`.codeos/toolkit/dba/03-prompts/workflow/support-session-orientation.md`.** Name the target feature or task. The prompt
 reads the matching live artifacts; do not copy repository state into the prompt.
 
 **Step 2 — Claude reads these two files (verify it confirms both):**
@@ -158,12 +162,23 @@ through the Stage 4 `delivery-entry` adapter, which owns compatibility and entry
 **What Claude cannot recover automatically:** any decisions or clarifications that happened only in conversation and were never written into an artifact. If a decision was important, it should have been captured in an artifact at the time. If it wasn't, re-state it explicitly when you resume.
 
 ### For Each Feature
-Work through stages in order. Decision behavior comes from the selected doctrine and the named
-boundary adapters:
+Support workflows route or prepare work without becoming lifecycle stages:
+
+| Support workflow | Current compatibility path | Purpose |
+|---|---|---|
+| Solution Framing | `support-solution-framing.md` | Propose problem, vision, outcomes, scope, and constraints without approving them |
+| Solution Charter | `support-solution-charter.md` | Approve the minimum solution-level authority |
+| Feature Decomposition | `support-feature-decomposition.md` | Divide approved solution scope into candidate features when needed |
+| Existing-Codebase Intake | `support-existing-codebase-intake.md` | Route observed existing behavior into normal DBA work |
+| Architecture Synthesis | `support-architecture-synthesis.md` | Approve required project-level structure |
+| Session Orientation | `support-session-orientation.md` | Select the applicable workflow from live state |
+| Session Handoff | `support-session-handoff.md` | Summarize current state for resumption |
+
+Work through governed Stages 1–9 in order. Decision behavior comes from the selected doctrine and
+the named boundary adapters:
 
 | Stage | File | Purpose | Claude produces | Boundary owner |
 |---|---|---|---|---|
-| 0 | `.codeos/toolkit/dba/03-prompts/workflow/00-charter.md` | Establish solution purpose, outcomes, boundary, and System Constraints | Charter in `00-project/` | `purpose-approval` adapter |
 | 1 | `.codeos/toolkit/dba/03-prompts/workflow/01-intent.md` | Capture *why* the feature exists — actor + outcome, no implementation details | Intent in `01-specification/intents/` | — |
 | 2 | `.codeos/toolkit/dba/03-prompts/workflow/02-contract.md` | Translate Intent into independently testable behavior | Contract in `01-specification/contracts/` | — |
 | 3 | `.codeos/toolkit/dba/03-prompts/workflow/03-event-schema.md` | Complete and cross-check the Specification Package | Event Schema in `01-specification/event-schemas/` | `specification-approval` adapter |
@@ -174,9 +189,9 @@ boundary adapters:
 | 8 | `.codeos/toolkit/dba/03-prompts/workflow/08-replay.md` | Verify replay and conformance | Inline final review package | `final-acceptance` adapter |
 | 9 | `.codeos/toolkit/dba/03-prompts/workflow/09-refine.md` | Apply targeted refinement and return to verification | Optional durable refinement | Stage 8 adapter |
 
-## Stage Purposes
+## Workflow Purposes
 
-### Stage 0 — Session Start
+### Support Workflow — Session Orientation
 **Purpose:** Orient Claude from live repository state, classify the target work, and select the
 applicable workflow. Claude reads the active DBA entrypoint, project instructions, and only the
 artifacts relevant to the target. Incomplete Specification Packages are normal work in progress.
@@ -206,7 +221,8 @@ invent placeholder events.
 ### Stage 4 — Implementation
 **Purpose:** Satisfy governed specification using normal internal engineering choices. This stage
 owns the `delivery-entry` adapter.
-**Key constraint:** Apply the constraints selected by the active doctrine.
+**Key constraint:** Apply the constraints selected by the active doctrine. Stage 4 owns local,
+reasonably reversible design inside approved architectural boundaries.
 
 ### Stage 5 — Tests
 **Purpose:** Write behavioral truth anchors that fail if observable behavior deviates from the

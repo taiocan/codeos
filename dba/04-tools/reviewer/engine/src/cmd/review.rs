@@ -64,7 +64,7 @@ pub fn prepare(
     cfg: &Config,
 ) -> std::result::Result<PreparedReview, PrepareFailure> {
     validate_identifier("feature", &args.feature)?;
-    validate_identifier("stage", &args.stage)?;
+    validate_identifier("workflow-or-stage", &args.stage)?;
 
     args.artifacts = normalize_paths(&args.artifacts, cfg, true, "artifact")?;
     args.sha_only = normalize_paths(&args.sha_only, cfg, true, "--sha-only")?;

@@ -30,8 +30,7 @@ Canonical durable locations are:
 | Event Schema | `.codeos/01-specification/event-schemas/<feature-id>_schema.md` | Required per feature |
 | Architecture Scope | `.codeos/02-architecture/scopes/<scope-id>.md` | Only when architecture synthesis applies |
 | Implementation Profile | `.codeos/02-architecture/implementation-profile.yaml` | Only when adopted |
-| Saved discovery | `.codeos/00-discovery/<topic-slug>.md` | Only when it has durable value |
-| Full-Solution Concept | `.codeos/00-discovery/solution-concept.md` | Only when whole-solution reasoning has durable value |
+| Saved framing or decomposition | `.codeos/00-discovery/<topic-slug>.md` | Only when it has durable value |
 | Refinement record | `.codeos/04-refinement/<feature-id>-<slug>.md` | Only when it has durable value |
 | Reviewer configuration | `.codeos/05-review/reviewer.toml` | Only when defaults are overridden |
 | Automated review records | `.codeos/05-review/reviews/` | Created and owned by the reviewer tool |
@@ -92,6 +91,11 @@ Unversioned canonical resources are not selected through this configuration. Con
 normal paths under `.codeos/toolkit/dba/03-prompts/`, `.codeos/toolkit/dba/04-tools/`, and
 `.codeos/toolkit/dba/05-guidance/`.
 
+Numeric workflow prefixes `01` through `09` are reserved for governed Stage IDs and correspond
+exactly to Stages 1 through 9. Every non-stage workflow prompt uses a descriptive
+`support-<role>.md` filename. Support workflows are not stages and MUST NOT be described as Stage
+0, Stage 3b, or additional lifecycle stages.
+
 The selected doctrine is the sole source of DBA semantic guarantees. Operational consequences may
 be encoded only at genuine execution boundaries marked `DOCTRINE ADAPTER`; other consumers refer
 to the doctrine or an adapter instead of restating its semantics.
@@ -102,8 +106,8 @@ This index is descriptive navigation, not a second authority source:
 
 | Boundary | Owning prompt |
 |---|---|
-| `purpose-approval` | `.codeos/toolkit/dba/03-prompts/workflow/00-charter.md` |
+| `purpose-approval` | `.codeos/toolkit/dba/03-prompts/workflow/support-solution-charter.md` |
 | `specification-approval` | `.codeos/toolkit/dba/03-prompts/workflow/03-event-schema.md` |
 | `delivery-entry` | `.codeos/toolkit/dba/03-prompts/workflow/04-implement.md` |
 | `final-acceptance` | `.codeos/toolkit/dba/03-prompts/workflow/08-replay.md` |
-| `architecture-entry` | `.codeos/toolkit/dba/03-prompts/workflow/03b-architecture-synthesis.md` |
+| `architecture-entry` | `.codeos/toolkit/dba/03-prompts/workflow/support-architecture-synthesis.md` |

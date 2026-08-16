@@ -181,6 +181,10 @@ fn review_help_exposes_only_current_evidence_controls() {
             "missing current option {current}: {stdout}"
         );
     }
+    assert!(
+        stdout.contains("<WORKFLOW_OR_STAGE>"),
+        "review target is still presented as stage-only: {stdout}"
+    );
     for retired in ["--mode", "--print-packet", "--dry-run", "--provider"] {
         assert!(
             !stdout.contains(retired),

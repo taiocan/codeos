@@ -10,6 +10,7 @@ out_of_scope: Feature behavior, general lifecycle rules, implementation, reviewe
 ## Purpose
 
 Resolve the minimum project-level architecture required before governed feature implementation.
+This is a conditional support workflow, not a numbered stage.
 
 ## Inputs / Prerequisites
 
@@ -31,6 +32,8 @@ duplicate membership, and reuse a matching scope or draft the current architectu
 - Treat approved quality requirements and System Constraints as inputs. Record the structural
   consequences they force; never originate a new one here.
 - Leave decisions that are local to one component and reasonably reversible to implementation.
+- Govern project-level structure only; Stage 4 owns local implementation design inside the
+  approved architectural boundaries.
 - Return a missing requirement to its owning source: a behavioral gap to the affected Specification
   Package, a feature-specific quality requirement to that feature's Contract, and a cross-cutting
   quality requirement or other System Constraint to the Solution Charter.

@@ -617,7 +617,10 @@ mod tests {
             format_review_id("UPG-0046__CHG-20260713-001", "selfdev-step-1", 1),
             "REV__UPG-0046__CHG-20260713-001__selfdev-step-1__R1"
         );
-        assert_eq!(format_review_id("checkout-flow", "brief", 2), "REV__checkout-flow__brief__R2");
+        assert_eq!(
+            format_review_id("checkout-flow", "decomposition", 2),
+            "REV__checkout-flow__decomposition__R2"
+        );
         assert_eq!(format_review_id("checkout-flow", "7", 1), "REV__checkout-flow__7__R1");
     }
 

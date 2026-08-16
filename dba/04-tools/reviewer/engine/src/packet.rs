@@ -133,7 +133,7 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
         let n: u32 = opts.stage.parse().unwrap();
         format!("{}", n.saturating_sub(1))
     } else {
-        "n/a (non-numeric stage)".to_string()
+        "n/a (non-numeric review target)".to_string()
     };
 
     let base_sha = opts.delta_base.clone().unwrap_or_default();
@@ -453,7 +453,7 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
         ""
     };
     content.push_str(&format!(
-        "\nREVIEW CONTEXT\n  Feature:                {feature}\n  Stage:                  {stage}\n  Branch:                 {branch}\n  Base commit:            {base_sha}\n  Review commit:          {review_sha}{dirty_note}\n  Preceding stage:         {preceding_stage}\n  Evidence coverage:      {coverage}\n  Workspace dirty:        {dirty_text}\n",
+        "\nREVIEW CONTEXT\n  Feature:                {feature}\n  Workflow/stage:         {stage}\n  Branch:                 {branch}\n  Base commit:            {base_sha}\n  Review commit:          {review_sha}{dirty_note}\n  Preceding numeric stage: {preceding_stage}\n  Evidence coverage:      {coverage}\n  Workspace dirty:        {dirty_text}\n",
         feature = opts.feature,
         stage = opts.stage,
         branch = branch,
@@ -464,7 +464,7 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
         dirty_text = if workspace_dirty { "yes (uncommitted changes at review time)" } else { "no" },
     ));
 
-    content.push_str("\nDBA RULES RELEVANT TO THIS STAGE\n");
+    content.push_str("\nDBA RULES RELEVANT TO THIS WORKFLOW/STAGE\n");
     content.push_str("  - Your assessment is advisory and never makes a workflow decision.\n");
     content.push_str(
         "  - Memory is not truth — assess only what is provided, pinned to the review commit.\n",
@@ -484,8 +484,8 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
         );
     }
 
-    content.push_str(&format!("\nSTAGE-SPECIFIC CHECKS\n{}\n", checks));
-    content.push_str(&format!("\nEXPECTED STAGE OUTPUT\n  {}\n", expected));
+    content.push_str(&format!("\nWORKFLOW/STAGE-SPECIFIC CHECKS\n{}\n", checks));
+    content.push_str(&format!("\nEXPECTED WORKFLOW/STAGE OUTPUT\n  {}\n", expected));
     content.push_str("\nARTIFACTS TO REVIEW\n");
     content.push_str(&artifacts_block);
 
@@ -769,9 +769,9 @@ pub fn sha256_str(s: &str) -> String {
 
 fn stage_expected(stage: &str) -> &'static str {
     match stage {
-        "discovery" => "Solution Discovery — candidate feature topology, shared vocabulary, event/config hypotheses, architectural risks, explicit non-decisions; every item labeled CANDIDATE/HYPOTHESIZED; non-authoritative banner present; carried claims are reviewed at the next applicable review point.",
-        "brief" => "Optional discovery brief — one problem decomposed into candidate feature outcomes and boundaries; no feature IDs, lifecycle state, approval, or implementation detail.",
-        "onboarding" => "Onboarding — draft Intent inputs derived from observation plus human intent; existing partial packages are valid and work continues through the normal Specification Package flow.",
+        "framing" => "Solution Framing — problem, vision, candidate outcomes, scope, candidate constraints, and open architecture concerns; non-authoritative banner present; promoted claims are reviewed at the next applicable review point.",
+        "decomposition" => "Feature Decomposition — one approved solution problem decomposed into candidate feature outcomes and boundaries; no feature IDs, lifecycle state, approval, or implementation detail.",
+        "intake" => "Existing-Codebase Intake — draft Intent inputs derived from observation plus human intent; existing partial packages are valid and work continues through the normal Specification Package flow.",
         "1" => "Intent — actor+outcome statements, stable guarantees, explicit scope boundary; NO implementation detail.",
         "2" => "Behavioral contract — observable Given/When/Then scenarios, named failure modes, invariants; independently testable; no white-box claims.",
         "3" => "Specification Package — Intent, Contract, and Event Schema reviewed together for mutual consistency; observation mode is explicit; every Contract rule traces to Intent and every governed event traces to Contract.",
@@ -787,9 +787,9 @@ fn stage_expected(stage: &str) -> &'static str {
 
 fn stage_checks(stage: &str) -> String {
     match stage {
-        "discovery" => "  - every item labeled CANDIDATE/HYPOTHESIZED, not approved; non-authoritative banner present; no intent/contract/schema language; out-of-scope findings recorded as backlog candidates, not acted on.".to_string(),
-        "brief" => "  - shared problem clear; candidate outcomes and boundaries are distinct; no IDs, lifecycle state, approval, or implementation detail; each accepted candidate can proceed independently to Intent.".to_string(),
-        "onboarding" => "  - normal draft Intent inputs used; observed behavior is not laundered into intent; infrastructure is not treated as a feature; normal Specification Package route named.".to_string(),
+        "framing" => "  - candidate outcomes and constraints are not approved; non-authoritative banner present; architecture concerns remain open; no components, flows, interfaces, technologies, governed artifacts, or implementation structure.".to_string(),
+        "decomposition" => "  - approved Charter boundary is preserved; candidate outcomes and boundaries are distinct; no IDs, lifecycle state, approval, or implementation detail; each accepted candidate can proceed independently to Intent.".to_string(),
+        "intake" => "  - normal draft Intent inputs used; observed behavior is not laundered into intent; infrastructure is not treated as a feature; normal Specification Package route named.".to_string(),
         "1" => "  - actor/outcome clarity; no implementation detail; scope boundary explicit; stable guarantees clear; ambiguity flagged.".to_string(),
         "2" => "  - every intent outcome has observable contract coverage; failure paths named; invariants testable; no white-box claims.".to_string(),
         "3" => "  - Intent, Contract, and Event Schema are all present; observation mode is explicit; every Contract rule traces to Intent; every governed event traces to Contract; external-observation mode invents no placeholder events.".to_string(),
@@ -850,7 +850,7 @@ mod tests {
 
     #[test]
     fn stage_expected_new_downstream_identifiers_are_real_not_placeholder() {
-        for stage in ["discovery", "brief", "onboarding"] {
+        for stage in ["framing", "decomposition", "intake"] {
             let text = stage_expected(stage);
             assert_ne!(
                 text, "(no expected-output template for stage)",
@@ -862,13 +862,26 @@ mod tests {
 
     #[test]
     fn stage_checks_new_downstream_identifiers_are_real_not_placeholder() {
-        for stage in ["discovery", "brief", "onboarding"] {
+        for stage in ["framing", "decomposition", "intake"] {
             let text = stage_checks(stage);
             assert!(
                 !text.contains("no stage-specific checklist"),
                 "stage '{}' must have real checklist text",
                 stage
             );
+        }
+    }
+
+    #[test]
+    fn framing_token_reviews_solution_framing_without_architecture_decisions() {
+        let expected = stage_expected("framing");
+        let checks = stage_checks("framing");
+        assert!(expected.contains("Solution Framing"));
+        assert!(expected.contains("candidate outcomes"));
+        assert!(expected.contains("open architecture concerns"));
+        assert!(checks.contains("architecture concerns remain open"));
+        for forbidden in ["components", "flows", "interfaces", "technologies"] {
+            assert!(checks.contains(forbidden));
         }
     }
 
@@ -957,9 +970,9 @@ mod tests {
     fn stage_4_deferral_question_is_scoped_to_stage_4_only() {
         // No other stage's checklist mentions the trace.
         for stage in [
-            "discovery",
-            "brief",
-            "onboarding",
+            "framing",
+            "decomposition",
+            "intake",
             "1",
             "2",
             "3",
