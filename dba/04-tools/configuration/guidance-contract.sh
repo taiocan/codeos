@@ -51,7 +51,7 @@ rg -q 'only their promotion into an approved Charter makes them' "${CHARTER_PROM
   fail 'Solution Charter promotion boundary is missing'
 rg -q 'Stage 4 owns local implementation design' "${ARCHITECTURE_PROMPT}" || \
   fail 'Architecture Synthesis design boundary is missing'
-rg -q 'local, reasonably reversible design decisions' "${IMPLEMENT_PROMPT}" || \
+rg -q 'feature-local design decisions inside approved architectural boundaries' "${IMPLEMENT_PROMPT}" || \
   fail 'Stage 4 local design ownership is missing'
 
 printf 'guidance contract: PASS\n'
