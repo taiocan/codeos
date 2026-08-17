@@ -31,7 +31,8 @@ duplicate membership, and reuse a matching scope or draft the current architectu
 - Derive decisions from approved requirements or explicit human architectural decisions.
 - Treat approved quality requirements and System Constraints as inputs. Record the structural
   consequences they force; never originate a new one here.
-- Leave decisions that are local to one component and reasonably reversible to implementation.
+- Leave decisions that are local to one component to implementation, even when reversing them would
+  be costly; implementation records those in its Stage 4 output.
 - Govern project-level structure only; Stage 4 owns local implementation design inside the
   approved architectural boundaries.
 - Return a missing requirement to its owning source: a behavioral gap to the affected Specification

@@ -180,7 +180,7 @@ decision has an owning level, and a lower level must not silently redefine a dec
 | 4 | Scope & Constraints | Solution Charter (solution) and Intent (feature) |
 | 5 | Requirements | Behavioral Contract, including its quality requirements; Charter System Constraints for cross-cutting ones |
 | 6 | Architecture | Architecture Scope, under the architecture-synthesis policy |
-| 7 | Design | Architecture Scope where the decision crosses boundaries or is costly to reverse; implementation otherwise |
+| 7 | Design | Architecture Scope where the decision crosses a shared boundary; implementation otherwise, recording its costly-to-reverse decisions at Stage 4 |
 | 8 | Detailed Specification | Behavioral Contract and Event Schema |
 | 9 | Implementation | Stage 4, under any approved Implementation Profile |
 | 10 | Verification | Stages 5, 7, and 8 |

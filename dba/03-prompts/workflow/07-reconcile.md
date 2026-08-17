@@ -55,6 +55,11 @@ Confirm Intent-to-Contract coverage, Contract-to-Event-Schema consistency where 
 implementation conformance, test coverage, quality-requirement verification, and runtime evidence. Structural observations may be
 noted separately when they affect future change cost, but they do not alter behavioral statuses.
 
+Reassess the Stage 4 structural decision record only for misclassification: if implementation
+revealed that a recorded decision establishes or constrains a shared boundary, route it to
+architecture synthesis before acceptance. Do not otherwise judge whether a recorded decision was
+good.
+
 Use this exact table shape:
 
 | Item | Intent | Contract | Event Schema | Implementation | Tests | Runtime / Observation | Status | Evidence | Note |

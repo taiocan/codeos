@@ -221,8 +221,9 @@ invent placeholder events.
 ### Stage 4 — Implementation
 **Purpose:** Satisfy governed specification using normal internal engineering choices. This stage
 owns the `delivery-entry` adapter.
-**Key constraint:** Apply the constraints selected by the active doctrine. Stage 4 owns local,
-reasonably reversible design inside approved architectural boundaries.
+**Key constraint:** Apply the constraints selected by the active doctrine. Stage 4 owns feature-local
+design inside approved architectural boundaries, recording inline any such decision that is costly to
+reverse.
 
 ### Stage 5 — Tests
 **Purpose:** Write behavioral truth anchors that fail if observable behavior deviates from the

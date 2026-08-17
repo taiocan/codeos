@@ -34,8 +34,13 @@ when applicable; project architecture and approved behavior remain authoritative
   map only authorized failures to authorized events or signals.
 - Use normal helpers, types, validation, logging, and established patterns when they preserve all
   governed boundaries.
-- Make local, reasonably reversible design decisions inside approved architectural boundaries;
-  do not promote those choices into project-level architecture.
+- Make feature-local design decisions inside approved architectural boundaries, including ones that
+  would be costly to reverse; do not promote those choices into project-level architecture.
+- Record a feature-local structural decision only when it is not cheap to undo, as
+  `decision | rationale | affected scope`. Ordinary class, module, function, helper, validation, and
+  error-style choices are never recorded, and a routine feature records nothing. A decision that
+  establishes or constrains a shared boundary is not recorded here at all; it stops and returns to
+  architecture synthesis.
 - Identify affected structural chokepoints before editing and use verification proportional to
   their risk.
 - Stop when implementation would require changing approved behavior, event semantics, architecture,
@@ -54,6 +59,7 @@ for inline delivery evidence rather than restating its format here.
 ## Output / Next Action
 
 Implement in the project's native source layout. Present the changed paths, implementation,
-Contract satisfaction mapping, applicable event mapping, failure mapping, and any genuine deferral
-trace. This stage creates no separate workflow artifact. Continue directly to `05-tests.md` without
-an intermediate approval unless the human requests one.
+Contract satisfaction mapping, applicable event mapping, failure mapping, any costly-to-reverse
+feature-local structural decisions, and any genuine deferral trace. This stage creates no separate
+workflow artifact; the decision record is inline and is never written to a file. Continue directly
+to `05-tests.md` without an intermediate approval unless the human requests one.

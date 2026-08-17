@@ -122,6 +122,8 @@ event -> emitted at -> condition        (Stage 4; leave empty for Stage 5)
 
 <<<CODEOS:NONCE:SECTION:notes>>>
 internal choices not fixed by the artifacts, and anything a reviewer should check
+plus any feature-local structural decision that is not cheap to undo, as
+  decision | rationale | affected scope
 <<<CODEOS:NONCE:ENDSECTION>>>
 ```
 
