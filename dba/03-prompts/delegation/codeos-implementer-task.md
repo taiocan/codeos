@@ -78,10 +78,14 @@ you believe a constraint is wrong or makes the contract unsatisfiable, say so in
 
 ## Stage 5 (Tests)
 
-- Write tests of **observable** behavior — state changes, approved failure signals, and idempotency
-  only if the Contract specifies it. In `events` mode, include governed event and replay checks. In
-  `external-observation` mode, verify the declared observation artifact without inventing event or
-  replay requirements. Do not test private methods, internal state, or intermediate computations.
+- Write tests for all **applicable approved behavior**: observable outcomes, governed failures,
+  Event Schema behavior when `events` mode applies, replay-relevant semantics when applicable, and
+  Contract falsifiers. In `external-observation` mode, verify the declared observation artifact
+  without inventing event or replay requirements. Test idempotency only when the Contract specifies
+  it. Do not test private methods, internal state, or intermediate computations.
+- When implementation is supplied as supporting context, use it only to discover public interfaces
+  and mechanical integration. Derive expected behavior from the Contract and Event Schema, never
+  from what the current implementation happens to do. If they disagree, the approved artifacts win.
 - In event mode, use event names from the approved Event Schema exactly as written.
 
 ## Repair requests

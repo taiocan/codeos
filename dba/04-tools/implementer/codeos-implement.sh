@@ -54,8 +54,12 @@
 #   DEEPSEEK_API_KEY        required when enabled. Read only into the HTTP Authorization header via a
 #                           curl config on stdin — never placed in argv, the request body, the
 #                           preserved packet, the response dump, or any candidate file.
-#   CODEOS_DEEPSEEK_MODEL   optional, default "deepseek-chat".
+#   CODEOS_DEEPSEEK_MODEL   optional, default "deepseek-v4-flash".
 #   CODEOS_DEEPSEEK_URL     optional, default "https://api.deepseek.com/chat/completions".
+#   CODEOS_DEEPSEEK_MAX_TOKENS
+#                           optional, default 32768. The only other supported value is 65536, for
+#                           one explicit pilot retry after finish_reason=length. A retry is a new
+#                           invocation so both attempts remain visible and count toward cost.
 #
 # Exit codes:
 #   0  success — candidate staged
@@ -226,8 +230,13 @@ if [[ -z "${DEEPSEEK_API_KEY:-}" ]]; then
   exit 6
 fi
 
-MODEL="${CODEOS_DEEPSEEK_MODEL:-deepseek-chat}"
+MODEL="${CODEOS_DEEPSEEK_MODEL:-deepseek-v4-flash}"
 DS_URL="${CODEOS_DEEPSEEK_URL:-https://api.deepseek.com/chat/completions}"
+MAX_TOKENS="${CODEOS_DEEPSEEK_MAX_TOKENS:-32768}"
+if [[ "${MAX_TOKENS}" != "32768" && "${MAX_TOKENS}" != "65536" ]]; then
+  err "CODEOS_DEEPSEEK_MAX_TOKENS must be 32768 or 65536; got '${MAX_TOKENS}'"
+  exit 3
+fi
 TASK_PROMPT="${CODEOS_ROOT}/dba/03-prompts/delegation/codeos-implementer-task.md"
 [[ -f "${TASK_PROMPT}" ]] || { err "implementer task prompt not found: ${TASK_PROMPT}"; exit 8; }
 
@@ -324,11 +333,14 @@ REQ_BODY="${STAGE_DIR}/request.json"
 # and jq then dies with "Argument list too long". Reading from the files avoids argv entirely, so
 # packet size is bounded by memory rather than by an exec limit.
 jq -n --arg model "${MODEL}" \
+      --argjson max_tokens "${MAX_TOKENS}" \
       --rawfile sys "${TASK_PROMPT}" \
       --rawfile usr "${STAGE_DIR}/user_content.txt" \
   '{model:$model,
     messages:[{role:"system",content:$sys},{role:"user",content:$usr}],
-    temperature:0,
+    thinking:{type:"enabled"},
+    reasoning_effort:"high",
+    max_tokens:$max_tokens,
     stream:false}' > "${REQ_BODY}"
 
 # ── 8. Call DeepSeek. Key is passed via a curl config on stdin (never argv / body / files). ──────
@@ -348,11 +360,35 @@ if [[ ! "${HTTP_CODE}" =~ ^2[0-9][0-9]$ ]]; then
   exit 8
 fi
 
-# Extract the model's plain-text reply verbatim.
+# Record response accounting before interpreting or parsing the candidate. This keeps a truncated or
+# otherwise non-normal response attributable without persisting the model's reasoning content.
+PT="$(jq -r '.usage.prompt_tokens // "?"' "${RESP_FILE}")"
+CT="$(jq -r '.usage.completion_tokens // "?"' "${RESP_FILE}")"
+TT="$(jq -r '.usage.total_tokens // "?"' "${RESP_FILE}")"
+PCH="$(jq -r '.usage.prompt_cache_hit_tokens // "?"' "${RESP_FILE}")"
+PCM="$(jq -r '.usage.prompt_cache_miss_tokens // "?"' "${RESP_FILE}")"
+RT="$(jq -r '.usage.completion_tokens_details.reasoning_tokens // "?"' "${RESP_FILE}")"
+RETURNED_MODEL="$(jq -r '.model // "?"' "${RESP_FILE}")"
+FINISH_REASON="$(jq -r '.choices[0].finish_reason // "?"' "${RESP_FILE}")"
+printf 'prompt_tokens=%s completion_tokens=%s total_tokens=%s prompt_cache_hit_tokens=%s prompt_cache_miss_tokens=%s reasoning_tokens=%s requested_model=%s returned_model=%s finish_reason=%s max_tokens=%s\n' \
+  "${PT}" "${CT}" "${TT}" "${PCH}" "${PCM}" "${RT}" "${MODEL}" "${RETURNED_MODEL}" \
+  "${FINISH_REASON}" "${MAX_TOKENS}" > "${STAGE_DIR}/tokens.txt"
+
+# Extract the model's plain-text reply verbatim, even for a non-normal finish, so the audit captures
+# what actually arrived. Only a natural stop is eligible for candidate parsing and staging.
 CONTENT_TXT="${STAGE_DIR}/model_content.txt"
 jq -r '.choices[0].message.content // empty' "${RESP_FILE}" > "${CONTENT_TXT}"
+if [[ "${FINISH_REASON}" != "stop" ]]; then
+  err "model response is not a valid candidate (finish_reason=${FINISH_REASON}); see ${RESP_FILE}"
+  if [[ "${FINISH_REASON}" == "length" && "${MAX_TOKENS}" == "32768" ]]; then
+    err "       pilot policy permits one explicit retry with CODEOS_DEEPSEEK_MAX_TOKENS=65536"
+  fi
+  rmdir "${STAGE_DIR}/candidate" 2>/dev/null || true
+  exit 8
+fi
 if [[ ! -s "${CONTENT_TXT}" ]]; then
   err "model returned an empty reply; see ${RESP_FILE}"
+  rmdir "${STAGE_DIR}/candidate" 2>/dev/null || true
   exit 8
 fi
 
@@ -461,23 +497,18 @@ for s in contract_satisfaction event_emission notes; do
   [[ -f "${STAGE_DIR}/${s}.txt" ]] || : > "${STAGE_DIR}/${s}.txt"
 done
 
-# Token usage.
-PT="$(jq -r '.usage.prompt_tokens // "?"' "${RESP_FILE}")"
-CT="$(jq -r '.usage.completion_tokens // "?"' "${RESP_FILE}")"
-TT="$(jq -r '.usage.total_tokens // "?"' "${RESP_FILE}")"
-printf 'prompt_tokens=%s completion_tokens=%s total_tokens=%s model=%s\n' "${PT}" "${CT}" "${TT}" "${MODEL}" \
-  > "${STAGE_DIR}/tokens.txt"
-
 # Append one invocation record to the log.
 {
   printf '## %s — %s stage %s\n' "${TS}" "${FEATURE}" "${STAGE}"
-  printf -- '- model: %s\n' "${MODEL}"
-  printf -- '- tokens: prompt=%s completion=%s total=%s\n' "${PT}" "${CT}" "${TT}"
+  printf -- '- model: requested=%s returned=%s\n' "${MODEL}" "${RETURNED_MODEL}"
+  printf -- '- response: finish_reason=%s max_tokens=%s\n' "${FINISH_REASON}" "${MAX_TOKENS}"
+  printf -- '- tokens: prompt=%s completion=%s reasoning=%s total=%s cache_hit=%s cache_miss=%s\n' \
+    "${PT}" "${CT}" "${RT}" "${TT}" "${PCH}" "${PCM}"
   printf -- '- candidate files: %s\n' "${NFILES}"
   printf -- '- staging: %s\n\n' "${STAGE_DIR}"
 } >> "${LOG_FILE}"
 
 echo "candidate staged: ${STAGE_DIR}/candidate  (${NFILES} file(s))"
-echo "  tokens: prompt=${PT} completion=${CT} total=${TT}   model=${MODEL}"
+echo "  tokens: prompt=${PT} completion=${CT} reasoning=${RT} total=${TT}   model=${RETURNED_MODEL}"
 echo "  audit:  packet=${STAGE_DIR}/packet.txt  response=${RESP_FILE}  log=${LOG_FILE}"
 echo "  NOTE: candidate only — promote manually; the Stage ${STAGE} human gate + advisory review still apply."

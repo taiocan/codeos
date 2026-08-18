@@ -15,6 +15,8 @@ Env:
   CODEOS_STUB_PORT     port to bind (default 8931)
   CODEOS_STUB_STATUS   HTTP status to return (default 200) — set non-2xx to exercise exit 8
   CODEOS_STUB_RAW      if set, return this literal body instead of a chat-completions envelope
+  CODEOS_STUB_FINISH_REASON
+                       completion finish reason (default stop)
 """
 import http.server
 import json
@@ -26,6 +28,7 @@ FIXTURE = os.environ.get("CODEOS_STUB_FIXTURE", "")
 PORT = int(os.environ.get("CODEOS_STUB_PORT", "8931"))
 STATUS = int(os.environ.get("CODEOS_STUB_STATUS", "200"))
 RAW = os.environ.get("CODEOS_STUB_RAW")
+FINISH_REASON = os.environ.get("CODEOS_STUB_FINISH_REASON", "stop")
 
 
 class Handler(http.server.BaseHTTPRequestHandler):
@@ -61,11 +64,20 @@ class Handler(http.server.BaseHTTPRequestHandler):
 
         out = json.dumps(
             {
-                "choices": [{"message": {"content": content}}],
+                "choices": [
+                    {
+                        "finish_reason": FINISH_REASON,
+                        "message": {"content": content},
+                    }
+                ],
+                "model": "deepseek-v4-flash",
                 "usage": {
                     "prompt_tokens": 1234,
                     "completion_tokens": 567,
                     "total_tokens": 1801,
+                    "prompt_cache_hit_tokens": 1000,
+                    "prompt_cache_miss_tokens": 234,
+                    "completion_tokens_details": {"reasoning_tokens": 321},
                 },
             }
         ).encode()

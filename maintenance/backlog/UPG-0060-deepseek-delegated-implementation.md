@@ -5,7 +5,7 @@ title: DeepSeek-Delegated Implementation for Stages 4-5
 status: PILOTED   # negative result — CHG-A COMPLETE and shipped off by default; CHG-B NOT DONE (2026-08-03)
 priority: P2
 depends_on: [UPG-0056]
-related_features: [UPG-0057, UPG-0064]
+related_features: [UPG-0057, UPG-0064, UPG-0066]
 supersedes: []
 superseded_by: []
 ---
@@ -239,7 +239,7 @@ cost of writing the code directly.
 
 **3. A Stage-5-only re-scope** — delegating test authoring from an approved contract instead of
 implementation. Tests are more mechanical given a contract, and a wrong test fails loudly rather than
-shipping a silent invariant violation. A different feature shape; would warrant its own brief rather
+shipping a silent invariant violation. This different feature shape is now owned by UPG-0066 rather
 than reviving CHG-B.
 
 **Judging any re-test.** Score the three axes separately and report them separately — a gain on one
@@ -277,4 +277,4 @@ feature stays closed.
 
 | Feature ID | Reason | Source finding |
 |---|---|---|
-| — | — | — |
+| UPG-0066 | Test Stage 5 independently before any broader delegation role | Negative Stage 4 evidence and the Stage-5-only re-scope above |

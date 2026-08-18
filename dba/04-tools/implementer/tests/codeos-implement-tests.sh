@@ -47,7 +47,8 @@ fixture() { printf '%s\n' "$1" > "${WORK}/fixture.txt"; export CODEOS_STUB_FIXTU
 
 start_stub() {
   [[ -n "${STUB_PID}" ]] && { kill "${STUB_PID}" 2>/dev/null; wait "${STUB_PID}" 2>/dev/null; }
-  CODEOS_STUB_PORT="${PORT}" CODEOS_STUB_STATUS="${1:-200}" python3 "${STUB}" >/dev/null 2>&1 &
+  CODEOS_STUB_PORT="${PORT}" CODEOS_STUB_STATUS="${1:-200}" \
+    CODEOS_STUB_FINISH_REASON="${2:-stop}" python3 "${STUB}" >/dev/null 2>&1 &
   STUB_PID=$!
   for _ in $(seq 1 50); do
     (exec 3<>/dev/tcp/127.0.0.1/"${PORT}") 2>/dev/null && { exec 3>&-; return 0; }
@@ -110,16 +111,56 @@ else
   bad "C6 source verbatim" "source file missing"
 fi
 
-# ── criterion 16: audit set + token instrumentation survive the protocol change ──────────────────
+# ── criterion 16: V4 request shape + response accounting survive the protocol change ─────────────
 missing=""
 for f in packet.txt request.json response.json model_content.txt tokens.txt \
          contract_satisfaction.txt event_emission.txt notes.txt; do
   [[ -f "${SD}/${f}" ]] || missing="${missing} ${f}"
 done
-grep -q 'prompt_tokens=1234 completion_tokens=567 total_tokens=1801' "${SD}/tokens.txt" 2>/dev/null \
+grep -qF 'prompt_tokens=1234 completion_tokens=567 total_tokens=1801 prompt_cache_hit_tokens=1000 prompt_cache_miss_tokens=234 reasoning_tokens=321 requested_model=deepseek-v4-flash returned_model=deepseek-v4-flash finish_reason=stop max_tokens=32768' "${SD}/tokens.txt" 2>/dev/null \
   && toks=1 || toks=0
 [[ -z "${missing}" && "${toks}" == 1 ]] && ok "C16 audit set complete + tokens recorded" \
                                         || bad "C16 audit set" "missing:${missing} tokens_ok=${toks}"
+if jq -e '.model == "deepseek-v4-flash"
+          and .thinking.type == "enabled"
+          and .reasoning_effort == "high"
+          and .max_tokens == 32768
+          and (.temperature == null)' "${SD}/request.json" >/dev/null; then
+  ok "C16 current V4 request shape is explicit and bounded"
+else
+  bad "C16 V4 request shape" "$(jq -c '{model,thinking,reasoning_effort,max_tokens,temperature}' "${SD}/request.json")"
+fi
+
+# A length-terminated response is preserved and accounted, but never parsed into a candidate. The
+# retry remains an explicit second invocation; 65536 is available only for that bounded pilot use.
+fixture '<<<CODEOS:{N}:FILE:modules/thing/src/lib.rs>>>
+partial
+<<<CODEOS:{N}:ENDFILE>>>'
+start_stub 200 length
+reset_state; enable_mech
+rc=$(run_tool F-0001 4 .codeos/01-specification/intents/F-0001.md)
+LENGTH_SD="$(latest_stage_dir)"
+staged=$(find "${LENGTH_SD}/candidate" -type f 2>/dev/null | wc -l)
+if [[ "${rc}" == "8" && "${staged}" == "0" ]] \
+   && grep -q 'finish_reason=length max_tokens=32768' "${LENGTH_SD}/tokens.txt" \
+   && grep -q 'permits one explicit retry' "${OUT}"; then
+  ok "C16 finish_reason=length is accounted and rejected before staging"
+else
+  bad "C16 length termination" "rc=${rc} staged=${staged} $(tail -2 "${OUT}")"
+fi
+
+start_stub
+reset_state
+rc=$(CODEOS_DEEPSEEK_MAX_TOKENS=65536 run_tool F-0001 4 .codeos/01-specification/intents/F-0001.md)
+RETRY_SD="$(latest_stage_dir)"
+if [[ "${rc}" == "0" ]] && jq -e '.max_tokens == 65536' "${RETRY_SD}/request.json" >/dev/null; then
+  ok "C16 explicit retry can raise the bound to 65536"
+else
+  bad "C16 retry bound" "rc=${rc}"
+fi
+# The retry reset the fixture repository's staging tree. Use that successful, still-present run for
+# the secret scan below rather than the earlier default-bound run.
+SD="${RETRY_SD}"
 
 # ── criterion 13: secret non-leakage — with a positive control on the checker itself ─────────────
 # The checker is asserted to be capable of detecting a planted key BEFORE it is trusted to report
@@ -459,6 +500,8 @@ rc=$( (cd "${WORK}" && bash "${TOOL}" F-0001 4 x.md) >/dev/null 2>&1; echo $?)
 
 rc=$(run_tool F-0001); [[ "${rc}" == "3" ]] && ok "C10 missing args -> exit 3" || bad "C10 missing args" "rc=${rc}"
 rc=$(run_tool F-0001 6 .codeos/01-specification/intents/F-0001.md); [[ "${rc}" == "3" ]] && ok "C10 stage=6 -> exit 3" || bad "C10 stage 6" "rc=${rc}"
+rc=$(CODEOS_DEEPSEEK_MAX_TOKENS=999 run_tool F-0001 4 .codeos/01-specification/intents/F-0001.md)
+[[ "${rc}" == "3" ]] && ok "C10 unsupported max-token bound -> exit 3" || bad "C10 max-token bound" "rc=${rc}"
 
 disable_mech
 rc=$(run_tool F-0001 4 .codeos/01-specification/intents/F-0001.md); [[ "${rc}" == "4" ]] && ok "C10 status:disabled -> exit 4" || bad "C10 disabled" "rc=${rc}"
