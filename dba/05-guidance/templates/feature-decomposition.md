@@ -6,7 +6,7 @@ multiple features or the boundary reasoning has durable value. Simple work proce
 an Intent. This decomposition has no feature ID, status, approval, or lifecycle gate and never
 overrides an Intent, Contract, or Event Schema.
 
-Canonical path when saved: .codeos/00-discovery/[topic-slug].md
+Canonical path when saved: .codeos/00-discovery/<topic-slug>.md
 -->
 
 ## Problem or Opportunity

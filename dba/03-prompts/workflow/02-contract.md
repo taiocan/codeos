@@ -61,5 +61,5 @@ unapproved event requirement appears.
 
 ## Output / Next Action
 
-Create `.codeos/01-specification/contracts/[feature_id]_contract.md` as `DRAFT`, present it, list
+Create `.codeos/01-specification/contracts/<feature-id>_contract.md` as `DRAFT`, present it, list
 unresolved Intent questions, and hand the current Intent and Contract to `03-event-schema.md`.

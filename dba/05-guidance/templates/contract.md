@@ -7,7 +7,7 @@ Contracts describe OBSERVABLE behavior, not internal logic.
 Every clause must be independently testable.
 Its governance transition is owned by the specification-approval doctrine adapter.
 
-DERIVED FROM: .codeos/01-specification/intents/[feature_id].md
+DERIVED FROM: .codeos/01-specification/intents/<feature-id>.md
 -->
 
 ## Scenarios
@@ -216,5 +216,5 @@ status: DRAFT
 feature_id: [feature_id]
 approved_by:
 approved_at:
-derived_from_intent: .codeos/01-specification/intents/[feature_id].md
-derived_event_schema: .codeos/01-specification/event-schemas/[feature_id]_schema.md
+derived_from_intent: .codeos/01-specification/intents/<feature-id>.md
+derived_event_schema: .codeos/01-specification/event-schemas/<feature-id>_schema.md

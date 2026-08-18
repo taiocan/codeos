@@ -13,8 +13,8 @@ the feature defines no governed internal events and maps Contract outcomes to th
 observation artifact.
 
 DERIVED FROM:
-- .codeos/01-specification/intents/[feature_id].md (actors, outcomes)
-- .codeos/01-specification/contracts/[feature_id]_contract.md (state transitions, failure modes)
+- .codeos/01-specification/intents/<feature-id>.md (actors, outcomes)
+- .codeos/01-specification/contracts/<feature-id>_contract.md (state transitions, failure modes)
 -->
 
 ## Naming Convention
@@ -83,7 +83,7 @@ Categories:
 ### [FailureEventName]
 
 - category: FAILURE
-- emitted when: [failure condition from .codeos/01-specification/contracts/[feature_id]_contract.md]
+- emitted when: [failure condition from .codeos/01-specification/contracts/<feature-id>_contract.md]
 - payload:
   - `failure_reason`: `string` — [snake_case reason code]
   - `[field_name]`: `[type]` — [description]
@@ -144,5 +144,5 @@ status: DRAFT
 feature_id: [feature_id]
 approved_by:
 approved_at:
-derived_from_intent: .codeos/01-specification/intents/[feature_id].md
-derived_from_contract: .codeos/01-specification/contracts/[feature_id]_contract.md
+derived_from_intent: .codeos/01-specification/intents/<feature-id>.md
+derived_from_contract: .codeos/01-specification/contracts/<feature-id>_contract.md

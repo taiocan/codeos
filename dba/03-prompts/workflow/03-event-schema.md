@@ -42,7 +42,7 @@ Contract. Apply the selected review policy at this decision boundary.
 
 ## Output / Next Action
 
-Create `.codeos/01-specification/event-schemas/[feature_id]_schema.md`, then present the complete
+Create `.codeos/01-specification/event-schemas/<feature-id>_schema.md`, then present the complete
 Specification Package and a concise review package using the current template. Run or waive
 advisory review as the selected review policy permits, then state:
 

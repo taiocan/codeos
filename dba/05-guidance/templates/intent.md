@@ -61,4 +61,4 @@ feature_id: [feature_id]
 serves_outcomes: [O-1]
 approved_by:
 approved_at:
-derived_contracts: .codeos/01-specification/contracts/[feature_id]_contract.md
+derived_contracts: .codeos/01-specification/contracts/<feature-id>_contract.md

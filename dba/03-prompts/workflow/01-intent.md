@@ -58,5 +58,5 @@ human.
 
 ## Output / Next Action
 
-Create `.codeos/01-specification/intents/[feature_id].md` as `DRAFT` and present it followed by only
+Create `.codeos/01-specification/intents/<feature-id>.md` as `DRAFT` and present it followed by only
 unresolved ambiguities. Keep it open to revision and hand it to `02-contract.md`.

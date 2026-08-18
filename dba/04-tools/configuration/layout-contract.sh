@@ -139,18 +139,35 @@ declare -A producer_outputs=(
   [support-solution-framing.md]='.codeos/00-discovery/<topic-slug>.md'
   [support-feature-decomposition.md]='.codeos/00-discovery/<topic-slug>.md'
   [support-existing-codebase-intake.md]='.codeos/01-specification/intents/<feature-id>.md'
-  [01-intent.md]='.codeos/01-specification/intents/[feature_id].md'
-  [02-contract.md]='.codeos/01-specification/contracts/[feature_id]_contract.md'
-  [03-event-schema.md]='.codeos/01-specification/event-schemas/[feature_id]_schema.md'
+  [01-intent.md]='.codeos/01-specification/intents/<feature-id>.md'
+  [02-contract.md]='.codeos/01-specification/contracts/<feature-id>_contract.md'
+  [03-event-schema.md]='.codeos/01-specification/event-schemas/<feature-id>_schema.md'
   [support-architecture-synthesis.md]='.codeos/02-architecture/scopes/<scope-id>.md'
   [09-refine.md]='.codeos/04-refinement/<feature-id>-<slug>.md'
 )
 
+# This map is kept deliberately. Which prompt produces which artifact is not derivable from the
+# layout: the relation is many-to-many and partial — two prompts produce a discovery note, two
+# produce an Intent, and several canonical locations have no producing prompt at all. Deriving the
+# expectation from the prompts themselves would make the check assert only that a prompt contains
+# what it contains. The map is an independent guard over an otherwise unowned relation.
 for prompt in "${!producer_outputs[@]}"; do
   path="${CODEOS_ROOT}/dba/03-prompts/workflow/${prompt}"
   grep -Fq "${producer_outputs[${prompt}]}" "$path" || \
     fail "artifact-producing prompt omits canonical output: ${prompt}"
+  # The path itself is owned by the layout contract. Requiring each value to be a canonical path
+  # keeps this map a guard rather than a second place a path may be edited into existence.
+  printf '%s\n' "${canonical_paths[@]}" | grep -Fxq "${producer_outputs[${prompt}]}" || \
+    fail "producer output is not a canonical path: ${producer_outputs[${prompt}]}"
 done
+
+# One placeholder notation for canonical paths. A second spelling of the same governed fact is what
+# previously forced this check to carry translation entries, so it is refused rather than bridged.
+# Content placeholders inside template bodies are a different thing and are not matched here: this
+# looks only inside a .codeos path token.
+mixed_notation="$(grep -rn '\.codeos/[^ `"]*\[[a-z_-]*\]' "${CODEOS_ROOT}/dba" "${CODEOS_ROOT}/dba-system.md" 2>/dev/null || true)"
+[[ -z "${mixed_notation}" ]] || \
+  fail "canonical path uses a non-canonical placeholder notation (use <kebab-case>): ${mixed_notation}"
 
 # Doctrine adapters: the selected doctrine owns which boundaries exist, so this check derives the
 # expected set from it rather than restating it. A list here would be a second, manually
