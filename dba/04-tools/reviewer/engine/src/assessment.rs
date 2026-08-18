@@ -379,6 +379,16 @@ pub fn write_assessment(
         content.push_str(&format!("  effective_concern_note: {}\n", parsed.coverage_note));
     }
     content.push_str(&format!("  evidence: {}\n", parsed.evidence));
+    // The reviewer task prompt requires LOG SUMMARY, EVIDENCE, and HIGHEST-IMPACT UNCERTAINTY
+    // as its last three lines. The first two are promoted above; promote the third too, so the
+    // review policy's verification round-trip can be triggered from the structured record
+    // rather than only from the raw body below. Omitted when the reviewer did not report one.
+    if !parsed.highest_impact_uncertainty.is_empty() {
+        content.push_str(&format!(
+            "  highest_impact_uncertainty: \"{}\"\n",
+            yaml_escape(&parsed.highest_impact_uncertainty)
+        ));
+    }
     content.push_str(&format!("  reasoning_effort: {}\n", raw.effort));
     content.push_str(&format!("  reconnect_count: {}\n", raw.reconnect_count));
     content.push_str(&format!("  elapsed_ms: {}\n", raw.elapsed_ms));
@@ -434,6 +444,42 @@ pub fn validate_schema(
         );
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod uncertainty_tests {
+    use super::*;
+
+    fn parse(text: &str) -> ParsedReview {
+        parse_review_output(text, &CoverageState::FullCoverage)
+    }
+
+    #[test]
+    fn highest_impact_uncertainty_is_parsed_from_the_last_three_lines() {
+        let parsed = parse(
+            "LOG SUMMARY: NO OBJECTION — fine\nEVIDENCE: A\nHIGHEST-IMPACT UNCERTAINTY: the base ref may not be the reviewed commit\n",
+        );
+        assert_eq!(
+            parsed.highest_impact_uncertainty,
+            "the base ref may not be the reviewed commit"
+        );
+    }
+
+    #[test]
+    fn absent_uncertainty_stays_empty_rather_than_becoming_a_placeholder() {
+        let parsed = parse("LOG SUMMARY: NO OBJECTION — fine\nEVIDENCE: A\n");
+        assert!(parsed.highest_impact_uncertainty.is_empty());
+    }
+
+    #[test]
+    fn uncertainty_containing_a_colon_is_quoted_and_escaped_for_yaml() {
+        // Free-text reviewer prose routinely contains ':' and '"', which would break the
+        // frontmatter if emitted bare.
+        let raw = "scope: the \"base\" ref";
+        let escaped = yaml_escape(raw);
+        assert_eq!(escaped, "scope: the \\\"base\\\" ref");
+        assert!(!escaped.contains("\"base\""));
+    }
 }
 
 #[cfg(test)]

@@ -115,6 +115,12 @@ pub fn append_review(
     entry.push_str(&format!("Codex concern: {}\n", parsed.codex_concern));
     entry.push_str(&format!("Effective concern: {}\n", parsed.effective_concern));
     entry.push_str(&format!("Evidence: {}\n", parsed.evidence));
+    if !parsed.highest_impact_uncertainty.is_empty() {
+        entry.push_str(&format!(
+            "Highest-impact uncertainty: {}\n",
+            parsed.highest_impact_uncertainty
+        ));
+    }
     entry.push_str(&format!("Coverage: {}; redactions: {}; workspace_dirty: {}{}\n",
         packet.coverage_state.as_str(), packet.redaction_count, dirty_text, coverage_note_suffix));
     entry.push_str(&format!("Log summary: {}\n",

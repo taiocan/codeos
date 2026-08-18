@@ -58,14 +58,6 @@ pub struct ArtifactEntry {
     pub bytes: u64,
 }
 
-pub struct PacketManifestEntry {
-    pub path: String,
-    pub mode: String,
-    pub bytes: u64,
-    pub sha256: String,
-    pub reason: Option<String>,
-}
-
 pub struct ReviewPacket {
     pub feature: String,
     pub stage: String,
