@@ -20,6 +20,10 @@ deletion, reuse, and one clear path over new mechanisms, variants, or future-pro
 Do not obtain simplicity by changing exact meaning, names or literals, normative strength,
 quantities, or unresolved decisions.
 
+Remove a duplicated fact only when the duplicate is a second manually maintained authority. A check
+that deliberately restates a list to detect unauthorized additions or silent removals is an
+independent guard, and removing it reduces complexity only in appearance.
+
 By default:
 
 - lead with one recommendation, decision, or result;
