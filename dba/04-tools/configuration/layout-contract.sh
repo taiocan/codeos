@@ -152,23 +152,35 @@ for prompt in "${!producer_outputs[@]}"; do
     fail "artifact-producing prompt omits canonical output: ${prompt}"
 done
 
-declare -A adapters=(
-  [purpose-approval]="dba/03-prompts/workflow/support-solution-charter.md"
-  [specification-approval]="dba/03-prompts/workflow/03-event-schema.md"
-  [delivery-entry]="dba/03-prompts/workflow/04-implement.md"
-  [final-acceptance]="dba/03-prompts/workflow/08-replay.md"
-  [architecture-entry]="dba/03-prompts/workflow/support-architecture-synthesis.md"
+# Doctrine adapters: the selected doctrine owns which boundaries exist, so this check derives the
+# expected set from it rather than restating it. A list here would be a second, manually
+# synchronized authority — and the one that previously decided membership in practice, because
+# nothing else named the set.
+ACTIVE_CONFIG="${CODEOS_ROOT}/dba/00-entry/configurations/DBA-3.yaml"
+doctrine_rel="$(awk '$1 == "doctrine:" { print $2 }' "${ACTIVE_CONFIG}")"
+[[ -n "${doctrine_rel}" ]] || fail 'active configuration names no doctrine'
+DOCTRINE="${CODEOS_ROOT}/${doctrine_rel}"
+[[ -f "${DOCTRINE}" ]] || fail "selected doctrine is missing: ${doctrine_rel}"
+
+# Membership as the doctrine declares it: one backticked name per list item under its adapter
+# boundary heading.
+mapfile -t doctrine_adapters < <(
+  awk '/^### Doctrine Adapter Boundaries$/ { inside = 1; next }
+       inside && /^## / { inside = 0 }
+       inside && /^- `[a-z-]+`/ { gsub(/^- `|`.*$/, ""); print }' "${DOCTRINE}" | LC_ALL=C sort
 )
+[[ "${#doctrine_adapters[@]}" -gt 0 ]] || \
+  fail 'selected doctrine declares no adapter boundaries'
 
-for adapter in "${!adapters[@]}"; do
-  path="${CODEOS_ROOT}/${adapters[${adapter}]}"
-  [[ -f "${path}" ]] || fail "adapter owner is missing: ${adapters[${adapter}]}"
-  grep -q "DOCTRINE ADAPTER: ${adapter}" "${path}" || \
-    fail "${adapter} is not declared by ${adapters[${adapter}]}"
-done
-
-adapter_count="$(rg -l 'DOCTRINE ADAPTER: [a-z-]+' "${CODEOS_ROOT}/dba/03-prompts" | wc -l)"
-[[ "${adapter_count}" -eq 5 ]] || fail "expected 5 doctrine adapter owners, found ${adapter_count}"
+# Membership as the prompts declare it.
+mapfile -t declared_adapters < <(
+  grep -rhoE 'DOCTRINE ADAPTER: [a-z-]+' "${CODEOS_ROOT}/dba/03-prompts" \
+    | sed 's/^DOCTRINE ADAPTER: //' | LC_ALL=C sort
+)
+[[ "${declared_adapters[*]}" == "$(printf '%s\n' "${declared_adapters[@]}" | LC_ALL=C sort -u | tr '\n' ' ' | sed 's/ $//')" ]] || \
+  fail 'a doctrine adapter is declared by more than one prompt'
+[[ "${doctrine_adapters[*]}" == "${declared_adapters[*]}" ]] || \
+  fail "adapter boundaries disagree: doctrine [${doctrine_adapters[*]}] vs prompts [${declared_adapters[*]}]"
 
 bash "${CODEOS_ROOT}/dba/04-tools/configuration/dba-config-boundaries.sh" \
   dba/00-entry/configurations/DBA-3.yaml >/dev/null

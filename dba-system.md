@@ -98,17 +98,13 @@ exactly to Stages 1 through 9. Every non-stage workflow prompt uses a descriptiv
 0, Stage 3b, or additional lifecycle stages.
 
 The selected doctrine is the sole source of DBA semantic guarantees. Operational consequences may
-be encoded only at genuine execution boundaries marked `DOCTRINE ADAPTER`; other consumers refer
-to the doctrine or an adapter instead of restating its semantics.
+be encoded only at the adapter boundaries the selected doctrine names, and only in a prompt that
+declares ownership of one with a `DOCTRINE ADAPTER: <name>` marker. Exactly one prompt owns each
+boundary. Other consumers refer to the doctrine or an adapter instead of restating its semantics.
 
-## Doctrine Adapter Index
+The doctrine owns which boundaries exist; this contract owns how a prompt declares one. To find the
+owner of a boundary, search the marker:
 
-This index is descriptive navigation, not a second authority source:
-
-| Boundary | Owning prompt |
-|---|---|
-| `purpose-approval` | `.codeos/toolkit/dba/03-prompts/workflow/support-solution-charter.md` |
-| `specification-approval` | `.codeos/toolkit/dba/03-prompts/workflow/03-event-schema.md` |
-| `delivery-entry` | `.codeos/toolkit/dba/03-prompts/workflow/04-implement.md` |
-| `final-acceptance` | `.codeos/toolkit/dba/03-prompts/workflow/08-replay.md` |
-| `architecture-entry` | `.codeos/toolkit/dba/03-prompts/workflow/support-architecture-synthesis.md` |
+```bash
+rg 'DOCTRINE ADAPTER: <name>' dba/03-prompts
+```
