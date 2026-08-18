@@ -772,6 +772,8 @@ fn stage_expected(stage: &str) -> &'static str {
         "framing" => "Solution Framing — problem, vision, candidate outcomes, scope, candidate constraints, and open architecture concerns; non-authoritative banner present; promoted claims are reviewed at the next applicable review point.",
         "decomposition" => "Feature Decomposition — one approved solution problem decomposed into candidate feature outcomes and boundaries; no feature IDs, lifecycle state, approval, or implementation detail.",
         "intake" => "Existing-Codebase Intake — draft Intent inputs derived from observation plus human intent; existing partial packages are valid and work continues through the normal Specification Package flow.",
+        "charter" => "Solution Charter — approved problem, vision, measurable O-# outcomes, explicit scope boundary, and System Constraints each carrying a verification route; no feature behavior, guarantees, or architecture.",
+        "architecture" => "Architecture Scope — the minimum project-level structure required before governed implementation, with non-empty duplicate-free feature membership; every decision derives from approved requirements or an explicit human architectural decision.",
         "1" => "Intent — actor+outcome statements, stable guarantees, explicit scope boundary; NO implementation detail.",
         "2" => "Behavioral contract — observable Given/When/Then scenarios, named failure modes, invariants; independently testable; no white-box claims.",
         "3" => "Specification Package — Intent, Contract, and Event Schema reviewed together for mutual consistency; observation mode is explicit; every Contract rule traces to Intent and every governed event traces to Contract.",
@@ -790,6 +792,8 @@ fn stage_checks(stage: &str) -> String {
         "framing" => "  - candidate outcomes and constraints are not approved; non-authoritative banner present; architecture concerns remain open; no components, flows, interfaces, technologies, governed artifacts, or implementation structure.".to_string(),
         "decomposition" => "  - approved Charter boundary is preserved; candidate outcomes and boundaries are distinct; no IDs, lifecycle state, approval, or implementation detail; each accepted candidate can proceed independently to Intent.".to_string(),
         "intake" => "  - normal draft Intent inputs used; observed behavior is not laundered into intent; infrastructure is not treated as a feature; normal Specification Package route named.".to_string(),
+        "charter" => "  - outcomes are measurable results with stable O-# identities rather than features; the scope boundary is explicit in and out; every System Constraint is a product or system obligation with a stated verification route; every threshold states workload, operating context, and rationale; no feature behavior, guarantees, or architecture decision leaked in.\n  - when an approved Charter is being revised, is approval returned to null and is the impact assessment specific — an outcome change naming affected features through their recorded serves_outcomes, and a scope, boundary, or System Constraint change naming the approved artifacts that may be affected? judge the assessment's substance, not its presence.".to_string(),
+        "architecture" => "  - only project-level structure is recorded; decisions local to one component are left to implementation even when reversing them would be costly; no behavior or quality requirement is invented, only the structural consequences approved requirements force; every listed feature has an approved Specification Package; unresolved responsibility, dependency-direction, data-authority, lifecycle, or integration conflicts keep approval null.\n  - a missing requirement is returned to its owning source — a behavioral gap to the affected Specification Package, a feature-specific quality requirement to that feature's Contract, a cross-cutting constraint to the Solution Charter — rather than resolved here.".to_string(),
         "1" => "  - actor/outcome clarity; no implementation detail; scope boundary explicit; stable guarantees clear; ambiguity flagged.".to_string(),
         "2" => "  - every intent outcome has observable contract coverage; failure paths named; invariants testable; no white-box claims.".to_string(),
         "3" => "  - Intent, Contract, and Event Schema are all present; observation mode is explicit; every Contract rule traces to Intent; every governed event traces to Contract; external-observation mode invents no placeholder events.".to_string(),
@@ -850,7 +854,7 @@ mod tests {
 
     #[test]
     fn stage_expected_new_downstream_identifiers_are_real_not_placeholder() {
-        for stage in ["framing", "decomposition", "intake"] {
+        for stage in ["framing", "decomposition", "intake", "charter", "architecture"] {
             let text = stage_expected(stage);
             assert_ne!(
                 text, "(no expected-output template for stage)",
@@ -862,7 +866,7 @@ mod tests {
 
     #[test]
     fn stage_checks_new_downstream_identifiers_are_real_not_placeholder() {
-        for stage in ["framing", "decomposition", "intake"] {
+        for stage in ["framing", "decomposition", "intake", "charter", "architecture"] {
             let text = stage_checks(stage);
             assert!(
                 !text.contains("no stage-specific checklist"),
@@ -882,6 +886,49 @@ mod tests {
         assert!(checks.contains("architecture concerns remain open"));
         for forbidden in ["components", "flows", "interfaces", "technologies"] {
             assert!(checks.contains(forbidden));
+        }
+    }
+
+    #[test]
+    fn charter_token_reviews_purpose_without_feature_behavior_or_architecture() {
+        let expected = stage_expected("charter");
+        let checks = stage_checks("charter");
+        assert!(expected.contains("Solution Charter"));
+        assert!(expected.contains("O-# outcomes"));
+        assert!(expected.contains("verification route"));
+        // The Charter owns purpose, never feature behavior or structure.
+        assert!(checks.contains("no feature behavior, guarantees, or architecture decision"));
+        // Revision is the same boundary, so the impact assessment is reviewable from the
+        // Charter itself rather than from a packet carrying every approved Intent.
+        assert!(checks.contains("serves_outcomes"));
+        assert!(checks.contains("approval returned to null"));
+    }
+
+    #[test]
+    fn architecture_token_reviews_project_level_structure_only() {
+        let expected = stage_expected("architecture");
+        let checks = stage_checks("architecture");
+        assert!(expected.contains("Architecture Scope"));
+        assert!(expected.contains("feature membership"));
+        // Reversal cost decides visibility, not authority (doctrine v3 Structural Ownership).
+        assert!(checks.contains("even when reversing them would be costly"));
+        // Architecture responds to requirements; it never originates them.
+        assert!(checks.contains("no behavior or quality requirement is invented"));
+        assert!(checks.contains("returned to its owning source"));
+    }
+
+    #[test]
+    fn decision_boundary_tokens_are_distinct_from_each_other() {
+        // A shared vocabulary is only useful if each identifier selects its own text.
+        let all = [
+            stage_checks("charter"),
+            stage_checks("architecture"),
+            stage_checks("framing"),
+        ];
+        for (i, a) in all.iter().enumerate() {
+            for b in all.iter().skip(i + 1) {
+                assert_ne!(a, b, "decision-boundary checklists must not collide");
+            }
         }
     }
 
@@ -973,6 +1020,8 @@ mod tests {
             "framing",
             "decomposition",
             "intake",
+            "charter",
+            "architecture",
             "1",
             "2",
             "3",
