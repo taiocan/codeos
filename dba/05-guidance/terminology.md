@@ -26,6 +26,7 @@ Ordinary technical vocabulary does not belong here. Git preserves the history of
 | **Declarative Behavioral Architecture (DBA)** | The Codeos model, also called Intent-Driven System (IDS), that carries human intent through behavioral contracts, implementation, runtime evidence, reconciliation, replay, and targeted refinement. |
 | **Development Evidence** | Evidence produced before acceptance to prove the candidate implementation. Contrast with Operational Observation. |
 | **Event Spine** | The complete ordered set of events a feature is permitted to emit. |
+| **External assessment** | Machine-generated findings supplied by a model Codeos did not invoke. Advisory evidence for human review; it never satisfies a required review round. Contrast with a review, which Codeos obtains itself. |
 | **Evidence source** | The strongest direct basis for a reconciliation result: `runtime`, `test`, `static`, or `none`. It is not a confidence or quality score. |
 | **Reconciliation status** | One of `ALIGNED`, `GAP`, `MISMATCH`, or `MISSING`. The row note explains the specific issue; status names do not encode gap subtypes. |
 | **External Event** | A runtime event representing a side effect on a system outside the governed boundary. |

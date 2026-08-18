@@ -7,7 +7,10 @@ The sibling layout keeps supported paths stable; lifecycle is not inferred from 
 
 - `initializer/` creates the minimum downstream layout.
 - `configuration/` validates the selected configuration and active layout.
-- `reviewer/` owns the Codex-backed advisory review interface and records.
+- `reviewer/` owns the advisory review interface and records. It invokes Codex; an assessment from
+  any other model enters through `review --assessment` as advisory evidence that never satisfies a
+  required review round. `codeos-review-deepseek.sh` is transport for that path and nothing more —
+  model-specific knowledge stops there and does not enter the engine.
 
 ## Bounded capabilities
 

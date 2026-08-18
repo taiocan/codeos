@@ -55,12 +55,18 @@ The `review` path, which is the longest and contains every other command's work 
    append-only log, and `format_review_id` produces `REV__<feature>__<stage>__R<N>`.
 10. `codex::invoke` spawns `codex exec` in a read-only sandbox, writes the packet to its stdin, and
     resumes the saved session unless `--fresh` was passed or the Codex version changed. The working
-    tree is compared before and after; any difference prints a read-only violation warning.
+    tree is compared before and after; any difference prints a read-only violation warning. With
+    `--assessment` no process is started at all: the reply text is read from the named file and
+    tagged `RunSource::External`, which is sequenced as `EXT__…__A<N>` and never advances the round.
 11. `assessment` parses the response — `LOG SUMMARY`, `EVIDENCE`, and the finding blocks — and
     escalates the concern to the coverage floor when evidence was incomplete.
 12. `validate_schema` fail-closes before anything durable is written. Then the packet file, the
     assessment file, and the log entry are written in that order, each error message naming what
     already landed.
+
+`plan` and `review` share `prepare`, so `plan --emit-packet` exports the bytes `review` would send:
+there is one packet construction path, and an external assessment is therefore evidence about the
+same packet a Codex-backed review would have seen.
 
 ## Main parts
 
@@ -74,6 +80,9 @@ The `review` path, which is the longest and contains every other command's work 
   per-stage check and expected-output tables.
 - **`codex.rs`** — the only module that knows the Codex CLI: flags, JSONL event shapes, session
   persistence, and process handling.
+- **`run.rs`** — `ReviewerRun` and `RunSource`: the reply text plus where it came from. A provenance
+  record, not a provider abstraction — there is no dispatch, trait, or configuration behind it, and
+  the two sources carry different fields so nothing is filled with placeholder measurements.
 - **`assessment.rs`** — response parsing, concern escalation, the assessment file, and the
   fail-closed schema check.
 - **`log.rs`** — round computation, append-only log entries, and decision provenance.

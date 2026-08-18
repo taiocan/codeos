@@ -111,7 +111,7 @@ Deciding hastily risks:
 ## Guardrail
 
 If ever implemented, this upgrade must:
-- Preserve every append-only and integrity guarantee in `dba/04-tools/reviewer/contract/v3.md` — the
+- Preserve every append-only and integrity guarantee in `dba/04-tools/reviewer/contract/v4.md` — the
   event log itself must be at least as durable and human-auditable as today's
   `.codeos/05-review/reviews/review-log.md`.
 - Never make the event log (or its generated projections) authoritative over the human's decision

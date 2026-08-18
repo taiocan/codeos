@@ -4,6 +4,7 @@ use crate::config::Config;
 use crate::log as review_log;
 use crate::packet::{self, PacketBuildOptions, ReviewPacket};
 use crate::precheck;
+use crate::run::{ReviewerRun, RunSource};
 use anyhow::Result;
 use std::path::{Path, PathBuf};
 
@@ -22,6 +23,12 @@ pub struct ReviewArgs {
     pub evidence: EvidenceArgs,
     pub fresh: bool,
     pub scratch: bool,
+    /// Record an assessment produced outside Codeos instead of invoking Codex.
+    pub assessment: Option<PathBuf>,
+    /// The exported packet the external model actually read. Required with `--assessment`.
+    pub packet: Option<PathBuf>,
+    /// Descriptive label for the external model. Metadata only.
+    pub reviewer_label: Option<String>,
 }
 
 pub struct PreparedReview {
@@ -115,15 +122,26 @@ pub fn prepare(
 }
 
 pub fn run(args: ReviewArgs, cfg: &Config) -> Result<i32> {
-    let prepared = match prepare(args.evidence, cfg) {
-        Ok(prepared) => prepared,
-        Err(failure) => {
-            eprintln!("error: {}", failure.message);
-            return Ok(failure.code);
+    // Two ways to obtain the packet, and only one of them builds anything. The import path adopts
+    // the exported bytes: the packet the model read and the packet recorded as reviewed are the
+    // same bytes, not two builds that happen to agree.
+    let (evidence, review_packet) = if let Some(packet_path) = args.packet.as_ref() {
+        match load_exported_packet(packet_path, &args.evidence) {
+            Ok(packet) => (args.evidence.clone(), packet),
+            Err(failure) => {
+                eprintln!("error: {}", failure.message);
+                return Ok(failure.code);
+            }
+        }
+    } else {
+        match prepare(args.evidence.clone(), cfg) {
+            Ok(prepared) => (prepared.args, prepared.packet),
+            Err(failure) => {
+                eprintln!("error: {}", failure.message);
+                return Ok(failure.code);
+            }
         }
     };
-    let evidence = prepared.args;
-    let review_packet = prepared.packet;
 
     if matches!(
         review_packet.coverage_state,
@@ -151,36 +169,90 @@ pub fn run(args: ReviewArgs, cfg: &Config) -> Result<i32> {
         cfg.review_log.clone()
     };
 
-    let round = match review_log::compute_review_round(
-        &review_log_path,
-        &evidence.feature,
-        &evidence.stage,
-    ) {
-        Ok(round) => round,
-        Err(error) => {
-            eprintln!("error: could not determine review round: {error}");
-            return Ok(crate::EXIT_WRITE);
+    // An external assessment is sequenced separately from review rounds, so importing one can
+    // never consume a round the human still owes the boundary.
+    let review_id = if args.assessment.is_some() {
+        match review_log::compute_assessment_sequence(
+            &review_log_path,
+            &evidence.feature,
+            &evidence.stage,
+        ) {
+            Ok(sequence) => {
+                review_log::format_assessment_id(&evidence.feature, &evidence.stage, sequence)
+            }
+            Err(error) => {
+                eprintln!("error: could not determine assessment sequence: {error}");
+                return Ok(crate::EXIT_WRITE);
+            }
+        }
+    } else {
+        match review_log::compute_review_round(&review_log_path, &evidence.feature, &evidence.stage)
+        {
+            Ok(round) => review_log::format_review_id(&evidence.feature, &evidence.stage, round),
+            Err(error) => {
+                eprintln!("error: could not determine review round: {error}");
+                return Ok(crate::EXIT_WRITE);
+            }
         }
     };
-    let review_id = review_log::format_review_id(&evidence.feature, &evidence.stage, round);
 
-    let pre_invoke_status = git_status(&cfg.repo_root);
-    let invoke_result = codex::invoke(&review_packet, cfg, args.fresh);
-    if let (Some(before), Some(after)) = (pre_invoke_status, git_status(&cfg.repo_root)) {
-        if before != after {
-            eprintln!("WARNING: working tree changed during review — reviewer should be read-only");
-        }
-    }
-    let raw = match invoke_result {
-        Ok(raw) => raw,
-        Err(error) => {
-            eprintln!("error: Codex invocation failed: {error}");
-            return Ok(crate::EXIT_PROVIDER);
+    let raw = match &args.assessment {
+        // Import path: no process is started, so there is no read-only violation to detect and no
+        // session to resume. The text is taken verbatim; it flows through the same parser and the
+        // same fail-closed schema check as a Codex reply.
+        Some(path) => match std::fs::read_to_string(path) {
+            Ok(text) if text.trim().is_empty() => {
+                eprintln!("error: external assessment file is empty: {}", path.display());
+                return Ok(crate::EXIT_PROVIDER);
+            }
+            Ok(text) => ReviewerRun {
+                text,
+                elapsed_ms: 0,
+                source: RunSource::External {
+                    label: args.reviewer_label.clone(),
+                },
+            },
+            Err(error) => {
+                eprintln!(
+                    "error: could not read external assessment {}: {error}",
+                    path.display()
+                );
+                return Ok(crate::EXIT_PROVIDER);
+            }
+        },
+        None => {
+            let pre_invoke_status = git_status(&cfg.repo_root);
+            let invoke_result = codex::invoke(&review_packet, cfg, args.fresh);
+            if let (Some(before), Some(after)) = (pre_invoke_status, git_status(&cfg.repo_root)) {
+                if before != after {
+                    eprintln!(
+                        "WARNING: working tree changed during review — reviewer should be read-only"
+                    );
+                }
+            }
+            match invoke_result {
+                Ok(raw) => raw,
+                Err(error) => {
+                    eprintln!("error: Codex invocation failed: {error}");
+                    return Ok(crate::EXIT_PROVIDER);
+                }
+            }
         }
     };
 
-    let parsed = assessment::parse_review_output(&raw.text, &review_packet.coverage_state);
+    // Findings first: whether they all parsed is an input to whether the assessment is usable.
     let (findings, unparsed_findings_count) = assessment::parse_findings(&raw.text, &review_id);
+    let parsed = assessment::parse_review_output(
+        &raw.text,
+        &review_packet.coverage_state,
+        findings.len(),
+        unparsed_findings_count,
+    );
+    // The recorded count covers every finding the reply declared but that never reached the record:
+    // malformed blocks plus declarations in a shape the parser does not accept.
+    let declared_findings = assessment::count_declared_findings(&raw.text);
+    let unrecorded_findings_count = unparsed_findings_count
+        + declared_findings.saturating_sub(findings.len() + unparsed_findings_count);
     let outdir = if args.scratch {
         cfg.state_dir.join("reviewer-scratch")
     } else {
@@ -233,7 +305,7 @@ pub fn run(args: ReviewArgs, cfg: &Config) -> Result<i32> {
     let (assessment_file, assessment_hash) = match assessment::write_assessment(
         &review_id,
         &findings,
-        unparsed_findings_count,
+        unrecorded_findings_count,
         &review_packet,
         &raw,
         &parsed,
@@ -266,16 +338,39 @@ pub fn run(args: ReviewArgs, cfg: &Config) -> Result<i32> {
         return Ok(crate::EXIT_WRITE);
     }
 
-    println!("review logged: {}", review_log_path.display());
-    println!("  review_id: {review_id}");
-    println!(
-        "  codex concern: {}   effective concern: {}   evidence: {}",
-        parsed.codex_concern, parsed.effective_concern, parsed.evidence
-    );
-    println!(
-        "  effort: {}   elapsed: {}ms   reconnects: {}",
-        raw.effort, raw.elapsed_ms, raw.reconnect_count
-    );
+    match &raw.source {
+        RunSource::Codex {
+            reconnect_count,
+            effort,
+            ..
+        } => {
+            println!("review logged: {}", review_log_path.display());
+            println!("  review_id: {review_id}");
+            println!(
+                "  codex concern: {}   effective concern: {}   evidence: {}",
+                parsed.codex_concern, parsed.effective_concern, parsed.evidence
+            );
+            println!(
+                "  effort: {}   elapsed: {}ms   reconnects: {}",
+                effort, raw.elapsed_ms, reconnect_count
+            );
+        }
+        RunSource::External { .. } => {
+            println!("external assessment logged: {}", review_log_path.display());
+            println!("  assessment_id: {review_id}");
+            println!(
+                "  reported concern: {}   effective concern: {}   evidence: {}",
+                parsed.codex_concern, parsed.effective_concern, parsed.evidence
+            );
+            println!("  advisory only: this does NOT satisfy a required review round.");
+        }
+    }
+    if parsed.assessment_status != "COMPLETE" {
+        println!(
+            "  assessment: {} — {} — recorded as DO NOT ADVANCE; this cannot clear a boundary.",
+            parsed.assessment_status, parsed.incomplete_reason
+        );
+    }
     println!(
         "  coverage: {} (redactions: {})",
         review_packet.coverage_state.as_str(),
@@ -284,6 +379,61 @@ pub fn run(args: ReviewArgs, cfg: &Config) -> Result<i32> {
     println!("  assessment: {}", assessment_file.display());
     println!("  packet: {}", packet_saved.display());
     Ok(crate::EXIT_SUCCESS)
+}
+
+/// Load an exported packet and its sidecar without rebuilding either. The sidecar is what makes
+/// this possible; the checks below are what make it trustworthy.
+fn load_exported_packet(
+    packet_path: &Path,
+    evidence: &EvidenceArgs,
+) -> std::result::Result<ReviewPacket, PrepareFailure> {
+    let content = std::fs::read_to_string(packet_path).map_err(|error| {
+        PrepareFailure::packet(format!(
+            "could not read exported packet {}: {error}",
+            packet_path.display()
+        ))
+    })?;
+    let sidecar_path = crate::cmd::plan::sidecar_path(packet_path);
+    let sidecar = std::fs::read_to_string(&sidecar_path).map_err(|error| {
+        PrepareFailure::packet(format!(
+            "could not read packet sidecar {}: {error}\n                    the sidecar is written beside the packet by `plan --emit-packet`",
+            sidecar_path.display()
+        ))
+    })?;
+    let packet: ReviewPacket = serde_json::from_str(&sidecar).map_err(|error| {
+        PrepareFailure::packet(format!(
+            "malformed packet sidecar {}: {error}",
+            sidecar_path.display()
+        ))
+    })?;
+
+    // The sidecar describes a packet; these checks establish that it describes *this* packet, and
+    // that the operator is importing the assessment against the evidence they named.
+    if packet.feature != evidence.feature {
+        return Err(PrepareFailure::packet(format!(
+            "exported packet is for feature '{}', not '{}'",
+            packet.feature, evidence.feature
+        )));
+    }
+    if packet.stage != evidence.stage {
+        return Err(PrepareFailure::packet(format!(
+            "exported packet is for stage '{}', not '{}'",
+            packet.stage, evidence.stage
+        )));
+    }
+    let mut exported: Vec<&str> = packet.artifacts.iter().map(|a| a.path.as_str()).collect();
+    let mut named: Vec<&str> = evidence.artifacts.iter().map(String::as_str).collect();
+    exported.sort_unstable();
+    named.sort_unstable();
+    if exported != named {
+        return Err(PrepareFailure::packet(format!(
+            "exported packet covers artifacts [{}], not [{}]",
+            exported.join(", "),
+            named.join(", ")
+        )));
+    }
+
+    Ok(packet.from_sidecar(content))
 }
 
 fn validate_identifier(label: &str, value: &str) -> std::result::Result<(), PrepareFailure> {

@@ -1,0 +1,32 @@
+{
+  "id": "a8ca432b-c6d0-47b5-b6f8-fcce880a7e4e",
+  "object": "chat.completion",
+  "created": 1787078202,
+  "model": "deepseek-v4-flash",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "Assessment pinned to review commit `360b838104afb47ba99e9ea71ab493f0950436e3`; earlier-session conclusions are not used.\n\n## 1. Acceptance criteria\n\nThe packet provides no expected-output template, so I assess against the artifact\u2019s own claims:\n\n- **External-assessment path exists and is advisory** \u2014 satisfied in code, policy, contract, and tests: `review --assessment`, `ReviewerRun/RunSource`, `EXT__\u2026__A<N>` IDs, and the policy statement that external assessments never satisfy a required review round.\n- **External assessments do not advance the review round** \u2014 satisfied: `compute_review_round` counts only `REVIEW` headings; external entries use `EXTERNAL ASSESSMENT` headings and the test asserts the next Codex review is still `R1`.\n- **One canonical packet construction path** \u2014 satisfied: `plan` and `review` share `prepare`; `emitted_packet_matches_the_packet_review_sends` verifies byte equality modulo the generated timestamp.\n- **Fail-closed handling of malformed/truncated/unrecognized findings** \u2014 satisfied: `assessment_status: INCOMPLETE` forces `effective_concern: DO NOT ADVANCE`; tests cover truncated replies and unrecognized finding shapes.\n- **Transport adapter holds no authority and writes no reviewer record** \u2014 satisfied: `codeos-review-deepseek.sh` writes only the raw reply, request/response files, and token accounting.\n- **Untracked files are shown or downgrade coverage** \u2014 satisfied: packet includes `UNTRACKED FILES` content and the test confirms an unshowable untracked file downgrades coverage to `PARTIAL_COVERAGE`.\n\n## 2. Claim support\n\nStrong claims such as \u201cone packet construction path\u201d, \u201cexternal assessment never satisfies a required review round\u201d, and \u201crecorded packet is the exported packet\u201d are supported by shared code paths and behavioral tests.\n\nOne strong documentation claim is **not** supported: the external-assessment import command shown in `codeos-review-deepseek.sh` omits `--packet`, while the CLI requires `--packet` whenever `--assessment` is present. This is the in-scope blocker below.\n\n## 3. Scope drift\n\nNo \u2014 the diff is coherent: external-assessment support, fail-closed parsing, exported-packet binding, and the corresponding policy/contract/terminology updates are all part of the same feature. The unrelated untracked workspace notes in the packet are not committed changes of this PR.\n\n## 4. In-scope blockers\n\n### Finding 1 / Severity: High / Classification: IN-SCOPE BLOCKER\n\n**Evidence:** `dba/04-tools/reviewer/codeos-review-deepseek.sh` (header comment) documents the import step as:\n\n```text\ncodeos-review.sh review <feature> <stage> --assessment ASSESSMENT \\\n    --reviewer-label deepseek-v4-flash <artifacts...>\n```\n\n\u2026but `dba/04-tools/reviewer/engine/src/main.rs` defines `--assessment` with `requires = \"packet\"`, so the documented command exits with a usage error before doing any work. `dba/06-reference/downstream-upgrade.md` likewise says `review --assessment` records the assessment without mentioning the required `--packet`.\n\n**Why:** The PR\u2019s core external-assessment workflow cannot be run as documented. This creates a false claim in the artifact and prevents the documented flow from executing.\n\n**Required action:** fix now \u2014 add `--packet PACKET` to the import command in the script comment, and make any contract/downstream usage text state that `--assessment` requires the exported packet.\n\n**Scope reason:** This PR is explicitly about making the external-assessment path usable; the broken documented invocation is directly in scope.\n\n## 5. Finding classification\n\nThe single finding above is classified **IN-SCOPE BLOCKER**.\n\nNo additional in-scope blockers were found.\n\n---\n\nPR decision: DO NOT ADVANCE  \nScope drift warning: no \u2014 the changes stay within the external-assessment/integrity scope of this PR.\n\nLOG SUMMARY: DO NOT ADVANCE \u2014 documented external-assessment import command omits the required --packet flag  \nEVIDENCE: B  \nHIGHEST-IMPACT UNCERTAINTY: Whether an unseen wrapper layer injects --packet automatically; if so, this becomes a non-blocking documentation gap rather than a blocker."
+      },
+      "logprobs": null,
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 38282,
+    "completion_tokens": 40643,
+    "total_tokens": 78925,
+    "prompt_tokens_details": {
+      "cached_tokens": 38272
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 39695
+    },
+    "prompt_cache_hit_tokens": 38272,
+    "prompt_cache_miss_tokens": 10
+  },
+  "system_fingerprint": "a26a7955944dc5c60445bff77fac9c8e",
+  "_note": "reasoning_content (168997 chars) removed; it is not an input to any comparison measure. Everything else is verbatim."
+}

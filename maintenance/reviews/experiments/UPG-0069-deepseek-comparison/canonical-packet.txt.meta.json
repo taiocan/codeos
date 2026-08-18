@@ -1,0 +1,76 @@
+{
+  "feature": "UPG-EXTPILOT2",
+  "stage": "selfdev-step-1",
+  "branch": "main",
+  "review_sha": "360b838104afb47ba99e9ea71ab493f0950436e3",
+  "base_sha": "(no base pin)",
+  "diff_hash": "bee1ecabbc9fe44c2bd33866956181ba80ba89b61d98b7af98e3daa37a4772f4",
+  "coverage_state": "SecretRedaction",
+  "workspace_dirty": true,
+  "redaction_count": 1,
+  "secret_flag": true,
+  "artifacts": [
+    {
+      "path": "dba/04-tools/reviewer/contract/v4.md",
+      "sha256": "d234d5ee57486ef89de8545e943d11127a570af22944d7f2b4d3a54bf2f68bb1",
+      "visibility": "shown",
+      "bytes": 6668
+    },
+    {
+      "path": "dba/02-policies/review/v2.md",
+      "sha256": "572cc2115d11fe1f8608bb281414a7c39284a679e52b6c7318f091ead60f291a",
+      "visibility": "shown",
+      "bytes": 5826
+    },
+    {
+      "path": "dba/04-tools/reviewer/codeos-review-deepseek.sh",
+      "sha256": "eeb398458332467df494e71ee05af682fd10d2e40f13dbe8877b16219f1e349b",
+      "visibility": "shown",
+      "bytes": 6496
+    }
+  ],
+  "excluded_paths": [],
+  "review_content_bytes": 141442,
+  "estimated_review_tokens": 35360,
+  "budget_bytes": 50000,
+  "over_budget": true,
+  "diff_bytes": 71696,
+  "budget_contributors": [
+    [
+      "dba/04-tools/reviewer/contract/v4.md",
+      6668
+    ],
+    [
+      "dba/02-policies/review/v2.md",
+      5826
+    ],
+    [
+      "dba/04-tools/reviewer/codeos-review-deepseek.sh",
+      6496
+    ],
+    [
+      "(diff)",
+      71696
+    ],
+    [
+      "dba/04-tools/reviewer/engine/src/run.rs",
+      2133
+    ],
+    [
+      "dba/04-tools/reviewer/engine/tests/external_assessment.rs",
+      20682
+    ],
+    [
+      "dba/04-tools/reviewer/tests/codeos-review-deepseek-tests.sh",
+      5005
+    ],
+    [
+      "sds-dba.md",
+      10417
+    ],
+    [
+      "software-development-structure.md",
+      12519
+    ]
+  ]
+}

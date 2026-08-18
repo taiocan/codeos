@@ -1,5 +1,5 @@
 use crate::packet::{CoverageState, ReviewPacket};
-use crate::codex::CodexResult;
+use crate::run::{ReviewerRun, RunSource};
 use anyhow::{Context, Result};
 use regex::Regex;
 use std::path::{Path, PathBuf};
@@ -11,6 +11,14 @@ pub struct ParsedReview {
     pub summary_line: String,
     pub coverage_note: String,
     pub highest_impact_uncertainty: String,
+    /// `OK` when every finding the reply declared was parsed; `FAILED` when any was not.
+    pub parse_status: String,
+    /// `COMPLETE` only when the reply carried a usable verdict and every finding was parsed.
+    /// `INCOMPLETE` forces the effective concern to DO NOT ADVANCE: a record that cannot show what
+    /// the reviewer found must not be able to clear a boundary.
+    pub assessment_status: String,
+    /// Why the assessment is incomplete. Empty when it is complete.
+    pub incomplete_reason: String,
 }
 
 /// The exact five TRIAGE RULE labels from `dba/03-prompts/review/codeos-reviewer-task.md` — the
@@ -89,11 +97,21 @@ fn yaml_escape(s: &str) -> String {
 /// `UPG-0045`/`UPG-0046` review rounds from this same session. This is ongoing model output
 /// variance, not a resolved historical format version — both shapes are permanently supported,
 /// not one treated as legacy.
+/// Whether a line opens a finding block: `Finding:` at the start, optionally numbered.
+fn is_finding_header_line(line: &str) -> bool {
+    let rest = line.trim_start_matches(|c: char| c.is_ascii_digit());
+    line.starts_with("Finding:")
+        || (rest.len() < line.len() && rest.trim_start_matches(['.', ' ']).starts_with("Finding:"))
+}
+
 pub fn parse_findings(raw_text: &str, review_id: &str) -> (Vec<Finding>, usize) {
     let real_region = raw_text.split("\nLOG SUMMARY:").next().unwrap_or(raw_text);
     let lines: Vec<&str> = real_region.lines().collect();
 
-    let finding_re = Regex::new(r"^Finding: (.+?) / Severity: (High|Medium|Low) / Classification: (.+?)\s*$")
+    // The optional `N. ` prefix is a real recurring shape: reviewers number their findings. It was
+    // silently dropping those findings entirely — they matched no header, so they were neither
+    // parsed nor counted unparsed.
+    let finding_re = Regex::new(r"^(?:\d+\.\s+)?Finding: (.+?) / Severity: (High|Medium|Low) / Classification: (.+?)\s*$")
         .expect("valid regex");
     let combined_re = Regex::new(r"^Evidence: (.+?) / Why: (.+?) / Required action: (fix now|optional fix|backlog|reject)\s*$")
         .expect("valid regex");
@@ -114,7 +132,7 @@ pub fn parse_findings(raw_text: &str, review_id: &str) -> (Vec<Finding>, usize) 
 
     while i < lines.len() {
         let line = lines[i];
-        if !line.starts_with("Finding:") {
+        if !is_finding_header_line(line) {
             i += 1;
             continue;
         }
@@ -212,7 +230,38 @@ pub fn parse_findings(raw_text: &str, review_id: &str) -> (Vec<Finding>, usize) 
 }
 
 /// Parse LOG SUMMARY, EVIDENCE, HIGHEST-IMPACT UNCERTAINTY from reviewer output.
-pub fn parse_review_output(output: &str, coverage_state: &CoverageState) -> ParsedReview {
+/// Count finding declarations the reply made, however it shaped them. `parse_findings` accepts one
+/// specific header line; a model that declares findings in any other shape would otherwise leave
+/// `findings: []` with nothing recorded as dropped. Every canonical classification label the reply
+/// applies is one declared finding, so comparing that count against what parsed turns a silent loss
+/// into a visible one.
+pub fn count_declared_findings(raw_text: &str) -> usize {
+    let body = match raw_text.find("\nLOG SUMMARY:") {
+        Some(index) => &raw_text[..index],
+        None => raw_text,
+    };
+    body.lines()
+        .filter(|line| {
+            if !line.contains("Classification:") || line.contains('|') {
+                // A `|` means the line enumerates the allowed labels — the reviewer prompt echoed
+                // back into the transcript, not a finding the reviewer made.
+                return false;
+            }
+            CANONICAL_CLASSIFICATIONS
+                .iter()
+                .filter(|label| line.contains(*label))
+                .count()
+                == 1
+        })
+        .count()
+}
+
+pub fn parse_review_output(
+    output: &str,
+    coverage_state: &CoverageState,
+    parsed_findings: usize,
+    unparsed_findings: usize,
+) -> ParsedReview {
     let summary_line = output.lines()
         .filter(|l| l.starts_with("LOG SUMMARY:"))
         .last()
@@ -246,13 +295,45 @@ pub fn parse_review_output(output: &str, coverage_state: &CoverageState) -> Pars
         .map(|l| l.trim_start_matches("HIGHEST-IMPACT UNCERTAINTY:").trim().to_string())
         .unwrap_or_default();
 
+    // Fail closed on anything that means the record cannot show what the reviewer actually found.
+    let declared = count_declared_findings(output);
+    let accounted = parsed_findings + unparsed_findings;
+    let unaccounted = declared.saturating_sub(accounted);
+    let parse_status = if unparsed_findings > 0 || unaccounted > 0 {
+        "FAILED"
+    } else {
+        "OK"
+    };
+    let incomplete_reason = if unaccounted > 0 {
+        format!("{unaccounted} declared finding(s) did not match the required finding format and were not recorded")
+    } else if unparsed_findings > 0 {
+        format!("{unparsed_findings} finding block(s) were malformed and could not be recorded")
+    } else if summary_line.is_empty() {
+        "the reply carried no LOG SUMMARY verdict line".to_string()
+    } else if codex_concern == "UNCLASSIFIED" {
+        "the reply's verdict was not one of the four recognised concerns".to_string()
+    } else if evidence == "not reported" {
+        "the reply carried no EVIDENCE grade".to_string()
+    } else {
+        String::new()
+    };
+    let assessment_status = if incomplete_reason.is_empty() {
+        "COMPLETE"
+    } else {
+        "INCOMPLETE"
+    };
+
     // Compute effective concern
     let floor = coverage_state.concern_floor();
     let concern_rank = concern_to_rank(&codex_concern);
-    let eff_rank = concern_rank.max(floor);
+    // An incomplete assessment cannot clear a boundary, whichever model produced it.
+    let incomplete_floor = if assessment_status == "INCOMPLETE" { 3 } else { 0 };
+    let eff_rank = concern_rank.max(floor).max(incomplete_floor);
     let effective_concern = rank_to_concern(eff_rank);
 
-    let coverage_note = if eff_rank > concern_rank {
+    let coverage_note = if eff_rank > concern_rank && incomplete_floor == 3 {
+        format!("raised to DO NOT ADVANCE: assessment INCOMPLETE — {incomplete_reason}")
+    } else if eff_rank > concern_rank {
         format!("raised from '{}' to the coverage floor for {}", codex_concern, coverage_state.as_str())
     } else {
         String::new()
@@ -271,6 +352,9 @@ pub fn parse_review_output(output: &str, coverage_state: &CoverageState) -> Pars
         summary_line: final_summary_line,
         coverage_note,
         highest_impact_uncertainty,
+        parse_status: parse_status.to_string(),
+        assessment_status: assessment_status.to_string(),
+        incomplete_reason,
     }
 }
 
@@ -310,7 +394,7 @@ pub fn write_assessment(
     findings: &[Finding],
     unparsed_findings_count: usize,
     packet: &ReviewPacket,
-    raw: &CodexResult,
+    raw: &ReviewerRun,
     parsed: &ParsedReview,
     outdir: &Path,
     packet_saved: &Path,
@@ -372,13 +456,25 @@ pub fn write_assessment(
     let packet_basename = packet_saved.file_name().and_then(|n| n.to_str()).unwrap_or("");
     content.push_str(&format!("  reviewed_packet: packets/{}\n", packet_basename));
     content.push_str(&format!("  reviewed_packet_sha256: {}\n", packet_hash));
-    content.push_str(&format!("  reviewer: \"codex (session {})\"\n", raw.session_id));
-    content.push_str(&format!("  codex_concern: {}\n", parsed.codex_concern));
+    content.push_str(&format!("  source: {}\n", if raw.is_external() { "external" } else { "codex" }));
+    content.push_str(&format!("  reviewer: \"{}\"\n", raw.reviewer_field()));
+    // The key names who reported the concern. `codex_concern` is the established name across
+    // existing review records and stays; an external assessment gets a name that is true of it.
+    content.push_str(&format!(
+        "  {}: {}\n",
+        if raw.is_external() { "reported_concern" } else { "codex_concern" },
+        parsed.codex_concern
+    ));
     content.push_str(&format!("  effective_concern: {}\n", parsed.effective_concern));
     if !parsed.coverage_note.is_empty() {
         content.push_str(&format!("  effective_concern_note: {}\n", parsed.coverage_note));
     }
     content.push_str(&format!("  evidence: {}\n", parsed.evidence));
+    content.push_str(&format!("  parse_status: {}\n", parsed.parse_status));
+    content.push_str(&format!("  assessment_status: {}\n", parsed.assessment_status));
+    if !parsed.incomplete_reason.is_empty() {
+        content.push_str(&format!("  incomplete_reason: \"{}\"\n", yaml_escape(&parsed.incomplete_reason)));
+    }
     // The reviewer task prompt requires LOG SUMMARY, EVIDENCE, and HIGHEST-IMPACT UNCERTAINTY
     // as its last three lines. The first two are promoted above; promote the third too, so the
     // review policy's verification round-trip can be triggered from the structured record
@@ -389,9 +485,22 @@ pub fn write_assessment(
             yaml_escape(&parsed.highest_impact_uncertainty)
         ));
     }
-    content.push_str(&format!("  reasoning_effort: {}\n", raw.effort));
-    content.push_str(&format!("  reconnect_count: {}\n", raw.reconnect_count));
-    content.push_str(&format!("  elapsed_ms: {}\n", raw.elapsed_ms));
+    // Effort, reconnects, and wall time describe a process this tool ran. An external assessment
+    // has none of them, and inventing zeroes would read as measurement rather than absence.
+    match &raw.source {
+        RunSource::Codex {
+            reconnect_count,
+            effort,
+            ..
+        } => {
+            content.push_str(&format!("  reasoning_effort: {}\n", effort));
+            content.push_str(&format!("  reconnect_count: {}\n", reconnect_count));
+            content.push_str(&format!("  elapsed_ms: {}\n", raw.elapsed_ms));
+        }
+        RunSource::External { .. } => {
+            content.push_str("  counts_as_review_round: false\n");
+        }
+    }
     content.push_str("---\n\n");
     content.push_str(&raw.text);
 
@@ -451,7 +560,7 @@ mod uncertainty_tests {
     use super::*;
 
     fn parse(text: &str) -> ParsedReview {
-        parse_review_output(text, &CoverageState::FullCoverage)
+        parse_review_output(text, &CoverageState::FullCoverage, 0, 0)
     }
 
     #[test]
@@ -487,20 +596,32 @@ mod tests {
     use super::*;
     use crate::packet::CoverageState;
 
-    fn make_raw(text: &str) -> CodexResult {
-        crate::codex::CodexResult {
+    fn make_raw(text: &str) -> ReviewerRun {
+        ReviewerRun {
             text: text.to_string(),
-            session_id: "test-session".to_string(),
             elapsed_ms: 1000,
-            reconnect_count: 0,
-            effort: "high".to_string(),
+            source: RunSource::Codex {
+                session_id: "test-session".to_string(),
+                reconnect_count: 0,
+                effort: "high".to_string(),
+            },
+        }
+    }
+
+    fn make_external_raw(text: &str, label: Option<&str>) -> ReviewerRun {
+        ReviewerRun {
+            text: text.to_string(),
+            elapsed_ms: 0,
+            source: RunSource::External {
+                label: label.map(str::to_string),
+            },
         }
     }
 
     #[test]
     fn parses_no_objection() {
         let text = "Some findings.\n\nPR decision: ADVANCE\nLOG SUMMARY: NO OBJECTION — all good\nEVIDENCE: A\nHIGHEST-IMPACT UNCERTAINTY: none\n";
-        let parsed = parse_review_output(text, &CoverageState::FullCoverage);
+        let parsed = parse_review_output(text, &CoverageState::FullCoverage, 0, 0);
         assert_eq!(parsed.codex_concern, "NO OBJECTION");
         assert_eq!(parsed.effective_concern, "NO OBJECTION");
         assert_eq!(parsed.evidence, "A");
@@ -509,7 +630,7 @@ mod tests {
     #[test]
     fn parses_changes_advised() {
         let text = "LOG SUMMARY: CHANGES ADVISED — fix required\nEVIDENCE: B\nHIGHEST-IMPACT UNCERTAINTY: something\n";
-        let parsed = parse_review_output(text, &CoverageState::FullCoverage);
+        let parsed = parse_review_output(text, &CoverageState::FullCoverage, 0, 0);
         assert_eq!(parsed.codex_concern, "CHANGES ADVISED");
         assert_eq!(parsed.evidence, "B");
     }
@@ -517,7 +638,7 @@ mod tests {
     #[test]
     fn coverage_floor_escalates_concern() {
         let text = "LOG SUMMARY: NO OBJECTION — ok\nEVIDENCE: A\nHIGHEST-IMPACT UNCERTAINTY: x\n";
-        let parsed = parse_review_output(text, &CoverageState::CriticalOmission);
+        let parsed = parse_review_output(text, &CoverageState::CriticalOmission, 0, 0);
         assert_eq!(parsed.codex_concern, "NO OBJECTION");
         assert_eq!(parsed.effective_concern, "DO NOT ADVANCE");
         assert!(!parsed.coverage_note.is_empty());
@@ -526,7 +647,7 @@ mod tests {
     #[test]
     fn missing_summary_gives_unclassified() {
         let text = "No summary line here.\n";
-        let parsed = parse_review_output(text, &CoverageState::FullCoverage);
+        let parsed = parse_review_output(text, &CoverageState::FullCoverage, 0, 0);
         assert_eq!(parsed.codex_concern, "UNCLASSIFIED");
         assert!(parsed.summary_line.contains("UNCLASSIFIED"));
     }
@@ -557,7 +678,7 @@ mod tests {
         };
         let packet = crate::packet::build(&opts).expect("build packet");
         let raw = make_raw("LOG SUMMARY: NO OBJECTION — ok\nEVIDENCE: A\nHIGHEST-IMPACT UNCERTAINTY: none\n");
-        let parsed = parse_review_output(&raw.text, &packet.coverage_state);
+        let parsed = parse_review_output(&raw.text, &packet.coverage_state, 0, 0);
 
         let outdir = dir.path().join("codex-out");
         let review_id = "REV__UPG-TEST__selfdev-step-1__R1";
@@ -749,6 +870,8 @@ mod tests {
         let mut total_parsed = 0usize;
         let mut total_unparsed = 0usize;
         let mut files_checked = 0usize;
+        let mut files_with_unaccounted = 0usize;
+        let mut total_unaccounted = 0usize;
 
         for entry in std::fs::read_dir(&codex_dir).expect("read reviews/codex") {
             let path = entry.expect("dir entry").path();
@@ -760,15 +883,39 @@ mod tests {
                 .or_else(|| content.splitn(3, "---\n").nth(2))
                 .unwrap_or(content.as_str());
             let real_region = body.split("\nLOG SUMMARY:").next().unwrap_or(body);
-            total_finding_lines += real_region.lines().filter(|l| l.starts_with("Finding:")).count();
+            // Uses the parser's own header rule, so the numbered shape counts on both sides.
+            total_finding_lines += real_region
+                .lines()
+                .filter(|l| is_finding_header_line(l))
+                .count();
 
             let (findings, unparsed) = parse_findings(body, "REV__CORPUS-CHECK__x__R1");
+            // The fail-closed rule keys off `count_declared_findings`. If that over-counted on real
+            // Codex output, every historical review would retroactively be INCOMPLETE — so assert
+            // here that it never claims more findings than the parser accounted for.
+            let declared = count_declared_findings(body);
+            if declared > findings.len() + unparsed {
+                files_with_unaccounted += 1;
+                total_unaccounted += declared - (findings.len() + unparsed);
+            }
             total_parsed += findings.len();
             total_unparsed += unparsed;
             files_checked += 1;
         }
 
+        eprintln!(
+            "corpus: {files_checked} files, {total_finding_lines} finding lines, \
+             {files_with_unaccounted} files with unaccounted declarations, {total_unaccounted} unaccounted"
+        );
         assert!(files_checked > 0, "expected historical assessments in the self-development archive");
+        // Findings declared in a shape no header rule accepts. On the corpus at the time of writing
+        // this is 2 of 510 files — two genuine, individually distinct prose declarations that the
+        // record silently lost. The ceiling catches a *systematic* new shape emerging (which would
+        // start marking real Codex reviews INCOMPLETE) without being brittle to that residual.
+        assert!(
+            files_with_unaccounted * 100 <= files_checked * 2,
+            "too many files declare findings in an unrecognised shape: {files_with_unaccounted}/{files_checked} ({total_unaccounted} findings)"
+        );
         assert!(total_finding_lines > 0, "expected at least some real Finding: lines in the corpus");
         assert_eq!(
             total_parsed + total_unparsed, total_finding_lines,

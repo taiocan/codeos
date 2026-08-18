@@ -87,7 +87,10 @@ consistency after the path-only migration.
 
 ## Migrate Reviewer Configuration
 
-The reviewer is Codex-only. In `.codeos/05-review/reviewer.toml`, remove any `provider` key and keep
+Codex remains the only reviewer the tool invokes, and provider selection stays retired: when Codex
+is unavailable, `plan --emit-packet` exports the packet, any model produces an assessment, and
+`review --assessment <reply> --packet <exported packet>` records it as advisory evidence bound to the
+exact bytes the model read. In `.codeos/05-review/reviewer.toml`, remove any `provider` key and keep
 only an optional `reasoning_effort` value. Remove `CODEOS_REVIEWER_PROVIDER` from project automation.
 The retired `--provider`, `--mode`, `--print-packet`, `--dry-run`, and `stage-start` interfaces have
 no compatibility aliases: use `plan` to inspect evidence, omit `--base` for full evidence, and pass

@@ -1,5 +1,6 @@
 use crate::config::Config;
 use crate::packet::ReviewPacket;
+use crate::run::{ReviewerRun, RunSource};
 use anyhow::{bail, Context, Result};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -7,15 +8,6 @@ use std::io::Write;
 use std::path::Path;
 use std::process::{Command, Stdio};
 use std::time::Instant;
-
-/// The reviewer-facing result of one Codex invocation. Every Codex CLI detail stays in this module.
-pub struct CodexResult {
-    pub text: String,
-    pub session_id: String,
-    pub elapsed_ms: u64,
-    pub reconnect_count: u32,
-    pub effort: String,
-}
 
 #[derive(Debug, Deserialize, Serialize)]
 struct SessionState {
@@ -25,7 +17,7 @@ struct SessionState {
     created_at: String,
 }
 
-pub fn invoke(packet: &ReviewPacket, cfg: &Config, fresh: bool) -> Result<CodexResult> {
+pub fn invoke(packet: &ReviewPacket, cfg: &Config, fresh: bool) -> Result<ReviewerRun> {
     let session_file = cfg.sessions_dir.join(format!("{}.json", packet.feature));
     let codex_version = codex_version()?;
     let saved = load_session(&session_file)?;
@@ -91,15 +83,17 @@ pub fn invoke(packet: &ReviewPacket, cfg: &Config, fresh: bool) -> Result<CodexR
         )?;
     }
 
-    Ok(CodexResult {
+    Ok(ReviewerRun {
         text,
-        session_id,
         elapsed_ms,
-        reconnect_count: events
-            .lines()
-            .filter(|line| line.contains("stream disconnected"))
-            .count() as u32,
-        effort: cfg.reasoning_effort.clone(),
+        source: RunSource::Codex {
+            session_id,
+            reconnect_count: events
+                .lines()
+                .filter(|line| line.contains("stream disconnected"))
+                .count() as u32,
+            effort: cfg.reasoning_effort.clone(),
+        },
     })
 }
 

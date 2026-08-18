@@ -16,3 +16,4 @@ implemented changes; this file is planning context, not workflow state or implem
 | UPG-0064 | [UPG-0064-delegated-stage4-envelope-alignment.md](UPG-0064-delegated-stage4-envelope-alignment.md) | Delegated Stage-4 Envelope Alignment and Governed Pilot | P2 | IN_PROGRESS |
 | UPG-0066 | [UPG-0066-deepseek-stage5-evidence-pilot.md](UPG-0066-deepseek-stage5-evidence-pilot.md) | DeepSeek Stage-5 Evidence Pilot | P2 | IN_PROGRESS |
 | UPG-0068 | [UPG-0068-serves-outcomes-rationale-and-retrofit.md](UPG-0068-serves-outcomes-rationale-and-retrofit.md) | serves_outcomes Has No Rationale Record and No Retrofit Path for Pre-Charter Intents | P2 | PROPOSED |
+| UPG-0069 | [UPG-0069-reviewer-provider-comparison.md](UPG-0069-reviewer-provider-comparison.md) | Reviewer Provider Comparison on One Canonical Packet | P2 | FROZEN (awaiting Codex arm) |

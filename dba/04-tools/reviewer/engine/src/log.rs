@@ -1,6 +1,6 @@
 use crate::assessment::ParsedReview;
 use crate::packet::ReviewPacket;
-use crate::codex::CodexResult;
+use crate::run::{ReviewerRun, RunSource};
 use anyhow::{Context, Result};
 use std::path::Path;
 
@@ -25,7 +25,7 @@ const LOG_HEADER: &str = "# Codeos Review Log (append-only, v0)
 Append-only record of automated advisory reviews and the human decisions that follow them.
 Entries are NEVER edited — a human decision is a separately appended entry. The reviewer is
 advisory and read-only; APPROVE belongs to the human. The reviewer tool is the authoritative
-owner of automated review records; see dba/04-tools/reviewer/contract/v3.md.
+owner of automated review records; see dba/04-tools/reviewer/contract/v4.md.
 ";
 
 /// Initialize the log file if it does not exist.
@@ -66,11 +66,42 @@ pub fn compute_review_round(log_path: &Path, feature: &str, stage: &str) -> Resu
             });
         }
     };
-    let suffix = format!(" REVIEW — {} — Stage {}", feature, stage);
-    let count = content.lines()
+    Ok(count_entries(&content, REVIEW_HEADING, feature, stage) + 1)
+}
+
+/// Heading verbs that distinguish the two record kinds in the log. `compute_review_round` counts
+/// only `REVIEW`, so recording an external assessment can never advance a required review round —
+/// the exclusion falls out of the heading rather than needing a separate rule to stay in sync.
+pub const REVIEW_HEADING: &str = "REVIEW";
+pub const EXTERNAL_ASSESSMENT_HEADING: &str = "EXTERNAL ASSESSMENT";
+
+fn count_entries(content: &str, kind: &str, feature: &str, stage: &str) -> u32 {
+    let suffix = format!(" {} — {} — Stage {}", kind, feature, stage);
+    content
+        .lines()
         .filter(|line| line.starts_with("## ") && line.ends_with(&suffix))
-        .count();
-    Ok(count as u32 + 1)
+        .count() as u32
+}
+
+/// Sequence number for the next external assessment of `feature`+`stage`. Counted separately from
+/// review rounds and never mixed with them.
+pub fn compute_assessment_sequence(log_path: &Path, feature: &str, stage: &str) -> Result<u32> {
+    let content = match std::fs::read_to_string(log_path) {
+        Ok(c) => c,
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(1),
+        Err(e) => {
+            return Err(e).with_context(|| {
+                format!("could not read review log to compute assessment sequence: {}", log_path.display())
+            });
+        }
+    };
+    Ok(count_entries(&content, EXTERNAL_ASSESSMENT_HEADING, feature, stage) + 1)
+}
+
+/// Format the `EXT__<feature>__<stage>__A<N>` external-assessment id. Deliberately not the
+/// `REV__…__R<N>` shape: an external assessment is not a round of review.
+pub fn format_assessment_id(feature: &str, stage: &str, sequence: u32) -> String {
+    format!("EXT__{}__{}__A{}", feature, stage, sequence)
 }
 
 /// Format the `REV__<feature>__<stage>__R<N>` review id. The stage is used verbatim — no
@@ -85,7 +116,7 @@ pub fn append_review(
     log_path: &Path,
     review_id: &str,
     packet: &ReviewPacket,
-    raw: &CodexResult,
+    raw: &ReviewerRun,
     parsed: &ParsedReview,
     assessment_file: &Path,
     assessment_hash: &str,
@@ -104,17 +135,44 @@ pub fn append_review(
 
     let mut entry = String::new();
     entry.push('\n');
-    entry.push_str(&format!("## {} REVIEW — {} — Stage {}\n", ts, packet.feature, packet.stage));
-    entry.push_str(&format!("Review ID: {}\n", review_id));
+    let kind = if raw.is_external() {
+        EXTERNAL_ASSESSMENT_HEADING
+    } else {
+        REVIEW_HEADING
+    };
+    entry.push_str(&format!("## {} {} — {} — Stage {}\n", ts, kind, packet.feature, packet.stage));
+    entry.push_str(&format!(
+        "{} ID: {}\n",
+        if raw.is_external() { "Assessment" } else { "Review" },
+        review_id
+    ));
     entry.push_str(&format!("Base: {}  Review: {}  Branch: {}\n",
         packet.base_sha, packet.review_sha, packet.branch));
     entry.push_str(&format!("Diff-hash: {}\n", packet.diff_hash));
-    entry.push_str(&format!("Reviewer: codex default-model (session {})\n", raw.session_id));
-    entry.push_str(&format!("Effort: {}   Wall time: {}ms   Reconnects: {}\n",
-        raw.effort, raw.elapsed_ms, raw.reconnect_count));
-    entry.push_str(&format!("Codex concern: {}\n", parsed.codex_concern));
+    entry.push_str(&format!("Reviewer: {}\n", raw.reviewer_field()));
+    match &raw.source {
+        RunSource::Codex { reconnect_count, effort, .. } => {
+            entry.push_str(&format!("Effort: {}   Wall time: {}ms   Reconnects: {}\n",
+                effort, raw.elapsed_ms, reconnect_count));
+            entry.push_str(&format!("Codex concern: {}\n", parsed.codex_concern));
+        }
+        RunSource::External { .. } => {
+            entry.push_str("Source: external — advisory findings only; does NOT satisfy a required review round.\n");
+            entry.push_str(&format!("Reported concern: {}\n", parsed.codex_concern));
+        }
+    }
     entry.push_str(&format!("Effective concern: {}\n", parsed.effective_concern));
     entry.push_str(&format!("Evidence: {}\n", parsed.evidence));
+    entry.push_str(&format!(
+        "Parse status: {}   Assessment status: {}\n",
+        parsed.parse_status, parsed.assessment_status
+    ));
+    if !parsed.incomplete_reason.is_empty() {
+        entry.push_str(&format!(
+            "INCOMPLETE — {} — advancement prohibited on this record.\n",
+            parsed.incomplete_reason
+        ));
+    }
     if !parsed.highest_impact_uncertainty.is_empty() {
         entry.push_str(&format!(
             "Highest-impact uncertainty: {}\n",
@@ -137,8 +195,12 @@ pub fn append_review(
         entry.push_str(&format!("Coverage gap: {} — excluded/redacted [{}] — MANUAL SECURITY REVIEW REQUIRED\n",
             packet.coverage_state.as_str(), excluded.join(", ")));
     }
-    entry.push_str(&format!("Human decision: (append with: codeos-reviewer decision {} {} <DECISION> \"<reason>\")\n",
-        packet.feature, packet.stage));
+    if raw.is_external() {
+        entry.push_str("Progression: unchanged — a required review still needs a Codex-backed review round or a recorded Review Waiver.\n");
+    } else {
+        entry.push_str(&format!("Human decision: (append with: codeos-reviewer decision {} {} <DECISION> \"<reason>\")\n",
+            packet.feature, packet.stage));
+    }
 
     append_to_log(log_path, &entry)
 }
@@ -657,13 +719,28 @@ mod tests {
         crate::packet::build(&opts).expect("build packet")
     }
 
-    fn test_raw() -> crate::codex::CodexResult {
-        crate::codex::CodexResult {
-            text: "LOG SUMMARY: NO OBJECTION — ok\nEVIDENCE: A\nHIGHEST-IMPACT UNCERTAINTY: none\n".to_string(),
-            session_id: "test-session".to_string(),
+    const TEST_REPLY: &str =
+        "LOG SUMMARY: NO OBJECTION — ok\nEVIDENCE: A\nHIGHEST-IMPACT UNCERTAINTY: none\n";
+
+    fn test_raw() -> ReviewerRun {
+        ReviewerRun {
+            text: TEST_REPLY.to_string(),
             elapsed_ms: 1,
-            reconnect_count: 0,
-            effort: "high".to_string(),
+            source: RunSource::Codex {
+                session_id: "test-session".to_string(),
+                reconnect_count: 0,
+                effort: "high".to_string(),
+            },
+        }
+    }
+
+    fn test_external_raw() -> ReviewerRun {
+        ReviewerRun {
+            text: TEST_REPLY.to_string(),
+            elapsed_ms: 0,
+            source: RunSource::External {
+                label: Some("deepseek-v4-flash".to_string()),
+            },
         }
     }
 
@@ -673,7 +750,7 @@ mod tests {
         let repo_root = dir.path();
         let packet = build_test_packet(repo_root, "UPG-TEST", "selfdev-step-1");
         let raw = test_raw();
-        let parsed = crate::assessment::parse_review_output(&raw.text, &packet.coverage_state);
+        let parsed = crate::assessment::parse_review_output(&raw.text, &packet.coverage_state, 0, 0);
 
         let log_path = repo_root.join("review-log.md");
         let review_id = format_review_id(&packet.feature, &packet.stage, 1);
@@ -700,7 +777,7 @@ mod tests {
         let repo_root = dir.path();
         let packet = build_test_packet(repo_root, "UPG-TEST", "selfdev-step-1");
         let raw = test_raw();
-        let parsed = crate::assessment::parse_review_output(&raw.text, &packet.coverage_state);
+        let parsed = crate::assessment::parse_review_output(&raw.text, &packet.coverage_state, 0, 0);
         let log_path = repo_root.join("review-log.md");
 
         // Round 1 (log does not exist yet).

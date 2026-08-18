@@ -87,7 +87,7 @@ Reviewer checks by stage:
 - **Stage 10 Architectural Refinement**: behavior remains unchanged; structural need is real;
   ADR/ARD need identified; no contract/schema drift hidden inside refactor.
 
-> Note: the actual automated implementation (see `dba/04-tools/reviewer/contract/v3.md`) keeps the
+> Note: the actual automated implementation (see `dba/04-tools/reviewer/contract/v4.md`) keeps the
 > reviewer **advisory and non-gatekeeping** — it uses concern-level vocabulary
 > (NO OBJECTION / CHANGES ADVISED / DO NOT ADVANCE), reserving APPROVE for the human, to
 > stay aligned with the existing `dba/03-prompts/review/pipeline-reviewer.md` stance.
@@ -110,7 +110,7 @@ asked.
 
 Touches the **review flow** and risks **gatekeeping**. Safe only while the reviewer stays
 advisory and read-only; the non-negotiable human-approval gate (rule #1) must remain
-untouched. The current external guarantees are in `dba/04-tools/reviewer/contract/v3.md`.
+untouched. The current external guarantees are in `dba/04-tools/reviewer/contract/v4.md`.
 
 ## Feature Thread
 

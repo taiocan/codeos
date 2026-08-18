@@ -9,6 +9,7 @@ mod config;
 mod log;
 mod packet;
 mod precheck;
+mod run;
 
 pub const EXIT_SUCCESS: i32 = 0;
 pub const EXIT_USAGE: i32 = 1;
@@ -57,6 +58,28 @@ struct ReviewCli {
     /// Write reviewer records under ignored operational state.
     #[arg(long)]
     scratch: bool,
+    /// Record an external assessment from this file instead of invoking Codex. The assessment is
+    /// advisory evidence: it is recorded with source: external and never counts as a review round.
+    /// Requires --packet: the assessment is bound to the exact packet the model read.
+    #[arg(long = "assessment", value_name = "FILE", requires = "packet")]
+    assessment: Option<PathBuf>,
+    /// The packet exported by `plan --emit-packet` that the external model read. Its bytes are
+    /// recorded as the reviewed packet; no packet is rebuilt. Requires --assessment.
+    #[arg(long = "packet", value_name = "FILE", requires = "assessment")]
+    packet: Option<PathBuf>,
+    /// Descriptive label for the model that produced an external assessment. Metadata only: Codeos
+    /// neither invoked nor verified it. Requires --assessment.
+    #[arg(long = "reviewer-label", value_name = "LABEL", requires = "assessment")]
+    reviewer_label: Option<String>,
+}
+
+#[derive(Args)]
+struct PlanCli {
+    #[command(flatten)]
+    evidence: EvidenceCli,
+    /// Write the exact packet `review` would send to this file, for assessment by an external model.
+    #[arg(long = "emit-packet", value_name = "FILE")]
+    emit_packet: Option<PathBuf>,
 }
 
 #[derive(Subcommand)]
@@ -64,7 +87,7 @@ enum Commands {
     /// Build evidence, invoke Codex, save the assessment, and append the review log.
     Review(ReviewCli),
     /// Preview evidence selection and packet size without invoking Codex or writing records.
-    Plan(EvidenceCli),
+    Plan(PlanCli),
     /// Append a human decision associated with an automated review.
     Decision {
         feature: String,
@@ -153,6 +176,9 @@ fn run() -> i32 {
                 evidence: args.evidence.into(),
                 fresh: args.fresh,
                 scratch: args.scratch,
+                assessment: args.assessment,
+                packet: args.packet,
+                reviewer_label: args.reviewer_label,
             },
             &cfg,
         )
@@ -160,10 +186,11 @@ fn run() -> i32 {
             eprintln!("internal error: {error}");
             EXIT_WRITE
         }),
-        Commands::Plan(args) => cmd::plan::run(args.into(), &cfg).unwrap_or_else(|error| {
-            eprintln!("internal error: {error}");
-            EXIT_WRITE
-        }),
+        Commands::Plan(args) => cmd::plan::run(args.evidence.into(), args.emit_packet, &cfg)
+            .unwrap_or_else(|error| {
+                eprintln!("internal error: {error}");
+                EXIT_WRITE
+            }),
         Commands::Decision {
             feature,
             stage,

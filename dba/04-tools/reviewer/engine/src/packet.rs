@@ -1,5 +1,6 @@
 use crate::precheck::redact_secrets;
 use anyhow::{bail, Context, Result};
+use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::path::Path;
 use std::process::Command;
@@ -17,7 +18,7 @@ const PATH_EXCLUDES: &[&str] = &[
     "*.log",
 ];
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum CoverageState {
     FullCoverage,
     PartialCoverage,
@@ -48,7 +49,7 @@ impl CoverageState {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct ArtifactEntry {
     pub path: String,
     pub sha256: String,
@@ -58,6 +59,7 @@ pub struct ArtifactEntry {
     pub bytes: u64,
 }
 
+#[derive(Serialize, Deserialize)]
 pub struct ReviewPacket {
     pub feature: String,
     pub stage: String,
@@ -91,12 +93,23 @@ pub struct ReviewPacket {
     /// oversized-packet warning ranks, exposed so callers can reproduce that exact ranking
     /// instead of (incorrectly) ranking all of `artifacts` by raw file size.
     pub budget_contributors: Vec<(String, u64)>,
+    /// The packet bytes. Held out of the sidecar: they live in the exported packet file itself, and
+    /// storing them twice would create two copies that could disagree about what was reviewed.
+    #[serde(skip)]
     content: String,
 }
 
 impl ReviewPacket {
     pub fn content(&self) -> &str {
         &self.content
+    }
+
+    /// Restore a packet from an exported sidecar plus the exported bytes. The bytes are adopted
+    /// verbatim: nothing is rebuilt, so the reviewed packet and the recorded packet are the same
+    /// bytes by construction rather than by a later comparison.
+    pub fn from_sidecar(mut self, content: String) -> Self {
+        self.content = content;
+        self
     }
 }
 
@@ -344,10 +357,65 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
         file_contributors.push(("(diff)".to_string(), diff_bytes));
     }
 
+    // Untracked files are part of the change under review but appear in no diff. Each one is either
+    // shown here or recorded as an exclusion — an exclusion downgrades coverage, so the packet
+    // cannot report FULL_COVERAGE while withholding a new file.
+    let mut untracked_block = String::new();
+    let mut untracked_shown = 0usize;
+    for path in git_untracked_files(&opts.repo_root) {
+        if opts.artifacts.contains(&path) || opts.sha_only_paths.contains(&path) {
+            continue; // already shown in its own right
+        }
+        if is_path_excluded(&path) {
+            excluded_paths.push((
+                path.clone(),
+                "excluded path pattern".to_string(),
+                "untracked".to_string(),
+            ));
+            continue;
+        }
+        let bytes = std::fs::metadata(&path).map(|m| m.len()).unwrap_or(0);
+        if bytes > SIZE_LIMIT_BYTES {
+            excluded_paths.push((
+                path.clone(),
+                format!("over size limit ({bytes} bytes)"),
+                "untracked".to_string(),
+            ));
+            continue;
+        }
+        let raw = match std::fs::read_to_string(&path) {
+            Ok(raw) => raw,
+            Err(error) => {
+                excluded_paths.push((
+                    path.clone(),
+                    format!("unreadable: {error}"),
+                    "untracked".to_string(),
+                ));
+                continue;
+            }
+        };
+        let (redacted, hits) = redact_secrets(&raw);
+        if hits > 0 {
+            redaction_count += hits;
+            secret_flag = true;
+        }
+        untracked_block.push_str(&format!(
+            "\n  --- {} (untracked — new file, not in any diff; sha256: {}, bytes: {}) ---\n{}\n",
+            path,
+            sha256_str(&raw),
+            bytes,
+            redacted
+        ));
+        review_content_bytes += redacted.len() as u64;
+        file_contributors.push((path.clone(), redacted.len() as u64));
+        untracked_shown += 1;
+    }
+
     // Coverage state (most severe wins)
     let coverage_state =
-        if (opts.delta_mode && delta_diff_count == 0 && redacted_diff.trim().is_empty())
-            || (!opts.delta_mode && shown_count == 0 && redacted_diff.trim().is_empty())
+        if untracked_shown == 0
+            && ((opts.delta_mode && delta_diff_count == 0 && redacted_diff.trim().is_empty())
+                || (!opts.delta_mode && shown_count == 0 && redacted_diff.trim().is_empty()))
         {
             CoverageState::EmptyPacket
         } else if artifact_excluded {
@@ -499,6 +567,14 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
         ));
     }
     content.push_str(&redacted_diff);
+
+    if untracked_shown > 0 {
+        content.push_str(&format!(
+            "\nUNTRACKED FILES ({} new file(s) not present in any diff, shown in full)\n",
+            untracked_shown
+        ));
+        content.push_str(&untracked_block);
+    }
 
     // Full Context Diff (AC-1: auto-appended when delta_mode AND delta_base are both active).
     if opts.delta_mode {
@@ -697,6 +773,32 @@ fn git_is_tracked(path: &str, repo_root: &str) -> bool {
         .output()
         .map(|o| o.status.success())
         .unwrap_or(false)
+}
+
+/// Files git knows nothing about yet, honouring .gitignore. A diff cannot show them, so without
+/// this they would be invisible to review while coverage still claimed to be full — which is how a
+/// new implementation module can be added and reviewed as if it did not exist.
+fn git_untracked_files(repo_root: &str) -> Vec<String> {
+    Command::new("git")
+        .args([
+            "ls-files",
+            "--others",
+            "--exclude-standard",
+            "--",
+            ".",
+            ":(exclude).codeos/05-review/reviews",
+            ":(exclude).codeos-state",
+        ])
+        .current_dir(repo_root)
+        .output()
+        .map(|o| {
+            String::from_utf8_lossy(&o.stdout)
+                .lines()
+                .filter(|l| !l.is_empty())
+                .map(|l| l.to_string())
+                .collect()
+        })
+        .unwrap_or_default()
 }
 
 fn git_is_dirty(repo_root: &str) -> bool {
