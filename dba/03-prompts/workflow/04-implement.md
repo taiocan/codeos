@@ -60,6 +60,8 @@ for inline delivery evidence rather than restating its format here.
 
 Implement in the project's native source layout. Present the changed paths, implementation,
 Contract satisfaction mapping, applicable event mapping, failure mapping, any costly-to-reverse
-feature-local structural decisions, and any genuine deferral trace. This stage creates no separate
-workflow artifact; the decision record is inline and is never written to a file. Continue directly
+feature-local structural decisions, and any genuine deferral trace. The inline decision record is
+never written to a file. Separately, this stage MAY create or update a Module Design Note at
+`.codeos/03-design/<module-slug>.md` when the doctrine's rule warrants one; the note is descriptive
+and governs nothing. Continue directly
 to `05-tests.md` without an intermediate approval unless the human requests one.

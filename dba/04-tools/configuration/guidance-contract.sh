@@ -17,6 +17,7 @@ expected_guidance=(
   templates/implementation-profile.yaml
   templates/intent.md
   templates/learning-register.md
+  templates/module-design-note.md
   templates/project-AGENTS.md
   templates/project-CLAUDE.md
   templates/project-root-CLAUDE.md

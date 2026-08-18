@@ -39,5 +39,6 @@ required. Do not improve unrelated code or disguise redesign as refinement.
 Create `.codeos/04-refinement/<feature-id>-<slug>.md` from the optional refinement template only
 when a durable refinement record adds value; otherwise use the governing artifact changes and Git
 as the record and keep this result inline. Present trigger, evidence, root cause, minimal repair,
-and verification route. Return the verified result to the final-acceptance adapter in
-`08-replay.md`.
+and verification route. Update an existing Module Design Note when the repair materially changes
+what it documents, under the doctrine's update trigger. Return the verified result to the
+final-acceptance adapter in `08-replay.md`.

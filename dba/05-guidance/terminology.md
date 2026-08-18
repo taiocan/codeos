@@ -34,6 +34,7 @@ Ordinary technical vocabulary does not belong here. Git preserves the history of
 | **Implementation Profile** | An approved project-level statement of preferred implementation language and scope that implementation must consult. |
 | **Intent** | Why a feature exists, expressed as actor and desired outcome without implementation details. |
 | **Learning Register** | An optional queue of material, unresolved post-acceptance observations that could change governed engineering truth. It is evidence, never authority, and is not an operational log. |
+| **Module Design Note** | Optional descriptive documentation of how an implementation module currently works; its normative rules are defined by the doctrine's Structural Ownership section. |
 | **NORMAL** | The default Codeos self-development classification for work that does not reasonably risk an approved consequential boundary. |
 | **Normalize-on-read** | A vocabulary strategy that stores the original representation and resolves it at every comparison site. |
 | **Normalize-on-write** | A vocabulary strategy that resolves input at ingestion and stores Concept identity. |

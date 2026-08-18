@@ -30,6 +30,7 @@ Canonical durable locations are:
 | Event Schema | `.codeos/01-specification/event-schemas/<feature-id>_schema.md` | Required per feature |
 | Architecture Scope | `.codeos/02-architecture/scopes/<scope-id>.md` | Only when architecture synthesis applies |
 | Implementation Profile | `.codeos/02-architecture/implementation-profile.yaml` | Only when adopted |
+| Module Design Note | `.codeos/03-design/<module-slug>.md` | Only when the module warrants one |
 | Saved framing or decomposition | `.codeos/00-discovery/<topic-slug>.md` | Only when it has durable value |
 | Refinement record | `.codeos/04-refinement/<feature-id>-<slug>.md` | Only when it has durable value |
 | Reviewer configuration | `.codeos/05-review/reviewer.toml` | Only when defaults are overridden |

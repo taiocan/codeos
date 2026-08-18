@@ -89,8 +89,8 @@ myproject/
     └── toolkit -> /path/to/Codeos  — Ignored machine-local mount
 ```
 
-Architecture, framing, refinement, review, runtime-evidence, and operational-state paths are
-created only when the project actually needs them. The full canonical location model is owned by
+Architecture, framing, module design notes, refinement, review, runtime-evidence, and
+operational-state paths are created only when the project actually needs them. The full canonical location model is owned by
 the Downstream Project Layout Contract in `dba-system.md`.
 
 ## The DBA Development Loop
@@ -223,7 +223,8 @@ invent placeholder events.
 owns the `delivery-entry` adapter.
 **Key constraint:** Apply the constraints selected by the active doctrine. Stage 4 owns feature-local
 design inside approved architectural boundaries, recording inline any such decision that is costly to
-reverse.
+reverse. It may also maintain a Module Design Note for a module complex enough to warrant one — a
+descriptive explanation of how that module works, never an authority for behavior or structure.
 
 ### Stage 5 — Tests
 **Purpose:** Write behavioral truth anchors that fail if observable behavior deviates from the

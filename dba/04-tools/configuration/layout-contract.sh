@@ -118,6 +118,7 @@ canonical_paths=(
   '.codeos/01-specification/event-schemas/<feature-id>_schema.md'
   '.codeos/02-architecture/scopes/<scope-id>.md'
   '.codeos/02-architecture/implementation-profile.yaml'
+  '.codeos/03-design/<module-slug>.md'
   '.codeos/00-discovery/<topic-slug>.md'
   '.codeos/04-refinement/<feature-id>-<slug>.md'
   '.codeos/05-review/reviewer.toml'

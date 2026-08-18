@@ -38,3 +38,7 @@ Profile, or register infrastructure as a feature.
 For each feature, create the draft Intent at
 `.codeos/01-specification/intents/<feature-id>.md`, present it with unresolved questions, and hand
 control to the ordinary Stage 1–3 Specification Package workflow.
+
+Intake MAY also create a Module Design Note at `.codeos/03-design/<module-slug>.md` for an inspected
+module the doctrine's rule warrants. Describe only behavior and structure the inspected code
+supports, and mark unresolved workings unknown rather than inferring them as fact.
