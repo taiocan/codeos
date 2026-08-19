@@ -24,6 +24,9 @@ description. Resolve existing artifacts through the Downstream Project Layout Co
 - Record in `serves_outcomes` the Charter outcomes this feature contributes to. If the feature
   serves no approved outcome or falls outside the Charter's scope boundary, stop and route the
   question to `support-solution-charter.md` rather than widening the solution silently.
+- Recording `serves_outcomes` on an already-approved Intent follows the rule in
+  `support-solution-charter.md` and leaves that Intent's `status`, `approved_by`, and `approved_at`
+  unchanged; it is never a reason to return an approved artifact to `DRAFT`.
 - State stable guarantees as enforceable, testable invariants; they need not use actor/outcome
   grammar when that would obscure the invariant.
 - Keep mechanisms, implementation technology, observability, workflow steps, and architecture out

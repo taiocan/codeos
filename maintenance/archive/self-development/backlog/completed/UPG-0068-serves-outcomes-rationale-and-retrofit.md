@@ -2,7 +2,7 @@
 feature_id: UPG-0068
 slug: serves-outcomes-rationale-and-retrofit
 title: No Retrofit Path for serves_outcomes on Pre-Charter Approved Intents
-status: PROPOSED
+status: COMPLETE
 priority: P2
 depends_on: []
 related_features: []
@@ -13,8 +13,34 @@ superseded_by: []
 # Upgrade: serves-outcomes-rationale-and-retrofit
 
 **Priority**: P2
-**Status**: PROPOSED
+**Status**: COMPLETE
 **Type**: prompt
+
+## Outcome (closed 2026-08-19)
+
+Implemented in `dba/03-prompts/workflow/support-solution-charter.md`, with a one-sentence pointer in
+`dba/03-prompts/workflow/01-intent.md`. No template, artifact, doctrine section, or glossary term was
+added.
+
+**The open question is answered: metadata recording, approval intact.** Doctrine v3 already requires
+the mapping — "Each Charter outcome has a stable identity. An Intent records the outcomes it serves"
+— so supplying it on a pre-Charter Intent restores conformance rather than deciding something new.
+Approval in DBA-3 is semantic, not byte-level: it holds while the artifacts "continue to represent
+the jointly approved specification", escalation triggers on changes to approved *behavior*, and
+"Existing approvals are not automatically invalidated."
+
+The confirmation model reuses the existing decision boundary rather than adding one. For an Intent
+approved before its Charter, `serves_outcomes` is proposed during Charter construction, listed per
+Intent alongside the artifact so the human is visibly approving the mappings, and recorded only
+after Charter approval — copying exactly the values presented, with the Intents' `status`,
+`approved_by`, and `approved_at` untouched.
+
+An Intent that cannot be truthfully mapped is reported unresolved and excluded from the set rather
+than given a mapping to complete it; `approval: null` holds while an in-scope Intent cannot be
+mapped, and the human resolves it by adding the missing outcome or explicitly placing the feature
+outside the scope boundary.
+
+The rationale-field half was dropped during the 2026-08-19 rescope and remains dropped.
 
 ## Problem
 

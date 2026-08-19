@@ -53,6 +53,20 @@ When revising an approved Charter, first return `approval` to `null`, then asses
 Existing approvals are not automatically invalidated. Report each affected artifact and the point at
 which it must be reassessed — before its next implementation or acceptance.
 
+When a Charter is approved over Intents that were approved before it existed, those Intents record
+no `serves_outcomes` yet, and the doctrine requirement that an Intent records the outcomes it serves
+is not yet satisfied. Propose each such Intent's `serves_outcomes` as part of constructing this
+Charter. Proposing is not recording: leave those Intents' `status`, `approved_by`, and `approved_at`
+untouched, and treat the mapping as confirmed only once the human approves this Charter.
+
+An Intent that cannot be truthfully mapped to an approved outcome is reported as unresolved and
+excluded from the proposed set; never assign a mapping to make the set complete. Such an
+inconsistency is a Charter question — either this Charter lacks an outcome the feature serves, or
+the feature lies outside the scope boundary — so, as with anything else unresolved above, keep
+`approval: null` while an in-scope Intent cannot be mapped. The human resolves it by adding the
+missing outcome or by explicitly placing the feature outside the boundary; once outside, it is not
+in the mapping set and no longer blocks approval.
+
 ## Applicable Checks
 
 Confirm that outcomes are measurable and identified, the boundary is explicit, every System
@@ -68,5 +82,12 @@ when revising, and state:
 
 `AWAITING HUMAN APPROVAL OF THE SOLUTION CHARTER`
 
-After explicit approval, record `approval.by` and `approval.at`. Then route feature work to
+When Intents approved before this Charter exist, list the proposed `serves_outcomes` per Intent
+alongside the artifact, so the human approving the Charter is approving those mappings rather than
+receiving them as hidden detail.
+
+After explicit approval, record `approval.by` and `approval.at` on the Charter. Where mappings were
+proposed, record into each affected Intent exactly the `serves_outcomes` presented for approval —
+do not re-infer or adjust them while recording — and change nothing else in those Intents,
+including their existing `status`, `approved_by`, and `approved_at`. Then route feature work to
 `01-intent.md`, recording the outcomes each Intent serves.
