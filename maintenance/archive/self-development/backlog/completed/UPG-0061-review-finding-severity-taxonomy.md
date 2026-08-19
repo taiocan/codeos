@@ -2,7 +2,7 @@
 feature_id: UPG-0061
 slug: review-finding-severity-taxonomy
 title: Separate Behavioral Blockers from Record-Hygiene Findings in Review
-status: PROPOSED
+status: OBSOLETE
 priority: P2
 depends_on: []
 related_features: [UPG-0047, UPG-0060]
@@ -13,8 +13,30 @@ superseded_by: []
 # Upgrade: review-finding-severity-taxonomy — Separate Behavioral Blockers from Record-Hygiene Findings
 
 **Priority**: P2
-**Status**: PROPOSED
+**Status**: OBSOLETE
 **Type**: prompt (+ possible script-tooling)
+
+## Outcome (closed 2026-08-19)
+
+Obsolete. The primary problem — a journaled procedural rule failing because nothing surfaces it at
+the transition where it applies — was entirely about the self-development loop that has since been
+retired. AJ-020's rule targets the dashboard row in `status/self-development.md`, now under
+`maintenance/archive/`; the false-governance-state case is a change record asserting
+`state: COMPLETE` / `review_state: ACCEPTED`. `CLAUDE.md` requires none of these: "No change record,
+fixed review round, reconciliation artifact, intermediate human gate, or routine review log is
+required." There is no longer a transition to guard.
+
+The secondary split is still literally true — `dba/03-prompts/review/codeos-reviewer-task.md`
+does bundle "breaks the stated goal" with "creates a FALSE CLAIM" under `IN-SCOPE BLOCKER` — but the
+case for fixing it does not survive. A `Severity: High|Medium|Low` axis already sits beside
+`Classification` on every finding, so the distinction is expressible today. Both proposed categories
+would still block, so only reporting would change. And the harm this brief argued was that
+"8 in-scope blockers over 6 rounds" reads misleadingly *from the dashboard* — a dashboard that is
+now archived.
+
+Adding a sixth value to a working five-value enum would touch the reviewer prompt, the engine's
+classification parser, and the review-log shape while preventing no correctness, safety, integrity,
+or human-control failure. `CLAUDE.md` permits added complexity only to prevent one of those.
 
 ## Problem — reframed 2026-08-04, after UPG-0060/0062/0063
 

@@ -1,7 +1,7 @@
 ---
 feature_id: UPG-0068
 slug: serves-outcomes-rationale-and-retrofit
-title: serves_outcomes Has No Rationale Record and No Retrofit Path for Pre-Charter Intents
+title: No Retrofit Path for serves_outcomes on Pre-Charter Approved Intents
 status: PROPOSED
 priority: P2
 depends_on: []
@@ -14,7 +14,7 @@ superseded_by: []
 
 **Priority**: P2
 **Status**: PROPOSED
-**Type**: template (+ prompt)
+**Type**: prompt
 
 ## Problem
 
@@ -40,24 +40,30 @@ field is a material change, whether approval fields stay untouched, or where the
 
 ## Upgrade
 
-Give the mapping's reasoning a home, and define the retrofit path.
+Define the retrofit path for approved Intents that predate their Charter.
 
 Open for Step 1, not settled here:
 
-- Whether the rationale belongs beside `serves_outcomes` in the Intent metadata, in the Charter next
-  to each outcome, or nowhere — a bare mapping may be judged sufficient, in which case the retrofit
-  gap is the whole feature.
 - Whether retrofitting `serves_outcomes` onto an approved Intent is a material change requiring
   reapproval, or metadata recording that leaves approval intact. PlotSpot assumed the latter.
 
+**Rescoped 2026-08-19 — the rationale field is not adopted.** Problem 1 below asked where the
+reasoning behind a `serves_outcomes` judgement should live. The answer is nowhere: a rationale field
+invites prose duplicating the Intent, which this brief's own Risk section names as its trap and
+`CLAUDE.md` forbids as duplicated authority. The bare mapping is judged sufficient, which this brief
+already allowed for — "in which case the retrofit gap is the whole feature." That is what remains.
+Do not reopen this without new evidence that an outcome-change reassessment actually failed for want
+of recorded reasoning.
+
 ## Scope
 
-**In scope:** `dba/05-guidance/templates/intent.md`; the recording instruction in
-`dba/03-prompts/workflow/01-intent.md`; the routing text in
-`dba/03-prompts/workflow/support-solution-charter.md`.
+**In scope:** the routing text in `dba/03-prompts/workflow/support-solution-charter.md`, which
+currently routes only forward after approval; and the recording instruction in
+`dba/03-prompts/workflow/01-intent.md`, which currently covers only an Intent being written now.
 
-**Out of scope:** the impact-tracing mechanism itself, which works; any new traceability ledger,
-index, or synchronized record surface; changing what approval means.
+**Out of scope:** `dba/05-guidance/templates/intent.md` — no new field is added, so the template is
+untouched; the rationale field (see Upgrade); the impact-tracing mechanism itself, which works; any
+new traceability ledger, index, or synchronized record surface; changing what approval means.
 
 ## Value
 
