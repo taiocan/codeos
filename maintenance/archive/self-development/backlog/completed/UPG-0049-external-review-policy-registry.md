@@ -2,7 +2,7 @@
 feature_id: UPG-0049
 slug: external-review-policy-registry
 title: External Review Policy Registry
-status: PROPOSED
+status: OBSOLETE
 priority: P3
 depends_on: []
 related_features: [UPG-0045, UPG-0037, UPG-0030]
@@ -13,8 +13,26 @@ superseded_by: []
 # Upgrade: external-review-policy-registry — External Review Policy Registry
 
 **Priority**: P3
-**Status**: PROPOSED
+**Status**: OBSOLETE
 **Type**: script-tooling
+
+## Outcome (closed 2026-08-19)
+
+Obsolete on the self-dev side and against doctrine on the downstream side.
+
+The self-dev half externalises the `PROFILE-0..5` cadence table from
+`maintenance/archive/self-development/retired-process/codeos-self-dev.md`. That process is retired
+and governs nothing; Codeos self-development now follows the NORMAL/PROTECTED model in `CLAUDE.md`,
+which has no review profiles to externalise.
+
+The downstream half would move stage checklist text out of the engine into a policy registry,
+creating a second authority for stage policy. `CLAUDE.md` says "Do not duplicate authority or
+operational state across files" and permits added complexity only to prevent a specific
+correctness, compatibility, safety, integrity, or human-control failure. This brief prevents none;
+it concedes as much itself — its Value is "lowering the cost of *future* stage/cadence doctrine
+changes rather than fixing a current pain point", and its stated trade-off is "trading 'change
+requires touching Rust' for 'change requires touching Rust AND a policy file AND doctrine prose'."
+That is a net complexity increase.
 
 ## Problem
 

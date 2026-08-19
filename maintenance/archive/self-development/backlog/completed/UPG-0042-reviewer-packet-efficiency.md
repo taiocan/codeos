@@ -2,7 +2,7 @@
 feature_id: UPG-0042
 slug: reviewer-packet-efficiency
 title: Reduce Reviewer Packet Bloat for Large Stable Files
-status: PROPOSED
+status: COMPLETE
 priority: P2
 depends_on: [UPG-0027]
 related_features: []
@@ -13,8 +13,30 @@ superseded_by: []
 # Upgrade: reviewer-packet-efficiency — Reduce Reviewer Packet Bloat for Large Stable Files
 
 **Priority**: P2
-**Status**: PROPOSED
+**Status**: COMPLETE
 **Type**: script-tooling
+
+## Outcome (closed 2026-08-19)
+
+Delivered. Every evidence mode this brief asked for exists in
+`dba/04-tools/reviewer/engine/src/packet.rs`: full content, `delta`/`delta_diff`, `path_sha_only`,
+and `oversize_omitted`, selected by `--base` and `--sha-only`. The packet-size policy shipped as
+`CODEOS_PACKET_BUDGET_BYTES` with an over-budget warning naming the overage multiple
+(`packet.rs:435-447`).
+
+The central guardrail — "no silent evidence truncation" — shipped as the per-artifact manifest
+(`mode`, `bytes`, `sha256`) plus a single `coverage_state` of `FULL_COVERAGE`, `PARTIAL_COVERAGE`,
+`CRITICAL_OMISSION`, or `EMPTY_PACKET`. Coverage escalates the reviewer's concern floor and never
+lowers it, so a reduced evidence set cannot yield a clean result. That is the safe-by-default
+behavior the Guardrail section demanded.
+
+The pain is gone empirically: packets ran 192-202 KB when this brief was written and 55-86 KB in
+the most recent rounds.
+
+One item is deliberately not built — automatic mode selection (auto-downgrading stable files to
+hash-only after R1). Implicit evidence reduction is the wrong default for a mechanism that decides
+what a reviewer is permitted to see, and this brief's own Risk section warns about over-compression
+and baseline drift. The operator selects modes explicitly.
 
 ## Problem
 

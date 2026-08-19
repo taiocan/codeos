@@ -2,7 +2,7 @@
 feature_id: UPG-0048
 slug: review-ledger-event-sourcing
 title: Review Ledger Event Sourcing (Speculative — Long-Term)
-status: PROPOSED
+status: OBSOLETE
 priority: P3
 depends_on: [UPG-0046, UPG-0047]
 related_features: []
@@ -13,8 +13,27 @@ superseded_by: []
 # Upgrade: review-ledger-event-sourcing — Review Ledger Event Sourcing (Speculative — Long-Term)
 
 **Priority**: P3
-**Status**: PROPOSED
+**Status**: OBSOLETE
 **Type**: script-tooling
+
+## Outcome (closed 2026-08-19)
+
+Obsolete, and now forbidden by the governing file. This brief exists to automate manual
+synchronisation between the review log and the self-development status dashboard. Both targets are
+retired: the process sits under `maintenance/archive/self-development/retired-process/`, the
+dashboard under `maintenance/archive/self-development/status/`, and `maintenance/reviews/` holds no
+review log at all.
+
+Its own re-triage condition has arrived and answers itself. Both stated prerequisites, UPG-0046 and
+UPG-0047, are complete, and this brief asked that the idea be re-decided "informed by how much
+friction remains *after*" they ship. The friction was removed by deleting the duplicate views, not
+by generating them.
+
+`CLAUDE.md:133-134` now states the principle this brief wanted — each stored fact has one
+authoritative representation, other views derive mechanically rather than by manual synchronisation
+— and `CLAUDE.md:154` forbids the artifacts it proposed to generate: "Do not create separate change
+records, traceability ledgers, status copies, or journal entries." Implementing this would violate
+the file governing this repository.
 
 ## Problem
 
