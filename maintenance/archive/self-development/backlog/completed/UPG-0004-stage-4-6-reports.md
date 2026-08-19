@@ -2,20 +2,38 @@
 feature_id: UPG-0004
 slug: stage-4-6-reports
 title: Structured Stage 4–6 Reports
-status: PROPOSED
+status: SUPERSEDED
 priority: P0
 depends_on: []
 related_features: []
 supersedes: []
-superseded_by: []
+superseded_by: ["inline Review Package (dba/05-guidance/templates/review-package.md)"]
 ---
 
 # Upgrade: stage-4-6-reports — Structured Stage 4–6 Reports
 
 **Priority**: P0
-**Status**: PROPOSED
+**Status**: SUPERSEDED
 **Type**: toolkit-upgrade
 **Related**: stage-report-generator, current-verified-state
+
+## Outcome (closed 2026-08-19)
+
+Superseded by the inline Review Package. `CHG-20260630-001` built the 127-line template, and commit
+`960ba9d` ("Simplify downstream DBA layout and lifecycle ownership", 2026-08-14) deleted it in full.
+Nothing references it.
+
+The requirement itself survives, owned inline by the workflow prompts rather than by a persisted
+report. `04-implement.md` requires changed paths, Contract satisfaction mapping, event mapping,
+failure mapping, and any deferral trace; `05-tests.md` requires changed paths, results, coverage
+mapping, and explicitly uncovered runtime behavior; `06-observe.md` requires scenarios executed,
+evidence collected, failures, skipped/blocked paths, and environment limits. Both stage prompts
+state the decision outright — "This stage creates no separate workflow artifact" and "creates no
+separate durable report".
+
+The replacement is `dba/05-guidance/templates/review-package.md`: 19 lines, inline, never a file,
+regenerated from current artifacts. That is a deliberate directional choice against this brief's
+three-report, ~39-field persisted format, not an oversight.
 
 ## Problem
 

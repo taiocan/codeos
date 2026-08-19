@@ -2,7 +2,7 @@
 feature_id: UPG-0003
 slug: reviewer-decision-brief
 title: Reviewer Agent for Stage Gate Decision Briefs
-status: PILOTED
+status: COMPLETE
 priority: P0
 depends_on: []
 related_features: []
@@ -13,9 +13,23 @@ superseded_by: []
 # Upgrade: reviewer-decision-brief — Reviewer Agent for Stage Gate Decision Briefs
 
 **Priority**: P0
-**Status**: PILOTED
+**Status**: COMPLETE
 **Type**: toolkit-upgrade
 **Related**: reviewer-full-diff, reviewer-quality-scale, reviewer-verification-packet
+
+## Outcome (closed 2026-08-19)
+
+Delivered, and surpassed by the implementation. The per-stage checks in the Design notes below ship
+verbatim in the reviewer engine's stage checklist table (`dba/04-tools/reviewer/engine/src/packet.rs`),
+which covers stages 1-9 and adds five stages this brief never anticipated (framing, decomposition,
+intake, charter, architecture). The decision brief itself is the append-only review-log entry:
+recommendation, effective concern, evidence grade A-E, coverage state, one-line summary, and a human
+decision slot.
+
+Two elements were intentionally not adopted. The `APPROVE / REQUEST CHANGES / BLOCK` vocabulary was
+replaced by `NO OBJECTION / CHANGES ADVISED / DO NOT ADVANCE`, reserving APPROVE for the human — this
+is what prevents the "reviewer becomes a second gate" risk named under Risk below. Stage 10 does not
+exist; the process has nine stages.
 
 ## Problem
 
