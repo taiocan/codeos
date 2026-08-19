@@ -16,6 +16,10 @@ Use the smallest solution and artifact set that preserves exact approved meaning
 reuse, and one clear path; add machinery only for a concrete correctness, safety, compatibility,
 integrity, or human-control need.
 
+Lead with the main recommendation, decision, or result. When several important findings matter,
+lead instead with a short plain-language summary of the key results; omit it when it would only
+repeat the answer.
+
 ## Working Agreements
 
 [Only durable instructions about how work is carried out in this repository that are not already

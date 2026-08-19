@@ -26,7 +26,9 @@ independent guard, and removing it reduces complexity only in appearance.
 
 By default:
 
-- lead with one recommendation, decision, or result;
+- lead with one recommendation, decision, or result; when several important findings matter,
+  lead instead with a short plain-language summary of the key results, omitted when it would
+  only repeat the answer;
 - include only information needed for the current decision or action;
 - use no more than three short sections unless required for correctness;
 - do not enumerate hypothetical variants, future scope, edge cases, or alternative designs unless
