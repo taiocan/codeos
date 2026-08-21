@@ -143,3 +143,8 @@ it is not a harness defect: the same tool, the same day, produced compiling Stag
 the same repository shape.
 
 Stage 7 remains a one-shot experiment contingent on a positive Stage 5 decision, which this is not.
+
+> **V4-Pro requalification (2026-08-21).** This brief's result is V4-Flash evidence and stands as
+> written. `deepseek-v4-pro` at `reasoning_effort: max` was run against the same frozen controls in
+> `maintenance/archive/self-development/backlog/completed/UPG-0071-deepseek-v4-pro-requalification.md`; figures from the two
+> configurations are never pooled.

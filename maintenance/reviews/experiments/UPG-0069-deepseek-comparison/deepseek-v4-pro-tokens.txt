@@ -1,0 +1,1 @@
+prompt_tokens=38295 completion_tokens=30747 total_tokens=69042 prompt_cache_hit_tokens=0 prompt_cache_miss_tokens=38295 reasoning_tokens=29363 requested_model=deepseek-v4-pro returned_model=deepseek-v4-pro finish_reason=stop max_tokens=32768

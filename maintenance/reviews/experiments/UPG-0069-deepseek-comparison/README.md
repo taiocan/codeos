@@ -33,6 +33,10 @@ Verify before use: `sha256sum -c canonical-packet.sha256`
 | `codex-response-envelope.json` | Its JSONL event stream, with the final message text replaced by a length note — that text is the raw answer file. |
 | `codex-tokens.txt` | Accounting for the single Codex attempt. |
 | `codex-parsed-assessment.md` | The record Codeos produced from that reply, through the same import path. |
+| `deepseek-v4-pro-raw-answer.txt` | The V4-Pro reply, verbatim. |
+| `deepseek-v4-pro-response-envelope.json` | Its API response with `reasoning_content` removed; everything else verbatim. |
+| `deepseek-v4-pro-tokens.txt` | Accounting for the single V4-Pro attempt. |
+| `deepseek-v4-pro-parsed-assessment.md` | The record Codeos produced from that reply, same import path. |
 
 ## What was reviewed
 
@@ -44,7 +48,7 @@ holding the external-assessment change. Named artifacts: `dba/04-tools/reviewer/
 untracked-file repair the same evidence reported `FULL_COVERAGE` while the new implementation
 modules were invisible to the reviewer.
 
-## DeepSeek arm result
+## DeepSeek V4-Flash arm result
 
 - `finish_reason: stop` on the second attempt.
 - Reported concern `DO NOT ADVANCE`, evidence grade `B`.
@@ -54,7 +58,7 @@ modules were invisible to the reviewer.
 - The single finding was real and was fixed: the adapter documented the import command without the
   required `--packet` flag.
 
-## DeepSeek cost and completion
+## DeepSeek V4-Flash cost and completion
 
 | Attempt | max_tokens | prompt | completion | reasoning | total | finish_reason | wall |
 |---|---|---|---|---|---|---|---|
@@ -76,7 +80,27 @@ prompted the integrity repair. That packet is not the comparison packet.
 tokens (50,912 in / 7,046 out, 6,214 of it reasoning), 2m56s. All three findings verified against the
 packet bytes; two of them are integrity defects still live at HEAD.
 
-## Reproducing the DeepSeek arm
+## DeepSeek V4-Pro arm result (UPG-0071)
+
+Added 2026-08-21, same packet bytes, `deepseek-v4-pro` at `reasoning_effort: max` — a different
+configuration from the Flash arm's `high`, so results belong to the configuration, not to model tier.
+Flash evidence above is unchanged.
+
+`stop` on the **first** attempt at 32768 (Flash needed the 65536 retry): 38,295 prompt / 30,747
+completion / 29,363 reasoning / 1,384 final content / 69,042 total, 7m54s. Reported `CHANGES
+ADVISED`, evidence `B`, effective `DO NOT ADVANCE`.
+
+`parse_status: FAILED`, `assessment_status: INCOMPLETE` — both findings used a multi-line
+`Finding:` / `Severity:` / `Classification:` block the parser does not accept, so `findings: []`. Two
+confirmed defects: the `--packet` omission, and a contract false claim neither other arm reported
+(the import path "applies the same evidence selection, packet construction … as `review`", packet
+line 193). It missed both packet-integrity defects the Codex arm found and listed those two
+properties among the *supported* claims.
+
+Scoring and the per-role decision live in
+`maintenance/archive/self-development/backlog/completed/UPG-0071-deepseek-v4-pro-requalification.md`.
+
+## Reproducing the DeepSeek arms
 
 ```bash
 export DEEPSEEK_API_KEY=...
@@ -85,7 +109,9 @@ CODEOS_DEEPSEEK_MAX_TOKENS=65536 \
 ```
 
 Model `deepseek-v4-flash`, `thinking: enabled`, `reasoning_effort: high`, `stream: false`, no system
-message — the packet carries the reviewer task prompt itself. Sampling is not pinned, so a rerun
+message — the packet carries the reviewer task prompt itself. The V4-Pro arm is the same command with
+`CODEOS_DEEPSEEK_MODEL=deepseek-v4-pro CODEOS_DEEPSEEK_REASONING_EFFORT=max` and no
+`CODEOS_DEEPSEEK_MAX_TOKENS` override, since it completed at the default bound. Sampling is not pinned, so a rerun
 will not reproduce the reply verbatim; the frozen answer above is the record of what was assessed.
 
 ## How the Codex arm ran

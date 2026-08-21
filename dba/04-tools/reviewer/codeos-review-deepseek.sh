@@ -30,6 +30,11 @@
 #   CODEOS_DEEPSEEK_MAX_TOKENS  optional, default 32768. The only other supported value is 65536,
 #                               for one explicit retry after finish_reason=length. A retry is a new
 #                               invocation so both attempts remain visible and count toward cost.
+#   CODEOS_DEEPSEEK_REASONING_EFFORT
+#                               optional, default "high". Sent verbatim as the request's
+#                               reasoning_effort. The default is what every recorded assessment so
+#                               far was produced with; set it only to run a deliberately different
+#                               configuration, and record which value was used with the result.
 #
 # Exit codes:
 #   0  success — assessment written
@@ -56,6 +61,7 @@ done
 [[ -s "${PACKET}" ]] || { err "packet file is missing or empty: ${PACKET}"; exit 7; }
 
 MODEL="${CODEOS_DEEPSEEK_MODEL:-deepseek-v4-flash}"
+REASONING_EFFORT="${CODEOS_DEEPSEEK_REASONING_EFFORT:-high}"
 DS_URL="${CODEOS_DEEPSEEK_URL:-https://api.deepseek.com/chat/completions}"
 MAX_TOKENS="${CODEOS_DEEPSEEK_MAX_TOKENS:-32768}"
 if [[ "${MAX_TOKENS}" != "32768" && "${MAX_TOKENS}" != "65536" ]]; then
@@ -77,12 +83,13 @@ TOKENS_FILE="${OUT}.tokens.txt"
 # realistic reviewer packet exceeds that. Reading from the file avoids argv entirely.
 REQ_BODY="${OUT}.request.json"
 jq -n --arg model "${MODEL}" \
+      --arg effort "${REASONING_EFFORT}" \
       --argjson max_tokens "${MAX_TOKENS}" \
       --rawfile packet "${PACKET}" \
   '{model:$model,
     messages:[{role:"user",content:$packet}],
     thinking:{type:"enabled"},
-    reasoning_effort:"high",
+    reasoning_effort:$effort,
     max_tokens:$max_tokens,
     stream:false}' > "${REQ_BODY}"
 

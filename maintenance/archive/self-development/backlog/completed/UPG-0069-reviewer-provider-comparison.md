@@ -149,3 +149,8 @@ Complete. The Codex arm ran against `canonical-packet.txt`, both arms are scored
 measures, and the fallback question is decided: no. That closes the fallback question and does not
 reopen the reviewer integrity guarantees, which stand on their own — the two defects the Codex arm
 found are new work, tracked separately.
+
+> **V4-Pro requalification (2026-08-21).** This brief's result is V4-Flash evidence and stands as
+> written. `deepseek-v4-pro` at `reasoning_effort: max` was run against the same frozen controls in
+> `maintenance/archive/self-development/backlog/completed/UPG-0071-deepseek-v4-pro-requalification.md`; figures from the two
+> configurations are never pooled.

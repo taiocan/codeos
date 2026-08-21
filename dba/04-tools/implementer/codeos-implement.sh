@@ -60,6 +60,11 @@
 #                           optional, default 32768. The only other supported value is 65536, for
 #                           one explicit pilot retry after finish_reason=length. A retry is a new
 #                           invocation so both attempts remain visible and count toward cost.
+#   CODEOS_DEEPSEEK_REASONING_EFFORT
+#                           optional, default "high". Sent verbatim as the request's
+#                           reasoning_effort. The default is what every recorded pilot so far was
+#                           produced with; set it only to run a deliberately different
+#                           configuration, and record which value was used with the result.
 #
 # Exit codes:
 #   0  success — candidate staged
@@ -231,6 +236,7 @@ if [[ -z "${DEEPSEEK_API_KEY:-}" ]]; then
 fi
 
 MODEL="${CODEOS_DEEPSEEK_MODEL:-deepseek-v4-flash}"
+REASONING_EFFORT="${CODEOS_DEEPSEEK_REASONING_EFFORT:-high}"
 DS_URL="${CODEOS_DEEPSEEK_URL:-https://api.deepseek.com/chat/completions}"
 MAX_TOKENS="${CODEOS_DEEPSEEK_MAX_TOKENS:-32768}"
 if [[ "${MAX_TOKENS}" != "32768" && "${MAX_TOKENS}" != "65536" ]]; then
@@ -333,13 +339,14 @@ REQ_BODY="${STAGE_DIR}/request.json"
 # and jq then dies with "Argument list too long". Reading from the files avoids argv entirely, so
 # packet size is bounded by memory rather than by an exec limit.
 jq -n --arg model "${MODEL}" \
+      --arg effort "${REASONING_EFFORT}" \
       --argjson max_tokens "${MAX_TOKENS}" \
       --rawfile sys "${TASK_PROMPT}" \
       --rawfile usr "${STAGE_DIR}/user_content.txt" \
   '{model:$model,
     messages:[{role:"system",content:$sys},{role:"user",content:$usr}],
     thinking:{type:"enabled"},
-    reasoning_effort:"high",
+    reasoning_effort:$effort,
     max_tokens:$max_tokens,
     stream:false}' > "${REQ_BODY}"
 

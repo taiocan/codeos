@@ -271,3 +271,8 @@ another harness round — CHG-A is the last harness correction this line of work
 (harness) and condition 1 (a materially stronger delegate model) have both now been satisfied, and
 the result did not change: the delegate executes a specification well and does not satisfy one.
 Case 3 remains unrun and is recorded as BLOCKED rather than assumed either way.
+
+> **V4-Pro requalification (2026-08-21).** This brief's result is V4-Flash evidence and stands as
+> written. `deepseek-v4-pro` at `reasoning_effort: max` was run against the same frozen controls in
+> `maintenance/archive/self-development/backlog/completed/UPG-0071-deepseek-v4-pro-requalification.md`; figures from the two
+> configurations are never pooled.
