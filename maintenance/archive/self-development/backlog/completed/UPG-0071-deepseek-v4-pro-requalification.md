@@ -289,23 +289,32 @@ and `"correlation_id": "uuid-v4"` in the required base fields, and the suites us
 values is Claude supplying contract conformance the delegate got wrong, so both features fail the
 boundary rather than being repaired past it. F-0001, by contrast, used real uuid-v4 event ids.
 
-### F-0001 — the candidate is right and the implementation is not
+### F-0001 — the candidate detected specification drift, not implementation defects
 
-After repair: 9 of 12 tests pass. The 3 failures are the candidate correctly enforcing the approved
-Event Schema against an implementation that deviates from it — two independently confirmed PlotSpot
-defects:
+After repair: 9 of 12 tests pass. The 3 failures are the candidate enforcing the **currently
+approved** Event Schema against an implementation that predates it. Corrected after checking the
+history — these are **not** coding defects:
 
-1. **`PublisherClaimEvidenceMissingRejected` omits the required `publisher_claim`.** The schema lists
-   it as a payload field; `reject_publisher_claim_evidence_missing` in
-   `modules/source_inventory/src/lib.rs` emits only `selected_country`, `candidate_dataset`,
-   `failure_name`, and `failure_reason`.
-2. **`OfficialCandidateRecorded.publisher_claims` is `array<string>`.** The schema requires
-   `array<object>` with `claim` and `discovery_evidence_refs` per entry; the event payload struct
-   declares `publisher_claims: Vec<String>`.
+| | Implementation (2026-07-26) | Approved package today |
+|---|---|---|
+| `OfficialCandidateRecorded.publisher_claims` | `array<string>` | `array<object>` with `claim` + `discovery_evidence_refs` |
+| `PublisherClaimEvidenceMissingRejected` | no `publisher_claim` field | `publisher_claim` required |
+| Contract happy path | — | "each publisher claim is shown with the discovery evidence that supports that claim" |
 
-**The committed direct-path suite passes unmutated (17 tests) and catches neither.** These are
-PlotSpot implementation defects surfaced by a delegated test suite; they belong to PlotSpot's own
-backlog and are recorded here rather than repaired.
+PlotSpot `9b5b424` (2026-08-14, "resolve package review findings") made all three changes and
+`b60b5f0` approved them. F-0001's Stage 4 implementation and Stage 5 tests both date from
+2026-07-26 and **conformed to the schema approved at the time**. F-0004, F-0005, and F-0006 were
+implemented on 2026-08-17, after the revision; only F-0001 was never re-entered against its revised
+package.
+
+So the finding is **live specification drift**, and the actionable item — PlotSpot's to take, not
+Codeos's — is a post-acceptance re-entry of F-0001 against its current approved package. One item,
+not two defects.
+
+**The committed direct-path suite passes unmutated (17 tests) and cannot see any of this**: it was
+written on 2026-07-26 against the superseded schema. That is the durable point for delegation — a
+Stage-5 suite regenerated from the current approved package surfaces drift that stale tests
+structurally hide.
 
 ### F-0001 mutation results
 
@@ -327,7 +336,7 @@ direct suite died — the direct suite's record is reported here as a comparison
 ### Conclusion — Stage 5 stops
 
 ```text
-F-0001  PASS   and exposed 2 real implementation defects the direct suite misses
+F-0001  PASS   and exposed live specification drift the direct suite cannot see
 F-0004  FAIL   semantic: schema-mandated uuid-v4 ids
 F-0006  FAIL   semantic: same, plus both base fields absent
 
@@ -336,9 +345,9 @@ F-0004 itself failed, so the context-complete rerun is not earned and was not ru
 ```
 
 The conclusion is more informative than the original NO without changing it: **V4-Pro demonstrated
-real semantic value on F-0001 — a suite that reads the approved schema more faithfully than both the
-shipped implementation and the existing direct-path tests — but reliability across features is still
-insufficient.** Two of three suites violate base-field rules stated in the very schema they were
+real semantic value on F-0001 — a suite generated from the current approved schema, which is exactly
+why it caught drift the 2026-07-26 direct-path tests cannot — but reliability across features is
+still insufficient.** Two of three suites violate base-field rules stated in the very schema they were
 given.
 
 No DeepSeek call was made for this diagnostic. Claude supervision for the whole repair-and-diagnosis
