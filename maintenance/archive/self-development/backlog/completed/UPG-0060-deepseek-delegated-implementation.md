@@ -2,7 +2,7 @@
 feature_id: UPG-0060
 slug: deepseek-delegated-implementation
 title: DeepSeek-Delegated Implementation for Stages 4-5
-status: PILOTED   # negative result — CHG-A COMPLETE and shipped off by default; CHG-B NOT DONE (2026-08-03)
+status: CLOSED   # negative; delegation line closed 2026-08-21 after UPG-0064/UPG-0066. Tool shipped inert at CHG-A
 priority: P2
 depends_on: [UPG-0056]
 related_features: [UPG-0057, UPG-0064, UPG-0066]
@@ -278,3 +278,59 @@ feature stays closed.
 | Feature ID | Reason | Source finding |
 |---|---|---|
 | UPG-0066 | Test Stage 5 independently before any broader delegation role | Negative Stage 4 evidence and the Stage-5-only re-scope above |
+
+## Re-interpretation under the corrected token objective (2026-08-21)
+
+The governing objective is **Claude/Anthropic tokens displaced**, not combined Claude + DeepSeek
+tokens. Applying that correction to this feature's own evidence:
+
+**The gate verdict survives, and did not rest on combined cost.** Its decisive clause is already
+Claude-denominated — Arm A cost Arm B *plus* ~5.4K Claude input tokens and **saved zero Claude output
+tokens** — and the evidence file states the point directly: "Money is not the constraint being
+measured: 28,437 DeepSeek tokens costs a fraction of a cent. The constraint is Claude's budget."
+Nothing in the verdict depended on adding DeepSeek's tokens to Claude's.
+
+Two qualifications now attach to it:
+
+- **The Claude-side figures are a labelled proxy**, derived from artifact byte counts at
+  ~3.7 bytes/token with no Claude meter read. They support the qualitative reading — the saving
+  mechanism never engaged because the candidate was rewritten — and not a precise magnitude. The
+  direction follows from a quality fact, not from the estimate.
+- **This is historical-model evidence: `deepseek-chat`.** It is not pooled with any
+  `deepseek-v4-flash` figure from UPG-0064 or UPG-0066.
+
+## Cross-feature synthesis and final decision (2026-08-21)
+
+Re-test condition 0 (harness) was discharged by `CHG-20260803-001`; condition 1 (a materially
+stronger delegate model) is discharged by UPG-0064's `deepseek-v4-flash` pilot. Four axes, kept
+separate:
+
+**1. Review quality and reliability.** On identical packet bytes (UPG-0069), DeepSeek found 1 real
+defect and Codex found 3, including two live packet-integrity defects DeepSeek missed. DeepSeek also
+failed the reviewer output protocol and needed two attempts.
+
+**2. Substitutability for Codex.** No. `dba/02-policies/review/v2.md` already says Codex is the
+required reviewer and that an external assessment supplies findings without satisfying a round; the
+evidence confirms that text rather than changing it. DeepSeek keeps the advisory-findings-under-waiver
+role it already has, which is about availability, not savings — reviewer work is already off Claude's
+budget either way.
+
+**3. Claude-token savings from delegation: never demonstrated, and UNKNOWN in every measured case.**
+Not "measured and small" — no arm ever produced an artifact that could be adopted as delivered, so
+no Claude output was displaced and no comparable direct-Claude baseline exists to compare against.
+UPG-0064's two Stage-4 candidates compiled clean and still failed core contract behavior; UPG-0066's
+three Stage-5 attempts returned no output at all.
+
+**4. Total-system cost (secondary).** 264,392 DeepSeek tokens for two unadoptable Stage-4 candidates
+and 384,299 for zero Stage-5 candidates, on 2026-08-21. Recorded, not decisive.
+
+**Decision.** The delegation line is closed. AJ-022's finding holds under a corrected harness and a
+stronger model: a rigorous specification is a poor delegation target, and Stage 4 delegability falls
+as contract rigor rises. What changed with the newer model is mechanical competence — layout,
+manifests, event shape, clean compilation; what did not change is satisfying invariant-dense approved
+behavior, which is the only part that would have saved Claude work.
+
+The tool stays exactly where CHG-A left it: shipped, `status: disabled`, no downstream footprint.
+Holding it inert still costs nothing, and removing it is a separate decision nobody needs to take
+now. Reopening requires a new, specific hypothesis with its own measurement — not another harness
+round.

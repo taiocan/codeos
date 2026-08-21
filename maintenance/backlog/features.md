@@ -6,7 +6,4 @@ implemented changes; this file is planning context, not workflow state or implem
 
 | Feature ID | File | Title | Priority | Status |
 |---|---|---|---|---|
-| UPG-0060 | [UPG-0060-deepseek-delegated-implementation.md](UPG-0060-deepseek-delegated-implementation.md) | DeepSeek-Delegated Implementation for Stages 4-5 | P2 | PILOTED (negative) |
-| UPG-0064 | [UPG-0064-delegated-stage4-envelope-alignment.md](UPG-0064-delegated-stage4-envelope-alignment.md) | Delegated Stage-4 Envelope Alignment and Governed Pilot | P2 | IN_PROGRESS |
-| UPG-0066 | [UPG-0066-deepseek-stage5-evidence-pilot.md](UPG-0066-deepseek-stage5-evidence-pilot.md) | DeepSeek Stage-5 Evidence Pilot | P2 | IN_PROGRESS |
-| UPG-0069 | [UPG-0069-reviewer-provider-comparison.md](UPG-0069-reviewer-provider-comparison.md) | Reviewer Provider Comparison on One Canonical Packet | P2 | FROZEN (awaiting Codex arm) |
+| UPG-0070 | [UPG-0070-reviewer-packet-integrity-gaps.md](UPG-0070-reviewer-packet-integrity-gaps.md) | Two Reviewer Packet-Integrity Gaps Found by the UPG-0069 Codex Arm | P2 | PROPOSED |

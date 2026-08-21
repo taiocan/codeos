@@ -2,7 +2,7 @@
 feature_id: UPG-0064
 slug: delegated-stage4-envelope-alignment
 title: Delegated Stage-4 Envelope Alignment and Governed Pilot
-status: IN_PROGRESS
+status: CLOSED   # CHG-A shipped; CHG-B ran 2026-08-21 and was negative
 priority: P2
 depends_on: [UPG-0051, UPG-0052, UPG-0063]
 related_features: [UPG-0060, UPG-0062, UPG-0056]
@@ -172,3 +172,102 @@ last harness correction this line of work gets.
 - **UPG-0060** — closed; established that architecture cannot be *derived* from a contract. Not revisited.
 - **UPG-0062** — closed; its planned prompt rewrite never shipped, which is part of why this gap exists.
 - **UPG-0051 / UPG-0052 / UPG-0063** — the envelope this makes visible to the delegate.
+
+## CHG-B case selection — frozen 2026-08-21, before any billed call
+
+Source repository: EvidenceAtlas at `46e0a8bde9673cc8883c5d8c888fd856ca5f1379`. Delegate model
+`deepseek-v4-flash` — recorded separately from UPG-0060's `deepseek-chat` evidence, never pooled
+with it. All 14 EA contracts are `status: APPROVED`; only EA-0001 is implemented, so every case
+below is genuinely unimplemented work.
+
+| Case | Feature | Why this one satisfies the case rule |
+|---|---|---|
+| 1 — almost no architectural freedom | **EA-0010 policy_registry** | Its Dependency Role states `Artifact/data dependency: none`: no upstream feature's output feeds it, so structure is fixed by the contract rather than chosen by the implementer. |
+| 2 — a real but bounded implementation choice | **EA-0003 corpus_construction** | The same feature UPG-0060's gate used, so quality is comparable against both historical arms under a changed model and a corrected harness. Its contract leaves bounded structural choice — historically 8 contract/schema violations. |
+| 3 — an explicit Stage 1-3 deferral | **BLOCKED** | See below. |
+
+**Case 3 — BLOCKED. Missing prerequisite: no approved downstream Specification Package carries a
+material Stage 1-3 deferral that is still open at Stage 4 entry.** Every deferral located across
+EvidenceAtlas and PlotSpot is one of two things that Stage 4 does not resolve:
+
+- resolved at Stage 2 by the feature's own contract — EA-0002, EA-0005, EA-0008, EA-0009, EA-0010,
+  EA-0012 all carry explicit Stage 2 resolution notes;
+- explicitly routed somewhere other than implementation — EA-0011's Design Tensions #3-4 are left to
+  the Contract Cohort Check or Architecture Synthesis Gate with the contract narrowed to a closed
+  three-source set; EA-0013's open items are returned to Stage 1/2; EA-0014's AJ-008 item is a scope
+  exclusion the feature does not implement. PlotSpot has no Stage-4 deferral and no Implementation
+  Profile artifact at all.
+
+Case 3 is therefore recorded as unrunnable with its reason, not replaced by a weaker case. It becomes
+runnable when a downstream feature reaches Stage 4 with a material decision its own approved artifacts
+explicitly defer to implementation.
+
+## CHG-B result — ran 2026-08-21
+
+Delegate `deepseek-v4-flash`, EvidenceAtlas at `46e0a8bde96`, every governed artifact declared by
+role flag and no positionals. **AJ-023 precondition satisfied first**: the identical invocation shape
+was dry-run against `stub-deepseek-server.py` and staged a candidate, and the preserved packet shows
+all five labels present — `BEHAVIORAL CONTRACT`, `EVENT SCHEMA`, `PROJECT ARCHITECTURE`,
+`IMPLEMENTATION PROFILE`, `LAYOUT EXEMPLAR`.
+
+### What the corrected harness and stronger model did fix
+
+Both candidates **compiled clean on first delivery** — correct module layout, a correct workspace
+manifest, and, for EA-0010, all six schema events with the required base fields and a `uuid`
+dependency the schema's `uuid-v4` `event_id` actually requires. Under `deepseek-chat` the same tool
+produced a candidate that did not compile as delivered. The harness handicaps AJ-022 identified are
+gone.
+
+### What did not change
+
+| Case | Feature | Codex review (stage 4) | Findings |
+|---|---|---|---|
+| 1 | EA-0010 policy_registry | `DO NOT ADVANCE`, evidence **A** | 3 IN-SCOPE BLOCKERS (2 High, 1 Medium) |
+| 2 | EA-0003 corpus_construction | `DO NOT ADVANCE`, evidence **A** | 2 IN-SCOPE BLOCKERS (both High) + 1 pilot artifact |
+| 3 | — | not run | BLOCKED, see selection above |
+
+EA-0010's blockers are core behavior, not polish: lookup matches on target identity alone and
+expressly ignores `scope` and `applicability`, so it cannot tell an applicable rule from an
+inapplicable one and reports every same-target active version as a conflict; both governance-safety
+guarantees ("never configures unexposed behavior", "never neuters a checkpoint") rest entirely on
+caller-supplied assertions the module never establishes; and the contract's "prior versions always
+remain available" has no persistence or reconstruction path. `LookupOutcome` also returns a private
+type through a public API.
+
+EA-0003's blockers are the same shape: `stopping_basis` can be emitted as `stopping_criteria_met`
+while a criterion is unresolved, making the Execution Report internally contradictory; and the
+observable start-before-completion invariant is not enforced by the recording API, since a caller
+can discard the start event and append only completion. Its third finding — unrelated EA-0010 code
+in the change set — is an artifact of both candidates sharing one scratch worktree, not a defect in
+the candidate.
+
+### Cost
+
+| Case | Attempt 1 (32768) | Attempt 2 (65536) | Total | Wall |
+|---|---|---|---|---|
+| EA-0010 | 53,318, `length`, **0 output chars** | 76,477, `stop`, staged | 129,795 | 12m47s |
+| EA-0003 | 55,486, `length`, **0 output chars** | 79,111, `stop`, staged | 134,597 | 12m36s |
+
+264,392 DeepSeek tokens for two candidates, both `DO NOT ADVANCE`. Every attempt at the default bound
+spent its entire completion budget on reasoning and returned no visible output at all.
+
+### Measured against the corrected objective
+
+- **A — Claude tokens spent:** measured for the pilot block as a whole, see UPG-0066's identical
+  section; the two pilots ran interleaved and share one measured block.
+- **B — quality:** neither candidate is usable without correction. Both fail on the invariant-dense
+  core the approved contract exists to pin down.
+- **C — Claude-token savings: UNKNOWN.** No comparable direct-Claude cost exists for EA-0010 or
+  EA-0003 under this harness, and no counterfactual is inferred. Note separately that no Claude
+  *output* tokens were displaced either, because no candidate could be adopted as delivered — that
+  is an observation about B, not a measured saving.
+
+### Verdict
+
+**CHG-B is complete and negative.** The feature's own abandonment rule applies as written: "abandon
+if the delegate violates the supplied architecture … or reconciliation approaches the cost of direct
+implementation. A negative result closes the delegation question for good rather than prompting
+another harness round — CHG-A is the last harness correction this line of work gets." Condition 0
+(harness) and condition 1 (a materially stronger delegate model) have both now been satisfied, and
+the result did not change: the delegate executes a specification well and does not satisfy one.
+Case 3 remains unrun and is recorded as BLOCKED rather than assumed either way.

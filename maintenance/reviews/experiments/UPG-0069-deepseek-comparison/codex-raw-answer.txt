@@ -1,0 +1,32 @@
+Acceptance criteria: none are explicitly supplied, and this stage has no expected-output template. Against the artifacts’ stated guarantees:
+
+- External assessments are recorded without invoking Codex: supported by `cmd/review.rs` and the behavioral test source.
+- External assessments use separate `EXT__…__A<N>` sequencing and do not consume review rounds: supported by `log.rs` and test source.
+- Unreadable or empty assessments fail before reviewer-record writes: supported by `cmd/review.rs` and test source.
+- Malformed or truncated assessments become incomplete and receive an effective `DO NOT ADVANCE`: supported by `assessment.rs` and test source.
+- Exact, validated packet binding: not satisfied; see Finding 1.
+- Complete visibility of untracked files: not satisfied fail-closed; see Finding 2.
+- Usable documented external-assessment interface: not satisfied; see Finding 3.
+
+Strong claims are generally reflected in implementation, but the packet contains no executed test output. The claims that the sidecar checks make the imported packet trustworthy and that every untracked file is shown or recorded as excluded are contradicted directly by the implementation.
+
+Finding: Packet metadata is not cryptographically bound to the exported packet bytes / Severity: High / Classification: IN-SCOPE BLOCKER  
+Evidence: `dba/04-tools/reviewer/engine/src/cmd/review.rs:384-433`; `dba/04-tools/reviewer/contract/v4.md:43-44,56-58` / Why: `load_exported_packet` independently reads the packet and sidecar but verifies no packet hash or length. Altered or even empty packet bytes can therefore be combined with a sidecar claiming valid, non-empty coverage and then recorded as trusted reviewed evidence. / Required action: fix now  
+Scope reason: Exact packet/evidence binding and empty-packet rejection are explicit guarantees of this change.
+
+Finding: Untracked-file discovery fails open / Severity: High / Classification: IN-SCOPE BLOCKER  
+Evidence: `dba/04-tools/reviewer/engine/src/packet.rs:775-799,357-419` / Why: `git_untracked_files` ignores both process-launch errors and non-successful Git exit status by returning an empty list. The packet can consequently report full coverage while silently omitting untracked files, contradicting the stated integrity purpose. / Required action: fix now  
+Scope reason: Preventing invisible untracked implementation files while claiming full coverage is an explicit capability introduced by this artifact.
+
+Finding: The documented external-assessment command cannot run as shown / Severity: Medium / Classification: IN-SCOPE BLOCKER  
+Evidence: `dba/04-tools/reviewer/codeos-review-deepseek.sh:7-11`; `dba/04-tools/reviewer/contract/v4.md:53-58`; `dba/04-tools/reviewer/engine/src/main.rs:61-68` / Why: Both user-facing examples omit `--packet`, while the CLI makes it mandatory whenever `--assessment` is supplied. Following the documented workflow therefore fails argument validation. / Required action: fix now  
+Scope reason: The external-assessment interface and its transport adapter are the central deliverables of this change.
+
+In-scope blockers: yes—the packet-binding guarantee can be bypassed, coverage can fail open, and the advertised invocation is unusable as documented.
+
+PR decision: DO NOT ADVANCE  
+Scope drift warning: yes — `sds-dba.md` and `software-development-structure.md` concern workflow restructuring rather than external-review transport; treat that content as OUT-OF-SCOPE BACKLOG and separate it from this artifact.
+
+LOG SUMMARY: DO NOT ADVANCE — imported evidence is not integrity-bound to its sidecar, allowing altered or empty packet bytes to be recorded as validated evidence
+EVIDENCE: B
+HIGHEST-IMPACT UNCERTAINTY: No explicit acceptance criteria or “What changes” list was supplied, so scope was inferred from UPG-EXTPILOT2 and the artifacts’ own interface and integrity claims.

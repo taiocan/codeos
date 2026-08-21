@@ -1,8 +1,8 @@
 # Frozen reviewer comparison experiment — DeepSeek arm
 
-Evidence for the open question in `maintenance/backlog/UPG-0069-reviewer-provider-comparison.md`:
-is DeepSeek usable as a fallback reviewer? The DeepSeek arm ran on 2026-08-18. The Codex arm has not
-run; Codex was unavailable.
+Evidence for `maintenance/archive/self-development/backlog/completed/UPG-0069-reviewer-provider-comparison.md`: is DeepSeek usable as a
+fallback reviewer? The DeepSeek arm ran on 2026-08-18, the Codex arm on 2026-08-21, both on the same
+packet bytes. Answer: no — the scoring and decision live in the brief.
 
 ## The rule this directory exists to enforce
 
@@ -29,6 +29,10 @@ Verify before use: `sha256sum -c canonical-packet.sha256`
 | `deepseek-response-envelope.json` | The API response with `reasoning_content` (168,997 chars) removed — it is not an input to any comparison measure. Everything else verbatim. |
 | `deepseek-attempt-2-tokens.txt` | Accounting for the successful attempt. |
 | `deepseek-parsed-assessment.md` | The record Codeos produced from that reply. |
+| `codex-raw-answer.txt` | Codex's reply, verbatim. |
+| `codex-response-envelope.json` | Its JSONL event stream, with the final message text replaced by a length note — that text is the raw answer file. |
+| `codex-tokens.txt` | Accounting for the single Codex attempt. |
+| `codex-parsed-assessment.md` | The record Codeos produced from that reply, through the same import path. |
 
 ## What was reviewed
 
@@ -40,7 +44,7 @@ holding the external-assessment change. Named artifacts: `dba/04-tools/reviewer/
 untracked-file repair the same evidence reported `FULL_COVERAGE` while the new implementation
 modules were invisible to the reviewer.
 
-## Result
+## DeepSeek arm result
 
 - `finish_reason: stop` on the second attempt.
 - Reported concern `DO NOT ADVANCE`, evidence grade `B`.
@@ -50,7 +54,7 @@ modules were invisible to the reviewer.
 - The single finding was real and was fixed: the adapter documented the import command without the
   required `--packet` flag.
 
-## Cost and completion
+## DeepSeek cost and completion
 
 | Attempt | max_tokens | prompt | completion | reasoning | total | finish_reason | wall |
 |---|---|---|---|---|---|---|---|
@@ -65,6 +69,13 @@ A prior run on 2026-08-18 over a smaller 57,331-byte packet completed at `max_to
 (prompt 18,153 / reasoning 30,818 / total 50,052, 4m39s) and found the packet-identity defect that
 prompted the integrity repair. That packet is not the comparison packet.
 
+## Codex arm result
+
+`finish_reason` equivalent `turn.completed` on the first attempt. `DO NOT ADVANCE`, evidence `B`,
+`parse_status: OK`, `assessment_status: COMPLETE`, 3 findings recorded and 0 unrecorded. 57,958
+tokens (50,912 in / 7,046 out, 6,214 of it reasoning), 2m56s. All three findings verified against the
+packet bytes; two of them are integrity defects still live at HEAD.
+
 ## Reproducing the DeepSeek arm
 
 ```bash
@@ -77,8 +88,27 @@ Model `deepseek-v4-flash`, `thinking: enabled`, `reasoning_effort: high`, `strea
 message — the packet carries the reviewer task prompt itself. Sampling is not pinned, so a rerun
 will not reproduce the reply verbatim; the frozen answer above is the record of what was assessed.
 
-## Running the Codex arm
+## How the Codex arm ran
 
-Codex must receive these exact bytes on stdin, not a rebuilt packet. Record its reply the same way
-the DeepSeek reply was recorded, then score both against the seven measures fixed in the backlog
-brief. Those measures were fixed before Codex ran and must not change after its result is seen.
+`codex exec --sandbox read-only` does **not** prevent reads outside `--cd`: a probe under those exact
+flags read `/home/rimo/projects/Codeos/CLAUDE.md`, and `codex sandbox -c sandbox_mode=read-only`
+confirmed it without a model in the loop. The arm therefore ran inside a `bwrap` mount namespace with
+`~/projects` unbound, where the same probe returned NOT-READABLE:
+
+```bash
+bwrap --ro-bind /usr /usr --ro-bind /bin /bin --ro-bind /lib /lib --ro-bind /lib64 /lib64 \
+  --ro-bind /etc /etc --proc /proc --dev /dev --tmpfs /tmp \
+  --bind ~/.codex ~/.codex --bind "$OUT" "$OUT" --chdir "$OUT/empty" \
+  --setenv HOME ~ --setenv PATH /usr/bin:/bin \
+  ~/.codex/packages/standalone/current/bin/codex exec --json --sandbox read-only \
+    --skip-git-repo-check --cd "$OUT/empty" -c model_reasoning_effort=high \
+    -o "$OUT/codex-final.txt" - < canonical-packet.txt > "$OUT/codex-events.jsonl"
+```
+
+Two details matter for reproduction: invoke the binary by its real path (invoking the
+`~/.local/bin/codex` symlink inside the namespace breaks Codex's sibling-helper lookup), and do not
+use a login shell (`/etc/profile` puts an older npm-installed `codex` first on PATH).
+
+Both replies were then imported through the same `review --assessment --packet` path, which is what
+makes protocol compliance comparable rather than asserted. Both records carry
+`reviewed_packet_sha256: 2a5ed7d4…6894f`.

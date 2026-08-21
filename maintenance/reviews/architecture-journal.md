@@ -743,7 +743,8 @@ independent of both the harness and the delegate, and stands. The stronger readi
 that suppressed manifests, withheld layout, discouraged the needed abstractions, and allowed no repair
 iteration. Correcting the harness is therefore a **prerequisite** to any further model comparison, not
 an alternative avenue — a re-test that changes the model without fixing the packet is uninterpretable.
-See `backlog/UPG-0060-deepseek-delegated-implementation.md` for the ordered re-test conditions.
+See `maintenance/archive/self-development/backlog/completed/UPG-0060-deepseek-delegated-implementation.md`
+for the ordered re-test conditions, both of which were discharged on 2026-08-21 with a negative result.
 
 ## AJ-023 — A suite tests what its author thought to test; the usage shape a change exists to enable is the one most likely to go untested
 
