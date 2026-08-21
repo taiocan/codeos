@@ -2,7 +2,7 @@
 feature_id: UPG-0071
 slug: deepseek-v4-pro-requalification
 title: DeepSeek V4-Pro Requalification Across Three Codeos Roles
-status: DECIDED — NO / NO / NO for V4-Pro-at-max (2026-08-21)
+status: DECIDED — NO / NO / NO for V4-Pro-at-max (2026-08-21); Stage-5 diagnostic appended, verdict unchanged
 priority: P2
 depends_on: []
 related_features: [UPG-0060, UPG-0064, UPG-0066, UPG-0069]
@@ -244,3 +244,103 @@ Stage-5 candidates would pass after the trivial mechanical repairs, and whether 
 mismatches would disappear if `modules/event_log` were in the packet. Answering it needs a repair
 iteration and a packet change — both forbidden by the frozen protocol and by the stop rule. It is a
 new experiment with a new hypothesis, and needs its own human decision, not an extension of this one.
+
+## Stage-5 diagnostic — mechanical repair only, 2026-08-21
+
+The Stage-5 NO above rested on a compile error, which does not distinguish "almost usable but
+mechanically wrong" from "semantically wrong". This settles that with **no new DeepSeek call**:
+repair the existing V4-Pro suites mechanically, then run them against the real implementations and
+the frozen mutations.
+
+**The repair boundary.** Mechanical repair may make a candidate compile against interfaces already
+present in source, but must not change expected values, assertions, control flow, scenario coverage,
+or any behavior a helper represents. Adding a missing required field is mechanical only if its value
+is irrelevant to the behavior under test; if choosing the value requires interpreting an approved
+artifact, that is semantic repair and the feature fails. The committed direct-path suites were not
+opened during repair — repair used the module source and the compiler's own errors only.
+
+### Refined acceptance rule (applies symmetrically to every feature)
+
+> A candidate test that fails against the real implementation is **not** a candidate failure when the
+> failed assertion is directly required by an approved artifact and the implementation is
+> independently confirmed nonconformant.
+
+The original criterion assumed the implementation was conformant. A Stage-5 candidate is supposed to
+test the approved specification, not to reproduce a faulty implementation:
+
+```text
+candidate disagrees with implementation
+  -> is the candidate supported by approved artifacts?
+       NO  -> candidate defect
+       YES -> implementation defect
+```
+
+### Per-feature result
+
+| Feature | Repair needed | Class | Result |
+|---|---|---|---|
+| F-0001 | 4 × bind a temporary to a `let` (12 lines) | mechanical | **PASS** |
+| F-0004 | `timestamp` → `timestamp_ms`, then uuid-v4 event/correlation ids | **semantic** | **FAIL** |
+| F-0006 | `meta()` omits `event_id` and `timestamp_ms` entirely; both need uuid-v4 values | **semantic** | **FAIL** |
+
+F-0004 and F-0006 fail on the same thing: their approved Event Schemas state `"event_id": "uuid-v4"`
+and `"correlation_id": "uuid-v4"` in the required base fields, and the suites use readable ids
+(`"event-corr-happy"`, `"correlation-happy"`). The schema was in both packets. Supplying conforming
+values is Claude supplying contract conformance the delegate got wrong, so both features fail the
+boundary rather than being repaired past it. F-0001, by contrast, used real uuid-v4 event ids.
+
+### F-0001 — the candidate is right and the implementation is not
+
+After repair: 9 of 12 tests pass. The 3 failures are the candidate correctly enforcing the approved
+Event Schema against an implementation that deviates from it — two independently confirmed PlotSpot
+defects:
+
+1. **`PublisherClaimEvidenceMissingRejected` omits the required `publisher_claim`.** The schema lists
+   it as a payload field; `reject_publisher_claim_evidence_missing` in
+   `modules/source_inventory/src/lib.rs` emits only `selected_country`, `candidate_dataset`,
+   `failure_name`, and `failure_reason`.
+2. **`OfficialCandidateRecorded.publisher_claims` is `array<string>`.** The schema requires
+   `array<object>` with `claim` and `discovery_evidence_refs` per entry; the event payload struct
+   declares `publisher_claims: Vec<String>`.
+
+**The committed direct-path suite passes unmutated (17 tests) and catches neither.** These are
+PlotSpot implementation defects surfaced by a delegated test suite; they belong to PlotSpot's own
+backlog and are recorded here rather than repaired.
+
+### F-0001 mutation results
+
+| Mutation | Approved rule | Candidate | Committed direct suite |
+|---|---|---|---|
+| M1 — accept empty `responsible_organization_evidence_refs` | Failure Path 2 `OfficialResponsibilityUnsupported` | **KILLED** (4th failure appears) | KILLED (1 failure) |
+| M2 — drop the `candidate_dataset_evidence_refs` guard | Failure Path 4 `CandidateIdentityIncomplete` | **KILLED** — `test_missing_candidate_identity_rejects_and_does_not_record` | **SURVIVES** (17 pass) |
+| M3 — country-scoped view returns every country | Invariant: every inventory view is scoped to a selected country | **not applicable** | not applicable |
+
+M3 is a defect in the mutation, not in either suite: the country filter lives in
+`list_official_candidates`, a trait method implemented by the caller-supplied store, so there is no
+module-level injection point and each suite brings its own store. It is recorded as inapplicable
+rather than scored.
+
+M2 is the case worth naming: a contract-valid mutation that the committed direct suite survives and
+the delegated suite kills. Mutation validity came from the approved Contract, never from whether the
+direct suite died — the direct suite's record is reported here as a comparison, not as a filter.
+
+### Conclusion — Stage 5 stops
+
+```text
+F-0001  PASS   and exposed 2 real implementation defects the direct suite misses
+F-0004  FAIL   semantic: schema-mandated uuid-v4 ids
+F-0006  FAIL   semantic: same, plus both base fields absent
+
+1 of 3 passes -> below UPG-0066's >=2 of 3 bar -> STOP
+F-0004 itself failed, so the context-complete rerun is not earned and was not run.
+```
+
+The conclusion is more informative than the original NO without changing it: **V4-Pro demonstrated
+real semantic value on F-0001 — a suite that reads the approved schema more faithfully than both the
+shipped implementation and the existing direct-path tests — but reliability across features is still
+insufficient.** Two of three suites violate base-field rules stated in the very schema they were
+given.
+
+No DeepSeek call was made for this diagnostic. Claude supervision for the whole repair-and-diagnosis
+block, measured from actual Anthropic session usage: 27,270 output, 43,526 fresh input, 70 uncached
+input, 14,078,869 cached read. `Claude-token savings: UNKNOWN` — unchanged, no baseline exists.
