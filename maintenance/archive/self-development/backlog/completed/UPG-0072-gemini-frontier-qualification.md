@@ -2,7 +2,7 @@
 feature_id: UPG-0072
 slug: gemini-frontier-qualification
 title: Gemini 3.7 Flash Qualification Across Three Codeos Roles
-status: DECIDED — NO / NO / YES for gemini-3.7-flash at reasoning_effort high (2026-08-23); provider switch retained, adoption undecided
+status: DECIDED — NO / NO / YES for gemini-3.7-flash at reasoning_effort high (2026-08-23); adoption since rejected and provider switch removed by UPG-0073
 priority: P2
 depends_on: []
 related_features: [UPG-0060, UPG-0064, UPG-0066, UPG-0069, UPG-0071]
@@ -352,6 +352,17 @@ One role passed, so the negative branch of the disposition rule does not fire an
 **not** removed. Per the rule fixed before the run, retention and adoption are a separate decision on
 their own evidence: passing an arm does not by itself make the Gemini path permanent, and nothing
 here promotes it to a supported extension point.
+
+> **Disposition resolved (UPG-0073, 2026-08-23).** The separate adoption decision this brief
+> deferred has been taken and is negative: on three features selected by rule rather than already
+> exercised, Gemini produced 1 usable suite of 3 against direct Claude's 3 of 3, and Claude usage was
+> not materially lower per usable result. The `CODEOS_LLM_PROVIDER` Gemini branch, its environment
+> variables, and its tests have been removed, and the alternative-model delegation line is closed.
+> This brief's own results stand as written and are not revised.
+>
+> One finding here is qualified rather than overturned: the uuid-v4 result below was real but not
+> reliable. UPG-0073 saw the same configuration produce conforming ids for one feature and
+> non-conforming ids for two others within a single run.
 
 **The open question this run did not settle**, recorded rather than pursued: whether a Stage-5 suite
 can be obtained that both passes baseline and enforces the drifted `publisher_claims` schema. Gemini

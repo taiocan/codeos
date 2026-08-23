@@ -7,4 +7,3 @@ implemented changes; this file is planning context, not workflow state or implem
 | Feature ID | File | Title | Priority | Status |
 |---|---|---|---|---|
 | UPG-0070 | [UPG-0070-reviewer-packet-integrity-gaps.md](UPG-0070-reviewer-packet-integrity-gaps.md) | Two Reviewer Packet-Integrity Gaps Found by the UPG-0069 Codex Arm | P2 | PROPOSED |
-| UPG-0073 | [UPG-0073-stage5-economic-qualification.md](UPG-0073-stage5-economic-qualification.md) | Stage-5 Economic Qualification — Gemini-Assisted vs Direct Claude | P2 | PROPOSED |
