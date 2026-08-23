@@ -1,0 +1,1 @@
+provider=gemini prompt_tokens=42279 completion_tokens=1069 total_tokens=51219 unclassified_tokens_derived=7871 final_content_tokens=1069 requested_model=gemini-3.7-flash returned_model=gemini-3.7-flash finish_reason=stop max_tokens=32768
