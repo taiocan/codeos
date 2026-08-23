@@ -17,6 +17,13 @@ Env:
   CODEOS_STUB_RAW      if set, return this literal body instead of a chat-completions envelope
   CODEOS_STUB_FINISH_REASON
                        completion finish reason (default stop)
+  CODEOS_STUB_SHAPE    "deepseek" (default) or "gemini". Selects the returned model id and the usage
+                       shape. The gemini shape carries prompt/completion/total only — no reasoning
+                       field and no cache fields — because that is what the real endpoint returns,
+                       and the adapter's derived accounting has to be tested against it.
+  CODEOS_STUB_REQUEST_DUMP
+                       optional path; the raw posted request body is written here so a test can
+                       assert on what the adapter actually sent (e.g. that `thinking` is absent).
 """
 import http.server
 import json
@@ -29,12 +36,37 @@ PORT = int(os.environ.get("CODEOS_STUB_PORT", "8931"))
 STATUS = int(os.environ.get("CODEOS_STUB_STATUS", "200"))
 RAW = os.environ.get("CODEOS_STUB_RAW")
 FINISH_REASON = os.environ.get("CODEOS_STUB_FINISH_REASON", "stop")
+SHAPE = os.environ.get("CODEOS_STUB_SHAPE", "deepseek")
+REQUEST_DUMP = os.environ.get("CODEOS_STUB_REQUEST_DUMP")
+
+# Two providers, two usage shapes. DeepSeek's completion_tokens INCLUDES its reported reasoning;
+# Gemini returns three fields only, and its completion_tokens EXCLUDES the residual.
+USAGE = {
+    "deepseek": (
+        "deepseek-v4-flash",
+        {
+            "prompt_tokens": 1234,
+            "completion_tokens": 567,
+            "total_tokens": 1801,
+            "prompt_cache_hit_tokens": 1000,
+            "prompt_cache_miss_tokens": 234,
+            "completion_tokens_details": {"reasoning_tokens": 321},
+        },
+    ),
+    "gemini": (
+        "gemini-3.7-flash",
+        {"prompt_tokens": 1234, "completion_tokens": 567, "total_tokens": 2101},
+    ),
+}
 
 
 class Handler(http.server.BaseHTTPRequestHandler):
     def do_POST(self):
         length = int(self.headers.get("Content-Length", 0))
         body = self.rfile.read(length).decode("utf-8", "replace")
+        if REQUEST_DUMP:
+            with open(REQUEST_DUMP, "w") as fh:
+                fh.write(body)
 
         # Recover the nonce the tool minted for this run.
         nonce = ""
@@ -62,6 +94,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
         else:
             content = ""
 
+        model_id, usage = USAGE[SHAPE]
         out = json.dumps(
             {
                 "choices": [
@@ -70,15 +103,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
                         "message": {"content": content},
                     }
                 ],
-                "model": "deepseek-v4-flash",
-                "usage": {
-                    "prompt_tokens": 1234,
-                    "completion_tokens": 567,
-                    "total_tokens": 1801,
-                    "prompt_cache_hit_tokens": 1000,
-                    "prompt_cache_miss_tokens": 234,
-                    "completion_tokens_details": {"reasoning_tokens": 321},
-                },
+                "model": model_id,
+                "usage": usage,
             }
         ).encode()
 

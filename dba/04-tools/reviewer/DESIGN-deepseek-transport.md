@@ -28,6 +28,27 @@ codeos-review.sh review <feature> <stage> --assessment ASSESSMENT --packet PACKE
     --reviewer-label deepseek-v4-flash <artifacts...>
 ```
 
+## Changes since `b5114dd` (this note's pin)
+
+Everything below this section describes the script as of `b5114dd` and was drafted by DeepSeek
+without claim-by-claim verification. Two later changes are recorded here rather than woven into that
+text, so the unverified body keeps its original provenance:
+
+- **UPG-0071** replaced the literal `reasoning_effort: "high"` with `CODEOS_DEEPSEEK_REASONING_EFFORT`,
+  defaulting to `high`.
+- **UPG-0072** added `CODEOS_LLM_PROVIDER` (default `deepseek`; the only other value is `gemini`).
+  With the default, the request bytes and the accounting line below are unchanged. The `gemini`
+  branch reads `GEMINI_API_KEY`, defaults to `gemini-3.7-flash` at the OpenAI-compatible
+  `generativelanguage.googleapis.com` endpoint, and takes its bounds and effort from
+  `CODEOS_GEMINI_MAX_TOKENS` / `CODEOS_GEMINI_REASONING_EFFORT`. Two differences are not reachable by
+  configuration, which is why the switch exists: `thinking:{type:"enabled"}` is omitted, because that
+  API rejects the field with HTTP 400; and its `usage` carries `prompt`/`completion`/`total` only, so
+  its accounting line reports those three as returned and records `total - prompt - completion` as
+  `unclassified_tokens_derived` — never as reasoning, since nothing authoritative states what the
+  residual contains. Its `completion_tokens` excludes that residual and so is the final-content
+  figure directly, the opposite of DeepSeek. The `gemini` branch is experiment support carrying the
+  disposition rule in `UPG-0072`, not a supported extension point.
+
 ## Usage and interface
 
 ```

@@ -530,6 +530,96 @@ reset_state
 rc=$(run_tool F-0001 4 .codeos/01-specification/intents/F-0001.md)
 [[ "${rc}" == "8" ]] && ok "C10 HTTP 500 -> exit 8" || bad "C10 transport error" "rc=${rc}"
 
+echo "== Group 3: gemini provider branch (UPG-0072) =="
+# Everything above ran with CODEOS_LLM_PROVIDER unset, so the assertions on the DeepSeek request
+# shape and accounting line are themselves the guard that the default path did not move. These cases
+# cover only what the gemini branch does differently. Each difference was measured against the real
+# endpoint before it was encoded here.
+GEM_REQ="${WORK}/gemini-request-sent.json"
+export GEMINI_API_KEY="gemini-canary-value-for-leak-assertion-not-a-credential"
+
+start_gemini_stub() {
+  [[ -n "${STUB_PID}" ]] && { kill "${STUB_PID}" 2>/dev/null; wait "${STUB_PID}" 2>/dev/null; }
+  CODEOS_STUB_PORT="${PORT}" CODEOS_STUB_SHAPE=gemini CODEOS_STUB_REQUEST_DUMP="${GEM_REQ}" \
+    python3 "${STUB}" >/dev/null 2>&1 &
+  STUB_PID=$!
+  for _ in $(seq 1 50); do
+    (exec 3<>/dev/tcp/127.0.0.1/"${PORT}") 2>/dev/null && { exec 3>&-; return 0; }
+    sleep 0.1
+  done
+  echo "gemini stub failed to start" >&2; return 1
+}
+run_tool_gemini() {
+  ( cd "${REPO}" && CODEOS_LLM_PROVIDER=gemini \
+      CODEOS_GEMINI_URL="http://127.0.0.1:${PORT}/chat/completions" \
+      bash "${TOOL}" "$@" ) > "${OUT}" 2>&1
+  echo $?
+}
+
+enable_mech
+fixture '<<<CODEOS:{N}:FILE:modules/thing/src/lib.rs>>>
+pub fn hi() -> &'"'"'static str { "hi" }
+<<<CODEOS:{N}:ENDFILE>>>'
+start_gemini_stub
+reset_state
+rc=$(run_tool_gemini F-0001 4 .codeos/01-specification/intents/F-0001.md)
+SDG="$(latest_stage_dir)"
+if [[ "${rc}" != "0" ]]; then
+  bad "C19 gemini run" "rc=${rc} $(tail -3 "${OUT}")"
+else
+  # The real endpoint rejects a thinking field with HTTP 400, so its absence is the property that
+  # makes this branch usable at all — not a stylistic difference.
+  if jq -e 'has("thinking")' "${GEM_REQ}" >/dev/null 2>&1; then
+    bad "C19 gemini request shape" "a thinking field was sent; the real API rejects it with 400"
+  elif jq -e '.model == "gemini-3.7-flash" and .reasoning_effort == "high"
+              and .max_tokens == 32768 and (.temperature == null)
+              and (.messages | length == 2)' "${GEM_REQ}" >/dev/null 2>&1; then
+    ok "C19 gemini request omits thinking and is otherwise explicit and bounded"
+  else
+    bad "C19 gemini request shape" "$(jq -c '{model,reasoning_effort,max_tokens}' "${GEM_REQ}")"
+  fi
+
+  # Stub usage is prompt=1234 completion=567 total=2101; the residual is 2101-1234-567 = 300.
+  # It is recorded as unclassified because nothing authoritative states what it contains, and
+  # completion_tokens excludes it, so completion IS the final-content figure for this provider.
+  gt="${SDG}/tokens.txt"
+  if grep -qF 'provider=gemini prompt_tokens=1234 completion_tokens=567 total_tokens=2101 unclassified_tokens_derived=300 final_content_tokens=567 requested_model=gemini-3.7-flash returned_model=gemini-3.7-flash finish_reason=stop max_tokens=32768' "${gt}" 2>/dev/null; then
+    ok "C19 gemini accounting: reported fields as reported, residual named unclassified"
+  else
+    bad "C19 gemini accounting" "$(cat "${gt}" 2>/dev/null)"
+  fi
+  if grep -q 'reasoning_tokens' "${gt}" 2>/dev/null; then
+    bad "C19 gemini accounting" "the residual must never be reported as reasoning tokens"
+  else
+    ok "C19 gemini accounting never calls the residual reasoning"
+  fi
+
+  # C13's positive-control discipline, applied to the second credential this tool can now read.
+  gctl="${WORK}/gemini-positive-control.txt"
+  printf 'prefix %s suffix\n' "${GEMINI_API_KEY}" > "${gctl}"
+  if grep -rqF -- "${GEMINI_API_KEY}" "${gctl}"; then
+    if grep -rqF -- "${GEMINI_API_KEY}" "${SDG}"; then
+      bad "C19 gemini secret non-leakage" "key found under ${SDG}"
+    else
+      ok "C19 gemini key absent from staging tree (checker passed positive control)"
+    fi
+  else
+    bad "C19 gemini secret checker is broken" "positive control did not detect a planted key"
+  fi
+fi
+
+# An unsupported provider is a usage error, decided before any network call.
+rc=$( (cd "${REPO}" && CODEOS_LLM_PROVIDER=anthropic \
+        bash "${TOOL}" F-0001 4 .codeos/01-specification/intents/F-0001.md) >/dev/null 2>&1; echo $?)
+[[ "${rc}" == "3" ]] && ok "C19 unsupported CODEOS_LLM_PROVIDER -> exit 3" \
+                     || bad "C19 unsupported provider" "rc=${rc}"
+# A provider takes its own credential: the deepseek key must not satisfy the gemini branch.
+rc=$( (cd "${REPO}" && CODEOS_LLM_PROVIDER=gemini GEMINI_API_KEY= \
+        CODEOS_GEMINI_URL="http://127.0.0.1:${PORT}/x" \
+        bash "${TOOL}" F-0001 4 .codeos/01-specification/intents/F-0001.md) >/dev/null 2>&1; echo $?)
+[[ "${rc}" == "6" ]] && ok "C19 unset GEMINI_API_KEY -> exit 6 (pre-network)" \
+                     || bad "C19 unset gemini key" "rc=${rc}"
+
 # ── criterion 17: mechanism still off by default in the Codeos repo itself ───────────────────────
 [[ "$(cat "${CODEOS_ROOT}/maintenance/config/delegated-implementation.yaml")" == "status: disabled" ]] \
   && ok "C17 self-dev activation file still status: disabled" \
