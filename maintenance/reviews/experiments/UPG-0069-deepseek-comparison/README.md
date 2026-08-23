@@ -37,6 +37,10 @@ Verify before use: `sha256sum -c canonical-packet.sha256`
 | `deepseek-v4-pro-response-envelope.json` | Its API response with `reasoning_content` removed; everything else verbatim. |
 | `deepseek-v4-pro-tokens.txt` | Accounting for the single V4-Pro attempt. |
 | `deepseek-v4-pro-parsed-assessment.md` | The record Codeos produced from that reply, same import path. |
+| `gemini-3.7-flash-raw-answer.txt` | The Gemini 3.7 Flash reply, verbatim. |
+| `gemini-3.7-flash-response-envelope.json` | Its API response with the opaque `thought_signature` removed; everything else verbatim. |
+| `gemini-3.7-flash-tokens.txt` | Accounting for the single Gemini attempt. This provider reports prompt/completion/total only, so the residual is recorded as `unclassified_tokens_derived`, never as reasoning. |
+| `gemini-3.7-flash-parsed-assessment.md` | The record Codeos produced from that reply, same import path. |
 
 ## What was reviewed
 
@@ -99,6 +103,43 @@ properties among the *supported* claims.
 
 Scoring and the per-role decision live in
 `maintenance/archive/self-development/backlog/completed/UPG-0071-deepseek-v4-pro-requalification.md`.
+
+## Gemini 3.7 Flash arm result (UPG-0072)
+
+Added 2026-08-23, same packet bytes, `gemini-3.7-flash` at `reasoning_effort: high` — the maximum
+that API accepts (`max` is rejected with HTTP 400). All earlier evidence is unchanged, and figures
+from different providers are never pooled.
+
+`stop` on the **first** attempt at 32768: 42,279 prompt / 1,069 final content / 51,219 total, 25
+seconds. Reported `CHANGES ADVISED`, evidence `B`, effective `CHANGES ADVISED`.
+
+`parse_status: OK`, `assessment_status: COMPLETE`, 1 finding recorded, 0 unparsed — the **first
+non-Codex arm to satisfy the output protocol**, and the cheapest and fastest arm recorded. Its finding
+is real: the reviewed header documents the import command without the `--packet` flag clap requires,
+at packet line 365.
+
+It missed both packet-integrity defects the Codex arm found and **listed both among its satisfied and
+supported claims**, the same failure mode as V4-Pro. Its scope-drift note about `sds-dba.md` and
+`software-development-structure.md` is factually true of the reviewed snapshot, which the sidecar
+records as untracked budget contributors.
+
+The response envelope has its 37,728-character opaque `thought_signature` removed, exactly as the
+DeepSeek arms' `reasoning_content` was; everything else is verbatim.
+
+Scoring and the per-role decision live in
+`maintenance/backlog/UPG-0072-gemini-frontier-qualification.md`.
+
+## Reproducing the Gemini arm
+
+```bash
+export GEMINI_API_KEY=...
+CODEOS_LLM_PROVIDER=gemini \
+  dba/04-tools/reviewer/codeos-review-deepseek.sh canonical-packet.txt /tmp/answer.txt
+```
+
+Model `gemini-3.7-flash`, `reasoning_effort: high`, `stream: false`, no system message, and **no
+`thinking` field** — that endpoint rejects it with HTTP 400. Sampling is not pinned, so a rerun will
+not reproduce the reply verbatim.
 
 ## Reproducing the DeepSeek arms
 
