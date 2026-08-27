@@ -6,6 +6,7 @@ CODEOS_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd -P)"
 fail() { printf 'guidance contract failed: %s\n' "$1" >&2; exit 1; }
 
 expected_guidance=(
+  patterns/rust-domain-modelling.md
   patterns/rust-project-structure.md
   patterns/shared-infrastructure-boundary.md
   patterns/vocabulary-architecture.md
