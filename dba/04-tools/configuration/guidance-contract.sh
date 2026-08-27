@@ -9,6 +9,7 @@ expected_guidance=(
   patterns/rust-domain-modelling.md
   patterns/rust-project-structure.md
   patterns/shared-infrastructure-boundary.md
+  patterns/svelte-state-and-components.md
   patterns/vocabulary-architecture.md
   templates/architecture-scope.md
   templates/charter.md
