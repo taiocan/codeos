@@ -10,6 +10,15 @@ approved Contract or Event Schema defines a closed set of values, a constrained 
 ordering rule. The Contract and Event Schema remain the authority for what must hold; this pattern
 only suggests where a type can help implement a governed constraint structurally.
 
+This pattern is evidence-based rather than aspirational. UPG-0071 and UPG-0073 each surfaced the
+same modelling failure in governed Rust projects — under two different models, on different
+features — a schema-mandated `uuid-v4` field supplied as a readable string instead of a constructed
+value. UPG-0064 surfaced a related but distinct failure, reproduced again in two later
+requalifications: a field stored under the correct type but never consulted by the logic that
+should have used it. That class of defect is named separately in "What This Pattern Does Not Do"
+below rather than folded into the newtype evidence above — a correct type prevents the wrong kind of
+mistake, not this one.
+
 > When a simple Rust type can directly prevent a governed invalid state, prefer that representation
 > over an unconstrained primitive.
 
