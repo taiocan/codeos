@@ -165,6 +165,26 @@ pub fn run_in_dir(repo_path: &std::path::Path, args: &[&str]) -> (i32, String, S
     (code, stdout, stderr)
 }
 
+/// Run the binary from a directory with extra environment variables set. Used to place a failing
+/// `git` shim ahead of the real one on PATH, so a discovery failure can be tested without a
+/// mock layer inside the engine.
+pub fn run_in_dir_with_env(
+    repo_path: &std::path::Path,
+    args: &[&str],
+    env: &[(&str, &str)],
+) -> (i32, String, String) {
+    let mut cmd = Command::new(binary());
+    cmd.args(args).current_dir(repo_path);
+    for (k, v) in env {
+        cmd.env(k, v);
+    }
+    let out = cmd.output().expect("run binary in dir with env");
+    let code = out.status.code().unwrap_or(-1);
+    let stdout = String::from_utf8_lossy(&out.stdout).into_owned();
+    let stderr = String::from_utf8_lossy(&out.stderr).into_owned();
+    (code, stdout, stderr)
+}
+
 /// Helper: add a new commit with an extra file to the temp repo.
 pub fn add_extra_commit(repo_path: &std::path::Path, filename: &str, content: &str) -> String {
     std::fs::write(repo_path.join(filename), content).expect("write extra file");

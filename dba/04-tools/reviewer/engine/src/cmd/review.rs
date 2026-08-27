@@ -421,6 +421,27 @@ fn load_exported_packet(
             packet.stage, evidence.stage
         )));
     }
+    // The sidecar's coverage claims are only about *these* bytes if they are bound to them. A
+    // sidecar written before this field existed cannot be verified; that is reported rather than
+    // treated as a pass, so an unverifiable import is visibly different from a verified one.
+    if packet.content_sha256.is_empty() {
+        eprintln!(
+            "warning: packet sidecar {} predates content binding — packet integrity unverifiable",
+            sidecar_path.display()
+        );
+    } else {
+        let actual = crate::packet::sha256_str(&content);
+        if actual != packet.content_sha256 {
+            return Err(PrepareFailure::packet(format!(
+                "exported packet does not match its sidecar: {} describes sha256 {}, but {} hashes to {}\n                    the packet bytes or the sidecar changed after export; re-run `plan --emit-packet`",
+                sidecar_path.display(),
+                &packet.content_sha256[..packet.content_sha256.len().min(12)],
+                packet_path.display(),
+                &actual[..actual.len().min(12)],
+            )));
+        }
+    }
+
     let mut exported: Vec<&str> = packet.artifacts.iter().map(|a| a.path.as_str()).collect();
     let mut named: Vec<&str> = evidence.artifacts.iter().map(String::as_str).collect();
     exported.sort_unstable();

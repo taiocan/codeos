@@ -93,6 +93,12 @@ pub struct ReviewPacket {
     /// oversized-packet warning ranks, exposed so callers can reproduce that exact ranking
     /// instead of (incorrectly) ranking all of `artifacts` by raw file size.
     pub budget_contributors: Vec<(String, u64)>,
+    /// sha256 of the packet bytes this sidecar describes. Without it the sidecar's coverage claims
+    /// are unbound: any packet file could be imported under any sidecar and inherit its
+    /// `coverage_state`, `artifacts`, and `redaction_count`. Defaulted so sidecars written before
+    /// this field existed still import, with a warning rather than silent acceptance.
+    #[serde(default)]
+    pub content_sha256: String,
     /// The packet bytes. Held out of the sidecar: they live in the exported packet file itself, and
     /// storing them twice would create two copies that could disagree about what was reviewed.
     #[serde(skip)]
@@ -362,7 +368,17 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
     // cannot report FULL_COVERAGE while withholding a new file.
     let mut untracked_block = String::new();
     let mut untracked_shown = 0usize;
-    for path in git_untracked_files(&opts.repo_root) {
+    let untracked = git_untracked_files(&opts.repo_root);
+    let untracked_unavailable = untracked.is_none();
+    if untracked_unavailable {
+        excluded_paths.push((
+            "(untracked-file discovery)".to_string(),
+            "git could not be consulted; untracked files may be missing from this packet"
+                .to_string(),
+            "untracked".to_string(),
+        ));
+    }
+    for path in untracked.unwrap_or_default() {
         if opts.artifacts.contains(&path) || opts.sha_only_paths.contains(&path) {
             continue; // already shown in its own right
         }
@@ -418,7 +434,7 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
                 || (!opts.delta_mode && shown_count == 0 && redacted_diff.trim().is_empty()))
         {
             CoverageState::EmptyPacket
-        } else if artifact_excluded {
+        } else if artifact_excluded || untracked_unavailable {
             CoverageState::CriticalOmission
         } else if secret_flag {
             CoverageState::SecretRedaction
@@ -656,6 +672,7 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
         over_budget: review_content_bytes > budget,
         diff_bytes,
         budget_contributors: file_contributors,
+        content_sha256: sha256_str(&content),
         content,
     })
 }
@@ -778,8 +795,8 @@ fn git_is_tracked(path: &str, repo_root: &str) -> bool {
 /// Files git knows nothing about yet, honouring .gitignore. A diff cannot show them, so without
 /// this they would be invisible to review while coverage still claimed to be full — which is how a
 /// new implementation module can be added and reviewed as if it did not exist.
-fn git_untracked_files(repo_root: &str) -> Vec<String> {
-    Command::new("git")
+fn git_untracked_files(repo_root: &str) -> Option<Vec<String>> {
+    let output = Command::new("git")
         .args([
             "ls-files",
             "--others",
@@ -791,14 +808,19 @@ fn git_untracked_files(repo_root: &str) -> Vec<String> {
         ])
         .current_dir(repo_root)
         .output()
-        .map(|o| {
-            String::from_utf8_lossy(&o.stdout)
-                .lines()
-                .filter(|l| !l.is_empty())
-                .map(|l| l.to_string())
-                .collect()
-        })
-        .unwrap_or_default()
+        .ok()?;
+    // A non-zero exit is not an empty working tree: it means the answer is unknown. Returning an
+    // empty list here is what let a packet claim full coverage while omitting every untracked file.
+    if !output.status.success() {
+        return None;
+    }
+    Some(
+        String::from_utf8_lossy(&output.stdout)
+            .lines()
+            .filter(|l| !l.is_empty())
+            .map(|l| l.to_string())
+            .collect(),
+    )
 }
 
 fn git_is_dirty(repo_root: &str) -> bool {

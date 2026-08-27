@@ -3,7 +3,10 @@
 //! must not invoke one at all.
 
 mod common;
-use common::{repo_root, run_in_dir, run_with_fake_codex, setup_fake_codex, setup_temp_git_repo};
+use common::{
+    repo_root, run_in_dir, run_in_dir_with_env, run_with_fake_codex, setup_fake_codex,
+    setup_temp_git_repo,
+};
 
 fn setup_codeos_symlink(repo_path: &std::path::Path) {
     std::fs::create_dir_all(repo_path.join(".codeos")).unwrap();
@@ -559,4 +562,137 @@ fn truncated_reply_cannot_produce_a_clean_assessment() {
     assert!(recorded.contains("assessment_status: INCOMPLETE"), "{recorded}");
     assert!(recorded.contains("no LOG SUMMARY verdict line"), "{recorded}");
     assert!(recorded.contains("effective_concern: DO NOT ADVANCE"), "{recorded}");
+}
+
+// ── UPG-0070: packet-integrity gaps ─────────────────────────────────────────────────────────────
+
+/// Gap 1. The sidecar's coverage claims are only about the packet they were written for. Before the
+/// content binding, altered packet bytes could be imported under an untouched sidecar and recorded
+/// as reviewed evidence carrying that sidecar's coverage_state.
+#[test]
+fn altered_packet_bytes_are_rejected_against_their_sidecar() {
+    let (repo, _) = setup_temp_git_repo();
+    setup_codeos_symlink(repo.path());
+    let export_dir = tempfile::tempdir().unwrap();
+    let emitted = export_dir.path().join("emitted-packet.txt");
+
+    let (plan_code, _, plan_stderr) = run_in_dir(
+        repo.path(),
+        &[
+            "plan",
+            "UPG-0070",
+            "selfdev-step-1",
+            "--emit-packet",
+            emitted.to_str().unwrap(),
+            "tracked.md",
+        ],
+    );
+    assert_eq!(plan_code, 0, "{plan_stderr}");
+
+    // The sidecar is left exactly as written; only the reviewed bytes change.
+    let original = std::fs::read_to_string(&emitted).unwrap();
+    std::fs::write(&emitted, format!("{original}\nINJECTED CONTENT THAT WAS NEVER REVIEWED\n"))
+        .unwrap();
+
+    let assessment = export_dir.path().join("assessment.md");
+    std::fs::write(
+        &assessment,
+        "LOG SUMMARY: NO OBJECTION — fine\nEVIDENCE: A\nHIGHEST-IMPACT UNCERTAINTY: none\n",
+    )
+    .unwrap();
+
+    let (code, _, stderr) = run_in_dir(
+        repo.path(),
+        &[
+            "review",
+            "UPG-0070",
+            "selfdev-step-1",
+            "--assessment",
+            assessment.to_str().unwrap(),
+            "--packet",
+            emitted.to_str().unwrap(),
+            "--reviewer-label",
+            "test",
+            "tracked.md",
+        ],
+    );
+    assert_ne!(code, 0, "altered packet bytes must not import: {stderr}");
+    assert!(
+        stderr.contains("does not match its sidecar"),
+        "the failure must name the binding that was violated, got: {stderr}"
+    );
+}
+
+/// Gap 2. `git ls-files --others` failing is not the same answer as "no untracked files". When git
+/// cannot be consulted the packet must not claim full coverage, because the files it would have
+/// listed are exactly the ones no diff can show.
+#[test]
+fn untracked_discovery_failure_downgrades_coverage_instead_of_reading_as_none() {
+    let (repo, _) = setup_temp_git_repo();
+    setup_codeos_symlink(repo.path());
+
+    // A `git` shim that fails ONLY `ls-files --others` and passes everything else through to the
+    // real binary. A blanket-failing git would break branch and diff resolution too, and the packet
+    // would then fail for an unrelated reason instead of exercising this defect.
+    let real_git = String::from_utf8(
+        std::process::Command::new("sh")
+            .args(["-c", "command -v git"])
+            .output()
+            .expect("locate git")
+            .stdout,
+    )
+    .expect("git path is utf8")
+    .trim()
+    .to_string();
+    assert!(!real_git.is_empty(), "a real git is required for this test");
+
+    let bin = tempfile::tempdir().unwrap();
+    let shim = bin.path().join("git");
+    std::fs::write(
+        &shim,
+        format!(
+            "#!/bin/sh\nif [ \"$1\" = \"ls-files\" ] && [ \"$2\" = \"--others\" ]; then exit 1; fi\nexec {real_git} \"$@\"\n"
+        ),
+    )
+    .unwrap();
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(&shim, std::fs::Permissions::from_mode(0o755)).unwrap();
+    }
+
+    // An untracked file that discovery would have found, so the packet is genuinely incomplete.
+    std::fs::write(repo.path().join("undiscovered.rs"), "fn hidden() {}\n").unwrap();
+
+    let export_dir = tempfile::tempdir().unwrap();
+    let emitted = export_dir.path().join("emitted-packet.txt");
+    let path_with_shim = format!(
+        "{}:{}",
+        bin.path().display(),
+        std::env::var("PATH").unwrap_or_default()
+    );
+
+    let (code, _, stderr) = run_in_dir_with_env(
+        repo.path(),
+        &[
+            "plan",
+            "UPG-0070",
+            "selfdev-step-1",
+            "--emit-packet",
+            emitted.to_str().unwrap(),
+            "tracked.md",
+        ],
+        &[("PATH", path_with_shim.as_str())],
+    );
+    assert_eq!(code, 0, "the packet should still build: {stderr}");
+
+    let sidecar = std::fs::read_to_string(format!("{}.meta.json", emitted.display())).unwrap();
+    assert!(
+        !sidecar.contains("FULL_COVERAGE"),
+        "coverage must be downgraded when untracked discovery is unavailable: {sidecar}"
+    );
+    assert!(
+        sidecar.contains("untracked-file discovery"),
+        "the reason must be visible in the packet's own exclusions: {sidecar}"
+    );
 }
