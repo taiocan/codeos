@@ -204,6 +204,49 @@ fn external_assessment_records_provenance_without_invoking_codex() {
     assert!(!log.contains("Codex concern:"), "{log}");
 }
 
+#[test]
+fn over_budget_external_assessment_remains_recordable() {
+    let (repo, _) = setup_temp_git_repo();
+    setup_codeos_symlink(repo.path());
+    let export_dir = tempfile::tempdir().unwrap();
+    let packet = export_dir.path().join("UPG-EXTERNAL-BUDGET.packet.txt");
+
+    let (plan_code, _, plan_stderr) = run_in_dir_with_env(
+        repo.path(),
+        &[
+            "plan",
+            "UPG-EXTERNAL-BUDGET",
+            "selfdev-step-1",
+            "--emit-packet",
+            packet.to_str().unwrap(),
+            "tracked.md",
+        ],
+        &[("CODEOS_PACKET_BUDGET_BYTES", "1")],
+    );
+    assert_eq!(plan_code, 0, "{plan_stderr}");
+
+    let reply = export_dir.path().join("assessment.txt");
+    std::fs::write(&reply, FIXTURE_REPLY).unwrap();
+    let (code, stdout, stderr) = run_in_dir_with_env(
+        repo.path(),
+        &[
+            "review",
+            "UPG-EXTERNAL-BUDGET",
+            "selfdev-step-1",
+            "--assessment",
+            reply.to_str().unwrap(),
+            "--packet",
+            packet.to_str().unwrap(),
+            "tracked.md",
+        ],
+        &[("CODEOS_PACKET_BUDGET_BYTES", "1")],
+    );
+
+    assert_eq!(code, 0, "{stderr}");
+    assert!(stdout.contains("external assessment logged:"), "{stdout}");
+    assert!(!repo.path().join(".codeos-state/codex-sessions").exists());
+}
+
 /// Recording an external assessment must not consume a review round the human still owes the
 /// boundary: the next Codex-backed review is still R1.
 #[test]

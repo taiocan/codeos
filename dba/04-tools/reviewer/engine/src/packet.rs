@@ -447,7 +447,8 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
     // workspace_dirty check
     let workspace_dirty = git_is_dirty(&opts.repo_root);
 
-    // Budget check (warning only)
+    // Packet construction measures and explains size. Codex invocation policy is enforced at the
+    // model-spawning boundary, not here.
     let budget = std::env::var("CODEOS_PACKET_BUDGET_BYTES")
         .ok()
         .and_then(|v| v.parse::<u64>().ok())
@@ -484,19 +485,6 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
         );
         eprintln!("  optional:");
         eprintln!("    use --sha-only <path> only for large unchanged context files that are not the primary artifact under review; this reduces review evidence");
-
-        // Opt-in (UPG-0074): default stays warn-only, unchanged from before this existed — no
-        // downstream project is affected until it sets this. `fail` turns the same overage this
-        // block already diagnosed into a refusal, before any Codex invocation.
-        if std::env::var("CODEOS_PACKET_BUDGET_MODE").as_deref() == Ok("fail") {
-            bail!(
-                "packet is {} KB, {}× over the {} KB budget (CODEOS_PACKET_BUDGET_MODE=fail); \
-                 trim evidence per the suggestions above and re-run",
-                packet_kb,
-                overage_multiple,
-                budget_kb
-            );
-        }
     }
 
     // Stage-specific checks

@@ -36,7 +36,8 @@ The `review` path, which is the longest and contains every other command's work 
    none.
 3. `config::resolve` detects self-development (a root `dba-system.md` plus `dba/00-entry`) and
    selects `maintenance/reviews` over `.codeos/05-review/reviews` accordingly. Reasoning effort
-   resolves environment → `reviewer.toml` → the compiled `high` default; unknown TOML keys fail here.
+   resolves environment → `reviewer.toml` → the compiled `high` default. Packet-budget mode resolves
+   to fail by default or the explicit `warn` operator override; unknown values and TOML keys fail here.
 4. `cmd::review::prepare` — shared verbatim with `plan` — validates the feature and stage
    identifiers, canonicalizes every supplied path and rejects any that resolves outside the
    repository, rejects a path passed as both an artifact and `--sha-only`, and resolves `--base` to
@@ -50,17 +51,24 @@ The `review` path, which is the longest and contains every other command's work 
 7. The packet text is assembled in order: the reviewer task prompt read from the toolkit, a manifest
    with byte counts and hashes, review context, stage-specific checks and expected output, the
    artifacts block, and the filtered diff.
-8. **`plan` stops here** and prints the selection. `review` continues.
-9. `log::compute_review_round` derives the round by counting matching entries already in the
-   append-only log, and `format_review_id` produces `REV__<feature>__<stage>__R<N>`.
-10. `codex::invoke` spawns `codex exec` in a read-only sandbox, writes the packet to its stdin, and
-    resumes the saved session unless `--fresh` was passed or the Codex version changed. The working
-    tree is compared before and after; any difference prints a read-only violation warning. With
+8. **`plan` stops here** and prints the selection, including whether spending policy would refuse an
+   oversized Codex review. Packet construction itself never enforces that policy. `review` continues.
+9. Before round derivation or provider access, a Codex-backed review refuses an over-budget packet
+   unless the `warn` operator override is active.
+10. `log::compute_review_round` derives the round by counting matching entries already in the
+    append-only log, and `format_review_id` produces `REV__<feature>__<stage>__R<N>`.
+11. `codex::invoke` enforces the budget invariant again at the sole model-spawning boundary, creates
+    an empty working directory, and applies a generated least-privilege Codex permission profile. A
+    local preflight must read an allowed runtime canary and must fail to read repository, Codex-state,
+    and unrelated canaries. Only then does Codeos start a fresh, ephemeral `codex exec`, suppressing
+    project instructions, user configuration, and exec-policy rules and writing the packet to stdin.
+    There is no provider-session resume or unisolated fallback. The working tree is compared before
+    and after; any difference prints a read-only warning. With
     `--assessment` no process is started at all: the reply text is read from the named file and
     tagged `RunSource::External`, which is sequenced as `EXT__…__A<N>` and never advances the round.
-11. `assessment` parses the response — `LOG SUMMARY`, `EVIDENCE`, and the finding blocks — and
+12. `assessment` parses the response — `LOG SUMMARY`, `EVIDENCE`, and the finding blocks — and
     escalates the concern to the coverage floor when evidence was incomplete.
-12. `validate_schema` fail-closes before anything durable is written. Then the packet file, the
+13. `validate_schema` fail-closes before anything durable is written. Then the packet file, the
     assessment file, and the log entry are written in that order, each error message naming what
     already landed.
 
@@ -78,8 +86,8 @@ same packet a Codex-backed review would have seen.
 - **`precheck.rs`** — artifact hygiene gates and the secret-redaction regexes used by `packet`.
 - **`packet.rs`** — the largest part: evidence selection, coverage state, budget accounting, and the
   per-stage check and expected-output tables.
-- **`codex.rs`** — the only module that knows the Codex CLI: flags, JSONL event shapes, session
-  persistence, and process handling.
+- **`codex.rs`** — the only module that knows the Codex CLI: effective-isolation preflight, flags,
+  JSONL event shapes, and process handling.
 - **`run.rs`** — `ReviewerRun` and `RunSource`: the reply text plus where it came from. A provenance
   record, not a provider abstraction — there is no dispatch, trait, or configuration behind it, and
   the two sources carry different fields so nothing is filled with placeholder measurements.
@@ -89,13 +97,15 @@ same packet a Codex-backed review would have seen.
 
 ## Data and state
 
-**In:** artifact paths and flags; `CODEOS_REASONING_EFFORT` and `CODEOS_PACKET_BUDGET_BYTES`;
+**In:** artifact paths and flags; `CODEOS_REASONING_EFFORT`, `CODEOS_PACKET_BUDGET_BYTES`, and
+`CODEOS_PACKET_BUDGET_MODE`;
 `reviewer.toml`; the reviewer task prompt at `dba/03-prompts/review/codeos-reviewer-task.md`; Git
 (branch, `HEAD`, diffs, tracked status, porcelain status).
 
 **State written:** the append-only review log; one assessment `.md` and one packet `.txt` per review
-under the resolved review root (or `.codeos-state/reviewer-scratch` with `--scratch`); Codex session
-state under `.codeos-state/codex-sessions/`. Existing entries and assessments are never rewritten.
+under the resolved review root (or `.codeos-state/reviewer-scratch` with `--scratch`). Codex provider
+sessions are ephemeral and no Codeos session state is written. Existing entries and assessments are
+never rewritten.
 
 **Out:** an exit code, a stdout summary naming the review id, both concerns, coverage, and the record
 paths.
@@ -116,8 +126,8 @@ paths.
 - **Findings are parsed only before the first line-anchored `LOG SUMMARY:`.** The CLI transcript
   echoes both the packaged prompt and the answer, so scanning the whole text would double-count
   every finding and could match the prompt's own placeholder line.
-- **Codex details are quarantined in `codex.rs`.** Session storage, command flags, and event shapes
-  are implementation details the contract explicitly does not guarantee.
+- **Codex details are quarantined in `codex.rs`.** Isolation mechanics, command flags, and event
+  shapes are implementation details; the effective packet-only boundary is the guarantee.
 
 ## Dependencies and boundaries
 
@@ -126,6 +136,7 @@ operations, path rules, configuration precedence, and record guarantees. This en
 contract and must not widen it silently.
 
 The engine reads the reviewer task prompt from the toolkit and shells out to `git` and `codex`. It
-must not write outside the resolved review root and `.codeos-state/`, must not invoke Codex with
-anything but a read-only sandbox, and must not turn its output into an approval — the review policy
+must not write outside the resolved review root and `.codeos-state/`, must not invoke Codex unless the
+effective preflight denies repository and user-state reads, and must configure the Codex run without
+write or command-network access. It must not turn Codex output into an approval — the review policy
 owns timing and waivers, and the human owns the decision.

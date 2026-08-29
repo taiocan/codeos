@@ -52,7 +52,7 @@ struct EvidenceCli {
 struct ReviewCli {
     #[command(flatten)]
     evidence: EvidenceCli,
-    /// Start a new Codex session and replace saved session state only after success.
+    /// Compatibility flag; Codex-backed reviews are always fresh and ephemeral.
     #[arg(long)]
     fresh: bool,
     /// Write reviewer records under ignored operational state.
@@ -179,22 +179,25 @@ fn run() -> i32 {
     };
 
     match cli.command {
-        Commands::Review(args) => cmd::review::run(
-            cmd::review::ReviewArgs {
-                evidence: args.evidence.into(),
-                fresh: args.fresh,
-                scratch: args.scratch,
-                assessment: args.assessment,
-                packet: args.packet,
-                reviewer_label: args.reviewer_label,
-                continues: args.continues,
-            },
-            &cfg,
-        )
-        .unwrap_or_else(|error| {
-            eprintln!("internal error: {error}");
-            EXIT_WRITE
-        }),
+        Commands::Review(args) => {
+            // Retained on the public CLI; all Codex-backed reviews now have this behavior.
+            let _ = args.fresh;
+            cmd::review::run(
+                cmd::review::ReviewArgs {
+                    evidence: args.evidence.into(),
+                    scratch: args.scratch,
+                    assessment: args.assessment,
+                    packet: args.packet,
+                    reviewer_label: args.reviewer_label,
+                    continues: args.continues,
+                },
+                &cfg,
+            )
+            .unwrap_or_else(|error| {
+                eprintln!("internal error: {error}");
+                EXIT_WRITE
+            })
+        }
         Commands::Plan(args) => cmd::plan::run(args.evidence.into(), args.emit_packet, &cfg)
             .unwrap_or_else(|error| {
                 eprintln!("internal error: {error}");

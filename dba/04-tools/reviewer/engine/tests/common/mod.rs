@@ -27,6 +27,14 @@ if [[ "${1:-}" == "--version" ]]; then
   printf '%s\n' 'codex-cli fake-1.0'
   exit 0
 fi
+if [[ "${1:-}" == "sandbox" ]]; then
+  if [[ "${CODEOS_FAKE_MODE:-success}" == "isolation_failure" ]]; then
+    printf '%s\n' 'CODEOS_ISOLATION_READABLE simulated'
+    exit 41
+  fi
+  printf '%s\n' 'CODEOS_ISOLATION_OK'
+  exit 0
+fi
 printf '%s\n' "$*" > "${CODEOS_FAKE_ARGS:?}"
 output_file=''
 while (( $# )); do
@@ -65,18 +73,31 @@ pub fn run_with_fake_codex(
     args: &[&str],
     mode: &str,
 ) -> (i32, String, String) {
+    run_with_fake_codex_env(repo_path, fake, args, mode, &[])
+}
+
+pub fn run_with_fake_codex_env(
+    repo_path: &std::path::Path,
+    fake: &FakeCodex,
+    args: &[&str],
+    mode: &str,
+    env: &[(&str, &str)],
+) -> (i32, String, String) {
     let old_path = std::env::var("PATH").unwrap_or_default();
     let path = format!("{}:{old_path}", fake.dir.path().display());
-    let out = Command::new(binary())
+    let mut command = Command::new(binary());
+    command
         .args(args)
         .current_dir(repo_path)
         .env("PATH", path)
         .env("CODEOS_FAKE_ARGS", &fake.args_log)
         .env("CODEOS_FAKE_PACKET", &fake.packet_log)
         .env("CODEOS_FAKE_MODE", mode)
-        .env("CODEOS_FAKE_REPO", repo_path)
-        .output()
-        .expect("run binary with fake Codex");
+        .env("CODEOS_FAKE_REPO", repo_path);
+    for (key, value) in env {
+        command.env(key, value);
+    }
+    let out = command.output().expect("run binary with fake Codex");
     (
         out.status.code().unwrap_or(-1),
         String::from_utf8_lossy(&out.stdout).into_owned(),

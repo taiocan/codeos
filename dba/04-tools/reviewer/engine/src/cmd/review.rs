@@ -21,7 +21,6 @@ pub struct EvidenceArgs {
 
 pub struct ReviewArgs {
     pub evidence: EvidenceArgs,
-    pub fresh: bool,
     pub scratch: bool,
     /// Record an assessment produced outside Codeos instead of invoking Codex.
     pub assessment: Option<PathBuf>,
@@ -174,6 +173,15 @@ pub fn run(args: ReviewArgs, cfg: &Config) -> Result<i32> {
         return Ok(crate::EXIT_PACKET);
     }
 
+    // Refuse before round derivation, provider access, record creation, or model execution. The
+    // common spawning boundary enforces the same predicate again for future callers.
+    if args.assessment.is_none() {
+        if let Some(refusal) = codex::budget_refusal(&review_packet, cfg) {
+            report_budget_refusal(refusal);
+            return Ok(crate::EXIT_PACKET);
+        }
+    }
+
     let review_log_path = if args.scratch {
         let scratch = cfg.state_dir.join("reviewer-scratch");
         if let Err(error) = std::fs::create_dir_all(&scratch) {
@@ -228,12 +236,15 @@ pub fn run(args: ReviewArgs, cfg: &Config) -> Result<i32> {
     };
 
     let raw = match &args.assessment {
-        // Import path: no process is started, so there is no read-only violation to detect and no
-        // session to resume. The text is taken verbatim; it flows through the same parser and the
+        // Import path: no process is started, so there is no read-only violation to detect. The text
+        // is taken verbatim; it flows through the same parser and the
         // same fail-closed schema check as a Codex reply.
         Some(path) => match std::fs::read_to_string(path) {
             Ok(text) if text.trim().is_empty() => {
-                eprintln!("error: external assessment file is empty: {}", path.display());
+                eprintln!(
+                    "error: external assessment file is empty: {}",
+                    path.display()
+                );
                 return Ok(crate::EXIT_PROVIDER);
             }
             Ok(text) => ReviewerRun {
@@ -253,7 +264,7 @@ pub fn run(args: ReviewArgs, cfg: &Config) -> Result<i32> {
         },
         None => {
             let pre_invoke_status = git_status(&cfg.repo_root);
-            let invoke_result = codex::invoke(&review_packet, cfg, args.fresh);
+            let invoke_result = codex::invoke(&review_packet, cfg);
             if let (Some(before), Some(after)) = (pre_invoke_status, git_status(&cfg.repo_root)) {
                 if before != after {
                     eprintln!(
@@ -262,7 +273,11 @@ pub fn run(args: ReviewArgs, cfg: &Config) -> Result<i32> {
                 }
             }
             match invoke_result {
-                Ok(raw) => raw,
+                Ok(codex::InvokeOutcome::Completed(raw)) => raw,
+                Ok(codex::InvokeOutcome::RefusedOverBudget(refusal)) => {
+                    report_budget_refusal(refusal);
+                    return Ok(crate::EXIT_PACKET);
+                }
                 Err(error) => {
                     eprintln!("error: Codex invocation failed: {error}");
                     return Ok(crate::EXIT_PROVIDER);
@@ -419,6 +434,17 @@ pub fn run(args: ReviewArgs, cfg: &Config) -> Result<i32> {
     println!("  assessment: {}", assessment_file.display());
     println!("  packet: {}", packet_saved.display());
     Ok(crate::EXIT_SUCCESS)
+}
+
+fn report_budget_refusal(refusal: codex::BudgetRefusal) {
+    eprintln!(
+        "error: oversized Codex invocation refused: {} review-content bytes exceeds the {} byte budget",
+        refusal.review_content_bytes, refusal.budget_bytes
+    );
+    eprintln!("       Inspect the evidence with plan, then reduce it with --base or --sha-only.");
+    eprintln!(
+        "       Operator override: CODEOS_PACKET_BUDGET_MODE=warn permits an intentional oversized Codex invocation."
+    );
 }
 
 /// Load an exported packet and its sidecar without rebuilding either. The sidecar is what makes

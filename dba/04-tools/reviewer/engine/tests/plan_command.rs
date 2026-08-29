@@ -203,13 +203,17 @@ fn smoke_plan_oversized_packet_warning_content() {
         "over-budget plan must suggest the exact delta-mode command: {}",
         stdout
     );
+    assert!(
+        stdout.contains("Codex review will refuse this packet"),
+        "plan must explain the default invocation policy: {}",
+        stdout
+    );
 }
 
 #[test]
-fn smoke_plan_budget_mode_fail_refuses_an_over_budget_packet() {
-    // Same tiny-budget setup as the warning-only test above, plus the opt-in fail mode
-    // (UPG-0074). The default (unset) case staying warn-only, exit 0, is already covered by
-    // smoke_plan_oversized_packet_warning_content — this is only the opt-in path.
+fn smoke_plan_warn_override_still_builds_and_reports_an_over_budget_packet() {
+    // Spending policy never blocks packet construction: plan remains diagnostic under the
+    // explicit operator override and reports that the corresponding Codex invocation is allowed.
     let out = Command::new(binary())
         .args([
             "plan",
@@ -220,20 +224,16 @@ fn smoke_plan_budget_mode_fail_refuses_an_over_budget_packet() {
         ])
         .current_dir(repo_root())
         .env("CODEOS_PACKET_BUDGET_BYTES", "1000")
-        .env("CODEOS_PACKET_BUDGET_MODE", "fail")
+        .env("CODEOS_PACKET_BUDGET_MODE", "warn")
         .output()
-        .expect("run plan with tiny budget and fail mode");
+        .expect("run plan with tiny budget and warn override");
     let code = out.status.code().unwrap_or(-1);
-    let stderr = String::from_utf8_lossy(&out.stderr).into_owned();
-    assert_ne!(
-        code, 0,
-        "CODEOS_PACKET_BUDGET_MODE=fail must refuse an over-budget packet: {}",
-        stderr
-    );
+    let stdout = String::from_utf8_lossy(&out.stdout).into_owned();
+    assert_eq!(code, 0, "plan must remain diagnostic: {}", stdout);
     assert!(
-        stderr.contains("CODEOS_PACKET_BUDGET_MODE=fail"),
-        "the refusal must name the mode that caused it: {}",
-        stderr
+        stdout.contains("operator override active: CODEOS_PACKET_BUDGET_MODE=warn"),
+        "plan must report the active override: {}",
+        stdout
     );
 }
 

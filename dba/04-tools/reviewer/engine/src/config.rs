@@ -2,15 +2,30 @@ use anyhow::{Context, Result};
 use serde::Deserialize;
 use std::path::{Path, PathBuf};
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PacketBudgetMode {
+    Fail,
+    Warn,
+}
+
+impl PacketBudgetMode {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Fail => "fail",
+            Self::Warn => "warn",
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Config {
     pub reasoning_effort: String,
+    pub packet_budget_mode: PacketBudgetMode,
     pub repo_root: PathBuf,
     pub toolkit_root: PathBuf,
     pub review_log: PathBuf,
     pub codex_dir: PathBuf,
     pub state_dir: PathBuf,
-    pub sessions_dir: PathBuf,
 }
 
 #[derive(Debug, Deserialize, Default)]
@@ -27,6 +42,7 @@ pub fn resolve(repo_root: &Path) -> Result<Config> {
         .filter(|value| !value.trim().is_empty())
         .or(reviewer_toml.reasoning_effort)
         .unwrap_or_else(|| "high".to_string());
+    let packet_budget_mode = resolve_packet_budget_mode()?;
 
     let toolkit_root = find_toolkit_root(repo_root);
     let state_dir = repo_root.join(".codeos-state");
@@ -40,13 +56,29 @@ pub fn resolve(repo_root: &Path) -> Result<Config> {
 
     Ok(Config {
         reasoning_effort,
+        packet_budget_mode,
         review_log: review_root.join("review-log.md"),
         codex_dir: review_root.join("codex"),
         state_dir: state_dir.clone(),
-        sessions_dir: state_dir.join("codex-sessions"),
         toolkit_root: toolkit_root.clone(),
         repo_root: repo_root.to_path_buf(),
     })
+}
+
+fn resolve_packet_budget_mode() -> Result<PacketBudgetMode> {
+    match std::env::var("CODEOS_PACKET_BUDGET_MODE") {
+        Ok(value) => match value.trim() {
+            "fail" => Ok(PacketBudgetMode::Fail),
+            "warn" => Ok(PacketBudgetMode::Warn),
+            other => anyhow::bail!(
+                "invalid CODEOS_PACKET_BUDGET_MODE '{other}'; expected 'fail' or 'warn'"
+            ),
+        },
+        Err(std::env::VarError::NotPresent) => Ok(PacketBudgetMode::Fail),
+        Err(std::env::VarError::NotUnicode(_)) => {
+            anyhow::bail!("CODEOS_PACKET_BUDGET_MODE is not valid Unicode")
+        }
+    }
 }
 
 fn load_reviewer_toml(repo_root: &Path) -> Result<ReviewerToml> {
@@ -114,6 +146,35 @@ mod tests {
         std::env::remove_var("CODEOS_REASONING_EFFORT");
         let cfg = resolve(dir.path()).expect("resolve");
         assert_eq!(cfg.reasoning_effort, "high");
+    }
+
+    #[test]
+    fn packet_budget_mode_defaults_to_fail() {
+        let _guard = ENV_VAR_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        let dir = tmp_repo();
+        std::env::remove_var("CODEOS_PACKET_BUDGET_MODE");
+        let cfg = resolve(dir.path()).expect("resolve");
+        assert_eq!(cfg.packet_budget_mode, PacketBudgetMode::Fail);
+    }
+
+    #[test]
+    fn packet_budget_warn_is_an_explicit_override() {
+        let _guard = ENV_VAR_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        let dir = tmp_repo();
+        std::env::set_var("CODEOS_PACKET_BUDGET_MODE", "warn");
+        let cfg = resolve(dir.path()).expect("resolve");
+        assert_eq!(cfg.packet_budget_mode, PacketBudgetMode::Warn);
+        std::env::remove_var("CODEOS_PACKET_BUDGET_MODE");
+    }
+
+    #[test]
+    fn unknown_packet_budget_mode_is_rejected() {
+        let _guard = ENV_VAR_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        let dir = tmp_repo();
+        std::env::set_var("CODEOS_PACKET_BUDGET_MODE", "ignore");
+        let error = resolve(dir.path()).expect_err("unknown mode must fail");
+        assert!(error.to_string().contains("expected 'fail' or 'warn'"));
+        std::env::remove_var("CODEOS_PACKET_BUDGET_MODE");
     }
 
     #[test]

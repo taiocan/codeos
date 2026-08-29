@@ -19,7 +19,7 @@ pub fn run(args: EvidenceArgs, emit_packet: Option<PathBuf>, cfg: &Config) -> Re
         }
     };
 
-    print_plan_summary(&prepared.args, &prepared.packet);
+    print_plan_summary(&prepared.args, &prepared.packet, cfg.packet_budget_mode);
     if matches!(prepared.packet.coverage_state, CoverageState::EmptyPacket) {
         // An empty packet fails before invocation, so there is nothing legitimate to export either.
         return Ok(crate::EXIT_PACKET);
@@ -88,7 +88,11 @@ fn warn_if_export_pollutes_evidence(path: &Path, repo_root: &Path, state_dir: &P
     }
 }
 
-fn print_plan_summary(args: &EvidenceArgs, packet: &ReviewPacket) {
+fn print_plan_summary(
+    args: &EvidenceArgs,
+    packet: &ReviewPacket,
+    budget_mode: crate::config::PacketBudgetMode,
+) {
     println!("review plan: {} {}", args.feature, args.stage);
     println!(
         "  mode: {}",
@@ -121,7 +125,7 @@ fn print_plan_summary(args: &EvidenceArgs, packet: &ReviewPacket) {
     );
 
     if packet.over_budget {
-        print_budget_warning(args, packet);
+        print_budget_warning(args, packet, budget_mode);
     }
     if matches!(packet.coverage_state, CoverageState::EmptyPacket) {
         println!();
@@ -129,7 +133,11 @@ fn print_plan_summary(args: &EvidenceArgs, packet: &ReviewPacket) {
     }
 }
 
-fn print_budget_warning(args: &EvidenceArgs, packet: &ReviewPacket) {
+fn print_budget_warning(
+    args: &EvidenceArgs,
+    packet: &ReviewPacket,
+    budget_mode: crate::config::PacketBudgetMode,
+) {
     let multiple = (packet.review_content_bytes as f64 / packet.budget_bytes as f64).ceil() as u64;
     println!();
     println!(
@@ -156,4 +164,12 @@ fn print_budget_warning(args: &EvidenceArgs, packet: &ReviewPacket) {
         args.feature, args.stage
     );
     println!("  use --sha-only only for unchanged context whose contents are not primary evidence");
+    match budget_mode {
+        crate::config::PacketBudgetMode::Fail => println!(
+            "  Codex review will refuse this packet; reduce evidence or intentionally set CODEOS_PACKET_BUDGET_MODE=warn"
+        ),
+        crate::config::PacketBudgetMode::Warn => println!(
+            "  operator override active: CODEOS_PACKET_BUDGET_MODE=warn permits this oversized Codex invocation"
+        ),
+    }
 }
