@@ -206,6 +206,111 @@ fn smoke_plan_oversized_packet_warning_content() {
 }
 
 #[test]
+fn smoke_plan_budget_mode_fail_refuses_an_over_budget_packet() {
+    // Same tiny-budget setup as the warning-only test above, plus the opt-in fail mode
+    // (UPG-0074). The default (unset) case staying warn-only, exit 0, is already covered by
+    // smoke_plan_oversized_packet_warning_content — this is only the opt-in path.
+    let out = Command::new(binary())
+        .args([
+            "plan",
+            "UPG-SMOKE-TEST",
+            "selfdev-step-3",
+            "--skip-prechecks",
+            "dba/04-tools/reviewer/engine/src/packet.rs",
+        ])
+        .current_dir(repo_root())
+        .env("CODEOS_PACKET_BUDGET_BYTES", "1000")
+        .env("CODEOS_PACKET_BUDGET_MODE", "fail")
+        .output()
+        .expect("run plan with tiny budget and fail mode");
+    let code = out.status.code().unwrap_or(-1);
+    let stderr = String::from_utf8_lossy(&out.stderr).into_owned();
+    assert_ne!(
+        code, 0,
+        "CODEOS_PACKET_BUDGET_MODE=fail must refuse an over-budget packet: {}",
+        stderr
+    );
+    assert!(
+        stderr.contains("CODEOS_PACKET_BUDGET_MODE=fail"),
+        "the refusal must name the mode that caused it: {}",
+        stderr
+    );
+}
+
+#[test]
+fn smoke_plan_events_log_artifact_warns_but_still_builds() {
+    // The precheck (UPG-0074) fires on a whole runtime-event-log passed as a positional artifact
+    // — the measured cause of the F-0004 packet's bloat — but it warns, it does not block: the
+    // packet still builds and the command still exits 0.
+    let (dir, _base_sha) = setup_temp_git_repo();
+    setup_codeos_symlink(dir.path());
+    std::fs::write(dir.path().join("runtime_events.jsonl"), "{}\n").expect("write events log");
+    Command::new("git")
+        .args(["add", "runtime_events.jsonl"])
+        .current_dir(dir.path())
+        .output()
+        .expect("git add");
+    Command::new("git")
+        .args(["commit", "-m", "add events log"])
+        .current_dir(dir.path())
+        .output()
+        .expect("git commit");
+
+    let (code, _stdout, stderr) = run_in_dir(
+        dir.path(),
+        &[
+            "plan",
+            "UPG-SMOKE-TEST",
+            "selfdev-step-3",
+            "runtime_events.jsonl",
+        ],
+    );
+    assert_eq!(code, 0, "the hygiene check must warn, not fail: {}", stderr);
+    assert!(
+        stderr.contains("looks like a full runtime event log"),
+        "expected the artifact-hygiene warning, got: {}",
+        stderr
+    );
+}
+
+#[test]
+fn smoke_plan_events_log_via_sha_only_does_not_warn() {
+    // The same file passed via --sha-only, the tool's own suggested remedy, must not trigger the
+    // warning — its content never reaches the precheck loop, which only reads `args.artifacts`.
+    let (dir, _base_sha) = setup_temp_git_repo();
+    setup_codeos_symlink(dir.path());
+    std::fs::write(dir.path().join("runtime_events.jsonl"), "{}\n").expect("write events log");
+    Command::new("git")
+        .args(["add", "runtime_events.jsonl"])
+        .current_dir(dir.path())
+        .output()
+        .expect("git add");
+    Command::new("git")
+        .args(["commit", "-m", "add events log"])
+        .current_dir(dir.path())
+        .output()
+        .expect("git commit");
+
+    let (code, _stdout, stderr) = run_in_dir(
+        dir.path(),
+        &[
+            "plan",
+            "UPG-SMOKE-TEST",
+            "selfdev-step-3",
+            "--sha-only",
+            "runtime_events.jsonl",
+            "tracked.md",
+        ],
+    );
+    assert_eq!(code, 0, "stderr: {}", stderr);
+    assert!(
+        !stderr.contains("looks like a full runtime event log"),
+        "a --sha-only file must not trigger the artifact-hygiene warning: {}",
+        stderr
+    );
+}
+
+#[test]
 fn smoke_plan_never_invokes_codex_or_mutates_tree() {
     let (dir, _base_sha) = setup_temp_git_repo();
     setup_codeos_symlink(dir.path());

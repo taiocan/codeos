@@ -29,6 +29,10 @@ pub struct ReviewArgs {
     pub packet: Option<PathBuf>,
     /// Descriptive label for the external model. Metadata only.
     pub reviewer_label: Option<String>,
+    /// This review continues an existing one (UPG-0074) — see `resolve_continued_round` for the
+    /// validation applied. `None` leaves round derivation exactly as it was before this flag
+    /// existed.
+    pub continues: Option<String>,
 }
 
 pub struct PreparedReview {
@@ -99,10 +103,25 @@ pub fn prepare(
             precheck::check_no_forbidden_fields(Path::new(artifact), &content)
                 .map_err(|error| PrepareFailure::packet(error.to_string()))?;
             precheck::check_draft_markers(Path::new(artifact), &content);
+            precheck::check_events_log_artifact_hygiene(Path::new(artifact));
         }
         for path in &args.guard_clean {
             precheck::check_guard_clean(Path::new(path))
                 .map_err(|error| PrepareFailure::packet(error.to_string()))?;
+        }
+        // Best-effort: a diff that can't be computed (unexpected repo state) is not grounds to
+        // fail an otherwise-successful prepare over a warning-only check.
+        if let Ok(diffed) =
+            packet::diff_changed_paths(args.base.as_deref(), &cfg.repo_root.to_string_lossy())
+        {
+            let mut declared = args.artifacts.clone();
+            declared.extend(args.sha_only.clone());
+            for path in precheck::unrelated_diff_paths(&diffed, &declared) {
+                eprintln!(
+                    "warning: precheck — {path} changed in the reviewed diff but is not a \
+                     declared artifact (unrelated-file drift)"
+                );
+            }
         }
     }
 
@@ -186,8 +205,20 @@ pub fn run(args: ReviewArgs, cfg: &Config) -> Result<i32> {
             }
         }
     } else {
-        match review_log::compute_review_round(&review_log_path, &evidence.feature, &evidence.stage)
-        {
+        let round_result = match args.continues.as_deref() {
+            Some(predecessor) => review_log::resolve_continued_round(
+                &review_log_path,
+                &evidence.feature,
+                &evidence.stage,
+                predecessor,
+            ),
+            None => review_log::compute_review_round(
+                &review_log_path,
+                &evidence.feature,
+                &evidence.stage,
+            ),
+        };
+        match round_result {
             Ok(round) => review_log::format_review_id(&evidence.feature, &evidence.stage, round),
             Err(error) => {
                 eprintln!("error: could not determine review round: {error}");
@@ -321,6 +352,14 @@ pub fn run(args: ReviewArgs, cfg: &Config) -> Result<i32> {
         }
     };
 
+    // An external assessment has no round — --continues only ever influenced round derivation in
+    // the review branch above, so it must not appear on an assessment entry either, even if both
+    // flags were passed together.
+    let continues_for_log = if raw.is_external() {
+        None
+    } else {
+        args.continues.as_deref()
+    };
     if let Err(error) = review_log::append_review(
         &review_log_path,
         &review_id,
@@ -331,6 +370,7 @@ pub fn run(args: ReviewArgs, cfg: &Config) -> Result<i32> {
         &assessment_hash,
         &packet_saved,
         &packet_hash,
+        continues_for_log,
     ) {
         eprintln!("error: log append failed: {error}");
         eprintln!("  assessment was written to: {}", assessment_file.display());

@@ -484,6 +484,19 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
         );
         eprintln!("  optional:");
         eprintln!("    use --sha-only <path> only for large unchanged context files that are not the primary artifact under review; this reduces review evidence");
+
+        // Opt-in (UPG-0074): default stays warn-only, unchanged from before this existed — no
+        // downstream project is affected until it sets this. `fail` turns the same overage this
+        // block already diagnosed into a refusal, before any Codex invocation.
+        if std::env::var("CODEOS_PACKET_BUDGET_MODE").as_deref() == Ok("fail") {
+            bail!(
+                "packet is {} KB, {}× over the {} KB budget (CODEOS_PACKET_BUDGET_MODE=fail); \
+                 trim evidence per the suggestions above and re-run",
+                packet_kb,
+                overage_multiple,
+                budget_kb
+            );
+        }
     }
 
     // Stage-specific checks
@@ -853,14 +866,64 @@ fn is_path_excluded(path: &str) -> bool {
     false
 }
 
-fn glob_match(pattern: &str, s: &str) -> bool {
-    if let Some(suffix) = pattern.strip_prefix('*') {
-        s.ends_with(suffix)
-    } else if let Some(prefix) = pattern.strip_suffix('*') {
-        s.starts_with(prefix)
-    } else {
-        s == pattern
+/// Whether `path` looks like a full runtime-event-log artifact, by the same glob this module
+/// already uses to auto-exclude such files from untracked-file discovery (UPG-0074). Exposed so a
+/// caller can warn when this kind of file is passed explicitly as a positional artifact, which is
+/// how it reaches the packet at all — `PATH_EXCLUDES` only stops auto-discovery, not an explicit
+/// pass.
+pub(crate) fn looks_like_events_log(path: &str) -> bool {
+    let name = Path::new(path)
+        .file_name()
+        .and_then(|n| n.to_str())
+        .unwrap_or(path);
+    glob_match("*runtime_events*.jsonl", path) || glob_match("*runtime_events*.jsonl", name)
+}
+
+/// The full, unrestricted set of paths that changed in the reviewed diff — against `base` when
+/// delta mode is in use, or against `HEAD` for a full review. Used to detect evidence outside the
+/// declared artifact set (UPG-0074); deliberately not scoped to any path list, unlike
+/// `git_diff_names`'s other callers, since scoping would hide exactly the drift this exists to
+/// find.
+pub(crate) fn diff_changed_paths(base: Option<&str>, repo_root: &str) -> Result<Vec<String>> {
+    match base {
+        Some(b) => git_diff_names(b, &[], repo_root),
+        None => git_diff_names_head(repo_root),
     }
+}
+
+/// Minimal glob matching: `*` as a wildcard, any number of them, no other special characters.
+/// UPG-0074 discovered that the previous single-wildcard-only implementation silently never
+/// matched `PATH_EXCLUDES`'s own `"*runtime_events*.jsonl"` entry — a pattern with a leading and a
+/// middle wildcard — because it only stripped one leading or one trailing `*` and compared the
+/// rest literally, including the second `*` character. That exclusion has therefore never actually
+/// applied since it was written; this restores the behavior the constant's own name and every
+/// caller already assumed, not a new exclusion rule.
+fn glob_match(pattern: &str, s: &str) -> bool {
+    let parts: Vec<&str> = pattern.split('*').collect();
+    if parts.len() == 1 {
+        return s == pattern;
+    }
+    let last = parts.len() - 1;
+    let mut rest = s;
+    for (i, part) in parts.iter().enumerate() {
+        if part.is_empty() {
+            continue;
+        }
+        if i == 0 {
+            if !rest.starts_with(part) {
+                return false;
+            }
+            rest = &rest[part.len()..];
+        } else if i == last {
+            return rest.ends_with(part);
+        } else {
+            match rest.find(part) {
+                Some(idx) => rest = &rest[idx + part.len()..],
+                None => return false,
+            }
+        }
+    }
+    true
 }
 
 fn is_oversize(path: &str) -> bool {
@@ -955,6 +1018,42 @@ mod tests {
         assert!(is_path_excluded("secrets/.env.local"));
         assert!(is_path_excluded("config.key"));
         assert!(!is_path_excluded("src/main.rs"));
+    }
+
+    #[test]
+    fn glob_match_handles_a_pattern_with_leading_and_middle_wildcards() {
+        // The regression this exists to guard: PATH_EXCLUDES' own "*runtime_events*.jsonl" never
+        // matched anything before this fix, because the old implementation only stripped a single
+        // leading OR trailing '*' and compared the remainder literally -- including the second
+        // '*' character itself.
+        assert!(glob_match("*runtime_events*.jsonl", "runtime_events.jsonl"));
+        assert!(glob_match("*runtime_events*.jsonl", "events/runtime_events.jsonl"));
+        assert!(!glob_match("*runtime_events*.jsonl", "runtime_events.txt"));
+        assert!(!glob_match("*runtime_events*.jsonl", "other.jsonl"));
+    }
+
+    #[test]
+    fn glob_match_single_wildcard_patterns_unchanged() {
+        assert!(glob_match("*.env", "config.env"));
+        assert!(!glob_match("*.env", "config.envelope"));
+        assert!(glob_match("secrets/*", "secrets/api.key"));
+        assert!(glob_match("foo", "foo"));
+        assert!(!glob_match("foo", "foobar"));
+    }
+
+    #[test]
+    fn looks_like_events_log_matches_the_full_path_and_the_bare_filename() {
+        assert!(looks_like_events_log("events/runtime_events.jsonl"));
+        assert!(looks_like_events_log("runtime_events.jsonl"));
+        assert!(looks_like_events_log(
+            ".codeos/05-review/events/runtime_events.jsonl"
+        ));
+    }
+
+    #[test]
+    fn looks_like_events_log_does_not_match_an_ordinary_artifact() {
+        assert!(!looks_like_events_log("modules/source_fitness/src/lib.rs"));
+        assert!(!looks_like_events_log("tests/behavioral/F-0004_behavior.test.rs"));
     }
 
     #[test]

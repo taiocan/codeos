@@ -89,6 +89,36 @@ pub fn check_draft_markers(path: &Path, content: &str) -> bool {
     false
 }
 
+/// Warning-only check (UPG-0074): a full runtime-event-log file passed as a whole positional
+/// artifact rather than via --sha-only/--base. This was the single largest contributor — 47% — to
+/// a measured 5x-over-budget review packet. Warns rather than blocks: the event content can
+/// occasionally be legitimately the thing under review, so preflight flags it and leaves the
+/// decision to the caller; only the explicit --packet-budget fail mode refuses a run.
+pub fn check_events_log_artifact_hygiene(path: &Path) -> bool {
+    if crate::packet::looks_like_events_log(&path.to_string_lossy()) {
+        eprintln!(
+            "warning: precheck — {} looks like a full runtime event log passed as a whole \
+             artifact; use --sha-only or --base unless the event content itself is under review",
+            path.display()
+        );
+        return true;
+    }
+    false
+}
+
+/// Warning-only check (UPG-0074): paths that changed in the reviewed diff but are not part of the
+/// declared evidence set (artifacts or --sha-only paths). Detects the packet drifting to cover
+/// changes the reviewer never declared. Returns the unrelated paths found; never fails the build —
+/// a diff legitimately touches files a human chose not to submit as evidence for other reasons,
+/// and this is a signal for the caller to check, not grounds to refuse the run.
+pub fn unrelated_diff_paths(diffed: &[String], declared: &[String]) -> Vec<String> {
+    diffed
+        .iter()
+        .filter(|p| !declared.contains(p))
+        .cloned()
+        .collect()
+}
+
 /// Check that a guard-clean path has no uncommitted changes vs HEAD.
 pub fn check_guard_clean(path: &Path) -> Result<()> {
     if !path.exists() {
@@ -206,5 +236,37 @@ mod tests {
     fn forbidden_field_absent_passes() {
         let result = check_no_forbidden_fields(&p("test.md"), "review_state: DRAFT\n");
         assert!(result.is_ok());
+    }
+
+    #[test]
+    fn events_log_hygiene_flags_a_full_runtime_log_artifact() {
+        assert!(check_events_log_artifact_hygiene(&p(
+            "events/runtime_events.jsonl"
+        )));
+    }
+
+    #[test]
+    fn events_log_hygiene_does_not_flag_an_ordinary_artifact() {
+        assert!(!check_events_log_artifact_hygiene(&p(
+            "modules/source_fitness/src/lib.rs"
+        )));
+    }
+
+    #[test]
+    fn unrelated_diff_paths_finds_only_what_is_not_declared() {
+        let diffed = vec!["modules/a/src/lib.rs".to_string(), "modules/b/src/lib.rs".to_string()];
+        let declared = vec!["modules/a/src/lib.rs".to_string()];
+        let unrelated = unrelated_diff_paths(&diffed, &declared);
+        assert_eq!(unrelated, vec!["modules/b/src/lib.rs".to_string()]);
+    }
+
+    #[test]
+    fn unrelated_diff_paths_empty_when_diff_is_a_subset_of_declared() {
+        let diffed = vec!["modules/a/src/lib.rs".to_string()];
+        let declared = vec![
+            "modules/a/src/lib.rs".to_string(),
+            "modules/b/src/lib.rs".to_string(),
+        ];
+        assert!(unrelated_diff_paths(&diffed, &declared).is_empty());
     }
 }

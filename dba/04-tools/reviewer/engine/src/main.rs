@@ -71,6 +71,14 @@ struct ReviewCli {
     /// neither invoked nor verified it. Requires --assessment.
     #[arg(long = "reviewer-label", value_name = "LABEL", requires = "assessment")]
     reviewer_label: Option<String>,
+    /// This review continues an existing one (UPG-0074) — e.g. it runs on an isolated branch or
+    /// worktree whose local log predates the predecessor's entries, which would otherwise make the
+    /// round-by-heading-count default mis-derive round 1 for what is substantively a later round.
+    /// The referenced ID is validated against the log (same feature, same stage, actually exists,
+    /// no cycle, and the resolved round does not exceed the three-round budget) rather than
+    /// trusted from this flag alone. Omit for the ordinary case; behavior is unchanged.
+    #[arg(long, value_name = "REVIEW_ID")]
+    continues: Option<String>,
 }
 
 #[derive(Args)]
@@ -179,6 +187,7 @@ fn run() -> i32 {
                 assessment: args.assessment,
                 packet: args.packet,
                 reviewer_label: args.reviewer_label,
+                continues: args.continues,
             },
             &cfg,
         )

@@ -83,6 +83,123 @@ fn count_entries(content: &str, kind: &str, feature: &str, stage: &str) -> u32 {
         .count() as u32
 }
 
+/// The round budget stated in `dba/02-policies/review/v2.md`: rounds 1-3 run automatically; a
+/// fourth requires a human decision rather than further automatic iteration. Not enforced in code
+/// on the ordinary (heading-count) path today — this constant exists for the one path that does
+/// enforce it, `resolve_continued_round` (UPG-0074).
+const ROUND_BUDGET: u32 = 3;
+
+/// Resolve the round for a review that explicitly `--continues` an existing one, instead of
+/// deriving it by counting headings in whatever log file this invocation happens to read. Exists
+/// because that heading-count derivation is scoped to a single log file, so a review that runs on
+/// an isolated branch or worktree — whose local log predates its true predecessors — mis-derives
+/// round 1 for what is substantively a later round (the demonstrated cause of UPG-0074's
+/// `REV__F-0004__8__R1` recorded where `R3` was correct, requiring a manual annotation to explain).
+///
+/// The referenced predecessor is validated against the log, not trusted from `continues` alone:
+/// same feature and stage (one lookup, scoped by the same heading suffix `compute_review_round`
+/// already matches on), the entry actually exists, its own predecessor chain (if any) terminates
+/// without cycling back on itself within the round budget, and the resolved round does not exceed
+/// that budget — a stricter check than the ordinary path has today, appropriate here because using
+/// `--continues` is a deliberate act with a moment to check, unlike the default derivation.
+pub fn resolve_continued_round(
+    log_path: &Path,
+    feature: &str,
+    stage: &str,
+    continues: &str,
+) -> Result<u32> {
+    let content = std::fs::read_to_string(log_path).with_context(|| {
+        format!(
+            "--continues {continues} was given but the review log could not be read: {}",
+            log_path.display()
+        )
+    })?;
+
+    // The round to use is the referenced predecessor's own round, by its position among matching
+    // headings — never wherever its ancestry eventually terminates. Its own Continues link, if
+    // any, is walked below purely to verify the chain, not to pick a different round.
+    let (predecessor_round, mut next) = find_predecessor_entry(&content, feature, stage, continues)
+        .ok_or_else(|| {
+            anyhow::anyhow!(
+                "--continues {continues} does not resolve to an existing review for {feature} \
+                 at stage {stage} — the referenced ID must be a prior REVIEW entry for the same \
+                 feature and stage"
+            )
+        })?;
+
+    // Walk the predecessor's own ancestry to confirm it terminates without cycling back on
+    // itself, bounded by the round budget — a chain that does not terminate within that many hops
+    // is invalid regardless of whether it is a literal cycle.
+    let mut seen = std::collections::HashSet::new();
+    seen.insert(continues.to_string());
+    let mut hops = 0u32;
+    while let Some(ancestor_id) = next {
+        hops += 1;
+        if hops >= ROUND_BUDGET || !seen.insert(ancestor_id.clone()) {
+            anyhow::bail!(
+                "--continues {continues} does not resolve within the {ROUND_BUDGET}-round budget \
+                 — its predecessor chain is a cycle, or longer than the budget allows"
+            );
+        }
+        let (_, ancestor_next) = find_predecessor_entry(&content, feature, stage, &ancestor_id)
+            .ok_or_else(|| {
+                anyhow::anyhow!(
+                    "--continues {continues} has a broken predecessor chain: {ancestor_id} does \
+                     not resolve to an existing review for {feature} at stage {stage}"
+                )
+            })?;
+        next = ancestor_next;
+    }
+
+    let next_round = predecessor_round + 1;
+    if next_round > ROUND_BUDGET {
+        anyhow::bail!(
+            "--continues {continues} resolves to round {predecessor_round}; continuing would \
+             exceed the {ROUND_BUDGET}-round budget — a human decision is required instead"
+        );
+    }
+    Ok(next_round)
+}
+
+/// Locate the REVIEW entry for `review_id` among entries matching `feature`+`stage`, returning its
+/// round — its 1-based position among those entries, the same derivation `compute_review_round`
+/// uses — and its own `Continues:` predecessor link, if it has one.
+fn find_predecessor_entry(
+    content: &str,
+    feature: &str,
+    stage: &str,
+    review_id: &str,
+) -> Option<(u32, Option<String>)> {
+    let heading_suffix = format!(" {} — {} — Stage {}", REVIEW_HEADING, feature, stage);
+    let lines: Vec<&str> = content.lines().collect();
+    let mut round = 0u32;
+    let mut i = 0;
+    while i < lines.len() {
+        if lines[i].starts_with("## ") && lines[i].ends_with(&heading_suffix) {
+            round += 1;
+            let mut j = i + 1;
+            let mut this_id: Option<&str> = None;
+            let mut this_continues: Option<String> = None;
+            while j < lines.len() && !lines[j].starts_with("## ") {
+                if let Some(id) = lines[j].strip_prefix("Review ID: ") {
+                    this_id = Some(id.trim());
+                }
+                if let Some(c) = lines[j].strip_prefix("Continues: ") {
+                    this_continues = Some(c.trim().to_string());
+                }
+                j += 1;
+            }
+            if this_id == Some(review_id) {
+                return Some((round, this_continues));
+            }
+            i = j;
+        } else {
+            i += 1;
+        }
+    }
+    None
+}
+
 /// Sequence number for the next external assessment of `feature`+`stage`. Counted separately from
 /// review rounds and never mixed with them.
 pub fn compute_assessment_sequence(log_path: &Path, feature: &str, stage: &str) -> Result<u32> {
@@ -122,6 +239,7 @@ pub fn append_review(
     assessment_hash: &str,
     packet_saved: &Path,
     packet_hash: &str,
+    continues: Option<&str>,
 ) -> Result<()> {
     ensure_log_exists(log_path)?;
 
@@ -146,6 +264,9 @@ pub fn append_review(
         if raw.is_external() { "Assessment" } else { "Review" },
         review_id
     ));
+    if let Some(predecessor) = continues {
+        entry.push_str(&format!("Continues: {}\n", predecessor));
+    }
     entry.push_str(&format!("Base: {}  Review: {}  Branch: {}\n",
         packet.base_sha, packet.review_sha, packet.branch));
     entry.push_str(&format!("Diff-hash: {}\n", packet.diff_hash));
@@ -559,6 +680,143 @@ mod tests {
         format!("## 2026-01-01T00:00:00Z REVIEW — {} — Stage {}\n", feature, stage)
     }
 
+    /// A REVIEW entry block exactly as `append_review` emits its first two lines — the only two
+    /// lines `resolve_continued_round`'s lookup reads. `continues` mirrors the optional
+    /// `Continues:` line `append_review` now writes when a predecessor was supplied.
+    fn review_entry(feature: &str, stage: &str, review_id: &str, continues: Option<&str>) -> String {
+        let mut e = review_header(feature, stage);
+        e.push_str(&format!("Review ID: {}\n", review_id));
+        if let Some(c) = continues {
+            e.push_str(&format!("Continues: {}\n", c));
+        }
+        e
+    }
+
+    #[test]
+    fn resolve_continued_round_happy_path_is_predecessor_round_plus_one() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let log_path = write_log(
+            dir.path(),
+            &[&review_entry("F-0004", "8", "REV__F-0004__8__R1", None)],
+        );
+        let round =
+            resolve_continued_round(&log_path, "F-0004", "8", "REV__F-0004__8__R1").unwrap();
+        assert_eq!(round, 2);
+    }
+
+    #[test]
+    fn resolve_continued_round_chases_a_multi_hop_chain() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let log_path = write_log(
+            dir.path(),
+            &[
+                &review_entry("F-0004", "8", "REV__F-0004__8__R1", None),
+                &review_entry("F-0004", "8", "REV__isolated-branch__R1", Some("REV__F-0004__8__R1")),
+            ],
+        );
+        // The second entry is itself round 2 by position (regardless of what its own ID string
+        // says — round is derived from position among matching headings, never parsed from the
+        // ID), so continuing it resolves to round 3.
+        let round = resolve_continued_round(
+            &log_path,
+            "F-0004",
+            "8",
+            "REV__isolated-branch__R1",
+        )
+        .unwrap();
+        assert_eq!(round, 3);
+    }
+
+    #[test]
+    fn resolve_continued_round_rejects_a_predecessor_for_a_different_feature() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let log_path = write_log(
+            dir.path(),
+            &[&review_entry("OTHER-FEATURE", "8", "REV__OTHER-FEATURE__8__R1", None)],
+        );
+        let err =
+            resolve_continued_round(&log_path, "F-0004", "8", "REV__OTHER-FEATURE__8__R1")
+                .unwrap_err();
+        assert!(err.to_string().contains("does not resolve to an existing review"));
+    }
+
+    #[test]
+    fn resolve_continued_round_rejects_a_predecessor_for_a_different_stage() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let log_path = write_log(
+            dir.path(),
+            &[&review_entry("F-0004", "5", "REV__F-0004__5__R1", None)],
+        );
+        let err = resolve_continued_round(&log_path, "F-0004", "8", "REV__F-0004__5__R1")
+            .unwrap_err();
+        assert!(err.to_string().contains("does not resolve to an existing review"));
+    }
+
+    #[test]
+    fn resolve_continued_round_rejects_a_nonexistent_id() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let log_path = write_log(
+            dir.path(),
+            &[&review_entry("F-0004", "8", "REV__F-0004__8__R1", None)],
+        );
+        let err = resolve_continued_round(&log_path, "F-0004", "8", "REV__made-up__R9")
+            .unwrap_err();
+        assert!(err.to_string().contains("does not resolve to an existing review"));
+    }
+
+    #[test]
+    fn resolve_continued_round_rejects_a_cycle() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        // Two entries whose Continues links point at each other. This cannot arise from real use
+        // of this mechanism (a predecessor's Continues is always fixed before the successor is
+        // written), but the check must still refuse it defensively rather than loop forever.
+        let log_path = write_log(
+            dir.path(),
+            &[
+                &review_entry("F-0004", "8", "REV__F-0004__8__A", Some("REV__F-0004__8__B")),
+                &review_entry("F-0004", "8", "REV__F-0004__8__B", Some("REV__F-0004__8__A")),
+            ],
+        );
+        let err = resolve_continued_round(&log_path, "F-0004", "8", "REV__F-0004__8__A")
+            .unwrap_err();
+        assert!(
+            err.to_string().contains("cycle") || err.to_string().contains("round budget"),
+            "expected a cycle/budget refusal, got: {err}"
+        );
+    }
+
+    #[test]
+    fn resolve_continued_round_rejects_exceeding_the_round_budget() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        // Round 3 by position; continuing it would make round 4, over the 3-round budget.
+        let log_path = write_log(
+            dir.path(),
+            &[
+                &review_entry("F-0004", "8", "REV__F-0004__8__R1", None),
+                &review_entry("F-0004", "8", "REV__F-0004__8__R2", Some("REV__F-0004__8__R1")),
+                &review_entry("F-0004", "8", "REV__F-0004__8__R3", Some("REV__F-0004__8__R2")),
+            ],
+        );
+        let err = resolve_continued_round(&log_path, "F-0004", "8", "REV__F-0004__8__R3")
+            .unwrap_err();
+        assert!(
+            err.to_string().contains("round budget") || err.to_string().contains("exceed"),
+            "expected a round-budget refusal, got: {err}"
+        );
+    }
+
+    #[test]
+    fn no_continues_flag_leaves_ordinary_round_derivation_unchanged() {
+        // The no-flag path (compute_review_round) is untouched by this feature's existence:
+        // same log, same result as before --continues was added.
+        let dir = tempfile::tempdir().expect("tempdir");
+        let log_path = write_log(
+            dir.path(),
+            &[&review_entry("F-0004", "8", "REV__F-0004__8__R1", None)],
+        );
+        assert_eq!(compute_review_round(&log_path, "F-0004", "8").unwrap(), 2);
+    }
+
     #[test]
     fn round_one_when_log_missing() {
         let dir = tempfile::tempdir().expect("tempdir");
@@ -756,7 +1014,7 @@ mod tests {
         let review_id = format_review_id(&packet.feature, &packet.stage, 1);
         append_review(
             &log_path, &review_id, &packet, &raw, &parsed,
-            Path::new("assessment.md"), "deadbeef", Path::new("packet.txt"), "cafefeed",
+            Path::new("assessment.md"), "deadbeef", Path::new("packet.txt"), "cafefeed", None,
         ).expect("append_review");
 
         let content = std::fs::read_to_string(&log_path).expect("read log");
@@ -787,7 +1045,7 @@ mod tests {
         assert!(review_id1.ends_with("__R1"));
         append_review(
             &log_path, &review_id1, &packet, &raw, &parsed,
-            Path::new("assessment1.md"), "deadbeef1", Path::new("packet1.txt"), "cafefeed1",
+            Path::new("assessment1.md"), "deadbeef1", Path::new("packet1.txt"), "cafefeed1", None,
         ).expect("append_review round 1");
 
         // Round 2 (log now has exactly one matching entry from round 1).
@@ -797,7 +1055,7 @@ mod tests {
         assert!(review_id2.ends_with("__R2"));
         append_review(
             &log_path, &review_id2, &packet, &raw, &parsed,
-            Path::new("assessment2.md"), "deadbeef2", Path::new("packet2.txt"), "cafefeed2",
+            Path::new("assessment2.md"), "deadbeef2", Path::new("packet2.txt"), "cafefeed2", None,
         ).expect("append_review round 2");
 
         let content = std::fs::read_to_string(&log_path).expect("read log");
