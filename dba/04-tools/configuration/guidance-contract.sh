@@ -10,6 +10,7 @@ expected_guidance=(
   patterns/rust-domain-modelling.md
   patterns/rust-project-structure.md
   patterns/shared-infrastructure-boundary.md
+  patterns/svelte-gui-verification.md
   patterns/svelte-state-and-components.md
   patterns/vocabulary-architecture.md
   templates/architecture-scope.md
@@ -29,6 +30,7 @@ expected_guidance=(
   templates/review-file.md
   templates/review-package.md
   templates/reviewer.toml
+  templates/user-workflow-map.md
   terminology.md
 )
 # LC_ALL=C keeps collation byte-ordered so the expected list is not locale-dependent.
@@ -45,6 +47,9 @@ TEST_PROMPT="${CODEOS_ROOT}/dba/03-prompts/workflow/05-tests.md"
 OBSERVE_PROMPT="${CODEOS_ROOT}/dba/03-prompts/workflow/06-observe.md"
 RECONCILE_PROMPT="${CODEOS_ROOT}/dba/03-prompts/workflow/07-reconcile.md"
 REPLAY_PROMPT="${CODEOS_ROOT}/dba/03-prompts/workflow/08-replay.md"
+SVELTE_PATTERN="${CODEOS_ROOT}/dba/05-guidance/patterns/svelte-state-and-components.md"
+GUI_PATTERN="${CODEOS_ROOT}/dba/05-guidance/patterns/svelte-gui-verification.md"
+WORKFLOW_MAP="${CODEOS_ROOT}/dba/05-guidance/templates/user-workflow-map.md"
 rg -q 'partially drafted Specification Package is normal' "${SESSION_START}" || fail 'partial packages are not accepted'
 rg -q 'terminology.md.*exists' "${SESSION_START}" || fail 'optional project terminology is not loaded'
 rg -q 'Its absence is valid' "${SESSION_START}" || fail 'project terminology became mandatory'
@@ -61,6 +66,14 @@ rg -q 'Stage 4 owns local implementation design' "${ARCHITECTURE_PROMPT}" || \
   fail 'Architecture Synthesis design boundary is missing'
 rg -q 'feature-local design decisions inside approved architectural boundaries' "${IMPLEMENT_PROMPT}" || \
   fail 'Stage 4 local design ownership is missing'
+rg -q 'selects a technology covered by an advisory pattern' "${IMPLEMENT_PROMPT}" || \
+  fail 'Stage 4 advisory technology-pattern routing is missing'
+rg -q 'profile governs' "${IMPLEMENT_PROMPT}" || \
+  fail 'Stage 4 Implementation Profile language authority is missing'
+rg -q 'architecture governs technology selection' "${IMPLEMENT_PROMPT}" || \
+  fail 'Stage 4 language and framework authority are conflated'
+rg -q 'svelte-gui-verification.md' "${TEST_PROMPT}" || \
+  fail 'Stage 5 Svelte GUI verification guidance is not discoverable'
 rg -q 'presented as acceptance evidence.*boundary named by the acceptance' "${TEST_PROMPT}" || \
   fail 'Stage 5 acceptance-evidence boundary is missing'
 rg -q 'Diagnostic and exploratory performance measurements may be collected freely' "${OBSERVE_PROMPT}" || \
@@ -73,5 +86,25 @@ rg -q 'No reconciliation claim may be stronger than its cited observation' "${RE
   fail 'Stage 7 evidence-bounded reconciliation is missing'
 rg -q 'separate eligibility status' "${REPLAY_PROMPT}" || \
   fail 'Stage 8 reuses the existing gap route incorrectly'
+rg -q 'approved architecture selects Svelte' "${SVELTE_PATTERN}" || \
+  fail 'Svelte pattern consultation is not architecture-selected'
+rg -q 'Vitest Browser Mode with the Playwright provider' "${GUI_PATTERN}" || \
+  fail 'Svelte GUI browser-component boundary is missing'
+rg -q 'Playwright Test' "${GUI_PATTERN}" || \
+  fail 'Svelte GUI end-to-end boundary is missing'
+rg -q 'currency is present in a model.*currency is visible' "${GUI_PATTERN}" || \
+  fail 'Svelte GUI rendered-field evidence distinction is missing'
+rg -q 'criterion appears in a request.*visible matched plots changed' "${GUI_PATTERN}" || \
+  fail 'Svelte GUI changed-result evidence distinction is missing'
+rg -q 'Before browser timing is accepted.*governed performance' "${GUI_PATTERN}" || \
+  fail 'Svelte GUI performance-evidence boundary is missing'
+rg -q 'does not install npm packages or download browsers' "${GUI_PATTERN}" || \
+  fail 'Svelte GUI guidance introduced a live dependency expectation'
+rg -q 'Optional, non-authoritative working aid' "${WORKFLOW_MAP}" || \
+  fail 'user workflow map authority boundary is missing'
+rg -q 'It has no approval, lifecycle' "${WORKFLOW_MAP}" || \
+  fail 'user workflow map creates approval or lifecycle obligations'
+rg -q 'review, or traceability role' "${WORKFLOW_MAP}" || \
+  fail 'user workflow map creates governance obligations'
 
 printf 'guidance contract: PASS\n'

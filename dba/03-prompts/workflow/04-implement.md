@@ -21,8 +21,10 @@ one valid approval and has not materially changed since. Run the architecture in
 feature and stop on invalid metadata, draft membership, conflicting membership, or an unresolved
 project-level decision.
 
-Resolve an approved Implementation Profile only as its policy specifies. Consult a language pattern
-when applicable; project architecture and approved behavior remain authoritative.
+Resolve an approved Implementation Profile only as its policy specifies. When approved architecture
+selects a technology covered by an advisory pattern, consult that pattern. The profile governs
+language and the architecture governs technology selection; patterns authorize neither and never
+override approved behavior or architecture.
 
 ## Task
 

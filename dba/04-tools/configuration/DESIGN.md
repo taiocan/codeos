@@ -248,8 +248,12 @@ The boundary script’s stdout is discarded; only its failure status or messages
 It requires the files under `dba/05-guidance` to match exactly this sorted inventory:
 
 ```text
+patterns/postgresql-reliability.md
+patterns/rust-domain-modelling.md
 patterns/rust-project-structure.md
 patterns/shared-infrastructure-boundary.md
+patterns/svelte-gui-verification.md
+patterns/svelte-state-and-components.md
 patterns/vocabulary-architecture.md
 templates/architecture-scope.md
 templates/charter.md
@@ -268,6 +272,7 @@ templates/refinement.md
 templates/review-file.md
 templates/review-package.md
 templates/reviewer.toml
+templates/user-workflow-map.md
 terminology.md
 ```
 

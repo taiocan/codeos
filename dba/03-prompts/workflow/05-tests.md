@@ -15,6 +15,11 @@ Load the approved Contract and Event Schema types through the Downstream Project
 then read the Stage 4 implementation. The Contract owns observation mode, scenarios, failures,
 invariants, and any minimum environment requirement.
 
+When approved architecture selects Svelte for a browser interface, consult
+`.codeos/toolkit/dba/05-guidance/patterns/svelte-gui-verification.md`. It supplies proportional
+verification techniques, not requirements or a substitute for judging whether evidence proves the
+Contract.
+
 ## Task
 
 - Add behavioral tests covering every applicable Contract scenario, governed failure, and invariant

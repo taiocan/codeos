@@ -6,12 +6,13 @@ out_of_scope: Cross-feature infrastructure sharing, snippet/slot mechanics, styl
 
 # Pattern: Svelte State and Components
 
-Consult this advisory pattern when an approved Implementation Profile resolves to Svelte 5. Approved
-behavior, applicable architecture, and the existing project structure remain authoritative.
+Consult this advisory pattern when approved architecture selects Svelte. An Implementation Profile
+governs implementation language, not framework selection. Approved behavior, applicable
+architecture, and the existing project structure remain authoritative.
 
-Unlike this directory's Rust patterns, this one reflects Svelte 5's own documented direction rather
-than a defect Codeos has observed in a governed project: no project this toolkit currently governs
-uses Svelte. Treat it as best-practice guidance to consult, not as evidence-backed correction.
+The rune APIs discussed below are Svelte 5 APIs; recheck them against the project's selected Svelte
+version when they change. This pattern addresses state and component communication. For observable
+browser testing, consult `svelte-gui-verification.md` as well.
 
 ## Source State, Derived State
 
