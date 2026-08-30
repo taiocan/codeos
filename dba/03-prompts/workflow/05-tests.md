@@ -46,8 +46,10 @@ semantics.
 ## Applicable Checks
 
 Build a Contract coverage mapping with no required behavior or quality requirement silently
-omitted. Confirm each test would fail under the wrong behavior it claims to detect. Use the Review Package template for inline
-delivery evidence.
+omitted. Confirm each test would fail under the wrong behavior it claims to detect. When a test is
+presented as acceptance evidence, confirm that it observes the boundary named by the acceptance
+claim rather than only an internal proxy. This adds no separate record for ordinary tests. Use the
+Review Package template for inline delivery evidence.
 
 ## Output / Next Action
 

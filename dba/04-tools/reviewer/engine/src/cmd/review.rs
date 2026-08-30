@@ -37,6 +37,54 @@ pub struct ReviewArgs {
 pub struct PreparedReview {
     pub args: EvidenceArgs,
     pub packet: ReviewPacket,
+    pub readiness: Stage8Readiness,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ReadinessIssue {
+    pub path: String,
+    pub condition: String,
+    pub action: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Stage8Readiness {
+    pub applicable: bool,
+    pub issues: Vec<ReadinessIssue>,
+}
+
+impl Stage8Readiness {
+    pub fn passes(&self) -> bool {
+        self.issues.is_empty()
+    }
+
+    pub fn print_plan(&self) {
+        if !self.applicable {
+            return;
+        }
+        if self.passes() {
+            println!("  stage8_readiness: PASS");
+            return;
+        }
+        println!("  stage8_readiness: FAIL");
+        for issue in &self.issues {
+            println!(
+                "    - {}: {}; action: {}",
+                issue.path, issue.condition, issue.action
+            );
+        }
+    }
+
+    pub fn print_refusal(&self) {
+        eprintln!("error: Stage-8 packet readiness failed:");
+        for issue in &self.issues {
+            eprintln!(
+                "  - {}: {}; action: {}",
+                issue.path, issue.condition, issue.action
+            );
+        }
+        eprintln!("       No reviewer round was created or consumed.");
+    }
 }
 
 pub struct PrepareFailure {
@@ -136,7 +184,94 @@ pub fn prepare(
     })
     .map_err(|error| PrepareFailure::packet(format!("error building packet: {error}")))?;
 
-    Ok(PreparedReview { args, packet })
+    // This integrity condition is intentionally outside the optional precheck block. Stage 8 may
+    // not spend a reviewer round on a packet whose canonical inputs are absent or not actually
+    // visible to the isolated reviewer, even when the caller skips advisory artifact prechecks.
+    let readiness = stage8_readiness(&args, &packet);
+
+    Ok(PreparedReview {
+        args,
+        packet,
+        readiness,
+    })
+}
+
+fn stage8_readiness(args: &EvidenceArgs, packet: &ReviewPacket) -> Stage8Readiness {
+    if args.stage != "8" {
+        return Stage8Readiness {
+            applicable: false,
+            issues: Vec::new(),
+        };
+    }
+
+    let canonical = vec![
+        ".codeos/00-project/charter.md".to_string(),
+        format!(".codeos/01-specification/intents/{}.md", args.feature),
+        format!(
+            ".codeos/01-specification/contracts/{}_contract.md",
+            args.feature
+        ),
+        format!(
+            ".codeos/01-specification/event-schemas/{}_schema.md",
+            args.feature
+        ),
+    ];
+    let mut issues = Vec::new();
+
+    for path in &canonical {
+        match packet.artifacts.iter().find(|entry| &entry.path == path) {
+            None => issues.push(ReadinessIssue {
+                path: path.clone(),
+                condition: "required canonical Stage-8 input was not supplied".to_string(),
+                action: "add it as a full artifact".to_string(),
+            }),
+            Some(entry) if entry.bytes == 0 => issues.push(ReadinessIssue {
+                path: path.clone(),
+                condition: "required canonical Stage-8 input is empty".to_string(),
+                action: "provide the populated approved artifact".to_string(),
+            }),
+            Some(entry) if !matches!(entry.visibility.as_str(), "shown" | "shown_redacted") => {
+                issues.push(ReadinessIssue {
+                    path: path.clone(),
+                    condition: format!(
+                        "required canonical Stage-8 content is not reviewable (visibility: {})",
+                        entry.visibility
+                    ),
+                    action: "include its content in a full packet; do not use --base or --sha-only for this path"
+                        .to_string(),
+                });
+            }
+            Some(_) => {}
+        }
+    }
+
+    // Positional artifacts are the caller's explicit evidence declaration. Missing/unreadable
+    // paths fail earlier during normalization; an oversize omission is the remaining case where a
+    // declared input can survive construction without its content reaching the packet. Redaction
+    // remains reviewable and keeps its existing coverage-policy treatment.
+    for path in &args.artifacts {
+        if canonical.contains(path) {
+            continue;
+        }
+        if let Some(entry) = packet.artifacts.iter().find(|entry| &entry.path == path) {
+            if matches!(entry.visibility.as_str(), "missing" | "oversize_omitted") {
+                issues.push(ReadinessIssue {
+                    path: path.clone(),
+                    condition: format!(
+                        "explicitly declared evidence is unavailable (visibility: {})",
+                        entry.visibility
+                    ),
+                    action: "supply reviewable bounded evidence using an existing packet mechanism"
+                        .to_string(),
+                });
+            }
+        }
+    }
+
+    Stage8Readiness {
+        applicable: true,
+        issues,
+    }
 }
 
 pub fn run(args: ReviewArgs, cfg: &Config) -> Result<i32> {
@@ -153,7 +288,13 @@ pub fn run(args: ReviewArgs, cfg: &Config) -> Result<i32> {
         }
     } else {
         match prepare(args.evidence.clone(), cfg) {
-            Ok(prepared) => (prepared.args, prepared.packet),
+            Ok(prepared) => {
+                if args.assessment.is_none() && !prepared.readiness.passes() {
+                    prepared.readiness.print_refusal();
+                    return Ok(crate::EXIT_PACKET);
+                }
+                (prepared.args, prepared.packet)
+            }
             Err(failure) => {
                 eprintln!("error: {}", failure.message);
                 return Ok(failure.code);

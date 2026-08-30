@@ -231,21 +231,24 @@ descriptive explanation of how that module works, never an authority for behavio
 Contract. Event mode includes event and replay checks; external-observation mode verifies its
 declared artifact.
 **Key constraint:** Tests assert observable outcomes, not private methods, internal state, or
-intermediate computations.
+intermediate computations. A test presented as acceptance evidence must observe the boundary named
+by the acceptance claim.
 
 ### Stage 6 — Runtime Execution
 **Purpose:** Run representative scenarios when permitted and capture evidence through the
 Contract's observation mode.
 **Key constraint:** Stage 6 never changes implementation or prior evidence and never fabricates an
 unavailable observation. Everything it produces is development evidence — pre-acceptance proof of
-the candidate implementation, distinct from a post-acceptance Operational Observation.
+the candidate implementation, distinct from a post-acceptance Operational Observation. Diagnostic
+measurements remain unrestricted; a performance measurement used for a governed requirement must
+first demonstrate that the measured operation exercises the governed behavior.
 
 ### Stage 7 — Reconciliation Review
 **Purpose:** Compare the applicable layers from Intent through runtime or external observation and
 surface incomplete, disagreeing, or absent coverage.
 **Key constraint:** Status is exactly `ALIGNED | GAP | MISMATCH | MISSING`; evidence source is
 exactly `runtime | test | static | none`; the note explains the issue without subtype taxonomies or
-scores.
+scores. A reconciliation claim cannot be stronger than its cited observation.
 
 ### Stage 8 — Replay Verification
 **Purpose:** Verify repeatable governed outcomes before final human acceptance. Event mode checks
@@ -253,6 +256,8 @@ schema, sequence, correlation, and deterministic payload content; external-obser
 its declared verification.
 **Key constraint:** Generated identifiers, timestamps, and other nondeterministic envelope fields
 are ignored unless contracted. A valid governed outcome may be a single-event chain.
+Mechanically unready packets are refused before a reviewer round; evidence adequacy remains a
+human, agent, and reviewer judgment.
 
 ### Stage 9 — Targeted Refinement
 **Purpose:** Repair an implementation that does not satisfy already-approved behavior, using the

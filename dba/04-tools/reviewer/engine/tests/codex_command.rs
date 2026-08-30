@@ -5,6 +5,7 @@ use common::{
     repo_root, run_in_dir, run_with_fake_codex, run_with_fake_codex_env, setup_fake_codex,
     setup_temp_git_repo,
 };
+use std::process::Command;
 
 fn setup_codeos_symlink(repo_path: &std::path::Path) {
     std::fs::create_dir_all(repo_path.join(".codeos")).unwrap();
@@ -14,6 +15,78 @@ fn setup_codeos_symlink(repo_path: &std::path::Path) {
 
 fn review_args<'a>(feature: &'a str) -> [&'a str; 4] {
     ["review", feature, "selfdev-step-1", "tracked.md"]
+}
+
+fn add_stage8_inputs(repo_path: &std::path::Path, feature: &str) -> Vec<String> {
+    let paths = vec![
+        ".codeos/00-project/charter.md".to_string(),
+        format!(".codeos/01-specification/intents/{feature}.md"),
+        format!(".codeos/01-specification/contracts/{feature}_contract.md"),
+        format!(".codeos/01-specification/event-schemas/{feature}_schema.md"),
+    ];
+    for path in &paths {
+        let absolute = repo_path.join(path);
+        std::fs::create_dir_all(absolute.parent().unwrap()).unwrap();
+        std::fs::write(&absolute, format!("# {path}\napproved content\n")).unwrap();
+    }
+    Command::new("git")
+        .arg("add")
+        .args(&paths)
+        .current_dir(repo_path)
+        .output()
+        .unwrap();
+    Command::new("git")
+        .args(["commit", "-m", "add stage8 inputs"])
+        .current_dir(repo_path)
+        .output()
+        .unwrap();
+    paths
+}
+
+#[test]
+fn stage8_readiness_failure_precedes_provider_round_and_records() {
+    let (repo, _) = setup_temp_git_repo();
+    setup_codeos_symlink(repo.path());
+    let fake = setup_fake_codex();
+
+    let (code, stdout, stderr) = run_with_fake_codex(
+        repo.path(),
+        &fake,
+        &["review", "F-0042", "8", "--skip-prechecks", "tracked.md"],
+        "success",
+    );
+
+    assert_eq!(code, 4, "{stdout}\n{stderr}");
+    assert!(
+        stderr.contains("Stage-8 packet readiness failed"),
+        "{stderr}"
+    );
+    assert!(
+        stderr.contains("No reviewer round was created or consumed"),
+        "{stderr}"
+    );
+    assert!(!fake.args_log.exists(), "provider was invoked");
+    assert!(!fake.packet_log.exists(), "provider received a packet");
+    assert!(
+        !repo.path().join(".codeos/05-review/reviews").exists(),
+        "review records were created"
+    );
+}
+
+#[test]
+fn stage8_ready_review_reaches_provider() {
+    let (repo, _) = setup_temp_git_repo();
+    setup_codeos_symlink(repo.path());
+    let fake = setup_fake_codex();
+    let paths = add_stage8_inputs(repo.path(), "F-0042");
+    let mut args = vec!["review", "F-0042", "8"];
+    args.extend(paths.iter().map(String::as_str));
+
+    let (code, stdout, stderr) = run_with_fake_codex(repo.path(), &fake, &args, "success");
+
+    assert_eq!(code, 0, "{stdout}\n{stderr}");
+    assert!(fake.args_log.exists(), "provider was not invoked");
+    assert!(stdout.contains("review_id: REV__F-0042__8__R1"), "{stdout}");
 }
 
 #[test]

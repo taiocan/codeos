@@ -168,6 +168,19 @@ Targeted refinement also narrows: it repairs implementations that do not satisfy
 and no longer routes requirement or architecture changes. Those return to their owning authority
 under the doctrine's re-entry rule.
 
+## Adopt DBA-4
+
+DBA-4 moves no paths and requires no migration of accepted features. It tightens evidence use at
+the next applicable verification activity: acceptance evidence observes the boundary named by its
+claim, governed performance evidence demonstrates that the measured operation exercises the
+required behavior, and reconciliation does not claim more than its cited observations prove.
+
+Before a Stage-8 reviewer round, `plan` and Codex-backed `review` validate the canonical and
+explicitly supplied packet inputs. A deterministic failure returns packet error `4` before provider
+invocation or round creation. The tool does not parse Contract prose, infer undeclared evidence, or
+judge semantic adequacy. Intentional redaction and exclusion retain their existing coverage-policy
+treatment.
+
 ## The Twelve Reasoning Levels
 
 Non-authoritative orientation for readers mapping DBA onto the general engineering decomposition

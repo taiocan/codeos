@@ -17,6 +17,10 @@ for final human acceptance.
 Read the Stage 7 reconciliation and resolve or explicitly carry every non-`ALIGNED` item. Read the
 Contract's observation mode and applicable replay or external-observation tests.
 
+Known unresolved evidence gaps follow the existing refinement route before final acceptance. Do
+not create a separate eligibility status or treat mechanical packet readiness as a judgment that
+the evidence proves the approved behavior.
+
 ## Task
 
 - In `events` mode, verify schema conformance, governed event sequence, correlation chains, and
@@ -35,7 +39,9 @@ Contract's observation mode and applicable replay or external-observation tests.
 ## Applicable Checks
 
 Use the selected review policy at this final decision boundary. Build the final inline Review
-Package from the current template and available evidence.
+Package from the current template and available evidence. The reviewer examines whether acceptance
+evidence observes the boundary named by each claim, whether governed performance evidence exercises
+the required behavior, and whether reconciliation stays within its cited observations.
 
 ## Output / Next Action
 

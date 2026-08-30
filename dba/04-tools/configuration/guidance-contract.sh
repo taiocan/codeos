@@ -41,6 +41,10 @@ FRAMING_PROMPT="${CODEOS_ROOT}/dba/03-prompts/workflow/support-solution-framing.
 CHARTER_PROMPT="${CODEOS_ROOT}/dba/03-prompts/workflow/support-solution-charter.md"
 ARCHITECTURE_PROMPT="${CODEOS_ROOT}/dba/03-prompts/workflow/support-architecture-synthesis.md"
 IMPLEMENT_PROMPT="${CODEOS_ROOT}/dba/03-prompts/workflow/04-implement.md"
+TEST_PROMPT="${CODEOS_ROOT}/dba/03-prompts/workflow/05-tests.md"
+OBSERVE_PROMPT="${CODEOS_ROOT}/dba/03-prompts/workflow/06-observe.md"
+RECONCILE_PROMPT="${CODEOS_ROOT}/dba/03-prompts/workflow/07-reconcile.md"
+REPLAY_PROMPT="${CODEOS_ROOT}/dba/03-prompts/workflow/08-replay.md"
 rg -q 'partially drafted Specification Package is normal' "${SESSION_START}" || fail 'partial packages are not accepted'
 rg -q 'terminology.md.*exists' "${SESSION_START}" || fail 'optional project terminology is not loaded'
 rg -q 'Its absence is valid' "${SESSION_START}" || fail 'project terminology became mandatory'
@@ -57,5 +61,17 @@ rg -q 'Stage 4 owns local implementation design' "${ARCHITECTURE_PROMPT}" || \
   fail 'Architecture Synthesis design boundary is missing'
 rg -q 'feature-local design decisions inside approved architectural boundaries' "${IMPLEMENT_PROMPT}" || \
   fail 'Stage 4 local design ownership is missing'
+rg -q 'presented as acceptance evidence.*boundary named by the acceptance' "${TEST_PROMPT}" || \
+  fail 'Stage 5 acceptance-evidence boundary is missing'
+rg -q 'Diagnostic and exploratory performance measurements may be collected freely' "${OBSERVE_PROMPT}" || \
+  fail 'Stage 6 diagnostic-measurement freedom is missing'
+rg -q 'performance measurement is accepted as evidence for a governed requirement' "${OBSERVE_PROMPT}" || \
+  fail 'Stage 6 governed-performance evidence boundary is missing'
+rg -q 'measured operation exercises the governed behavior' "${OBSERVE_PROMPT}" || \
+  fail 'Stage 6 governed-performance evidence boundary is missing'
+rg -q 'No reconciliation claim may be stronger than its cited observation' "${RECONCILE_PROMPT}" || \
+  fail 'Stage 7 evidence-bounded reconciliation is missing'
+rg -q 'separate eligibility status' "${REPLAY_PROMPT}" || \
+  fail 'Stage 8 reuses the existing gap route incorrectly'
 
 printf 'guidance contract: PASS\n'

@@ -28,6 +28,10 @@ environment.
   observable outcomes it is meant to prove.
 - Record any unobserved path and the concrete reason. Do not fabricate evidence or turn absence into
   a pass.
+- Diagnostic and exploratory performance measurements may be collected freely. Before a
+  performance measurement is accepted as evidence for a governed requirement, demonstrate that
+  the measured operation exercises the governed behavior; a changed input or completed request is
+  not sufficient when the requirement concerns a stronger observable outcome.
 - Never edit implementation, schemas, fixtures, or prior runtime evidence in this stage. If required
   instrumentation is absent, route the gap back to Stage 4 or the Specification Package as
   appropriate.

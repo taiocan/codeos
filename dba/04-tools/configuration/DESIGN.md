@@ -219,7 +219,7 @@ A source comment states that a second spelling of the same governed fact is refu
 The active configuration is fixed in this script as:
 
 ```text
-dba/00-entry/configurations/DBA-3.yaml
+dba/00-entry/configurations/DBA-4.yaml
 ```
 
 It extracts the value of the `doctrine:` line with `awk`, requires it to be non-empty, resolves it under `CODEOS_ROOT`, and requires that file to exist.
@@ -234,7 +234,7 @@ Finally, it runs:
 
 ```bash
 bash "${CODEOS_ROOT}/dba/04-tools/configuration/dba-config-boundaries.sh" \
-  dba/00-entry/configurations/DBA-3.yaml >/dev/null
+  dba/00-entry/configurations/DBA-4.yaml >/dev/null
 ```
 
 The boundary script’s stdout is discarded; only its failure status or messages matter.

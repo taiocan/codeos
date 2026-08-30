@@ -40,6 +40,12 @@ and review, and `runtime` covers measurement and operational evidence. Use `GAP`
 not yet been carried out, and state the method in the Note. Do not downgrade a requirement to
 `ALIGNED` because it is hard to test.
 
+No reconciliation claim may be stronger than its cited observation. Evidence must observe the
+boundary named by the claim: an internal field does not prove rendered output, an emitted event does
+not prove a user-visible effect, and a changed request value does not prove a changed governed
+result. When evidence establishes only a proxy, use `GAP` and name the missing observation rather
+than recording the stronger claim as `ALIGNED`.
+
 Do not encode gap causes as additional statuses. State implementation, test, runtime,
 observability, or environment-quality concerns in the Note. When the Contract declares a minimum
 environment, record the observed environment plainly and use `GAP` if it is insufficient; do not

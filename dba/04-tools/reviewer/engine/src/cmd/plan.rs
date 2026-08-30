@@ -20,6 +20,10 @@ pub fn run(args: EvidenceArgs, emit_packet: Option<PathBuf>, cfg: &Config) -> Re
     };
 
     print_plan_summary(&prepared.args, &prepared.packet, cfg.packet_budget_mode);
+    prepared.readiness.print_plan();
+    if !prepared.readiness.passes() {
+        return Ok(crate::EXIT_PACKET);
+    }
     if matches!(prepared.packet.coverage_state, CoverageState::EmptyPacket) {
         // An empty packet fails before invocation, so there is nothing legitimate to export either.
         return Ok(crate::EXIT_PACKET);

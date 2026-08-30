@@ -966,9 +966,9 @@ fn stage_checks(stage: &str) -> String {
         "3" => "  - Intent, Contract, and Event Schema are all present; observation mode is explicit; every Contract rule traces to Intent; every governed event traces to Contract; external-observation mode invents no placeholder events.".to_string(),
         "4" => "  - code traces to approved contract/schema only; no unapproved events; no hidden behavior; no unrelated files; evidence is sufficient for the next stage.\n  - did implementation resolve any question an approved artifact EXPLICITLY deferred? if so, is each material resolution recorded in a Deferral -> Resolution Trace (source deferral, resolution, where implemented, final/interim, expected superseder)? judge deferral by meaning, not by phrase; a missing record is a traceability finding, not an implementation failure.".to_string(),
         "5" => "  - behavior tested rather than private internals; applicable failures and invariants covered; observation-mode-specific verification present.".to_string(),
-        "6" => "  - evidence captured without changing implementation; event or external-observation evidence bounded/sanitized; unavailable paths reported.".to_string(),
-        "7" => "  - only ALIGNED/GAP/MISMATCH/MISSING used; evidence source is runtime/test/static/none; each note supports the result and routes the gap.".to_string(),
-        "8" => "  - verification follows observation mode; determinism excludes generated envelope fields unless contracted; missing fixtures reported.".to_string(),
+        "6" => "  - evidence captured without changing implementation; event or external-observation evidence bounded/sanitized; unavailable paths reported; a performance measurement used for a governed requirement demonstrates that the measured operation exercises the governed behavior.".to_string(),
+        "7" => "  - only ALIGNED/GAP/MISMATCH/MISSING used; evidence source is runtime/test/static/none; each note supports the result and routes the gap; no ALIGNED claim is stronger than its cited observation.".to_string(),
+        "8" => "  - verification follows observation mode; determinism excludes generated envelope fields unless contracted; missing fixtures reported; acceptance evidence observes the boundary named by the claim; performance evidence exercises the governed behavior; reconciliation claims no more than cited evidence proves.".to_string(),
         "9" => "  - trigger valid; proposed fix minimal; no redesign disguised as refinement; affected artifacts identified.".to_string(),
         _ => format!("  - (no stage-specific checklist for stage {})", stage),
     }
@@ -1166,6 +1166,14 @@ mod tests {
         assert!(checks.contains("every governed event traces to Contract"));
         assert!(checks.contains("observation mode is explicit"));
         assert!(checks.contains("external-observation mode invents no placeholder events"));
+    }
+
+    #[test]
+    fn stage_8_reviewer_checks_semantics_without_making_them_preflight_logic() {
+        let checks = stage_checks("8");
+        assert!(checks.contains("acceptance evidence observes the boundary named by the claim"));
+        assert!(checks.contains("performance evidence exercises the governed behavior"));
+        assert!(checks.contains("reconciliation claims no more than cited evidence proves"));
     }
 
     #[test]

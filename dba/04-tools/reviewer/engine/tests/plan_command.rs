@@ -22,6 +22,32 @@ fn setup_codeos_symlink(repo_path: &std::path::Path) {
         .expect("ignore toolkit symlink");
 }
 
+fn add_stage8_inputs(repo_path: &std::path::Path, feature: &str) -> Vec<String> {
+    let paths = vec![
+        ".codeos/00-project/charter.md".to_string(),
+        format!(".codeos/01-specification/intents/{feature}.md"),
+        format!(".codeos/01-specification/contracts/{feature}_contract.md"),
+        format!(".codeos/01-specification/event-schemas/{feature}_schema.md"),
+    ];
+    for path in &paths {
+        let absolute = repo_path.join(path);
+        std::fs::create_dir_all(absolute.parent().unwrap()).unwrap();
+        std::fs::write(&absolute, format!("# {path}\napproved content\n")).unwrap();
+    }
+    Command::new("git")
+        .arg("add")
+        .args(&paths)
+        .current_dir(repo_path)
+        .output()
+        .unwrap();
+    Command::new("git")
+        .args(["commit", "-m", "add stage8 inputs"])
+        .current_dir(repo_path)
+        .output()
+        .unwrap();
+    paths
+}
+
 #[test]
 fn smoke_plan_full_mode_basic() {
     let (dir, _base_sha) = setup_temp_git_repo();
@@ -165,6 +191,152 @@ fn smoke_plan_sha_only_mode() {
         "positional artifact should still be shown in full: {}",
         stdout
     );
+}
+
+#[test]
+fn stage8_plan_fails_with_exact_missing_canonical_inputs() {
+    let (repo, _) = setup_temp_git_repo();
+    setup_codeos_symlink(repo.path());
+
+    let (code, stdout, stderr) = run_in_dir(
+        repo.path(),
+        &["plan", "F-0042", "8", "--skip-prechecks", "tracked.md"],
+    );
+
+    assert_eq!(code, 4, "{stderr}");
+    assert!(stdout.contains("stage8_readiness: FAIL"), "{stdout}");
+    for path in [
+        ".codeos/00-project/charter.md",
+        ".codeos/01-specification/intents/F-0042.md",
+        ".codeos/01-specification/contracts/F-0042_contract.md",
+        ".codeos/01-specification/event-schemas/F-0042_schema.md",
+    ] {
+        assert!(
+            stdout.contains(path),
+            "missing diagnostic for {path}: {stdout}"
+        );
+    }
+}
+
+#[test]
+fn stage8_plan_passes_with_canonical_inputs_and_does_not_infer_undeclared_evidence() {
+    let (repo, _) = setup_temp_git_repo();
+    setup_codeos_symlink(repo.path());
+    let paths = add_stage8_inputs(repo.path(), "F-0042");
+    let mut args = vec!["plan", "F-0042", "8"];
+    args.extend(paths.iter().map(String::as_str));
+
+    let (code, stdout, stderr) = run_in_dir(repo.path(), &args);
+
+    assert_eq!(code, 0, "{stderr}");
+    assert!(stdout.contains("stage8_readiness: PASS"), "{stdout}");
+    assert!(stdout.contains("coverage: FULL_COVERAGE"), "{stdout}");
+}
+
+#[test]
+fn stage8_secret_redaction_label_alone_does_not_fail_readiness() {
+    let (repo, _) = setup_temp_git_repo();
+    setup_codeos_symlink(repo.path());
+    let paths = add_stage8_inputs(repo.path(), "F-0042");
+    std::fs::write(repo.path().join("evidence.md"), "TOKEN=abcdefghijk\n").unwrap();
+    Command::new("git")
+        .args(["add", "evidence.md"])
+        .current_dir(repo.path())
+        .output()
+        .unwrap();
+    Command::new("git")
+        .args(["commit", "-m", "add redacted evidence"])
+        .current_dir(repo.path())
+        .output()
+        .unwrap();
+    let mut args = vec!["plan", "F-0042", "8", "evidence.md"];
+    args.extend(paths.iter().map(String::as_str));
+
+    let (code, stdout, stderr) = run_in_dir(repo.path(), &args);
+
+    assert_eq!(code, 0, "{stderr}");
+    assert!(stdout.contains("coverage: SECRET_REDACTION"), "{stdout}");
+    assert!(stdout.contains("stage8_readiness: PASS"), "{stdout}");
+}
+
+#[test]
+fn stage8_partial_coverage_label_alone_does_not_fail_readiness() {
+    let (repo, _) = setup_temp_git_repo();
+    setup_codeos_symlink(repo.path());
+    let paths = add_stage8_inputs(repo.path(), "F-0042");
+    std::fs::create_dir_all(repo.path().join("events")).unwrap();
+    std::fs::write(
+        repo.path().join("events/runtime_events.jsonl"),
+        "{\"event\":\"intentionally excluded untracked context\"}\n",
+    )
+    .unwrap();
+    let mut args = vec!["plan", "F-0042", "8"];
+    args.extend(paths.iter().map(String::as_str));
+
+    let (code, stdout, stderr) = run_in_dir(repo.path(), &args);
+
+    assert_eq!(code, 0, "{stderr}");
+    assert!(stdout.contains("coverage: PARTIAL_COVERAGE"), "{stdout}");
+    assert!(stdout.contains("stage8_readiness: PASS"), "{stdout}");
+}
+
+#[test]
+fn stage8_empty_canonical_input_fails_with_corrective_action() {
+    let (repo, _) = setup_temp_git_repo();
+    setup_codeos_symlink(repo.path());
+    let paths = add_stage8_inputs(repo.path(), "F-0042");
+    std::fs::write(repo.path().join(&paths[0]), "").unwrap();
+    let mut args = vec!["plan", "F-0042", "8"];
+    args.extend(paths.iter().map(String::as_str));
+
+    let (code, stdout, stderr) = run_in_dir(repo.path(), &args);
+
+    assert_eq!(code, 4, "{stderr}");
+    assert!(stdout.contains("required canonical Stage-8 input is empty"), "{stdout}");
+    assert!(stdout.contains("provide the populated approved artifact"), "{stdout}");
+}
+
+#[test]
+fn stage8_canonical_hash_only_input_is_not_reviewable() {
+    let (repo, _) = setup_temp_git_repo();
+    setup_codeos_symlink(repo.path());
+    let paths = add_stage8_inputs(repo.path(), "F-0042");
+    let charter = paths[0].as_str();
+    let mut args = vec!["plan", "F-0042", "8", "--sha-only", charter];
+    args.extend(paths[1..].iter().map(String::as_str));
+
+    let (code, stdout, stderr) = run_in_dir(repo.path(), &args);
+
+    assert_eq!(code, 4, "{stderr}");
+    assert!(stdout.contains("stage8_readiness: FAIL"), "{stdout}");
+    assert!(stdout.contains("visibility: path_sha_only"), "{stdout}");
+}
+
+#[test]
+fn stage8_oversize_declared_evidence_fails_but_redaction_does_not() {
+    let (repo, _) = setup_temp_git_repo();
+    setup_codeos_symlink(repo.path());
+    let paths = add_stage8_inputs(repo.path(), "F-0042");
+    std::fs::write(repo.path().join("oversize.md"), vec![b'x'; 256 * 1024 + 1]).unwrap();
+    Command::new("git")
+        .args(["add", "oversize.md"])
+        .current_dir(repo.path())
+        .output()
+        .unwrap();
+    Command::new("git")
+        .args(["commit", "-m", "add oversize evidence"])
+        .current_dir(repo.path())
+        .output()
+        .unwrap();
+    let mut args = vec!["plan", "F-0042", "8", "oversize.md"];
+    args.extend(paths.iter().map(String::as_str));
+
+    let (code, stdout, stderr) = run_in_dir(repo.path(), &args);
+
+    assert_eq!(code, 4, "{stderr}");
+    assert!(stdout.contains("stage8_readiness: FAIL"), "{stdout}");
+    assert!(stdout.contains("oversize_omitted"), "{stdout}");
+    assert!(stdout.contains("oversize.md"), "{stdout}");
 }
 
 #[test]
