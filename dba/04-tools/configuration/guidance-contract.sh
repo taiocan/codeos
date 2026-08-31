@@ -41,6 +41,7 @@ SESSION_START="${CODEOS_ROOT}/dba/03-prompts/workflow/support-session-orientatio
 INTENT_PROMPT="${CODEOS_ROOT}/dba/03-prompts/workflow/01-intent.md"
 FRAMING_PROMPT="${CODEOS_ROOT}/dba/03-prompts/workflow/support-solution-framing.md"
 CHARTER_PROMPT="${CODEOS_ROOT}/dba/03-prompts/workflow/support-solution-charter.md"
+CHARTER_TEMPLATE="${CODEOS_ROOT}/dba/05-guidance/templates/charter.md"
 ARCHITECTURE_PROMPT="${CODEOS_ROOT}/dba/03-prompts/workflow/support-architecture-synthesis.md"
 IMPLEMENT_PROMPT="${CODEOS_ROOT}/dba/03-prompts/workflow/04-implement.md"
 TEST_PROMPT="${CODEOS_ROOT}/dba/03-prompts/workflow/05-tests.md"
@@ -50,6 +51,7 @@ REPLAY_PROMPT="${CODEOS_ROOT}/dba/03-prompts/workflow/08-replay.md"
 SVELTE_PATTERN="${CODEOS_ROOT}/dba/05-guidance/patterns/svelte-state-and-components.md"
 GUI_PATTERN="${CODEOS_ROOT}/dba/05-guidance/patterns/svelte-gui-verification.md"
 WORKFLOW_MAP="${CODEOS_ROOT}/dba/05-guidance/templates/user-workflow-map.md"
+TERMINOLOGY="${CODEOS_ROOT}/dba/05-guidance/terminology.md"
 rg -q 'partially drafted Specification Package is normal' "${SESSION_START}" || fail 'partial packages are not accepted'
 rg -q 'terminology.md.*exists' "${SESSION_START}" || fail 'optional project terminology is not loaded'
 rg -q 'Its absence is valid' "${SESSION_START}" || fail 'project terminology became mandatory'
@@ -62,6 +64,20 @@ rg -q 'MUST NOT resolve that concern into components' "${FRAMING_PROMPT}" || \
   fail 'Solution Framing architecture boundary is missing'
 rg -q 'only their promotion into an approved Charter makes them' "${CHARTER_PROMPT}" || \
   fail 'Solution Charter promotion boundary is missing'
+rg -q '^## Decision Supported$' "${CHARTER_TEMPLATE}" || \
+  fail 'Solution Charter decision-supported interface is missing'
+rg -q 'primary actor and primary decision supported by the solution' "${CHARTER_TEMPLATE}" || \
+  fail 'Solution Charter decision-supported content is incomplete'
+rg -q 'existing approved Charter remains valid' "${CHARTER_PROMPT}" || \
+  fail 'existing Solution Charters are not protected from migration'
+rg -q 'new or materially revised Charter' "${CHARTER_PROMPT}" || \
+  fail 'Solution Charter decision-supported applicability is missing'
+rg -q 'alignment lens, not an' "${CHARTER_PROMPT}" || \
+  fail 'Solution Charter decision-supported authority boundary is missing'
+rg -q 'acceptance requirement' "${CHARTER_PROMPT}" || \
+  fail 'Solution Charter decision-supported acceptance boundary is missing'
+rg -q 'primary supported decision' "${TERMINOLOGY}" || \
+  fail 'Solution Charter terminology is stale'
 rg -q 'Stage 4 owns local implementation design' "${ARCHITECTURE_PROMPT}" || \
   fail 'Architecture Synthesis design boundary is missing'
 rg -q 'feature-local design decisions inside approved architectural boundaries' "${IMPLEMENT_PROMPT}" || \

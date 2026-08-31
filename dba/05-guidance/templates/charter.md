@@ -5,8 +5,9 @@ approval: null
 # Solution Charter: [solution name]
 
 <!--
-The one authoritative statement of why this solution exists, what success means, where its boundary
-lies, and which obligations apply across it. Canonical path: .codeos/00-project/charter.md
+The one authoritative statement of why this solution exists, which primary decision it supports,
+what success means, where its boundary lies, and which obligations apply across it. Canonical path:
+.codeos/00-project/charter.md
 
 Governance: front matter owns approval; Git owns history. There is no status or version field.
 A material change returns `approval` to null before the replacement decisions are used.
@@ -30,6 +31,11 @@ Do not start from technology.]
 
 [What the affected people's world looks like once the problem is solved well. Understandable
 without implementation knowledge. This is the solution concept, not architecture.]
+
+## Decision Supported
+
+[One concise statement naming the primary actor and primary decision supported by the solution.
+This is an alignment lens, not an acceptance requirement or feature behavior.]
 
 ## Outcomes
 

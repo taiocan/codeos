@@ -51,7 +51,7 @@ Ordinary technical vocabulary does not belong here. Git preserves the history of
 | **Representation Ban Rule** | Domain logic must not store, compare, branch on, or pattern-match vocabulary representations; it uses resolved Concept identity. |
 | **Resolution** | Mapping an Alias or canonical representation to its Concept through the vocabulary owner's API. |
 | **Shared Infrastructure Module** | A module used by at least two feature modules that provides only mechanical infrastructure and contains no domain logic. |
-| **Solution Charter** | The single approved artifact defining a solution's problem, vision, measurable outcomes, scope boundary, and System Constraints. It governs purpose; it does not define feature behavior. |
+| **Solution Charter** | The single approved artifact defining a solution's problem, vision, primary supported decision, measurable outcomes, scope boundary, and System Constraints. It governs purpose; it does not define feature behavior. |
 | **Solution Framing** | Optional, non-authoritative exploration of a solution's problem, vision, candidate outcomes, scope, and candidate constraints. It may identify open architecture concerns but cannot approve solution meaning or decide architecture. |
 | **Specification Package** | The Intent, Contract, and Event Schema considered together by the specification-approval adapter. Decision semantics come only from the selected doctrine. |
 | **System Constraint** | A Charter-owned obligation applying across features or solution-wide, each with a verification route. The broader category: cross-cutting quality requirements are one type, alongside regulatory, interoperability, deployment, and externally imposed technology constraints. |

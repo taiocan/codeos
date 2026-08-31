@@ -1,5 +1,5 @@
 ---
-component_question: How should the solution's purpose, outcomes, boundary, and cross-cutting constraints be established and approved?
+component_question: How should the solution's purpose, primary supported decision, outcomes, boundary, and cross-cutting constraints be established and approved?
 out_of_scope: Feature behavior, architecture decisions, implementation, verification evidence, and non-authoritative exploration.
 ---
 
@@ -9,9 +9,10 @@ out_of_scope: Feature behavior, architecture decisions, implementation, verifica
 
 ## Purpose
 
-Establish the one approved statement of why the solution exists, what success means, where its
-boundary lies, and which obligations apply across it. This support workflow owns that approval
-boundary; a Charter must be approved before the first Specification Package approval.
+Establish the one approved statement of why the solution exists, which primary decision it
+supports, what success means, where its boundary lies, and which obligations apply across it. This
+support workflow owns that approval boundary; a Charter must be approved before the first
+Specification Package approval.
 
 ## Inputs / Prerequisites
 
@@ -23,10 +24,17 @@ governed truth; do not synchronize framing material afterwards.
 When revising an existing Charter, read the current artifact first and treat its approved content
 as binding until the replacement is approved.
 
+An existing approved Charter remains valid without a `Decision Supported` section. Do not revise
+one solely to add it. A new or materially revised Charter uses the current template and includes
+the section.
+
 ## Task
 
 - State the problem from the affected people's situation, not from technology.
 - Describe the vision so it is understandable without implementation knowledge.
+- Name the primary actor and primary decision the solution supports in one concise statement. Keep
+  it consistent with Problem, Vision, Outcomes, and Scope. It is an alignment lens, not an
+  acceptance requirement; do not turn it into feature behavior.
 - Express outcomes as measurable results rather than features, and give each a stable `O-#`
   identity. Never reuse a retired identity.
 - Record the scope boundary explicitly, in and out.
@@ -69,10 +77,12 @@ in the mapping set and no longer blocks approval.
 
 ## Applicable Checks
 
-Confirm that outcomes are measurable and identified, the boundary is explicit, every System
-Constraint has a type and a verification route, every threshold carries its context and rationale,
-and no feature behavior or architecture decision leaked into the artifact. Apply the selected review
-policy at this decision boundary.
+For a new or materially revised Charter, confirm that `Decision Supported` names the primary actor
+and primary decision, agrees with Problem, Vision, Outcomes, and Scope, and is not treated as an
+acceptance requirement. Confirm that outcomes are measurable and identified, the boundary is
+explicit, every System Constraint has a type and a verification route, every threshold carries its
+context and rationale, and no feature behavior or architecture decision leaked into the artifact.
+Apply the selected review policy at this decision boundary.
 
 ## Output / Next Action
 
