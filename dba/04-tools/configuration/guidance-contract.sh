@@ -69,6 +69,10 @@ rg -q 'missing recurring project-specific term' "${READER_OUTPUT}" || \
   fail 'reader-oriented missing-term behavior is missing'
 rg -q 'project glossary must not silently redefine a Codeos or DBA term' "${READER_OUTPUT}" || \
   fail 'reader-oriented terminology precedence is missing'
+rg -q '^## Maintain Sentence-to-Sentence Continuity$' "${READER_OUTPUT}" || \
+  fail 'reader-oriented sentence continuity is missing'
+rg -q 'recognizable information connection, not an identical sentence' "${READER_OUTPUT}" || \
+  fail 'reader-oriented sentence continuity boundary is missing'
 rg -q 'Formal artifact rules take precedence' "${READER_OUTPUT}" || \
   fail 'formal artifact syntax no longer takes precedence over output guidance'
 rg -q 'Every Codeos-owned AI entry point that produces human-readable prose must receive' "${READER_OUTPUT}" || \

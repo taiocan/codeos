@@ -52,10 +52,34 @@ Do not substitute synonyms merely for variety. Repeat a precise term when repeti
 ambiguity. Distinct concepts should keep intentionally distinct names. Do not add stylistic
 vocabulary or every newly used word to a terminology glossary.
 
+## Maintain Sentence-to-Sentence Continuity
+
+Within explanatory prose, connect each sentence to information the reader can already identify
+from the preceding context before introducing new information.
+
+Prefer:
+
+> The reviewer receives a frozen packet. That packet contains the evidence available for
+> assessment. The assessment is then bound to the packet hash.
+
+Avoid:
+
+> The reviewer receives a frozen packet. Assessment integrity depends on hashing. Evidence
+> selection occurs during packet construction.
+
+The second version may be factually correct, but it makes the reader reconstruct the relationship
+between sentences. Do not force grammatical repetition when it makes a sentence unnatural or less
+precise. The requirement is a recognizable information connection, not an identical sentence
+opening.
+
 ## Choose a Reader-Oriented Progression
 
 Use the simplest progression that fits the explanation. Do not name the pattern in the output
 unless doing so is itself useful to the reader.
+
+Patterns may be combined when useful. For example, Preview Then Traverse may introduce three
+architecture areas, Whole Before Parts may structure one area, and Known-to-New may explain a
+workflow within it. Do not combine patterns mechanically.
 
 ### Stable Topic
 
@@ -71,7 +95,8 @@ Do not repeatedly change the subject when each sentence still describes the same
 
 ### Known-to-New Progression
 
-Use a reasoning chain for workflows, causality, and transformations:
+Use a deliberate chain when one newly introduced concept becomes the subject of the next reasoning
+step, especially for workflows, causality, transformations, and logical derivations:
 
 ```text
 A -> B
@@ -85,6 +110,14 @@ Begin each step from information the reader can already identify, then introduce
 
 Name the whole, relationship, or category before explaining its parts. Use this for architecture,
 decomposition, responsibilities, and sibling concepts whose relationship matters.
+
+Example:
+
+> The reviewer protects assessment integrity through three boundaries: packet construction,
+> provider isolation, and assessment recording.
+>
+> Packet construction freezes the evidence. Provider isolation limits access to that evidence.
+> Assessment recording binds the result to the packet.
 
 ### Preview Then Traverse
 
