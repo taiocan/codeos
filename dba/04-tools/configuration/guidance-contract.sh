@@ -13,6 +13,7 @@ expected_guidance=(
   patterns/svelte-gui-verification.md
   patterns/svelte-state-and-components.md
   patterns/vocabulary-architecture.md
+  reader-oriented-output.md
   templates/architecture-scope.md
   templates/charter.md
   templates/contract.md
@@ -52,6 +53,46 @@ SVELTE_PATTERN="${CODEOS_ROOT}/dba/05-guidance/patterns/svelte-state-and-compone
 GUI_PATTERN="${CODEOS_ROOT}/dba/05-guidance/patterns/svelte-gui-verification.md"
 WORKFLOW_MAP="${CODEOS_ROOT}/dba/05-guidance/templates/user-workflow-map.md"
 TERMINOLOGY="${CODEOS_ROOT}/dba/05-guidance/terminology.md"
+READER_OUTPUT="${CODEOS_ROOT}/dba/05-guidance/reader-oriented-output.md"
+SELF_INSTRUCTIONS="${CODEOS_ROOT}/CLAUDE.md"
+PROJECT_INSTRUCTIONS="${CODEOS_ROOT}/dba/05-guidance/templates/project-CLAUDE.md"
+DBA_ENTRY="${CODEOS_ROOT}/dba-system.md"
+rg -q 'lead with the main result, recommendation, or decision' "${READER_OUTPUT}" || \
+  fail 'reader-oriented opening behavior is missing'
+rg -q 'important findings, then explain them in the same order' "${READER_OUTPUT}" || \
+  fail 'reader-oriented complex-output opening behavior is missing'
+for progression in 'Stable Topic' 'Known-to-New Progression' 'Whole Before Parts' 'Preview Then Traverse'; do
+  rg -q "^### ${progression}$" "${READER_OUTPUT}" || \
+    fail "reader-oriented progression is missing: ${progression}"
+done
+rg -q 'missing recurring project-specific term' "${READER_OUTPUT}" || \
+  fail 'reader-oriented missing-term behavior is missing'
+rg -q 'project glossary must not silently redefine a Codeos or DBA term' "${READER_OUTPUT}" || \
+  fail 'reader-oriented terminology precedence is missing'
+rg -q 'Formal artifact rules take precedence' "${READER_OUTPUT}" || \
+  fail 'formal artifact syntax no longer takes precedence over output guidance'
+rg -q 'Every Codeos-owned AI entry point that produces human-readable prose must receive' "${READER_OUTPUT}" || \
+  fail 'future human-readable AI entry-point invariant is missing'
+rg -q 'Exclusively machine-structured outputs are' "${READER_OUTPUT}" || \
+  fail 'machine-structured output exemption is missing'
+rg -q 'Integration tests must demonstrate the applicable route' "${READER_OUTPUT}" || \
+  fail 'future AI entry-point integration-test obligation is missing'
+for route in "${SELF_INSTRUCTIONS}" "${PROJECT_INSTRUCTIONS}" "${DBA_ENTRY}"; do
+  rg -q 'For every human-readable output, read and apply' "${route}" || \
+    fail "normal-agent route is not actionable: ${route#${CODEOS_ROOT}/}"
+  rg -q 'reader-oriented-output.md' "${route}" || \
+    fail "normal-agent route omits reader-oriented guidance: ${route#${CODEOS_ROOT}/}"
+done
+if rg -l 'Known-to-New Progression|Preview Then Traverse' \
+  "${SELF_INSTRUCTIONS}" "${PROJECT_INSTRUCTIONS}" "${DBA_ENTRY}" \
+  "${CODEOS_ROOT}/dba/03-prompts" "${CODEOS_ROOT}/dba/05-guidance" \
+  | grep -Fvx "${READER_OUTPUT}" >/dev/null; then
+  fail 'reader-oriented progression rules have a competing active copy'
+fi
+if rg -q 'Controlled Plain English|controlled-plain-english|controlled_plain_english|writing-discipline' \
+  "${READER_OUTPUT}"; then
+  fail 'reader-oriented guidance resurrects a retired writing mechanism'
+fi
 rg -q 'partially drafted Specification Package is normal' "${SESSION_START}" || fail 'partial packages are not accepted'
 rg -q 'terminology.md.*exists' "${SESSION_START}" || fail 'optional project terminology is not loaded'
 rg -q 'Its absence is valid' "${SESSION_START}" || fail 'project terminology became mandatory'

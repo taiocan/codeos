@@ -48,9 +48,10 @@ The `review` path, which is the longest and contains every other command's work 
    path- and size-excluded files, redacts secrets from both diff and artifact text, renders each
    artifact as full content, hash-only, delta, or omitted-with-reason, and derives a single
    `coverage_state` in which the most severe condition wins.
-7. The packet text is assembled in order: the reviewer task prompt read from the toolkit, a manifest
-   with byte counts and hashes, review context, stage-specific checks and expected output, the
-   artifacts block, and the filtered diff.
+7. The packet text is assembled in order: the reviewer task prompt; the canonical reader-oriented
+   guidance and Codeos terminology; the canonical project terminology when it exists; a manifest
+   with byte counts and hashes; review context; stage-specific checks and expected output; the
+   artifacts block; and the filtered diff. Communication context is not counted as review evidence.
 8. **`plan` stops here** and prints the selection, including whether spending policy would refuse an
    oversized Codex review. Packet construction itself never enforces that policy. `review` continues.
 9. Before round derivation or provider access, a Codex-backed review refuses an over-budget packet
@@ -99,8 +100,9 @@ same packet a Codex-backed review would have seen.
 
 **In:** artifact paths and flags; `CODEOS_REASONING_EFFORT`, `CODEOS_PACKET_BUDGET_BYTES`, and
 `CODEOS_PACKET_BUDGET_MODE`;
-`reviewer.toml`; the reviewer task prompt at `dba/03-prompts/review/codeos-reviewer-task.md`; Git
-(branch, `HEAD`, diffs, tracked status, porcelain status).
+`reviewer.toml`; the reviewer task prompt at `dba/03-prompts/review/codeos-reviewer-task.md`; the
+reader-oriented guidance and applicable canonical terminology; Git (branch, `HEAD`, diffs, tracked
+status, porcelain status).
 
 **State written:** the append-only review log; one assessment `.md` and one packet `.txt` per review
 under the resolved review root (or `.codeos-state/reviewer-scratch` with `--scratch`). Codex provider

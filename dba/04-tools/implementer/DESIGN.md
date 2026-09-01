@@ -74,7 +74,7 @@ The script enforces preconditions in a fixed sequence.
    Options are parsed, then `feature_id` and `stage` are required. Stage must be `4` or `5`. At least one artifact must be present. Missing/incorrect usage exits with code 3.
 
 3. **Dependency check**  
-   `curl` and `jq` must be on `PATH`. Missing dependency exits with code 2.
+   `curl`, `jq`, and `readlink` must be on `PATH`. Missing dependency exits with code 2.
 
 4. **Context resolution**  
    The script resolves its own repository root and the caller’s repository root:
@@ -150,6 +150,9 @@ The user content is written to `${STAGE_DIR}/user_content.txt` and contains:
 
 - A header: `DELEGATED IMPLEMENTATION REQUEST`, `feature_id`, `stage`, and `output_nonce`.
 - A statement telling the model to produce the candidate following the strict output contract and to use the nonce verbatim in every marker.
+- The canonical reader-oriented guidance and Codeos terminology, plus the canonical project
+  terminology file when it exists. These are labelled as communication context rather than
+  implementation evidence. Sources resolving to the same file are emitted once.
 - Declared role artifacts, emitted in a fixed order:
   - `BEHAVIORAL CONTRACT`
   - `EVENT SCHEMA`
@@ -305,13 +308,13 @@ NOTE: candidate only — promote manually; the Stage N human gate + advisory rev
 |---|---|
 | 0 | Success — candidate staged |
 | 1 | Not inside a git repository |
-| 2 | Missing dependency (`curl` or `jq` not found) |
+| 2 | Missing dependency (`curl`, `jq`, or `readlink` not found) |
 | 3 | Usage error |
 | 4 | Mechanism disabled or status file absent |
 | 5 | Activation status file malformed |
 | 6 | `DEEPSEEK_API_KEY` unset or empty while enabled |
 | 7 | Artifact path does not exist |
-| 8 | DeepSeek API/transport error, unsafe candidate path, or missing task prompt |
+| 8 | DeepSeek API/transport error, unsafe communication input, unsafe candidate path, or missing task prompt |
 | 9 | `--exemplar` path does not exist |
 | 10 | `--repair-candidate` / `--repair-output` path does not exist |
 | 11 | Model response violates the delimited output protocol; nothing staged |
@@ -324,7 +327,7 @@ The script never runs a build, test, compile, or package-manager command, never 
 The external commands the script invokes are exactly:
 
 ```text
-git curl jq awk sed cat tr od head date mkdir mktemp rmdir dirname
+git curl jq awk sed cat tr od head date mkdir mktemp rmdir dirname readlink
 ```
 
 The source comment states that `dba/04-tools/implementer/tests/codeos-implement-tests.sh` scans the script against this list and fails if any external tool outside it appears, so the comment cannot silently drift from the code.

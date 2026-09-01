@@ -70,6 +70,39 @@ fn smoke_plan_full_mode_basic() {
 }
 
 #[test]
+fn communication_context_does_not_change_review_content_budget() {
+    let (repo, _) = setup_temp_git_repo();
+    setup_codeos_symlink(repo.path());
+    let args = ["plan", "UPG-OUTPUT", "selfdev-step-1", "tracked.md"];
+
+    let (first_code, first_stdout, first_stderr) = run_in_dir(repo.path(), &args);
+    assert_eq!(first_code, 0, "{first_stderr}");
+    let before = plan_value_after(&first_stdout, "review_content_bytes: ").unwrap();
+
+    std::fs::create_dir_all(repo.path().join(".codeos/00-project")).unwrap();
+    std::fs::write(
+        repo.path().join(".codeos/00-project/terminology.md"),
+        "# Project Terminology\nA large communication-only glossary entry.\n",
+    )
+    .unwrap();
+    Command::new("git")
+        .args(["add", ".codeos/00-project/terminology.md"])
+        .current_dir(repo.path())
+        .output()
+        .unwrap();
+    Command::new("git")
+        .args(["commit", "-m", "add project terminology"])
+        .current_dir(repo.path())
+        .output()
+        .unwrap();
+
+    let (second_code, second_stdout, second_stderr) = run_in_dir(repo.path(), &args);
+    assert_eq!(second_code, 0, "{second_stderr}");
+    let after = plan_value_after(&second_stdout, "review_content_bytes: ").unwrap();
+    assert_eq!(before, after, "communication context changed evidence budgeting");
+}
+
+#[test]
 fn smoke_plan_missing_artifact_exits_packet() {
     let (dir, _base_sha) = setup_temp_git_repo();
     let (code, _stdout, stderr) = run_in_dir(
@@ -551,4 +584,10 @@ fn smoke_plan_idempotent_output() {
         stdout1, stdout2,
         "plan output must be idempotent across repeated runs"
     );
+}
+
+fn plan_value_after(text: &str, marker: &str) -> Option<u64> {
+    let rest = &text[text.find(marker)? + marker.len()..];
+    let digits: String = rest.chars().take_while(char::is_ascii_digit).collect();
+    digits.parse().ok()
 }

@@ -182,6 +182,77 @@ else
   ok "C13 secret absent from invocation log"
 fi
 
+# ── UPG-0079: reader-oriented guidance and canonical terminology delivery ──────────────────────
+echo "== UPG-0079: communication context =="
+effective="$(jq -r '.messages[].content' "${SD}/request.json")"
+guide_count="$(printf '%s\n' "${effective}" | grep -cF '# Reader-Oriented LLM Output' || true)"
+codeos_terms_count="$(printf '%s\n' "${effective}" | grep -cF '# Codeos Terminology' || true)"
+if [[ "${guide_count}" == "1" && "${codeos_terms_count}" == "1" ]]; then
+  ok "OUTPUT required guidance and Codeos terminology delivered exactly once"
+else
+  bad "OUTPUT required communication context" "guide=${guide_count} codeos_terms=${codeos_terms_count}"
+fi
+if ! printf '%s\n' "${effective}" | grep -qF 'PROJECT-TERMINOLOGY-CANARY'; then
+  ok "OUTPUT absent optional project terminology is valid"
+else
+  bad "OUTPUT absent optional project terminology" "unexpected project glossary content"
+fi
+
+mkdir -p "${REPO}/.codeos/00-project" "${REPO}/docs"
+printf '# Unrelated Terminology\nNONCANONICAL-TERMINOLOGY-CANARY\n' > "${REPO}/docs/terminology.md"
+printf '# Project Terminology\nPROJECT-TERMINOLOGY-CANARY\n' \
+  > "${REPO}/.codeos/00-project/terminology.md"
+reset_state
+rc=$(run_tool F-0001 4 .codeos/01-specification/intents/F-0001.md)
+OUTPUT_SD="$(latest_stage_dir)"
+effective="$(jq -r '.messages[].content' "${OUTPUT_SD}/request.json")"
+project_count="$(printf '%s\n' "${effective}" | grep -cF 'PROJECT-TERMINOLOGY-CANARY' || true)"
+packet_project_count="$(grep -cF 'PROJECT-TERMINOLOGY-CANARY' "${OUTPUT_SD}/packet.txt" || true)"
+if [[ "${rc}" == "0" && "${project_count}" == "1" && "${packet_project_count}" == "1" ]] \
+   && ! printf '%s\n' "${effective}" | grep -qF 'NONCANONICAL-TERMINOLOGY-CANARY'; then
+  ok "OUTPUT canonical project terminology delivered once; unrelated glossary ignored"
+else
+  bad "OUTPUT project terminology routing" \
+    "rc=${rc} request_count=${project_count} packet_count=${packet_project_count}"
+fi
+if printf '%s\n' "${effective}" | grep -qF 'not implementation evidence' \
+   && printf '%s\n' "${effective}" | grep -qF 'acceptance evidence, a requirement, or approval authority'; then
+  ok "OUTPUT terminology is labelled as communication context, not evidence"
+else
+  bad "OUTPUT terminology authority boundary" "communication/evidence label missing"
+fi
+
+rm -f "${REPO}/.codeos/00-project/terminology.md"
+printf '# External Terminology\n' > "${WORK}/external-terminology.md"
+ln -s "${WORK}/external-terminology.md" "${REPO}/.codeos/00-project/terminology.md"
+reset_state
+rc=$(run_tool F-0001 4 .codeos/01-specification/intents/F-0001.md)
+stage_count="$(find "${REPO}/.codeos-state/deepseek-candidates" -type d 2>/dev/null | wc -l)"
+if [[ "${rc}" == "8" && "${stage_count}" == "0" ]] \
+   && grep -qF 'project terminology resolves outside its owning repository' "${OUT}"; then
+  ok "OUTPUT unsafe canonical project terminology fails before provider staging"
+else
+  bad "OUTPUT unsafe project terminology" "rc=${rc} stage_dirs=${stage_count} $(tail -2 "${OUT}")"
+fi
+
+rm -f "${REPO}/.codeos/00-project/terminology.md"
+if ln "${CODEOS_ROOT}/dba/05-guidance/terminology.md" \
+    "${REPO}/.codeos/00-project/terminology.md"; then
+  reset_state
+  rc=$(run_tool F-0001 4 .codeos/01-specification/intents/F-0001.md)
+  OUTPUT_SD="$(latest_stage_dir)"
+  effective="$(jq -r '.messages[].content' "${OUTPUT_SD}/request.json")"
+  codeos_terms_count="$(printf '%s\n' "${effective}" | grep -cF '# Codeos Terminology' || true)"
+  if [[ "${rc}" == "0" && "${codeos_terms_count}" == "1" ]]; then
+    ok "OUTPUT duplicate communication source is coalesced"
+  else
+    bad "OUTPUT duplicate communication source" "rc=${rc} count=${codeos_terms_count}"
+  fi
+else
+  bad "OUTPUT duplicate communication source" "could not create same-file fixture"
+fi
+rm -f "${REPO}/.codeos/00-project/terminology.md"
+
 # ── criterion 3 + 8: exemplar and repair sections labeled distinctly in the packet ───────────────
 printf 'exemplar module layout\n' > "${REPO}/exemplar.rs"
 printf 'error[E0599]: no method named foo\n' > "${REPO}/build-output.txt"
@@ -217,10 +288,10 @@ fi
 # Strip comments and the embedded awk program, then look for any external tool outside the set the
 # change record documents. Conservative by design: it scans a broad candidate list, so a newly
 # introduced tool trips it even if harmless, forcing the documentation to be updated with it.
-ALLOWED=" git curl jq awk sed cat tr od head date mkdir mktemp rmdir dirname "
+ALLOWED=" git curl jq awk sed cat tr od head date mkdir mktemp rmdir dirname readlink "
 CANDIDATES="cargo npm pnpm yarn make mvn gradle pytest pip python python3 node rustc gcc cc perl ruby
 docker ssh scp rsync wget nc socat systemctl sudo su chmod chown find xargs tee sort uniq cut paste
-grep egrep fgrep awk sed cat tr od head tail date mkdir mktemp rmdir dirname basename git curl jq"
+grep egrep fgrep awk sed cat tr od head tail date mkdir mktemp rmdir dirname basename readlink git curl jq"
 body="$(sed 's/#.*//' "${TOOL}" | sed "/^[[:space:]]*awk /,/^' /d")"
 unexpected=""
 for c in ${CANDIDATES}; do

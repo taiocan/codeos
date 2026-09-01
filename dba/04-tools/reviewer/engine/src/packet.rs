@@ -2,7 +2,8 @@ use crate::precheck::redact_secrets;
 use anyhow::{bail, Context, Result};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
-use std::path::Path;
+use std::collections::HashSet;
+use std::path::{Path, PathBuf};
 use std::process::Command;
 
 const SIZE_LIMIT_BYTES: u64 = 256 * 1024;
@@ -128,6 +129,106 @@ pub struct PacketBuildOptions {
     pub delta_base: Option<String>,
     pub repo_root: String,
     pub toolkit_root: String,
+}
+
+struct CommunicationSource {
+    label: &'static str,
+    canonical_path: PathBuf,
+    content: String,
+}
+
+fn read_communication_source(
+    path: &Path,
+    allowed_root: &Path,
+    label: &'static str,
+) -> Result<CommunicationSource> {
+    let canonical_root = std::fs::canonicalize(allowed_root).with_context(|| {
+        format!(
+            "could not resolve communication-context root {}",
+            allowed_root.display()
+        )
+    })?;
+    let canonical_path = std::fs::canonicalize(path)
+        .with_context(|| format!("could not resolve applicable {label}: {}", path.display()))?;
+    if !canonical_path.starts_with(&canonical_root) {
+        bail!(
+            "applicable {label} resolves outside its owning repository: {}",
+            path.display()
+        );
+    }
+    if !canonical_path.is_file() {
+        bail!(
+            "applicable {label} is not a regular file: {}",
+            path.display()
+        );
+    }
+    let content = std::fs::read_to_string(&canonical_path)
+        .with_context(|| format!("could not read applicable {label}: {}", path.display()))?;
+    Ok(CommunicationSource {
+        label,
+        canonical_path,
+        content,
+    })
+}
+
+fn communication_context(opts: &PacketBuildOptions) -> Result<String> {
+    let toolkit_root = Path::new(&opts.toolkit_root);
+    let repo_root = Path::new(&opts.repo_root);
+    let mut sources = vec![
+        read_communication_source(
+            &toolkit_root.join("dba/05-guidance/reader-oriented-output.md"),
+            toolkit_root,
+            "reader-oriented output guidance",
+        )?,
+        read_communication_source(
+            &toolkit_root.join("dba/05-guidance/terminology.md"),
+            toolkit_root,
+            "Codeos terminology",
+        )?,
+    ];
+
+    let project_terminology = repo_root.join(".codeos/00-project/terminology.md");
+    match std::fs::symlink_metadata(&project_terminology) {
+        Ok(_) => sources.push(read_communication_source(
+            &project_terminology,
+            repo_root,
+            "project terminology",
+        )?),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+        Err(error) => {
+            return Err(error).with_context(|| {
+                format!(
+                    "could not inspect applicable project terminology: {}",
+                    project_terminology.display()
+                )
+            })
+        }
+    }
+
+    let mut seen = HashSet::new();
+    let mut context = String::from(
+        "\nCOMMUNICATION CONTEXT (instructions and canonical language; not review evidence)\n\
+         Apply the following guidance and terminology to every human-readable part of the assessment.\n",
+    );
+    for source in sources {
+        if !seen.insert(source.canonical_path.clone()) {
+            continue;
+        }
+        context.push_str(&format!(
+            "\n--- {}: {} ---\n",
+            source.label.to_uppercase(),
+            source.canonical_path.display()
+        ));
+        context.push_str(&source.content);
+        if !source.content.ends_with('\n') {
+            context.push('\n');
+        }
+    }
+    context.push_str(
+        "\nEND COMMUNICATION CONTEXT\n\
+         The content above governs expression and interpretation only. It is not acceptance evidence, a requirement, or approval authority.\n",
+    );
+    Ok(context)
 }
 
 pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
@@ -496,11 +597,13 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
     );
     let task_prompt = std::fs::read_to_string(&task_prompt_path)
         .with_context(|| format!("reviewer task template not found: {}", task_prompt_path))?;
+    let communication_context = communication_context(opts)?;
 
     // Build the packet text
     let mut content = String::new();
     content.push_str(&task_prompt);
     content.push('\n');
+    content.push_str(&communication_context);
 
     let budget_status = if review_content_bytes > budget {
         format!(

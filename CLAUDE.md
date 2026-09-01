@@ -26,9 +26,6 @@ independent guard, and removing it reduces complexity only in appearance.
 
 By default:
 
-- lead with one recommendation, decision, or result; when several important findings matter,
-  lead instead with a short plain-language summary of the key results, omitted when it would
-  only repeat the answer;
 - include only information needed for the current decision or action;
 - use no more than three short sections unless required for correctness;
 - do not enumerate hypothetical variants, future scope, edge cases, or alternative designs unless
@@ -171,6 +168,12 @@ create a separate terminology workflow or history.
 When a change relies on a governed term, verification MUST confirm that its definition exists,
 affected uses are consistent, and no conflicting meaning was introduced. If two governed concepts
 would otherwise share a term, use distinct names.
+
+## Human-Readable Output
+
+For every human-readable output, read and apply
+`dba/05-guidance/reader-oriented-output.md` and the applicable canonical terminology in
+`dba/05-guidance/terminology.md`.
 
 ## Boundaries
 

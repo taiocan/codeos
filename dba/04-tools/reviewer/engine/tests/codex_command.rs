@@ -144,6 +144,151 @@ fn plan_and_review_prepare_equivalent_packets() {
 }
 
 #[test]
+fn reviewer_receives_reader_guidance_and_only_canonical_terminology_once() {
+    let (repo, _) = setup_temp_git_repo();
+    setup_codeos_symlink(repo.path());
+    let fake = setup_fake_codex();
+    std::fs::create_dir_all(repo.path().join(".codeos/00-project")).unwrap();
+    std::fs::create_dir_all(repo.path().join("docs")).unwrap();
+    std::fs::write(
+        repo.path().join(".codeos/00-project/terminology.md"),
+        "# Project Terminology\nPROJECT-TERM-CANARY\n",
+    )
+    .unwrap();
+    std::fs::write(
+        repo.path().join("docs/terminology.md"),
+        "# Unrelated Terminology\nNONCANONICAL-TERM-CANARY\n",
+    )
+    .unwrap();
+    Command::new("git")
+        .args([
+            "add",
+            ".codeos/00-project/terminology.md",
+            "docs/terminology.md",
+        ])
+        .current_dir(repo.path())
+        .output()
+        .unwrap();
+    Command::new("git")
+        .args(["commit", "-m", "add terminology fixtures"])
+        .current_dir(repo.path())
+        .output()
+        .unwrap();
+
+    let (code, _, stderr) =
+        run_with_fake_codex(repo.path(), &fake, &review_args("UPG-OUTPUT"), "success");
+    assert_eq!(code, 0, "{stderr}");
+    let captured = std::fs::read_to_string(&fake.packet_log).unwrap();
+
+    for unique in [
+        "# Reader-Oriented LLM Output",
+        "# Codeos Terminology",
+        "PROJECT-TERM-CANARY",
+    ] {
+        assert_eq!(
+            captured.matches(unique).count(),
+            1,
+            "communication source was not delivered exactly once: {unique}"
+        );
+    }
+    assert!(
+        captured.contains("COMMUNICATION CONTEXT (instructions and canonical language; not review evidence)")
+    );
+    assert!(
+        captured.contains("It is not acceptance evidence, a requirement, or approval authority.")
+    );
+    assert!(!captured.contains("NONCANONICAL-TERM-CANARY"));
+
+    let packets = repo.path().join(".codeos/05-review/reviews/codex/packets");
+    let saved = std::fs::read_dir(packets)
+        .unwrap()
+        .next()
+        .unwrap()
+        .unwrap()
+        .path();
+    assert_eq!(captured, std::fs::read_to_string(saved).unwrap());
+}
+
+#[test]
+fn unsafe_canonical_project_terminology_fails_before_provider_invocation() {
+    let (repo, _) = setup_temp_git_repo();
+    setup_codeos_symlink(repo.path());
+    let fake = setup_fake_codex();
+    std::fs::create_dir_all(repo.path().join(".codeos/00-project")).unwrap();
+    let external = tempfile::NamedTempFile::new().unwrap();
+    std::os::unix::fs::symlink(
+        external.path(),
+        repo.path().join(".codeos/00-project/terminology.md"),
+    )
+    .unwrap();
+
+    let (code, _, stderr) =
+        run_with_fake_codex(repo.path(), &fake, &review_args("UPG-OUTPUT"), "success");
+
+    assert_eq!(code, 4, "{stderr}");
+    assert!(
+        stderr.contains("project terminology resolves outside its owning repository"),
+        "{stderr}"
+    );
+    assert!(!fake.args_log.exists(), "provider was invoked");
+    assert!(!fake.packet_log.exists(), "provider received a packet");
+    assert!(!repo.path().join(".codeos/05-review/reviews").exists());
+}
+
+#[test]
+fn reviewer_coalesces_communication_sources_that_resolve_to_one_canonical_path() {
+    let (repo, _) = setup_temp_git_repo();
+    let fake = setup_fake_codex();
+    for directory in [
+        "dba/00-entry",
+        "dba/03-prompts/review",
+        "dba/05-guidance",
+        ".codeos/00-project",
+    ] {
+        std::fs::create_dir_all(repo.path().join(directory)).unwrap();
+    }
+    std::fs::write(repo.path().join("dba-system.md"), "# Test DBA entry\n").unwrap();
+    std::fs::write(
+        repo.path()
+            .join("dba/03-prompts/review/codeos-reviewer-task.md"),
+        "Reviewer test task.\n",
+    )
+    .unwrap();
+    std::fs::write(
+        repo.path()
+            .join("dba/05-guidance/reader-oriented-output.md"),
+        "# Test Reader Guidance\n",
+    )
+    .unwrap();
+    std::fs::write(
+        repo.path().join("dba/05-guidance/terminology.md"),
+        "# Test Codeos Terminology\nDUPLICATE-SOURCE-CANARY\n",
+    )
+    .unwrap();
+    std::os::unix::fs::symlink(
+        "../../dba/05-guidance/terminology.md",
+        repo.path().join(".codeos/00-project/terminology.md"),
+    )
+    .unwrap();
+    Command::new("git")
+        .args(["add", "dba-system.md", "dba", ".codeos"])
+        .current_dir(repo.path())
+        .output()
+        .unwrap();
+    Command::new("git")
+        .args(["commit", "-m", "add self-development toolkit fixture"])
+        .current_dir(repo.path())
+        .output()
+        .unwrap();
+
+    let (code, _, stderr) =
+        run_with_fake_codex(repo.path(), &fake, &review_args("UPG-OUTPUT"), "success");
+    assert_eq!(code, 0, "{stderr}");
+    let captured = std::fs::read_to_string(&fake.packet_log).unwrap();
+    assert_eq!(captured.matches("DUPLICATE-SOURCE-CANARY").count(), 1);
+}
+
+#[test]
 fn every_review_is_fresh_ephemeral_and_saved_sessions_are_ignored() {
     let (repo, _) = setup_temp_git_repo();
     setup_codeos_symlink(repo.path());

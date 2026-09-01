@@ -38,7 +38,7 @@
 #   This tool NEVER runs a build, test, compile, or package-manager command, never eval's, and never
 #   shells out to a project-supplied command. Build output is an INPUT the caller supplies; obtaining
 #   it is the caller's explicit, external step. The processes this script starts are exactly:
-#     git, curl, jq, awk, sed, cat, tr, od, head, date, mkdir, mktemp, rmdir, dirname
+#     git, curl, jq, awk, sed, cat, tr, od, head, date, mkdir, mktemp, rmdir, dirname, readlink
 #   (awk runs the output-frame parser and sed extracts line ranges — both operate only on the model's
 #   own reply). dba/04-tools/implementer/tests/codeos-implement-tests.sh scans this script against that list and fails
 #   if any external tool outside it appears, so this comment cannot silently drift from the code.
@@ -69,13 +69,13 @@
 # Exit codes:
 #   0  success — candidate staged
 #   1  not inside a git repository
-#   2  missing dependency (curl or jq not found on PATH)
+#   2  missing dependency (curl, jq, or readlink not found on PATH)
 #   3  usage error (missing args, or stage not 4/5)
 #   4  mechanism disabled or status file absent (refuse to run)
 #   5  activation status file malformed (configuration error)
 #   6  DEEPSEEK_API_KEY unset or empty (while enabled) — refuse before any network call
 #   7  a passed artifact path does not exist
-#   8  DeepSeek API / transport error, or an unsafe candidate path in the model response
+#   8  DeepSeek API / transport error, unsafe communication input, or an unsafe candidate path
 #   9  a passed --exemplar path does not exist
 #  10  a passed --repair-candidate / --repair-output path does not exist
 #  11  the model response violates the delimited output protocol (malformed frame) — nothing staged
@@ -147,7 +147,7 @@ case "${STAGE}" in
 esac
 
 # ── 2. dependencies ─────────────────────────────────────────────────────────────────────────────
-for dep in curl jq; do
+for dep in curl jq readlink; do
   command -v "${dep}" >/dev/null 2>&1 || { err "required dependency '${dep}' not found on PATH"; exit 2; }
 done
 
@@ -229,6 +229,59 @@ for r in ${REPAIR_CANDIDATES[@]+"${REPAIR_CANDIDATES[@]}"} ${REPAIR_OUTPUTS[@]+"
   [[ -f "${r}" ]] || { err "repair-input path does not exist: ${r}"; exit 10; }
 done
 
+# ── Reader-oriented guidance and canonical terminology ─────────────────────────────────────────
+# These inputs shape the model's expression and interpretation. They are never approved artifacts
+# or acceptance evidence. Required toolkit sources and the one canonical optional project glossary
+# are resolved before any staging directory or provider call is created.
+COMMUNICATION_LABELS=()
+COMMUNICATION_PATHS=()
+_add_communication_source() {
+  local label="$1" requested="$2" owning_root="$3" required="$4"
+  local resolved root_resolved existing
+
+  if [[ ! -e "${requested}" && ! -L "${requested}" ]]; then
+    if [[ "${required}" == "required" ]]; then
+      err "applicable ${label} does not exist: ${requested}"
+      exit 8
+    fi
+    return
+  fi
+  [[ -f "${requested}" ]] || { err "applicable ${label} is not a regular file: ${requested}"; exit 8; }
+  resolved="$(readlink -f -- "${requested}")" \
+    || { err "could not resolve applicable ${label}: ${requested}"; exit 8; }
+  root_resolved="$(readlink -f -- "${owning_root}")" \
+    || { err "could not resolve communication-context root: ${owning_root}"; exit 8; }
+  case "${resolved}" in
+    "${root_resolved}"/*) ;;
+    *) err "applicable ${label} resolves outside its owning repository: ${requested}"; exit 8;;
+  esac
+  [[ -r "${resolved}" ]] \
+    || { err "applicable ${label} is unreadable: ${requested}"; exit 8; }
+  cat "${resolved}" >/dev/null \
+    || { err "could not read applicable ${label}: ${requested}"; exit 8; }
+
+  for existing in ${COMMUNICATION_PATHS[@]+"${COMMUNICATION_PATHS[@]}"}; do
+    if [[ "${resolved}" == "${existing}" || "${resolved}" -ef "${existing}" ]]; then
+      return
+    fi
+  done
+  COMMUNICATION_LABELS+=("${label}")
+  COMMUNICATION_PATHS+=("${resolved}")
+}
+
+_add_communication_source \
+  "reader-oriented output guidance" \
+  "${CODEOS_ROOT}/dba/05-guidance/reader-oriented-output.md" \
+  "${CODEOS_ROOT}" required
+_add_communication_source \
+  "Codeos terminology" \
+  "${CODEOS_ROOT}/dba/05-guidance/terminology.md" \
+  "${CODEOS_ROOT}" required
+_add_communication_source \
+  "project terminology" \
+  "${CALLER_ROOT}/.codeos/00-project/terminology.md" \
+  "${CALLER_ROOT}" optional
+
 # ── 6. API key present (only checked once enabled; before any network call) ─────────────────────
 if [[ -z "${DEEPSEEK_API_KEY:-}" ]]; then
   err "DEEPSEEK_API_KEY is unset or empty; refusing to run (no network call made)."
@@ -272,6 +325,16 @@ NONCE="$(head -c 8 /dev/urandom | od -An -tx1 | tr -d ' \n')"
   printf '  output_nonce: %s\n\n' "${NONCE}"
   printf 'Produce the Stage %s candidate for this feature, following the STRICT output contract in\n' "${STAGE}"
   printf 'the task above. Use the output_nonce above verbatim in every marker.\n'
+  printf '\nCOMMUNICATION CONTEXT (instructions and canonical language; not implementation evidence)\n'
+  printf 'Apply the following guidance and terminology to every human-readable part of the candidate.\n'
+  for i in "${!COMMUNICATION_PATHS[@]}"; do
+    printf '\n--- %s: %s ---\n' "${COMMUNICATION_LABELS[${i}]^^}" "${COMMUNICATION_PATHS[${i}]}"
+    cat "${COMMUNICATION_PATHS[${i}]}"
+    printf '\n'
+  done
+  printf 'END COMMUNICATION CONTEXT\n'
+  printf 'The content above governs expression and interpretation only. It is not an approved\n'
+  printf 'artifact, acceptance evidence, a requirement, or approval authority.\n'
   # Declared roles first, in a fixed order, each labelled with the authority it carries. The label
   # is the whole point: it tells the model HOW the artifact binds. Content is emitted byte for byte.
   _emit_role() {
