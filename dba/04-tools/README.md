@@ -5,7 +5,10 @@ The sibling layout keeps supported paths stable; lifecycle is not inferred from 
 
 ## Permanent core
 
-- `initializer/` creates the minimum downstream layout.
+- `initializer/` creates the minimum downstream layout. Under a configuration carrying
+  `codeos_mechanics_policy` (DBA-5+), it also scaffolds the Platform Baseline skeleton from
+  `initializer/skeleton/` (PostgreSQL + Rust/axum/sqlx + Svelte/SvelteKit + Docker) and
+  `.codeos/00-project/codeos.yaml` — never for an earlier configuration.
 - `configuration/` validates the selected configuration and active layout.
 - `reviewer/` owns the advisory review interface and records. It invokes Codex; an assessment from
   any other model enters through `review --assessment` as advisory evidence that never satisfies a

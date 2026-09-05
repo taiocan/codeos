@@ -73,4 +73,67 @@ git -C "${SOURCE}" worktree add -q -b linked "${WORKTREE}"
 run_init "${WORKTREE}" worktree
 [[ -f "${WORKTREE}/.git" ]] || fail 'linked worktree marker was replaced'
 
+# Platform Baseline gating: dba-init.sh must scaffold the skeleton only when the active
+# configuration carries codeos_mechanics_policy (DBA-5+), never for DBA-4. A fake toolkit root is
+# required because dba-init.sh derives its own toolkit path from its script location, not an env
+# var, so the real active pointer (DBA-4) cannot be exercised for the "true" branch in place.
+FAKE_TOOLKIT="${WORK}/fake-toolkit"
+mkdir -p "${FAKE_TOOLKIT}/dba/00-entry/configurations" \
+  "${FAKE_TOOLKIT}/dba/04-tools/initializer" \
+  "${FAKE_TOOLKIT}/dba/05-guidance/templates"
+cp "${CODEOS_ROOT}/dba/04-tools/initializer/dba-init.sh" "${FAKE_TOOLKIT}/dba/04-tools/initializer/"
+cp -r "${CODEOS_ROOT}/dba/04-tools/initializer/skeleton" "${FAKE_TOOLKIT}/dba/04-tools/initializer/"
+cp "${CODEOS_ROOT}/dba/05-guidance/templates/project-CLAUDE.md" \
+  "${CODEOS_ROOT}/dba/05-guidance/templates/project-root-CLAUDE.md" \
+  "${CODEOS_ROOT}/dba/05-guidance/templates/project-AGENTS.md" \
+  "${CODEOS_ROOT}/dba/05-guidance/templates/codeos.yaml" \
+  "${FAKE_TOOLKIT}/dba/05-guidance/templates/"
+printf 'codeos_mechanics_policy: dba/02-policies/codeos-mechanics/fake.md\n' \
+  > "${FAKE_TOOLKIT}/dba/00-entry/configurations/DBA-TEST.yaml"
+printf 'Active configuration: `.codeos/toolkit/dba/00-entry/configurations/DBA-TEST.yaml`\n' \
+  > "${FAKE_TOOLKIT}/dba-system.md"
+
+run_fake_init() { (cd "$1" && bash "${FAKE_TOOLKIT}/dba/04-tools/initializer/dba-init.sh" "${2:-example}" >/dev/null); }
+
+BASELINE_PROJECT="${WORK}/baseline-project"
+mkdir -p "${BASELINE_PROJECT}"
+run_fake_init "${BASELINE_PROJECT}" baseline-example
+
+for path in backend web docker-compose.yml PLATFORM-BASELINE.md .codeos/00-project/codeos.yaml; do
+  [[ -e "${BASELINE_PROJECT}/${path}" ]] || fail "Platform Baseline config omitted ${path}"
+done
+grep -Fxq '  charter: governed' "${BASELINE_PROJECT}/.codeos/00-project/codeos.yaml" \
+  || fail 'copied codeos.yaml is missing locked core-four governance'
+
+printf 'local edit\n' >> "${BASELINE_PROJECT}/backend/README.md"
+run_fake_init "${BASELINE_PROJECT}" baseline-example
+grep -Fq 'local edit' "${BASELINE_PROJECT}/backend/README.md" \
+  || fail 'rerun overwrote an existing Platform Baseline skeleton'
+
+# A DBA-4-shaped fixture (no codeos_mechanics_policy key) must not scaffold the Platform Baseline
+# — mirrors BASELINE_PROJECT's fixture above rather than relying on whichever configuration this
+# repo's own active pointer happens to name, which changes over time.
+FAKE_TOOLKIT_DBA4="${WORK}/fake-toolkit-dba4"
+mkdir -p "${FAKE_TOOLKIT_DBA4}/dba/00-entry/configurations" \
+  "${FAKE_TOOLKIT_DBA4}/dba/04-tools/initializer" \
+  "${FAKE_TOOLKIT_DBA4}/dba/05-guidance/templates"
+cp "${CODEOS_ROOT}/dba/04-tools/initializer/dba-init.sh" "${FAKE_TOOLKIT_DBA4}/dba/04-tools/initializer/"
+cp -r "${CODEOS_ROOT}/dba/04-tools/initializer/skeleton" "${FAKE_TOOLKIT_DBA4}/dba/04-tools/initializer/"
+cp "${CODEOS_ROOT}/dba/05-guidance/templates/project-CLAUDE.md" \
+  "${CODEOS_ROOT}/dba/05-guidance/templates/project-root-CLAUDE.md" \
+  "${CODEOS_ROOT}/dba/05-guidance/templates/project-AGENTS.md" \
+  "${CODEOS_ROOT}/dba/05-guidance/templates/codeos.yaml" \
+  "${FAKE_TOOLKIT_DBA4}/dba/05-guidance/templates/"
+printf 'doctrine: dba/01-doctrine/v4.md\n' \
+  > "${FAKE_TOOLKIT_DBA4}/dba/00-entry/configurations/DBA-4-TEST.yaml"
+printf 'Active configuration: `.codeos/toolkit/dba/00-entry/configurations/DBA-4-TEST.yaml`\n' \
+  > "${FAKE_TOOLKIT_DBA4}/dba-system.md"
+
+DBA4_PROJECT="${WORK}/dba4-project"
+mkdir -p "${DBA4_PROJECT}"
+(cd "${DBA4_PROJECT}" && bash "${FAKE_TOOLKIT_DBA4}/dba/04-tools/initializer/dba-init.sh" dba4-example >/dev/null)
+for path in backend web docker-compose.yml PLATFORM-BASELINE.md .codeos/00-project/codeos.yaml; do
+  [[ ! -e "${DBA4_PROJECT}/${path}" ]] || fail "DBA-4 initialization created Platform Baseline ${path}"
+done
+
 printf 'initializer tests: PASS\n'

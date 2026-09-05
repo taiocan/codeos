@@ -1,0 +1,46 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: codeos
+      POSTGRES_PASSWORD: codeos
+      POSTGRES_DB: codeos
+    # Published so `cargo test`/`cargo run` on the host (not in a container) can reach this
+    # database directly during active backend development — see backend/README.md.
+    ports:
+      - "5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U codeos -d codeos"]
+      interval: 2s
+      timeout: 3s
+      retries: 10
+
+  backend:
+    build: ./backend
+    environment:
+      DATABASE_URL: postgres://codeos:codeos@db:5432/codeos
+      BACKEND_ADDR: 0.0.0.0:8080
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web:
+    build: ./web
+    environment:
+      BACKEND_URL: http://backend:8080
+      PORT: 3000
+      # adapter-node does not trust the Host header for its CSRF Origin check; without this, a
+      # SvelteKit form action (e.g. a feature's first form submission) is rejected with 403. Must
+      # match the browser-visible origin, so override it if this stack is reached elsewhere.
+      ORIGIN: http://localhost:3000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+volumes:
+  db-data:

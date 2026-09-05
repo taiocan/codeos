@@ -15,6 +15,16 @@ ROOT_CLAUDE_TEMPLATE="$CODEOS_PATH/dba/05-guidance/templates/project-root-CLAUDE
 ROOT_AGENTS_TEMPLATE="$CODEOS_PATH/dba/05-guidance/templates/project-AGENTS.md"
 PROJECT_CLAUDE="$CODEOS_DIR/00-project/CLAUDE.md"
 
+# Whether the active configuration carries the Platform Baseline mandate is read from dba-system.md
+# itself — the one authoritative place naming the active configuration — rather than hardcoding a
+# doctrine version number here.
+ACTIVE_CONFIG_REL="$(sed -n 's#^Active configuration: `\.codeos/toolkit/\(.*\)`$#\1#p' "$CODEOS_PATH/dba-system.md")"
+PLATFORM_BASELINE=false
+if [[ -n "$ACTIVE_CONFIG_REL" && -f "$CODEOS_PATH/$ACTIVE_CONFIG_REL" ]] \
+    && grep -q '^codeos_mechanics_policy:' "$CODEOS_PATH/$ACTIVE_CONFIG_REL"; then
+    PLATFORM_BASELINE=true
+fi
+
 fail() {
     echo "[error] $*" >&2
     exit 1
@@ -137,6 +147,23 @@ else
     echo "[ok]   git init"
 fi
 
+if [[ "$PLATFORM_BASELINE" == true ]]; then
+    SKELETON_DIR="$CODEOS_PATH/dba/04-tools/initializer/skeleton"
+    PROJECT_CODEOS_YAML="$CODEOS_DIR/00-project/codeos.yaml"
+    if [[ -e "$PROJECT_DIR/backend" || -e "$PROJECT_DIR/web" || -e "$PROJECT_DIR/docker-compose.yml" ]]; then
+        echo "[skip] Platform Baseline skeleton already present"
+    else
+        cp -r "$SKELETON_DIR/." "$PROJECT_DIR/"
+        echo "[ok]   Platform Baseline skeleton (backend/, web/, docker-compose.yml)"
+    fi
+    if [[ -f "$PROJECT_CODEOS_YAML" ]]; then
+        echo "[skip] .codeos/00-project/codeos.yaml already exists"
+    else
+        cp "$CODEOS_PATH/dba/05-guidance/templates/codeos.yaml" "$PROJECT_CODEOS_YAML"
+        echo "[ok]   .codeos/00-project/codeos.yaml"
+    fi
+fi
+
 if [[ -n "$REMOTE_URL" ]]; then
     if git -C "$PROJECT_DIR" remote get-url origin &>/dev/null; then
         echo "[skip] git remote 'origin' already set"
@@ -146,4 +173,8 @@ if [[ -n "$REMOTE_URL" ]]; then
     fi
 fi
 
-echo "Done. Fill in .codeos/00-project/CLAUDE.md, then use .codeos/toolkit/dba/03-prompts/workflow/support-solution-charter.md to establish and approve the Solution Charter before the first Specification Package."
+if [[ "$PLATFORM_BASELINE" == true ]]; then
+    echo "Done. Run 'docker compose up --build' to see the integrated Platform Baseline (see PLATFORM-BASELINE.md), fill in .codeos/00-project/CLAUDE.md, then use .codeos/toolkit/dba/03-prompts/workflow/support-solution-charter.md to establish and approve the Solution Charter before the first Specification Package."
+else
+    echo "Done. Fill in .codeos/00-project/CLAUDE.md, then use .codeos/toolkit/dba/03-prompts/workflow/support-solution-charter.md to establish and approve the Solution Charter before the first Specification Package."
+fi

@@ -1,0 +1,2 @@
+-- Reference skeleton baseline: no domain tables yet. Each feature's Stage 4 implementation adds
+-- its own migration file here once a real feature needs persistence.
