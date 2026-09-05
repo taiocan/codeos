@@ -4,12 +4,17 @@
 > `.codeos/toolkit/dba-system.md`. Codeos toolkit self-development is governed separately by the repository
 > root `CLAUDE.md`.
 
-Active configuration: `.codeos/toolkit/dba/00-entry/configurations/DBA-4.yaml`
+Active configuration: `.codeos/toolkit/dba/00-entry/configurations/DBA-5.yaml`
 
 The configuration selects the authoritative version of each governed DBA component. Component
 files own their semantics; the configuration only selects which versions are active.
 
-Only the active DBA configuration is supported. Inactive configurations are historical records.
+The active configuration is the default for a newly initialized project and the target of an
+explicit upgrade. A project that has already adopted a specific configuration continues under it
+until that project's user explicitly elects to upgrade — the active pointer changing here does not
+migrate, retrofit, or reinterpret an existing project's artifacts. A configuration a project has
+adopted remains supported for that project's continued use. A configuration no project has adopted
+and that is not active is a historical record only.
 
 ## Downstream Project Layout Contract
 
