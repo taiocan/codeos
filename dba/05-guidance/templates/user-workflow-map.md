@@ -1,6 +1,12 @@
+---
+artifact_type: user_workflow_map
+---
+
 # User Workflow Map: [journey]
 
 <!--
+Exempt from the Summary block and reader_model declaration: the Journey table is already compact.
+
 Optional, non-authoritative working aid for a user-facing journey. It has no approval, lifecycle,
 review, or traceability role and never overrides an approved Charter, Specification Package, or
 Architecture Scope. If it disagrees with one, this map is wrong or stale.

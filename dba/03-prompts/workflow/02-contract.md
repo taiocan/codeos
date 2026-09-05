@@ -48,6 +48,12 @@ both artifacts in `DRAFT` and revise Intent if Contract work exposes a product g
 - Identify exact cross-module signals only when behavior depends on them.
 - Apply the vocabulary pattern only when Stage 1 identified a vocabulary dependency; keep
   resolution strategy out of the Contract.
+- Answer the template's Validation Questions (Behavior, Repeatability, Browser, Preview) before
+  implementation begins, per the selected Codeos Mechanics policy. Answer Browser as "not
+  applicable" only when the feature genuinely has no GUI-visible outcome.
+- Complete the Feature Impact Accounting table: record this feature's effect on each Platform
+  Baseline tier as changed or unchanged, with a reason. A tier changes only when the feature
+  actually requires it — do not manufacture a change to satisfy the table.
 
 If an unresolved Intent decision prevents a sound Contract, present the partial draft with an
 actionable unknown and return to Stage 1.

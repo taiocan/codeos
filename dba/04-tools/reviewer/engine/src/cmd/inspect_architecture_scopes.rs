@@ -9,6 +9,13 @@ use std::path::Path;
 struct ScopeMetadata {
     features: Vec<String>,
     approval: serde_yaml::Value,
+    // Present on a DBA-5 (or later) Architecture Scope; absent on an already-adopted DBA-4 scope,
+    // which remains valid unchanged. Neither field affects scope facts — governance state is read
+    // from `features`/`approval` only, per the Downstream Artifact Frontmatter Contract.
+    #[serde(default)]
+    artifact_type: Option<String>,
+    #[serde(default)]
+    reader_model: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]

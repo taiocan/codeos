@@ -22,6 +22,7 @@ Canonical durable locations are:
 | Capability | Location | Creation |
 |---|---|---|
 | Project instructions | `.codeos/00-project/CLAUDE.md` | Required |
+| Project configuration | `.codeos/00-project/codeos.yaml` | Required under DBA-5 and later; not applicable under DBA-4 |
 | Solution Charter | `.codeos/00-project/charter.md` | Required before the first Specification Package approval |
 | Learning Register | `.codeos/00-project/learnings.md` | Only when a material unresolved observation exists |
 | Project terminology | `.codeos/00-project/terminology.md` | Only when shared project-specific terminology exists |
@@ -51,6 +52,56 @@ This section is the sole semantic owner of canonical downstream locations. Workf
 canonical output paths for operational clarity; consumers load artifact types from this contract
 without independently redefining the layout. Templates and tools implement these locations, and
 the layout contract check enforces them.
+
+## Downstream Artifact Frontmatter and Communication Contract
+
+Applies under DBA-5 and later to every artifact produced under the Downstream Project Layout
+Contract above. It is distinct from the Component Boundary Contract below, which governs this
+toolkit's own doctrine, policy, prompt, and tool files, not downstream project artifacts.
+
+Every downstream artifact begins with:
+
+```yaml
+---
+artifact_type: <type>
+---
+```
+
+plus that artifact type's approval-bearing metadata when `<type>` is governed, and any other
+type-specific fields its owning template or policy defines (for example `features` on an
+Architecture Scope). Approval-bearing metadata is either an `approval` field (Charter, Architecture
+Scope, and other single-decision artifacts) or the Specification Package's own `status` /
+`approved_by` / `approved_at` triple (Intent, Contract, Event Schema — kept distributed because the
+three record one joint package decision, not three separate gates). `governed` is not a supported
+frontmatter key — an artifact never restates its own governance state. Charter, Intent, Contract,
+and Event Schema always require it. Every other type's requirement is read from
+`.codeos/00-project/codeos.yaml`'s `artifacts:` block, which is the sole authoritative source for
+that state.
+
+Every substantial human-facing artifact — governed or not — opens with a Summary block immediately
+after this frontmatter:
+
+```markdown
+## Summary
+- [key message]
+- [key message]
+
+Oversimplification risk: this summary can omit nuance the full artifact carries. Read the
+relevant section directly before relying on the summary alone for a consequential decision.
+```
+
+and declares `reader_model: <stable-topic | known-to-new | whole-before-parts | preview-then-traverse>`
+in its frontmatter, per `dba/05-guidance/reader-oriented-output.md`. Both requirements are exempt on
+event schemas, logs, machine-structured data, compact tables, and any artifact short enough that a
+summary would repeat it.
+
+`.codeos/00-project/codeos.yaml` also names the solution's Platform Baseline and displays the fixed
+Codeos Mechanics from the selected Codeos Mechanics policy. It is mechanically checked by
+`bash dba/04-tools/configuration/project-config-contract.sh`, which fails closed on a downgraded
+core-four artifact type, an unlisted artifact type, or an attempt to change a fixed mechanic.
+Toggling a configurable artifact type's governed state changes its process weight only; it does not
+suspend a doctrine-level human-control guarantee, none of which are represented as configuration
+entries.
 
 ## Component Boundary Contract
 

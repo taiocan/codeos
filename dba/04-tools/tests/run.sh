@@ -6,6 +6,7 @@ CODEOS_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd -P)"
 
 bash "${CODEOS_ROOT}/dba/04-tools/configuration/layout-contract.sh"
 bash "${CODEOS_ROOT}/dba/04-tools/configuration/guidance-contract.sh"
+bash "${CODEOS_ROOT}/dba/04-tools/configuration/project-config-contract.sh"
 bash "${CODEOS_ROOT}/dba/04-tools/initializer/tests/dba-init-tests.sh"
 bash "${CODEOS_ROOT}/dba/04-tools/reviewer/tests/codeos-review-wrapper.sh"
 bash "${CODEOS_ROOT}/dba/04-tools/reviewer/tests/codeos-review-deepseek-tests.sh"

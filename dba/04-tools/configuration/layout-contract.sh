@@ -110,6 +110,7 @@ fi
 
 canonical_paths=(
   '.codeos/00-project/CLAUDE.md'
+  '.codeos/00-project/codeos.yaml'
   '.codeos/00-project/charter.md'
   '.codeos/00-project/learnings.md'
   '.codeos/00-project/terminology.md'

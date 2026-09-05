@@ -16,6 +16,7 @@ expected_guidance=(
   reader-oriented-output.md
   templates/architecture-scope.md
   templates/charter.md
+  templates/codeos.yaml
   templates/contract.md
   templates/event-schema.md
   templates/feature-decomposition.md
@@ -90,9 +91,15 @@ done
 if rg -l 'Known-to-New Progression|Preview Then Traverse' \
   "${SELF_INSTRUCTIONS}" "${PROJECT_INSTRUCTIONS}" "${DBA_ENTRY}" \
   "${CODEOS_ROOT}/dba/03-prompts" "${CODEOS_ROOT}/dba/05-guidance" \
-  | grep -Fvx "${READER_OUTPUT}" >/dev/null; then
+  | grep -Fvx -e "${READER_OUTPUT}" -e "${TERMINOLOGY}" >/dev/null; then
   fail 'reader-oriented progression rules have a competing active copy'
 fi
+# terminology.md may name the four progression values once, as the Reader Model glossary entry's
+# enum, without restating their definitions.
+rg -q '^\| \*\*Reader Model\*\* \|' "${TERMINOLOGY}" || fail 'Reader Model term is missing from terminology.md'
+rg -c 'Stable Topic|Known-to-New|Whole Before Parts|Preview Then Traverse' "${TERMINOLOGY}" \
+  | awk -F: '{ if ($1 > 1) exit 1 }' || \
+  fail 'terminology.md references a progression name outside the single Reader Model entry'
 if rg -q 'Controlled Plain English|controlled-plain-english|controlled_plain_english|writing-discipline' \
   "${READER_OUTPUT}"; then
   fail 'reader-oriented guidance resurrects a retired writing mechanism'

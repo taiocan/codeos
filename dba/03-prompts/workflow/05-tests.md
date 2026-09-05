@@ -15,10 +15,13 @@ Load the approved Contract and Event Schema types through the Downstream Project
 then read the Stage 4 implementation. The Contract owns observation mode, scenarios, failures,
 invariants, and any minimum environment requirement.
 
-When approved architecture selects Svelte for a browser interface, consult
+Read the selected Codeos Mechanics policy. Its `validation` mechanics are fixed, not
+project-configurable: `smoke`, `behavior`, and `repeatability` apply to every feature; `playwright`
+and `human_ux` apply whenever the Contract has a GUI-visible outcome. When approved architecture
+selects Svelte for a browser interface — the Platform Baseline default — consult
 `.codeos/toolkit/dba/05-guidance/patterns/svelte-gui-verification.md`. It supplies proportional
-verification techniques, not requirements or a substitute for judging whether evidence proves the
-Contract.
+verification technique; the Codeos Mechanics policy, not this pattern, is what makes its
+application mandatory rather than optional.
 
 ## Task
 
@@ -43,6 +46,13 @@ Contract.
   Contract explicitly makes that global state part of the scenario.
 - When runtime boundaries cannot be exercised in tests, record the uncovered Contract behavior for
   Stage 6 instead of pretending it is covered.
+- Confirm basic DB↔backend↔GUI integration smoke actually runs for any tier the Feature Impact
+  Accounting table marked changed (`smoke` mechanic), before deeper verification.
+- For a Contract with a GUI-visible outcome, add at least one bounded, integrated Playwright journey
+  demonstrating the critical user-visible outcome against the real Postgres, real Rust backend, and
+  real Svelte app — no tier mocked (`playwright` mechanic). Record the separate human UX validation
+  (`human_ux` mechanic) as evidence distinct from behavioral correctness; it is not satisfied by a
+  passing Playwright assertion alone.
 
 Replay comparisons ignore generated identifiers, timestamps, and other nondeterministic envelope
 fields unless the Contract governs them. Compare governed sequence and deterministic payload

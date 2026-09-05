@@ -1,0 +1,52 @@
+# Canonical path: .codeos/00-project/codeos.yaml
+#
+# The single project configuration naming the Platform Baseline, the fixed Codeos Mechanics
+# (display only — see dba/02-policies/codeos-mechanics/<version>.md, which owns their semantics),
+# and each artifact type's governed state. Checked by
+# `bash dba/04-tools/configuration/project-config-contract.sh`.
+#
+# An artifact type's governed state has exactly one authoritative source: the `artifacts:` block
+# below. Never restate it inside an artifact's own frontmatter.
+
+platform:
+  persistence: postgresql
+  backend: rust
+  webapp: svelte
+  runtime: docker
+  # A tier reads "not-applicable: <reason>" only when the Solution Charter records why it does not
+  # apply, e.g.:
+  #   webapp: not-applicable: no end user; charter.md records this as a pure backend service
+
+mechanics:
+  # Fixed by the selected Codeos Mechanics policy. Shown here for transparency only — every value
+  # below must match that policy exactly. A project cannot change one; the validator fails closed
+  # if it tries.
+  delivery:
+    vertical_slice: always
+    early_gui_preview: always_when_gui
+  validation:
+    smoke: always
+    behavior: always
+    repeatability: always
+    playwright: always_when_gui
+    human_ux: always_when_gui
+  communication:
+    summary_first: always
+    reader_oriented_writing: always
+    terminology_consistency: always
+
+artifacts:
+  # Charter, intent, contract, and event_schema are locked governed and cannot be set otherwise.
+  charter: governed
+  intent: governed
+  contract: governed
+  event_schema: governed
+  # Every other type is project-configurable. Values below are the shipped defaults.
+  architecture: governed
+  module_design_note: nongoverned
+  learning_register: nongoverned
+  review_file: nongoverned
+  feature_decomposition: nongoverned
+  project_terminology: nongoverned
+  user_workflow_map: nongoverned
+  refinement: nongoverned

@@ -1,8 +1,18 @@
 ---
+artifact_type: charter
 approval: null
+reader_model:  # stable-topic | known-to-new | whole-before-parts | preview-then-traverse
 ---
 
 # Solution Charter: [solution name]
+
+## Summary
+- [key message]
+- [key message]
+- [key message]
+
+Oversimplification risk: this summary can omit nuance the full artifact carries. Read the
+relevant section directly before relying on the summary alone for a consequential decision.
 
 <!--
 The one authoritative statement of why this solution exists, which primary decision it supports,
@@ -20,6 +30,12 @@ This artifact does not define feature behavior. Feature outcomes, guarantees, an
 Intents; observable behavior belongs to Contracts; structure belongs to Architecture Scopes.
 Delete any section that has no content rather than filling it with "none".
 -->
+
+## Product Demonstrability
+
+The product stays continuously demonstrable through the integrated solution — behavioral,
+repeatability, browser-level, and human validation, per the Codeos Mechanics policy — rather than
+becoming demonstrable only once, near the end.
 
 ## Problem
 
@@ -50,6 +66,17 @@ later outcome change identifies the features it may affect. Never reuse a retire
 | ID | Outcome | How success is measured |
 |---|---|---|
 | O-1 | [what must become true for people using the solution] | [the measure or observation that shows it] |
+
+## Platform Baseline
+
+<!--
+The solution gets PostgreSQL persistence, a Rust backend, a Svelte GUI, and Docker runtime by
+default. Record a tier here only when it does not apply — this is the sole exception mechanism;
+no separate approval is needed beyond this Charter's own approval.
+-->
+
+All four Platform Baseline tiers apply. [Or: delete the line above and list each excepted tier with
+its reason, e.g. "GUI — not applicable: no end user, this is a backend-only integration service."]
 
 ## Scope and Boundary
 

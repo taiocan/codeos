@@ -1,9 +1,18 @@
 ---
+artifact_type: module_design_note
 module: [module_slug]
 verified_against_commit: [git SHA]
+reader_model:  # stable-topic | known-to-new | whole-before-parts | preview-then-traverse
 ---
 
 # Module Design Note: [module]
+
+## Summary
+- [key message]
+- [key message]
+
+Oversimplification risk: this summary can omit nuance the full artifact carries. Read the
+relevant section directly before relying on the summary alone for a consequential decision.
 
 <!--
 Optional descriptive documentation of how one implementation module currently works. Explanatory

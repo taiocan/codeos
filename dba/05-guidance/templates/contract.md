@@ -1,4 +1,23 @@
+---
+artifact_type: contract
+feature_id: F-####
+status: DRAFT
+approved_by:
+approved_at:
+derived_from_intent: .codeos/01-specification/intents/<feature-id>.md
+derived_event_schema: .codeos/01-specification/event-schemas/<feature-id>_schema.md
+reader_model:  # stable-topic | known-to-new | whole-before-parts | preview-then-traverse
+---
+
 # Behavioral Contract: [feature_id]
+
+## Summary
+- [key message]
+- [key message]
+- [key message]
+
+Oversimplification risk: this summary can omit nuance the full artifact carries. Read the
+relevant section directly before relying on the summary alone for a consequential decision.
 
 <!--
 PURPOSE OF THIS FILE:
@@ -9,6 +28,19 @@ Its governance transition is owned by the specification-approval doctrine adapte
 
 DERIVED FROM: .codeos/01-specification/intents/<feature-id>.md
 -->
+
+## Validation Questions
+
+<!--
+Answered before implementation so testing discipline is not reconstructed after the fact. See the
+Codeos Mechanics policy for what each obligation requires.
+-->
+
+**Behavior** — how will it be proven? [test strategy]
+**Repeatability** — how will it be proven? [replay/idempotency strategy, or "not applicable" with reason]
+**Browser** — what Playwright journey proves the critical user-visible outcome? [journey, or "not
+applicable" when the feature has no GUI-visible outcome]
+**Preview** — what will the human inspect at the Early Development Preview checkpoint? [what to show]
 
 ## Scenarios
 
@@ -98,6 +130,19 @@ Keep the requirement separate from its architectural consequence:
 | Requirement | Workload and operating context | Rationale | Verification method |
 |---|---|---|---|
 | [observable or verifiable quality this feature must exhibit] | [the conditions under which it must hold] | [why this level] | [test \| measurement \| analysis \| inspection \| review \| operational evidence] |
+
+## Feature Impact Accounting
+
+<!--
+Per the Platform Baseline doctrine: record this feature's effect on each tier as changed or
+unchanged, with a reason. A tier changes only when the feature actually requires it.
+-->
+
+| Tier | Changed / Unchanged | Reason |
+|---|---|---|
+| Persistence (PostgreSQL) | [changed \| unchanged] | [reason] |
+| Backend (Rust) | [changed \| unchanged] | [reason] |
+| GUI (Svelte) | [changed \| unchanged] | [reason] |
 
 ## Vocabulary Dependency
 
@@ -208,13 +253,3 @@ Exhaustive list of named governed failure modes. Every failure here needs:
 |---|---|---|
 | [failure_name] | [when it occurs] | [event emitted or error returned] |
 | [failure_name] | [when it occurs] | [event emitted or error returned] |
-
----
-
-<!-- METADATA — recording behavior is owned by the specification-approval doctrine adapter -->
-status: DRAFT
-feature_id: [feature_id]
-approved_by:
-approved_at:
-derived_from_intent: .codeos/01-specification/intents/<feature-id>.md
-derived_event_schema: .codeos/01-specification/event-schemas/<feature-id>_schema.md

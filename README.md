@@ -23,6 +23,21 @@ Intent, architecture, or targeted refinement — and never changes approved beha
 Current operational consequences are located by searching for `DOCTRINE ADAPTER` in the stage
 prompts. The doctrine remains authoritative when explanatory text disagrees.
 
+## Where to Focus Limited Review Time
+
+Every substantial artifact opens with a Summary; read the full artifact only where the summary's
+Oversimplification Risk note or the table below says the stakes warrant it.
+
+| Artifact | Question it answers | Governance | Focus review on |
+|---|---|---|---|
+| Charter | Why are we building this? | Always | Purpose, scope, outcomes, Platform Baseline exceptions |
+| Intent | What capability are we adding? | Always | Is this what you want? |
+| Contract | What must be true? | Always | Is the behavior correct? The Feature Impact Accounting table |
+| Event Schema | What runtime facts prove it? | Always | Are the right facts observable? |
+| Architecture Scope | How is the solution structured? | Configurable (default: governed) | Major boundaries/tradeoffs, Platform Baseline resolution |
+| Module Design Note | How does this module work? | Configurable (default: nongoverned) | Main risks and choices — descriptive only, never authoritative |
+| User Workflow Map | What will the user do and see? | Configurable (default: nongoverned) | Does the journey make sense? |
+
 ## Quick Start
 
 ```bash
@@ -79,6 +94,8 @@ myproject/
 └── .codeos/                     — Durable project-local DBA state
     ├── 00-project/
     │   ├── CLAUDE.md            — Canonical project instructions
+    │   ├── codeos.yaml          — Project config (DBA-5+): Platform Baseline, Codeos Mechanics,
+    │   │                          per-artifact-type governance
     │   ├── charter.md           — Solution Charter, before the first package approval
     │   ├── learnings.md         — Optional Learning Register, created when needed
     │   └── terminology.md       — Optional shared project terminology, created when needed

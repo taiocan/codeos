@@ -1,3 +1,18 @@
+---
+artifact_type: event_schema
+feature_id: F-####
+status: DRAFT
+approved_by:
+approved_at:
+derived_from_intent: .codeos/01-specification/intents/<feature-id>.md
+derived_from_contract: .codeos/01-specification/contracts/<feature-id>_contract.md
+---
+
+<!--
+Event Schema is exempt from the Summary block and reader_model declaration: it is mechanical,
+tabular event/payload definition, not narrative explanation.
+-->
+
 # Event Schema: [feature_id]
 
 <!--
@@ -137,12 +152,4 @@ Also verify before submitting:
 - [ ] Event flow diagram contains events only — no processing steps
 -->
 
----
-
-<!-- METADATA — recording behavior is owned by the specification-approval doctrine adapter -->
-status: DRAFT
-feature_id: [feature_id]
-approved_by:
-approved_at:
-derived_from_intent: .codeos/01-specification/intents/<feature-id>.md
-derived_from_contract: .codeos/01-specification/contracts/<feature-id>_contract.md
+<!-- Recording behavior is owned by the specification-approval doctrine adapter. -->

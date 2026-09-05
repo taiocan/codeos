@@ -1,6 +1,12 @@
+---
+artifact_type: learning_register
+---
+
 # Learning Register: [solution name]
 
 <!--
+Exempt from the Summary block and reader_model declaration: entries are already short.
+
 Optional queue of unresolved post-acceptance learning. Canonical path:
 .codeos/00-project/learnings.md — create it only when the first entry qualifies.
 

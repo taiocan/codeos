@@ -1,4 +1,10 @@
+---
+artifact_type: review_file
+---
+
 # Review-Process Measurement
+
+<!-- Exempt from the Summary block and reader_model declaration: already a compact measurement. -->
 
 > Optional, non-authoritative analytical evidence. The reviewer tool owns automated review records;
 > the applicable doctrine boundary owns approval. This file evaluates the review process and is

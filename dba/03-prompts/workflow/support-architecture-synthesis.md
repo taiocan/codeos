@@ -24,6 +24,10 @@ duplicate membership, and reuse a matching scope or draft the current architectu
 
 ## Task
 
+- Resolve the Platform Baseline for this scope: persistence (PostgreSQL), backend (Rust), webapp
+  (Svelte), and runtime (Docker) by default, or the Charter-recorded exception for a tier that does
+  not apply. Identify where integrated verification crosses the Postgres/Rust/Svelte boundaries —
+  e.g. which component owns the Playwright acceptance surface for a given user journey.
 - Review approved feature requirements, Charter System Constraints, and applicable architecture
   together.
 - Record only material project-level responsibilities, dependencies, state ownership, integration,

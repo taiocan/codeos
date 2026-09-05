@@ -14,7 +14,8 @@ Implementation Profile constraints, without adding governed behavior.
 
 ## Inputs / Prerequisites
 
-Read the selected doctrine, architecture and Implementation Profile policies. Load the three
+Read the selected doctrine, architecture and Implementation Profile policies, and the Codeos
+Mechanics policy for the fixed delivery obligations below. Load the three
 approved Specification Package artifact types and applicable approved architecture from the
 canonical locations defined by the Downstream Project Layout Contract. Verify the package records
 one valid approval and has not materially changed since. Run the architecture inspector for the
@@ -28,6 +29,20 @@ override approved behavior or architecture.
 
 ## Task
 
+- Implement per the Contract's Feature Impact Accounting: land the change to every Platform
+  Baseline tier the Contract marks changed, together, inside this delivery cycle (`vertical_slice`
+  mechanic) — do not implement a GUI-visible outcome on the backend alone and defer its GUI tier to
+  a later cycle.
+- Once the first runnable implementation across the touched tiers passes basic integration smoke,
+  and before the full verification loop in `05-tests.md` proceeds, surface a clearly labeled
+  Development Preview to the human: *"Development Preview — direction and UX review only;
+  verification is incomplete."* This is a direction check, not an approval gate.
+  - Route the resulting feedback per doctrine: feedback that would change approved behavior returns
+    to the affected Specification Package for revision and human re-approval before implementation
+    continues. Feedback that concerns only implementation or UX choices within already-approved
+    behavior stays here in implementation. Do not apply a behavior-changing correction directly
+    without that return trip — the preview is a direction check, not a side channel for redefining
+    approved meaning.
 - Implement every Contract requirement and no additional governed outcome.
 - In `events` mode, emit only Event-Schema-authorized governed events and propagate correlation as
   specified. In `external-observation` mode, do not invent governed internal events; preserve the
@@ -65,5 +80,6 @@ Contract satisfaction mapping, applicable event mapping, failure mapping, any co
 feature-local structural decisions, and any genuine deferral trace. The inline decision record is
 never written to a file. Separately, this stage MAY create or update a Module Design Note at
 `.codeos/03-design/<module-slug>.md` when the doctrine's rule warrants one; the note is descriptive
-and governs nothing. Continue directly
+and governs nothing. Surface the Development Preview once basic smoke passes, resolve any
+behavior-changing feedback through the affected Specification Package first, then continue directly
 to `05-tests.md` without an intermediate approval unless the human requests one.

@@ -1,6 +1,13 @@
+---
+artifact_type: refinement
+feature_id: F-####
+---
+
 # Refinement: [feature_id] — [short description]
 
 <!--
+Exempt from the Summary block and reader_model declaration: already a short, three-part record.
+
 Optional durable record for a targeted refinement. Use only when the trigger, decision, or
 verification would be difficult to reconstruct from governing artifact changes and Git.
 When saved, use `.codeos/04-refinement/<feature-id>-<slug>.md`.

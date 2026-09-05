@@ -1,6 +1,12 @@
+---
+artifact_type: feature_decomposition
+---
+
 # Feature Decomposition: [topic]
 
 <!--
+Exempt from the Summary block and reader_model declaration: this is already a short working aid.
+
 Optional, non-governed decomposition material. Use only when one problem needs decomposition into
 multiple features or the boundary reasoning has durable value. Simple work proceeds directly to
 an Intent. This decomposition has no feature ID, status, approval, or lifecycle gate and never

@@ -1,4 +1,10 @@
+---
+artifact_type: project_terminology
+---
+
 # [PROJECT_NAME] Terminology
+
+<!-- Exempt from the Summary block and reader_model declaration: a glossary table is compact. -->
 
 This is the canonical glossary for recurring project-wide specialized meanings. Create this file
 only when such terminology exists. Do not add ordinary technical language or terms used by only one
