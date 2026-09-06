@@ -22,6 +22,11 @@ one valid approval and has not materially changed since. Run the architecture in
 feature and stop on invalid metadata, draft membership, conflicting membership, or an unresolved
 project-level decision.
 
+Under the selected Workflow Governance policy, entry to the bounded delivery cycle is also gated on
+the Feature Development checkpoints F1–F2 being mechanically verified as present and current —
+`codeos-workflow status --workflow feature --subject <feature-id>` reports F1 and F2 as PASS. This
+confirms evidence exists; it raises no acceptance bar.
+
 Resolve an approved Implementation Profile only as its policy specifies. When approved architecture
 selects a technology covered by an advisory pattern, consult that pattern. The profile governs
 language and the architecture governs technology selection; patterns authorize neither and never
@@ -43,6 +48,12 @@ override approved behavior or architecture.
     behavior stays here in implementation. Do not apply a behavior-changing correction directly
     without that return trip — the preview is a direction check, not a side channel for redefining
     approved meaning.
+  - Record the human's direction call as the Early Development Preview decision receipt in
+    `.codeos/06-workflow/decisions.jsonl`: `codeos-workflow decide --workflow feature --subject
+    <feature-id> --checkpoint early_preview --result
+    <direction_confirmed|behavior_revision_required|implementation_or_ux_refinement_required>`. The
+    receipt records that the direction call happened and binds it to the current Specification
+    Package and implementation state; it carries no product authority.
 - Implement every Contract requirement and no additional governed outcome.
 - In `events` mode, emit only Event-Schema-authorized governed events and propagate correlation as
   specified. In `external-observation` mode, do not invent governed internal events; preserve the

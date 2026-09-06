@@ -77,21 +77,34 @@ run_init "${WORKTREE}" worktree
 # configuration carries codeos_mechanics_policy (DBA-5+), never for DBA-4. A fake toolkit root is
 # required because dba-init.sh derives its own toolkit path from its script location, not an env
 # var, so the real active pointer (DBA-4) cannot be exercised for the "true" branch in place.
+# A Platform-Baseline fake toolkit selecting codeos-mechanics <mechver>. dba-init.sh renders the
+# fixed mechanics: block from the selected policy, so the policy and the renderer must be present.
+mk_baseline_toolkit() {
+  local toolkit="$1" mechver="$2"
+  mkdir -p "${toolkit}/dba/00-entry/configurations" \
+    "${toolkit}/dba/04-tools/initializer" \
+    "${toolkit}/dba/04-tools/configuration" \
+    "${toolkit}/dba/02-policies/codeos-mechanics" \
+    "${toolkit}/dba/05-guidance/templates"
+  cp "${CODEOS_ROOT}/dba/04-tools/initializer/dba-init.sh" "${toolkit}/dba/04-tools/initializer/"
+  cp -r "${CODEOS_ROOT}/dba/04-tools/initializer/skeleton" "${toolkit}/dba/04-tools/initializer/"
+  cp "${CODEOS_ROOT}/dba/04-tools/configuration/render-mechanics-block.sh" \
+    "${toolkit}/dba/04-tools/configuration/"
+  cp "${CODEOS_ROOT}/dba/02-policies/codeos-mechanics/${mechver}.md" \
+    "${toolkit}/dba/02-policies/codeos-mechanics/${mechver}.md"
+  cp "${CODEOS_ROOT}/dba/05-guidance/templates/project-CLAUDE.md" \
+    "${CODEOS_ROOT}/dba/05-guidance/templates/project-root-CLAUDE.md" \
+    "${CODEOS_ROOT}/dba/05-guidance/templates/project-AGENTS.md" \
+    "${CODEOS_ROOT}/dba/05-guidance/templates/codeos.yaml" \
+    "${toolkit}/dba/05-guidance/templates/"
+  printf 'codeos_mechanics_policy: dba/02-policies/codeos-mechanics/%s.md\n' "${mechver}" \
+    > "${toolkit}/dba/00-entry/configurations/DBA-TEST.yaml"
+  printf 'Active configuration: `.codeos/toolkit/dba/00-entry/configurations/DBA-TEST.yaml`\n' \
+    > "${toolkit}/dba-system.md"
+}
+
 FAKE_TOOLKIT="${WORK}/fake-toolkit"
-mkdir -p "${FAKE_TOOLKIT}/dba/00-entry/configurations" \
-  "${FAKE_TOOLKIT}/dba/04-tools/initializer" \
-  "${FAKE_TOOLKIT}/dba/05-guidance/templates"
-cp "${CODEOS_ROOT}/dba/04-tools/initializer/dba-init.sh" "${FAKE_TOOLKIT}/dba/04-tools/initializer/"
-cp -r "${CODEOS_ROOT}/dba/04-tools/initializer/skeleton" "${FAKE_TOOLKIT}/dba/04-tools/initializer/"
-cp "${CODEOS_ROOT}/dba/05-guidance/templates/project-CLAUDE.md" \
-  "${CODEOS_ROOT}/dba/05-guidance/templates/project-root-CLAUDE.md" \
-  "${CODEOS_ROOT}/dba/05-guidance/templates/project-AGENTS.md" \
-  "${CODEOS_ROOT}/dba/05-guidance/templates/codeos.yaml" \
-  "${FAKE_TOOLKIT}/dba/05-guidance/templates/"
-printf 'codeos_mechanics_policy: dba/02-policies/codeos-mechanics/fake.md\n' \
-  > "${FAKE_TOOLKIT}/dba/00-entry/configurations/DBA-TEST.yaml"
-printf 'Active configuration: `.codeos/toolkit/dba/00-entry/configurations/DBA-TEST.yaml`\n' \
-  > "${FAKE_TOOLKIT}/dba-system.md"
+mk_baseline_toolkit "${FAKE_TOOLKIT}" v2
 
 run_fake_init() { (cd "$1" && bash "${FAKE_TOOLKIT}/dba/04-tools/initializer/dba-init.sh" "${2:-example}" >/dev/null); }
 
@@ -104,6 +117,31 @@ for path in backend web docker-compose.yml PLATFORM-BASELINE.md .codeos/00-proje
 done
 grep -Fxq '  charter: governed' "${BASELINE_PROJECT}/.codeos/00-project/codeos.yaml" \
   || fail 'copied codeos.yaml is missing locked core-four governance'
+
+# A fresh DBA-6 (v2-selecting) initialization emits the EXACT v2 mechanics set.
+V2_EMITTED="$(sed -n '/^mechanics:/,/^[a-z]/p' "${BASELINE_PROJECT}/.codeos/00-project/codeos.yaml" \
+  | sed '/^artifacts:/d' | grep -vE '^\s*#|^\s*$')"
+V2_EXPECTED="$(bash "${CODEOS_ROOT}/dba/04-tools/configuration/render-mechanics-block.sh" \
+  "${CODEOS_ROOT}/dba/02-policies/codeos-mechanics/v2.md" | grep -vE '^\s*#|^\s*$')"
+[[ -n "${V2_EMITTED}" && "${V2_EMITTED}" == "${V2_EXPECTED}" ]] \
+  || fail 'a fresh DBA-6 initialization does not emit the exact v2 mechanics set'
+grep -Fxq '    data_integrity: always_when_persistence' "${BASELINE_PROJECT}/.codeos/00-project/codeos.yaml" \
+  || fail 'a fresh DBA-6 initialization omits the v2 data_integrity mechanic'
+
+# An explicit DBA-5 (v1-selecting) initialization emits the EXACT v1 set — no data_integrity.
+V1_TOOLKIT="${WORK}/fake-toolkit-v1"
+mk_baseline_toolkit "${V1_TOOLKIT}" v1
+V1_PROJECT="${WORK}/v1-project"
+mkdir -p "${V1_PROJECT}"
+(cd "${V1_PROJECT}" && bash "${V1_TOOLKIT}/dba/04-tools/initializer/dba-init.sh" v1-example >/dev/null)
+V1_EMITTED="$(sed -n '/^mechanics:/,/^[a-z]/p' "${V1_PROJECT}/.codeos/00-project/codeos.yaml" \
+  | sed '/^artifacts:/d' | grep -vE '^\s*#|^\s*$')"
+V1_EXPECTED="$(bash "${CODEOS_ROOT}/dba/04-tools/configuration/render-mechanics-block.sh" \
+  "${CODEOS_ROOT}/dba/02-policies/codeos-mechanics/v1.md" | grep -vE '^\s*#|^\s*$')"
+[[ -n "${V1_EMITTED}" && "${V1_EMITTED}" == "${V1_EXPECTED}" ]] \
+  || fail 'an explicit DBA-5 initialization does not emit the exact v1 mechanics set'
+grep -Fq 'data_integrity' "${V1_PROJECT}/.codeos/00-project/codeos.yaml" \
+  && fail 'an explicit DBA-5 initialization emitted the v2-only data_integrity mechanic'
 
 printf 'local edit\n' >> "${BASELINE_PROJECT}/backend/README.md"
 run_fake_init "${BASELINE_PROJECT}" baseline-example

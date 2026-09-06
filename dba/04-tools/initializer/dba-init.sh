@@ -160,7 +160,19 @@ if [[ "$PLATFORM_BASELINE" == true ]]; then
         echo "[skip] .codeos/00-project/codeos.yaml already exists"
     else
         cp "$CODEOS_PATH/dba/05-guidance/templates/codeos.yaml" "$PROJECT_CODEOS_YAML"
-        echo "[ok]   .codeos/00-project/codeos.yaml"
+        # The fixed `mechanics:` block is the exact set the active configuration's Codeos Mechanics
+        # policy defines — rendered here rather than carried statically, so one template serves every
+        # policy version and project-config-contract.sh can validate the block against that policy.
+        MECH_POLICY_REL="$(sed -n 's#^codeos_mechanics_policy:[[:space:]]*\([^[:space:]#]*\.md\).*#\1#p' "$CODEOS_PATH/$ACTIVE_CONFIG_REL")"
+        [[ -n "$MECH_POLICY_REL" && -f "$CODEOS_PATH/$MECH_POLICY_REL" ]] || \
+            fail "active configuration selects no resolvable codeos_mechanics_policy; cannot render codeos.yaml"
+        MECH_BLOCK="$(bash "$CODEOS_PATH/dba/04-tools/configuration/render-mechanics-block.sh" "$CODEOS_PATH/$MECH_POLICY_REL")"
+        awk -v block="$MECH_BLOCK" '
+            /^artifacts:/ && !spliced { print block; print ""; spliced = 1 }
+            { print }
+        ' "$PROJECT_CODEOS_YAML" > "$PROJECT_CODEOS_YAML.tmp" \
+            && mv "$PROJECT_CODEOS_YAML.tmp" "$PROJECT_CODEOS_YAML"
+        echo "[ok]   .codeos/00-project/codeos.yaml (mechanics from ${MECH_POLICY_REL##*/})"
     fi
 fi
 

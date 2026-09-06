@@ -77,3 +77,9 @@ Present the table inline and summarize non-`ALIGNED` rows with the minimum route
 This workflow creates no separate durable reconciliation file. If a fix requires changed approved
 meaning or project-level architecture, stop for human governance. Otherwise hand the evidence to
 `08-replay.md`.
+
+When the reconciliation has been carried out against the current evidence, record its completion as
+the Reconciliation completion decision receipt: `codeos-workflow decide --workflow feature
+--subject <feature-id> --checkpoint reconciliation --result completed`. `completed` records that
+the process ran, independent of how many `GAP`, `MISMATCH`, or `MISSING` rows it honestly records;
+whether an unresolved gap permits progression stays with the Stage 8 acceptance decision.

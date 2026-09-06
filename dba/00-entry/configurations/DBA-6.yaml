@@ -1,0 +1,19 @@
+# DBA-6 — Mechanical Workflow Governance: DBA-5 plus three named governed workflows whose
+# checkpoint progression is mechanically verified against real evidence.
+#
+# Component paths are relative to the Codeos toolkit root. Component files own their semantics;
+# this configuration only selects their authoritative versions.
+
+doctrine: dba/01-doctrine/v6.md
+review_policy: dba/02-policies/review/v3.md
+architecture_synthesis_policy: dba/02-policies/architecture-synthesis/v4.md
+implementation_profile_policy: dba/02-policies/implementation-profile/v2.md
+reviewer_tool_contract: dba/04-tools/reviewer/contract/v5.md
+codeos_mechanics_policy: dba/02-policies/codeos-mechanics/v2.md
+workflow_governance_policy: dba/02-policies/workflow-governance/v1.md
+workflow_bootstrap_policy: dba/02-policies/workflow-bootstrap/v1.md
+workflow_feature_policy: dba/02-policies/workflow-feature/v1.md
+workflow_operation_policy: dba/02-policies/workflow-operation/v1.md
+
+status: approved
+approved_at: 2026-09-06

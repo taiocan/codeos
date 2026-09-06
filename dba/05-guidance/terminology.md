@@ -20,6 +20,7 @@ Ordinary technical vocabulary does not belong here. Git preserves the history of
 | **Behavioral Event** | A runtime event representing a verified outcome. |
 | **Behavioral invariant** | A condition that must remain true in externally observable behavior, independent of internal implementation structure. |
 | **Canonical** | The single stable runtime identifier that names a Concept within a vocabulary. |
+| **Checkpoint** | An ordered point in a governed workflow with a defined entry condition, required evidence, required human decisions, exit condition, and valid return routes. Its state is derived from canonical evidence as `PASS`, `BLOCKED`, or `WAITING`; a later checkpoint is never treated as satisfied while a required earlier one is unresolved. |
 | **Codeos Mechanic** | A fixed delivery, verification, or communication obligation named by the Codeos Mechanics policy; a project's configuration may display it but not disable it. |
 | **Concept** | The semantic identity used by domain logic, independent of its string or storage representation. |
 | **Concept Dependency Rule** | Domain logic compares resolved Concept identity rather than vocabulary representations. |
@@ -27,6 +28,7 @@ Ordinary technical vocabulary does not belong here. Git preserves the history of
 | **Consequential conformance repair** | A change that restores already-approved behavior where an incorrect repair could have consequential effects; it is not a new semantic decision. |
 | **Correlation ID** | The UUID linking all runtime events from one feature execution chain. |
 | **Decision Governance** | The doctrine-level human-control guarantees — consequential architecture approval, canonical terminology consistency, and the like — that remain active regardless of any artifact type's configured governance state. |
+| **Decision receipt** | An append-only record that a governed-workflow decision occurred and which governed inputs it was bound to at the time. It is evidence of workflow progression only — never a governing artifact, never overriding the Charter, a Specification Package, an Architecture Scope, or any human-control boundary — and stops establishing its checkpoint once any bound input changes. Only the closed set of irreducible human or authorized-agent decisions gets one. |
 | **Declarative Behavioral Architecture (DBA)** | The Codeos model, also called Intent-Driven System (IDS), that carries human intent through behavioral contracts, implementation, runtime evidence, reconciliation, replay, and targeted refinement. |
 | **Development Evidence** | Evidence produced before acceptance to prove the candidate implementation. Contrast with Operational Observation. |
 | **Early Development Preview** | An unverified, clearly labeled preview shown to the human after basic integration smoke and before full verification, for a direction and UX check only; feedback that would change approved behavior returns to the Specification Package rather than being applied silently. |
@@ -38,6 +40,7 @@ Ordinary technical vocabulary does not belong here. Git preserves the history of
 | **Failure Event** | A runtime event representing a classified error condition. |
 | **Feature ID** | The stable `F-####` identity assigned when an Intent is created. It is never reused; partial Specification Packages remain valid identities. |
 | **Feature Impact Accounting** | A feature's recorded changed-or-unchanged, with-reason account of its effect on each Platform Baseline tier, replacing any requirement to touch every tier regardless of need. |
+| **Governed workflow** | One of the three named workflows enclosing the nine-stage lifecycle — Solution Bootstrap, Feature Development, Operation & Learning — each an ordered set of checkpoints whose progression is mechanically verified against real evidence. A governed workflow adds no lifecycle stage, approval, or source of product authority. |
 | **Implementation Profile** | An approved project-level statement of preferred implementation language and scope that implementation must consult. |
 | **Intent** | Why a feature exists, expressed as actor and desired outcome without implementation details. |
 | **Learning Register** | An optional queue of material, unresolved post-acceptance observations that could change governed engineering truth. It is evidence, never authority, and is not an operational log. |
@@ -65,6 +68,7 @@ Ordinary technical vocabulary does not belong here. Git preserves the history of
 | **Specification Package** | The Intent, Contract, and Event Schema considered together by the specification-approval adapter. Decision semantics come only from the selected doctrine. |
 | **System Constraint** | A Charter-owned obligation applying across features or solution-wide, each with a verification route. The broader category: cross-cutting quality requirements are one type, alongside regulatory, interoperability, deployment, and externally imposed technology constraints. |
 | **Targeted Refinement** | The smallest effective repair of an implementation that does not satisfy already-approved behavior. It never redefines intended behavior, requirements, or architecture. |
+| **Verification record** | An append-only record that a mechanical verification actually executed and passed against a specific state, written by the workflow checker's `check` command and bound to the governed inputs and implementation state it ran against. It asserts only that the verification ran and passed — never that the behavior is adequate — and goes stale the moment any bound input changes. Distinct from a decision receipt, which records a human or process decision, not a mechanical result. |
 | **Vertical Drift** | Accumulation of domain logic in shared infrastructure, bypassing feature-isolation boundaries. |
 | **Vocabulary consumer** | A module that uses vocabulary-defined Concepts through the resolution API without interpreting representations itself. |
 | **Vocabulary owner** | The single module that defines Concepts, accepts Aliases, validates the vocabulary, and exposes Resolution. |

@@ -17,11 +17,20 @@ invariants, and any minimum environment requirement.
 
 Read the selected Codeos Mechanics policy. Its `validation` mechanics are fixed, not
 project-configurable: `smoke`, `behavior`, and `repeatability` apply to every feature; `playwright`
-and `human_ux` apply whenever the Contract has a GUI-visible outcome. When approved architecture
-selects Svelte for a browser interface — the Platform Baseline default — consult
+and `human_ux` apply whenever the Contract has a GUI-visible outcome; and where the policy defines
+`data_integrity`, it applies whenever the feature persists or changes data. When approved
+architecture selects Svelte for a browser interface — the Platform Baseline default — consult
 `.codeos/toolkit/dba/05-guidance/patterns/svelte-gui-verification.md`. It supplies proportional
 verification technique; the Codeos Mechanics policy, not this pattern, is what makes its
 application mandatory rather than optional.
+
+Under the selected Workflow Governance policy, verification is not complete while the Early
+Development Preview (F4) is unresolved for a GUI-visible feature. Each applicable `validation`
+mechanic's evidence is the mechanical verification record `codeos-workflow check --workflow feature
+--subject <feature-id>` writes on a pass, bound to the Specification Package and implementation
+state and stale the moment either drifts. This records that the verification ran and passed; it
+makes no judgment that the behavior is adequate, and it changes none of the test requirements
+below.
 
 ## Task
 

@@ -4,7 +4,7 @@
 > `.codeos/toolkit/dba-system.md`. Codeos toolkit self-development is governed separately by the repository
 > root `CLAUDE.md`.
 
-Active configuration: `.codeos/toolkit/dba/00-entry/configurations/DBA-5.yaml`
+Active configuration: `.codeos/toolkit/dba/00-entry/configurations/DBA-6.yaml`
 
 The configuration selects the authoritative version of each governed DBA component. Component
 files own their semantics; the configuration only selects which versions are active.
@@ -42,6 +42,8 @@ Canonical durable locations are:
 | Reviewer configuration | `.codeos/05-review/reviewer.toml` | Only when defaults are overridden |
 | Automated review records | `.codeos/05-review/reviews/` | Created and owned by the reviewer tool |
 | Review measurement | `.codeos/05-review/measurements/<name>.md` | Only when it has durable value |
+| Workflow decision receipts | `.codeos/06-workflow/decisions.jsonl` | Created and owned by `codeos-workflow` under DBA-6 and later; append-only, non-authoritative |
+| Workflow verification records | `.codeos/06-workflow/verifications.jsonl` | Created and owned by `codeos-workflow` under DBA-6 and later; append-only, non-authoritative |
 
 Implementation Profile replacement may additionally use
 `.codeos/02-architecture/proposals/implementation-profile-v<N>.yaml` and

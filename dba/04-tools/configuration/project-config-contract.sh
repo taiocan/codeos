@@ -42,37 +42,31 @@ for line in "${artifact_lines[@]}"; do
 done
 
 # --- mechanics: block -------------------------------------------------------
-# Derived from the selected Codeos Mechanics policy, not hardcoded here, so the fixed set has one
-# authoritative source. A configuration's mechanics block, if present, must match it exactly.
-mapfile -t expected_mechanics < <(
+# The fixed mechanics block is a transparency view of the selected Codeos Mechanics policy, which is
+# its single authoritative source. When the block is present it must be the EXACT set the policy
+# defines: every policy mechanic with its exact value, and no additional fixed mechanic. A v1
+# project must not silently carry (or display) a v2-only mechanic such as `data_integrity`.
+
+# Canonicalize a YAML mechanics block (from the policy renderer or a real codeos.yaml) to sorted
+# `group:name:value` lines, ignoring comments, blank lines, and trailing whitespace.
+mechanics_triples() {
   awk '
-    /^### Delivery$/    { group = "delivery" }
-    /^### Validation$/  { group = "validation" }
-    /^### Communication$/ { group = "communication" }
-    /^\| `[a-z_]+` \|/ {
-      line = $0
-      gsub(/^\| `/, "", line)
-      split(line, parts, /` \| /)
-      name = parts[1]
-      split(parts[2], rest, / \|/)
-      applies = rest[1]
-      print group ":" name ":" applies
-    }
-  ' "${MECHANICS_POLICY}"
-)
-[[ ${#expected_mechanics[@]} -gt 0 ]] || fail 'Codeos Mechanics policy declares no mechanics'
+    { sub(/[[:space:]]+$/, "") }
+    /^[[:space:]]*#/ || /^[[:space:]]*$/ { next }
+    /^  [a-z_]+:$/            { group = $1; sub(/:$/, "", group); next }
+    /^    [a-z_]+: [a-z_]+$/  { name = $1; sub(/:$/, "", name); print group ":" name ":" $2 }
+  ' | LC_ALL=C sort
+}
 
 if grep -q '^mechanics:' "${CONFIG}"; then
-  for entry in "${expected_mechanics[@]}"; do
-    group="${entry%%:*}"
-    rest="${entry#*:}"
-    name="${rest%%:*}"
-    applies="${rest#*:}"
-    mechanics_block="$(sed -n '/^mechanics:/,/^[a-z]/p' "${CONFIG}")"
-    group_block="$(printf '%s\n' "${mechanics_block}" | sed -n "/^  ${group}:/,/^  [a-z]/p")"
-    printf '%s\n' "${group_block}" | grep -qE "^    ${name}: ${applies}\$" || \
-      fail "mechanics.${group}.${name} does not match the fixed policy value (${applies})"
-  done
+  expected_triples="$(bash "${HERE}/render-mechanics-block.sh" "${MECHANICS_POLICY}" | mechanics_triples)"
+  [[ -n "${expected_triples}" ]] || fail 'selected Codeos Mechanics policy renders no mechanics'
+  # The config's block runs from `^mechanics:` to the line before the next top-level key.
+  actual_triples="$(sed -n '/^mechanics:/,/^[a-z]/p' "${CONFIG}" | sed '/^[a-z]/d' | mechanics_triples)"
+  if [[ "${actual_triples}" != "${expected_triples}" ]]; then
+    diff_out="$(diff <(printf '%s\n' "${expected_triples}") <(printf '%s\n' "${actual_triples}") || true)"
+    fail "mechanics: block is not the exact set the selected policy defines${diff_out:+ ($(printf '%s' "${diff_out}" | tr '\n' ' '))}"
+  fi
 fi
 
 # --- platform: block ---------------------------------------------------------

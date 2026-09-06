@@ -17,23 +17,10 @@ platform:
   # apply, e.g.:
   #   webapp: not-applicable: no end user; charter.md records this as a pure backend service
 
-mechanics:
-  # Fixed by the selected Codeos Mechanics policy. Shown here for transparency only — every value
-  # below must match that policy exactly. A project cannot change one; the validator fails closed
-  # if it tries.
-  delivery:
-    vertical_slice: always
-    early_gui_preview: always_when_gui
-  validation:
-    smoke: always
-    behavior: always
-    repeatability: always
-    playwright: always_when_gui
-    human_ux: always_when_gui
-  communication:
-    summary_first: always
-    reader_oriented_writing: always
-    terminology_consistency: always
+# The fixed `mechanics:` block is written here by `dba-init.sh`, rendered from the Codeos Mechanics
+# policy the active DBA configuration selects (see dba/04-tools/configuration/render-mechanics-block.sh).
+# It is transparency only — a project cannot change a value; project-config-contract.sh fails closed
+# on any deviation from the selected policy's exact set.
 
 artifacts:
   # Charter, intent, contract, and event_schema are locked governed and cannot be set otherwise.

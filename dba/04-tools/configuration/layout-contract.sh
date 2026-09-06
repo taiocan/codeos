@@ -47,7 +47,7 @@ fi
 # records remain valid outside this list; this is an active-layout invariant, not a history scan.
 supported_runtime_paths=(
   "${CODEOS_ROOT}/dba-system.md"
-  "${CODEOS_ROOT}/dba/00-entry/configurations/DBA-5.yaml"
+  "${CODEOS_ROOT}/dba/00-entry/configurations/DBA-6.yaml"
   "${CODEOS_ROOT}/dba/03-prompts"
   "${CODEOS_ROOT}/dba/04-tools/initializer"
   "${CODEOS_ROOT}/dba/04-tools/reviewer"
@@ -83,6 +83,7 @@ expected_support_prompts=(
   support-feature-decomposition.md
   support-session-handoff.md
   support-session-orientation.md
+  support-solution-bootstrap.md
   support-solution-charter.md
   support-solution-framing.md
 )
@@ -125,6 +126,8 @@ canonical_paths=(
   '.codeos/05-review/reviewer.toml'
   '.codeos/05-review/reviews/'
   '.codeos/05-review/measurements/<name>.md'
+  '.codeos/06-workflow/decisions.jsonl'
+  '.codeos/06-workflow/verifications.jsonl'
   '.codeos/toolkit'
   '.codeos-state/'
   'events/runtime_events.jsonl'
@@ -140,6 +143,7 @@ declare -A producer_outputs=(
   [support-solution-framing.md]='.codeos/00-discovery/<topic-slug>.md'
   [support-feature-decomposition.md]='.codeos/00-discovery/<topic-slug>.md'
   [support-existing-codebase-intake.md]='.codeos/01-specification/intents/<feature-id>.md'
+  [support-solution-bootstrap.md]='.codeos/06-workflow/decisions.jsonl'
   [01-intent.md]='.codeos/01-specification/intents/<feature-id>.md'
   [02-contract.md]='.codeos/01-specification/contracts/<feature-id>_contract.md'
   [03-event-schema.md]='.codeos/01-specification/event-schemas/<feature-id>_schema.md'
@@ -152,6 +156,13 @@ declare -A producer_outputs=(
 # produce an Intent, and several canonical locations have no producing prompt at all. Deriving the
 # expectation from the prompts themselves would make the check assert only that a prompt contains
 # what it contains. The map is an independent guard over an otherwise unowned relation.
+#
+# The map tracks the primary canonical artifact a workflow prompt's step brings into being. A
+# support prompt whose step records a decision receipt is mapped to `.codeos/06-workflow/decisions.jsonl`
+# (support-solution-bootstrap.md → the Initial Product Preview receipt). It is NOT mapped to
+# `.codeos/06-workflow/verifications.jsonl`: verification records are mechanical evidence the shared
+# workflow checker writes for every workflow, not a distinctive output of one prompt — the same
+# reason the reviewer tool's own records have no producer entry.
 for prompt in "${!producer_outputs[@]}"; do
   path="${CODEOS_ROOT}/dba/03-prompts/workflow/${prompt}"
   grep -Fq "${producer_outputs[${prompt}]}" "$path" || \
@@ -174,7 +185,7 @@ mixed_notation="$(grep -rn '\.codeos/[^ `"]*\[[a-z_-]*\]' "${CODEOS_ROOT}/dba" "
 # expected set from it rather than restating it. A list here would be a second, manually
 # synchronized authority — and the one that previously decided membership in practice, because
 # nothing else named the set.
-ACTIVE_CONFIG="${CODEOS_ROOT}/dba/00-entry/configurations/DBA-5.yaml"
+ACTIVE_CONFIG="${CODEOS_ROOT}/dba/00-entry/configurations/DBA-6.yaml"
 doctrine_rel="$(awk '$1 == "doctrine:" { print $2 }' "${ACTIVE_CONFIG}")"
 [[ -n "${doctrine_rel}" ]] || fail 'active configuration names no doctrine'
 DOCTRINE="${CODEOS_ROOT}/${doctrine_rel}"
@@ -201,6 +212,6 @@ mapfile -t declared_adapters < <(
   fail "adapter boundaries disagree: doctrine [${doctrine_adapters[*]}] vs prompts [${declared_adapters[*]}]"
 
 bash "${CODEOS_ROOT}/dba/04-tools/configuration/dba-config-boundaries.sh" \
-  dba/00-entry/configurations/DBA-5.yaml >/dev/null
+  dba/00-entry/configurations/DBA-6.yaml >/dev/null
 
 printf 'Codeos layout contract OK\n'
