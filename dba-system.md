@@ -4,7 +4,7 @@
 > `.codeos/toolkit/dba-system.md`. Codeos toolkit self-development is governed separately by the repository
 > root `CLAUDE.md`.
 
-Active configuration: `.codeos/toolkit/dba/00-entry/configurations/DBA-6.yaml`
+Active configuration: `.codeos/toolkit/dba/00-entry/configurations/DBA-7.yaml`
 
 The configuration selects the authoritative version of each governed DBA component. Component
 files own their semantics; the configuration only selects which versions are active.
