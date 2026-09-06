@@ -11,8 +11,17 @@ fail() { printf 'project config contract failed: %s\n' "$1" >&2; exit 1; }
 CONFIG="${1:-${CODEOS_ROOT}/dba/05-guidance/templates/codeos.yaml}"
 [[ -f "${CONFIG}" ]] || fail "configuration does not exist: ${CONFIG}"
 
-MECHANICS_POLICY="${CODEOS_ROOT}/dba/02-policies/codeos-mechanics/v1.md"
-[[ -f "${MECHANICS_POLICY}" ]] || fail "Codeos Mechanics policy is missing: ${MECHANICS_POLICY}"
+# The mechanics-policy version is derived from the active configuration, not hardcoded, so a new
+# DBA configuration selecting a newer Codeos Mechanics policy is validated against that version
+# while an older configuration keeps validating against the one it selects.
+ACTIVE_CONFIG_REL="$(sed -n 's#^Active configuration: `\.codeos/toolkit/\(.*\)`$#\1#p' "${CODEOS_ROOT}/dba-system.md")"
+[[ -n "${ACTIVE_CONFIG_REL}" && -f "${CODEOS_ROOT}/${ACTIVE_CONFIG_REL}" ]] || \
+  fail "cannot resolve the active configuration from dba-system.md"
+MECHANICS_POLICY_REL="$(sed -n 's#^codeos_mechanics_policy:[[:space:]]*\([^[:space:]#]*\.md\).*#\1#p' "${CODEOS_ROOT}/${ACTIVE_CONFIG_REL}")"
+[[ -n "${MECHANICS_POLICY_REL}" ]] || \
+  fail "active configuration selects no codeos_mechanics_policy; codeos.yaml validation requires DBA-5 or later"
+MECHANICS_POLICY="${CODEOS_ROOT}/${MECHANICS_POLICY_REL}"
+[[ -f "${MECHANICS_POLICY}" ]] || fail "Codeos Mechanics policy is missing: ${MECHANICS_POLICY_REL}"
 
 # --- artifacts: block -------------------------------------------------------
 # Core-four governance is locked regardless of what the file says elsewhere; verify it reads
