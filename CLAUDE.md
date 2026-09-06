@@ -171,8 +171,9 @@ would otherwise share a term, use distinct names.
 
 ## Human-Readable Output
 
-For every human-readable output, read and apply
-`dba/05-guidance/reader-oriented-output.md` and the applicable canonical terminology in
+For every human-readable output, read and apply the Reader Output policy the active DBA
+configuration selects (`reader_output_policy`), or `dba/05-guidance/reader-oriented-output.md` when
+it selects none, together with the applicable canonical terminology in
 `dba/05-guidance/terminology.md`.
 
 ## Boundaries

@@ -10,10 +10,11 @@ System Constraints. Do not restate them here.
 When `.codeos/00-project/terminology.md` exists, it owns recurring project-wide specialized
 meanings. Feature-local definitions remain in their owning Intents.
 
-For every human-readable output, read and apply
-`.codeos/toolkit/dba/05-guidance/reader-oriented-output.md`,
-`.codeos/toolkit/dba/05-guidance/terminology.md`, and `.codeos/00-project/terminology.md` when it
-exists.
+For every human-readable output, read and apply the Reader Output policy the DBA configuration this
+project has adopted selects (`reader_output_policy`), or
+`.codeos/toolkit/dba/05-guidance/reader-oriented-output.md` when that configuration selects none,
+together with `.codeos/toolkit/dba/05-guidance/terminology.md` and `.codeos/00-project/terminology.md`
+when it exists.
 
 ## Minimum Complexity
 

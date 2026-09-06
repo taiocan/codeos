@@ -46,4 +46,13 @@ for selection in "${COMPONENTS[@]}"; do
   checked=$((checked + 1))
 done
 
+# Doctrine v7 and later add the D10 human-reviewability invariant, whose operational rules are owned
+# by a versioned Reader Output policy. A configuration that selects such a doctrine MUST also select
+# a reader_output_policy; the component loop above has already validated its four-line boundary.
+doctrine_path="$(printf '%s\n' "${COMPONENTS[@]}" | sed -n 's/^doctrine|//p')"
+if [[ "${doctrine_path}" =~ /v([7-9]|[1-9][0-9]+)\.md$ ]]; then
+  printf '%s\n' "${COMPONENTS[@]}" | grep -q '^reader_output_policy|' || \
+    fail "doctrine ${doctrine_path##*/} requires a reader_output_policy selection"
+fi
+
 printf 'DBA boundary contract OK: %s (%d checked)\n' "$1" "${checked}"

@@ -86,7 +86,11 @@ for route in "${SELF_INSTRUCTIONS}" "${PROJECT_INSTRUCTIONS}" "${DBA_ENTRY}"; do
   rg -q 'For every human-readable output, read and apply' "${route}" || \
     fail "normal-agent route is not actionable: ${route#${CODEOS_ROOT}/}"
   rg -q 'reader-oriented-output.md' "${route}" || \
-    fail "normal-agent route omits reader-oriented guidance: ${route#${CODEOS_ROOT}/}"
+    fail "normal-agent route omits the reader-oriented fallback: ${route#${CODEOS_ROOT}/}"
+  rg -q 'Reader Output policy' "${route}" || \
+    fail "normal-agent route does not resolve the selected Reader Output policy: ${route#${CODEOS_ROOT}/}"
+  rg -q 'reader_output_policy' "${route}" || \
+    fail "normal-agent route does not name the reader_output_policy selection: ${route#${CODEOS_ROOT}/}"
 done
 if rg -l 'Known-to-New Progression|Preview Then Traverse' \
   "${SELF_INSTRUCTIONS}" "${PROJECT_INSTRUCTIONS}" "${DBA_ENTRY}" \

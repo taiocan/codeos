@@ -150,9 +150,10 @@ Unversioned canonical resources are not selected through this configuration. Con
 normal paths under `.codeos/toolkit/dba/03-prompts/`, `.codeos/toolkit/dba/04-tools/`, and
 `.codeos/toolkit/dba/05-guidance/`.
 
-For every human-readable output, read and apply
-`.codeos/toolkit/dba/05-guidance/reader-oriented-output.md`,
-`.codeos/toolkit/dba/05-guidance/terminology.md`, and the project terminology at
+For every human-readable output, read and apply the Reader Output policy the DBA configuration this
+project has adopted selects (`reader_output_policy`), or
+`.codeos/toolkit/dba/05-guidance/reader-oriented-output.md` when that configuration selects none,
+together with `.codeos/toolkit/dba/05-guidance/terminology.md` and the project terminology at
 `.codeos/00-project/terminology.md` when it exists.
 
 Numeric workflow prefixes `01` through `09` are reserved for governed Stage IDs and correspond
