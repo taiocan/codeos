@@ -17,6 +17,41 @@ fn review_args<'a>(feature: &'a str) -> [&'a str; 4] {
     ["review", feature, "selfdev-step-1", "tracked.md"]
 }
 
+/// The first `# ` heading of the reader-output guidance the repo's active DBA configuration selects
+/// (or the unversioned fallback). Mirrors `packet::resolve_reader_output_guidance` so this test
+/// tracks the selected policy rather than a fixed filename.
+fn expected_reader_guidance_title() -> String {
+    let root = repo_root();
+    let fallback = root.join("dba/05-guidance/reader-oriented-output.md");
+    let resolved = std::fs::read_to_string(root.join("dba-system.md"))
+        .ok()
+        .and_then(|system| {
+            system
+                .lines()
+                .find_map(|l| {
+                    l.strip_prefix("Active configuration: `.codeos/toolkit/")
+                        .and_then(|r| r.strip_suffix('`'))
+                        .map(str::to_string)
+                })
+                .and_then(|rel| std::fs::read_to_string(root.join(rel)).ok())
+        })
+        .and_then(|config| {
+            config.lines().find_map(|l| {
+                l.strip_prefix("reader_output_policy:")
+                    .map(|r| r.trim().trim_matches('`').to_string())
+            })
+        })
+        .map(|rel| root.join(rel))
+        .filter(|p| p.is_file())
+        .unwrap_or(fallback);
+    std::fs::read_to_string(&resolved)
+        .unwrap()
+        .lines()
+        .find(|l| l.starts_with("# "))
+        .unwrap()
+        .to_string()
+}
+
 fn add_stage8_inputs(repo_path: &std::path::Path, feature: &str) -> Vec<String> {
     let paths = vec![
         ".codeos/00-project/charter.md".to_string(),
@@ -181,16 +216,21 @@ fn reviewer_receives_reader_guidance_and_only_canonical_terminology_once() {
     let captured = std::fs::read_to_string(&fake.packet_log).unwrap();
 
     for unique in [
-        "# Reader-Oriented LLM Output",
-        "# Codeos Terminology",
-        "PROJECT-TERM-CANARY",
+        expected_reader_guidance_title(),
+        "# Codeos Terminology".to_string(),
+        "PROJECT-TERM-CANARY".to_string(),
     ] {
         assert_eq!(
-            captured.matches(unique).count(),
+            captured.matches(&unique).count(),
             1,
             "communication source was not delivered exactly once: {unique}"
         );
     }
+    assert_eq!(
+        captured.matches("--- READER-ORIENTED OUTPUT GUIDANCE:").count(),
+        1,
+        "the selected reader-output guidance was not delivered exactly once"
+    );
     assert!(
         captured.contains("COMMUNICATION CONTEXT (instructions and canonical language; not review evidence)")
     );
@@ -286,6 +326,98 @@ fn reviewer_coalesces_communication_sources_that_resolve_to_one_canonical_path()
     assert_eq!(code, 0, "{stderr}");
     let captured = std::fs::read_to_string(&fake.packet_log).unwrap();
     assert_eq!(captured.matches("DUPLICATE-SOURCE-CANARY").count(), 1);
+}
+
+/// Build a self-contained toolkit fixture in `repo` whose `dba-system.md` points at a config with
+/// the given body, alongside a fallback `reader-oriented-output.md` and a selectable
+/// `reader-output/v1.md`, then run a review and return the captured packet bytes. `find_toolkit_root`
+/// resolves this repo as its own toolkit mount, so the reviewer reads exactly this project's config.
+fn review_with_toolkit_config(config_body: &str) -> String {
+    let (repo, _) = setup_temp_git_repo();
+    let fake = setup_fake_codex();
+    for directory in [
+        "dba/00-entry/configurations",
+        "dba/02-policies/reader-output",
+        "dba/03-prompts/review",
+        "dba/05-guidance",
+    ] {
+        std::fs::create_dir_all(repo.path().join(directory)).unwrap();
+    }
+    std::fs::write(
+        repo.path()
+            .join("dba/03-prompts/review/codeos-reviewer-task.md"),
+        "Reviewer test task.\n",
+    )
+    .unwrap();
+    std::fs::write(
+        repo.path().join("dba/05-guidance/terminology.md"),
+        "# Test Codeos Terminology\n",
+    )
+    .unwrap();
+    std::fs::write(
+        repo.path().join("dba/05-guidance/reader-oriented-output.md"),
+        "# Unversioned Fallback\nFALLBACK-GUIDANCE-CANARY\n",
+    )
+    .unwrap();
+    std::fs::write(
+        repo.path().join("dba/02-policies/reader-output/v1.md"),
+        "# Selected Reader Output Policy\nSELECTED-GUIDANCE-CANARY\n",
+    )
+    .unwrap();
+    std::fs::write(
+        repo.path().join("dba/00-entry/configurations/DBA-TEST.yaml"),
+        config_body,
+    )
+    .unwrap();
+    std::fs::write(
+        repo.path().join("dba-system.md"),
+        "Active configuration: `.codeos/toolkit/dba/00-entry/configurations/DBA-TEST.yaml`\n",
+    )
+    .unwrap();
+    Command::new("git")
+        .args(["add", "-A"])
+        .current_dir(repo.path())
+        .output()
+        .unwrap();
+    Command::new("git")
+        .args(["commit", "-m", "toolkit fixture"])
+        .current_dir(repo.path())
+        .output()
+        .unwrap();
+    let (code, _, stderr) =
+        run_with_fake_codex(repo.path(), &fake, &review_args("UPG-OUTPUT"), "success");
+    assert_eq!(code, 0, "{stderr}");
+    std::fs::read_to_string(&fake.packet_log).unwrap()
+}
+
+/// A reviewed project whose own toolkit mount selects a `reader_output_policy` is reviewed under
+/// that policy — independent of any other repository's active pointer.
+#[test]
+fn reviewer_reader_guidance_follows_the_reviewed_projects_selected_policy() {
+    let captured = review_with_toolkit_config(
+        "doctrine: dba/01-doctrine/v7.md\nreader_output_policy: dba/02-policies/reader-output/v1.md\n",
+    );
+    assert!(
+        captured.contains("SELECTED-GUIDANCE-CANARY"),
+        "reviewer did not receive the project-selected reader output policy"
+    );
+    assert!(
+        !captured.contains("FALLBACK-GUIDANCE-CANARY"),
+        "reviewer received the unversioned fallback despite a selected policy"
+    );
+}
+
+/// A reviewed project whose toolkit mount selects no `reader_output_policy` (a project still on an
+/// older DBA configuration) is reviewed under the unversioned fallback, whatever the toolkit's own
+/// active pointer says elsewhere.
+#[test]
+fn reviewer_reader_guidance_falls_back_when_the_project_selects_no_policy() {
+    let captured = review_with_toolkit_config("doctrine: dba/01-doctrine/v6.md\n");
+    assert!(
+        captured.contains("FALLBACK-GUIDANCE-CANARY"),
+        "reviewer did not fall back to reader-oriented-output.md when no policy is selected"
+    );
+    assert!(!captured.contains("SELECTED-GUIDANCE-CANARY"));
 }
 
 #[test]

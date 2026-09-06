@@ -171,12 +171,47 @@ fn read_communication_source(
     })
 }
 
+/// The reader-output guidance for the reviewed project, resolved from **that project's own toolkit
+/// mount** — `<repo_root>/.codeos/toolkit` downstream, or the toolkit itself in self-development.
+/// `toolkit_root` is already that mount (`config::find_toolkit_root`), so its `dba-system.md` is the
+/// configuration the project is bound to: a project stays on DBA-6 by mounting a DBA-6 toolkit, and
+/// this reads whatever that mount declares. This is the same project-scoped rule a normal agent
+/// applies when it reads `.codeos/toolkit/dba-system.md`.
+///
+/// Returns the `reader_output_policy` that configuration selects, or the unversioned
+/// `dba/05-guidance/reader-oriented-output.md` when it selects none or cannot be resolved.
+/// Resolution is deterministic from the mount contents, so the frozen packet bytes stay
+/// reproducible, and every candidate path is under `toolkit_root`, so packet isolation is unchanged.
+fn resolve_reader_output_guidance(toolkit_root: &Path) -> PathBuf {
+    let fallback = toolkit_root.join("dba/05-guidance/reader-oriented-output.md");
+    let Ok(system) = std::fs::read_to_string(toolkit_root.join("dba-system.md")) else {
+        return fallback;
+    };
+    let Some(config_rel) = system.lines().find_map(|line| {
+        line.strip_prefix("Active configuration: `.codeos/toolkit/")
+            .and_then(|rest| rest.strip_suffix('`'))
+    }) else {
+        return fallback;
+    };
+    let Ok(config) = std::fs::read_to_string(toolkit_root.join(config_rel)) else {
+        return fallback;
+    };
+    let selected = config.lines().find_map(|line| {
+        line.strip_prefix("reader_output_policy:")
+            .map(|rest| rest.trim().trim_matches('`').to_string())
+    });
+    match selected {
+        Some(rel) if toolkit_root.join(&rel).is_file() => toolkit_root.join(rel),
+        _ => fallback,
+    }
+}
+
 fn communication_context(opts: &PacketBuildOptions) -> Result<String> {
     let toolkit_root = Path::new(&opts.toolkit_root);
     let repo_root = Path::new(&opts.repo_root);
     let mut sources = vec![
         read_communication_source(
-            &toolkit_root.join("dba/05-guidance/reader-oriented-output.md"),
+            &resolve_reader_output_guidance(toolkit_root),
             toolkit_root,
             "reader-oriented output guidance",
         )?,
@@ -1361,5 +1396,63 @@ mod tests {
     fn stage_checks_unrecognized_identifier_still_falls_back_to_placeholder() {
         let text = stage_checks("nonexistent-stage");
         assert!(text.contains("no stage-specific checklist for stage nonexistent-stage"));
+    }
+
+    #[test]
+    fn reader_output_guidance_follows_the_selected_reader_output_policy() {
+        let tk = tempfile::tempdir().expect("toolkit dir");
+        let root = tk.path();
+        std::fs::create_dir_all(root.join("dba/00-entry/configurations")).unwrap();
+        std::fs::create_dir_all(root.join("dba/05-guidance")).unwrap();
+        std::fs::create_dir_all(root.join("dba/02-policies/reader-output")).unwrap();
+        std::fs::write(
+            root.join("dba/05-guidance/reader-oriented-output.md"),
+            "# unversioned fallback\n",
+        )
+        .unwrap();
+        std::fs::write(
+            root.join("dba/02-policies/reader-output/v1.md"),
+            "# selected reader output policy\n",
+        )
+        .unwrap();
+
+        // No dba-system.md -> fallback.
+        assert_eq!(
+            resolve_reader_output_guidance(root),
+            root.join("dba/05-guidance/reader-oriented-output.md")
+        );
+
+        // A configuration that selects no reader_output_policy -> fallback.
+        std::fs::write(
+            root.join("dba/00-entry/configurations/DBA-6.yaml"),
+            "doctrine: dba/01-doctrine/v6.md\n",
+        )
+        .unwrap();
+        std::fs::write(
+            root.join("dba-system.md"),
+            "Active configuration: `.codeos/toolkit/dba/00-entry/configurations/DBA-6.yaml`\n",
+        )
+        .unwrap();
+        assert_eq!(
+            resolve_reader_output_guidance(root),
+            root.join("dba/05-guidance/reader-oriented-output.md")
+        );
+
+        // A configuration that selects one -> that policy file.
+        std::fs::write(
+            root.join("dba/00-entry/configurations/DBA-7.yaml"),
+            "doctrine: dba/01-doctrine/v7.md\n\
+             reader_output_policy: dba/02-policies/reader-output/v1.md\n",
+        )
+        .unwrap();
+        std::fs::write(
+            root.join("dba-system.md"),
+            "Active configuration: `.codeos/toolkit/dba/00-entry/configurations/DBA-7.yaml`\n",
+        )
+        .unwrap();
+        assert_eq!(
+            resolve_reader_output_guidance(root),
+            root.join("dba/02-policies/reader-output/v1.md")
+        );
     }
 }
