@@ -46,11 +46,12 @@ for selection in "${COMPONENTS[@]}"; do
   checked=$((checked + 1))
 done
 
-# Doctrine v7 and later add the D10 human-reviewability invariant, whose operational rules are owned
-# by a versioned Reader Output policy. A configuration that selects such a doctrine MUST also select
-# a reader_output_policy; the component loop above has already validated its four-line boundary.
+# Doctrine v7 adds the D10 human-reviewability invariant, whose operational rules are owned by a
+# versioned Reader Output policy, so a configuration selecting doctrine v7 MUST also select a
+# reader_output_policy (the component loop above has already validated its four-line boundary). This
+# is deliberately specific to v7: a later doctrine version declares its own component dependencies.
 doctrine_path="$(printf '%s\n' "${COMPONENTS[@]}" | sed -n 's/^doctrine|//p')"
-if [[ "${doctrine_path}" =~ /v([7-9]|[1-9][0-9]+)\.md$ ]]; then
+if [[ "${doctrine_path}" == "dba/01-doctrine/v7.md" ]]; then
   printf '%s\n' "${COMPONENTS[@]}" | grep -q '^reader_output_policy|' || \
     fail "doctrine ${doctrine_path##*/} requires a reader_output_policy selection"
 fi
