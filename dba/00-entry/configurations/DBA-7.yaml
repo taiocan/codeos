@@ -11,7 +11,7 @@ architecture_synthesis_policy: dba/02-policies/architecture-synthesis/v4.md
 implementation_profile_policy: dba/02-policies/implementation-profile/v2.md
 reviewer_tool_contract: dba/04-tools/reviewer/contract/v5.md
 codeos_mechanics_policy: dba/02-policies/codeos-mechanics/v2.md
-reader_output_policy: dba/02-policies/reader-output/v1.md
+reader_output_policy: dba/02-policies/reader-output/v2.md
 workflow_governance_policy: dba/02-policies/workflow-governance/v1.md
 workflow_bootstrap_policy: dba/02-policies/workflow-bootstrap/v1.md
 workflow_feature_policy: dba/02-policies/workflow-feature/v1.md

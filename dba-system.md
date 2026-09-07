@@ -85,8 +85,8 @@ and Event Schema always require it. Every other type's requirement is read from
 `.codeos/00-project/codeos.yaml`'s `artifacts:` block, which is the sole authoritative source for
 that state.
 
-Every substantial human-facing artifact — governed or not — opens with a Summary block immediately
-after this frontmatter:
+Every substantial human-facing artifact produced under the Downstream Project Layout Contract —
+governed or not — opens with a Summary block immediately after this frontmatter:
 
 ```markdown
 ## Summary
@@ -98,9 +98,14 @@ relevant section directly before relying on the summary alone for a consequentia
 ```
 
 and declares `reader_model: <stable-topic | known-to-new | whole-before-parts | preview-then-traverse>`
-in its frontmatter, per `dba/05-guidance/reader-oriented-output.md`. Both requirements are exempt on
+in its frontmatter, per the Reader Output policy the adopted DBA configuration selects (or
+`dba/05-guidance/reader-oriented-output.md` when it selects none). Both requirements are exempt on
 event schemas, logs, machine-structured data, compact tables, and any artifact short enough that a
 summary would repeat it.
+
+The Summary-block and `reader_model` requirements are a downstream artifact layout requirement.
+They do not bind the toolkit's own `dba/` components, which follow the Component Boundary Contract
+below and satisfy doctrine D10 through structure alone.
 
 `.codeos/00-project/codeos.yaml` also names the solution's Platform Baseline and displays the fixed
 Codeos Mechanics from the selected Codeos Mechanics policy. It is mechanically checked by
@@ -125,6 +130,12 @@ out_of_scope: The nearest responsibilities this component must not absorb.
 The question defines the component's responsibility. `out_of_scope` names likely ownership
 mistakes, not every dependency. Neither field summarizes or overrides the component's rules. No
 other boundary metadata is supported.
+
+A canonical toolkit component is not a downstream artifact instance. It keeps this two-field
+frontmatter and is not subject to the Summary-block or `reader_model` requirement above; it
+satisfies doctrine D10 through structure — an orienting opening before the detailed rules, one
+reader question per section, and distinguishable decisions, evidence, gaps, and actions. Its own
+owning contract may require more.
 
 A DBA configuration MUST NOT become active unless it passes the focused boundary-contract test
 immediately before the active-configuration pointer changes:

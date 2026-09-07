@@ -92,6 +92,32 @@ for route in "${SELF_INSTRUCTIONS}" "${PROJECT_INSTRUCTIONS}" "${DBA_ENTRY}"; do
   rg -q 'reader_output_policy' "${route}" || \
     fail "normal-agent route does not name the reader_output_policy selection: ${route#${CODEOS_ROOT}/}"
 done
+
+# D10 semantic-vs-format boundary: the Summary-block / reader_model requirement is a downstream
+# artifact layout requirement, and a toolkit component is explicitly not a downstream artifact
+# instance. Guard both ownership statements so the distinction cannot silently collapse.
+rg -q 'downstream artifact layout requirement' "${DBA_ENTRY}" || \
+  fail 'Summary/reader_model requirement is no longer marked as a downstream artifact layout requirement'
+rg -q 'A canonical toolkit component is not a downstream artifact instance' "${DBA_ENTRY}" || \
+  fail 'Component Boundary Contract no longer distinguishes a toolkit component from a downstream artifact instance'
+
+# The selected Reader Output policy, when a configuration selects one, must carry the four-tier
+# scope boundary and the toolkit-component metadata exemption. Resolve it from the active
+# configuration exactly as the engine wiring does.
+RO_CONFIG_REL="$(sed -n 's#^Active configuration: `\.codeos/toolkit/\(.*\)`$#\1#p' "${DBA_ENTRY}")"
+RO_POLICY_REL="$(sed -n 's#^reader_output_policy:[[:space:]]*\([^[:space:]#]*\.md\).*#\1#p' \
+  "${CODEOS_ROOT}/${RO_CONFIG_REL}" 2>/dev/null || true)"
+if [[ -n "${RO_POLICY_REL}" && -f "${CODEOS_ROOT}/${RO_POLICY_REL}" ]]; then
+  RO_POLICY="${CODEOS_ROOT}/${RO_POLICY_REL}"
+  rg -q '^## Scope$' "${RO_POLICY}" || \
+    fail "selected Reader Output policy has no Scope section: ${RO_POLICY_REL}"
+  rg -q 'Canonical toolkit components under' "${RO_POLICY}" || \
+    fail "selected Reader Output policy does not scope the toolkit-component tier: ${RO_POLICY_REL}"
+  rg -q 'no specific heading is mandatory' "${RO_POLICY}" || \
+    fail "selected Reader Output policy no longer exempts toolkit components from a mandatory heading: ${RO_POLICY_REL}"
+  rg -q 'A canonical toolkit component carries neither the .reader_model. field nor a required' "${RO_POLICY}" || \
+    fail "selected Reader Output policy no longer exempts toolkit components from reader_model / Summary metadata: ${RO_POLICY_REL}"
+fi
 if rg -l 'Known-to-New Progression|Preview Then Traverse' \
   "${SELF_INSTRUCTIONS}" "${PROJECT_INSTRUCTIONS}" "${DBA_ENTRY}" \
   "${CODEOS_ROOT}/dba/03-prompts" "${CODEOS_ROOT}/dba/05-guidance" \
