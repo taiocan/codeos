@@ -269,9 +269,31 @@ _add_communication_source() {
   COMMUNICATION_PATHS+=("${resolved}")
 }
 
+# The reader-output guidance is the one this project's own toolkit mount selects: read the active
+# DBA configuration's `reader_output_policy` from `${CODEOS_ROOT}/dba-system.md` (CODEOS_ROOT already
+# follows the .codeos/toolkit symlink), and fall back to the unversioned
+# `dba/05-guidance/reader-oriented-output.md` when it selects none. A project on DBA-6 keeps the
+# unversioned guidance; a project on DBA-7 gets the versioned Reader Output policy. Both candidate
+# paths are under CODEOS_ROOT, so _add_communication_source's isolation check is unchanged.
+_resolve_reader_output_guidance() {
+  local fallback="${CODEOS_ROOT}/dba/05-guidance/reader-oriented-output.md"
+  local system="${CODEOS_ROOT}/dba-system.md"
+  [[ -f "${system}" ]] || { printf '%s\n' "${fallback}"; return; }
+  local cfg_rel policy_rel
+  cfg_rel="$(sed -n 's#^Active configuration: `\.codeos/toolkit/\(.*\)`$#\1#p' "${system}")"
+  [[ -n "${cfg_rel}" && -f "${CODEOS_ROOT}/${cfg_rel}" ]] || { printf '%s\n' "${fallback}"; return; }
+  policy_rel="$(sed -n 's#^reader_output_policy:[[:space:]]*\([^[:space:]#]*\.md\).*#\1#p' \
+    "${CODEOS_ROOT}/${cfg_rel}")"
+  if [[ -n "${policy_rel}" && -f "${CODEOS_ROOT}/${policy_rel}" ]]; then
+    printf '%s\n' "${CODEOS_ROOT}/${policy_rel}"
+  else
+    printf '%s\n' "${fallback}"
+  fi
+}
+
 _add_communication_source \
   "reader-oriented output guidance" \
-  "${CODEOS_ROOT}/dba/05-guidance/reader-oriented-output.md" \
+  "$(_resolve_reader_output_guidance)" \
   "${CODEOS_ROOT}" required
 _add_communication_source \
   "Codeos terminology" \

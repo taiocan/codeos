@@ -185,7 +185,21 @@ fi
 # ── UPG-0079: reader-oriented guidance and canonical terminology delivery ──────────────────────
 echo "== UPG-0079: communication context =="
 effective="$(jq -r '.messages[].content' "${SD}/request.json")"
-guide_count="$(printf '%s\n' "${effective}" | grep -cF '# Reader-Oriented LLM Output' || true)"
+# The reader-output guidance is whichever one the active DBA configuration selects (DBA-7 →
+# reader-output/v1.md; DBA-6/none → reader-oriented-output.md). Grep for that file's own H1.
+_active_reader_output_h1() {
+  local fallback="${CODEOS_ROOT}/dba/05-guidance/reader-oriented-output.md" cfg_rel policy_rel resolved
+  cfg_rel="$(sed -n 's#^Active configuration: `\.codeos/toolkit/\(.*\)`$#\1#p' "${CODEOS_ROOT}/dba-system.md" 2>/dev/null)"
+  policy_rel="$(sed -n 's#^reader_output_policy:[[:space:]]*\([^[:space:]#]*\.md\).*#\1#p' "${CODEOS_ROOT}/${cfg_rel}" 2>/dev/null)"
+  if [[ -n "${policy_rel}" && -f "${CODEOS_ROOT}/${policy_rel}" ]]; then
+    resolved="${CODEOS_ROOT}/${policy_rel}"
+  else
+    resolved="${fallback}"
+  fi
+  grep -m1 '^# ' "${resolved}"
+}
+guide_h1="$(_active_reader_output_h1)"
+guide_count="$(printf '%s\n' "${effective}" | grep -cF "${guide_h1}" || true)"
 codeos_terms_count="$(printf '%s\n' "${effective}" | grep -cF '# Codeos Terminology' || true)"
 if [[ "${guide_count}" == "1" && "${codeos_terms_count}" == "1" ]]; then
   ok "OUTPUT required guidance and Codeos terminology delivered exactly once"
@@ -220,6 +234,30 @@ if printf '%s\n' "${effective}" | grep -qF 'not implementation evidence' \
   ok "OUTPUT terminology is labelled as communication context, not evidence"
 else
   bad "OUTPUT terminology authority boundary" "communication/evidence label missing"
+fi
+
+# The reader-output guidance follows the project's own toolkit-mount configuration: a DBA-7 mount
+# delivers reader-output/v1.md, a DBA-6 mount the unversioned fallback — proven directly against the
+# implementer's own resolver.
+eval "$(sed -n '/^_resolve_reader_output_guidance()/,/^}/p' "${TOOL}")"
+RO_FX="${WORK}/ro-fixture"
+mkdir -p "${RO_FX}/dba/00-entry/configurations" \
+         "${RO_FX}/dba/02-policies/reader-output" \
+         "${RO_FX}/dba/05-guidance"
+printf '# Unversioned Fallback\n' > "${RO_FX}/dba/05-guidance/reader-oriented-output.md"
+printf '# Selected Reader Output Policy\n' > "${RO_FX}/dba/02-policies/reader-output/v1.md"
+printf 'Active configuration: `.codeos/toolkit/dba/00-entry/configurations/DBA-X.yaml`\n' \
+  > "${RO_FX}/dba-system.md"
+printf 'doctrine: dba/01-doctrine/v7.md\nreader_output_policy: dba/02-policies/reader-output/v1.md\n' \
+  > "${RO_FX}/dba/00-entry/configurations/DBA-X.yaml"
+got7="$(CODEOS_ROOT="${RO_FX}" _resolve_reader_output_guidance)"
+printf 'doctrine: dba/01-doctrine/v6.md\n' > "${RO_FX}/dba/00-entry/configurations/DBA-X.yaml"
+got6="$(CODEOS_ROOT="${RO_FX}" _resolve_reader_output_guidance)"
+if [[ "${got7}" == "${RO_FX}/dba/02-policies/reader-output/v1.md" \
+      && "${got6}" == "${RO_FX}/dba/05-guidance/reader-oriented-output.md" ]]; then
+  ok "OUTPUT reader-output guidance follows the project-adopted configuration"
+else
+  bad "OUTPUT reader-output guidance resolution" "v7=${got7##*/} v6=${got6##*/}"
 fi
 
 rm -f "${REPO}/.codeos/00-project/terminology.md"
