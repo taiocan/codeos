@@ -185,12 +185,11 @@ fi
 # ── UPG-0079: reader-oriented guidance and canonical terminology delivery ──────────────────────
 echo "== UPG-0079: communication context =="
 effective="$(jq -r '.messages[].content' "${SD}/request.json")"
-# The reader-output guidance is whichever one the active DBA configuration selects (DBA-7 →
-# reader-output/v1.md; DBA-6/none → reader-oriented-output.md). Grep for that file's own H1.
+# The reader-output guidance is whichever composition the fixture project resolves.
 _active_reader_output_h1() {
-  local fallback="${CODEOS_ROOT}/dba/05-guidance/reader-oriented-output.md" cfg_rel policy_rel resolved
-  cfg_rel="$(sed -n 's#^Active configuration: `\.codeos/toolkit/\(.*\)`$#\1#p' "${CODEOS_ROOT}/dba-system.md" 2>/dev/null)"
-  policy_rel="$(sed -n 's#^reader_output_policy:[[:space:]]*\([^[:space:]#]*\.md\).*#\1#p' "${CODEOS_ROOT}/${cfg_rel}" 2>/dev/null)"
+  local fallback="${CODEOS_ROOT}/dba/05-guidance/reader-oriented-output.md" policy_rel resolved
+  policy_rel="$(bash "${CODEOS_ROOT}/dba/04-tools/configuration/resolve-project-configuration.sh" "${REPO}" \
+    | sed -n 's/^reader_output_policy=//p')"
   if [[ -n "${policy_rel}" && -f "${CODEOS_ROOT}/${policy_rel}" ]]; then
     resolved="${CODEOS_ROOT}/${policy_rel}"
   else
@@ -236,23 +235,26 @@ else
   bad "OUTPUT terminology authority boundary" "communication/evidence label missing"
 fi
 
-# The reader-output guidance follows the project's own toolkit-mount configuration: a DBA-7 mount
-# delivers reader-output/v1.md, a DBA-6 mount the unversioned fallback — proven directly against the
-# implementer's own resolver.
+# Reader-output guidance follows the project's explicit binding through the canonical resolver.
 eval "$(sed -n '/^_resolve_reader_output_guidance()/,/^}/p' "${TOOL}")"
 RO_FX="${WORK}/ro-fixture"
 mkdir -p "${RO_FX}/dba/00-entry/configurations" \
+         "${RO_FX}/dba/04-tools/configuration" \
          "${RO_FX}/dba/02-policies/reader-output" \
-         "${RO_FX}/dba/05-guidance"
+         "${RO_FX}/dba/05-guidance" \
+         "${RO_FX}/project/.codeos/00-project"
+cp "${CODEOS_ROOT}/dba/04-tools/configuration/resolve-project-configuration.sh" \
+  "${RO_FX}/dba/04-tools/configuration/"
 printf '# Unversioned Fallback\n' > "${RO_FX}/dba/05-guidance/reader-oriented-output.md"
 printf '# Selected Reader Output Policy\n' > "${RO_FX}/dba/02-policies/reader-output/v1.md"
-printf 'Active configuration: `.codeos/toolkit/dba/00-entry/configurations/DBA-X.yaml`\n' \
-  > "${RO_FX}/dba-system.md"
-printf 'doctrine: dba/01-doctrine/v7.md\nreader_output_policy: dba/02-policies/reader-output/v1.md\n' \
-  > "${RO_FX}/dba/00-entry/configurations/DBA-X.yaml"
-got7="$(CODEOS_ROOT="${RO_FX}" _resolve_reader_output_guidance)"
-printf 'doctrine: dba/01-doctrine/v6.md\n' > "${RO_FX}/dba/00-entry/configurations/DBA-X.yaml"
-got6="$(CODEOS_ROOT="${RO_FX}" _resolve_reader_output_guidance)"
+printf 'doctrine: dba/01-doctrine/v7.md\nreader_output_policy: dba/02-policies/reader-output/v1.md\nstatus: approved\n' \
+  > "${RO_FX}/dba/00-entry/configurations/DBA-7.yaml"
+printf 'doctrine: dba/01-doctrine/v6.md\nstatus: approved\n' \
+  > "${RO_FX}/dba/00-entry/configurations/DBA-6.yaml"
+printf 'codeos_schema: 2\ndba_configuration: DBA-7\n' > "${RO_FX}/project/.codeos/00-project/codeos.yaml"
+got7="$(CODEOS_ROOT="${RO_FX}" CALLER_ROOT="${RO_FX}/project" _resolve_reader_output_guidance)"
+printf 'codeos_schema: 2\ndba_configuration: DBA-6\n' > "${RO_FX}/project/.codeos/00-project/codeos.yaml"
+got6="$(CODEOS_ROOT="${RO_FX}" CALLER_ROOT="${RO_FX}/project" _resolve_reader_output_guidance)"
 if [[ "${got7}" == "${RO_FX}/dba/02-policies/reader-output/v1.md" \
       && "${got6}" == "${RO_FX}/dba/05-guidance/reader-oriented-output.md" ]]; then
   ok "OUTPUT reader-output guidance follows the project-adopted configuration"

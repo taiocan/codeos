@@ -1,12 +1,15 @@
 # Canonical path: .codeos/00-project/codeos.yaml
 #
-# The single project configuration naming the Platform Baseline, the fixed Codeos Mechanics
+# The single project configuration binding an immutable DBA composition, naming the Platform Baseline, the fixed Codeos Mechanics
 # (display only — see dba/02-policies/codeos-mechanics/<version>.md, which owns their semantics),
 # and each artifact type's governed state. Checked by
 # `bash dba/04-tools/configuration/project-config-contract.sh`.
 #
 # An artifact type's governed state has exactly one authoritative source: the `artifacts:` block
 # below. Never restate it inside an artifact's own frontmatter.
+
+codeos_schema: 2
+dba_configuration: DBA-8
 
 platform:
   persistence: postgresql

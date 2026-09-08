@@ -22,6 +22,8 @@ Ordinary technical vocabulary does not belong here. Git preserves the history of
 | **Canonical** | The single stable runtime identifier that names a Concept within a vocabulary. |
 | **Checkpoint** | An ordered point in a governed workflow with a defined entry condition, required evidence, required human decisions, exit condition, and valid return routes. Its state is derived from canonical evidence as `PASS`, `BLOCKED`, or `WAITING`; a later checkpoint is never treated as satisfied while a required earlier one is unresolved. |
 | **Codeos Mechanic** | A fixed delivery, verification, or communication obligation named by the Codeos Mechanics policy; a project's configuration may display it but not disable it. |
+| **DBA configuration** | An immutable, approved composition selecting compatible doctrine, policies, prompts, and tool contracts. Its identity and number do not imply a doctrine version. |
+| **Legacy DBA-7 cutover compatibility baseline** | The DBA-7 composition applied by a DBA-8-capable toolkit to a schema-less project for compatibility; it is not evidence that the project historically adopted DBA-7. Changing such a project's toolkit mount is a controlled, human-authorized compatibility action. |
 | **Concept** | The semantic identity used by domain logic, independent of its string or storage representation. |
 | **Concept Dependency Rule** | Domain logic compares resolved Concept identity rather than vocabulary representations. |
 | **Concept leak** | A defect in which a vocabulary representation escapes the resolution boundary into domain logic. |

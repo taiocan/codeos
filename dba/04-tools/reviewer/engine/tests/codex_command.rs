@@ -20,26 +20,20 @@ fn review_args<'a>(feature: &'a str) -> [&'a str; 4] {
 /// The first `# ` heading of the reader-output guidance the repo's active DBA configuration selects
 /// (or the unversioned fallback). Mirrors `packet::resolve_reader_output_guidance` so this test
 /// tracks the selected policy rather than a fixed filename.
-fn expected_reader_guidance_title() -> String {
+fn expected_reader_guidance_title(project_root: &std::path::Path) -> String {
     let root = repo_root();
     let fallback = root.join("dba/05-guidance/reader-oriented-output.md");
-    let resolved = std::fs::read_to_string(root.join("dba-system.md"))
+    let resolved = Command::new("bash")
+        .arg(root.join("dba/04-tools/configuration/resolve-project-configuration.sh"))
+        .arg(project_root)
+        .output()
         .ok()
-        .and_then(|system| {
-            system
-                .lines()
-                .find_map(|l| {
-                    l.strip_prefix("Active configuration: `.codeos/toolkit/")
-                        .and_then(|r| r.strip_suffix('`'))
-                        .map(str::to_string)
-                })
-                .and_then(|rel| std::fs::read_to_string(root.join(rel)).ok())
-        })
+        .filter(|o| o.status.success())
+        .and_then(|o| String::from_utf8(o.stdout).ok())
         .and_then(|config| {
-            config.lines().find_map(|l| {
-                l.strip_prefix("reader_output_policy:")
-                    .map(|r| r.trim().trim_matches('`').to_string())
-            })
+            config
+                .lines()
+                .find_map(|l| l.strip_prefix("reader_output_policy=").map(str::to_string))
         })
         .map(|rel| root.join(rel))
         .filter(|p| p.is_file())
@@ -216,7 +210,7 @@ fn reviewer_receives_reader_guidance_and_only_canonical_terminology_once() {
     let captured = std::fs::read_to_string(&fake.packet_log).unwrap();
 
     for unique in [
-        expected_reader_guidance_title(),
+        expected_reader_guidance_title(repo.path()),
         "# Codeos Terminology".to_string(),
         "PROJECT-TERM-CANARY".to_string(),
     ] {
@@ -227,13 +221,15 @@ fn reviewer_receives_reader_guidance_and_only_canonical_terminology_once() {
         );
     }
     assert_eq!(
-        captured.matches("--- READER-ORIENTED OUTPUT GUIDANCE:").count(),
+        captured
+            .matches("--- READER-ORIENTED OUTPUT GUIDANCE:")
+            .count(),
         1,
         "the selected reader-output guidance was not delivered exactly once"
     );
-    assert!(
-        captured.contains("COMMUNICATION CONTEXT (instructions and canonical language; not review evidence)")
-    );
+    assert!(captured.contains(
+        "COMMUNICATION CONTEXT (instructions and canonical language; not review evidence)"
+    ));
     assert!(
         captured.contains("It is not acceptance evidence, a requirement, or approval authority.")
     );
@@ -339,7 +335,9 @@ fn review_with_toolkit_config(config_body: &str) -> String {
         "dba/00-entry/configurations",
         "dba/02-policies/reader-output",
         "dba/03-prompts/review",
+        "dba/04-tools/configuration",
         "dba/05-guidance",
+        ".codeos/00-project",
     ] {
         std::fs::create_dir_all(repo.path().join(directory)).unwrap();
     }
@@ -355,7 +353,8 @@ fn review_with_toolkit_config(config_body: &str) -> String {
     )
     .unwrap();
     std::fs::write(
-        repo.path().join("dba/05-guidance/reader-oriented-output.md"),
+        repo.path()
+            .join("dba/05-guidance/reader-oriented-output.md"),
         "# Unversioned Fallback\nFALLBACK-GUIDANCE-CANARY\n",
     )
     .unwrap();
@@ -364,14 +363,32 @@ fn review_with_toolkit_config(config_body: &str) -> String {
         "# Selected Reader Output Policy\nSELECTED-GUIDANCE-CANARY\n",
     )
     .unwrap();
+    std::fs::copy(
+        repo_root().join("dba/04-tools/configuration/resolve-project-configuration.sh"),
+        repo.path()
+            .join("dba/04-tools/configuration/resolve-project-configuration.sh"),
+    )
+    .unwrap();
+    let configuration_id = if config_body.contains("v7.md") {
+        "DBA-7"
+    } else {
+        "DBA-6"
+    };
     std::fs::write(
-        repo.path().join("dba/00-entry/configurations/DBA-TEST.yaml"),
-        config_body,
+        repo.path().join(format!(
+            "dba/00-entry/configurations/{configuration_id}.yaml"
+        )),
+        format!("{config_body}status: approved\n"),
+    )
+    .unwrap();
+    std::fs::write(
+        repo.path().join(".codeos/00-project/codeos.yaml"),
+        format!("codeos_schema: 2\ndba_configuration: {configuration_id}\n"),
     )
     .unwrap();
     std::fs::write(
         repo.path().join("dba-system.md"),
-        "Active configuration: `.codeos/toolkit/dba/00-entry/configurations/DBA-TEST.yaml`\n",
+        format!("Active configuration: `.codeos/toolkit/dba/00-entry/configurations/{configuration_id}.yaml`\n"),
     )
     .unwrap();
     Command::new("git")

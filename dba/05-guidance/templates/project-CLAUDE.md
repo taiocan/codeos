@@ -1,8 +1,9 @@
 # [PROJECT_NAME]
 
 This is the canonical project-specific instruction document. The root `CLAUDE.md` discovery
-adapter loads it. For DBA mechanics, read `.codeos/toolkit/dba-system.md`; it selects the
-authoritative doctrine, policies, prompts, tools, and guidance.
+adapter loads it. For DBA mechanics, run
+`.codeos/toolkit/dba/04-tools/configuration/resolve-project-configuration.sh` from the project root,
+then read the selected authoritative doctrine, policies, prompts, tools, and guidance.
 
 `.codeos/00-project/charter.md` owns the solution's problem, vision, outcomes, scope boundary, and
 System Constraints. Do not restate them here.

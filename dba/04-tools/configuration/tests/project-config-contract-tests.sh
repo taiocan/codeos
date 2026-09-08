@@ -25,13 +25,13 @@ mk_fake_root() {
            "${root}/dba/00-entry/configurations" \
            "${root}/dba/02-policies/codeos-mechanics"
   cp "${CFG_DIR}/project-config-contract.sh" "${CFG_DIR}/render-mechanics-block.sh" \
+     "${CFG_DIR}/resolve-project-configuration.sh" \
      "${root}/dba/04-tools/configuration/"
   cp "${CODEOS_ROOT}/dba/02-policies/codeos-mechanics/${mechver}.md" \
      "${root}/dba/02-policies/codeos-mechanics/${mechver}.md"
   printf 'codeos_mechanics_policy: dba/02-policies/codeos-mechanics/%s.md\n' "${mechver}" \
-    > "${root}/dba/00-entry/configurations/DBA-X.yaml"
-  printf 'Active configuration: `.codeos/toolkit/dba/00-entry/configurations/DBA-X.yaml`\n' \
-    > "${root}/dba-system.md"
+    > "${root}/dba/00-entry/configurations/DBA-7.yaml"
+  printf 'status: approved\n' >> "${root}/dba/00-entry/configurations/DBA-7.yaml"
 }
 
 # Wrap a mechanics block (on stdin) into a complete codeos.yaml.

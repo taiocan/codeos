@@ -277,13 +277,11 @@ _add_communication_source() {
 # paths are under CODEOS_ROOT, so _add_communication_source's isolation check is unchanged.
 _resolve_reader_output_guidance() {
   local fallback="${CODEOS_ROOT}/dba/05-guidance/reader-oriented-output.md"
-  local system="${CODEOS_ROOT}/dba-system.md"
-  [[ -f "${system}" ]] || { printf '%s\n' "${fallback}"; return; }
-  local cfg_rel policy_rel
-  cfg_rel="$(sed -n 's#^Active configuration: `\.codeos/toolkit/\(.*\)`$#\1#p' "${system}")"
-  [[ -n "${cfg_rel}" && -f "${CODEOS_ROOT}/${cfg_rel}" ]] || { printf '%s\n' "${fallback}"; return; }
-  policy_rel="$(sed -n 's#^reader_output_policy:[[:space:]]*\([^[:space:]#]*\.md\).*#\1#p' \
-    "${CODEOS_ROOT}/${cfg_rel}")"
+  local resolver="${CODEOS_ROOT}/dba/04-tools/configuration/resolve-project-configuration.sh"
+  [[ -f "${resolver}" ]] || { printf '%s\n' "${fallback}"; return; }
+  local resolved policy_rel
+  resolved="$(bash "${resolver}" "${CALLER_ROOT}" 2>/dev/null)" || { printf '%s\n' "${fallback}"; return; }
+  policy_rel="$(printf '%s\n' "${resolved}" | sed -n 's/^reader_output_policy=//p')"
   if [[ -n "${policy_rel}" && -f "${CODEOS_ROOT}/${policy_rel}" ]]; then
     printf '%s\n' "${CODEOS_ROOT}/${policy_rel}"
   else

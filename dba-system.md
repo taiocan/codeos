@@ -4,17 +4,18 @@
 > `.codeos/toolkit/dba-system.md`. Codeos toolkit self-development is governed separately by the repository
 > root `CLAUDE.md`.
 
-Active configuration: `.codeos/toolkit/dba/00-entry/configurations/DBA-7.yaml`
+Active configuration: `.codeos/toolkit/dba/00-entry/configurations/DBA-8.yaml`
 
 The configuration selects the authoritative version of each governed DBA component. Component
 files own their semantics; the configuration only selects which versions are active.
 
-The active configuration is the default for a newly initialized project and the target of an
-explicit upgrade. A project that has already adopted a specific configuration continues under it
-until that project's user explicitly elects to upgrade — the active pointer changing here does not
-migrate, retrofit, or reinterpret an existing project's artifacts. A configuration a project has
-adopted remains supported for that project's continued use. A configuration no project has adopted
-and that is not active is a historical record only.
+The active configuration is only the default for a newly initialized or explicitly adopting
+project. Project tools resolve the adopted composition through
+`dba/04-tools/configuration/resolve-project-configuration.sh`, never from this pointer directly.
+A schema-2 project binds its immutable composition with `dba_configuration`. A schema-less project
+on a DBA-8-capable toolkit resolves to the frozen DBA-7 cutover compatibility baseline; this does
+not infer historical adoption. Changing either a binding or a schema-less project's toolkit mount
+is a controlled, human-authorized action. An agent MUST NOT perform either change silently.
 
 ## Downstream Project Layout Contract
 
@@ -111,6 +112,8 @@ below and satisfy doctrine D10 through structure alone.
 Codeos Mechanics from the selected Codeos Mechanics policy. It is mechanically checked by
 `bash dba/04-tools/configuration/project-config-contract.sh`, which fails closed on a downgraded
 core-four artifact type, an unlisted artifact type, or an attempt to change a fixed mechanic.
+Under schema 2 it also binds the project's DBA composition using `codeos_schema: 2` and
+`dba_configuration: DBA-N`; missing and unknown bindings fail closed.
 Toggling a configurable artifact type's governed state changes its process weight only; it does not
 suspend a doctrine-level human-control guarantee, none of which are represented as configuration
 entries.
@@ -148,7 +151,7 @@ After changing the pointer, verify that it names the candidate configuration tha
 
 At the start of a DBA session:
 
-1. Read the active configuration above.
+1. Run the canonical project-configuration resolver and read its selected configuration.
 2. Treat its component paths as relative to the `.codeos/toolkit/` root.
 3. Read the `doctrine` component fully.
 4. Read each other selected component when its policy or tool applies to the current work.
@@ -161,8 +164,8 @@ Unversioned canonical resources are not selected through this configuration. Con
 normal paths under `.codeos/toolkit/dba/03-prompts/`, `.codeos/toolkit/dba/04-tools/`, and
 `.codeos/toolkit/dba/05-guidance/`.
 
-For every human-readable output, read and apply the Reader Output policy the DBA configuration this
-project has adopted selects (`reader_output_policy`), or
+For every human-readable output, read and apply the Reader Output policy the canonically resolved
+DBA configuration selects (`reader_output_policy`), or
 `.codeos/toolkit/dba/05-guidance/reader-oriented-output.md` when that configuration selects none,
 together with `.codeos/toolkit/dba/05-guidance/terminology.md` and the project terminology at
 `.codeos/00-project/terminology.md` when it exists.
