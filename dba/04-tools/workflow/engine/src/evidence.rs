@@ -178,12 +178,24 @@ pub fn latest_review_record(
     if !dir.is_dir() {
         return Ok(None);
     }
-    let mut candidates: Vec<_> = std::fs::read_dir(dir)?
-        .filter_map(|e| e.ok())
-        .map(|e| e.path())
-        .filter(|p| p.extension().map(|x| x == "md").unwrap_or(false))
-        .collect();
-    candidates.sort();
+    fn collect_markdown(dir: &Path, files: &mut Vec<std::path::PathBuf>) -> Result<()> {
+        for entry in std::fs::read_dir(dir)? {
+            let entry = entry?;
+            let file_type = entry.file_type()?;
+            if file_type.is_dir() {
+                collect_markdown(&entry.path(), files)?;
+            } else if file_type.is_file() && entry.path().extension().is_some_and(|x| x == "md") {
+                files.push(entry.path());
+            }
+        }
+        Ok(())
+    }
+
+    let mut candidates = Vec::new();
+    collect_markdown(dir, &mut candidates)?;
+    candidates.sort_by(|a, b| a.file_name().cmp(&b.file_name()).then_with(|| a.cmp(b)));
+    let mut latest_name = None;
+    let mut latest = None;
     for path in candidates.into_iter().rev() {
         let Ok(text) = std::fs::read_to_string(&path) else {
             continue;
@@ -199,13 +211,23 @@ pub fn latest_review_record(
         let f = reviewed
             .and_then(|r| r.get("feature"))
             .and_then(|v| v.as_str());
-        let s = reviewed
-            .and_then(|r| r.get("stage"))
-            .and_then(|v| v.as_str());
-        if f != Some(feature) || s != Some(stage) {
+        let s = reviewed.and_then(|r| r.get("stage"));
+        let stage_matches = s.and_then(|v| v.as_str()) == Some(stage)
+            || s.and_then(|v| v.as_u64()).map(|v| v.to_string()) == Some(stage.to_string());
+        if f != Some(feature) || !stage_matches {
             continue;
         }
-        return Ok(Some(ReviewRecord {
+        let name = path.file_name().and_then(|v| v.to_str()).unwrap_or_default();
+        if latest_name.as_deref() == Some(name) {
+            anyhow::bail!(
+                "ambiguous reviewer records for {feature} at stage {stage}: duplicate canonical filename {name}"
+            );
+        }
+        if latest.is_some() {
+            break;
+        }
+        latest_name = Some(name.to_string());
+        latest = Some(ReviewRecord {
             review_commit: reviewed
                 .and_then(|r| r.get("review_commit"))
                 .and_then(|v| v.as_str())
@@ -216,14 +238,15 @@ pub fn latest_review_record(
                 .and_then(|v| v.as_str())
                 .unwrap_or_default()
                 .to_string(),
-            effective_concern: doc
-                .get("effective_concern")
+            effective_concern: reviewed
+                .and_then(|r| r.get("effective_concern"))
+                .or_else(|| doc.get("effective_concern"))
                 .and_then(|v| v.as_str())
                 .unwrap_or_default()
                 .to_string(),
-        }));
+        });
     }
-    Ok(None)
+    Ok(latest)
 }
 
 /// A review outcome permits progression unless it is an unresolved "DO NOT ADVANCE".
@@ -357,5 +380,64 @@ mod tests {
         assert!(review_permits_progression("NO OBJECTION"));
         assert!(review_permits_progression("CHANGES ADVISED"));
         assert!(!review_permits_progression("DO NOT ADVANCE"));
+    }
+
+    fn review_record(feature: &str, stage: &str, id: &str) -> String {
+        format!(
+            "---\nreview_id: {id}\nreviewed:\n  feature: {feature}\n  stage: \"{stage}\"\n  review_commit: abc\n  reviewed_packet_sha256: packet\neffective_concern: NO OBJECTION\n---\n"
+        )
+    }
+
+    fn canonical_review_record(feature: &str, stage: u64, id: &str) -> String {
+        format!(
+            "---\nreview_id: {id}\nreviewed:\n  feature: {feature}\n  stage: {stage}\n  review_commit: abc\n  reviewed_packet_sha256: packet\n  effective_concern: NO OBJECTION\n---\n"
+        )
+    }
+
+    #[test]
+    fn review_record_is_found_at_root_or_canonical_codex_location() {
+        let dir = tempfile::tempdir().unwrap();
+        fs::write(
+            dir.path().join("20260101T000000Z-F-ROOT-stage-8-abc.md"),
+            review_record("F-ROOT", "8", "REV__F-ROOT__8__R1"),
+        ).unwrap();
+        let codex = dir.path().join("codex");
+        fs::create_dir(&codex).unwrap();
+        fs::write(
+            codex.join("20260101T000001Z-F-NESTED-stage-8-abc.md"),
+            canonical_review_record("F-NESTED", 8, "REV__F-NESTED__8__R1"),
+        ).unwrap();
+
+        assert!(latest_review_record(dir.path(), "F-ROOT", "8").unwrap().is_some());
+        assert!(latest_review_record(dir.path(), "F-NESTED", "8").unwrap().is_some());
+    }
+
+    #[test]
+    fn reentry_record_uses_normal_canonical_discovery() {
+        let dir = tempfile::tempdir().unwrap();
+        let codex = dir.path().join("codex");
+        fs::create_dir(&codex).unwrap();
+        fs::write(
+            codex.join("20260101T000001Z-F-0004-stage-8-abc.md"),
+            canonical_review_record("F-0004", 8, "REV__F-0004__8__REENTRY-1"),
+        ).unwrap();
+        let record = latest_review_record(dir.path(), "F-0004", "8").unwrap().unwrap();
+        assert_eq!(record.effective_concern, "NO OBJECTION");
+    }
+
+    #[test]
+    fn irrelevant_files_are_ignored_and_duplicate_canonical_names_fail_closed() {
+        let dir = tempfile::tempdir().unwrap();
+        fs::write(dir.path().join("notes.md"), "not a review").unwrap();
+        fs::write(dir.path().join("packet.txt"), "not a review").unwrap();
+        assert!(latest_review_record(dir.path(), "F-0004", "8").unwrap().is_none());
+
+        let name = "20260101T000001Z-F-0004-stage-8-abc.md";
+        fs::write(dir.path().join(name), review_record("F-0004", "8", "REV__F-0004__8__R3")).unwrap();
+        let codex = dir.path().join("codex");
+        fs::create_dir(&codex).unwrap();
+        fs::write(codex.join(name), review_record("F-0004", "8", "REV__F-0004__8__REENTRY-1")).unwrap();
+        let error = latest_review_record(dir.path(), "F-0004", "8").unwrap_err();
+        assert!(error.to_string().contains("ambiguous reviewer records"));
     }
 }
