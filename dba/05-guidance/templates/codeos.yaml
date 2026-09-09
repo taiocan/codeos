@@ -20,6 +20,15 @@ platform:
   # apply, e.g.:
   #   webapp: not-applicable: no end user; charter.md records this as a pure backend service
 
+# Optional verification locations for a project whose runtime topology differs from the shipped
+# skeleton. Omit this block to retain the canonical legacy defaults. The referenced database URL
+# is read from the environment only while checks run; its value is never stored in evidence.
+# runtime_verification:
+#   database_service: postgres
+#   database_test_url_env: PROJECT_TEST_DATABASE_URL
+#   backend_health_url: http://127.0.0.1:8080/health
+#   web_url: http://127.0.0.1:3000/
+
 # The fixed `mechanics:` block is written here by `dba-init.sh`, rendered from the Codeos Mechanics
 # policy the active DBA configuration selects (see dba/04-tools/configuration/render-mechanics-block.sh).
 # It is transparency only — a project cannot change a value; project-config-contract.sh fails closed

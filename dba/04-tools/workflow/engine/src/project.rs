@@ -1,7 +1,40 @@
 //! Resolving a project's canonical paths and its active DBA configuration.
 
 use anyhow::{Context, Result};
+use serde::Deserialize;
+use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
+use std::process::Command;
+
+const DEFAULT_DATABASE_SERVICE: &str = "db";
+const DEFAULT_DATABASE_TEST_URL: &str = "postgres://codeos:codeos@localhost:5432/codeos";
+const DEFAULT_BACKEND_HEALTH_URL: &str = "http://localhost:8080/health";
+const DEFAULT_WEB_URL: &str = "http://localhost:3000/";
+
+/// Project facts needed to locate verification targets. These values describe where the
+/// project's already-declared runtime can be observed; they do not define that runtime.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RuntimeVerification {
+    pub database_service: String,
+    pub database_test_url_env: Option<String>,
+    pub backend_health_url: String,
+    pub web_url: String,
+}
+
+#[derive(Debug, Default, Deserialize)]
+struct ProjectConfiguration {
+    #[serde(default)]
+    runtime_verification: Option<RuntimeVerificationInput>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RuntimeVerificationInput {
+    database_service: String,
+    database_test_url_env: String,
+    backend_health_url: String,
+    web_url: String,
+}
 
 /// The canonical locations a checkpoint reads evidence from. Downstream projects use `.codeos/…`;
 /// Codeos self-development keeps reviewer records under `maintenance/reviews`.
@@ -50,6 +83,106 @@ impl Project {
         self.codeos_dir().join("00-project/codeos.yaml")
     }
 
+    pub fn runtime_verification(&self) -> Result<RuntimeVerification> {
+        let text = std::fs::read_to_string(self.codeos_yaml()).context("read codeos.yaml")?;
+        let config: ProjectConfiguration =
+            serde_yaml::from_str(&text).context("parse runtime_verification in codeos.yaml")?;
+        let Some(input) = config.runtime_verification else {
+            return Ok(RuntimeVerification {
+                database_service: DEFAULT_DATABASE_SERVICE.into(),
+                database_test_url_env: None,
+                backend_health_url: DEFAULT_BACKEND_HEALTH_URL.into(),
+                web_url: DEFAULT_WEB_URL.into(),
+            });
+        };
+        for (name, value) in [
+            ("database_service", input.database_service.as_str()),
+            (
+                "database_test_url_env",
+                input.database_test_url_env.as_str(),
+            ),
+            ("backend_health_url", input.backend_health_url.as_str()),
+            ("web_url", input.web_url.as_str()),
+        ] {
+            if value.trim().is_empty() {
+                anyhow::bail!("runtime_verification.{name} must be non-empty");
+            }
+        }
+        if !valid_env_name(&input.database_test_url_env) {
+            anyhow::bail!(
+                "runtime_verification.database_test_url_env must be an environment-variable name"
+            );
+        }
+        for (name, value) in [
+            ("backend_health_url", input.backend_health_url.as_str()),
+            ("web_url", input.web_url.as_str()),
+        ] {
+            if !(value.starts_with("http://") || value.starts_with("https://")) {
+                anyhow::bail!("runtime_verification.{name} must be an http(s) URL");
+            }
+        }
+        Ok(RuntimeVerification {
+            database_service: input.database_service,
+            database_test_url_env: Some(input.database_test_url_env),
+            backend_health_url: input.backend_health_url,
+            web_url: input.web_url,
+        })
+    }
+
+    /// Resolve the host-side database URL without persisting its value in configuration or
+    /// verification evidence. Legacy projects retain the original canonical default.
+    pub fn database_test_url(&self, runtime: &RuntimeVerification) -> Result<String> {
+        match &runtime.database_test_url_env {
+            Some(name) => {
+                let value = std::env::var(name).with_context(|| {
+                    format!(
+                        "required runtime verification environment variable {name} is unavailable"
+                    )
+                })?;
+                if value.trim().is_empty() {
+                    anyhow::bail!(
+                        "required runtime verification environment variable {name} is empty"
+                    );
+                }
+                Ok(value)
+            }
+            None => Ok(DEFAULT_DATABASE_TEST_URL.into()),
+        }
+    }
+
+    /// Cargo establishes the Rust workspace and package set. If the project has no usable Cargo
+    /// metadata, retain the original skeleton paths for compatibility.
+    pub fn cargo_workspace_root(&self) -> Option<PathBuf> {
+        self.resolved_cargo_metadata()
+            .and_then(|v| v.get("workspace_root")?.as_str().map(PathBuf::from))
+    }
+
+    pub fn compose_has_service(&self, service: &str) -> Result<bool> {
+        let out = Command::new("docker")
+            .args(["compose", "config", "--services"])
+            .current_dir(&self.root)
+            .output()
+            .context("run docker compose config --services")?;
+        if !out.status.success() {
+            anyhow::bail!("docker compose config --services failed");
+        }
+        Ok(service_output_contains(
+            &String::from_utf8_lossy(&out.stdout),
+            service,
+        ))
+    }
+
+    pub fn web_has_script(&self, script: &str) -> bool {
+        let Ok(bytes) = std::fs::read(self.root.join("web/package.json")) else {
+            return false;
+        };
+        serde_json::from_slice::<serde_json::Value>(&bytes)
+            .ok()
+            .and_then(|v| v.get("scripts")?.get(script).cloned())
+            .and_then(|v| v.as_str().map(str::to_owned))
+            .is_some()
+    }
+
     pub fn intent(&self, feature: &str) -> PathBuf {
         self.codeos_dir()
             .join(format!("01-specification/intents/{feature}.md"))
@@ -75,11 +208,89 @@ impl Project {
         }
     }
 
-    /// Repo-relative paths, from the project root, that make up a feature's implementation state.
-    /// Deliberately broad: the whole backend/web/migrations surface plus any project-native src.
-    pub fn implementation_paths(&self) -> Vec<&'static str> {
-        vec!["backend", "web", "migrations", "src", "docker-compose.yml"]
+    /// Repo-relative paths that make up the implementation evidence set: Cargo's resolved
+    /// workspace/package targets plus the applicable web, migration, and Compose surfaces.
+    pub fn implementation_paths(&self) -> Vec<String> {
+        let Some(metadata) = self.resolved_cargo_metadata() else {
+            return ["backend", "web", "migrations", "src", "docker-compose.yml"]
+                .into_iter()
+                .map(String::from)
+                .collect();
+        };
+        let mut paths = BTreeSet::new();
+        if let Some(root) = metadata.get("workspace_root").and_then(|v| v.as_str()) {
+            add_relative(&self.root, Path::new(root).join("Cargo.toml"), &mut paths);
+            add_relative(&self.root, Path::new(root).join("Cargo.lock"), &mut paths);
+        }
+        for package in metadata
+            .get("packages")
+            .and_then(|v| v.as_array())
+            .into_iter()
+            .flatten()
+        {
+            if let Some(manifest) = package.get("manifest_path").and_then(|v| v.as_str()) {
+                if let Some(parent) = Path::new(manifest).parent() {
+                    add_relative(&self.root, parent, &mut paths);
+                    let migrations = parent.join("migrations");
+                    if migrations.is_dir() {
+                        add_relative(&self.root, migrations, &mut paths);
+                    }
+                }
+            }
+            for target in package
+                .get("targets")
+                .and_then(|v| v.as_array())
+                .into_iter()
+                .flatten()
+            {
+                if let Some(src) = target.get("src_path").and_then(|v| v.as_str()) {
+                    add_relative(&self.root, src, &mut paths);
+                }
+            }
+        }
+        for conventional in ["web", "migrations", "docker-compose.yml"] {
+            if self.root.join(conventional).exists() {
+                paths.insert(conventional.into());
+            }
+        }
+        paths.into_iter().collect()
     }
+
+    fn resolved_cargo_metadata(&self) -> Option<serde_json::Value> {
+        cargo_metadata(&self.root).or_else(|| cargo_metadata(&self.root.join("backend")))
+    }
+}
+
+fn cargo_metadata(root: &Path) -> Option<serde_json::Value> {
+    let out = Command::new("cargo")
+        .args(["metadata", "--no-deps", "--format-version", "1"])
+        .current_dir(root)
+        .output()
+        .ok()?
+        .stdout;
+    serde_json::from_slice(&out).ok()
+}
+
+fn add_relative(root: &Path, path: impl AsRef<Path>, paths: &mut BTreeSet<String>) {
+    let supplied = path.as_ref();
+    let normalized = supplied
+        .canonicalize()
+        .unwrap_or_else(|_| supplied.to_path_buf());
+    if let Ok(relative) = normalized.strip_prefix(root) {
+        if !relative.as_os_str().is_empty() {
+            paths.insert(relative.to_string_lossy().into_owned());
+        }
+    }
+}
+
+fn valid_env_name(value: &str) -> bool {
+    let mut chars = value.chars();
+    matches!(chars.next(), Some('A'..='Z' | 'a'..='z' | '_'))
+        && chars.all(|c| c.is_ascii_alphanumeric() || c == '_')
+}
+
+fn service_output_contains(output: &str, service: &str) -> bool {
+    output.lines().any(|line| line.trim() == service)
 }
 
 #[cfg(test)]
@@ -108,5 +319,124 @@ mod tests {
         let p = Project::discover(dir.path()).unwrap();
         assert!(p.self_dev);
         assert!(p.review_records_dir().ends_with("maintenance/reviews"));
+    }
+
+    fn downstream_project() -> (tempfile::TempDir, Project) {
+        let dir = tempfile::tempdir().unwrap();
+        fs::create_dir_all(dir.path().join(".codeos/00-project")).unwrap();
+        let project = Project::discover(dir.path()).unwrap();
+        (dir, project)
+    }
+
+    #[test]
+    fn runtime_verification_defaults_preserve_the_skeleton_contract() {
+        let (_dir, project) = downstream_project();
+        fs::write(
+            project.codeos_yaml(),
+            "platform:\n  persistence: postgresql\nartifacts:\n  charter: governed\n",
+        )
+        .unwrap();
+        let runtime = project.runtime_verification().unwrap();
+        assert_eq!(runtime.database_service, "db");
+        assert_eq!(runtime.database_test_url_env, None);
+        assert_eq!(runtime.backend_health_url, "http://localhost:8080/health");
+        assert_eq!(runtime.web_url, "http://localhost:3000/");
+    }
+
+    #[test]
+    fn evidenceatlas_shaped_runtime_profile_resolves_without_project_branches() {
+        let (_dir, project) = downstream_project();
+        fs::write(
+            project.codeos_yaml(),
+            "runtime_verification:\n  database_service: postgres\n  database_test_url_env: EVIDENCEATLAS_TEST_DATABASE_URL\n  backend_health_url: http://127.0.0.1:3002/api/publications\n  web_url: http://127.0.0.1:4173/publications\n",
+        )
+        .unwrap();
+        let runtime = project.runtime_verification().unwrap();
+        assert_eq!(runtime.database_service, "postgres");
+        assert_eq!(
+            runtime.database_test_url_env.as_deref(),
+            Some("EVIDENCEATLAS_TEST_DATABASE_URL")
+        );
+        assert_eq!(
+            runtime.backend_health_url,
+            "http://127.0.0.1:3002/api/publications"
+        );
+    }
+
+    #[test]
+    fn runtime_profile_rejects_unknown_keys_and_invalid_values() {
+        let (_dir, project) = downstream_project();
+        fs::write(
+            project.codeos_yaml(),
+            "runtime_verification:\n  database_service: postgres\n  database_test_url_env: not-valid!\n  backend_health_url: ftp://backend\n  web_url: http://web\n  project: evidenceatlas\n",
+        )
+        .unwrap();
+        assert!(project.runtime_verification().is_err());
+    }
+
+    #[test]
+    fn configured_database_url_fails_closed_when_the_environment_value_is_missing() {
+        let (_dir, project) = downstream_project();
+        let variable = "CODEOS_TEST_INTENTIONALLY_MISSING_DATABASE_URL_7E7C";
+        std::env::remove_var(variable);
+        fs::write(
+            project.codeos_yaml(),
+            format!("runtime_verification:\n  database_service: postgres\n  database_test_url_env: {variable}\n  backend_health_url: http://backend/health\n  web_url: http://web/\n"),
+        )
+        .unwrap();
+        let runtime = project.runtime_verification().unwrap();
+        let error = project.database_test_url(&runtime).unwrap_err().to_string();
+        assert!(error.contains(variable));
+    }
+
+    #[test]
+    fn compose_service_matching_is_exact() {
+        let services = "postgres\nserver\npublic-web\n";
+        assert!(service_output_contains(services, "postgres"));
+        assert!(!service_output_contains(services, "db"));
+        assert!(!service_output_contains(services, "post"));
+    }
+
+    #[test]
+    fn cargo_metadata_discovers_workspace_packages_and_external_targets() {
+        let (dir, project) = downstream_project();
+        fs::create_dir_all(dir.path().join("apps/server/src")).unwrap();
+        fs::create_dir_all(dir.path().join("tests")).unwrap();
+        fs::write(
+            dir.path().join("Cargo.toml"),
+            "[workspace]\nmembers = [\"apps/server\"]\nresolver = \"2\"\n",
+        )
+        .unwrap();
+        fs::write(
+            dir.path().join("apps/server/Cargo.toml"),
+            "[package]\nname = \"server\"\nversion = \"0.1.0\"\nedition = \"2021\"\n\n[[test]]\nname = \"outside\"\npath = \"../../tests/outside.rs\"\n",
+        )
+        .unwrap();
+        fs::write(dir.path().join("apps/server/src/lib.rs"), "").unwrap();
+        fs::write(dir.path().join("tests/outside.rs"), "#[test] fn ok() {}\n").unwrap();
+        let paths = project.implementation_paths();
+        assert!(paths.contains(&"Cargo.toml".to_string()));
+        assert!(paths.contains(&"apps/server".to_string()));
+        assert!(paths.contains(&"tests/outside.rs".to_string()));
+        assert!(!paths.iter().any(|p| p.contains("EvidenceAtlas")));
+    }
+
+    #[test]
+    fn cargo_metadata_preserves_the_legacy_backend_layout() {
+        let (dir, project) = downstream_project();
+        fs::create_dir_all(dir.path().join("backend/src")).unwrap();
+        fs::write(
+            dir.path().join("backend/Cargo.toml"),
+            "[package]\nname = \"backend\"\nversion = \"0.1.0\"\nedition = \"2021\"\n",
+        )
+        .unwrap();
+        fs::write(dir.path().join("backend/src/lib.rs"), "").unwrap();
+        assert_eq!(
+            project.cargo_workspace_root().unwrap(),
+            dir.path().join("backend").canonicalize().unwrap()
+        );
+        assert!(project
+            .implementation_paths()
+            .contains(&"backend".to_string()));
     }
 }

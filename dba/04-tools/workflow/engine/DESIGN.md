@@ -46,8 +46,10 @@ The command paths:
 
 1. `main.rs` parses the CLI, `Project::discover` walks up from `--project` (default `.`) to the
    directory holding `.codeos/` (downstream) or `dba-system.md` + `dba/00-entry` (self-development),
-   and `Subject::resolve` reads the Feature Impact Accounting table and the GUI-visible-outcome
-   marker from the Contract to fix `gui` / `persistence` applicability.
+   resolves Cargo's workspace/package evidence and the optional Runtime Verification Profile, and
+   `Subject::resolve` reads the Feature Impact Accounting table and GUI-visible-outcome marker from
+   the Contract to fix `gui` / `persistence` applicability. Without a runtime profile, the shipped
+   skeleton's existing service and endpoint defaults remain in effect.
 2. `status` and `next` call `checker::evaluate`, which is strictly read-only. For a Feature subject
    with no prior acceptance receipt it first synthesizes a `bootstrap-entry` report by evaluating
    the Bootstrap subject and checking B1–B4. It then walks the contract in order: a non-applicable
@@ -99,17 +101,18 @@ The three contracts as they flow end to end:
   `evaluate` with the same three-state result.
 - `evidence.rs` — frontmatter parsing, approval predicates, `section_filled`, reviewer-record
   lookup, and the command runner (`run` / `run_env`).
-- `hashing.rs` — `file_sha256`, `working_tree_state` (HEAD + tracked diff + untracked bytes, so a
-  preview can bind to uncommitted work), `text_sha256`, and `binding_drift` shared by both stores.
+- `hashing.rs` — `file_sha256`, `working_tree_state` (committed tree entries + tracked diff +
+  untracked bytes for resolved implementation paths, so previews bind to uncommitted work without
+  drifting on unrelated commits), `text_sha256`, and `binding_drift` shared by both stores.
 - `project.rs` / `report.rs` / `main.rs` — path resolution, `status` / `next` rendering, CLI.
 
 ## Data and state
 
 Two append-only JSONL files under `.codeos/06-workflow/` (or `maintenance/` in self-development).
 Neither is authority: both are progression evidence that ceases to establish its checkpoint when a
-bound input drifts. `implementation_state` is a content hash over `backend`, `web`, `migrations`,
-`src`, and `docker-compose.yml`, not a commit SHA. Nothing else is persisted — every canonical-state
-predicate is recomputed on each query.
+bound input drifts. `implementation_state` is a content hash over the Cargo-resolved workspace and
+package set, `web`, applicable migrations, and `docker-compose.yml`, not a commit SHA. Nothing else
+is persisted — every canonical-state predicate is recomputed on each query.
 
 ## Design choices
 

@@ -82,6 +82,36 @@ for tier in persistence backend webapp runtime; do
   fi
 done
 
+# --- runtime_verification: block -------------------------------------------
+# Optional project facts used only to locate the runtime that mechanical checks observe. The
+# profile never selects platform architecture or changes mechanic semantics.
+if grep -q '^runtime_verification:' "${CONFIG}"; then
+  mapfile -t runtime_lines < <(
+    sed -n '/^runtime_verification:/,/^[a-z]/p' "${CONFIG}" |
+      grep -E '^  [a-z_]+: ' || true
+  )
+  expected_keys=$'backend_health_url\ndatabase_service\ndatabase_test_url_env\nweb_url'
+  actual_keys="$(printf '%s\n' "${runtime_lines[@]}" | sed -E 's/^  ([a-z_]+):.*/\1/' | LC_ALL=C sort)"
+  [[ "${actual_keys}" == "${expected_keys}" ]] ||
+    fail 'runtime_verification must contain exactly database_service, database_test_url_env, backend_health_url, and web_url'
+
+  runtime_value() {
+    local key="$1"
+    printf '%s\n' "${runtime_lines[@]}" | sed -n "s/^  ${key}:[[:space:]]*//p" | head -n1
+  }
+  database_service="$(runtime_value database_service)"
+  database_test_url_env="$(runtime_value database_test_url_env)"
+  backend_health_url="$(runtime_value backend_health_url)"
+  web_url="$(runtime_value web_url)"
+  [[ -n "${database_service}" ]] || fail 'runtime_verification.database_service must be non-empty'
+  [[ "${database_test_url_env}" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]] ||
+    fail 'runtime_verification.database_test_url_env must be an environment-variable name'
+  [[ "${backend_health_url}" =~ ^https?://[^[:space:]]+$ ]] ||
+    fail 'runtime_verification.backend_health_url must be an http(s) URL'
+  [[ "${web_url}" =~ ^https?://[^[:space:]]+$ ]] ||
+    fail 'runtime_verification.web_url must be an http(s) URL'
+fi
+
 # --- single-source-of-governance rule ----------------------------------------
 # `governed:` is not a supported frontmatter key on any downstream artifact template — the
 # artifacts: block above is the only authoritative source, so no template may restate it.

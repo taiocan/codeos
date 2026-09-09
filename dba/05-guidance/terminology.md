@@ -62,6 +62,7 @@ Ordinary technical vocabulary does not belong here. Git preserves the history of
 | **Re-entry Rule** | Post-acceptance learning returns to the earliest governed authority whose truth must change. |
 | **Reader Model** | The declared reader-oriented progression (Stable Topic, Known-to-New, Whole Before Parts, or Preview Then Traverse) a substantial narrative artifact states it uses, making its application inspectable rather than only instructed. |
 | **Replay Verification** | Confirmation that a runtime event log conforms to its approved schema and contract sequence. |
+| **Runtime Verification Profile** | Optional project configuration naming only the runtime locations that mechanical workflow checks cannot safely derive. It describes where an already-declared project topology is verified; it neither defines that topology nor changes checkpoint semantics. |
 | **Representation Ban Rule** | Domain logic must not store, compare, branch on, or pattern-match vocabulary representations; it uses resolved Concept identity. |
 | **Resolution** | Mapping an Alias or canonical representation to its Concept through the vocabulary owner's API. |
 | **Shared Infrastructure Module** | A module used by at least two feature modules that provides only mechanical infrastructure and contains no domain logic. |

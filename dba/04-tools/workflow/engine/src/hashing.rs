@@ -19,26 +19,32 @@ pub fn file_sha256(path: &Path) -> Result<Option<String>> {
 }
 
 /// A hash over the current working-tree state of `paths`, relative to `repo_root`. Combines
-/// `git rev-parse HEAD`, the tracked diff for those paths, and the bytes of any untracked file
-/// under them, so any change — committed or not — moves the hash.
-pub fn working_tree_state(repo_root: &Path, paths: &[&str]) -> Result<String> {
+/// the committed tree entries for those paths, the tracked diff for those paths, and the bytes of
+/// any untracked file under them. An unrelated commit does not invalidate scoped evidence.
+pub fn working_tree_state(repo_root: &Path, paths: &[String]) -> Result<String> {
     let mut hasher = Sha256::new();
-
-    let head = git(repo_root, &["rev-parse", "HEAD"]).unwrap_or_default();
-    hasher.update(b"HEAD\0");
-    hasher.update(head.as_bytes());
 
     for p in paths {
         hasher.update(b"\0PATH\0");
         hasher.update(p.as_bytes());
 
-        let diff = git(repo_root, &["diff", "HEAD", "--", p]).unwrap_or_default();
+        let tree = git(repo_root, &["ls-tree", "-r", "HEAD", "--", p.as_str()]).unwrap_or_default();
+        hasher.update(b"\0TREE\0");
+        hasher.update(tree.as_bytes());
+
+        let diff = git(repo_root, &["diff", "HEAD", "--", p.as_str()]).unwrap_or_default();
         hasher.update(b"\0DIFF\0");
         hasher.update(diff.as_bytes());
 
         let untracked = git(
             repo_root,
-            &["ls-files", "--others", "--exclude-standard", "--", p],
+            &[
+                "ls-files",
+                "--others",
+                "--exclude-standard",
+                "--",
+                p.as_str(),
+            ],
         )
         .unwrap_or_default();
         for rel in untracked.lines().filter(|l| !l.is_empty()) {
@@ -124,5 +130,41 @@ mod tests {
     fn file_sha256_missing_is_none() {
         let dir = tempfile::tempdir().unwrap();
         assert!(file_sha256(&dir.path().join("nope")).unwrap().is_none());
+    }
+
+    #[test]
+    fn implementation_hash_ignores_unrelated_commits_but_tracks_scoped_content() {
+        let dir = tempfile::tempdir().unwrap();
+        fs::create_dir_all(dir.path().join("src")).unwrap();
+        fs::create_dir_all(dir.path().join("docs")).unwrap();
+        fs::write(dir.path().join("src/lib.rs"), "pub fn one() {}\n").unwrap();
+        fs::write(dir.path().join("docs/note.md"), "one\n").unwrap();
+        let run = |args: &[&str]| {
+            let status = Command::new("git")
+                .args(args)
+                .current_dir(dir.path())
+                .env("GIT_AUTHOR_NAME", "t")
+                .env("GIT_AUTHOR_EMAIL", "t@t")
+                .env("GIT_COMMITTER_NAME", "t")
+                .env("GIT_COMMITTER_EMAIL", "t@t")
+                .status()
+                .unwrap();
+            assert!(status.success(), "git {args:?}");
+        };
+        run(&["init", "-q"]);
+        run(&["add", "-A"]);
+        run(&["commit", "-q", "-m", "initial"]);
+        let paths = vec!["src".to_string()];
+        let first = working_tree_state(dir.path(), &paths).unwrap();
+
+        fs::write(dir.path().join("docs/note.md"), "two\n").unwrap();
+        run(&["add", "-A"]);
+        run(&["commit", "-q", "-m", "docs"]);
+        assert_eq!(first, working_tree_state(dir.path(), &paths).unwrap());
+
+        fs::write(dir.path().join("src/lib.rs"), "pub fn two() {}\n").unwrap();
+        run(&["add", "-A"]);
+        run(&["commit", "-q", "-m", "implementation"]);
+        assert_ne!(first, working_tree_state(dir.path(), &paths).unwrap());
     }
 }

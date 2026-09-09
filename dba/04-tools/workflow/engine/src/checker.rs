@@ -739,44 +739,25 @@ fn run_mechanic(project: &Project, mechanic: &str) -> evidence::CommandOutcome {
             }
         }
     }
-    let backend = project.root.join("backend");
     let web = project.root.join("web");
     match mechanic {
         "baseline" => run_integrated_baseline(project),
-        "smoke" | "behavior" | "repeatability" | "data_integrity" => {
-            if !backend.is_dir() {
-                return evidence::CommandOutcome {
-                    ok: false,
-                    command: String::new(),
-                    summary: "no backend/ to verify".into(),
-                };
-            }
-            // These exercise real PostgreSQL; bring the composed db up and point cargo at it.
-            let db_url = "postgres://codeos:codeos@localhost:5432/codeos";
-            if project.root.join("docker-compose.yml").is_file() {
-                let _ = evidence::run(
-                    &project.root,
-                    "docker",
-                    &["compose", "up", "-d", "--wait", "db"],
-                );
+        "smoke" => run_smoke(project),
+        "behavior" | "repeatability" | "data_integrity" => run_cargo_tests(project),
+        "playwright" => {
+            let runtime = match project.runtime_verification() {
+                Ok(runtime) => runtime,
+                Err(error) => return failure(error.to_string()),
+            };
+            if !web.is_dir() {
+                return failure("no web/ to verify");
             }
             evidence::run_env(
-                &backend,
-                "cargo",
-                &["test", "--quiet"],
-                &[("DATABASE_URL", db_url)],
+                &web,
+                "npm",
+                &["run", "test:e2e"],
+                &[("PLAYWRIGHT_BASE_URL", runtime.web_url.as_str())],
             )
-        }
-        "playwright" => {
-            if web.is_dir() {
-                evidence::run(&web, "npm", &["run", "test:e2e"])
-            } else {
-                evidence::CommandOutcome {
-                    ok: false,
-                    command: String::new(),
-                    summary: "no web/ to verify".into(),
-                }
-            }
         }
         other => evidence::CommandOutcome {
             ok: false,
@@ -786,8 +767,89 @@ fn run_mechanic(project: &Project, mechanic: &str) -> evidence::CommandOutcome {
     }
 }
 
-/// B3: bring the integrated stack up, prove DB<->backend<->GUI reachability and a clean migration,
-/// run the skeleton's shipped tests and Playwright journey, then tear the stack down.
+fn failure(summary: impl Into<String>) -> evidence::CommandOutcome {
+    evidence::CommandOutcome {
+        ok: false,
+        command: String::new(),
+        summary: summary.into(),
+    }
+}
+
+fn resolved_runtime(
+    project: &Project,
+) -> Result<(crate::project::RuntimeVerification, String), evidence::CommandOutcome> {
+    let runtime = project
+        .runtime_verification()
+        .map_err(|e| failure(e.to_string()))?;
+    match project.compose_has_service(&runtime.database_service) {
+        Ok(true) => {}
+        Ok(false) => {
+            return Err(failure(format!(
+                "runtime_verification.database_service '{}' is not declared by docker compose",
+                runtime.database_service
+            )))
+        }
+        Err(e) => return Err(failure(e.to_string())),
+    }
+    let database_url = project
+        .database_test_url(&runtime)
+        .map_err(|e| failure(e.to_string()))?;
+    Ok((runtime, database_url))
+}
+
+fn compose(project: &Project, args: &[&str]) -> evidence::CommandOutcome {
+    evidence::run(&project.root, "docker", &[&["compose"], args].concat())
+}
+
+fn endpoint_ready(project: &Project, url: &str) -> bool {
+    for _ in 0..40 {
+        if evidence::run(&project.root, "curl", &["-fsS", "-o", "/dev/null", url]).ok {
+            return true;
+        }
+        std::thread::sleep(std::time::Duration::from_millis(250));
+    }
+    false
+}
+
+fn run_smoke(project: &Project) -> evidence::CommandOutcome {
+    let runtime = match resolved_runtime(project) {
+        Ok((runtime, _)) => runtime,
+        Err(error) => return error,
+    };
+    let up = compose(project, &["up", "-d", "--build", "--wait"]);
+    if !up.ok {
+        return up;
+    }
+    let backend = endpoint_ready(project, &runtime.backend_health_url);
+    let web = endpoint_ready(project, &runtime.web_url);
+    evidence::CommandOutcome {
+        ok: backend && web,
+        command: "docker compose up -d --build --wait; configured endpoint probes".into(),
+        summary: format!(
+            "backend {} reachable: {backend}; web {} reachable: {web}",
+            runtime.backend_health_url, runtime.web_url
+        ),
+    }
+}
+
+fn run_cargo_tests(project: &Project) -> evidence::CommandOutcome {
+    let database_url = match resolved_runtime(project) {
+        Ok((_, database_url)) => database_url,
+        Err(error) => return error,
+    };
+    let Some(workspace) = project.cargo_workspace_root() else {
+        return failure("cargo metadata did not resolve a Rust workspace");
+    };
+    evidence::run_env(
+        &workspace,
+        "cargo",
+        &["test", "--workspace", "--quiet"],
+        &[("DATABASE_URL", database_url.as_str())],
+    )
+}
+
+/// B3: bring the declared integrated stack up, prove DB<->backend<->GUI reachability and a clean
+/// migration, run the project's shipped tests and Playwright journey, then tear the stack down.
 fn run_integrated_baseline(project: &Project) -> evidence::CommandOutcome {
     let root = &project.root;
     if !root.join("docker-compose.yml").is_file() {
@@ -797,14 +859,17 @@ fn run_integrated_baseline(project: &Project) -> evidence::CommandOutcome {
             summary: "no docker-compose.yml".into(),
         };
     }
+    let (runtime, database_url) = match resolved_runtime(project) {
+        Ok(resolved) => resolved,
+        Err(error) => return error,
+    };
     let mut steps: Vec<String> = Vec::new();
-    let compose = |args: &[&str]| evidence::run(root, "docker", &[&["compose"], args].concat());
 
     // Always start from a clean volume so the migration runs from an empty database.
-    let _ = compose(&["down", "-v"]);
-    let up = compose(&["up", "-d", "--build", "--wait"]);
+    let _ = compose(project, &["down", "-v"]);
+    let up = compose(project, &["up", "-d", "--build", "--wait"]);
     if !up.ok {
-        let _ = compose(&["down", "-v"]);
+        let _ = compose(project, &["down", "-v"]);
         return evidence::CommandOutcome {
             ok: false,
             command: "docker compose up -d --build --wait".into(),
@@ -813,9 +878,9 @@ fn run_integrated_baseline(project: &Project) -> evidence::CommandOutcome {
     }
 
     let mut ok = true;
-    // Backend health reports a connected database — proves the clean migration applied.
-    let health = evidence::run(root, "curl", &["-fsS", "http://localhost:8080/health"]);
-    let db_connected = health.ok && health.summary.contains("connected");
+    // The project declares a DB-backed backend health endpoint; 2xx proves the migrated database
+    // is reachable through the real backend boundary.
+    let db_connected = endpoint_ready(project, &runtime.backend_health_url);
     ok &= db_connected;
     steps.push(format!(
         "health: {}",
@@ -826,43 +891,41 @@ fn run_integrated_baseline(project: &Project) -> evidence::CommandOutcome {
         }
     ));
 
-    let web = evidence::run(
-        root,
-        "curl",
-        &["-fsS", "-o", "/dev/null", "http://localhost:3000/"],
-    );
-    ok &= web.ok;
-    steps.push(format!("web reachable: {}", web.ok));
+    let web_reachable = endpoint_ready(project, &runtime.web_url);
+    ok &= web_reachable;
+    steps.push(format!("web reachable: {web_reachable}"));
 
-    if root.join("backend").is_dir() {
-        // The composed db is up; point the backend test run at it (skeleton tests that touch
-        // PostgreSQL need DATABASE_URL, exactly as the feature mechanics do).
+    if let Some(workspace) = project.cargo_workspace_root() {
         let t = evidence::run_env(
-            &root.join("backend"),
+            &workspace,
             "cargo",
-            &["test", "--quiet"],
-            &[(
-                "DATABASE_URL",
-                "postgres://codeos:codeos@localhost:5432/codeos",
-            )],
+            &["test", "--workspace", "--quiet"],
+            &[("DATABASE_URL", database_url.as_str())],
         );
         ok &= t.ok;
         steps.push(format!("backend tests: {}", t.ok));
     }
     if root.join("web").is_dir() {
-        let u = evidence::run(
+        if project.web_has_script("test:unit") {
+            let u = evidence::run(
+                &root.join("web"),
+                "npm",
+                &["run", "test:unit", "--", "--run"],
+            );
+            ok &= u.ok;
+            steps.push(format!("web unit/component tests: {}", u.ok));
+        }
+        let e = evidence::run_env(
             &root.join("web"),
             "npm",
-            &["run", "test:unit", "--", "--run"],
+            &["run", "test:e2e"],
+            &[("PLAYWRIGHT_BASE_URL", runtime.web_url.as_str())],
         );
-        ok &= u.ok;
-        steps.push(format!("web unit/component tests: {}", u.ok));
-        let e = evidence::run(&root.join("web"), "npm", &["run", "test:e2e"]);
         ok &= e.ok;
         steps.push(format!("Playwright journey: {}", e.ok));
     }
 
-    let _ = compose(&["down", "-v"]);
+    let _ = compose(project, &["down", "-v"]);
     evidence::CommandOutcome {
         ok,
         command: "docker compose integrated baseline (migration + curl + cargo test + npm test)"

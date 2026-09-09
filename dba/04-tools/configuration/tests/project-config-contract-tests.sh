@@ -91,4 +91,30 @@ if check "${FAKE_V1}" "${WORK}/v2-exact.yaml"; then
   fail 'a v2 mechanics block validated against a v1-selecting configuration'
 fi
 
+# 7. A complete runtime-verification profile is accepted without changing mechanics selection.
+awk '/^artifacts:/{print "runtime_verification:"; print "  database_service: postgres"; print "  database_test_url_env: PROJECT_TEST_DATABASE_URL"; print "  backend_health_url: http://127.0.0.1:3002/health"; print "  web_url: http://127.0.0.1:4173/"} {print}' \
+  "${WORK}/v2-exact.yaml" > "${WORK}/v2-runtime.yaml"
+check "${FAKE_V2}" "${WORK}/v2-runtime.yaml" \
+  || fail 'a valid runtime_verification profile was rejected'
+
+# 8. The optional profile fails closed on missing, unknown, and malformed fields.
+sed '/^  web_url:/d' "${WORK}/v2-runtime.yaml" > "${WORK}/runtime-missing.yaml"
+if check "${FAKE_V2}" "${WORK}/runtime-missing.yaml"; then
+  fail 'runtime_verification with a missing field was accepted'
+fi
+sed '/^  web_url:/a\  evidenceatlas_mode: true' "${WORK}/v2-runtime.yaml" > "${WORK}/runtime-unknown.yaml"
+if check "${FAKE_V2}" "${WORK}/runtime-unknown.yaml"; then
+  fail 'runtime_verification with an unknown field was accepted'
+fi
+sed 's/database_test_url_env: PROJECT_TEST_DATABASE_URL/database_test_url_env: not-valid!/' \
+  "${WORK}/v2-runtime.yaml" > "${WORK}/runtime-invalid-env.yaml"
+if check "${FAKE_V2}" "${WORK}/runtime-invalid-env.yaml"; then
+  fail 'runtime_verification with an invalid environment-variable name was accepted'
+fi
+sed 's#backend_health_url: http://#backend_health_url: ftp://#' \
+  "${WORK}/v2-runtime.yaml" > "${WORK}/runtime-invalid-url.yaml"
+if check "${FAKE_V2}" "${WORK}/runtime-invalid-url.yaml"; then
+  fail 'runtime_verification with a non-http endpoint was accepted'
+fi
+
 printf 'project config contract tests: PASS\n'
