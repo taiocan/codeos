@@ -191,6 +191,35 @@ fn parse_scope(repo_root: &Path, path: &Path) -> Result<Scope, String> {
     let metadata: ScopeMetadata = serde_yaml::from_str(&front_matter)
         .map_err(|error| format!("invalid {relative} metadata: {error}"))?;
 
+    match (&metadata.artifact_type, &metadata.reader_model) {
+        (None, None) => {} // Already-adopted DBA-4 scope.
+        (Some(artifact_type), reader_model) => {
+            if artifact_type != "architecture" {
+                return Err(format!(
+                    "invalid {relative}: artifact_type must be architecture"
+                ));
+            }
+            if let Some(reader_model) = reader_model {
+                if !matches!(
+                    reader_model.as_str(),
+                    "stable-topic"
+                        | "known-to-new"
+                        | "whole-before-parts"
+                        | "preview-then-traverse"
+                ) {
+                    return Err(format!(
+                        "invalid {relative}: reader_model must be stable-topic, known-to-new, whole-before-parts, or preview-then-traverse"
+                    ));
+                }
+            }
+        }
+        (None, Some(_)) => {
+            return Err(format!(
+                "invalid {relative}: reader_model requires artifact_type: architecture"
+            ));
+        }
+    }
+
     if metadata.features.is_empty() {
         return Err(format!("invalid {relative}: features must not be empty"));
     }
@@ -214,6 +243,11 @@ fn parse_scope(repo_root: &Path, path: &Path) -> Result<Scope, String> {
             if approval.by.trim().is_empty() || approval.at.trim().is_empty() {
                 return Err(format!(
                     "invalid {relative}: approval.by and approval.at must be non-empty"
+                ));
+            }
+            if metadata.artifact_type.is_some() && metadata.reader_model.is_none() {
+                return Err(format!(
+                    "invalid {relative}: an approved architecture scope must declare reader_model"
                 ));
             }
             ApprovalState::Approved

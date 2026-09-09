@@ -69,6 +69,40 @@ fn reports_draft_and_approved_scopes_deterministically() {
 }
 
 #[test]
+fn accepts_policy_required_communication_metadata() {
+    let (repo, _) = setup_temp_git_repo();
+    write_scope(
+        repo.path(),
+        "current",
+        "artifact_type: architecture\nfeatures: [F-0001]\napproval: null\nreader_model: whole-before-parts",
+    );
+
+    let (code, stdout, stderr) = run_in_dir(repo.path(), &["inspect-architecture-scopes"]);
+
+    assert_eq!(code, 0, "{stderr}");
+    assert!(stdout.contains("scope: current"));
+}
+
+#[test]
+fn accepts_evidenceatlas_shaped_scope() {
+    let (repo, _) = setup_temp_git_repo();
+    write_scope(
+        repo.path(),
+        "evidenceatlas-core",
+        "artifact_type: architecture\nfeatures:\n- EA-0016\n- EA-0018\napproval:\n  by: human (DBA-8 architecture reassessment)\n  at: '2026-09-08'\nreader_model: whole-before-parts",
+    );
+
+    let (code, stdout, stderr) = run_in_dir(
+        repo.path(),
+        &["inspect-architecture-scopes", "--feature", "EA-0018"],
+    );
+
+    assert_eq!(code, 0, "{stderr}");
+    assert!(stdout.contains("scope: evidenceatlas-core"));
+    assert!(stdout.contains("resolution: approved"));
+}
+
+#[test]
 fn rejects_malformed_or_extended_governance_metadata() {
     for (name, metadata) in [
         ("missing-approval", "features: [F-0001]"),
@@ -88,6 +122,34 @@ fn rejects_malformed_or_extended_governance_metadata() {
         (
             "duplicate-feature",
             "features: [F-0001, F-0001]\napproval: null",
+        ),
+    ] {
+        let (repo, _) = setup_temp_git_repo();
+        write_scope(repo.path(), name, metadata);
+        let (code, _, stderr) = run_in_dir(repo.path(), &["inspect-architecture-scopes"]);
+        assert_eq!(code, 2, "case {name} unexpectedly passed");
+        assert!(stderr.contains("error:"), "case {name}: {stderr}");
+    }
+}
+
+#[test]
+fn rejects_invalid_or_incomplete_communication_metadata() {
+    for (name, metadata) in [
+        (
+            "wrong-artifact-type",
+            "artifact_type: contract\nfeatures: [F-0001]\napproval: null\nreader_model: whole-before-parts",
+        ),
+        (
+            "unknown-reader-model",
+            "artifact_type: architecture\nfeatures: [F-0001]\napproval: null\nreader_model: newest-first",
+        ),
+        (
+            "missing-reader-model",
+            "artifact_type: architecture\nfeatures: [F-0001]\napproval:\n  by: Ada\n  at: '2026-08-12'",
+        ),
+        (
+            "missing-artifact-type",
+            "features: [F-0001]\napproval: null\nreader_model: stable-topic",
         ),
     ] {
         let (repo, _) = setup_temp_git_repo();
