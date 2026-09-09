@@ -32,6 +32,8 @@ pub struct ReviewArgs {
     /// validation applied. `None` leaves round derivation exactly as it was before this flag
     /// existed.
     pub continues: Option<String>,
+    /// The exhausted R3 whose following human decision explicitly authorizes one re-entry.
+    pub reentry_after: Option<String>,
 }
 
 pub struct PreparedReview {
@@ -339,6 +341,7 @@ pub fn run(args: ReviewArgs, cfg: &Config) -> Result<i32> {
 
     // An external assessment is sequenced separately from review rounds, so importing one can
     // never consume a round the human still owes the boundary.
+    let mut reentry_authorization = None;
     let review_id = if args.assessment.is_some() {
         match review_log::compute_assessment_sequence(
             &review_log_path,
@@ -354,6 +357,24 @@ pub fn run(args: ReviewArgs, cfg: &Config) -> Result<i32> {
             }
         }
     } else {
+        if let Some(predecessor) = args.reentry_after.as_deref() {
+            match review_log::resolve_reentry_authorization(
+                &review_log_path,
+                &evidence.feature,
+                &evidence.stage,
+                predecessor,
+            ) {
+                Ok(authorization) => {
+                    let id = review_log::format_reentry_id(&evidence.feature, &evidence.stage);
+                    reentry_authorization = Some(authorization);
+                    id
+                }
+                Err(error) => {
+                    eprintln!("error: could not authorize review re-entry: {error}");
+                    return Ok(crate::EXIT_WRITE);
+                }
+            }
+        } else {
         let round_result = match args.continues.as_deref() {
             Some(predecessor) => review_log::resolve_continued_round(
                 &review_log_path,
@@ -373,6 +394,7 @@ pub fn run(args: ReviewArgs, cfg: &Config) -> Result<i32> {
                 eprintln!("error: could not determine review round: {error}");
                 return Ok(crate::EXIT_WRITE);
             }
+        }
         }
     };
 
@@ -527,6 +549,7 @@ pub fn run(args: ReviewArgs, cfg: &Config) -> Result<i32> {
         &packet_saved,
         &packet_hash,
         continues_for_log,
+        reentry_authorization.as_ref(),
     ) {
         eprintln!("error: log append failed: {error}");
         eprintln!("  assessment was written to: {}", assessment_file.display());

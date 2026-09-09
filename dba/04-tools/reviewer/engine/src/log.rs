@@ -66,7 +66,13 @@ pub fn compute_review_round(log_path: &Path, feature: &str, stage: &str) -> Resu
             });
         }
     };
-    Ok(count_entries(&content, REVIEW_HEADING, feature, stage) + 1)
+    let next = count_entries(&content, REVIEW_HEADING, feature, stage) + 1;
+    if next > ROUND_BUDGET {
+        anyhow::bail!(
+            "ordinary review round {next} would exceed the {ROUND_BUDGET}-round budget — use an explicitly authorized review re-entry instead"
+        );
+    }
+    Ok(next)
 }
 
 /// Heading verbs that distinguish the two record kinds in the log. `compute_review_round` counts
@@ -74,6 +80,7 @@ pub fn compute_review_round(log_path: &Path, feature: &str, stage: &str) -> Resu
 /// the exclusion falls out of the heading rather than needing a separate rule to stay in sync.
 pub const REVIEW_HEADING: &str = "REVIEW";
 pub const EXTERNAL_ASSESSMENT_HEADING: &str = "EXTERNAL ASSESSMENT";
+pub const REENTRY_REVIEW_HEADING: &str = "RE-ENTRY REVIEW";
 
 fn count_entries(content: &str, kind: &str, feature: &str, stage: &str) -> u32 {
     let suffix = format!(" {} — {} — Stage {}", kind, feature, stage);
@@ -83,11 +90,73 @@ fn count_entries(content: &str, kind: &str, feature: &str, stage: &str) -> u32 {
         .count() as u32
 }
 
-/// The round budget stated in `dba/02-policies/review/v2.md`: rounds 1-3 run automatically; a
-/// fourth requires a human decision rather than further automatic iteration. Not enforced in code
-/// on the ordinary (heading-count) path today — this constant exists for the one path that does
-/// enforce it, `resolve_continued_round` (UPG-0074).
+/// The round budget stated in `dba/02-policies/review/v2.md`: rounds 1-3 run automatically; an
+/// ordinary fourth round is rejected. One separately authorized Review re-entry may follow.
 const ROUND_BUDGET: u32 = 3;
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ReentryAuthorization {
+    pub after_review_id: String,
+    pub decision_timestamp: String,
+    pub scope: String,
+}
+
+/// Resolve the one exceptional post-budget review authorized by the human decision following R3.
+/// The authorization remains in the append-only history; this derives permission without adding a
+/// second authority store.
+pub fn resolve_reentry_authorization(
+    log_path: &Path,
+    feature: &str,
+    stage: &str,
+    after_review_id: &str,
+) -> Result<ReentryAuthorization> {
+    let content = std::fs::read_to_string(log_path).with_context(|| {
+        format!("--reentry-after {after_review_id} was given but the review log could not be read: {}", log_path.display())
+    })?;
+    let (round, _) = find_predecessor_entry(&content, feature, stage, after_review_id)
+        .ok_or_else(|| anyhow::anyhow!("{after_review_id} is not a review for {feature} at stage {stage}"))?;
+    if round != ROUND_BUDGET {
+        anyhow::bail!("{after_review_id} is round {round}; re-entry is available only after exhausted R{ROUND_BUDGET}");
+    }
+    if count_entries(&content, REENTRY_REVIEW_HEADING, feature, stage) != 0 {
+        anyhow::bail!("the single authorized re-entry for {feature} at stage {stage} has already been used");
+    }
+
+    let review_marker = format!("Review ID: {after_review_id}");
+    let review_pos = content.find(&review_marker)
+        .ok_or_else(|| anyhow::anyhow!("could not locate {after_review_id} in the review log"))?;
+    let tail = &content[review_pos + review_marker.len()..];
+    let human_suffix = format!(" HUMAN DECISION — {feature} — Stage {stage}");
+    for block in tail.split("\n## ").skip(1) {
+        let mut lines = block.lines();
+        let heading = lines.next().unwrap_or_default();
+        if heading.ends_with(&human_suffix) {
+            let decision = lines.clone().find_map(|line| line.strip_prefix("Decision: "));
+            let reason = lines.find_map(|line| line.strip_prefix("Reason/next: "));
+            let explicit = reason.map(|r| r.to_ascii_lowercase().contains("re-entry authorized")).unwrap_or(false);
+            if decision != Some("REQUEST_CHANGES") || !explicit {
+                anyhow::bail!("the human decision following {after_review_id} does not explicitly authorize review re-entry");
+            }
+            let scope = reason.unwrap().trim().to_string();
+            let timestamp = heading.strip_suffix(&human_suffix).unwrap_or_default().trim().to_string();
+            return Ok(ReentryAuthorization {
+                after_review_id: after_review_id.to_string(),
+                decision_timestamp: timestamp,
+                scope,
+            });
+        }
+        if heading.ends_with(&format!(" {REVIEW_HEADING} — {feature} — Stage {stage}"))
+            || heading.ends_with(&format!(" {REENTRY_REVIEW_HEADING} — {feature} — Stage {stage}"))
+        {
+            break;
+        }
+    }
+    anyhow::bail!("no human re-entry authorization follows {after_review_id}")
+}
+
+pub fn format_reentry_id(feature: &str, stage: &str) -> String {
+    format!("REV__{}__{}__REENTRY-1", feature, stage)
+}
 
 /// Resolve the round for a review that explicitly `--continues` an existing one, instead of
 /// deriving it by counting headings in whatever log file this invocation happens to read. Exists
@@ -240,6 +309,7 @@ pub fn append_review(
     packet_saved: &Path,
     packet_hash: &str,
     continues: Option<&str>,
+    reentry: Option<&ReentryAuthorization>,
 ) -> Result<()> {
     ensure_log_exists(log_path)?;
 
@@ -255,6 +325,8 @@ pub fn append_review(
     entry.push('\n');
     let kind = if raw.is_external() {
         EXTERNAL_ASSESSMENT_HEADING
+    } else if reentry.is_some() {
+        REENTRY_REVIEW_HEADING
     } else {
         REVIEW_HEADING
     };
@@ -266,6 +338,11 @@ pub fn append_review(
     ));
     if let Some(predecessor) = continues {
         entry.push_str(&format!("Continues: {}\n", predecessor));
+    }
+    if let Some(auth) = reentry {
+        entry.push_str(&format!("Re-entry after: {}\n", auth.after_review_id));
+        entry.push_str(&format!("Human authorization: {} HUMAN DECISION\n", auth.decision_timestamp));
+        entry.push_str(&format!("Authorized scope: {}\n", auth.scope));
     }
     entry.push_str(&format!("Base: {}  Review: {}  Branch: {}\n",
         packet.base_sha, packet.review_sha, packet.branch));
@@ -692,6 +769,12 @@ mod tests {
         e
     }
 
+    fn reentry_decision(feature: &str, stage: &str, reason: &str) -> String {
+        format!(
+            "## 2026-01-01T00:01:00Z HUMAN DECISION — {feature} — Stage {stage}\nDecision: REQUEST_CHANGES\nReason/next: {reason}\n"
+        )
+    }
+
     #[test]
     fn resolve_continued_round_happy_path_is_predecessor_round_plus_one() {
         let dir = tempfile::tempdir().expect("tempdir");
@@ -803,6 +886,79 @@ mod tests {
             err.to_string().contains("round budget") || err.to_string().contains("exceed"),
             "expected a round-budget refusal, got: {err}"
         );
+    }
+
+    #[test]
+    fn ordinary_fourth_review_is_rejected() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let log_path = write_log(
+            dir.path(),
+            &[
+                &review_entry("F-0004", "8", "REV__F-0004__8__R1", None),
+                &review_entry("F-0004", "8", "REV__F-0004__8__R2", Some("REV__F-0004__8__R1")),
+                &review_entry("F-0004", "8", "REV__F-0004__8__R3", Some("REV__F-0004__8__R2")),
+            ],
+        );
+        let err = compute_review_round(&log_path, "F-0004", "8").unwrap_err();
+        assert!(err.to_string().contains("exceed"));
+    }
+
+    #[test]
+    fn authorized_reentry_is_distinct_and_preserves_scope() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let reason = "Stage 8 review re-entry authorized after R3 budget exhaustion, limited to the named findings.";
+        let log_path = write_log(
+            dir.path(),
+            &[
+                &review_entry("F-0004", "8", "REV__F-0004__8__R1", None),
+                &review_entry("F-0004", "8", "REV__F-0004__8__R2", Some("REV__F-0004__8__R1")),
+                &review_entry("F-0004", "8", "REV__F-0004__8__R3", Some("REV__F-0004__8__R2")),
+                &reentry_decision("F-0004", "8", reason),
+            ],
+        );
+        let authorization = resolve_reentry_authorization(
+            &log_path,
+            "F-0004",
+            "8",
+            "REV__F-0004__8__R3",
+        ).unwrap();
+        assert_eq!(authorization.scope, reason);
+        assert_eq!(format_reentry_id("F-0004", "8"), "REV__F-0004__8__REENTRY-1");
+        assert_eq!(compute_review_round(&log_path, "F-0004", "8").unwrap_err().to_string().contains("exceed"), true);
+    }
+
+    #[test]
+    fn reentry_without_explicit_authorization_fails_closed() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let log_path = write_log(
+            dir.path(),
+            &[
+                &review_entry("F-0004", "8", "REV__F-0004__8__R1", None),
+                &review_entry("F-0004", "8", "REV__F-0004__8__R2", Some("REV__F-0004__8__R1")),
+                &review_entry("F-0004", "8", "REV__F-0004__8__R3", Some("REV__F-0004__8__R2")),
+                &reentry_decision("F-0004", "8", "Fix the findings and continue."),
+            ],
+        );
+        let err = resolve_reentry_authorization(&log_path, "F-0004", "8", "REV__F-0004__8__R3").unwrap_err();
+        assert!(err.to_string().contains("does not explicitly authorize"));
+    }
+
+    #[test]
+    fn a_second_reentry_is_rejected() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let existing = "## 2026-01-01T00:02:00Z RE-ENTRY REVIEW — F-0004 — Stage 8\nReview ID: REV__F-0004__8__REENTRY-1\n";
+        let log_path = write_log(
+            dir.path(),
+            &[
+                &review_entry("F-0004", "8", "REV__F-0004__8__R1", None),
+                &review_entry("F-0004", "8", "REV__F-0004__8__R2", Some("REV__F-0004__8__R1")),
+                &review_entry("F-0004", "8", "REV__F-0004__8__R3", Some("REV__F-0004__8__R2")),
+                &reentry_decision("F-0004", "8", "Review re-entry authorized after R3 budget exhaustion."),
+                existing,
+            ],
+        );
+        let err = resolve_reentry_authorization(&log_path, "F-0004", "8", "REV__F-0004__8__R3").unwrap_err();
+        assert!(err.to_string().contains("already been used"));
     }
 
     #[test]
@@ -1014,7 +1170,7 @@ mod tests {
         let review_id = format_review_id(&packet.feature, &packet.stage, 1);
         append_review(
             &log_path, &review_id, &packet, &raw, &parsed,
-            Path::new("assessment.md"), "deadbeef", Path::new("packet.txt"), "cafefeed", None,
+            Path::new("assessment.md"), "deadbeef", Path::new("packet.txt"), "cafefeed", None, None,
         ).expect("append_review");
 
         let content = std::fs::read_to_string(&log_path).expect("read log");
@@ -1045,7 +1201,7 @@ mod tests {
         assert!(review_id1.ends_with("__R1"));
         append_review(
             &log_path, &review_id1, &packet, &raw, &parsed,
-            Path::new("assessment1.md"), "deadbeef1", Path::new("packet1.txt"), "cafefeed1", None,
+            Path::new("assessment1.md"), "deadbeef1", Path::new("packet1.txt"), "cafefeed1", None, None,
         ).expect("append_review round 1");
 
         // Round 2 (log now has exactly one matching entry from round 1).
@@ -1055,7 +1211,7 @@ mod tests {
         assert!(review_id2.ends_with("__R2"));
         append_review(
             &log_path, &review_id2, &packet, &raw, &parsed,
-            Path::new("assessment2.md"), "deadbeef2", Path::new("packet2.txt"), "cafefeed2", None,
+            Path::new("assessment2.md"), "deadbeef2", Path::new("packet2.txt"), "cafefeed2", None, None,
         ).expect("append_review round 2");
 
         let content = std::fs::read_to_string(&log_path).expect("read log");

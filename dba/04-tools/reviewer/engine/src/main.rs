@@ -79,6 +79,15 @@ struct ReviewCli {
     /// trusted from this flag alone. Omit for the ordinary case; behavior is unchanged.
     #[arg(long, value_name = "REVIEW_ID")]
     continues: Option<String>,
+    /// Run the single exceptional review re-entry authorized by the human decision following an
+    /// exhausted third round. The referenced review must be that feature/stage's R3.
+    #[arg(
+        long = "reentry-after",
+        value_name = "REVIEW_ID",
+        conflicts_with = "continues",
+        conflicts_with = "assessment"
+    )]
+    reentry_after: Option<String>,
 }
 
 #[derive(Args)]
@@ -190,6 +199,7 @@ fn run() -> i32 {
                     packet: args.packet,
                     reviewer_label: args.reviewer_label,
                     continues: args.continues,
+                    reentry_after: args.reentry_after,
                 },
                 &cfg,
             )
