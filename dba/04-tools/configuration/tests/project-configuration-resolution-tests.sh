@@ -18,6 +18,12 @@ explicit="$(bash "${RESOLVER}" "${WORK}")"
 grep -Fxq 'resolution_mode=explicit' <<<"${explicit}" || fail 'schema-2 mode is not explicit'
 grep -Fxq 'reader_output_policy=dba/02-policies/reader-output/v3.md' <<<"${explicit}" || fail 'DBA-8 did not select Reader Output v3'
 
+printf 'codeos_schema: 2\ndba_configuration: DBA-9\n' > "${WORK}/.codeos/00-project/codeos.yaml"
+explicit="$(bash "${RESOLVER}" "${WORK}")"
+grep -Fxq 'doctrine=dba/01-doctrine/v8.md' <<<"${explicit}" || fail 'DBA-9 did not select doctrine v8'
+grep -Fxq 'workflow_feature_policy=dba/02-policies/workflow-feature/v2.md' <<<"${explicit}" || fail 'DBA-9 did not select Feature Workflow v2'
+grep -Fxq 'codeos_mechanics_policy=dba/02-policies/codeos-mechanics/v4.md' <<<"${explicit}" || fail 'DBA-9 did not select Mechanics v4'
+
 printf 'codeos_schema: 2\n' > "${WORK}/.codeos/00-project/codeos.yaml"
 if bash "${RESOLVER}" "${WORK}" >/dev/null 2>&1; then fail 'missing schema-2 binding was accepted'; fi
 

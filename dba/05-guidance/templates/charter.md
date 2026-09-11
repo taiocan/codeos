@@ -37,6 +37,17 @@ The product stays continuously demonstrable through the integrated solution — 
 repeatability, browser-level, and human validation, per the Codeos Mechanics policy — rather than
 becoming demonstrable only once, near the end.
 
+## Primary Product Journey
+
+<!-- Required when the adopted Feature Workflow policy is v2 or later. This is the single
+solution-level traversal anchor, not a second feature specification. -->
+
+journey_id: primary
+legitimate_entry: [the real product entry used by its actor]
+initial_frontier: entry
+target_outcome: [the useful outcome or supported decision the completed journey reaches]
+verification_route: product_journey
+
 ## Problem
 
 [What is wrong, difficult, expensive, slow, risky, or missing today, and for whom? Describe the

@@ -32,6 +32,9 @@ duplicate membership, and reuse a matching scope or draft the current architectu
   together.
 - Record only material project-level responsibilities, dependencies, state ownership, integration,
   runtime placement, constraints, and feature obligations.
+- When the selected Architecture Synthesis policy is v5 or later, identify for every shared
+  primary-journey boundary the production adapter, transition owner, authoritative state or
+  evidence at the boundary, next consumer, and persisted object only when persistence applies.
 - Derive decisions from approved requirements or explicit human architectural decisions.
 - Treat approved quality requirements and System Constraints as inputs. Record the structural
   consequences they force; never originate a new one here.

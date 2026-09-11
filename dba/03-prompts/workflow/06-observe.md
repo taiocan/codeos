@@ -28,6 +28,12 @@ environment.
   observable outcomes it is meant to prove.
 - Record any unobserved path and the concrete reason. Do not fabricate evidence or turn absence into
   a pass.
+- When an external provider participates, report live readiness separately as `READY`, `NOT READY`,
+  or `UNKNOWN`, with observation time and environment. Check credentials, quota, reachability, and
+  one live request when permitted. This evidence supports only current operational readiness.
+  External unavailability does not defeat deterministic behavioral evidence unless live
+  availability is an explicitly governed requirement, and absent live evidence never supports a
+  current-live-operation claim.
 - Diagnostic and exploratory performance measurements may be collected freely. Before a
   performance measurement is accepted as evidence for a governed requirement, demonstrate that
   the measured operation exercises the governed behavior; a changed input or completed request is

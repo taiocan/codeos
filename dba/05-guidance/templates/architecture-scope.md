@@ -40,3 +40,7 @@ boundaries — e.g. which component owns the Playwright acceptance surface for a
 [Record the minimum project-level architecture, rationale or authority, component responsibilities,
 and any feature-specific obligations that materially constrain implementation. Keep unresolved
 questions visible and retain `approval: null` until explicit human approval.]
+
+<!-- Under Architecture Synthesis v5 or later, include only shared primary-journey boundaries that
+need architectural ownership: production adapter, transition owner, authoritative boundary
+state/evidence, next consumer, and persistence when applicable. -->

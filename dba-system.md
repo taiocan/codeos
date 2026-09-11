@@ -4,7 +4,7 @@
 > `.codeos/toolkit/dba-system.md`. Codeos toolkit self-development is governed separately by the repository
 > root `CLAUDE.md`.
 
-Active configuration: `.codeos/toolkit/dba/00-entry/configurations/DBA-8.yaml`
+Active configuration: `.codeos/toolkit/dba/00-entry/configurations/DBA-9.yaml`
 
 The configuration selects the authoritative version of each governed DBA component. Component
 files own their semantics; the configuration only selects which versions are active.
@@ -13,7 +13,7 @@ The active configuration is only the default for a newly initialized or explicit
 project. Project tools resolve the adopted composition through
 `dba/04-tools/configuration/resolve-project-configuration.sh`, never from this pointer directly.
 A schema-2 project binds its immutable composition with `dba_configuration`. A schema-less project
-on a DBA-8-capable toolkit resolves to the frozen DBA-7 cutover compatibility baseline; this does
+on a DBA-8-or-later-capable toolkit resolves to the frozen DBA-7 cutover compatibility baseline; this does
 not infer historical adoption. Changing either a binding or a schema-less project's toolkit mount
 is a controlled, human-authorized action. An agent MUST NOT perform either change silently.
 

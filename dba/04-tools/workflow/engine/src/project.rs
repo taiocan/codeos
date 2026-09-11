@@ -44,6 +44,51 @@ pub struct Project {
 }
 
 impl Project {
+    /// Resolve the selected feature-workflow policy through the project's adopted composition.
+    /// Older projects with no reachable resolver retain workflow v1 compatibility.
+    pub fn feature_workflow_version(&self) -> Result<u8> {
+        let resolver = if self.self_dev {
+            self.root
+                .join("dba/04-tools/configuration/resolve-project-configuration.sh")
+        } else {
+            self.codeos_dir()
+                .join("toolkit/dba/04-tools/configuration/resolve-project-configuration.sh")
+        };
+        if !resolver.is_file() {
+            let explicitly_bound = std::fs::read_to_string(self.codeos_yaml())
+                .map(|text| text.lines().any(|line| line.trim() == "codeos_schema: 2"))
+                .unwrap_or(false);
+            if explicitly_bound {
+                anyhow::bail!(
+                    "explicit project configuration cannot resolve workflow_feature_policy because the toolkit resolver is unavailable"
+                );
+            }
+            return Ok(1);
+        }
+        let output = Command::new("bash")
+            .arg(&resolver)
+            .arg(&self.root)
+            .arg(self.codeos_yaml())
+            .output()
+            .context("resolve project DBA configuration")?;
+        if !output.status.success() {
+            anyhow::bail!(
+                "project DBA configuration did not resolve: {}",
+                String::from_utf8_lossy(&output.stderr).trim()
+            );
+        }
+        let resolved = String::from_utf8_lossy(&output.stdout);
+        let selected = resolved
+            .lines()
+            .find_map(|line| line.strip_prefix("workflow_feature_policy="))
+            .unwrap_or("dba/02-policies/workflow-feature/v1.md");
+        match selected.rsplit('/').next() {
+            Some("v1.md") => Ok(1),
+            Some("v2.md") => Ok(2),
+            _ => anyhow::bail!("unsupported workflow_feature_policy '{selected}'"),
+        }
+    }
+
     /// Resolve upward from `start` to the directory that holds `.codeos/` (downstream) or
     /// `dba-system.md` + `dba/00-entry` (Codeos self-development).
     pub fn discover(start: &Path) -> Result<Self> {
@@ -341,6 +386,18 @@ mod tests {
         assert_eq!(runtime.database_test_url_env, None);
         assert_eq!(runtime.backend_health_url, "http://localhost:8080/health");
         assert_eq!(runtime.web_url, "http://localhost:3000/");
+    }
+
+    #[test]
+    fn explicit_configuration_fails_closed_without_the_toolkit_resolver() {
+        let (_dir, project) = downstream_project();
+        fs::write(
+            project.codeos_yaml(),
+            "codeos_schema: 2\ndba_configuration: DBA-9\n",
+        )
+        .unwrap();
+        let error = project.feature_workflow_version().unwrap_err().to_string();
+        assert!(error.contains("toolkit resolver is unavailable"));
     }
 
     #[test]

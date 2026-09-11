@@ -54,6 +54,12 @@ both artifacts in `DRAFT` and revise Intent if Contract work exposes a product g
 - Complete the Feature Impact Accounting table: record this feature's effect on each Platform
   Baseline tier as changed or unchanged, with a reason. A tier changes only when the feature
   actually requires it — do not manufacture a change to satisfy the table.
+- When the selected Feature Workflow policy is v2 or later, complete Product Journey Contribution.
+  Use `advance` when the feature creates a new transition on the Charter's primary journey; name
+  the current accepted frontier as `previous_frontier` and the candidate endpoint as
+  `proposed_frontier`. Use `preserve` only when no new journey transition is created, with a reason.
+  A change to an existing journey transition still requires continuous journey verification and
+  must not be framed as an isolated internal-stage capability.
 
 If an unresolved Intent decision prevents a sound Contract, present the partial draft with an
 actionable unknown and return to Stage 1.

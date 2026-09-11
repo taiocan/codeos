@@ -1,7 +1,10 @@
 //! End-to-end checks of the Feature Development contract against fixture evidence — no real
 //! project, no network. Drives the library directly.
 
-use codeos_workflow::checker::{evaluate, verification_bindings_for, Subject};
+use codeos_workflow::checker::{
+    current_accepted_frontier, evaluate, product_journey_target,
+    verification_bindings_for_mechanic, Subject,
+};
 use codeos_workflow::contract::Workflow;
 use codeos_workflow::project::Project;
 use codeos_workflow::receipts::{Receipt, ReceiptStore};
@@ -59,6 +62,25 @@ impl Fixture {
         Project::discover(&self.root).unwrap()
     }
 
+    fn enable_dba(&self, configuration: &str) {
+        let manifest = Path::new(env!("CARGO_MANIFEST_DIR"));
+        let toolkit = manifest.ancestors().nth(4).unwrap();
+        #[cfg(unix)]
+        std::os::unix::fs::symlink(toolkit, self.root.join(".codeos/toolkit")).unwrap();
+        self.write(
+            ".codeos/00-project/codeos.yaml",
+            &format!("codeos_schema: 2\ndba_configuration: {configuration}\n"),
+        );
+        self.write(
+            ".codeos/00-project/charter.md",
+            "---\nartifact_type: charter\napproval:\n  by: Human\n  at: 2026-09-11\n---\n\n## Primary Product Journey\njourney_id: primary\nlegitimate_entry: product home\ninitial_frontier: entry\ntarget_outcome: useful result\nverification_route: product_journey\n",
+        );
+    }
+
+    fn enable_dba9(&self) {
+        self.enable_dba("DBA-9");
+    }
+
     /// Make the fixture a git repo with one commit, so `working_tree_state` (HEAD + diff +
     /// untracked) actually moves when a tracked implementation file is edited.
     fn git_init_commit(&self) {
@@ -85,8 +107,13 @@ impl Fixture {
     /// Seed a passing mechanical-verification record for one (checkpoint, mechanic), bound to the
     /// current inputs — exactly what `check` would persist on success.
     fn verify(&self, feature: &str, checkpoint: &str, mechanic: &str) {
-        let bindings =
-            verification_bindings_for(&self.project(), &self.subject(feature), checkpoint).unwrap();
+        let bindings = verification_bindings_for_mechanic(
+            &self.project(),
+            &self.subject(feature),
+            checkpoint,
+            mechanic,
+        )
+        .unwrap();
         VerificationStore::at(&self.root.join(".codeos"))
             .append(&VerificationRecord {
                 workflow: "feature".into(),
@@ -172,6 +199,179 @@ fn put_receipt(
 fn hashes(fx: &Fixture, feature: &str, checkpoint: &str) -> BTreeMap<String, String> {
     codeos_workflow::checker::bindings_for_decision(&fx.project(), &fx.subject(feature), checkpoint)
         .unwrap()
+}
+
+fn dba9_spec(feature: &str, contribution: &str) -> (String, String, String) {
+    let (intent, contract, schema) = approved_spec(feature, true, false);
+    (
+        intent,
+        format!("{contract}\n## Product Journey Contribution\n{contribution}\n"),
+        schema,
+    )
+}
+
+fn write_spec(fx: &Fixture, feature: &str, spec: &(String, String, String)) {
+    fx.write(
+        &format!(".codeos/01-specification/intents/{feature}.md"),
+        &spec.0,
+    );
+    fx.write(
+        &format!(".codeos/01-specification/contracts/{feature}_contract.md"),
+        &spec.1,
+    );
+    fx.write(
+        &format!(".codeos/01-specification/event-schemas/{feature}_schema.md"),
+        &spec.2,
+    );
+}
+
+#[test]
+fn dba9_requires_a_valid_product_journey_contribution_but_v1_does_not() {
+    let legacy = Fixture::new();
+    legacy.enable_dba("DBA-8");
+    write_spec(&legacy, "F-0100", &approved_spec("F-0100", true, false));
+    let reports = evaluate(&legacy.project(), &legacy.subject("F-0100")).unwrap();
+    assert_eq!(Fixture::state_of(&reports, "F2").state, State::Pass);
+
+    let dba9 = Fixture::new();
+    dba9.enable_dba9();
+    write_spec(&dba9, "F-0100", &approved_spec("F-0100", true, false));
+    let reports = evaluate(&dba9.project(), &dba9.subject("F-0100")).unwrap();
+    assert_eq!(Fixture::state_of(&reports, "F2").state, State::Blocked);
+    assert!(Fixture::state_of(&reports, "F2")
+        .unmet
+        .iter()
+        .any(|item| item.contains("Product Journey Contribution")));
+}
+
+#[test]
+fn dba9_advancing_feature_targets_proposed_frontier_then_acceptance_establishes_it() {
+    let fx = Fixture::new();
+    fx.enable_dba9();
+    let advance = dba9_spec(
+        "F-0101",
+        "mode: advance\nprevious_frontier: entry\nproposed_frontier: corpus-ready\ntransition: submitted investigation produces a corpus",
+    );
+    write_spec(&fx, "F-0101", &advance);
+    assert_eq!(
+        product_journey_target(&fx.project(), &fx.subject("F-0101")).unwrap(),
+        "corpus-ready"
+    );
+    let reports = evaluate(&fx.project(), &fx.subject("F-0101")).unwrap();
+    assert_eq!(Fixture::state_of(&reports, "F2").state, State::Pass);
+    assert!(Fixture::state_of(&reports, "F3")
+        .unmet
+        .iter()
+        .any(|item| item.contains("continuous product journey")));
+
+    let journey_bindings_before = verification_bindings_for_mechanic(
+        &fx.project(),
+        &fx.subject("F-0101"),
+        "F3",
+        "product_journey",
+    )
+    .unwrap();
+
+    put_receipt(
+        &fx.root,
+        "F-0101",
+        "acceptance",
+        "accepted",
+        hashes(&fx, "F-0101", "acceptance"),
+    );
+    assert_eq!(
+        current_accepted_frontier(&fx.project()).unwrap(),
+        "corpus-ready"
+    );
+    let journey_bindings_after = verification_bindings_for_mechanic(
+        &fx.project(),
+        &fx.subject("F-0101"),
+        "F3",
+        "product_journey",
+    )
+    .unwrap();
+    assert_eq!(journey_bindings_before, journey_bindings_after);
+
+    let preserve = dba9_spec(
+        "F-0102",
+        "mode: preserve\nreason: improves an existing transition without extending the journey",
+    );
+    write_spec(&fx, "F-0102", &preserve);
+    assert_eq!(
+        product_journey_target(&fx.project(), &fx.subject("F-0102")).unwrap(),
+        "corpus-ready"
+    );
+}
+
+#[test]
+fn dba9_rejects_a_competing_stale_previous_frontier() {
+    let fx = Fixture::new();
+    fx.enable_dba9();
+    let first = dba9_spec(
+        "F-0201",
+        "mode: advance\nprevious_frontier: entry\nproposed_frontier: planned\ntransition: entry produces an approved plan",
+    );
+    write_spec(&fx, "F-0201", &first);
+    put_receipt(
+        &fx.root,
+        "F-0201",
+        "acceptance",
+        "accepted",
+        hashes(&fx, "F-0201", "acceptance"),
+    );
+
+    let stale = dba9_spec(
+        "F-0202",
+        "mode: advance\nprevious_frontier: entry\nproposed_frontier: retrieved\ntransition: plan produces retrieved material",
+    );
+    write_spec(&fx, "F-0202", &stale);
+    let reports = evaluate(&fx.project(), &fx.subject("F-0202")).unwrap();
+    let f2 = Fixture::state_of(&reports, "F2");
+    assert_eq!(f2.state, State::Blocked);
+    assert!(f2
+        .unmet
+        .iter()
+        .any(|item| item.contains("does not match current accepted frontier 'planned'")));
+}
+
+#[test]
+fn dba9_acceptance_command_refuses_to_establish_an_unverified_frontier() {
+    let fx = Fixture::new();
+    fx.enable_dba9();
+    let spec = dba9_spec(
+        "F-0301",
+        "mode: advance\nprevious_frontier: entry\nproposed_frontier: result-ready\ntransition: entry produces the useful result",
+    );
+    write_spec(&fx, "F-0301", &spec);
+    let before = ReceiptStore::at(&fx.root.join(".codeos"))
+        .all()
+        .unwrap()
+        .len();
+    let output = std::process::Command::new(env!("CARGO_BIN_EXE_codeos-workflow"))
+        .args([
+            "--project",
+            fx.root.to_str().unwrap(),
+            "decide",
+            "--workflow",
+            "feature",
+            "--subject",
+            "F-0301",
+            "--checkpoint",
+            "acceptance",
+            "--result",
+            "accepted",
+        ])
+        .output()
+        .unwrap();
+    assert!(!output.status.success());
+    assert!(String::from_utf8_lossy(&output.stderr).contains("earlier checkpoints are unresolved"));
+    assert_eq!(
+        ReceiptStore::at(&fx.root.join(".codeos"))
+            .all()
+            .unwrap()
+            .len(),
+        before
+    );
 }
 
 #[test]

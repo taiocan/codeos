@@ -49,6 +49,7 @@ supported_runtime_paths=(
   "${CODEOS_ROOT}/dba-system.md"
   "${CODEOS_ROOT}/dba/00-entry/configurations/DBA-7.yaml"
   "${CODEOS_ROOT}/dba/00-entry/configurations/DBA-8.yaml"
+  "${CODEOS_ROOT}/dba/00-entry/configurations/DBA-9.yaml"
   "${CODEOS_ROOT}/dba/03-prompts"
   "${CODEOS_ROOT}/dba/04-tools/initializer"
   "${CODEOS_ROOT}/dba/04-tools/reviewer"
@@ -186,7 +187,7 @@ mixed_notation="$(grep -rn '\.codeos/[^ `"]*\[[a-z_-]*\]' "${CODEOS_ROOT}/dba" "
 # expected set from it rather than restating it. A list here would be a second, manually
 # synchronized authority — and the one that previously decided membership in practice, because
 # nothing else named the set.
-ACTIVE_CONFIG="${CODEOS_ROOT}/dba/00-entry/configurations/DBA-8.yaml"
+ACTIVE_CONFIG="${CODEOS_ROOT}/dba/00-entry/configurations/DBA-9.yaml"
 doctrine_rel="$(awk '$1 == "doctrine:" { print $2 }' "${ACTIVE_CONFIG}")"
 [[ -n "${doctrine_rel}" ]] || fail 'active configuration names no doctrine'
 DOCTRINE="${CODEOS_ROOT}/${doctrine_rel}"
@@ -213,6 +214,6 @@ mapfile -t declared_adapters < <(
   fail "adapter boundaries disagree: doctrine [${doctrine_adapters[*]}] vs prompts [${declared_adapters[*]}]"
 
 bash "${CODEOS_ROOT}/dba/04-tools/configuration/dba-config-boundaries.sh" \
-  dba/00-entry/configurations/DBA-8.yaml >/dev/null
+  dba/00-entry/configurations/DBA-9.yaml >/dev/null
 
 printf 'Codeos layout contract OK\n'

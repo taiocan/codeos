@@ -48,6 +48,9 @@ pub enum Requirement {
     CodeosYamlValid,
     /// The named `## <heading>` section of the Contract is present and has no unfilled placeholder.
     ContractSection(&'static str),
+    /// DBA-9: the Contract declares a valid preserve/advance contribution against the accepted
+    /// primary-journey frontier.
+    ProductJourneyContribution,
     /// A current (non-stale) receipt exists for `checkpoint` whose `result` is one of `results`.
     Receipt {
         checkpoint: &'static str,
@@ -75,9 +78,9 @@ pub struct Checkpoint {
     pub requirements: Vec<Requirement>,
 }
 
-pub fn contract_for(w: Workflow) -> Vec<Checkpoint> {
+pub fn contract_for(w: Workflow, feature_version: u8) -> Vec<Checkpoint> {
     match w {
-        Workflow::Feature => feature_contract(),
+        Workflow::Feature => feature_contract(feature_version),
         Workflow::Bootstrap => bootstrap_contract(),
         Workflow::Operation => operation_contract(),
     }
@@ -98,7 +101,7 @@ fn cp(
 }
 
 /// Feature Development Workflow Contract v1 — F1..F9.
-pub fn feature_contract() -> Vec<Checkpoint> {
+pub fn feature_contract(version: u8) -> Vec<Checkpoint> {
     use Requirement::*;
     vec![
         cp(
@@ -111,16 +114,36 @@ pub fn feature_contract() -> Vec<Checkpoint> {
             "F2",
             "Preparation",
             Applies::Always,
-            vec![ContractSection("Feature Impact Accounting")],
+            if version >= 2 {
+                vec![
+                    ContractSection("Feature Impact Accounting"),
+                    ProductJourneyContribution,
+                ]
+            } else {
+                vec![ContractSection("Feature Impact Accounting")]
+            },
         ),
         cp(
             "F3",
             "Vertical implementation",
             Applies::Always,
-            vec![LiveVerification {
-                name: "integration smoke",
-                mechanic: "smoke",
-            }],
+            if version >= 2 {
+                vec![
+                    LiveVerification {
+                        name: "integration smoke",
+                        mechanic: "smoke",
+                    },
+                    LiveVerification {
+                        name: "continuous product journey",
+                        mechanic: "product_journey",
+                    },
+                ]
+            } else {
+                vec![LiveVerification {
+                    name: "integration smoke",
+                    mechanic: "smoke",
+                }]
+            },
         ),
         cp(
             "F4",

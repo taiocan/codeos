@@ -48,6 +48,7 @@ check() { bash "$1/dba/04-tools/configuration/project-config-contract.sh" "$2" >
 
 FAKE_V1="${WORK}/root-v1"; mk_fake_root "${FAKE_V1}" v1
 FAKE_V2="${WORK}/root-v2"; mk_fake_root "${FAKE_V2}" v2
+FAKE_V4="${WORK}/root-v4"; mk_fake_root "${FAKE_V4}" v4
 
 # 0. Shipped template validates against the repo's own active configuration.
 bash "${CFG_DIR}/project-config-contract.sh" >/dev/null \
@@ -89,6 +90,18 @@ if check "${FAKE_V2}" "${WORK}/v1-exact.yaml"; then
 fi
 if check "${FAKE_V1}" "${WORK}/v2-exact.yaml"; then
   fail 'a v2 mechanics block validated against a v1-selecting configuration'
+fi
+
+# 6b. DBA-9's v4 set requires product_journey and remains incompatible with v2.
+bash "${CFG_DIR}/render-mechanics-block.sh" "${CODEOS_ROOT}/dba/02-policies/codeos-mechanics/v4.md" \
+  | wrap_config "${WORK}/v4-exact.yaml"
+check "${FAKE_V4}" "${WORK}/v4-exact.yaml" \
+  || fail 'the exact v4 mechanics block was rejected'
+if check "${FAKE_V4}" "${WORK}/v2-exact.yaml"; then
+  fail 'a v2 mechanics block validated against v4 without product_journey'
+fi
+if check "${FAKE_V2}" "${WORK}/v4-exact.yaml"; then
+  fail 'a v4 mechanics block validated against v2 with an extra mechanic'
 fi
 
 # 7. A complete runtime-verification profile is accepted without changing mechanics selection.

@@ -123,6 +123,35 @@ fn run(cli: &Cli, start: &std::path::Path) -> Result<i32> {
             let workflow = Workflow::parse(&a.workflow).unwrap();
             let subject = Subject::resolve(&project, workflow, &a.subject)?;
 
+            // DBA-9 acceptance establishes an advancing feature's proposed frontier. Re-evaluate
+            // every preceding checkpoint immediately before appending that receipt so a competing
+            // acceptance cannot silently create a branched frontier.
+            if workflow == Workflow::Feature
+                && project.feature_workflow_version()? >= 2
+                && a.checkpoint == "acceptance"
+                && a.result == "accepted"
+            {
+                let reports = checker::evaluate(&project, &subject)?;
+                let unresolved: Vec<_> = reports
+                    .iter()
+                    .take_while(|report| report.id != "F9")
+                    .filter(|report| {
+                        !matches!(
+                            report.state,
+                            codeos_workflow::checker::State::Pass
+                                | codeos_workflow::checker::State::NotApplicable
+                        )
+                    })
+                    .map(|report| report.id.as_str())
+                    .collect();
+                if !unresolved.is_empty() {
+                    anyhow::bail!(
+                        "cannot record DBA-9 acceptance while earlier checkpoints are unresolved: {}",
+                        unresolved.join(", ")
+                    );
+                }
+            }
+
             // An observation-bearing checkpoint must carry the observation statement; its hash is
             // the durable binding, since an Operational Observation has no other durable home.
             let needs_observation = matches!(

@@ -1,6 +1,6 @@
 ---
 module: workflow-engine
-verified_against_commit: 1ce5103
+verified_against_commit: pending DBA-9 acceptance
 ---
 
 # Module Design Note: workflow engine
@@ -46,7 +46,8 @@ The command paths:
 
 1. `main.rs` parses the CLI, `Project::discover` walks up from `--project` (default `.`) to the
    directory holding `.codeos/` (downstream) or `dba-system.md` + `dba/00-entry` (self-development),
-   resolves Cargo's workspace/package evidence and the optional Runtime Verification Profile, and
+   resolves the adopted Feature Workflow policy, Cargo's workspace/package evidence, and the
+   optional Runtime Verification Profile, and
    `Subject::resolve` reads the Feature Impact Accounting table and GUI-visible-outcome marker from
    the Contract to fix `gui` / `persistence` applicability. Without a runtime profile, the shipped
    skeleton's existing service and endpoint defaults remain in effect.
@@ -64,7 +65,9 @@ The command paths:
    first failure it stops. It then renders `status`. It never writes a receipt.
 4. `decide` computes the bindings the checker will later re-check for that checkpoint, adds the
    observation hash for an `operation_route` / `no_action_closure` receipt, and appends one receipt.
-   The store rejects an out-of-set checkpoint and a `no_action_closure` with no rationale.
+   The store rejects an out-of-set checkpoint and a `no_action_closure` with no rationale. Under
+   Feature Workflow v2, acceptance first re-evaluates every preceding checkpoint so a competing
+   acceptance cannot establish a branched product-journey frontier.
 
 The three contracts as they flow end to end:
 
@@ -73,7 +76,7 @@ The three contracts as they flow end to end:
   reachability, runs the shipped tests and Playwright journey, tears down; the record binds to
   `codeos.yaml` only), B4 the Initial Product Preview receipt (bound to the Charter and
   `codeos.yaml`, never to working-tree state), B5 derived from B1–B4.
-- **Feature** — F1 Specification Package approval, F2 Feature Impact Accounting, F3 the `smoke`
+- **Feature v1** — F1 Specification Package approval, F2 Feature Impact Accounting, F3 the `smoke`
   verification, F4 the Early Development Preview receipt where the Contract has a GUI-visible
   outcome, F5 `behavior` + `repeatability` (plus F5d `data_integrity` when persistence changed and
   F5g `playwright` when GUI), F6 the Reconciliation completion receipt (`completed` regardless of
@@ -81,6 +84,10 @@ The three contracts as they flow end to end:
   UX Validation receipt, F9 the Acceptance receipt. Every feature verification binds to the
   Specification Package and implementation state, so revising the spec or the code re-blocks the
   earliest affected checkpoint and everything after it.
+- **Feature v2** — retains v1 and adds Product Journey Contribution at F2 plus
+  `product_journey` at F3. The journey target is the accepted frontier for `preserve` and the
+  proposed new frontier for `advance`. The accepted frontier derives from the Charter and current
+  acceptance receipts; journey evidence additionally binds to both.
 - **Operation** — O1 an observation statement carried on the O2 receipt, O2 the route classification
   receipt (one of six routes; the tool never selects one), O3 derived, O4 route-appropriate
   resolution evidence (an acceptance recorded after the route decision for a build route; an

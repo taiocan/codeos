@@ -128,6 +128,25 @@ V2_EXPECTED="$(bash "${CODEOS_ROOT}/dba/04-tools/configuration/render-mechanics-
 grep -Fxq '    data_integrity: always_when_persistence' "${BASELINE_PROJECT}/.codeos/00-project/codeos.yaml" \
   || fail 'a fresh DBA-6 initialization omits the v2 data_integrity mechanic'
 
+# The new-project DBA-9 composition emits Mechanics v4 and the dedicated journey runner.
+V4_TOOLKIT="${WORK}/fake-toolkit-v4"
+mk_baseline_toolkit "${V4_TOOLKIT}" v4
+V4_PROJECT="${WORK}/v4-project"
+mkdir -p "${V4_PROJECT}"
+(cd "${V4_PROJECT}" && bash "${V4_TOOLKIT}/dba/04-tools/initializer/dba-init.sh" v4-example >/dev/null)
+V4_EMITTED="$(sed -n '/^mechanics:/,/^[a-z]/p' "${V4_PROJECT}/.codeos/00-project/codeos.yaml" \
+  | sed '/^artifacts:/d' | grep -vE '^\s*#|^\s*$')"
+V4_EXPECTED="$(bash "${CODEOS_ROOT}/dba/04-tools/configuration/render-mechanics-block.sh" \
+  "${CODEOS_ROOT}/dba/02-policies/codeos-mechanics/v4.md" | grep -vE '^\s*#|^\s*$')"
+[[ -n "${V4_EMITTED}" && "${V4_EMITTED}" == "${V4_EXPECTED}" ]] \
+  || fail 'a fresh DBA-9 initialization does not emit the exact v4 mechanics set'
+grep -Fxq '    product_journey: always' "${V4_PROJECT}/.codeos/00-project/codeos.yaml" \
+  || fail 'a fresh DBA-9 initialization omits product_journey'
+grep -Fq '"test:journey"' "${V4_PROJECT}/web/package.json" \
+  || fail 'a fresh DBA-9 initialization omits the dedicated journey runner'
+grep -Fq '@frontier:entry' "${V4_PROJECT}/web/src/routes/page.e2e.ts" \
+  || fail 'a fresh DBA-9 initialization omits the initial frontier tag'
+
 # An explicit DBA-5 (v1-selecting) initialization emits the EXACT v1 set — no data_integrity.
 V1_TOOLKIT="${WORK}/fake-toolkit-v1"
 mk_baseline_toolkit "${V1_TOOLKIT}" v1

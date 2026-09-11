@@ -27,6 +27,10 @@ YOUR TASK — answer these five questions using only the evidence in the packet:
      rather than read.)
   4. In-scope blockers: Are there facts that, if left in, would make the artifact wrong,
      unsafe, or internally contradictory?
+     Under Feature Workflow v2 or later, treat product-journey evidence that bypasses an
+     implemented upstream capability by injecting its owned intermediate domain state as an
+     in-scope blocker. Confirm an advancing feature's journey reaches its proposed, not merely
+     accepted, frontier.
   5. Finding classification: Classify every finding you raise as exactly one of the five
      TRIAGE RULE categories below.
 

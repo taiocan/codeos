@@ -38,7 +38,14 @@ override approved behavior or architecture.
   Baseline tier the Contract marks changed, together, inside this delivery cycle (`vertical_slice`
   mechanic) — do not implement a GUI-visible outcome on the backend alone and defer its GUI tier to
   a later cycle.
-- Once the first runnable implementation across the touched tiers passes basic integration smoke,
+- When the selected Feature Workflow policy is v2 or later, implement the Contract's journey
+  contribution as one continuous production path: legitimate input → production adapter →
+  orchestration → authoritative boundary state or evidence → next observable handoff. Include
+  persistence only where it applies. An advancing feature must make the complete path through its
+  proposed new frontier runnable before preview; a preserving feature must keep the accepted
+  frontier runnable.
+- Once the first runnable implementation across the touched tiers passes basic integration smoke
+  and, under Feature Workflow v2 or later, the applicable product-journey verification,
   and before the full verification loop in `05-tests.md` proceeds, surface a clearly labeled
   Development Preview to the human: *"Development Preview — direction and UX review only;
   verification is incomplete."* This is a direction check, not an approval gate.

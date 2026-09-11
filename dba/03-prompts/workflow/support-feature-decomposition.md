@@ -23,6 +23,8 @@ skip this prompt and proceed to Intent.
 1. Identify the shared problem or opportunity and affected human actors within the approved
    Charter boundary.
 2. Separate candidate features by meaningful outcome and execution boundary, not by code layer.
+   A candidate that creates a transition on the primary product journey must carry that transition
+   through the continuous production path; do not decompose it into an isolated internal stage.
 3. Record only dependencies or open decisions that materially affect that decomposition.
 4. Do not allocate feature IDs; IDs belong to the resulting Intents.
 5. Do not write guarantees, Contract scenarios, events, or implementation design.

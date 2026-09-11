@@ -17,7 +17,7 @@ use crate::project::Project;
 use crate::receipts::{self, ReceiptState, ReceiptStore};
 use crate::verification::{self, RecordState, VerificationRecord, VerificationStore};
 use anyhow::Result;
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::path::Path;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -85,7 +85,7 @@ impl Subject {
 pub fn evaluate(project: &Project, subject: &Subject) -> Result<Vec<CheckpointReport>> {
     let store = ReceiptStore::at(&project.codeos_dir());
     let vstore = VerificationStore::at(&project.codeos_dir());
-    let contract = contract_for(subject.workflow);
+    let contract = contract_for(subject.workflow, project.feature_workflow_version()?);
     let mut reports = Vec::new();
     let mut all_prior_pass = true;
 
@@ -193,6 +193,205 @@ fn impact_row_changed(lower_text: &str, tier_keyword: &str) -> bool {
     })
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+enum JourneyContribution {
+    Preserve {
+        reason: String,
+    },
+    Advance {
+        previous: String,
+        proposed: String,
+        transition: String,
+    },
+}
+
+fn section_fields(text: &str, heading: &str) -> BTreeMap<String, String> {
+    let marker = format!("## {heading}");
+    let mut inside = false;
+    let mut fields = BTreeMap::new();
+    for line in text.lines() {
+        if line.trim() == marker {
+            inside = true;
+            continue;
+        }
+        if inside && line.starts_with("## ") {
+            break;
+        }
+        if inside {
+            if let Some((key, value)) = line.split_once(':') {
+                let key = key.trim();
+                let value = value.trim();
+                if !key.is_empty() && !value.is_empty() {
+                    fields.insert(key.to_string(), value.to_string());
+                }
+            }
+        }
+    }
+    fields
+}
+
+fn journey_contribution(path: &Path) -> Result<JourneyContribution> {
+    let text = std::fs::read_to_string(path)?;
+    let fields = section_fields(&text, "Product Journey Contribution");
+    match fields.get("mode").map(String::as_str) {
+        Some("preserve") => fields
+            .get("reason")
+            .filter(|value| !value.trim().is_empty())
+            .cloned()
+            .map(|reason| JourneyContribution::Preserve { reason })
+            .ok_or_else(|| anyhow::anyhow!("mode preserve requires a non-empty reason"))
+            .and_then(|contribution| {
+                if ["previous_frontier", "proposed_frontier", "transition"]
+                    .iter()
+                    .any(|name| fields.contains_key(*name))
+                {
+                    anyhow::bail!("mode preserve must not declare advance fields");
+                }
+                Ok(contribution)
+            }),
+        Some("advance") => {
+            let required = |name: &str| {
+                fields
+                    .get(name)
+                    .filter(|value| !value.trim().is_empty())
+                    .cloned()
+                    .ok_or_else(|| anyhow::anyhow!("mode advance requires {name}"))
+            };
+            let previous = required("previous_frontier")?;
+            let proposed = required("proposed_frontier")?;
+            let transition = required("transition")?;
+            if fields.contains_key("reason") {
+                anyhow::bail!("mode advance must not declare preserve reason");
+            }
+            if !valid_frontier_id(&previous) || !valid_frontier_id(&proposed) {
+                anyhow::bail!(
+                    "frontier identifiers must use only letters, digits, dot, underscore, or hyphen"
+                );
+            }
+            if previous == proposed {
+                anyhow::bail!("proposed_frontier must differ from previous_frontier");
+            }
+            Ok(JourneyContribution::Advance {
+                previous,
+                proposed,
+                transition,
+            })
+        }
+        Some(other) => anyhow::bail!("unsupported product journey mode '{other}'"),
+        None => anyhow::bail!("Product Journey Contribution must declare mode"),
+    }
+}
+
+fn valid_frontier_id(value: &str) -> bool {
+    !value.is_empty()
+        && value
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || matches!(c, '.' | '_' | '-'))
+}
+
+fn charter_initial_frontier(project: &Project) -> Result<String> {
+    let text = std::fs::read_to_string(project.charter())?;
+    let fields = section_fields(&text, "Primary Product Journey");
+    for name in ["journey_id", "legitimate_entry", "target_outcome"] {
+        if fields
+            .get(name)
+            .map(|value| value.trim().is_empty())
+            .unwrap_or(true)
+        {
+            anyhow::bail!("Charter Primary Product Journey must declare {name}");
+        }
+    }
+    if fields.get("verification_route").map(String::as_str) != Some("product_journey") {
+        anyhow::bail!("Charter Primary Product Journey verification_route must be product_journey");
+    }
+    let frontier = fields
+        .get("initial_frontier")
+        .filter(|value| !value.trim().is_empty())
+        .cloned()
+        .ok_or_else(|| {
+            anyhow::anyhow!("Charter Primary Product Journey must declare initial_frontier")
+        })?;
+    if !valid_frontier_id(&frontier) {
+        anyhow::bail!(
+            "Charter initial_frontier must use only letters, digits, dot, underscore, or hyphen"
+        );
+    }
+    Ok(frontier)
+}
+
+/// Derive the sole accepted frontier from the Charter and the latest current acceptance receipt
+/// for each journey-advancing feature, in append order. No parallel frontier state is stored.
+pub fn current_accepted_frontier(project: &Project) -> Result<String> {
+    accepted_frontier_excluding(project, None)
+}
+
+fn accepted_frontier_excluding(
+    project: &Project,
+    excluded_subject: Option<&str>,
+) -> Result<String> {
+    let mut frontier = charter_initial_frontier(project)?;
+    let receipts = ReceiptStore::at(&project.codeos_dir()).all()?;
+    let mut latest = BTreeMap::new();
+    for (index, receipt) in receipts.iter().enumerate() {
+        if receipt.workflow == "feature"
+            && receipt.checkpoint == "acceptance"
+            && receipt.result == "accepted"
+        {
+            latest.insert(receipt.subject.clone(), index);
+        }
+    }
+    let latest_indices: BTreeSet<_> = latest.into_values().collect();
+    for (index, receipt) in receipts.into_iter().enumerate() {
+        if !latest_indices.contains(&index) {
+            continue;
+        }
+        if excluded_subject == Some(receipt.subject.as_str()) {
+            continue;
+        }
+        let contract = project.contract(&receipt.subject);
+        let Some(now) = hashing::file_sha256(&contract)? else {
+            continue;
+        };
+        if receipt.bindings.get("contract") != Some(&now) {
+            continue;
+        }
+        if let JourneyContribution::Advance {
+            previous, proposed, ..
+        } = journey_contribution(&contract)?
+        {
+            if previous != frontier {
+                anyhow::bail!(
+                    "accepted product-journey frontier conflict: {} expected previous '{}' but accepted frontier is '{}'",
+                    receipt.subject,
+                    previous,
+                    frontier
+                );
+            }
+            frontier = proposed;
+        }
+    }
+    Ok(frontier)
+}
+
+pub fn product_journey_target(project: &Project, subject: &Subject) -> Result<String> {
+    let accepted = accepted_frontier_excluding(project, Some(&subject.id))?;
+    match journey_contribution(&project.contract(&subject.id))? {
+        JourneyContribution::Preserve { .. } => Ok(accepted),
+        JourneyContribution::Advance {
+            previous, proposed, ..
+        } => {
+            if previous != accepted {
+                anyhow::bail!(
+                    "previous_frontier '{}' does not match current accepted frontier '{}'",
+                    previous,
+                    accepted
+                );
+            }
+            Ok(proposed)
+        }
+    }
+}
+
 fn applies(a: Applies, s: &Subject) -> bool {
     match a {
         Applies::Always => true,
@@ -290,6 +489,42 @@ fn evaluate_checkpoint(
                         .get_or_insert(format!("complete the Contract's '{heading}' section"));
                 }
             }
+            Requirement::ProductJourneyContribution => {
+                match journey_contribution(&project.contract(&subject.id))
+                    .and_then(|contribution| {
+                        let current = accepted_frontier_excluding(project, Some(&subject.id))?;
+                        if let JourneyContribution::Advance { previous, .. } = &contribution {
+                            if previous != &current {
+                                anyhow::bail!(
+                                    "previous_frontier '{}' does not match current accepted frontier '{}'",
+                                    previous,
+                                    current
+                                );
+                            }
+                        }
+                        Ok(contribution)
+                    }) {
+                    Ok(JourneyContribution::Preserve { reason }) => {
+                        met.push(format!("product journey preserved: {reason}"));
+                    }
+                    Ok(JourneyContribution::Advance {
+                        previous,
+                        proposed,
+                        transition,
+                    }) => {
+                        met.push(format!(
+                            "product journey advances {previous} -> {proposed}: {transition}"
+                        ));
+                    }
+                    Err(error) => {
+                        unmet.push(format!("invalid Product Journey Contribution: {error}"));
+                        next_action.get_or_insert(
+                            "declare preserve with reason, or advance from the accepted frontier"
+                                .into(),
+                        );
+                    }
+                }
+            }
             Requirement::Receipt {
                 checkpoint,
                 results,
@@ -379,7 +614,7 @@ fn evaluate_checkpoint(
                 }
             }
             Requirement::LiveVerification { name, mechanic } => {
-                let want = verification_bindings(project, subject, c.id)?;
+                let want = verification_bindings(project, subject, c.id, Some(mechanic))?;
                 let have = vstore.latest(subject.workflow.slug(), &subject.id, c.id, mechanic)?;
                 match verification::evaluate(have, &want) {
                     RecordState::Absent => {
@@ -524,7 +759,7 @@ fn evaluate_checkpoint(
 /// cannot advance (one blocked on an approval, a receipt, or review — not on a mechanical
 /// verification). Returns one human-readable line per verification attempted; writes nothing else.
 pub fn run_checks(project: &Project, subject: &Subject) -> Result<Vec<String>> {
-    let contract = contract_for(subject.workflow);
+    let contract = contract_for(subject.workflow, project.feature_workflow_version()?);
     let vstore = VerificationStore::at(&project.codeos_dir());
     let slug = subject.workflow.slug();
     let mut log = Vec::new();
@@ -555,14 +790,14 @@ pub fn run_checks(project: &Project, subject: &Subject) -> Result<Vec<String>> {
             break; // this checkpoint waits on a human decision or a non-mechanical condition
         }
 
-        let want = verification_bindings(project, subject, &stuck.id)?;
         let mut progressed = false;
         for mechanic in mechanics {
+            let want = verification_bindings(project, subject, &stuck.id, Some(mechanic))?;
             let have = vstore.latest(slug, &subject.id, &stuck.id, mechanic)?;
             if matches!(verification::evaluate(have, &want), RecordState::Current(_)) {
                 continue; // already verified against the current inputs
             }
-            let outcome = run_mechanic(project, mechanic);
+            let outcome = run_mechanic(project, subject, mechanic);
             log.push(format!("{} / {mechanic}: {}", stuck.id, outcome.summary));
             if !outcome.ok {
                 return Ok(log); // fail closed at the first failing verification
@@ -654,13 +889,23 @@ pub fn verification_bindings_for(
     subject: &Subject,
     checkpoint: &str,
 ) -> Result<BTreeMap<String, String>> {
-    verification_bindings(project, subject, checkpoint)
+    verification_bindings(project, subject, checkpoint, None)
+}
+
+pub fn verification_bindings_for_mechanic(
+    project: &Project,
+    subject: &Subject,
+    checkpoint: &str,
+    mechanic: &str,
+) -> Result<BTreeMap<String, String>> {
+    verification_bindings(project, subject, checkpoint, Some(mechanic))
 }
 
 fn verification_bindings(
     project: &Project,
     subject: &Subject,
     checkpoint: &str,
+    mechanic: Option<&str>,
 ) -> Result<BTreeMap<String, String>> {
     let mut b = BTreeMap::new();
     let put = |b: &mut BTreeMap<String, String>, k: &str, path: &Path| -> Result<()> {
@@ -690,6 +935,17 @@ fn verification_bindings(
         }
         _ => {}
     }
+    if mechanic == Some("product_journey") {
+        put(&mut b, "charter", &project.charter())?;
+        b.insert(
+            "accepted_frontier".into(),
+            hashing::text_sha256(&accepted_frontier_excluding(project, Some(&subject.id))?),
+        );
+        b.insert(
+            "journey_target".into(),
+            hashing::text_sha256(&product_journey_target(project, subject)?),
+        );
+    }
     Ok(b)
 }
 
@@ -718,7 +974,7 @@ fn validate_codeos_yaml(project: &Project, yaml: &Path) -> Option<bool> {
     Some(text.contains("platform:") && text.contains("artifacts:"))
 }
 
-fn run_mechanic(project: &Project, mechanic: &str) -> evidence::CommandOutcome {
+fn run_mechanic(project: &Project, subject: &Subject, mechanic: &str) -> evidence::CommandOutcome {
     // Test seam: a `.codeos/06-workflow/.verify-stub` file of `mechanic=pass|fail` lines forces
     // outcomes without executing anything. A real project never has this file; it is per-project,
     // so parallel tests do not interfere.
@@ -743,6 +999,7 @@ fn run_mechanic(project: &Project, mechanic: &str) -> evidence::CommandOutcome {
     match mechanic {
         "baseline" => run_integrated_baseline(project),
         "smoke" => run_smoke(project),
+        "product_journey" => run_product_journey(project, subject),
         "behavior" | "repeatability" | "data_integrity" => run_cargo_tests(project),
         "playwright" => {
             let runtime = match project.runtime_verification() {
@@ -765,6 +1022,41 @@ fn run_mechanic(project: &Project, mechanic: &str) -> evidence::CommandOutcome {
             summary: format!("unknown mechanic {other}"),
         },
     }
+}
+
+fn run_product_journey(project: &Project, subject: &Subject) -> evidence::CommandOutcome {
+    let target = match product_journey_target(project, subject) {
+        Ok(target) => target,
+        Err(error) => return failure(error.to_string()),
+    };
+    if subject.gui {
+        if !project.web_has_script("test:journey") {
+            return failure("web/package.json has no test:journey script");
+        }
+        let runtime = match project.runtime_verification() {
+            Ok(runtime) => runtime,
+            Err(error) => return failure(error.to_string()),
+        };
+        let tag = format!("@frontier:{target}");
+        return evidence::run_env(
+            &project.root.join("web"),
+            "npm",
+            &["run", "test:journey", "--", "--grep", &tag],
+            &[
+                ("PLAYWRIGHT_BASE_URL", runtime.web_url.as_str()),
+                ("CODEOS_EXPECTED_FRONTIER", target.as_str()),
+            ],
+        );
+    }
+    let script = project.root.join("scripts/test-product-journey.sh");
+    if !script.is_file() {
+        return failure("GUI-exempt project has no scripts/test-product-journey.sh");
+    }
+    evidence::run(
+        &project.root,
+        "bash",
+        &["scripts/test-product-journey.sh", &target],
+    )
 }
 
 fn failure(summary: impl Into<String>) -> evidence::CommandOutcome {
@@ -955,5 +1247,86 @@ fn short(s: &str) -> String {
         format!("{}…", &s[..10])
     } else {
         s.to_string()
+    }
+}
+
+#[cfg(test)]
+mod journey_tests {
+    use super::*;
+    use std::fs;
+
+    fn fixture(gui: bool) -> (tempfile::TempDir, Project, Subject) {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path().to_path_buf();
+        fs::create_dir_all(root.join(".codeos/00-project")).unwrap();
+        fs::create_dir_all(root.join(".codeos/01-specification/contracts")).unwrap();
+        fs::write(
+            root.join(".codeos/00-project/charter.md"),
+            "## Primary Product Journey\njourney_id: primary\nlegitimate_entry: product home\ninitial_frontier: entry\ntarget_outcome: useful result\nverification_route: product_journey\n",
+        )
+        .unwrap();
+        fs::write(
+            root.join(".codeos/00-project/codeos.yaml"),
+            "runtime_verification:\n  database_service: db\n  database_test_url_env: TEST_DB_URL\n  backend_health_url: http://backend/health\n  web_url: http://product/\n",
+        )
+        .unwrap();
+        fs::write(
+            root.join(".codeos/01-specification/contracts/F-1_contract.md"),
+            "## Product Journey Contribution\nmode: advance\nprevious_frontier: entry\nproposed_frontier: usable\ntransition: entry reaches useful output\n",
+        )
+        .unwrap();
+        let project = Project {
+            root,
+            self_dev: false,
+        };
+        let subject = Subject {
+            workflow: Workflow::Feature,
+            id: "F-1".into(),
+            gui,
+            persistence: false,
+            arch_approval_required: false,
+        };
+        (dir, project, subject)
+    }
+
+    #[test]
+    fn gui_journey_selects_the_proposed_frontier_tag() {
+        let (_dir, project, subject) = fixture(true);
+        fs::create_dir_all(project.root.join("web")).unwrap();
+        fs::write(
+            project.root.join("web/package.json"),
+            r#"{"scripts":{"test:journey":"node journey.js"}}"#,
+        )
+        .unwrap();
+        fs::write(
+            project.root.join("web/journey.js"),
+            "if (!process.argv.includes('@frontier:usable')) process.exit(7);\n",
+        )
+        .unwrap();
+        let outcome = run_product_journey(&project, &subject);
+        assert!(outcome.ok, "{}", outcome.summary);
+    }
+
+    #[test]
+    fn gui_journey_fails_closed_without_the_dedicated_script() {
+        let (_dir, project, subject) = fixture(true);
+        fs::create_dir_all(project.root.join("web")).unwrap();
+        fs::write(project.root.join("web/package.json"), r#"{"scripts":{}}"#).unwrap();
+        let outcome = run_product_journey(&project, &subject);
+        assert!(!outcome.ok);
+        assert!(outcome.summary.contains("test:journey"));
+    }
+
+    #[test]
+    fn gui_exempt_journey_receives_the_proposed_frontier() {
+        let (_dir, project, subject) = fixture(false);
+        fs::create_dir_all(project.root.join("scripts")).unwrap();
+        fs::write(
+            project.root.join("scripts/test-product-journey.sh"),
+            "#!/usr/bin/env bash\n[[ \"$1\" == usable ]]\n",
+        )
+        .unwrap();
+        let outcome = run_product_journey(&project, &subject);
+        assert!(outcome.ok, "{}", outcome.summary);
     }
 }

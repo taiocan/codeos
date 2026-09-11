@@ -42,6 +42,17 @@ Codeos Mechanics policy for what each obligation requires.
 applicable" when the feature has no GUI-visible outcome]
 **Preview** — what will the human inspect at the Early Development Preview checkpoint? [what to show]
 
+## Product Journey Contribution
+
+<!-- Required when the adopted Feature Workflow policy is v2 or later. Use exactly one shape:
+mode: preserve + reason, or mode: advance + previous_frontier + proposed_frontier + transition. -->
+
+mode: [preserve | advance]
+reason: [required only for preserve]
+previous_frontier: [required only for advance: the current accepted frontier]
+proposed_frontier: [required only for advance: one stable new frontier]
+transition: [required only for advance: the observable previous → new capability]
+
 ## Scenarios
 
 ### Happy Path

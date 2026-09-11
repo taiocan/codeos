@@ -62,6 +62,14 @@ below.
   real Svelte app — no tier mocked (`playwright` mechanic). Record the separate human UX validation
   (`human_ux` mechanic) as evidence distinct from behavioral correctness; it is not satisfied by a
   passing Playwright assertion alone.
+- Under Feature Workflow v2 or later, keep one dedicated product-journey test tagged
+  `@frontier:<frontier-id>`. For `preserve`, traverse from the legitimate entry through the current
+  accepted frontier. For `advance`, traverse through the proposed new frontier. Do not insert an
+  intermediate domain object that an implemented upstream journey capability owns. Infrastructure,
+  actor accounts, and static reference data may be established as prerequisites.
+- For an external provider, exercise the real adapter against a protocol-faithful deterministic
+  boundary server. Do not replace the adapter with a repository mock or inject its downstream
+  product state.
 
 Replay comparisons ignore generated identifiers, timestamps, and other nondeterministic envelope
 fields unless the Contract governs them. Compare governed sequence and deterministic payload

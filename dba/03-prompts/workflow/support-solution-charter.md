@@ -35,6 +35,10 @@ the section.
 - Name the primary actor and primary decision the solution supports in one concise statement. Keep
   it consistent with Problem, Vision, Outcomes, and Scope. It is an alignment lens, not an
   acceptance requirement; do not turn it into feature behavior.
+- When doctrine v8 or Feature Workflow v2 is selected, define one Primary Product Journey using the
+  template's exact fields: one legitimate product entry, `initial_frontier: entry`, the useful
+  target outcome, and `verification_route: product_journey`. This anchors continuous traversal; it
+  does not specify the feature steps that will eventually reach the outcome.
 - Express outcomes as measurable results rather than features, and give each a stable `O-#`
   identity. Never reuse a retired identity.
 - Record the scope boundary explicitly, in and out.
@@ -82,6 +86,8 @@ and primary decision, agrees with Problem, Vision, Outcomes, and Scope, and is n
 acceptance requirement. Confirm that outcomes are measurable and identified, the boundary is
 explicit, every System Constraint has a type and a verification route, every threshold carries its
 context and rationale, and no feature behavior or architecture decision leaked into the artifact.
+When doctrine v8 or Feature Workflow v2 is selected, also confirm the Primary Product Journey is
+complete and consistent with the actor, supported decision, and target outcome.
 Apply the selected review policy at this decision boundary.
 
 ## Output / Next Action
