@@ -54,6 +54,7 @@ impl Fx {
                 bindings,
                 command: "seeded".into(),
                 timestamp: "2026-09-06T00:00:00Z".into(),
+                details: None,
             })
             .unwrap();
     }

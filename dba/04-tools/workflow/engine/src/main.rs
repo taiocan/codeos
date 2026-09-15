@@ -30,6 +30,15 @@ enum Cmd {
     Check(Target),
     /// Append a decision receipt for one of the seven receipt-bearing checkpoints.
     Decide(DecideArgs),
+    /// Show the primary journey, accepted/candidate frontiers, and first broken transition.
+    Journey(JourneyArgs),
+}
+
+#[derive(clap::Args)]
+struct JourneyArgs {
+    /// Restrict candidate reporting to one feature; accepted reachability is always shown.
+    #[arg(long)]
+    subject: Option<String>,
 }
 
 #[derive(clap::Args)]
@@ -81,6 +90,14 @@ fn main() {
 
 fn run(cli: &Cli, start: &std::path::Path) -> Result<i32> {
     match &cli.command {
+        Cmd::Journey(args) => {
+            let project = Project::discover(start)?;
+            println!(
+                "{}",
+                checker::render_journey(&project, args.subject.as_deref())?
+            );
+            Ok(EXIT_SUCCESS)
+        }
         Cmd::Status(t) | Cmd::Next(t) | Cmd::Check(t) => {
             let Some(workflow) = Workflow::parse(&t.workflow) else {
                 eprintln!("workflow must be bootstrap | feature | operation");

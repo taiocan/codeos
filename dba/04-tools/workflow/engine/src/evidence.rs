@@ -260,6 +260,7 @@ pub struct CommandOutcome {
     /// The command line that was run (empty when nothing could be executed).
     pub command: String,
     pub summary: String,
+    pub details: Option<serde_json::Value>,
 }
 
 /// Run a shell command from `cwd`. Used only by `check`, never by `status`/`next`.
@@ -323,12 +324,14 @@ pub fn run_env(cwd: &Path, program: &str, args: &[&str], env: &[(&str, &str)]) -
                     }
                 ),
                 command,
+                details: None,
             }
         }
         Err(e) => CommandOutcome {
             ok: false,
             summary: format!("{command}: {e}"),
             command,
+            details: None,
         },
     }
 }

@@ -35,6 +35,9 @@ duplicate membership, and reuse a matching scope or draft the current architectu
 - When the selected Architecture Synthesis policy is v5 or later, identify for every shared
   primary-journey boundary the production adapter, transition owner, authoritative state or
   evidence at the boundary, next consumer, and persisted object only when persistence applies.
+- When it is v6 or later, encode each cross-feature seam in the scope's `Primary Journey
+  Transitions` YAML with one project-unique `T-####`, both member features, producer role, handoff
+  type, and consumer role. Do not copy runtime observations into architecture.
 - Derive decisions from approved requirements or explicit human architectural decisions.
 - Treat approved quality requirements and System Constraints as inputs. Record the structural
   consequences they force; never originate a new one here.

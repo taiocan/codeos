@@ -17,6 +17,7 @@ use crate::project::Project;
 use crate::receipts::{self, ReceiptState, ReceiptStore};
 use crate::verification::{self, RecordState, VerificationRecord, VerificationStore};
 use anyhow::Result;
+use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::Path;
 
@@ -205,6 +206,84 @@ enum JourneyContribution {
     },
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
+struct JourneySetup {
+    category: String,
+    resource: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
+struct JourneyObservation {
+    transition_id: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    handoff_identity: Option<String>,
+    state_origin: String,
+    result: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    reason: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
+struct JourneyEvidence {
+    schema: u8,
+    journey_id: String,
+    target_frontier: String,
+    #[serde(default)]
+    setup: Vec<JourneySetup>,
+    observations: Vec<JourneyObservation>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+struct ExpectedTransition {
+    transition_id: String,
+    from_frontier: String,
+    to_frontier: String,
+    producer_role: String,
+    handoff_type: String,
+    consumer_role: String,
+    authority_kind: String,
+    authority_id: String,
+    owner_feature: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    authority_path: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+struct JourneyDefinition {
+    schema: u8,
+    journey_id: String,
+    target_frontier: String,
+    transitions: Vec<ExpectedTransition>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ArchitectureTransitions {
+    transitions: Vec<ArchitectureTransition>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ArchitectureTransition {
+    transition_id: String,
+    from_frontier: String,
+    to_frontier: String,
+    producer_feature: String,
+    producer_role: String,
+    handoff_type: String,
+    consumer_feature: String,
+    consumer_role: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct ArchitectureFrontmatter {
+    #[serde(default)]
+    features: Vec<String>,
+}
+
 fn section_fields(text: &str, heading: &str) -> BTreeMap<String, String> {
     let marker = format!("## {heading}");
     let mut inside = false;
@@ -319,6 +398,273 @@ fn charter_initial_frontier(project: &Project) -> Result<String> {
     Ok(frontier)
 }
 
+fn charter_journey(project: &Project) -> Result<(String, String, String, String)> {
+    let text = std::fs::read_to_string(project.charter())?;
+    let fields = section_fields(&text, "Primary Product Journey");
+    let required = |name: &str| {
+        fields
+            .get(name)
+            .filter(|v| !v.trim().is_empty())
+            .cloned()
+            .ok_or_else(|| anyhow::anyhow!("Charter Primary Product Journey must declare {name}"))
+    };
+    Ok((
+        required("journey_id")?,
+        required("legitimate_entry")?,
+        required("initial_frontier")?,
+        required("target_outcome")?,
+    ))
+}
+
+fn accepted_advances_excluding(
+    project: &Project,
+    excluded_subject: Option<&str>,
+) -> Result<Vec<(String, String, String)>> {
+    let receipts = ReceiptStore::at(&project.codeos_dir()).all()?;
+    let mut latest = BTreeMap::new();
+    for (index, receipt) in receipts.iter().enumerate() {
+        if receipt.workflow == "feature"
+            && receipt.checkpoint == "acceptance"
+            && receipt.result == "accepted"
+        {
+            latest.insert(receipt.subject.clone(), index);
+        }
+    }
+    let latest_indices: BTreeSet<_> = latest.into_values().collect();
+    let mut advances = Vec::new();
+    for (index, receipt) in receipts.into_iter().enumerate() {
+        if !latest_indices.contains(&index) || excluded_subject == Some(receipt.subject.as_str()) {
+            continue;
+        }
+        let contract = project.contract(&receipt.subject);
+        let Some(now) = hashing::file_sha256(&contract)? else {
+            continue;
+        };
+        if receipt.bindings.get("contract") != Some(&now) {
+            continue;
+        }
+        if let JourneyContribution::Advance {
+            previous, proposed, ..
+        } = journey_contribution(&contract)?
+        {
+            advances.push((receipt.subject, previous, proposed));
+        }
+    }
+    Ok(advances)
+}
+
+fn markdown_frontmatter_and_body(text: &str) -> Result<(&str, &str)> {
+    let rest = text
+        .strip_prefix("---\n")
+        .ok_or_else(|| anyhow::anyhow!("missing YAML frontmatter"))?;
+    let (frontmatter, body) = rest
+        .split_once("\n---\n")
+        .ok_or_else(|| anyhow::anyhow!("unterminated YAML frontmatter"))?;
+    Ok((frontmatter, body))
+}
+
+fn fenced_yaml_section<'a>(body: &'a str, heading: &str) -> Result<Option<&'a str>> {
+    let marker = format!("## {heading}");
+    let Some(after) = body.split_once(&marker).map(|(_, after)| after) else {
+        return Ok(None);
+    };
+    let section = after.split("\n## ").next().unwrap_or(after);
+    let Some(after_fence) = section.split_once("```yaml\n").map(|(_, after)| after) else {
+        anyhow::bail!("{heading} must contain one fenced YAML block");
+    };
+    let Some((yaml, _)) = after_fence.split_once("\n```") else {
+        anyhow::bail!("{heading} has an unterminated YAML block");
+    };
+    Ok(Some(yaml))
+}
+
+fn architecture_transition(
+    project: &Project,
+    producer_feature: &str,
+    consumer_feature: &str,
+    from: &str,
+    to: &str,
+) -> Result<ExpectedTransition> {
+    let dir = project.codeos_dir().join("02-architecture/scopes");
+    let mut matches = Vec::new();
+    let mut seen_ids = BTreeSet::new();
+    if dir.is_dir() {
+        for entry in std::fs::read_dir(&dir)? {
+            let path = entry?.path();
+            if path.extension().and_then(|v| v.to_str()) != Some("md") {
+                continue;
+            }
+            let text = std::fs::read_to_string(&path)?;
+            let (frontmatter, body) = markdown_frontmatter_and_body(&text)?;
+            let metadata: ArchitectureFrontmatter = serde_yaml::from_str(frontmatter)?;
+            let Some(yaml) = fenced_yaml_section(body, "Primary Journey Transitions")? else {
+                continue;
+            };
+            let definitions: ArchitectureTransitions = serde_yaml::from_str(yaml)?;
+            for definition in definitions.transitions {
+                let valid_id = definition
+                    .transition_id
+                    .strip_prefix("T-")
+                    .map(|digits| digits.len() == 4 && digits.chars().all(|c| c.is_ascii_digit()))
+                    .unwrap_or(false);
+                if !valid_id {
+                    anyhow::bail!("architecture transition_id must use T-####");
+                }
+                if !seen_ids.insert(definition.transition_id.clone()) {
+                    anyhow::bail!(
+                        "duplicate architecture transition_id {}",
+                        definition.transition_id
+                    );
+                }
+                if [
+                    definition.producer_role.as_str(),
+                    definition.handoff_type.as_str(),
+                    definition.consumer_role.as_str(),
+                ]
+                .iter()
+                .any(|value| value.trim().is_empty())
+                {
+                    anyhow::bail!(
+                        "architecture transition {} has an empty topology role",
+                        definition.transition_id
+                    );
+                }
+                if definition.from_frontier == from && definition.to_frontier == to {
+                    if !evidence::approval_recorded(&path)? {
+                        anyhow::bail!(
+                            "cross-feature journey transition {from} -> {to} is defined by unapproved architecture scope {}",
+                            path.display()
+                        );
+                    }
+                    for feature in [&definition.producer_feature, &definition.consumer_feature] {
+                        if !metadata.features.contains(feature) {
+                            anyhow::bail!(
+                                "architecture transition {} names feature {} outside its scope membership",
+                                definition.transition_id,
+                                feature
+                            );
+                        }
+                    }
+                    if definition.producer_feature != producer_feature
+                        || definition.consumer_feature != consumer_feature
+                    {
+                        anyhow::bail!(
+                            "architecture transition {} assigns the wrong producer or consumer feature",
+                            definition.transition_id
+                        );
+                    }
+                    let scope_id = path.file_stem().unwrap().to_string_lossy().into_owned();
+                    let relative = path
+                        .strip_prefix(&project.root)
+                        .unwrap_or(&path)
+                        .to_string_lossy()
+                        .into_owned();
+                    matches.push(ExpectedTransition {
+                        transition_id: definition.transition_id,
+                        from_frontier: definition.from_frontier,
+                        to_frontier: definition.to_frontier,
+                        producer_role: definition.producer_role,
+                        handoff_type: definition.handoff_type,
+                        consumer_role: definition.consumer_role,
+                        authority_kind: "architecture".into(),
+                        authority_id: scope_id,
+                        owner_feature: consumer_feature.into(),
+                        authority_path: Some(relative),
+                    });
+                }
+            }
+        }
+    }
+    match matches.len() {
+        1 => Ok(matches.remove(0)),
+        0 => anyhow::bail!(
+            "cross-feature journey transition {from} -> {to} requires one approved Architecture Scope definition"
+        ),
+        _ => anyhow::bail!(
+            "cross-feature journey transition {from} -> {to} has duplicate Architecture Scope definitions"
+        ),
+    }
+}
+
+fn accepted_journey_definition(
+    project: &Project,
+    excluded_subject: Option<&str>,
+) -> Result<(JourneyDefinition, Option<String>)> {
+    let (journey_id, _, initial, _) = charter_journey(project)?;
+    let advances = accepted_advances_excluding(project, excluded_subject)?;
+    let mut frontier = initial;
+    let mut prior_owner: Option<String> = None;
+    let mut transitions = Vec::new();
+    for (owner, previous, proposed) in advances {
+        if previous != frontier {
+            anyhow::bail!("accepted journey chain expected previous frontier '{frontier}', found '{previous}'");
+        }
+        let transition = match prior_owner.as_deref() {
+            Some(producer) if producer != owner => {
+                architecture_transition(project, producer, &owner, &previous, &proposed)?
+            }
+            _ => ExpectedTransition {
+                transition_id: format!("feature-{}-{}-{}", owner, previous, proposed),
+                from_frontier: previous.clone(),
+                to_frontier: proposed.clone(),
+                producer_role: "primary-entry".into(),
+                handoff_type: "feature-output".into(),
+                consumer_role: owner.clone(),
+                authority_kind: "feature".into(),
+                authority_id: owner.clone(),
+                owner_feature: owner.clone(),
+                authority_path: None,
+            },
+        };
+        transitions.push(transition);
+        frontier = proposed;
+        prior_owner = Some(owner);
+    }
+    Ok((
+        JourneyDefinition {
+            schema: 1,
+            journey_id,
+            target_frontier: frontier,
+            transitions,
+        },
+        prior_owner,
+    ))
+}
+
+fn journey_definition(project: &Project, subject: &Subject) -> Result<JourneyDefinition> {
+    let (mut definition, prior_owner) = accepted_journey_definition(project, Some(&subject.id))?;
+    let mut frontier = definition.target_frontier.clone();
+    if let JourneyContribution::Advance {
+        previous, proposed, ..
+    } = journey_contribution(&project.contract(&subject.id))?
+    {
+        if previous != frontier {
+            anyhow::bail!("previous_frontier '{previous}' does not match current accepted frontier '{frontier}'");
+        }
+        let transition = match prior_owner.as_deref() {
+            Some(producer) if producer != subject.id => {
+                architecture_transition(project, producer, &subject.id, &previous, &proposed)?
+            }
+            _ => ExpectedTransition {
+                transition_id: format!("feature-{}-{}-{}", subject.id, previous, proposed),
+                from_frontier: previous.clone(),
+                to_frontier: proposed.clone(),
+                producer_role: "primary-entry".into(),
+                handoff_type: "feature-output".into(),
+                consumer_role: subject.id.clone(),
+                authority_kind: "feature".into(),
+                authority_id: subject.id.clone(),
+                owner_feature: subject.id.clone(),
+                authority_path: None,
+            },
+        };
+        definition.transitions.push(transition);
+        frontier = proposed;
+    }
+    definition.target_frontier = frontier;
+    Ok(definition)
+}
+
 /// Derive the sole accepted frontier from the Charter and the latest current acceptance receipt
 /// for each journey-advancing feature, in append order. No parallel frontier state is stored.
 pub fn current_accepted_frontier(project: &Project) -> Result<String> {
@@ -390,6 +736,211 @@ pub fn product_journey_target(project: &Project, subject: &Subject) -> Result<St
             Ok(proposed)
         }
     }
+}
+
+/// Read-only project-level journey reachability derived from canonical artifacts and attempts.
+pub fn render_journey(project: &Project, selected_subject: Option<&str>) -> Result<String> {
+    if project.codeos_mechanics_version()? < 5 {
+        anyhow::bail!("structured journey status requires Codeos Mechanics v5 (DBA-10)");
+    }
+    let (journey_id, legitimate_entry, _, target_outcome) = charter_journey(project)?;
+    let (accepted, _) = accepted_journey_definition(project, None)?;
+    let records = VerificationStore::at(&project.codeos_dir()).all()?;
+    let mut current: BTreeMap<String, (JourneyObservation, ExpectedTransition, String)> =
+        BTreeMap::new();
+    let mut stale: BTreeSet<String> = BTreeSet::new();
+    let mut latest_error: Option<(String, String)> = None;
+
+    for record in records {
+        if record.workflow != "feature" || record.verification != "product_journey" {
+            continue;
+        }
+        let Some(details) = record.details.clone() else {
+            continue;
+        };
+        let definition = details
+            .get("definition")
+            .cloned()
+            .and_then(|v| serde_json::from_value::<JourneyDefinition>(v).ok());
+        let evidence_value = details.get("evidence").cloned();
+        let evidence =
+            evidence_value.and_then(|v| serde_json::from_value::<JourneyEvidence>(v).ok());
+        let state = Subject::resolve(project, Workflow::Feature, &record.subject)
+            .and_then(|subject| {
+                verification_bindings(
+                    project,
+                    &subject,
+                    &record.checkpoint,
+                    Some("product_journey"),
+                )
+            })
+            .map(|want| verification::evaluate(Some(record.clone()), &want));
+        let is_current = matches!(
+            state,
+            Ok(RecordState::Current(_)) | Ok(RecordState::Failed(_))
+        );
+        if let (Some(definition), Some(evidence)) = (definition, evidence) {
+            for observation in evidence.observations {
+                if let Some(expected) = definition
+                    .transitions
+                    .iter()
+                    .find(|item| item.transition_id == observation.transition_id)
+                {
+                    if is_current {
+                        current.insert(
+                            observation.transition_id.clone(),
+                            (observation, expected.clone(), record.timestamp.clone()),
+                        );
+                        stale.remove(&expected.transition_id);
+                    } else if !current.contains_key(&observation.transition_id) {
+                        stale.insert(observation.transition_id);
+                    }
+                }
+            }
+        }
+        if is_current {
+            if let Some(error) = details.get("validation_error").and_then(|v| v.as_str()) {
+                latest_error = Some((record.timestamp, error.to_string()));
+            }
+        }
+    }
+
+    let mut out = format!(
+        "Primary journey: {journey_id}\nLegitimate entry: {legitimate_entry}\nTarget outcome: {target_outcome}\nAccepted frontier: {}\n",
+        accepted.target_frontier
+    );
+    render_definition_status(
+        &mut out,
+        "Accepted reachability",
+        &accepted,
+        &current,
+        &stale,
+    );
+
+    let subjects = if let Some(id) = selected_subject {
+        vec![id.to_string()]
+    } else {
+        current_proposals(project)?
+    };
+    if !subjects.is_empty() {
+        out.push_str("\nProposals:\n");
+    }
+    for id in subjects {
+        let subject = Subject::resolve(project, Workflow::Feature, &id)?;
+        let definition = journey_definition(project, &subject)?;
+        out.push_str(&format!("\n{id} -> {}\n", definition.target_frontier));
+        render_definition_status(
+            &mut out,
+            "Candidate reachability",
+            &definition,
+            &current,
+            &stale,
+        );
+    }
+    if let Some((timestamp, error)) = latest_error {
+        out.push_str(&format!(
+            "\nLatest attempt error: {error}\nEvidence: current — {timestamp}\n"
+        ));
+    }
+    Ok(out.trim_end().to_string())
+}
+
+fn render_definition_status(
+    out: &mut String,
+    label: &str,
+    definition: &JourneyDefinition,
+    current: &BTreeMap<String, (JourneyObservation, ExpectedTransition, String)>,
+    stale: &BTreeSet<String>,
+) {
+    let first = definition.transitions.iter().find_map(|expected| {
+        if let Some((observed, _, timestamp)) = current.get(&expected.transition_id) {
+            if observed.result == "passed" {
+                None
+            } else {
+                Some((
+                    "BLOCKED",
+                    expected,
+                    Some(observed),
+                    Some(timestamp.as_str()),
+                ))
+            }
+        } else if stale.contains(&expected.transition_id) {
+            Some(("STALE", expected, None, None))
+        } else {
+            Some(("MISSING", expected, None, None))
+        }
+    });
+    match first {
+        None => out.push_str(&format!("{label}: PASS\n")),
+        Some((state, transition, observed, timestamp)) => {
+            out.push_str(&format!(
+                "{label}: {state}\nFirst failing transition: {} — {} -> {}\nExpected: {} -> {} -> {}\n",
+                transition.transition_id,
+                transition.from_frontier,
+                transition.to_frontier,
+                transition.producer_role,
+                transition.handoff_type,
+                transition.consumer_role
+            ));
+            if let Some(observed) = observed {
+                if let Some(identity) = observed.handoff_identity.as_deref() {
+                    out.push_str(&format!("Observed handoff: {identity}\n"));
+                }
+                out.push_str(&format!(
+                    "Reason: {}\n",
+                    observed
+                        .reason
+                        .as_deref()
+                        .unwrap_or("transition did not pass")
+                ));
+            }
+            out.push_str(&format!(
+                "Evidence: {}{}\n",
+                state.to_ascii_lowercase(),
+                timestamp.map(|v| format!(" — {v}")).unwrap_or_default()
+            ));
+        }
+    }
+}
+
+fn current_proposals(project: &Project) -> Result<Vec<String>> {
+    let accepted = current_accepted_frontier(project)?;
+    let receipts = ReceiptStore::at(&project.codeos_dir()).all()?;
+    let mut latest = BTreeMap::new();
+    for receipt in receipts {
+        if receipt.workflow == "feature"
+            && receipt.checkpoint == "acceptance"
+            && receipt.result == "accepted"
+        {
+            latest.insert(receipt.subject.clone(), receipt);
+        }
+    }
+    let mut accepted_subjects = BTreeSet::new();
+    for (id, receipt) in latest {
+        if let Some(hash) = hashing::file_sha256(&project.contract(&id))? {
+            if receipt.bindings.get("contract") == Some(&hash) {
+                accepted_subjects.insert(id);
+            }
+        }
+    }
+    let mut proposals = Vec::new();
+    for id in project.feature_ids()? {
+        if accepted_subjects.contains(&id)
+            || !evidence::spec_artifact_approved(&project.intent(&id))?
+            || !evidence::spec_artifact_approved(&project.contract(&id))?
+            || !evidence::spec_artifact_approved(&project.event_schema(&id))?
+        {
+            continue;
+        }
+        if let JourneyContribution::Advance { previous, .. } =
+            journey_contribution(&project.contract(&id))?
+        {
+            if previous == accepted {
+                proposals.push(id);
+            }
+        }
+    }
+    Ok(proposals)
 }
 
 fn applies(a: Applies, s: &Subject) -> bool {
@@ -641,6 +1192,33 @@ fn evaluate_checkpoint(
                             r.timestamp, r.verification
                         ));
                     }
+                    RecordState::Failed(r) => {
+                        let reason = r
+                            .details
+                            .as_ref()
+                            .and_then(|v| v.get("validation_error"))
+                            .and_then(|v| v.as_str())
+                            .or_else(|| {
+                                r.details
+                                    .as_ref()
+                                    .and_then(|v| v.get("evidence"))
+                                    .and_then(|v| v.get("observations"))
+                                    .and_then(|v| v.as_array())
+                                    .and_then(|items| {
+                                        items.iter().find(|item| {
+                                            item.get("result").and_then(|v| v.as_str())
+                                                == Some("failed")
+                                        })
+                                    })
+                                    .and_then(|item| item.get("reason"))
+                                    .and_then(|v| v.as_str())
+                            })
+                            .unwrap_or("latest current verification attempt failed");
+                        unmet.push(format!("{name} failed: {reason}"));
+                        next_action.get_or_insert(format!(
+                            "repair the failure and re-run `codeos-workflow check` for {name}"
+                        ));
+                    }
                 }
             }
             Requirement::ObservationStated => {
@@ -800,6 +1378,19 @@ pub fn run_checks(project: &Project, subject: &Subject) -> Result<Vec<String>> {
             let outcome = run_mechanic(project, subject, mechanic);
             log.push(format!("{} / {mechanic}: {}", stuck.id, outcome.summary));
             if !outcome.ok {
+                if mechanic == "product_journey" && project.workflow_governance_version()? >= 2 {
+                    vstore.append(&VerificationRecord {
+                        workflow: slug.to_string(),
+                        subject: subject.id.clone(),
+                        checkpoint: stuck.id.clone(),
+                        verification: mechanic.to_string(),
+                        result: "failed".to_string(),
+                        bindings: want.clone(),
+                        command: outcome.command.clone(),
+                        timestamp: chrono::Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string(),
+                        details: outcome.details.clone(),
+                    })?;
+                }
                 return Ok(log); // fail closed at the first failing verification
             }
             let command = if outcome.command.is_empty() {
@@ -816,6 +1407,7 @@ pub fn run_checks(project: &Project, subject: &Subject) -> Result<Vec<String>> {
                 bindings: want.clone(),
                 command,
                 timestamp: chrono::Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string(),
+                details: outcome.details.clone(),
             })?;
             progressed = true;
         }
@@ -945,6 +1537,18 @@ fn verification_bindings(
             "journey_target".into(),
             hashing::text_sha256(&product_journey_target(project, subject)?),
         );
+        if project.codeos_mechanics_version()? >= 5 {
+            let definition = journey_definition(project, subject)?;
+            for transition in definition.transitions {
+                if let Some(relative) = transition.authority_path {
+                    put(
+                        &mut b,
+                        &format!("architecture:{}", transition.authority_id),
+                        &project.root.join(relative),
+                    )?;
+                }
+            }
+        }
     }
     Ok(b)
 }
@@ -990,6 +1594,7 @@ fn run_mechanic(project: &Project, subject: &Subject, mechanic: &str) -> evidenc
                         ok: v.trim() == "pass",
                         command: format!("<stub {mechanic}>"),
                         summary: format!("{mechanic} (stubbed {})", v.trim()),
+                        details: None,
                     };
                 }
             }
@@ -1020,11 +1625,213 @@ fn run_mechanic(project: &Project, subject: &Subject, mechanic: &str) -> evidenc
             ok: false,
             command: String::new(),
             summary: format!("unknown mechanic {other}"),
+            details: None,
         },
     }
 }
 
 fn run_product_journey(project: &Project, subject: &Subject) -> evidence::CommandOutcome {
+    if project.codeos_mechanics_version().unwrap_or(4) < 5 {
+        return run_legacy_product_journey(project, subject);
+    }
+    let definition = match journey_definition(project, subject) {
+        Ok(definition) => definition,
+        Err(error) => return journey_failure(error.to_string()),
+    };
+    let runtime = match project.runtime_verification() {
+        Ok(runtime) => runtime,
+        Err(error) => return journey_failure(error.to_string()),
+    };
+    let nonce = format!(
+        "{}-{}-{}",
+        std::process::id(),
+        subject.id,
+        chrono::Utc::now().timestamp_nanos_opt().unwrap_or_default()
+    );
+    let temp = std::env::temp_dir();
+    let definition_path = temp.join(format!("codeos-journey-definition-{nonce}.json"));
+    let evidence_path = temp.join(format!("codeos-journey-evidence-{nonce}.json"));
+    if let Err(error) = std::fs::write(
+        &definition_path,
+        serde_json::to_vec_pretty(&definition).unwrap(),
+    ) {
+        return journey_failure(format!("write derived journey definition: {error}"));
+    }
+    let definition_text = definition_path.to_string_lossy().into_owned();
+    let evidence_text = evidence_path.to_string_lossy().into_owned();
+    let target = definition.target_frontier.clone();
+    let env = [
+        ("PLAYWRIGHT_BASE_URL", runtime.web_url.as_str()),
+        ("CODEOS_EXPECTED_FRONTIER", target.as_str()),
+        ("CODEOS_JOURNEY_DEFINITION_PATH", definition_text.as_str()),
+        ("CODEOS_JOURNEY_EVIDENCE_PATH", evidence_text.as_str()),
+    ];
+    let (cwd, program, args): (&Path, String, Vec<String>) = if subject.gui {
+        if !project.web_has_script("test:journey") {
+            let _ = std::fs::remove_file(&definition_path);
+            return journey_failure("web/package.json has no test:journey script");
+        }
+        let tag = format!("@frontier:{target}");
+        (
+            &project.root.join("web"),
+            "npm".into(),
+            vec![
+                "run".into(),
+                "test:journey".into(),
+                "--".into(),
+                "--grep".into(),
+                tag,
+            ],
+        )
+    } else {
+        let script = project.root.join("scripts/test-product-journey.sh");
+        if !script.is_file() {
+            let _ = std::fs::remove_file(&definition_path);
+            return journey_failure("GUI-exempt project has no scripts/test-product-journey.sh");
+        }
+        (
+            &project.root,
+            "bash".into(),
+            vec!["scripts/test-product-journey.sh".into(), target.clone()],
+        )
+    };
+    let arg_refs: Vec<&str> = args.iter().map(String::as_str).collect();
+    let mut outcome = if let Some(guard) = runtime.journey_guard_script.as_deref() {
+        let guard_path = project.root.join(guard).to_string_lossy().into_owned();
+        let mut guarded = vec!["--", program.as_str()];
+        guarded.extend(arg_refs.iter().copied());
+        evidence::run_env(cwd, &guard_path, &guarded, &env)
+    } else {
+        evidence::run_env(cwd, &program, &arg_refs, &env)
+    };
+    let parsed = std::fs::read_to_string(&evidence_path)
+        .map_err(|error| anyhow::anyhow!("journey runner produced no readable evidence: {error}"))
+        .and_then(|text| {
+            serde_json::from_str::<JourneyEvidence>(&text)
+                .map_err(|error| anyhow::anyhow!("invalid journey evidence: {error}"))
+        });
+    let _ = std::fs::remove_file(&definition_path);
+    let _ = std::fs::remove_file(&evidence_path);
+    match parsed.and_then(|observed| {
+        validate_journey_evidence(&definition, &observed, outcome.ok)?;
+        Ok(observed)
+    }) {
+        Ok(observed) => {
+            let passed = observed.observations.len() == definition.transitions.len()
+                && observed
+                    .observations
+                    .iter()
+                    .all(|item| item.result == "passed");
+            outcome.ok = passed;
+            outcome.details = Some(serde_json::json!({
+                "definition": definition,
+                "evidence": observed
+            }));
+            if let Some(failed) = observed
+                .observations
+                .iter()
+                .find(|item| item.result == "failed")
+            {
+                outcome.summary = format!(
+                    "{} -> FAILED at {} ({})",
+                    outcome.command,
+                    failed.transition_id,
+                    failed.reason.as_deref().unwrap_or("no reason")
+                );
+            }
+            outcome
+        }
+        Err(error) => {
+            outcome.ok = false;
+            outcome.summary = format!("{} -> FAILED ({error})", outcome.command);
+            outcome.details = Some(serde_json::json!({
+                "definition": definition,
+                "validation_error": error.to_string()
+            }));
+            outcome
+        }
+    }
+}
+
+fn journey_failure(summary: impl Into<String>) -> evidence::CommandOutcome {
+    let summary = summary.into();
+    evidence::CommandOutcome {
+        ok: false,
+        command: String::new(),
+        details: Some(serde_json::json!({ "validation_error": summary })),
+        summary,
+    }
+}
+
+fn validate_journey_evidence(
+    definition: &JourneyDefinition,
+    evidence: &JourneyEvidence,
+    command_ok: bool,
+) -> Result<()> {
+    if evidence.schema != 1 || evidence.journey_id != definition.journey_id {
+        anyhow::bail!(
+            "journey evidence schema or journey_id does not match the derived definition"
+        );
+    }
+    if evidence.target_frontier != definition.target_frontier {
+        anyhow::bail!("journey evidence target does not match the expected frontier");
+    }
+    for setup in &evidence.setup {
+        if !matches!(
+            setup.category.as_str(),
+            "infrastructure"
+                | "actor_identity"
+                | "static_reference_data"
+                | "external_boundary_simulation"
+        ) || setup.resource.trim().is_empty()
+        {
+            anyhow::bail!("journey setup contains an unsupported category or empty resource");
+        }
+    }
+    if evidence.observations.len() > definition.transitions.len() {
+        anyhow::bail!("journey evidence contains more transitions than the derived definition");
+    }
+    let mut saw_failure = false;
+    for (index, observed) in evidence.observations.iter().enumerate() {
+        let expected = &definition.transitions[index];
+        if observed.transition_id != expected.transition_id {
+            anyhow::bail!("journey observation order or transition identity differs from the derived definition");
+        }
+        if observed.state_origin != "production" {
+            anyhow::bail!(
+                "{} was not created through its production capability",
+                observed.transition_id
+            );
+        }
+        match observed.result.as_str() {
+            "passed" if !saw_failure => {
+                if observed.handoff_identity.as_deref().map(str::trim).unwrap_or("").is_empty() {
+                    anyhow::bail!("passed transition {} has no observed handoff identity", observed.transition_id);
+                }
+                if observed.reason.is_some() {
+                    anyhow::bail!("passed transition {} must not report a failure reason", observed.transition_id);
+                }
+            }
+            "failed" if !saw_failure && index + 1 == evidence.observations.len() => {
+                if observed.reason.as_deref().map(str::trim).unwrap_or("").is_empty() {
+                    anyhow::bail!("failed transition {} has no reason", observed.transition_id);
+                }
+                saw_failure = true;
+            }
+            _ => anyhow::bail!("journey observations must be an ordered passed prefix followed by at most one failure"),
+        }
+    }
+    let complete_pass = evidence.observations.len() == definition.transitions.len() && !saw_failure;
+    if command_ok != complete_pass {
+        anyhow::bail!("journey command exit status contradicts its structured observations");
+    }
+    if !complete_pass && !saw_failure {
+        anyhow::bail!("incomplete journey evidence does not identify the first failed transition");
+    }
+    Ok(())
+}
+
+fn run_legacy_product_journey(project: &Project, subject: &Subject) -> evidence::CommandOutcome {
     let target = match product_journey_target(project, subject) {
         Ok(target) => target,
         Err(error) => return failure(error.to_string()),
@@ -1064,6 +1871,7 @@ fn failure(summary: impl Into<String>) -> evidence::CommandOutcome {
         ok: false,
         command: String::new(),
         summary: summary.into(),
+        details: None,
     }
 }
 
@@ -1121,6 +1929,7 @@ fn run_smoke(project: &Project) -> evidence::CommandOutcome {
             "backend {} reachable: {backend}; web {} reachable: {web}",
             runtime.backend_health_url, runtime.web_url
         ),
+        details: None,
     }
 }
 
@@ -1149,6 +1958,7 @@ fn run_integrated_baseline(project: &Project) -> evidence::CommandOutcome {
             ok: false,
             command: String::new(),
             summary: "no docker-compose.yml".into(),
+            details: None,
         };
     }
     let (runtime, database_url) = match resolved_runtime(project) {
@@ -1166,6 +1976,7 @@ fn run_integrated_baseline(project: &Project) -> evidence::CommandOutcome {
             ok: false,
             command: "docker compose up -d --build --wait".into(),
             summary: format!("docker compose up failed: {}", up.summary),
+            details: None,
         };
     }
 
@@ -1223,6 +2034,7 @@ fn run_integrated_baseline(project: &Project) -> evidence::CommandOutcome {
         command: "docker compose integrated baseline (migration + curl + cargo test + npm test)"
             .into(),
         summary: steps.join("; "),
+        details: None,
     }
 }
 
@@ -1328,5 +2140,130 @@ mod journey_tests {
         .unwrap();
         let outcome = run_product_journey(&project, &subject);
         assert!(outcome.ok, "{}", outcome.summary);
+    }
+
+    fn transition(id: &str, from: &str, to: &str) -> ExpectedTransition {
+        ExpectedTransition {
+            transition_id: id.into(),
+            from_frontier: from.into(),
+            to_frontier: to.into(),
+            producer_role: format!("producer-{from}"),
+            handoff_type: format!("{to}-handoff"),
+            consumer_role: format!("consumer-{to}"),
+            authority_kind: "architecture".into(),
+            authority_id: "core".into(),
+            owner_feature: "F-2".into(),
+            authority_path: None,
+        }
+    }
+
+    #[test]
+    fn failed_extension_preserves_a_reproven_accepted_prefix() {
+        let first = transition("T-0001", "entry", "accepted");
+        let second = transition("T-0002", "accepted", "candidate");
+        let current = BTreeMap::from([
+            (
+                first.transition_id.clone(),
+                (
+                    JourneyObservation {
+                        transition_id: first.transition_id.clone(),
+                        handoff_identity: Some("accepted-1".into()),
+                        state_origin: "production".into(),
+                        result: "passed".into(),
+                        reason: None,
+                    },
+                    first.clone(),
+                    "now".into(),
+                ),
+            ),
+            (
+                second.transition_id.clone(),
+                (
+                    JourneyObservation {
+                        transition_id: second.transition_id.clone(),
+                        handoff_identity: None,
+                        state_origin: "production".into(),
+                        result: "failed".into(),
+                        reason: Some("no production consumer".into()),
+                    },
+                    second.clone(),
+                    "now".into(),
+                ),
+            ),
+        ]);
+        let accepted = JourneyDefinition {
+            schema: 1,
+            journey_id: "primary".into(),
+            target_frontier: "accepted".into(),
+            transitions: vec![first],
+        };
+        let candidate = JourneyDefinition {
+            schema: 1,
+            journey_id: "primary".into(),
+            target_frontier: "candidate".into(),
+            transitions: vec![accepted.transitions[0].clone(), second],
+        };
+        let mut out = String::new();
+        render_definition_status(&mut out, "Accepted", &accepted, &current, &BTreeSet::new());
+        render_definition_status(
+            &mut out,
+            "Candidate",
+            &candidate,
+            &current,
+            &BTreeSet::new(),
+        );
+        assert!(out.contains("Accepted: PASS"));
+        assert!(out.contains("Candidate: BLOCKED"));
+        assert!(out.contains("T-0002 — accepted -> candidate"));
+    }
+
+    #[test]
+    fn structured_evidence_rejects_self_reported_topology_and_domain_seeding() {
+        let raw = r#"{
+          "schema":1,"journey_id":"primary","target_frontier":"done",
+          "producer":"invented",
+          "setup":[],"observations":[]
+        }"#;
+        assert!(serde_json::from_str::<JourneyEvidence>(raw).is_err());
+
+        let definition = JourneyDefinition {
+            schema: 1,
+            journey_id: "primary".into(),
+            target_frontier: "done".into(),
+            transitions: vec![transition("T-0001", "entry", "done")],
+        };
+        let evidence = JourneyEvidence {
+            schema: 1,
+            journey_id: "primary".into(),
+            target_frontier: "done".into(),
+            setup: vec![JourneySetup {
+                category: "retrieved_material".into(),
+                resource: "fixture row".into(),
+            }],
+            observations: vec![JourneyObservation {
+                transition_id: "T-0001".into(),
+                handoff_identity: Some("run-1".into()),
+                state_origin: "production".into(),
+                result: "passed".into(),
+                reason: None,
+            }],
+        };
+        assert!(validate_journey_evidence(&definition, &evidence, true).is_err());
+    }
+
+    #[test]
+    fn architecture_owns_a_cross_feature_transition_definition() {
+        let (_dir, project, _subject) = fixture(false);
+        let scopes = project.root.join(".codeos/02-architecture/scopes");
+        fs::create_dir_all(&scopes).unwrap();
+        fs::write(
+            scopes.join("core.md"),
+            "---\nartifact_type: architecture\nfeatures: [F-1, F-2]\napproval:\n  by: Human\n  at: 2026-09-15\n---\n\n## Primary Journey Transitions\n\n```yaml\ntransitions:\n  - transition_id: T-0001\n    from_frontier: one\n    to_frontier: two\n    producer_feature: F-1\n    producer_role: producer\n    handoff_type: Handoff\n    consumer_feature: F-2\n    consumer_role: consumer\n```\n",
+        )
+        .unwrap();
+        let derived = architecture_transition(&project, "F-1", "F-2", "one", "two").unwrap();
+        assert_eq!(derived.transition_id, "T-0001");
+        assert_eq!(derived.producer_role, "producer");
+        assert_eq!(derived.authority_kind, "architecture");
     }
 }

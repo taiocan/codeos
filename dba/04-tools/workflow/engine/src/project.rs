@@ -19,6 +19,7 @@ pub struct RuntimeVerification {
     pub database_test_url_env: Option<String>,
     pub backend_health_url: String,
     pub web_url: String,
+    pub journey_guard_script: Option<String>,
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -34,6 +35,8 @@ struct RuntimeVerificationInput {
     database_test_url_env: String,
     backend_health_url: String,
     web_url: String,
+    #[serde(default)]
+    journey_guard_script: Option<String>,
 }
 
 /// The canonical locations a checkpoint reads evidence from. Downstream projects use `.codeos/…`;
@@ -47,6 +50,35 @@ impl Project {
     /// Resolve the selected feature-workflow policy through the project's adopted composition.
     /// Older projects with no reachable resolver retain workflow v1 compatibility.
     pub fn feature_workflow_version(&self) -> Result<u8> {
+        self.selected_policy_version(
+            "workflow_feature_policy",
+            "dba/02-policies/workflow-feature/v1.md",
+            &[1, 2],
+        )
+    }
+
+    pub fn workflow_governance_version(&self) -> Result<u8> {
+        self.selected_policy_version(
+            "workflow_governance_policy",
+            "dba/02-policies/workflow-governance/v1.md",
+            &[1, 2],
+        )
+    }
+
+    pub fn codeos_mechanics_version(&self) -> Result<u8> {
+        self.selected_policy_version(
+            "codeos_mechanics_policy",
+            "dba/02-policies/codeos-mechanics/v3.md",
+            &[1, 2, 3, 4, 5],
+        )
+    }
+
+    fn selected_policy_version(
+        &self,
+        key: &str,
+        legacy_default: &str,
+        supported: &[u8],
+    ) -> Result<u8> {
         let resolver = if self.self_dev {
             self.root
                 .join("dba/04-tools/configuration/resolve-project-configuration.sh")
@@ -60,10 +92,10 @@ impl Project {
                 .unwrap_or(false);
             if explicitly_bound {
                 anyhow::bail!(
-                    "explicit project configuration cannot resolve workflow_feature_policy because the toolkit resolver is unavailable"
+                    "explicit project configuration cannot resolve {key} because the toolkit resolver is unavailable"
                 );
             }
-            return Ok(1);
+            return version_from_policy(legacy_default, supported);
         }
         let output = Command::new("bash")
             .arg(&resolver)
@@ -78,15 +110,12 @@ impl Project {
             );
         }
         let resolved = String::from_utf8_lossy(&output.stdout);
+        let prefix = format!("{key}=");
         let selected = resolved
             .lines()
-            .find_map(|line| line.strip_prefix("workflow_feature_policy="))
-            .unwrap_or("dba/02-policies/workflow-feature/v1.md");
-        match selected.rsplit('/').next() {
-            Some("v1.md") => Ok(1),
-            Some("v2.md") => Ok(2),
-            _ => anyhow::bail!("unsupported workflow_feature_policy '{selected}'"),
-        }
+            .find_map(|line| line.strip_prefix(&prefix))
+            .unwrap_or(legacy_default);
+        version_from_policy(selected, supported)
     }
 
     /// Resolve upward from `start` to the directory that holds `.codeos/` (downstream) or
@@ -138,6 +167,7 @@ impl Project {
                 database_test_url_env: None,
                 backend_health_url: DEFAULT_BACKEND_HEALTH_URL.into(),
                 web_url: DEFAULT_WEB_URL.into(),
+                journey_guard_script: None,
             });
         };
         for (name, value) in [
@@ -166,11 +196,20 @@ impl Project {
                 anyhow::bail!("runtime_verification.{name} must be an http(s) URL");
             }
         }
+        if let Some(path) = input.journey_guard_script.as_deref() {
+            if self.codeos_mechanics_version()? < 5 {
+                anyhow::bail!(
+                    "runtime_verification.journey_guard_script requires Codeos Mechanics v5"
+                );
+            }
+            validate_project_executable(&self.root, path)?;
+        }
         Ok(RuntimeVerification {
             database_service: input.database_service,
             database_test_url_env: Some(input.database_test_url_env),
             backend_health_url: input.backend_health_url,
             web_url: input.web_url,
+            journey_guard_script: input.journey_guard_script,
         })
     }
 
@@ -236,6 +275,25 @@ impl Project {
     pub fn contract(&self, feature: &str) -> PathBuf {
         self.codeos_dir()
             .join(format!("01-specification/contracts/{feature}_contract.md"))
+    }
+
+    pub fn feature_ids(&self) -> Result<Vec<String>> {
+        let dir = self.codeos_dir().join("01-specification/contracts");
+        if !dir.is_dir() {
+            return Ok(Vec::new());
+        }
+        let mut ids = Vec::new();
+        for entry in std::fs::read_dir(dir)? {
+            let path = entry?.path();
+            let Some(name) = path.file_name().and_then(|v| v.to_str()) else {
+                continue;
+            };
+            if let Some(id) = name.strip_suffix("_contract.md") {
+                ids.push(id.to_string());
+            }
+        }
+        ids.sort();
+        Ok(ids)
     }
 
     pub fn event_schema(&self, feature: &str) -> PathBuf {
@@ -304,6 +362,50 @@ impl Project {
     fn resolved_cargo_metadata(&self) -> Option<serde_json::Value> {
         cargo_metadata(&self.root).or_else(|| cargo_metadata(&self.root.join("backend")))
     }
+}
+
+fn version_from_policy(path: &str, supported: &[u8]) -> Result<u8> {
+    let filename = path.rsplit('/').next().unwrap_or(path);
+    let Some(raw) = filename
+        .strip_prefix('v')
+        .and_then(|v| v.strip_suffix(".md"))
+    else {
+        anyhow::bail!("unsupported policy path '{path}'");
+    };
+    let version: u8 = raw
+        .parse()
+        .with_context(|| format!("unsupported policy version '{path}'"))?;
+    if !supported.contains(&version) {
+        anyhow::bail!("unsupported policy version '{path}'");
+    }
+    Ok(version)
+}
+
+fn validate_project_executable(root: &Path, supplied: &str) -> Result<()> {
+    let path = Path::new(supplied);
+    if path.is_absolute()
+        || supplied.trim().is_empty()
+        || path
+            .components()
+            .any(|c| matches!(c, std::path::Component::ParentDir))
+    {
+        anyhow::bail!("runtime_verification.journey_guard_script must be a non-traversing project-relative path");
+    }
+    let canonical = root
+        .join(path)
+        .canonicalize()
+        .with_context(|| format!("resolve journey guard script {supplied}"))?;
+    if !canonical.starts_with(root) || !canonical.is_file() {
+        anyhow::bail!("runtime_verification.journey_guard_script must resolve to a regular file inside the project");
+    }
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        if canonical.metadata()?.permissions().mode() & 0o111 == 0 {
+            anyhow::bail!("runtime_verification.journey_guard_script must be executable");
+        }
+    }
+    Ok(())
 }
 
 fn cargo_metadata(root: &Path) -> Option<serde_json::Value> {
@@ -429,6 +531,21 @@ mod tests {
         )
         .unwrap();
         assert!(project.runtime_verification().is_err());
+    }
+
+    #[test]
+    #[cfg(unix)]
+    fn runtime_profile_accepts_only_an_executable_guard_inside_the_project() {
+        use std::os::unix::fs::PermissionsExt;
+        let (_dir, project) = downstream_project();
+        fs::create_dir_all(project.root.join("scripts")).unwrap();
+        let guard = project.root.join("scripts/guard.sh");
+        fs::write(&guard, "#!/usr/bin/env bash\nexec \"$@\"\n").unwrap();
+        let mut permissions = guard.metadata().unwrap().permissions();
+        permissions.set_mode(0o755);
+        fs::set_permissions(&guard, permissions).unwrap();
+        validate_project_executable(&project.root, "scripts/guard.sh").unwrap();
+        assert!(validate_project_executable(&project.root, "../outside.sh").is_err());
     }
 
     #[test]

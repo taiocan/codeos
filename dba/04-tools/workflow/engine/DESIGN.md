@@ -1,6 +1,6 @@
 ---
 module: workflow-engine
-verified_against_commit: pending DBA-9 acceptance
+verified_against_commit: pending DBA-10 pilot
 ---
 
 # Module Design Note: workflow engine
@@ -32,11 +32,11 @@ State is derived from three evidence classes and nothing else:
    reviewer's own assessment records, and binding currency. Cheap deterministic predicates,
    re-evaluated live on every query. `codeos.yaml` validity shells out to the authoritative
    `project-config-contract.sh` when the toolkit is reachable and falls back to a structural check.
-2. **Verification records** — `06-workflow/verifications.jsonl`. A mechanical verification the
-   `check` command actually executed and that passed, persisted with the governed inputs and
-   implementation state it ran against (each hashed), the command line, and a timestamp. It asserts
-   only that the verification ran and passed against that state — never that the behavior is
-   adequate. Stale the moment any bound input's current hash differs.
+2. **Verification records** — `06-workflow/verifications.jsonl`. Passing mechanical verifications
+   are persisted with bound inputs, command, and timestamp. Under Workflow Governance v2, failed
+   product-journey attempts are also retained with Codeos-derived transition definitions and
+   validated runtime observations so the first broken seam remains visible. Neither result judges
+   adequacy; drift makes it stale.
 3. **Decision receipts** — `06-workflow/decisions.jsonl`. The closed set of seven irreducible human
    or authorized-agent decisions (Initial Product Preview, Early Development Preview outcome,
    Reconciliation completion, Final Human UX Validation, Acceptance, Operation route, `no_action`
@@ -61,8 +61,9 @@ The command paths:
 3. `check` calls `run_checks`, which loops: `evaluate` read-only, find the first `BLOCKED` /
    `WAITING` checkpoint, stop if it is blocked behind an earlier checkpoint or waits on a
    non-mechanical condition, otherwise run each of its `LiveVerification` mechanics whose record is
-   absent or stale. On a pass it appends a verification record bound to the current inputs; on the
-   first failure it stops. It then renders `status`. It never writes a receipt.
+   absent or stale. On a pass it appends a verification record bound to the current inputs; on a
+   DBA-10 product-journey failure it also appends the failed attempt, then stops. It never writes a
+   receipt.
 4. `decide` computes the bindings the checker will later re-check for that checkpoint, adds the
    observation hash for an `operation_route` / `no_action_closure` receipt, and appends one receipt.
    The store rejects an out-of-set checkpoint and a `no_action_closure` with no rationale. Under
@@ -88,6 +89,10 @@ The three contracts as they flow end to end:
   `product_journey` at F3. The journey target is the accepted frontier for `preserve` and the
   proposed new frontier for `advance`. The accepted frontier derives from the Charter and current
   acceptance receipts; journey evidence additionally binds to both.
+- **DBA-10 journey evidence** — derives cross-feature topology from approved Architecture Scopes,
+  gives that definition to the runner, validates runtime-only observations, and derives
+  reachability per transition. `journey` reports accepted/candidate frontiers and the first
+  non-passing seam without storing a Journey Status artifact.
 - **Operation** — O1 an observation statement carried on the O2 receipt, O2 the route classification
   receipt (one of six routes; the tool never selects one), O3 derived, O4 route-appropriate
   resolution evidence (an acceptance recorded after the route decision for a build route; an
@@ -103,7 +108,7 @@ The three contracts as they flow end to end:
 - `contract.rs` — the `Workflow`, `Applies`, and `Requirement` vocabularies and the three
   `*_contract()` functions. Plain data, not user-authored, not a DSL.
 - `verification.rs` — `VerificationRecord`, `VerificationStore` (append / latest by
-  checkpoint+verification), and `evaluate` → `Absent` / `Current` / `Stale`.
+  checkpoint+verification), and `evaluate` → `Absent` / `Current` / `Failed` / `Stale`.
 - `receipts.rs` — `Receipt`, `ReceiptStore` (append with closed-set and rationale enforcement), and
   `evaluate` with the same three-state result.
 - `evidence.rs` — frontmatter parsing, approval predicates, `section_filled`, reviewer-record

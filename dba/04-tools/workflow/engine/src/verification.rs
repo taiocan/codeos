@@ -20,13 +20,16 @@ pub struct VerificationRecord {
     pub checkpoint: String,
     /// The verification identity, e.g. `smoke`, `behavior`, `baseline`.
     pub verification: String,
-    /// Always `passed` — a failing verification is never persisted.
+    /// `passed`, or under Workflow Governance v2, `failed` for product-journey attempts.
     pub result: String,
     /// Named governed inputs / implementation state -> content hash at execution time.
     pub bindings: BTreeMap<String, String>,
     /// The command line actually executed.
     pub command: String,
     pub timestamp: String,
+    /// Structured mechanic evidence. Present only for DBA-10 product-journey attempts.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub details: Option<serde_json::Value>,
 }
 
 /// Why a verification record does or does not currently establish its checkpoint.
@@ -34,6 +37,7 @@ pub struct VerificationRecord {
 pub enum RecordState {
     Absent,
     Current(VerificationRecord),
+    Failed(VerificationRecord),
     Stale {
         record: VerificationRecord,
         binding: String,
@@ -127,7 +131,8 @@ pub fn evaluate(
             was,
             now,
         },
-        None => RecordState::Current(record),
+        None if record.result == "passed" => RecordState::Current(record),
+        None => RecordState::Failed(record),
     }
 }
 
@@ -152,6 +157,7 @@ mod tests {
             bindings: b(bindings),
             command: "cargo test".into(),
             timestamp: "2026-09-06T00:00:00Z".into(),
+            details: None,
         }
     }
 

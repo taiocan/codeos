@@ -31,6 +31,9 @@ YOUR TASK — answer these five questions using only the evidence in the packet:
      implemented upstream capability by injecting its owned intermediate domain state as an
      in-scope blocker. Confirm an advancing feature's journey reaches its proposed, not merely
      accepted, frontier.
+     Under Codeos Mechanics v5 or later, confirm the test consumes Codeos-derived topology,
+     reports only runtime observations, and does not omit or misclassify setup that directly
+     creates an intermediate domain object.
   5. Finding classification: Classify every finding you raise as exactly one of the five
      TRIAGE RULE categories below.
 

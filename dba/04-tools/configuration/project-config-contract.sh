@@ -91,6 +91,10 @@ if grep -q '^runtime_verification:' "${CONFIG}"; then
       grep -E '^  [a-z_]+: ' || true
   )
   expected_keys=$'backend_health_url\ndatabase_service\ndatabase_test_url_env\nweb_url'
+  if [[ "${MECHANICS_POLICY_REL}" == 'dba/02-policies/codeos-mechanics/v5.md' ]] && \
+     printf '%s\n' "${runtime_lines[@]}" | grep -q '^  journey_guard_script:'; then
+    expected_keys=$'backend_health_url\ndatabase_service\ndatabase_test_url_env\njourney_guard_script\nweb_url'
+  fi
   actual_keys="$(printf '%s\n' "${runtime_lines[@]}" | sed -E 's/^  ([a-z_]+):.*/\1/' | LC_ALL=C sort)"
   [[ "${actual_keys}" == "${expected_keys}" ]] ||
     fail 'runtime_verification must contain exactly database_service, database_test_url_env, backend_health_url, and web_url'
@@ -110,6 +114,13 @@ if grep -q '^runtime_verification:' "${CONFIG}"; then
     fail 'runtime_verification.backend_health_url must be an http(s) URL'
   [[ "${web_url}" =~ ^https?://[^[:space:]]+$ ]] ||
     fail 'runtime_verification.web_url must be an http(s) URL'
+  if [[ "${MECHANICS_POLICY_REL}" == 'dba/02-policies/codeos-mechanics/v5.md' ]]; then
+    journey_guard_script="$(runtime_value journey_guard_script)"
+    if [[ -n "${journey_guard_script}" ]]; then
+      [[ "${journey_guard_script}" != /* && "${journey_guard_script}" != *'..'* ]] ||
+        fail 'runtime_verification.journey_guard_script must be a non-traversing project-relative path'
+    fi
+  fi
 fi
 
 # --- single-source-of-governance rule ----------------------------------------

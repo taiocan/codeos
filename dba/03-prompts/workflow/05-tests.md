@@ -67,6 +67,10 @@ below.
   accepted frontier. For `advance`, traverse through the proposed new frontier. Do not insert an
   intermediate domain object that an implemented upstream journey capability owns. Infrastructure,
   actor accounts, and static reference data may be established as prerequisites.
+- Under Codeos Mechanics v5 or later, read the definition at
+  `CODEOS_JOURNEY_DEFINITION_PATH` and write only runtime observations to
+  `CODEOS_JOURNEY_EVIDENCE_PATH`. Do not restate topology. Identify observations by the derived
+  transition ID, record a concrete handoff identity on pass, and identify the first failure.
 - For an external provider, exercise the real adapter against a protocol-faithful deterministic
   boundary server. Do not replace the adapter with a repository mock or inject its downstream
   product state.

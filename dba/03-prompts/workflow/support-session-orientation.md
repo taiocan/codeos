@@ -25,6 +25,9 @@ perform stage work from this prompt.
    git status --short
    ```
 
+   With Codeos Mechanics v5 or later, also run `codeos-workflow journey` and report accepted
+   reachability, current proposals, and the first non-passing transition.
+
 4. Identify the human's target feature or structural task. For a named feature, resolve matching
    Intent, Contract, Event Schema, and Architecture Scope types through the Downstream Project
    Layout Contract, then inspect those that actually exist together with relevant implementation

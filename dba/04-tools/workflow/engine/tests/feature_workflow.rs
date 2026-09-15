@@ -81,6 +81,10 @@ impl Fixture {
         self.enable_dba("DBA-9");
     }
 
+    fn enable_dba10(&self) {
+        self.enable_dba("DBA-10");
+    }
+
     /// Make the fixture a git repo with one commit, so `working_tree_state` (HEAD + diff +
     /// untracked) actually moves when a tracked implementation file is edited.
     fn git_init_commit(&self) {
@@ -124,6 +128,7 @@ impl Fixture {
                 bindings,
                 command: "seeded".into(),
                 timestamp: "2026-09-06T00:00:00Z".into(),
+                details: None,
             })
             .unwrap();
     }
@@ -372,6 +377,86 @@ fn dba9_acceptance_command_refuses_to_establish_an_unverified_frontier() {
             .len(),
         before
     );
+}
+
+#[test]
+fn dba10_persists_and_reports_the_first_failed_transition() {
+    use std::os::unix::fs::PermissionsExt;
+    let fx = Fixture::new();
+    fx.enable_dba10();
+    fx.write(
+        ".codeos/00-project/codeos.yaml",
+        "codeos_schema: 2\ndba_configuration: DBA-10\nruntime_verification:\n  database_service: db\n  database_test_url_env: TEST_DATABASE_URL\n  backend_health_url: http://backend/health\n  web_url: http://product/\n  journey_guard_script: scripts/journey-guard.sh\n",
+    );
+    let spec = dba9_spec(
+        "F-0401",
+        "mode: advance\nprevious_frontier: entry\nproposed_frontier: result-ready\ntransition: entry produces the useful result",
+    );
+    write_spec(&fx, "F-0401", &spec);
+    fx.write(".codeos/06-workflow/.verify-stub", "smoke=pass\n");
+    fx.write(
+        "scripts/journey-guard.sh",
+        "#!/usr/bin/env bash\nprintf '%s' \"$*|$CODEOS_EXPECTED_FRONTIER|$CODEOS_JOURNEY_DEFINITION_PATH\" > ../guard-invocation\nshift\nexec \"$@\"\n",
+    );
+    let guard = fx.root.join("scripts/journey-guard.sh");
+    let mut permissions = guard.metadata().unwrap().permissions();
+    permissions.set_mode(0o755);
+    fs::set_permissions(guard, permissions).unwrap();
+    fx.write(
+        "web/package.json",
+        r#"{"scripts":{"test:journey":"node journey.js"}}"#,
+    );
+    fx.write(
+        "web/journey.js",
+        r#"const fs = require('fs');
+fs.writeFileSync(process.env.CODEOS_JOURNEY_EVIDENCE_PATH, JSON.stringify({schema:1,journey_id:'primary',target_frontier:'result-ready',setup:[],observations:[{transition_id:'feature-F-0401-entry-result-ready',state_origin:'production',result:'failed',reason:'no production consumer'}]}));
+process.exit(1);
+"#,
+    );
+
+    let checked = std::process::Command::new(env!("CARGO_BIN_EXE_codeos-workflow"))
+        .args([
+            "--project",
+            fx.root.to_str().unwrap(),
+            "check",
+            "--workflow",
+            "feature",
+            "--subject",
+            "F-0401",
+        ])
+        .output()
+        .unwrap();
+    assert_eq!(checked.status.code(), Some(2));
+    let record = VerificationStore::at(&fx.root.join(".codeos"))
+        .latest("feature", "F-0401", "F3", "product_journey")
+        .unwrap()
+        .unwrap();
+    assert_eq!(record.result, "failed");
+    assert!(
+        record.details.is_some(),
+        "record={record:?}; stdout={}",
+        String::from_utf8_lossy(&checked.stdout)
+    );
+    let guard_invocation = fs::read_to_string(fx.root.join("guard-invocation")).unwrap();
+    assert!(guard_invocation.contains("-- npm run test:journey"));
+    assert!(guard_invocation.contains("|result-ready|"));
+
+    let status = std::process::Command::new(env!("CARGO_BIN_EXE_codeos-workflow"))
+        .args([
+            "--project",
+            fx.root.to_str().unwrap(),
+            "journey",
+            "--subject",
+            "F-0401",
+        ])
+        .output()
+        .unwrap();
+    assert!(status.status.success());
+    let stdout = String::from_utf8_lossy(&status.stdout);
+    assert!(stdout.contains("Accepted reachability: PASS"));
+    assert!(stdout.contains("Candidate reachability: BLOCKED"));
+    assert!(stdout.contains("feature-F-0401-entry-result-ready"));
+    assert!(stdout.contains("no production consumer"));
 }
 
 #[test]

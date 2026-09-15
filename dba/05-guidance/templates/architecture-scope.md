@@ -44,3 +44,6 @@ questions visible and retain `approval: null` until explicit human approval.]
 <!-- Under Architecture Synthesis v5 or later, include only shared primary-journey boundaries that
 need architectural ownership: production adapter, transition owner, authoritative boundary
 state/evidence, next consumer, and persistence when applicable. -->
+
+<!-- Under Architecture Synthesis v6 or later, define every cross-feature primary-journey seam in
+one fenced YAML block using the policy's exact `Primary Journey Transitions` structure. -->

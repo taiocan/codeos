@@ -61,6 +61,7 @@ impl Pilot {
                 bindings,
                 command: "pilot".into(),
                 timestamp: "2026-09-06T10:00:00Z".into(),
+                details: None,
             })
             .unwrap();
     }

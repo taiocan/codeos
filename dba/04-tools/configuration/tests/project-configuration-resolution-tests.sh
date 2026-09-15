@@ -24,6 +24,12 @@ grep -Fxq 'doctrine=dba/01-doctrine/v8.md' <<<"${explicit}" || fail 'DBA-9 did n
 grep -Fxq 'workflow_feature_policy=dba/02-policies/workflow-feature/v2.md' <<<"${explicit}" || fail 'DBA-9 did not select Feature Workflow v2'
 grep -Fxq 'codeos_mechanics_policy=dba/02-policies/codeos-mechanics/v4.md' <<<"${explicit}" || fail 'DBA-9 did not select Mechanics v4'
 
+printf 'codeos_schema: 2\ndba_configuration: DBA-10\n' > "${WORK}/.codeos/00-project/codeos.yaml"
+explicit="$(bash "${RESOLVER}" "${WORK}")"
+grep -Fxq 'architecture_synthesis_policy=dba/02-policies/architecture-synthesis/v6.md' <<<"${explicit}" || fail 'DBA-10 did not select Architecture Synthesis v6'
+grep -Fxq 'workflow_governance_policy=dba/02-policies/workflow-governance/v2.md' <<<"${explicit}" || fail 'DBA-10 did not select Workflow Governance v2'
+grep -Fxq 'codeos_mechanics_policy=dba/02-policies/codeos-mechanics/v5.md' <<<"${explicit}" || fail 'DBA-10 did not select Mechanics v5'
+
 printf 'codeos_schema: 2\n' > "${WORK}/.codeos/00-project/codeos.yaml"
 if bash "${RESOLVER}" "${WORK}" >/dev/null 2>&1; then fail 'missing schema-2 binding was accepted'; fi
 

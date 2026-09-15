@@ -49,6 +49,7 @@ check() { bash "$1/dba/04-tools/configuration/project-config-contract.sh" "$2" >
 FAKE_V1="${WORK}/root-v1"; mk_fake_root "${FAKE_V1}" v1
 FAKE_V2="${WORK}/root-v2"; mk_fake_root "${FAKE_V2}" v2
 FAKE_V4="${WORK}/root-v4"; mk_fake_root "${FAKE_V4}" v4
+FAKE_V5="${WORK}/root-v5"; mk_fake_root "${FAKE_V5}" v5
 
 # 0. Shipped template validates against the repo's own active configuration.
 bash "${CFG_DIR}/project-config-contract.sh" >/dev/null \
@@ -102,6 +103,16 @@ if check "${FAKE_V4}" "${WORK}/v2-exact.yaml"; then
 fi
 if check "${FAKE_V2}" "${WORK}/v4-exact.yaml"; then
   fail 'a v4 mechanics block validated against v2 with an extra mechanic'
+fi
+
+bash "${CFG_DIR}/render-mechanics-block.sh" "${CODEOS_ROOT}/dba/02-policies/codeos-mechanics/v5.md" \
+  | wrap_config "${WORK}/v5-exact.yaml"
+awk '/^artifacts:/{print "runtime_verification:"; print "  database_service: postgres"; print "  database_test_url_env: PROJECT_TEST_DATABASE_URL"; print "  backend_health_url: http://127.0.0.1:3002/health"; print "  web_url: http://127.0.0.1:4173/"; print "  journey_guard_script: scripts/product-journey-guard.sh"} {print}' \
+  "${WORK}/v5-exact.yaml" > "${WORK}/v5-guard.yaml"
+check "${FAKE_V5}" "${WORK}/v5-guard.yaml" \
+  || fail 'DBA-10 v5 rejected the optional project-relative journey guard'
+if check "${FAKE_V4}" "${WORK}/v5-guard.yaml"; then
+  fail 'DBA-9 v4 accepted the DBA-10-only journey guard field'
 fi
 
 # 7. A complete runtime-verification profile is accepted without changing mechanics selection.
