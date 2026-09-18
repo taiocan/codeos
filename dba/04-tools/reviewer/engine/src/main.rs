@@ -112,6 +112,9 @@ enum Commands {
         stage: String,
         verdict: String,
         reason: String,
+        /// Bind a review-control authorization to the identified exhausted R3 boundary.
+        #[arg(long = "after-review", value_name = "REVIEW_ID")]
+        after_review: Option<String>,
         #[arg(long = "override", value_name = "RATIONALE")]
         override_reason: Option<String>,
     },
@@ -218,12 +221,14 @@ fn run() -> i32 {
             stage,
             verdict,
             reason,
+            after_review,
             override_reason,
         } => cmd::decision::run(
             &feature,
             &stage,
             &verdict,
             &reason,
+            after_review.as_deref(),
             override_reason.as_deref(),
             &cfg,
         )

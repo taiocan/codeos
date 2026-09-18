@@ -358,11 +358,30 @@ pub fn run(args: ReviewArgs, cfg: &Config) -> Result<i32> {
         }
     } else {
         if let Some(predecessor) = args.reentry_after.as_deref() {
+            let semantics = match crate::config::resolve_reviewer_tool_contract(cfg) {
+                Ok(contract) if contract == "dba/04-tools/reviewer/contract/v4.md" => {
+                    review_log::ReentryDecisionSemantics::LegacySingleDecision
+                }
+                Ok(contract) if contract == "dba/04-tools/reviewer/contract/v6.md" => {
+                    review_log::ReentryDecisionSemantics::CanonicalLogOrder
+                }
+                Ok(contract) => {
+                    eprintln!(
+                        "error: --reentry-after is not supported by the selected reviewer contract: {contract}"
+                    );
+                    return Ok(crate::EXIT_USAGE);
+                }
+                Err(error) => {
+                    eprintln!("error: could not resolve Review re-entry semantics: {error}");
+                    return Ok(crate::EXIT_CONFIG);
+                }
+            };
             match review_log::resolve_reentry_authorization(
                 &review_log_path,
                 &evidence.feature,
                 &evidence.stage,
                 predecessor,
+                semantics,
             ) {
                 Ok(authorization) => {
                     let id = review_log::format_reentry_id(&evidence.feature, &evidence.stage);

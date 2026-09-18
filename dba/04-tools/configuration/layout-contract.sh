@@ -51,6 +51,7 @@ supported_runtime_paths=(
   "${CODEOS_ROOT}/dba/00-entry/configurations/DBA-8.yaml"
   "${CODEOS_ROOT}/dba/00-entry/configurations/DBA-9.yaml"
   "${CODEOS_ROOT}/dba/00-entry/configurations/DBA-10.yaml"
+  "${CODEOS_ROOT}/dba/00-entry/configurations/DBA-11.yaml"
   "${CODEOS_ROOT}/dba/03-prompts"
   "${CODEOS_ROOT}/dba/04-tools/initializer"
   "${CODEOS_ROOT}/dba/04-tools/reviewer"
@@ -218,5 +219,7 @@ bash "${CODEOS_ROOT}/dba/04-tools/configuration/dba-config-boundaries.sh" \
   dba/00-entry/configurations/DBA-9.yaml >/dev/null
 bash "${CODEOS_ROOT}/dba/04-tools/configuration/dba-config-boundaries.sh" \
   dba/00-entry/configurations/DBA-10.yaml >/dev/null
+bash "${CODEOS_ROOT}/dba/04-tools/configuration/dba-config-boundaries.sh" \
+  dba/00-entry/configurations/DBA-11.yaml >/dev/null
 
 printf 'Codeos layout contract OK\n'

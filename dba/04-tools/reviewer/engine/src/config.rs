@@ -28,6 +28,30 @@ pub struct Config {
     pub state_dir: PathBuf,
 }
 
+/// Resolve the reviewer contract selected by the reviewed project's immutable DBA composition.
+/// Re-entry semantics are contract-versioned, so inability to resolve this selection must fail
+/// closed rather than silently choosing a behavior.
+pub fn resolve_reviewer_tool_contract(config: &Config) -> Result<String> {
+    let resolver = config
+        .toolkit_root
+        .join("dba/04-tools/configuration/resolve-project-configuration.sh");
+    anyhow::ensure!(resolver.is_file(), "project DBA configuration resolver is unavailable");
+    let output = std::process::Command::new("bash")
+        .arg(&resolver)
+        .arg(&config.repo_root)
+        .output()
+        .with_context(|| format!("could not run {}", resolver.display()))?;
+    anyhow::ensure!(
+        output.status.success(),
+        "could not resolve the project's DBA configuration: {}",
+        String::from_utf8_lossy(&output.stderr).trim()
+    );
+    String::from_utf8_lossy(&output.stdout)
+        .lines()
+        .find_map(|line| line.strip_prefix("reviewer_tool_contract=").map(str::to_string))
+        .ok_or_else(|| anyhow::anyhow!("the resolved DBA configuration selects no reviewer_tool_contract"))
+}
+
 #[derive(Debug, Deserialize, Default)]
 #[serde(deny_unknown_fields)]
 struct ReviewerToml {

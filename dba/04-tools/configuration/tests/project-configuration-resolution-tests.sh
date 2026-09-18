@@ -30,6 +30,13 @@ grep -Fxq 'architecture_synthesis_policy=dba/02-policies/architecture-synthesis/
 grep -Fxq 'workflow_governance_policy=dba/02-policies/workflow-governance/v2.md' <<<"${explicit}" || fail 'DBA-10 did not select Workflow Governance v2'
 grep -Fxq 'codeos_mechanics_policy=dba/02-policies/codeos-mechanics/v5.md' <<<"${explicit}" || fail 'DBA-10 did not select Mechanics v5'
 
+printf 'codeos_schema: 2\ndba_configuration: DBA-11\n' > "${WORK}/.codeos/00-project/codeos.yaml"
+explicit="$(bash "${RESOLVER}" "${WORK}")"
+grep -Fxq 'review_policy=dba/02-policies/review/v4.md' <<<"${explicit}" || fail 'DBA-11 did not select Review Policy v4'
+grep -Fxq 'reviewer_tool_contract=dba/04-tools/reviewer/contract/v6.md' <<<"${explicit}" || fail 'DBA-11 did not select Reviewer Contract v6'
+grep -Fxq 'workflow_governance_policy=dba/02-policies/workflow-governance/v1.md' <<<"${explicit}" || fail 'DBA-11 did not preserve the DBA-9 workflow policy'
+grep -Fxq 'codeos_mechanics_policy=dba/02-policies/codeos-mechanics/v4.md' <<<"${explicit}" || fail 'DBA-11 did not preserve DBA-9 Mechanics v4'
+
 printf 'codeos_schema: 2\n' > "${WORK}/.codeos/00-project/codeos.yaml"
 if bash "${RESOLVER}" "${WORK}" >/dev/null 2>&1; then fail 'missing schema-2 binding was accepted'; fi
 

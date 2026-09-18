@@ -3,7 +3,7 @@
 //! Tests for the decision command (APPROVE_STAGE, REQUEST_CHANGES verdicts).
 
 mod common;
-use common::{setup_temp_git_repo, binary, run};
+use common::{setup_temp_git_repo, binary, repo_root, run};
 use std::process::Command;
 
 #[test]
@@ -102,6 +102,17 @@ fn setup_review_log(repo_path: &std::path::Path) -> std::path::PathBuf {
     log_path
 }
 
+fn setup_dba11(repo_path: &std::path::Path) {
+    std::fs::create_dir_all(repo_path.join(".codeos/00-project")).expect("create project config");
+    std::os::unix::fs::symlink(repo_root(), repo_path.join(".codeos/toolkit"))
+        .expect("create toolkit symlink");
+    std::fs::write(
+        repo_path.join(".codeos/00-project/codeos.yaml"),
+        "codeos_schema: 2\ndba_configuration: DBA-11\n",
+    )
+    .expect("write project config");
+}
+
 fn run_decision_in(
     repo_path: &std::path::Path,
     args: &[&str],
@@ -115,6 +126,51 @@ fn run_decision_in(
     let stdout = String::from_utf8_lossy(&out.stdout).into_owned();
     let stderr = String::from_utf8_lossy(&out.stderr).into_owned();
     (code, stdout, stderr)
+}
+
+#[test]
+fn authorize_reentry_is_bound_review_control_not_stage_approval() {
+    let (dir, _) = setup_temp_git_repo();
+    let repo = dir.path();
+    setup_dba11(repo);
+    let log_path = setup_review_log(repo);
+    std::fs::write(
+        &log_path,
+        "# Codeos Review Log (append-only, v0)\n\
+## 2026-01-01T00:00:00Z REVIEW — FEAT — Stage 8\nReview ID: REV__FEAT__8__R1\n\
+## 2026-01-01T00:01:00Z REVIEW — FEAT — Stage 8\nReview ID: REV__FEAT__8__R2\n\
+## 2026-01-01T00:02:00Z REVIEW — FEAT — Stage 8\nReview ID: REV__FEAT__8__R3\n",
+    )
+    .expect("write R1-R3 history");
+
+    let (code, _, stderr) = run_decision_in(repo, &[
+        "decision",
+        "FEAT",
+        "8",
+        "AUTHORIZE_REENTRY",
+        "One reviewer execution for repaired findings.",
+        "--after-review",
+        "REV__FEAT__8__R3",
+    ]);
+    assert_eq!(code, 0, "authorization failed: {stderr}");
+
+    let log = std::fs::read_to_string(log_path).expect("read log");
+    assert!(log.contains("Decision: AUTHORIZE_REENTRY"), "{log}");
+    assert!(log.contains("Re-entry after: REV__FEAT__8__R3"), "{log}");
+    assert!(!log.contains("Decision: APPROVE_STAGE"), "{log}");
+    assert!(!log.contains("Provenance:"), "review control must not claim assessment provenance: {log}");
+}
+
+#[test]
+fn stage_disposition_rejects_reentry_binding() {
+    let (dir, _) = setup_temp_git_repo();
+    setup_review_log(dir.path());
+    let (code, _, stderr) = run_decision_in(dir.path(), &[
+        "decision", "FEAT", "8", "APPROVE_STAGE", "reason",
+        "--after-review", "REV__FEAT__8__R3",
+    ]);
+    assert_eq!(code, 1);
+    assert!(stderr.contains("valid only with AUTHORIZE_REENTRY"), "{stderr}");
 }
 
 #[test]

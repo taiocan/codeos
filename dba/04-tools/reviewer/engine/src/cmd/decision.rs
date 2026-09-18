@@ -2,18 +2,63 @@ use crate::config::Config;
 use crate::log::{self as review_log, DecisionProvenance};
 use anyhow::Result;
 
-const VALID_DECISIONS: &[&str] = &["APPROVE_STAGE", "REQUEST_CHANGES", "STOP"];
+const VALID_DECISIONS: &[&str] = &[
+    "APPROVE_STAGE",
+    "REQUEST_CHANGES",
+    "STOP",
+    "AUTHORIZE_REENTRY",
+];
 
 pub fn run(
     feature: &str,
     stage: &str,
     decision: &str,
     reason: &str,
+    after_review: Option<&str>,
     override_reason: Option<&str>,
     cfg: &Config,
 ) -> Result<i32> {
     if !VALID_DECISIONS.contains(&decision) {
-        eprintln!("decision must be APPROVE_STAGE | REQUEST_CHANGES | STOP");
+        eprintln!(
+            "decision must be APPROVE_STAGE | REQUEST_CHANGES | STOP | AUTHORIZE_REENTRY"
+        );
+        return Ok(crate::EXIT_USAGE);
+    }
+
+    let is_reentry_authorization = decision == "AUTHORIZE_REENTRY";
+    if is_reentry_authorization {
+        if reason.trim().is_empty() {
+            eprintln!("error: AUTHORIZE_REENTRY requires a non-empty reason and scope");
+            return Ok(crate::EXIT_USAGE);
+        }
+        let Some(review_id) = after_review else {
+            eprintln!("error: AUTHORIZE_REENTRY requires --after-review <R3-review-id>");
+            return Ok(crate::EXIT_USAGE);
+        };
+        match crate::config::resolve_reviewer_tool_contract(cfg) {
+            Ok(contract) if contract == "dba/04-tools/reviewer/contract/v6.md" => {}
+            Ok(contract) => {
+                eprintln!(
+                    "error: AUTHORIZE_REENTRY is not supported by the selected reviewer contract: {contract}"
+                );
+                return Ok(crate::EXIT_USAGE);
+            }
+            Err(error) => {
+                eprintln!("error: could not resolve Review re-entry semantics: {error}");
+                return Ok(crate::EXIT_CONFIG);
+            }
+        }
+        if let Err(error) = review_log::validate_reentry_authorization_target(
+            &cfg.review_log,
+            feature,
+            stage,
+            review_id,
+        ) {
+            eprintln!("error: AUTHORIZE_REENTRY refused: {error}");
+            return Ok(crate::EXIT_USAGE);
+        }
+    } else if after_review.is_some() {
+        eprintln!("error: --after-review is valid only with AUTHORIZE_REENTRY");
         return Ok(crate::EXIT_USAGE);
     }
 
@@ -21,7 +66,9 @@ pub fn run(
     //   Ok(None)     → no assessment exists → legacy path (AC-6)
     //   Ok(Some(.))  → assessment parsed → full provenance check
     //   Err(..)      → assessment exists but is unreadable/unparseable → fail-closed
-    let provenance = match review_log::load_decision_provenance(
+    let provenance = if is_reentry_authorization {
+        None
+    } else { match review_log::load_decision_provenance(
         feature,
         stage,
         override_reason,
@@ -52,7 +99,7 @@ pub fn run(
                 provenance_error: Some(e.to_string()),
             })
         }
-    };
+    }};
 
     // Coverage gate — only for APPROVE_STAGE (AC-7: REQUEST_CHANGES / STOP are never gated).
     if decision == "APPROVE_STAGE" {
@@ -85,6 +132,7 @@ pub fn run(
         stage,
         decision,
         reason,
+        after_review,
         provenance.as_ref(),
         &cfg.repo_root,
         &cfg.codex_dir,

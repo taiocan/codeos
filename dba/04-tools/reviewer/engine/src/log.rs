@@ -25,7 +25,8 @@ const LOG_HEADER: &str = "# Codeos Review Log (append-only, v0)
 Append-only record of automated advisory reviews and the human decisions that follow them.
 Entries are NEVER edited — a human decision is a separately appended entry. The reviewer is
 advisory and read-only; APPROVE belongs to the human. The reviewer tool is the authoritative
-owner of automated review records; see dba/04-tools/reviewer/contract/v4.md.
+owner of automated review records; see the reviewer_tool_contract selected by the project's DBA
+configuration.
 ";
 
 /// Initialize the log file if it does not exist.
@@ -101,6 +102,41 @@ pub struct ReentryAuthorization {
     pub scope: String,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ReentryDecisionSemantics {
+    /// Contract v4 has no rule for ordering conflicting post-R3 decisions. One decision can
+    /// authorize re-entry; more than one is ambiguous and therefore fails closed.
+    LegacySingleDecision,
+    /// Contract v6 makes physical append order authoritative. A bound AUTHORIZE_REENTRY creates
+    /// review-control authority; a later STOP revokes it before consumption. Stage dispositions
+    /// neither create nor consume that authority. Timestamps remain evidence only.
+    CanonicalLogOrder,
+}
+
+pub fn validate_reentry_authorization_target(
+    log_path: &Path,
+    feature: &str,
+    stage: &str,
+    after_review_id: &str,
+) -> Result<()> {
+    let content = std::fs::read_to_string(log_path).with_context(|| {
+        format!("the review log could not be read: {}", log_path.display())
+    })?;
+    let (round, _) = find_predecessor_entry(&content, feature, stage, after_review_id)
+        .ok_or_else(|| anyhow::anyhow!(
+            "{after_review_id} is not a review for {feature} at stage {stage}"
+        ))?;
+    anyhow::ensure!(
+        round == ROUND_BUDGET,
+        "{after_review_id} is round {round}; authorization is available only for R{ROUND_BUDGET}"
+    );
+    anyhow::ensure!(
+        count_entries(&content, REENTRY_REVIEW_HEADING, feature, stage) == 0,
+        "the single re-entry for {feature} at stage {stage} has already been consumed"
+    );
+    Ok(())
+}
+
 /// Resolve the one exceptional post-budget review authorized by the human decision following R3.
 /// The authorization remains in the append-only history; this derives permission without adding a
 /// second authority store.
@@ -109,41 +145,33 @@ pub fn resolve_reentry_authorization(
     feature: &str,
     stage: &str,
     after_review_id: &str,
+    semantics: ReentryDecisionSemantics,
 ) -> Result<ReentryAuthorization> {
     let content = std::fs::read_to_string(log_path).with_context(|| {
         format!("--reentry-after {after_review_id} was given but the review log could not be read: {}", log_path.display())
     })?;
-    let (round, _) = find_predecessor_entry(&content, feature, stage, after_review_id)
-        .ok_or_else(|| anyhow::anyhow!("{after_review_id} is not a review for {feature} at stage {stage}"))?;
-    if round != ROUND_BUDGET {
-        anyhow::bail!("{after_review_id} is round {round}; re-entry is available only after exhausted R{ROUND_BUDGET}");
-    }
-    if count_entries(&content, REENTRY_REVIEW_HEADING, feature, stage) != 0 {
-        anyhow::bail!("the single authorized re-entry for {feature} at stage {stage} has already been used");
-    }
+    validate_reentry_authorization_target(log_path, feature, stage, after_review_id)?;
 
     let review_marker = format!("Review ID: {after_review_id}");
     let review_pos = content.find(&review_marker)
         .ok_or_else(|| anyhow::anyhow!("could not locate {after_review_id} in the review log"))?;
     let tail = &content[review_pos + review_marker.len()..];
     let human_suffix = format!(" HUMAN DECISION — {feature} — Stage {stage}");
+    let mut decisions = Vec::new();
     for block in tail.split("\n## ").skip(1) {
         let mut lines = block.lines();
         let heading = lines.next().unwrap_or_default();
         if heading.ends_with(&human_suffix) {
             let decision = lines.clone().find_map(|line| line.strip_prefix("Decision: "));
+            let binding = lines.clone().find_map(|line| line.strip_prefix("Re-entry after: "));
             let reason = lines.find_map(|line| line.strip_prefix("Reason/next: "));
-            let explicit = reason.map(|r| r.to_ascii_lowercase().contains("re-entry authorized")).unwrap_or(false);
-            if decision != Some("REQUEST_CHANGES") || !explicit {
-                anyhow::bail!("the human decision following {after_review_id} does not explicitly authorize review re-entry");
-            }
-            let scope = reason.unwrap().trim().to_string();
             let timestamp = heading.strip_suffix(&human_suffix).unwrap_or_default().trim().to_string();
-            return Ok(ReentryAuthorization {
-                after_review_id: after_review_id.to_string(),
-                decision_timestamp: timestamp,
-                scope,
-            });
+            decisions.push((
+                decision.map(str::to_string),
+                reason.map(str::to_string),
+                binding.map(str::to_string),
+                timestamp,
+            ));
         }
         if heading.ends_with(&format!(" {REVIEW_HEADING} — {feature} — Stage {stage}"))
             || heading.ends_with(&format!(" {REENTRY_REVIEW_HEADING} — {feature} — Stage {stage}"))
@@ -151,7 +179,55 @@ pub fn resolve_reentry_authorization(
             break;
         }
     }
-    anyhow::bail!("no human re-entry authorization follows {after_review_id}")
+
+    let selected = match semantics {
+        ReentryDecisionSemantics::LegacySingleDecision => match decisions.as_slice() {
+            [] => anyhow::bail!("no human re-entry authorization follows {after_review_id}"),
+            [decision] => decision,
+            _ => anyhow::bail!(
+                "multiple human decisions follow {after_review_id}; the selected reviewer contract does not define their ordering"
+            ),
+        },
+        ReentryDecisionSemantics::CanonicalLogOrder => {
+            let authorization_index = decisions.iter().rposition(|(decision, _, binding, _)| {
+                decision.as_deref() == Some("AUTHORIZE_REENTRY")
+                    && binding.as_deref() == Some(after_review_id)
+            }).ok_or_else(|| anyhow::anyhow!(
+                "no AUTHORIZE_REENTRY bound to {after_review_id} follows that review"
+            ))?;
+            if decisions[authorization_index + 1..]
+                .iter()
+                .any(|(decision, _, _, _)| decision.as_deref() == Some("STOP"))
+            {
+                anyhow::bail!(
+                    "a STOP appended after the authorization denies re-entry after {after_review_id}"
+                );
+            }
+            &decisions[authorization_index]
+        }
+    };
+
+    let (decision, reason, _binding, timestamp) = selected;
+    let explicit = reason
+        .as_deref()
+        .map(|value| value.to_ascii_lowercase().contains("re-entry authorized"))
+        .unwrap_or(false);
+    let authorized_decision = match semantics {
+        ReentryDecisionSemantics::LegacySingleDecision => {
+            decision.as_deref() == Some("REQUEST_CHANGES") && explicit
+        }
+        ReentryDecisionSemantics::CanonicalLogOrder => {
+            decision.as_deref() == Some("AUTHORIZE_REENTRY") && reason.as_deref().is_some_and(|r| !r.trim().is_empty())
+        }
+    };
+    if !authorized_decision {
+        anyhow::bail!("the controlling human decision following {after_review_id} does not explicitly authorize review re-entry");
+    }
+    Ok(ReentryAuthorization {
+        after_review_id: after_review_id.to_string(),
+        decision_timestamp: timestamp.clone(),
+        scope: reason.as_deref().unwrap().trim().to_string(),
+    })
 }
 
 pub fn format_reentry_id(feature: &str, stage: &str) -> String {
@@ -567,6 +643,7 @@ pub fn append_decision(
     stage: &str,
     decision: &str,
     reason: &str,
+    reentry_after: Option<&str>,
     provenance: Option<&DecisionProvenance>,
     repo_root: &Path,
     codex_dir: &Path,
@@ -581,6 +658,9 @@ pub fn append_decision(
     entry.push_str(&format!("## {} HUMAN DECISION — {} — Stage {}\n", ts, feature, stage));
     entry.push_str(&format!("Commit at decision: {}\n", sha));
     entry.push_str(&format!("Decision: {}\n", decision));
+    if let Some(review_id) = reentry_after {
+        entry.push_str(&format!("Re-entry after: {}\n", review_id));
+    }
     entry.push_str(&format!("Reason/next: {}\n", reason));
 
     let mut legacy_changed = false;
@@ -771,7 +851,19 @@ mod tests {
 
     fn reentry_decision(feature: &str, stage: &str, reason: &str) -> String {
         format!(
-            "## 2026-01-01T00:01:00Z HUMAN DECISION — {feature} — Stage {stage}\nDecision: REQUEST_CHANGES\nReason/next: {reason}\n"
+            "## 2026-01-01T00:01:00Z HUMAN DECISION — {feature} — Stage {stage}\nDecision: AUTHORIZE_REENTRY\nRe-entry after: REV__{feature}__{stage}__R3\nReason/next: {reason}\n"
+        )
+    }
+
+    fn human_decision(
+        timestamp: &str,
+        feature: &str,
+        stage: &str,
+        decision: &str,
+        reason: &str,
+    ) -> String {
+        format!(
+            "## {timestamp} HUMAN DECISION — {feature} — Stage {stage}\nDecision: {decision}\nReason/next: {reason}\n"
         )
     }
 
@@ -921,6 +1013,7 @@ mod tests {
             "F-0004",
             "8",
             "REV__F-0004__8__R3",
+            ReentryDecisionSemantics::CanonicalLogOrder,
         ).unwrap();
         assert_eq!(authorization.scope, reason);
         assert_eq!(format_reentry_id("F-0004", "8"), "REV__F-0004__8__REENTRY-1");
@@ -936,11 +1029,152 @@ mod tests {
                 &review_entry("F-0004", "8", "REV__F-0004__8__R1", None),
                 &review_entry("F-0004", "8", "REV__F-0004__8__R2", Some("REV__F-0004__8__R1")),
                 &review_entry("F-0004", "8", "REV__F-0004__8__R3", Some("REV__F-0004__8__R2")),
-                &reentry_decision("F-0004", "8", "Fix the findings and continue."),
+                &human_decision(
+                    "2026-01-01T00:01:00Z",
+                    "F-0004",
+                    "8",
+                    "REQUEST_CHANGES",
+                    "Fix the findings and continue.",
+                ),
             ],
         );
-        let err = resolve_reentry_authorization(&log_path, "F-0004", "8", "REV__F-0004__8__R3").unwrap_err();
-        assert!(err.to_string().contains("does not explicitly authorize"));
+        let err = resolve_reentry_authorization(
+            &log_path,
+            "F-0004",
+            "8",
+            "REV__F-0004__8__R3",
+            ReentryDecisionSemantics::CanonicalLogOrder,
+        ).unwrap_err();
+        assert!(err.to_string().contains("no AUTHORIZE_REENTRY"));
+    }
+
+    #[test]
+    fn canonical_order_allows_a_later_authorization_after_an_approval() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let same_timestamp = "2026-01-01T00:01:00Z";
+        let scope = "Review re-entry authorized for the repaired findings.";
+        let log_path = write_log(
+            dir.path(),
+            &[
+                &review_entry("F-0001", "8", "REV__F-0001__8__R1", None),
+                &review_entry("F-0001", "8", "REV__F-0001__8__R2", Some("REV__F-0001__8__R1")),
+                &review_entry("F-0001", "8", "REV__F-0001__8__R3", Some("REV__F-0001__8__R2")),
+                &human_decision(same_timestamp, "F-0001", "8", "APPROVE_STAGE", "Mistaken approval."),
+                &human_decision(same_timestamp, "OTHER", "8", "STOP", "Unrelated."),
+                &human_decision(same_timestamp, "F-0001", "7", "STOP", "Wrong stage."),
+                &format!(
+                    "## {same_timestamp} HUMAN DECISION — F-0001 — Stage 8\nDecision: AUTHORIZE_REENTRY\nRe-entry after: REV__F-0001__8__R3\nReason/next: {scope}\n"
+                ),
+            ],
+        );
+
+        let authorization = resolve_reentry_authorization(
+            &log_path,
+            "F-0001",
+            "8",
+            "REV__F-0001__8__R3",
+            ReentryDecisionSemantics::CanonicalLogOrder,
+        ).unwrap();
+        assert_eq!(authorization.scope, scope);
+        assert_eq!(authorization.decision_timestamp, same_timestamp);
+    }
+
+    #[test]
+    fn canonical_order_denies_a_stop_appended_after_authorization() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let log_path = write_log(
+            dir.path(),
+            &[
+                &review_entry("F-0001", "8", "REV__F-0001__8__R1", None),
+                &review_entry("F-0001", "8", "REV__F-0001__8__R2", Some("REV__F-0001__8__R1")),
+                &review_entry("F-0001", "8", "REV__F-0001__8__R3", Some("REV__F-0001__8__R2")),
+                &reentry_decision("F-0001", "8", "Review re-entry authorized."),
+                &human_decision("2026-01-01T00:01:00Z", "F-0001", "8", "STOP", "Do not continue."),
+            ],
+        );
+
+        let error = resolve_reentry_authorization(
+            &log_path,
+            "F-0001",
+            "8",
+            "REV__F-0001__8__R3",
+            ReentryDecisionSemantics::CanonicalLogOrder,
+        ).unwrap_err();
+        assert!(error.to_string().contains("STOP appended after"));
+    }
+
+    #[test]
+    fn canonical_order_ignores_stage_dispositions_after_authorization() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let scope = "One bounded reviewer execution for the repaired findings.";
+        let log_path = write_log(
+            dir.path(),
+            &[
+                &review_entry("F-0001", "8", "REV__F-0001__8__R1", None),
+                &review_entry("F-0001", "8", "REV__F-0001__8__R2", Some("REV__F-0001__8__R1")),
+                &review_entry("F-0001", "8", "REV__F-0001__8__R3", Some("REV__F-0001__8__R2")),
+                &reentry_decision("F-0001", "8", scope),
+                &human_decision("2026-01-01T00:02:00Z", "F-0001", "8", "APPROVE_STAGE", "Stage disposition only."),
+                &human_decision("2026-01-01T00:03:00Z", "F-0001", "8", "REQUEST_CHANGES", "Stage disposition only."),
+            ],
+        );
+
+        let authorization = resolve_reentry_authorization(
+            &log_path,
+            "F-0001",
+            "8",
+            "REV__F-0001__8__R3",
+            ReentryDecisionSemantics::CanonicalLogOrder,
+        ).unwrap();
+        assert_eq!(authorization.scope, scope);
+    }
+
+    #[test]
+    fn canonical_order_rejects_authorization_bound_to_another_review() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let authorization = "## 2026-01-01T00:01:00Z HUMAN DECISION — F-0001 — Stage 8\nDecision: AUTHORIZE_REENTRY\nRe-entry after: REV__F-0001__8__R2\nReason/next: Wrong boundary.\n";
+        let log_path = write_log(
+            dir.path(),
+            &[
+                &review_entry("F-0001", "8", "REV__F-0001__8__R1", None),
+                &review_entry("F-0001", "8", "REV__F-0001__8__R2", Some("REV__F-0001__8__R1")),
+                &review_entry("F-0001", "8", "REV__F-0001__8__R3", Some("REV__F-0001__8__R2")),
+                authorization,
+            ],
+        );
+
+        let error = resolve_reentry_authorization(
+            &log_path,
+            "F-0001",
+            "8",
+            "REV__F-0001__8__R3",
+            ReentryDecisionSemantics::CanonicalLogOrder,
+        ).unwrap_err();
+        assert!(error.to_string().contains("no AUTHORIZE_REENTRY bound"));
+    }
+
+    #[test]
+    fn legacy_contract_denies_multiple_post_r3_decisions_as_ambiguous() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let log_path = write_log(
+            dir.path(),
+            &[
+                &review_entry("F-0001", "8", "REV__F-0001__8__R1", None),
+                &review_entry("F-0001", "8", "REV__F-0001__8__R2", Some("REV__F-0001__8__R1")),
+                &review_entry("F-0001", "8", "REV__F-0001__8__R3", Some("REV__F-0001__8__R2")),
+                &human_decision("2026-01-01T00:01:00Z", "F-0001", "8", "APPROVE_STAGE", "Mistaken approval."),
+                &human_decision("2026-01-01T00:02:00Z", "F-0001", "8", "REQUEST_CHANGES", "Review re-entry authorized."),
+            ],
+        );
+
+        let error = resolve_reentry_authorization(
+            &log_path,
+            "F-0001",
+            "8",
+            "REV__F-0001__8__R3",
+            ReentryDecisionSemantics::LegacySingleDecision,
+        ).unwrap_err();
+        assert!(error.to_string().contains("does not define their ordering"));
     }
 
     #[test]
@@ -957,8 +1191,14 @@ mod tests {
                 existing,
             ],
         );
-        let err = resolve_reentry_authorization(&log_path, "F-0004", "8", "REV__F-0004__8__R3").unwrap_err();
-        assert!(err.to_string().contains("already been used"));
+        let err = resolve_reentry_authorization(
+            &log_path,
+            "F-0004",
+            "8",
+            "REV__F-0004__8__R3",
+            ReentryDecisionSemantics::CanonicalLogOrder,
+        ).unwrap_err();
+        assert!(err.to_string().contains("already been consumed"));
     }
 
     #[test]
