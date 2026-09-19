@@ -39,10 +39,8 @@ impl ReviewerRun {
                 Some(label) => format!(
                     "external assessment ({label}, as supplied — not invoked or verified by Codeos)"
                 ),
-                None => {
-                    "external assessment (model unstated — not invoked or verified by Codeos)"
-                        .to_string()
-                }
+                None => "external assessment (model unstated — not invoked or verified by Codeos)"
+                    .to_string(),
             },
         }
     }

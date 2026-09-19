@@ -66,6 +66,10 @@ pub fn text_sha256(s: &str) -> String {
     hex_digest(s.trim().as_bytes())
 }
 
+pub fn bytes_sha256(bytes: &[u8]) -> String {
+    hex_digest(bytes)
+}
+
 /// The first bound input whose recorded hash no longer matches the current map, as
 /// `(name, was, now)`. `None` when every recorded binding still matches. Shared by decision-receipt
 /// and verification-record staleness — a record is stale the moment one bound input drifts.

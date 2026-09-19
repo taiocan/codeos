@@ -35,7 +35,10 @@ pub fn resolve_reviewer_tool_contract(config: &Config) -> Result<String> {
     let resolver = config
         .toolkit_root
         .join("dba/04-tools/configuration/resolve-project-configuration.sh");
-    anyhow::ensure!(resolver.is_file(), "project DBA configuration resolver is unavailable");
+    anyhow::ensure!(
+        resolver.is_file(),
+        "project DBA configuration resolver is unavailable"
+    );
     let output = std::process::Command::new("bash")
         .arg(&resolver)
         .arg(&config.repo_root)
@@ -48,8 +51,13 @@ pub fn resolve_reviewer_tool_contract(config: &Config) -> Result<String> {
     );
     String::from_utf8_lossy(&output.stdout)
         .lines()
-        .find_map(|line| line.strip_prefix("reviewer_tool_contract=").map(str::to_string))
-        .ok_or_else(|| anyhow::anyhow!("the resolved DBA configuration selects no reviewer_tool_contract"))
+        .find_map(|line| {
+            line.strip_prefix("reviewer_tool_contract=")
+                .map(str::to_string)
+        })
+        .ok_or_else(|| {
+            anyhow::anyhow!("the resolved DBA configuration selects no reviewer_tool_contract")
+        })
 }
 
 #[derive(Debug, Deserialize, Default)]

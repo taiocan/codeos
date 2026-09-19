@@ -1,6 +1,9 @@
 ---
 artifact_type: intent
 feature_id: F-####
+semantic_revision: 1
+semantic_revision_from: null
+semantic_change: Initial approved Specification Package.
 status: DRAFT
 serves_outcomes: [O-1]
 approved_by:

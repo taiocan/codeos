@@ -123,6 +123,20 @@ if grep -q '^runtime_verification:' "${CONFIG}"; then
   fi
 fi
 
+# --- reality_verification: block -------------------------------------------
+if grep -q '^reality_verification:' "${CONFIG}"; then
+  mapfile -t reality_lines < <(
+    sed -n '/^reality_verification:/,/^[a-z]/p' "${CONFIG}" |
+      grep -E '^  [a-z_]+: ' || true
+  )
+  actual_keys="$(printf '%s\n' "${reality_lines[@]}" | sed -E 's/^  ([a-z_]+):.*/\1/' | LC_ALL=C sort)"
+  [[ "${actual_keys}" == 'command' ]] ||
+    fail 'reality_verification must contain exactly command'
+  reality_command="$(printf '%s\n' "${reality_lines[@]}" | sed -n 's/^  command:[[:space:]]*//p')"
+  [[ -n "${reality_command}" && "${reality_command}" != /* && "${reality_command}" != *'..'* ]] ||
+    fail 'reality_verification.command must be a non-traversing project-relative path'
+fi
+
 # --- single-source-of-governance rule ----------------------------------------
 # `governed:` is not a supported frontmatter key on any downstream artifact template — the
 # artifacts: block above is the only authoritative source, so no template may restate it.

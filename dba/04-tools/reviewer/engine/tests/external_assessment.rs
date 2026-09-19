@@ -135,7 +135,12 @@ fn external_assessment_records_provenance_without_invoking_codex() {
     let (repo, _) = setup_temp_git_repo();
     setup_codeos_symlink(repo.path());
     let export_dir = tempfile::tempdir().unwrap();
-    let packet = export_packet(repo.path(), export_dir.path(), "UPG-EXTERNAL", &["tracked.md"]);
+    let packet = export_packet(
+        repo.path(),
+        export_dir.path(),
+        "UPG-EXTERNAL",
+        &["tracked.md"],
+    );
     let reply = export_dir.path().join("assessment.txt");
     std::fs::write(&reply, FIXTURE_REPLY).unwrap();
 
@@ -155,10 +160,7 @@ fn external_assessment_records_provenance_without_invoking_codex() {
         ],
     );
     assert_eq!(code, 0, "{stderr}");
-    assert!(
-        stdout.contains("external assessment logged:"),
-        "{stdout}"
-    );
+    assert!(stdout.contains("external assessment logged:"), "{stdout}");
     assert!(
         stdout.contains("does NOT satisfy a required review round"),
         "{stdout}"
@@ -192,14 +194,29 @@ fn external_assessment_records_provenance_without_invoking_codex() {
     );
     // The unchanged parser handled the external text: the fixture's single finding is structured,
     // and nothing was dropped.
-    assert!(recorded.contains("  reported_concern: CHANGES ADVISED\n"), "{recorded}");
+    assert!(
+        recorded.contains("  reported_concern: CHANGES ADVISED\n"),
+        "{recorded}"
+    );
     assert!(!recorded.contains("codex_concern:"), "{recorded}");
-    assert!(recorded.contains("classification: IN-SCOPE BLOCKER"), "{recorded}");
-    assert!(recorded.contains("unparsed_findings_count: 0"), "{recorded}");
-    assert!(recorded.contains("EXT__UPG-EXTERNAL__selfdev-step-1__A1"), "{recorded}");
+    assert!(
+        recorded.contains("classification: IN-SCOPE BLOCKER"),
+        "{recorded}"
+    );
+    assert!(
+        recorded.contains("unparsed_findings_count: 0"),
+        "{recorded}"
+    );
+    assert!(
+        recorded.contains("EXT__UPG-EXTERNAL__selfdev-step-1__A1"),
+        "{recorded}"
+    );
 
     let log = std::fs::read_to_string(reviews.join("review-log.md")).unwrap();
-    assert!(log.contains("EXTERNAL ASSESSMENT — UPG-EXTERNAL — Stage selfdev-step-1"), "{log}");
+    assert!(
+        log.contains("EXTERNAL ASSESSMENT — UPG-EXTERNAL — Stage selfdev-step-1"),
+        "{log}"
+    );
     assert!(log.contains("Reported concern: CHANGES ADVISED"), "{log}");
     assert!(!log.contains("Codex concern:"), "{log}");
 }
@@ -288,8 +305,8 @@ fn external_assessment_does_not_advance_the_review_round() {
         "two external assessments must leave the first review round unclaimed:\n{stdout}"
     );
 
-    let log =
-        std::fs::read_to_string(repo.path().join(".codeos/05-review/reviews/review-log.md")).unwrap();
+    let log = std::fs::read_to_string(repo.path().join(".codeos/05-review/reviews/review-log.md"))
+        .unwrap();
     assert!(log.contains("EXT__UPG-ROUND__selfdev-step-1__A1"), "{log}");
     assert!(log.contains("EXT__UPG-ROUND__selfdev-step-1__A2"), "{log}");
 }
@@ -383,7 +400,11 @@ fn recorded_packet_is_the_exported_packet_even_after_the_tree_moves_on() {
 
     // The reviewed artifact changes after the model read it. A rebuild here would record different
     // evidence than the one assessed.
-    std::fs::write(repo.path().join("tracked.md"), "# tracked\nchanged after export\n").unwrap();
+    std::fs::write(
+        repo.path().join("tracked.md"),
+        "# tracked\nchanged after export\n",
+    )
+    .unwrap();
 
     let reply = export_dir.path().join("assessment.txt");
     std::fs::write(&reply, FIXTURE_REPLY).unwrap();
@@ -450,7 +471,12 @@ fn missing_sidecar_fails_closed() {
     let (repo, _) = setup_temp_git_repo();
     setup_codeos_symlink(repo.path());
     let export_dir = tempfile::tempdir().unwrap();
-    let packet = export_packet(repo.path(), export_dir.path(), "UPG-NOMETA", &["tracked.md"]);
+    let packet = export_packet(
+        repo.path(),
+        export_dir.path(),
+        "UPG-NOMETA",
+        &["tracked.md"],
+    );
     std::fs::remove_file(format!("{}.meta.json", packet.display())).unwrap();
     let reply = export_dir.path().join("assessment.txt");
     std::fs::write(&reply, FIXTURE_REPLY).unwrap();
@@ -486,7 +512,12 @@ fn untracked_files_are_shown_and_do_not_leave_coverage_overstated() {
     .unwrap();
 
     let export_dir = tempfile::tempdir().unwrap();
-    let packet = export_packet(repo.path(), export_dir.path(), "UPG-UNTRACKED", &["tracked.md"]);
+    let packet = export_packet(
+        repo.path(),
+        export_dir.path(),
+        "UPG-UNTRACKED",
+        &["tracked.md"],
+    );
     let text = std::fs::read_to_string(&packet).unwrap();
     assert!(text.contains("UNTRACKED FILES"), "{text}");
     assert!(text.contains("new_module.rs (untracked"), "{text}");
@@ -496,7 +527,11 @@ fn untracked_files_are_shown_and_do_not_leave_coverage_overstated() {
     );
 
     // An untracked file that cannot be shown downgrades coverage instead of being dropped silently.
-    std::fs::write(repo.path().join("secrets.pem"), "-----BEGIN PRIVATE KEY-----\n").unwrap();
+    std::fs::write(
+        repo.path().join("secrets.pem"),
+        "-----BEGIN PRIVATE KEY-----\n",
+    )
+    .unwrap();
     let (code, stdout, stderr) = run_in_dir(
         repo.path(),
         &["plan", "UPG-UNTRACKED2", "selfdev-step-1", "tracked.md"],
@@ -558,8 +593,14 @@ HIGHEST-IMPACT UNCERTAINTY: none
         .expect("assessment file");
     let recorded = std::fs::read_to_string(file).unwrap();
     assert!(recorded.contains("parse_status: FAILED"), "{recorded}");
-    assert!(recorded.contains("assessment_status: INCOMPLETE"), "{recorded}");
-    assert!(recorded.contains("unparsed_findings_count: 1"), "{recorded}");
+    assert!(
+        recorded.contains("assessment_status: INCOMPLETE"),
+        "{recorded}"
+    );
+    assert!(
+        recorded.contains("unparsed_findings_count: 1"),
+        "{recorded}"
+    );
     assert!(
         recorded.contains("effective_concern: DO NOT ADVANCE"),
         "a reviewer's NO OBJECTION must not survive findings that could not be recorded:\n{recorded}"
@@ -602,9 +643,18 @@ fn truncated_reply_cannot_produce_a_clean_assessment() {
         .find(|p| p.extension().is_some_and(|e| e == "md"))
         .expect("assessment file");
     let recorded = std::fs::read_to_string(file).unwrap();
-    assert!(recorded.contains("assessment_status: INCOMPLETE"), "{recorded}");
-    assert!(recorded.contains("no LOG SUMMARY verdict line"), "{recorded}");
-    assert!(recorded.contains("effective_concern: DO NOT ADVANCE"), "{recorded}");
+    assert!(
+        recorded.contains("assessment_status: INCOMPLETE"),
+        "{recorded}"
+    );
+    assert!(
+        recorded.contains("no LOG SUMMARY verdict line"),
+        "{recorded}"
+    );
+    assert!(
+        recorded.contains("effective_concern: DO NOT ADVANCE"),
+        "{recorded}"
+    );
 }
 
 // ── UPG-0070: packet-integrity gaps ─────────────────────────────────────────────────────────────
@@ -634,8 +684,11 @@ fn altered_packet_bytes_are_rejected_against_their_sidecar() {
 
     // The sidecar is left exactly as written; only the reviewed bytes change.
     let original = std::fs::read_to_string(&emitted).unwrap();
-    std::fs::write(&emitted, format!("{original}\nINJECTED CONTENT THAT WAS NEVER REVIEWED\n"))
-        .unwrap();
+    std::fs::write(
+        &emitted,
+        format!("{original}\nINJECTED CONTENT THAT WAS NEVER REVIEWED\n"),
+    )
+    .unwrap();
 
     let assessment = export_dir.path().join("assessment.md");
     std::fs::write(

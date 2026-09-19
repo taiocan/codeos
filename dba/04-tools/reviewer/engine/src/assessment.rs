@@ -19,6 +19,9 @@ pub struct ParsedReview {
     pub assessment_status: String,
     /// Why the assessment is incomplete. Empty when it is complete.
     pub incomplete_reason: String,
+    /// Present for a negative F7 evidence reassessment when the reviewer confirms the new
+    /// canonical evidence addressed the named requirement even though it did not close it.
+    pub evidence_materiality: Option<String>,
 }
 
 /// The exact five TRIAGE RULE labels from `dba/03-prompts/review/codeos-reviewer-task.md` — the
@@ -46,6 +49,8 @@ pub struct Finding {
     pub evidence: String,
     pub why: String,
     pub scope_reason: Option<String>,
+    pub blocker_kind: Option<String>,
+    pub evidence_required: Option<String>,
 }
 
 impl Finding {
@@ -56,11 +61,26 @@ impl Finding {
         s.push_str(&format!("    - finding_id: {}\n", self.finding_id));
         s.push_str(&format!("      severity: {}\n", self.severity));
         s.push_str(&format!("      classification: {}\n", self.classification));
-        s.push_str(&format!("      summary: \"{}\"\n", yaml_escape(&self.summary)));
+        s.push_str(&format!(
+            "      summary: \"{}\"\n",
+            yaml_escape(&self.summary)
+        ));
         if let Some(ac) = &self.acceptance_criterion {
             s.push_str(&format!("      acceptance_criterion: {}\n", ac));
         }
-        s.push_str(&format!("      required_action: {}\n", self.required_action));
+        s.push_str(&format!(
+            "      required_action: {}\n",
+            self.required_action
+        ));
+        if let Some(kind) = &self.blocker_kind {
+            s.push_str(&format!("      blocker_kind: {}\n", kind));
+        }
+        if let Some(required) = &self.evidence_required {
+            s.push_str(&format!(
+                "      evidence_required: \"{}\"\n",
+                yaml_escape(required)
+            ));
+        }
         s
     }
 }
@@ -111,8 +131,10 @@ pub fn parse_findings(raw_text: &str, review_id: &str) -> (Vec<Finding>, usize) 
     // The optional `N. ` prefix is a real recurring shape: reviewers number their findings. It was
     // silently dropping those findings entirely — they matched no header, so they were neither
     // parsed nor counted unparsed.
-    let finding_re = Regex::new(r"^(?:\d+\.\s+)?Finding: (.+?) / Severity: (High|Medium|Low) / Classification: (.+?)\s*$")
-        .expect("valid regex");
+    let finding_re = Regex::new(
+        r"^(?:\d+\.\s+)?Finding: (.+?) / Severity: (High|Medium|Low) / Classification: (.+?)\s*$",
+    )
+    .expect("valid regex");
     let combined_re = Regex::new(r"^Evidence: (.+?) / Why: (.+?) / Required action: (fix now|optional fix|backlog|reject)\s*$")
         .expect("valid regex");
     // A third real, historical shape: Evidence/Why/Required action/Scope reason all combined
@@ -121,8 +143,12 @@ pub fn parse_findings(raw_text: &str, review_id: &str) -> (Vec<Finding>, usize) 
         .expect("valid regex");
     let evidence_only_re = Regex::new(r"^Evidence: (.+?)\s*$").expect("valid regex");
     let why_only_re = Regex::new(r"^Why: (.+?)\s*$").expect("valid regex");
-    let action_only_re = Regex::new(r"^Required action: (fix now|optional fix|backlog|reject)\s*$").expect("valid regex");
+    let action_only_re = Regex::new(r"^Required action: (fix now|optional fix|backlog|reject)\s*$")
+        .expect("valid regex");
     let scope_re = Regex::new(r"^Scope reason: (.+)$").expect("valid regex");
+    let blocker_kind_re =
+        Regex::new(r"^Blocker kind: (SUBSTANTIVE|EVIDENCE_INSUFFICIENT)\s*$").expect("valid regex");
+    let evidence_required_re = Regex::new(r"^Evidence required: (.+)$").expect("valid regex");
     let ac_re = Regex::new(r"AC-\d+").expect("valid regex");
 
     let mut findings = Vec::new();
@@ -161,14 +187,20 @@ pub fn parse_findings(raw_text: &str, review_id: &str) -> (Vec<Finding>, usize) 
         let mut why: Option<String> = None;
         let mut required_action: Option<String> = None;
         let mut scope_reason: Option<String> = None;
+        let mut blocker_kind: Option<String> = None;
+        let mut evidence_required: Option<String> = None;
         let mut k = i + 1;
-        let window_end = (i + 1 + 6).min(lines.len());
+        let window_end = (i + 1 + 9).min(lines.len());
         while k < window_end {
             let l = lines[k];
             if l.trim().is_empty() || l.starts_with("Finding:") || l.starts_with("PR decision:") {
                 break;
             }
-            if evidence.is_none() && why.is_none() && required_action.is_none() && scope_reason.is_none() {
+            if evidence.is_none()
+                && why.is_none()
+                && required_action.is_none()
+                && scope_reason.is_none()
+            {
                 if let Some(c) = combined_with_scope_re.captures(l) {
                     evidence = Some(c[1].trim().to_string());
                     why = Some(c[2].trim().to_string());
@@ -188,21 +220,52 @@ pub fn parse_findings(raw_text: &str, review_id: &str) -> (Vec<Finding>, usize) 
                 }
             }
             if evidence.is_none() {
-                if let Some(c) = evidence_only_re.captures(l) { evidence = Some(c[1].trim().to_string()); k += 1; continue; }
+                if let Some(c) = evidence_only_re.captures(l) {
+                    evidence = Some(c[1].trim().to_string());
+                    k += 1;
+                    continue;
+                }
             }
             if why.is_none() {
-                if let Some(c) = why_only_re.captures(l) { why = Some(c[1].trim().to_string()); k += 1; continue; }
+                if let Some(c) = why_only_re.captures(l) {
+                    why = Some(c[1].trim().to_string());
+                    k += 1;
+                    continue;
+                }
             }
             if required_action.is_none() {
-                if let Some(c) = action_only_re.captures(l) { required_action = Some(c[1].to_string()); k += 1; continue; }
+                if let Some(c) = action_only_re.captures(l) {
+                    required_action = Some(c[1].to_string());
+                    k += 1;
+                    continue;
+                }
             }
             if scope_reason.is_none() {
-                if let Some(c) = scope_re.captures(l) { scope_reason = Some(c[1].trim().to_string()); k += 1; continue; }
+                if let Some(c) = scope_re.captures(l) {
+                    scope_reason = Some(c[1].trim().to_string());
+                    k += 1;
+                    continue;
+                }
+            }
+            if blocker_kind.is_none() {
+                if let Some(c) = blocker_kind_re.captures(l) {
+                    blocker_kind = Some(c[1].to_string());
+                    k += 1;
+                    continue;
+                }
+            }
+            if evidence_required.is_none() {
+                if let Some(c) = evidence_required_re.captures(l) {
+                    evidence_required = Some(c[1].trim().to_string());
+                    k += 1;
+                    continue;
+                }
             }
             break;
         }
 
-        let (Some(evidence), Some(why), Some(required_action)) = (evidence, why, required_action) else {
+        let (Some(evidence), Some(why), Some(required_action)) = (evidence, why, required_action)
+        else {
             unparsed_count += 1;
             eprintln!("warning: malformed finding block (Evidence/Why/Required action not all found in either supported shape) near: {}", line);
             i += 1;
@@ -222,6 +285,8 @@ pub fn parse_findings(raw_text: &str, review_id: &str) -> (Vec<Finding>, usize) 
             evidence,
             why,
             scope_reason,
+            blocker_kind,
+            evidence_required,
         });
         i = k;
     }
@@ -262,7 +327,8 @@ pub fn parse_review_output(
     parsed_findings: usize,
     unparsed_findings: usize,
 ) -> ParsedReview {
-    let summary_line = output.lines()
+    let summary_line = output
+        .lines()
         .filter(|l| l.starts_with("LOG SUMMARY:"))
         .last()
         .map(|l| l.to_string())
@@ -276,7 +342,8 @@ pub fn parse_review_output(
         normalize_concern(&rest[..concern_end])
     };
 
-    let evidence_raw = output.lines()
+    let evidence_raw = output
+        .lines()
         .filter(|l| l.starts_with("EVIDENCE:"))
         .last()
         .map(|l| l.trim_start_matches("EVIDENCE:").trim().to_string())
@@ -289,11 +356,22 @@ pub fn parse_review_output(
         _ => "not reported".to_string(),
     };
 
-    let highest_impact_uncertainty = output.lines()
+    let highest_impact_uncertainty = output
+        .lines()
         .filter(|l| l.starts_with("HIGHEST-IMPACT UNCERTAINTY:"))
         .last()
-        .map(|l| l.trim_start_matches("HIGHEST-IMPACT UNCERTAINTY:").trim().to_string())
+        .map(|l| {
+            l.trim_start_matches("HIGHEST-IMPACT UNCERTAINTY:")
+                .trim()
+                .to_string()
+        })
         .unwrap_or_default();
+    let evidence_materiality = output
+        .lines()
+        .filter_map(|line| line.strip_prefix("EVIDENCE MATERIALITY: "))
+        .last()
+        .filter(|value| matches!(*value, "MATERIAL" | "NOT_MATERIAL"))
+        .map(str::to_string);
 
     // Fail closed on anything that means the record cannot show what the reviewer actually found.
     let declared = count_declared_findings(output);
@@ -327,20 +405,29 @@ pub fn parse_review_output(
     let floor = coverage_state.concern_floor();
     let concern_rank = concern_to_rank(&codex_concern);
     // An incomplete assessment cannot clear a boundary, whichever model produced it.
-    let incomplete_floor = if assessment_status == "INCOMPLETE" { 3 } else { 0 };
+    let incomplete_floor = if assessment_status == "INCOMPLETE" {
+        3
+    } else {
+        0
+    };
     let eff_rank = concern_rank.max(floor).max(incomplete_floor);
     let effective_concern = rank_to_concern(eff_rank);
 
     let coverage_note = if eff_rank > concern_rank && incomplete_floor == 3 {
         format!("raised to DO NOT ADVANCE: assessment INCOMPLETE — {incomplete_reason}")
     } else if eff_rank > concern_rank {
-        format!("raised from '{}' to the coverage floor for {}", codex_concern, coverage_state.as_str())
+        format!(
+            "raised from '{}' to the coverage floor for {}",
+            codex_concern,
+            coverage_state.as_str()
+        )
     } else {
         String::new()
     };
 
     let final_summary_line = if summary_line.is_empty() {
-        "LOG SUMMARY: UNCLASSIFIED — no parseable summary; HIGH attention, manual review required".to_string()
+        "LOG SUMMARY: UNCLASSIFIED — no parseable summary; HIGH attention, manual review required"
+            .to_string()
     } else {
         summary_line
     };
@@ -355,6 +442,7 @@ pub fn parse_review_output(
         parse_status: parse_status.to_string(),
         assessment_status: assessment_status.to_string(),
         incomplete_reason,
+        evidence_materiality,
     }
 }
 
@@ -371,9 +459,9 @@ fn normalize_concern(s: &str) -> String {
 
 fn concern_to_rank(c: &str) -> u8 {
     match c {
-        "NO OBJECTION"   => 0,
+        "NO OBJECTION" => 0,
         "CHANGES ADVISED" => 1,
-        "UNCLASSIFIED"   => 2,
+        "UNCLASSIFIED" => 2,
         "DO NOT ADVANCE" => 3,
         _ => 2,
     }
@@ -385,7 +473,8 @@ fn rank_to_concern(r: u8) -> String {
         1 => "CHANGES ADVISED",
         2 => "UNCLASSIFIED",
         _ => "DO NOT ADVANCE",
-    }.to_string()
+    }
+    .to_string()
 }
 
 /// Write the assessment file and return (assessment_path, assessment_sha256).
@@ -403,7 +492,10 @@ pub fn write_assessment(
     let ts = chrono::Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string();
     let short_sha = &packet.review_sha[..7.min(packet.review_sha.len())];
     let ts_clean = ts.replace(':', "");
-    let filename = format!("{}-{}-stage-{}-{}.md", ts_clean, packet.feature, packet.stage, short_sha);
+    let filename = format!(
+        "{}-{}-stage-{}-{}.md",
+        ts_clean, packet.feature, packet.stage, short_sha
+    );
     let assessment_file = outdir.join(&filename);
 
     std::fs::create_dir_all(outdir).context("create assessment dir")?;
@@ -419,7 +511,10 @@ pub fn write_assessment(
             content.push_str(&f.to_yaml_entry());
         }
     }
-    content.push_str(&format!("unparsed_findings_count: {}\n", unparsed_findings_count));
+    content.push_str(&format!(
+        "unparsed_findings_count: {}\n",
+        unparsed_findings_count
+    ));
     content.push_str("reviewed:\n");
     content.push_str(&format!("  feature: {}\n", packet.feature));
     content.push_str(&format!("  stage: {}\n", packet.stage));
@@ -439,7 +534,10 @@ pub fn write_assessment(
         }
     }
     content.push_str(&format!("  diff_hash: {}\n", packet.diff_hash));
-    content.push_str(&format!("  coverage_state: {}\n", packet.coverage_state.as_str()));
+    content.push_str(&format!(
+        "  coverage_state: {}\n",
+        packet.coverage_state.as_str()
+    ));
     content.push_str(&format!("  workspace_dirty: {}\n", packet.workspace_dirty));
     content.push_str(&format!("  redaction_count: {}\n", packet.redaction_count));
     content.push_str(&format!("  secret_redaction: {}\n", packet.secret_flag));
@@ -453,27 +551,56 @@ pub fn write_assessment(
             content.push_str(&format!("      affected_section: {}\n", section));
         }
     }
-    let packet_basename = packet_saved.file_name().and_then(|n| n.to_str()).unwrap_or("");
+    let packet_basename = packet_saved
+        .file_name()
+        .and_then(|n| n.to_str())
+        .unwrap_or("");
     content.push_str(&format!("  reviewed_packet: packets/{}\n", packet_basename));
     content.push_str(&format!("  reviewed_packet_sha256: {}\n", packet_hash));
-    content.push_str(&format!("  source: {}\n", if raw.is_external() { "external" } else { "codex" }));
+    content.push_str(&format!(
+        "  source: {}\n",
+        if raw.is_external() {
+            "external"
+        } else {
+            "codex"
+        }
+    ));
     content.push_str(&format!("  reviewer: \"{}\"\n", raw.reviewer_field()));
     // The key names who reported the concern. `codex_concern` is the established name across
     // existing review records and stays; an external assessment gets a name that is true of it.
     content.push_str(&format!(
         "  {}: {}\n",
-        if raw.is_external() { "reported_concern" } else { "codex_concern" },
+        if raw.is_external() {
+            "reported_concern"
+        } else {
+            "codex_concern"
+        },
         parsed.codex_concern
     ));
-    content.push_str(&format!("  effective_concern: {}\n", parsed.effective_concern));
+    content.push_str(&format!(
+        "  effective_concern: {}\n",
+        parsed.effective_concern
+    ));
     if !parsed.coverage_note.is_empty() {
-        content.push_str(&format!("  effective_concern_note: {}\n", parsed.coverage_note));
+        content.push_str(&format!(
+            "  effective_concern_note: {}\n",
+            parsed.coverage_note
+        ));
     }
     content.push_str(&format!("  evidence: {}\n", parsed.evidence));
     content.push_str(&format!("  parse_status: {}\n", parsed.parse_status));
-    content.push_str(&format!("  assessment_status: {}\n", parsed.assessment_status));
+    content.push_str(&format!(
+        "  assessment_status: {}\n",
+        parsed.assessment_status
+    ));
     if !parsed.incomplete_reason.is_empty() {
-        content.push_str(&format!("  incomplete_reason: \"{}\"\n", yaml_escape(&parsed.incomplete_reason)));
+        content.push_str(&format!(
+            "  incomplete_reason: \"{}\"\n",
+            yaml_escape(&parsed.incomplete_reason)
+        ));
+    }
+    if let Some(materiality) = &parsed.evidence_materiality {
+        content.push_str(&format!("  evidence_materiality: {}\n", materiality));
     }
     // The reviewer task prompt requires LOG SUMMARY, EVIDENCE, and HIGHEST-IMPACT UNCERTAINTY
     // as its last three lines. The first two are promoted above; promote the third too, so the
@@ -504,8 +631,12 @@ pub fn write_assessment(
     content.push_str("---\n\n");
     content.push_str(&raw.text);
 
-    std::fs::write(&assessment_file, &content)
-        .with_context(|| format!("could not write assessment to {}", assessment_file.display()))?;
+    std::fs::write(&assessment_file, &content).with_context(|| {
+        format!(
+            "could not write assessment to {}",
+            assessment_file.display()
+        )
+    })?;
 
     let sha = crate::packet::sha256_str(&content);
     Ok((assessment_file, sha))
@@ -518,30 +649,56 @@ pub fn validate_schema(
     packet_hash: &str,
 ) -> Result<()> {
     let mut errs = Vec::new();
-    if packet.feature.is_empty() { errs.push("missing:feature"); }
-    if packet.stage.is_empty() { errs.push("missing:stage"); }
-    if packet.base_sha.is_empty() { errs.push("missing:base_commit"); }
-    if packet.review_sha.is_empty() { errs.push("missing:review_commit"); }
-    if packet.diff_hash.is_empty() { errs.push("missing:diff_hash"); }
-    if packet_hash.is_empty() { errs.push("missing:reviewed_packet_sha256"); }
+    if packet.feature.is_empty() {
+        errs.push("missing:feature");
+    }
+    if packet.stage.is_empty() {
+        errs.push("missing:stage");
+    }
+    if packet.base_sha.is_empty() {
+        errs.push("missing:base_commit");
+    }
+    if packet.review_sha.is_empty() {
+        errs.push("missing:review_commit");
+    }
+    if packet.diff_hash.is_empty() {
+        errs.push("missing:diff_hash");
+    }
+    if packet_hash.is_empty() {
+        errs.push("missing:reviewed_packet_sha256");
+    }
 
-    let valid_coverage = ["FULL_COVERAGE","PARTIAL_COVERAGE","SECRET_REDACTION","CRITICAL_OMISSION","EMPTY_PACKET"];
+    let valid_coverage = [
+        "FULL_COVERAGE",
+        "PARTIAL_COVERAGE",
+        "SECRET_REDACTION",
+        "CRITICAL_OMISSION",
+        "EMPTY_PACKET",
+    ];
     if !valid_coverage.contains(&packet.coverage_state.as_str()) {
         errs.push("enum:coverage_state");
     }
-    let valid_concern = ["NO OBJECTION","CHANGES ADVISED","DO NOT ADVANCE","UNCLASSIFIED"];
+    let valid_concern = [
+        "NO OBJECTION",
+        "CHANGES ADVISED",
+        "DO NOT ADVANCE",
+        "UNCLASSIFIED",
+    ];
     if !valid_concern.contains(&parsed.codex_concern.as_str()) {
         errs.push("enum:codex_concern");
     }
     if !valid_concern.contains(&parsed.effective_concern.as_str()) {
         errs.push("enum:effective_concern");
     }
-    let valid_evidence = ["A","B","C","D","E","not reported"];
+    let valid_evidence = ["A", "B", "C", "D", "E", "not reported"];
     if !valid_evidence.contains(&parsed.evidence.as_str()) {
         errs.push("enum:evidence");
     }
     if packet.artifacts.is_empty()
-        && !matches!(packet.coverage_state, CoverageState::CriticalOmission | CoverageState::EmptyPacket)
+        && !matches!(
+            packet.coverage_state,
+            CoverageState::CriticalOmission | CoverageState::EmptyPacket
+        )
     {
         errs.push("missing:artifacts");
     }
@@ -656,15 +813,37 @@ mod tests {
     fn write_assessment_includes_review_id_in_frontmatter() {
         let dir = tempfile::tempdir().expect("tempdir");
         let repo_root = dir.path();
-        std::process::Command::new("git").args(["init"]).current_dir(repo_root).output().expect("git init");
-        std::process::Command::new("git").args(["config", "user.email", "t@t.test"]).current_dir(repo_root).output().ok();
-        std::process::Command::new("git").args(["config", "user.name", "T"]).current_dir(repo_root).output().ok();
+        std::process::Command::new("git")
+            .args(["init"])
+            .current_dir(repo_root)
+            .output()
+            .expect("git init");
+        std::process::Command::new("git")
+            .args(["config", "user.email", "t@t.test"])
+            .current_dir(repo_root)
+            .output()
+            .ok();
+        std::process::Command::new("git")
+            .args(["config", "user.name", "T"])
+            .current_dir(repo_root)
+            .output()
+            .ok();
         std::fs::write(repo_root.join("tracked.md"), "# tracked\n").expect("write");
-        std::process::Command::new("git").args(["add", "tracked.md"]).current_dir(repo_root).output().expect("git add");
-        std::process::Command::new("git").args(["commit", "-m", "init"]).current_dir(repo_root).output().expect("git commit");
+        std::process::Command::new("git")
+            .args(["add", "tracked.md"])
+            .current_dir(repo_root)
+            .output()
+            .expect("git add");
+        std::process::Command::new("git")
+            .args(["commit", "-m", "init"])
+            .current_dir(repo_root)
+            .output()
+            .expect("git commit");
 
         let mut toolkit_root = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        for _ in 0..4 { toolkit_root.pop(); }
+        for _ in 0..4 {
+            toolkit_root.pop();
+        }
 
         let opts = crate::packet::PacketBuildOptions {
             feature: "UPG-TEST".to_string(),
@@ -677,27 +856,43 @@ mod tests {
             toolkit_root: toolkit_root.to_string_lossy().into_owned(),
         };
         let packet = crate::packet::build(&opts).expect("build packet");
-        let raw = make_raw("LOG SUMMARY: NO OBJECTION — ok\nEVIDENCE: A\nHIGHEST-IMPACT UNCERTAINTY: none\n");
+        let raw = make_raw(
+            "LOG SUMMARY: NO OBJECTION — ok\nEVIDENCE: A\nHIGHEST-IMPACT UNCERTAINTY: none\n",
+        );
         let parsed = parse_review_output(&raw.text, &packet.coverage_state, 0, 0);
 
         let outdir = dir.path().join("codex-out");
         let review_id = "REV__UPG-TEST__selfdev-step-1__R1";
         let (assessment_file, _hash) = write_assessment(
-            review_id, &[], 0, &packet, &raw, &parsed, &outdir, Path::new("packet.txt"), "cafefeed",
-        ).expect("write_assessment");
+            review_id,
+            &[],
+            0,
+            &packet,
+            &raw,
+            &parsed,
+            &outdir,
+            Path::new("packet.txt"),
+            "cafefeed",
+        )
+        .expect("write_assessment");
 
         let content = std::fs::read_to_string(&assessment_file).expect("read assessment");
         assert!(
             content.starts_with(&format!("---\nreview_id: {}\n", review_id)),
-            "review_id must be the first frontmatter field: {}", content
+            "review_id must be the first frontmatter field: {}",
+            content
         );
 
         // AC-5: review_id is a content field only — the filename keeps its pre-existing
         // <ts>-<feature>-stage-<stage>-<sha>.md shape, never a REV__... shape.
-        let filename = assessment_file.file_name().and_then(|n| n.to_str()).unwrap_or("");
+        let filename = assessment_file
+            .file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or("");
         assert!(
             !filename.starts_with("REV__"),
-            "assessment filename must not be renamed to the REV__ shape: {}", filename
+            "assessment filename must not be renamed to the REV__ shape: {}",
+            filename
         );
         assert!(
             filename.contains("-UPG-TEST-stage-selfdev-step-1-"),
@@ -723,6 +918,22 @@ mod tests {
         assert_eq!(f.evidence, "diff shows renamed tests");
         assert_eq!(f.why, "breaks traceability");
         assert_eq!(f.scope_reason.as_deref(), Some("directly affects AC-7."));
+    }
+
+    #[test]
+    fn parses_f7_blocker_kind_and_evidence_requirement() {
+        let text = "Finding: Runtime failures are not proven / Severity: High / Classification: IN-SCOPE BLOCKER\nEvidence: bounded set has success only\nWhy: five failure outcomes are absent\nRequired action: fix now\nScope reason: final verification requires the missing proof\nBlocker kind: EVIDENCE_INSUFFICIENT\nEvidence required: canonical failure events for all five classifications\n\nPR decision: DO NOT ADVANCE\nLOG SUMMARY: DO NOT ADVANCE — evidence missing\nEVIDENCE: A\nHIGHEST-IMPACT UNCERTAINTY: failure conformance\n";
+        let (findings, unparsed) = parse_findings(text, RID);
+        assert_eq!(unparsed, 0);
+        assert_eq!(findings.len(), 1);
+        assert_eq!(
+            findings[0].blocker_kind.as_deref(),
+            Some("EVIDENCE_INSUFFICIENT")
+        );
+        assert_eq!(
+            findings[0].evidence_required.as_deref(),
+            Some("canonical failure events for all five classifications")
+        );
     }
 
     #[test]
@@ -753,7 +964,12 @@ mod tests {
             );
             let (findings, unparsed) = parse_findings(&text, RID);
             assert_eq!(unparsed, 0, "label {} should parse cleanly", label);
-            assert_eq!(findings.len(), 1, "label {} should produce exactly one finding", label);
+            assert_eq!(
+                findings.len(),
+                1,
+                "label {} should produce exactly one finding",
+                label
+            );
             assert_eq!(
                 findings[0].classification, label,
                 "compound label must parse as one classification value, not split on its own '/'"
@@ -767,7 +983,10 @@ mod tests {
         // label must be treated as malformed (counted unparsed), never silently accepted.
         let text = "Finding: x / Severity: Low / Classification: MAYBE-BLOCKER  \nEvidence: e / Why: w / Required action: backlog  \n\nLOG SUMMARY: CHANGES ADVISED — x\nEVIDENCE: A\nHIGHEST-IMPACT UNCERTAINTY: none\n";
         let (findings, unparsed) = parse_findings(text, RID);
-        assert!(findings.is_empty(), "a non-canonical classification must not produce a finding");
+        assert!(
+            findings.is_empty(),
+            "a non-canonical classification must not produce a finding"
+        );
         assert_eq!(unparsed, 1, "a non-canonical classification must be counted as unparsed, not silently dropped or accepted");
     }
 
@@ -786,7 +1005,10 @@ mod tests {
         let text = "Finding: something is wrong / Severity: High\nEvidence: e / Why: w / Required action: fix now  \n\nLOG SUMMARY: CHANGES ADVISED — malformed\nEVIDENCE: C\nHIGHEST-IMPACT UNCERTAINTY: none\n";
         let (findings, unparsed) = parse_findings(text, RID);
         assert_eq!(findings.len(), 0);
-        assert_eq!(unparsed, 1, "a malformed Finding line must be counted, not silently dropped");
+        assert_eq!(
+            unparsed, 1,
+            "a malformed Finding line must be counted, not silently dropped"
+        );
     }
 
     #[test]
@@ -800,7 +1022,9 @@ mod tests {
         assert_eq!(findings[0].severity, "Low");
         assert_eq!(findings[0].classification, "IN-SCOPE BLOCKER");
         assert_eq!(findings[0].required_action, "fix now");
-        assert!(findings[0].evidence.contains("smoke_review_id_first_round_is_r1"));
+        assert!(findings[0]
+            .evidence
+            .contains("smoke_review_id_first_round_is_r1"));
         assert_eq!(findings[0].acceptance_criterion.as_deref(), Some("AC-2"));
     }
 
@@ -815,7 +1039,11 @@ mod tests {
         let text = format!("{}{}", real_answer, echoed_transcript);
         let (findings, unparsed) = parse_findings(&text, RID);
         assert_eq!(unparsed, 0);
-        assert_eq!(findings.len(), 1, "the echoed transcript must not double-count the same finding");
+        assert_eq!(
+            findings.len(),
+            1,
+            "the echoed transcript must not double-count the same finding"
+        );
     }
 
     #[test]
@@ -837,9 +1065,18 @@ mod tests {
         assert!(yaml.contains("severity: Medium"));
         assert!(yaml.contains("classification: IN-SCOPE BLOCKER"));
         assert!(yaml.contains("required_action: fix now"));
-        assert!(!yaml.contains("some evidence text"), "evidence must not be serialized");
-        assert!(!yaml.contains("some why text"), "why must not be serialized");
-        assert!(!yaml.contains("some scope text"), "scope_reason must not be serialized");
+        assert!(
+            !yaml.contains("some evidence text"),
+            "evidence must not be serialized"
+        );
+        assert!(
+            !yaml.contains("some why text"),
+            "why must not be serialized"
+        );
+        assert!(
+            !yaml.contains("some scope text"),
+            "scope_reason must not be serialized"
+        );
     }
 
     #[test]
@@ -863,7 +1100,9 @@ mod tests {
         // The 15% ceiling below catches a *future* regression (a new systematic shape emerging
         // and going unsupported) without being brittle to this already-understood residual.
         let mut repo_root = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        for _ in 0..4 { repo_root.pop(); }
+        for _ in 0..4 {
+            repo_root.pop();
+        }
         let codex_dir = repo_root.join("maintenance/archive/self-development/reviews/codex");
 
         let mut total_finding_lines = 0usize;
@@ -879,7 +1118,9 @@ mod tests {
                 continue;
             }
             let content = std::fs::read_to_string(&path).expect("read assessment");
-            let body = content.splitn(2, "---\n\n").nth(1)
+            let body = content
+                .splitn(2, "---\n\n")
+                .nth(1)
                 .or_else(|| content.splitn(3, "---\n").nth(2))
                 .unwrap_or(content.as_str());
             let real_region = body.split("\nLOG SUMMARY:").next().unwrap_or(body);
@@ -907,7 +1148,10 @@ mod tests {
             "corpus: {files_checked} files, {total_finding_lines} finding lines, \
              {files_with_unaccounted} files with unaccounted declarations, {total_unaccounted} unaccounted"
         );
-        assert!(files_checked > 0, "expected historical assessments in the self-development archive");
+        assert!(
+            files_checked > 0,
+            "expected historical assessments in the self-development archive"
+        );
         // Findings declared in a shape no header rule accepts. On the corpus at the time of writing
         // this is 2 of 510 files — two genuine, individually distinct prose declarations that the
         // record silently lost. The ceiling catches a *systematic* new shape emerging (which would
@@ -916,7 +1160,10 @@ mod tests {
             files_with_unaccounted * 100 <= files_checked * 2,
             "too many files declare findings in an unrecognised shape: {files_with_unaccounted}/{files_checked} ({total_unaccounted} findings)"
         );
-        assert!(total_finding_lines > 0, "expected at least some real Finding: lines in the corpus");
+        assert!(
+            total_finding_lines > 0,
+            "expected at least some real Finding: lines in the corpus"
+        );
         assert_eq!(
             total_parsed + total_unparsed, total_finding_lines,
             "every Finding: line in the real (pre-echo) region must be either parsed or counted unparsed \
@@ -928,7 +1175,10 @@ mod tests {
             unparsed_pct <= 15.0,
             "unparsed rate {:.1}% ({}/{} findings across {} files) exceeds the known-residual \
              ceiling — investigate whether a new systematic (recurring) format shape appeared",
-            unparsed_pct, total_unparsed, total_finding_lines, files_checked
+            unparsed_pct,
+            total_unparsed,
+            total_finding_lines,
+            files_checked
         );
     }
 }

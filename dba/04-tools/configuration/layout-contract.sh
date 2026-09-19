@@ -52,6 +52,10 @@ supported_runtime_paths=(
   "${CODEOS_ROOT}/dba/00-entry/configurations/DBA-9.yaml"
   "${CODEOS_ROOT}/dba/00-entry/configurations/DBA-10.yaml"
   "${CODEOS_ROOT}/dba/00-entry/configurations/DBA-11.yaml"
+  "${CODEOS_ROOT}/dba/00-entry/configurations/DBA-12.yaml"
+  "${CODEOS_ROOT}/dba/00-entry/configurations/DBA-13.yaml"
+  "${CODEOS_ROOT}/dba/00-entry/configurations/DBA-14.yaml"
+  "${CODEOS_ROOT}/dba/00-entry/configurations/DBA-15.yaml"
   "${CODEOS_ROOT}/dba/03-prompts"
   "${CODEOS_ROOT}/dba/04-tools/initializer"
   "${CODEOS_ROOT}/dba/04-tools/reviewer"
@@ -132,6 +136,7 @@ canonical_paths=(
   '.codeos/05-review/measurements/<name>.md'
   '.codeos/06-workflow/decisions.jsonl'
   '.codeos/06-workflow/verifications.jsonl'
+  '.codeos/06-workflow/reality-evidence/<sha256>.json'
   '.codeos/toolkit'
   '.codeos-state/'
   'events/runtime_events.jsonl'
@@ -221,5 +226,9 @@ bash "${CODEOS_ROOT}/dba/04-tools/configuration/dba-config-boundaries.sh" \
   dba/00-entry/configurations/DBA-10.yaml >/dev/null
 bash "${CODEOS_ROOT}/dba/04-tools/configuration/dba-config-boundaries.sh" \
   dba/00-entry/configurations/DBA-11.yaml >/dev/null
+bash "${CODEOS_ROOT}/dba/04-tools/configuration/dba-config-boundaries.sh" \
+  dba/00-entry/configurations/DBA-12.yaml >/dev/null
+bash "${CODEOS_ROOT}/dba/04-tools/configuration/dba-config-boundaries.sh" \
+  dba/00-entry/configurations/DBA-13.yaml >/dev/null
 
 printf 'Codeos layout contract OK\n'

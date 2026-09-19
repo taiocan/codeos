@@ -1,6 +1,9 @@
 ---
 artifact_type: contract
 feature_id: F-####
+semantic_revision: 1
+semantic_revision_from: null
+semantic_change: Initial approved Specification Package.
 status: DRAFT
 approved_by:
 approved_at:
@@ -41,6 +44,16 @@ Codeos Mechanics policy for what each obligation requires.
 **Browser** — what Playwright journey proves the critical user-visible outcome? [journey, or "not
 applicable" when the feature has no GUI-visible outcome]
 **Preview** — what will the human inspect at the Early Development Preview checkpoint? [what to show]
+
+## Reality Basis
+
+<!-- Classify every governed user-visible claim. A product may mix classifications. For each
+reality-dependent claim, complete source, supported conditions, currency/provenance, unavailable
+behavior, and fixture policy. Fixtures may test behavior but cannot establish real-world truth. -->
+
+| Claim ID | User-visible claim | Classification | Production source | Supported conditions | Currency / provenance | Unavailable behavior | Fixture policy |
+|---|---|---|---|---|---|---|---|
+| C-1 | [claim] | [reality-dependent \| simulated \| not-reality-dependent] | [source or n/a] | [scope] | [requirements] | [truthful state] | [test-only or n/a] |
 
 ## Product Journey Contribution
 

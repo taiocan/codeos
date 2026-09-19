@@ -1,6 +1,9 @@
 ---
 artifact_type: event_schema
 feature_id: F-####
+semantic_revision: 1
+semantic_revision_from: null
+semantic_change: Initial approved Specification Package.
 status: DRAFT
 approved_by:
 approved_at:

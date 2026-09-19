@@ -8,6 +8,208 @@ use crate::run::{ReviewerRun, RunSource};
 use anyhow::Result;
 use std::path::{Path, PathBuf};
 
+struct SemanticRevision {
+    revision: u64,
+    from: Option<u64>,
+    change: String,
+}
+
+fn semantic_revision(cfg: &Config, feature: &str) -> Result<SemanticRevision> {
+    let paths = [
+        cfg.repo_root
+            .join(format!(".codeos/01-specification/intents/{feature}.md")),
+        cfg.repo_root.join(format!(
+            ".codeos/01-specification/contracts/{feature}_contract.md"
+        )),
+        cfg.repo_root.join(format!(
+            ".codeos/01-specification/event-schemas/{feature}_schema.md"
+        )),
+    ];
+    let mut revisions = Vec::new();
+    let mut predecessors = Vec::new();
+    let mut changes = Vec::new();
+    for path in paths {
+        let text = std::fs::read_to_string(&path)?;
+        let frontmatter = text
+            .strip_prefix("---\n")
+            .and_then(|rest| rest.split_once("\n---"))
+            .map(|(frontmatter, _)| frontmatter)
+            .ok_or_else(|| anyhow::anyhow!("{} has no YAML frontmatter", path.display()))?;
+        let yaml: serde_yaml::Value = serde_yaml::from_str(frontmatter)?;
+        anyhow::ensure!(
+            yaml.get("status").and_then(serde_yaml::Value::as_str) == Some("APPROVED")
+                && yaml
+                    .get("approved_by")
+                    .and_then(serde_yaml::Value::as_str)
+                    .is_some_and(|v| !v.trim().is_empty())
+                && yaml.get("approved_at").is_some(),
+            "{} is not an approved Specification Package artifact",
+            path.display()
+        );
+        let revision = yaml
+            .get("semantic_revision")
+            .and_then(serde_yaml::Value::as_u64)
+            .ok_or_else(|| {
+                anyhow::anyhow!("{} has no positive semantic_revision", path.display())
+            })?;
+        anyhow::ensure!(revision > 0, "semantic_revision must be positive");
+        revisions.push(revision);
+        predecessors.push(
+            yaml.get("semantic_revision_from")
+                .and_then(serde_yaml::Value::as_u64),
+        );
+        changes.push(
+            yaml.get("semantic_change")
+                .and_then(serde_yaml::Value::as_str)
+                .unwrap_or_default()
+                .trim()
+                .to_string(),
+        );
+    }
+    anyhow::ensure!(
+        revisions.iter().all(|revision| *revision == revisions[0]),
+        "Intent, Contract, and Event Schema semantic_revision values differ"
+    );
+    anyhow::ensure!(
+        predecessors.iter().all(|value| *value == predecessors[0]),
+        "Intent, Contract, and Event Schema semantic_revision_from values differ"
+    );
+    anyhow::ensure!(
+        changes[0].len() >= 12 && changes.iter().all(|value| value == &changes[0]),
+        "Specification Package requires one identical, substantive semantic_change declaration"
+    );
+    if let Some(from) = predecessors[0] {
+        anyhow::ensure!(
+            from + 1 == revisions[0],
+            "semantic_revision must increment exactly once from semantic_revision_from"
+        );
+    }
+    Ok(SemanticRevision {
+        revision: revisions[0],
+        from: predecessors[0],
+        change: changes.remove(0),
+    })
+}
+
+fn validate_semantic_predecessor(
+    cfg: &Config,
+    packet: &ReviewPacket,
+    semantic: &SemanticRevision,
+) -> Result<()> {
+    let Some(from) = semantic.from else {
+        return Ok(());
+    };
+    let mut files = Vec::new();
+    fn collect(dir: &Path, files: &mut Vec<PathBuf>) -> Result<()> {
+        if !dir.is_dir() {
+            return Ok(());
+        }
+        for entry in std::fs::read_dir(dir)? {
+            let entry = entry?;
+            if entry.file_type()?.is_dir() {
+                collect(&entry.path(), files)?;
+            } else if entry.path().extension().is_some_and(|ext| ext == "md") {
+                files.push(entry.path());
+            }
+        }
+        Ok(())
+    }
+    collect(&cfg.repo_root.join(".codeos/05-review/reviews"), &mut files)?;
+    files.sort();
+    let mut predecessor_hashes = std::collections::BTreeMap::new();
+    for path in files {
+        let Ok(text) = std::fs::read_to_string(path) else {
+            continue;
+        };
+        let Some(frontmatter) = text
+            .strip_prefix("---\n")
+            .and_then(|rest| rest.split_once("\n---"))
+            .map(|(frontmatter, _)| frontmatter)
+        else {
+            continue;
+        };
+        let Ok(doc) = serde_yaml::from_str::<serde_yaml::Value>(frontmatter) else {
+            continue;
+        };
+        let reviewed = doc.get("reviewed");
+        if reviewed
+            .and_then(|v| v.get("feature"))
+            .and_then(|v| v.as_str())
+            != Some(packet.feature.as_str())
+            || reviewed
+                .and_then(|v| v.get("stage"))
+                .and_then(|v| v.as_u64())
+                != Some(8)
+        {
+            continue;
+        }
+        let id = doc
+            .get("review_id")
+            .and_then(|v| v.as_str())
+            .unwrap_or_default();
+        let revision = id
+            .split("__SR")
+            .nth(1)
+            .and_then(|tail| tail.split("__R").next())
+            .and_then(|value| value.parse::<u64>().ok())
+            .unwrap_or(0);
+        if revision != from
+            || !id
+                .rsplit("__R")
+                .next()
+                .is_some_and(|v| v.parse::<u32>().is_ok())
+        {
+            continue;
+        }
+        if let Some(artifacts) = reviewed
+            .and_then(|v| v.get("artifacts"))
+            .and_then(|v| v.as_sequence())
+        {
+            for artifact in artifacts {
+                if let (Some(path), Some(hash)) = (
+                    artifact.get("path").and_then(|v| v.as_str()),
+                    artifact.get("sha256").and_then(|v| v.as_str()),
+                ) {
+                    predecessor_hashes.insert(path.to_string(), hash.to_string());
+                }
+            }
+        }
+    }
+    if predecessor_hashes.is_empty() {
+        // No ordinary Stage 8 budget exists to reset; a pre-review package revision may proceed.
+        return Ok(());
+    }
+    let package_paths = [
+        format!(".codeos/01-specification/intents/{}.md", packet.feature),
+        format!(
+            ".codeos/01-specification/contracts/{}_contract.md",
+            packet.feature
+        ),
+        format!(
+            ".codeos/01-specification/event-schemas/{}_schema.md",
+            packet.feature
+        ),
+    ];
+    let changed = package_paths.iter().any(|path| {
+        let current = packet
+            .artifacts
+            .iter()
+            .find(|artifact| &artifact.path == path);
+        current.is_some_and(|artifact| predecessor_hashes.get(path) != Some(&artifact.sha256))
+    });
+    anyhow::ensure!(
+        changed,
+        "semantic revision {} does not change governed package content from reviewed revision {from}",
+        semantic.revision
+    );
+    anyhow::ensure!(
+        !semantic.change.eq_ignore_ascii_case("revision bump")
+            && !semantic.change.eq_ignore_ascii_case("formatting"),
+        "semantic_change does not identify a governed meaning change"
+    );
+    Ok(())
+}
+
 #[derive(Clone)]
 pub struct EvidenceArgs {
     pub feature: String,
@@ -34,6 +236,11 @@ pub struct ReviewArgs {
     pub continues: Option<String>,
     /// The exhausted R3 whose following human decision explicitly authorizes one re-entry.
     pub reentry_after: Option<String>,
+    pub evidence_closure_after: Option<String>,
+    pub infrastructure_revalidation_after: Option<String>,
+    pub evidence_reassessment_after: Option<String>,
+    pub findings: Vec<String>,
+    pub event_evidence_sha: Option<String>,
 }
 
 pub struct PreparedReview {
@@ -280,7 +487,7 @@ pub fn run(args: ReviewArgs, cfg: &Config) -> Result<i32> {
     // Two ways to obtain the packet, and only one of them builds anything. The import path adopts
     // the exported bytes: the packet the model read and the packet recorded as reviewed are the
     // same bytes, not two builds that happen to agree.
-    let (evidence, review_packet) = if let Some(packet_path) = args.packet.as_ref() {
+    let (evidence, mut review_packet) = if let Some(packet_path) = args.packet.as_ref() {
         match load_exported_packet(packet_path, &args.evidence) {
             Ok(packet) => (args.evidence.clone(), packet),
             Err(failure) => {
@@ -304,6 +511,60 @@ pub fn run(args: ReviewArgs, cfg: &Config) -> Result<i32> {
         }
     };
 
+    let selected_contract = crate::config::resolve_reviewer_tool_contract(cfg).ok();
+    if evidence.stage == "8"
+        && selected_contract.as_deref() == Some("dba/04-tools/reviewer/contract/v10.md")
+        && args.continues.is_some()
+    {
+        eprintln!(
+            "error: --continues cannot bypass a semantic-revision-bound Stage 8 review cycle"
+        );
+        return Ok(crate::EXIT_USAGE);
+    }
+    if evidence.stage == "8"
+        && matches!(
+            selected_contract.as_deref(),
+            Some("dba/04-tools/reviewer/contract/v9.md" | "dba/04-tools/reviewer/contract/v10.md")
+        )
+    {
+        review_packet.require_f7_blocker_classification();
+    }
+
+    if let Some(predecessor) = args.evidence_reassessment_after.as_deref() {
+        if args.findings.is_empty() || args.event_evidence_sha.as_deref().unwrap_or("").is_empty() {
+            eprintln!(
+                "error: --evidence-reassessment-after requires --findings and --event-evidence-sha"
+            );
+            return Ok(crate::EXIT_USAGE);
+        }
+        review_packet.constrain_to_evidence_reassessment(
+            predecessor,
+            &args.findings,
+            args.event_evidence_sha.as_deref().unwrap(),
+        );
+    } else if let Some(predecessor) = args.infrastructure_revalidation_after.as_deref() {
+        if args.findings.is_empty() || args.event_evidence_sha.as_deref().unwrap_or("").is_empty() {
+            eprintln!("error: --infrastructure-revalidation-after requires --findings and --event-evidence-sha");
+            return Ok(crate::EXIT_USAGE);
+        }
+        review_packet.constrain_to_infrastructure_revalidation(
+            predecessor,
+            &args.findings,
+            args.event_evidence_sha.as_deref().unwrap(),
+        );
+    } else if let Some(predecessor) = args.evidence_closure_after.as_deref() {
+        if args.findings.is_empty() || args.findings.iter().any(|f| f.trim().is_empty()) {
+            eprintln!("error: --evidence-closure-after requires non-empty --findings");
+            return Ok(crate::EXIT_USAGE);
+        }
+        review_packet.constrain_to_evidence_closure(predecessor, &args.findings);
+    } else if !args.findings.is_empty() || args.event_evidence_sha.is_some() {
+        eprintln!(
+            "error: --findings and --event-evidence-sha require a bounded exceptional review mode"
+        );
+        return Ok(crate::EXIT_USAGE);
+    }
+
     if matches!(
         review_packet.coverage_state,
         crate::packet::CoverageState::EmptyPacket
@@ -324,7 +585,6 @@ pub fn run(args: ReviewArgs, cfg: &Config) -> Result<i32> {
             return Ok(crate::EXIT_PACKET);
         }
     }
-
     let review_log_path = if args.scratch {
         let scratch = cfg.state_dir.join("reviewer-scratch");
         if let Err(error) = std::fs::create_dir_all(&scratch) {
@@ -342,6 +602,9 @@ pub fn run(args: ReviewArgs, cfg: &Config) -> Result<i32> {
     // An external assessment is sequenced separately from review rounds, so importing one can
     // never consume a round the human still owes the boundary.
     let mut reentry_authorization = None;
+    let mut closure_authorization = None;
+    let mut infrastructure_authorization = None;
+    let mut evidence_reassessment = None;
     let review_id = if args.assessment.is_some() {
         match review_log::compute_assessment_sequence(
             &review_log_path,
@@ -357,12 +620,121 @@ pub fn run(args: ReviewArgs, cfg: &Config) -> Result<i32> {
             }
         }
     } else {
-        if let Some(predecessor) = args.reentry_after.as_deref() {
+        if let Some(predecessor) = args.evidence_reassessment_after.as_deref() {
+            let contract = crate::config::resolve_reviewer_tool_contract(cfg);
+            if !matches!(
+                contract.as_deref(),
+                Ok("dba/04-tools/reviewer/contract/v9.md"
+                    | "dba/04-tools/reviewer/contract/v10.md")
+            ) {
+                eprintln!(
+                    "error: --evidence-reassessment-after requires Reviewer Tool Contract v9"
+                );
+                return Ok(crate::EXIT_USAGE);
+            }
+            match review_log::resolve_evidence_reassessment(
+                &review_log_path,
+                &cfg.repo_root,
+                &evidence.feature,
+                &evidence.stage,
+                predecessor,
+                &args.findings,
+                args.event_evidence_sha.as_deref().unwrap_or_default(),
+            ) {
+                Ok(item) => {
+                    match review_log::format_evidence_reassessment_id(
+                        &review_log_path,
+                        &evidence.feature,
+                        &evidence.stage,
+                    ) {
+                        Ok(id) => {
+                            evidence_reassessment = Some(item);
+                            id
+                        }
+                        Err(error) => {
+                            eprintln!("error: could not sequence evidence reassessment: {error}");
+                            return Ok(crate::EXIT_WRITE);
+                        }
+                    }
+                }
+                Err(error) => {
+                    eprintln!("error: evidence reassessment refused: {error}");
+                    return Ok(crate::EXIT_WRITE);
+                }
+            }
+        } else if let Some(predecessor) = args.infrastructure_revalidation_after.as_deref() {
+            if selected_contract.as_deref() != Some("dba/04-tools/reviewer/contract/v8.md") {
+                eprintln!("error: --infrastructure-revalidation-after is not supported by the selected reviewer contract");
+                return Ok(crate::EXIT_USAGE);
+            }
+            let evidence_sha = args.event_evidence_sha.as_deref().unwrap_or_default();
+            match review_log::resolve_infrastructure_revalidation_authorization(
+                &review_log_path,
+                &cfg.repo_root,
+                &evidence.feature,
+                &evidence.stage,
+                predecessor,
+                &args.findings,
+                evidence_sha,
+            ) {
+                Ok(authorization) => {
+                    let id = review_log::format_infrastructure_revalidation_id(
+                        &evidence.feature,
+                        &evidence.stage,
+                    );
+                    infrastructure_authorization = Some(authorization);
+                    id
+                }
+                Err(error) => {
+                    eprintln!(
+                        "error: could not authorize Infrastructure Repair Revalidation: {error}"
+                    );
+                    return Ok(crate::EXIT_WRITE);
+                }
+            }
+        } else if let Some(predecessor) = args.evidence_closure_after.as_deref() {
+            if !matches!(
+                selected_contract.as_deref(),
+                Some(
+                    "dba/04-tools/reviewer/contract/v7.md" | "dba/04-tools/reviewer/contract/v8.md"
+                )
+            ) {
+                eprintln!("error: --evidence-closure-after is not supported by the selected reviewer contract");
+                return Ok(crate::EXIT_USAGE);
+            }
+            match review_log::resolve_evidence_closure_authorization(
+                &review_log_path,
+                &evidence.feature,
+                &evidence.stage,
+                predecessor,
+                &args.findings,
+            ) {
+                Ok(authorization) => {
+                    let id =
+                        review_log::format_evidence_closure_id(&evidence.feature, &evidence.stage);
+                    closure_authorization = Some(authorization);
+                    id
+                }
+                Err(error) => {
+                    eprintln!("error: could not authorize evidence closure: {error}");
+                    return Ok(crate::EXIT_WRITE);
+                }
+            }
+        } else if let Some(predecessor) = args.reentry_after.as_deref() {
             let semantics = match crate::config::resolve_reviewer_tool_contract(cfg) {
                 Ok(contract) if contract == "dba/04-tools/reviewer/contract/v4.md" => {
                     review_log::ReentryDecisionSemantics::LegacySingleDecision
                 }
-                Ok(contract) if contract == "dba/04-tools/reviewer/contract/v6.md" => {
+                Ok(contract)
+                    if matches!(
+                        contract.as_str(),
+                        "dba/04-tools/reviewer/contract/v6.md"
+                            | "dba/04-tools/reviewer/contract/v7.md"
+                            | "dba/04-tools/reviewer/contract/v8.md"
+                            | "dba/04-tools/reviewer/contract/v9.md"
+                            | "dba/04-tools/reviewer/contract/v10.md"
+                    ) =>
+                {
                     review_log::ReentryDecisionSemantics::CanonicalLogOrder
                 }
                 Ok(contract) => {
@@ -394,26 +766,58 @@ pub fn run(args: ReviewArgs, cfg: &Config) -> Result<i32> {
                 }
             }
         } else {
-        let round_result = match args.continues.as_deref() {
-            Some(predecessor) => review_log::resolve_continued_round(
-                &review_log_path,
-                &evidence.feature,
-                &evidence.stage,
-                predecessor,
-            ),
-            None => review_log::compute_review_round(
-                &review_log_path,
-                &evidence.feature,
-                &evidence.stage,
-            ),
-        };
-        match round_result {
-            Ok(round) => review_log::format_review_id(&evidence.feature, &evidence.stage, round),
-            Err(error) => {
-                eprintln!("error: could not determine review round: {error}");
-                return Ok(crate::EXIT_WRITE);
+            let id_result = match args.continues.as_deref() {
+                Some(predecessor) => review_log::resolve_continued_round(
+                    &review_log_path,
+                    &evidence.feature,
+                    &evidence.stage,
+                    predecessor,
+                )
+                .map(|round| {
+                    review_log::format_review_id(&evidence.feature, &evidence.stage, round)
+                }),
+                None if evidence.stage == "8"
+                    && selected_contract.as_deref()
+                        == Some("dba/04-tools/reviewer/contract/v10.md") =>
+                {
+                    match semantic_revision(cfg, &evidence.feature).and_then(|semantic| {
+                        validate_semantic_predecessor(cfg, &review_packet, &semantic)?;
+                        review_log::compute_semantic_review_round(
+                            &review_log_path,
+                            &evidence.feature,
+                            &evidence.stage,
+                            semantic.revision,
+                        )
+                        .map(|round| (semantic.revision, round))
+                    }) {
+                        Ok(pair) => Ok(pair),
+                        Err(error) => Err(error),
+                    }
+                    .map(|(revision, round)| {
+                        review_log::format_semantic_review_id(
+                            &evidence.feature,
+                            &evidence.stage,
+                            revision,
+                            round,
+                        )
+                    })
+                }
+                None => review_log::compute_review_round(
+                    &review_log_path,
+                    &evidence.feature,
+                    &evidence.stage,
+                )
+                .map(|round| {
+                    review_log::format_review_id(&evidence.feature, &evidence.stage, round)
+                }),
+            };
+            match id_result {
+                Ok(id) => id,
+                Err(error) => {
+                    eprintln!("error: could not determine review round: {error}");
+                    return Ok(crate::EXIT_WRITE);
+                }
             }
-        }
         }
     };
 
@@ -470,12 +874,64 @@ pub fn run(args: ReviewArgs, cfg: &Config) -> Result<i32> {
 
     // Findings first: whether they all parsed is an input to whether the assessment is usable.
     let (findings, unparsed_findings_count) = assessment::parse_findings(&raw.text, &review_id);
-    let parsed = assessment::parse_review_output(
+    let mut parsed = assessment::parse_review_output(
         &raw.text,
         &review_packet.coverage_state,
         findings.len(),
         unparsed_findings_count,
     );
+    if evidence.stage == "8"
+        && matches!(
+            selected_contract.as_deref(),
+            Some("dba/04-tools/reviewer/contract/v9.md" | "dba/04-tools/reviewer/contract/v10.md")
+        )
+    {
+        let invalid = findings.iter().any(|finding| {
+            finding.classification == "IN-SCOPE BLOCKER"
+                && (finding.blocker_kind.is_none()
+                    || (finding.blocker_kind.as_deref() == Some("EVIDENCE_INSUFFICIENT")
+                        && finding
+                            .evidence_required
+                            .as_deref()
+                            .unwrap_or("")
+                            .trim()
+                            .is_empty()))
+        });
+        if invalid {
+            parsed.parse_status = "FAILED".to_string();
+            parsed.assessment_status = "INCOMPLETE".to_string();
+            parsed.incomplete_reason =
+                "an F7 blocker omitted its required blocker kind or evidence requirement"
+                    .to_string();
+            parsed.effective_concern = "DO NOT ADVANCE".to_string();
+        }
+    }
+    if let Some(item) = evidence_reassessment.as_mut() {
+        item.substantive = findings.iter().any(|finding| {
+            finding.classification == "IN-SCOPE BLOCKER"
+                && finding.blocker_kind.as_deref() == Some("SUBSTANTIVE")
+        });
+        if parsed.assessment_status == "COMPLETE"
+            && parsed.effective_concern == "DO NOT ADVANCE"
+            && !item.substantive
+            && parsed.evidence_materiality.is_none()
+        {
+            parsed.parse_status = "FAILED".to_string();
+            parsed.assessment_status = "INCOMPLETE".to_string();
+            parsed.incomplete_reason =
+                "a negative evidence reassessment omitted EVIDENCE MATERIALITY".to_string();
+        }
+    }
+    if (closure_authorization.is_some() || infrastructure_authorization.is_some())
+        && parsed.assessment_status == "COMPLETE"
+        && parsed.effective_concern == "NO OBJECTION"
+    {
+        parsed.effective_concern = if infrastructure_authorization.is_some() {
+            "INFRASTRUCTURE EVIDENCE REVALIDATED — PROGRESSION PERMITTED".to_string()
+        } else {
+            "EVIDENCE CLOSED — PROGRESSION PERMITTED".to_string()
+        };
+    }
     // The recorded count covers every finding the reply declared but that never reached the record:
     // malformed blocks plus declarations in a shape the parser does not accept.
     let declared_findings = assessment::count_declared_findings(&raw.text);
@@ -569,6 +1025,9 @@ pub fn run(args: ReviewArgs, cfg: &Config) -> Result<i32> {
         &packet_hash,
         continues_for_log,
         reentry_authorization.as_ref(),
+        closure_authorization.as_ref(),
+        infrastructure_authorization.as_ref(),
+        evidence_reassessment.as_ref(),
     ) {
         eprintln!("error: log append failed: {error}");
         eprintln!("  assessment was written to: {}", assessment_file.display());

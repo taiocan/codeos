@@ -99,7 +99,10 @@ fn communication_context_does_not_change_review_content_budget() {
     let (second_code, second_stdout, second_stderr) = run_in_dir(repo.path(), &args);
     assert_eq!(second_code, 0, "{second_stderr}");
     let after = plan_value_after(&second_stdout, "review_content_bytes: ").unwrap();
-    assert_eq!(before, after, "communication context changed evidence budgeting");
+    assert_eq!(
+        before, after,
+        "communication context changed evidence budgeting"
+    );
 }
 
 #[test]
@@ -325,8 +328,14 @@ fn stage8_empty_canonical_input_fails_with_corrective_action() {
     let (code, stdout, stderr) = run_in_dir(repo.path(), &args);
 
     assert_eq!(code, 4, "{stderr}");
-    assert!(stdout.contains("required canonical Stage-8 input is empty"), "{stdout}");
-    assert!(stdout.contains("provide the populated approved artifact"), "{stdout}");
+    assert!(
+        stdout.contains("required canonical Stage-8 input is empty"),
+        "{stdout}"
+    );
+    assert!(
+        stdout.contains("provide the populated approved artifact"),
+        "{stdout}"
+    );
 }
 
 #[test]

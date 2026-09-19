@@ -22,10 +22,23 @@ pub struct RuntimeVerification {
     pub journey_guard_script: Option<String>,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RealityVerification {
+    pub command: String,
+}
+
 #[derive(Debug, Default, Deserialize)]
 struct ProjectConfiguration {
     #[serde(default)]
     runtime_verification: Option<RuntimeVerificationInput>,
+    #[serde(default)]
+    reality_verification: Option<RealityVerificationInput>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RealityVerificationInput {
+    command: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -53,7 +66,7 @@ impl Project {
         self.selected_policy_version(
             "workflow_feature_policy",
             "dba/02-policies/workflow-feature/v1.md",
-            &[1, 2],
+            &[1, 2, 3],
         )
     }
 
@@ -69,7 +82,7 @@ impl Project {
         self.selected_policy_version(
             "codeos_mechanics_policy",
             "dba/02-policies/codeos-mechanics/v3.md",
-            &[1, 2, 3, 4, 5],
+            &[1, 2, 3, 4, 5, 6],
         )
     }
 
@@ -210,6 +223,19 @@ impl Project {
             backend_health_url: input.backend_health_url,
             web_url: input.web_url,
             journey_guard_script: input.journey_guard_script,
+        })
+    }
+
+    pub fn reality_verification(&self) -> Result<RealityVerification> {
+        let text = std::fs::read_to_string(self.codeos_yaml()).context("read codeos.yaml")?;
+        let config: ProjectConfiguration =
+            serde_yaml::from_str(&text).context("parse reality_verification in codeos.yaml")?;
+        let input = config
+            .reality_verification
+            .context("reality-dependent claims require reality_verification.command")?;
+        validate_project_executable(&self.root, &input.command)?;
+        Ok(RealityVerification {
+            command: input.command,
         })
     }
 

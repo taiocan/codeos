@@ -16,7 +16,7 @@ use crate::hashing;
 use crate::project::Project;
 use crate::receipts::{self, ReceiptState, ReceiptStore};
 use crate::verification::{self, RecordState, VerificationRecord, VerificationStore};
-use anyhow::Result;
+use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::Path;
@@ -57,11 +57,13 @@ pub struct Subject {
     pub gui: bool,
     pub persistence: bool,
     pub arch_approval_required: bool,
+    pub reality_claims: Vec<String>,
 }
 
 impl Subject {
     pub fn resolve(project: &Project, workflow: Workflow, id: &str) -> Result<Self> {
         let (mut gui, mut persistence) = (false, false);
+        let mut reality_claims = Vec::new();
         if workflow == Workflow::Feature {
             let contract_path = project.contract(id);
             if let Ok(text) = std::fs::read_to_string(&contract_path) {
@@ -69,6 +71,7 @@ impl Subject {
                 let lower = text.to_lowercase();
                 gui = lower.contains("gui-visible outcome") || impact_row_changed(&lower, "gui");
                 persistence = impact_row_changed(&lower, "persistence");
+                reality_claims = reality_dependent_claims(&text)?;
             }
         }
         Ok(Self {
@@ -77,6 +80,7 @@ impl Subject {
             gui,
             persistence,
             arch_approval_required: false,
+            reality_claims,
         })
     }
 }
@@ -105,6 +109,7 @@ pub fn evaluate(project: &Project, subject: &Subject) -> Result<Vec<CheckpointRe
                 gui: false,
                 persistence: false,
                 arch_approval_required: false,
+                reality_claims: vec![],
             };
             let boot_reports = evaluate(project, &boot)?;
             let boot_complete = boot_reports
@@ -192,6 +197,47 @@ fn impact_row_changed(lower_text: &str, tier_keyword: &str) -> bool {
             && l.contains(tier_keyword)
             && l.split('|').map(str::trim).any(|cell| cell == "changed")
     })
+}
+
+fn reality_dependent_claims(contract: &str) -> Result<Vec<String>> {
+    let Some(section) = contract.split("## Reality Basis").nth(1) else {
+        return Ok(vec![]);
+    };
+    let section = section.split("\n## ").next().unwrap_or(section);
+    let rows: Vec<Vec<&str>> = section
+        .lines()
+        .filter_map(|line| {
+            let cells: Vec<_> = line
+                .trim()
+                .trim_matches('|')
+                .split('|')
+                .map(str::trim)
+                .collect();
+            (cells.len() >= 3
+                && !matches!(cells[0], "" | "Claim ID")
+                && !cells[0].chars().all(|c| c == '-'))
+            .then_some(cells)
+        })
+        .collect();
+    let mut reality = Vec::new();
+    for cells in rows {
+        if !matches!(
+            cells[2],
+            "reality-dependent" | "simulated" | "not-reality-dependent"
+        ) {
+            anyhow::bail!("claim '{}' has an invalid reality classification", cells[0]);
+        }
+        if cells[2] == "reality-dependent" {
+            if cells.len() < 8 || cells[3..8].iter().any(|value| value.trim().is_empty()) {
+                anyhow::bail!(
+                    "reality-dependent claim '{}' has incomplete source requirements",
+                    cells[0]
+                );
+            }
+            reality.push(cells[0].to_string());
+        }
+    }
+    Ok(reality)
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -1029,6 +1075,25 @@ fn evaluate_checkpoint(
                     }
                 }
             }
+            Requirement::SemanticPackageRevision => {
+                match semantic_package_revision(project, &subject.id) {
+                    Ok(revision) if revision > 0 => {
+                        met.push(format!(
+                            "Specification Package semantic revision {revision}"
+                        ));
+                    }
+                    Ok(_) => unmet.push(
+                        "new Specification Packages must use a positive semantic_revision".into(),
+                    ),
+                    Err(error) => {
+                        unmet.push(format!("invalid semantic package revision: {error}"));
+                        next_action.get_or_insert(
+                            "set the same semantic_revision on Intent, Contract, and Event Schema"
+                                .into(),
+                        );
+                    }
+                }
+            }
             Requirement::ContractSection(heading) => {
                 if evidence::section_filled(&project.contract(&subject.id), heading)? {
                     met.push(format!("Contract '{heading}' is filled in"));
@@ -1089,6 +1154,14 @@ fn evaluate_checkpoint(
                 if let Some(h) = latest.as_ref().and_then(|r| r.bindings.get("observation")) {
                     bindings.insert("observation".into(), h.clone());
                 }
+                if let Some(h) = selected_production_evidence(project, subject)? {
+                    if matches!(
+                        *checkpoint,
+                        "reconciliation" | "final_ux_validation" | "acceptance"
+                    ) {
+                        bindings.insert("production_evidence".into(), h);
+                    }
+                }
                 match receipts::evaluate(latest, &bindings) {
                     ReceiptState::Absent => {
                         soft += 1;
@@ -1140,6 +1213,15 @@ fn evaluate_checkpoint(
                             .get_or_insert("run the reviewer at the final review boundary".into());
                     }
                     Some(r) => {
+                        if let Some(selected) = selected_production_evidence(project, subject)? {
+                            if r.production_evidence.as_deref() != Some(selected.as_str()) {
+                                unmet.push("reviewer packet is not bound to the production evidence selected at F6".into());
+                                next_action.get_or_insert(
+                                    "review the exact selected production-evidence artifact".into(),
+                                );
+                                continue;
+                            }
+                        }
                         let head = current_head(&project.root);
                         let bound = r.review_commit.is_empty()
                             || head.is_empty()
@@ -1152,6 +1234,43 @@ fn evaluate_checkpoint(
                             next_action.get_or_insert(
                                 "re-run the reviewer against the current commit".into(),
                             );
+                        } else if r.effective_concern == "EVIDENCE CLOSED — PROGRESSION PERMITTED"
+                            && !evidence::evidence_closure_history_permits_progression(
+                                &project.codeos_dir().join("05-review/reviews/review-log.md"),
+                                &subject.id,
+                                stage,
+                            )?
+                        {
+                            unmet.push("evidence-closure assessment lacks the required composite review history".into());
+                            next_action.get_or_insert(
+                                "restore the exact authorized evidence-closure chain".into(),
+                            );
+                        } else if r.effective_concern
+                            == "INFRASTRUCTURE EVIDENCE REVALIDATED — PROGRESSION PERMITTED"
+                            && !evidence::infrastructure_revalidation_history_permits_progression(
+                                &project.codeos_dir().join("05-review/reviews/review-log.md"),
+                                &subject.id,
+                                stage,
+                            )?
+                        {
+                            unmet.push("infrastructure revalidation lacks the required immutable composite history".into());
+                            next_action.get_or_insert(
+                                "restore the exact authorized infrastructure-revalidation chain"
+                                    .into(),
+                            );
+                        } else if r.review_id.contains("__EVIDENCE-REASSESSMENT-")
+                            && !evidence::evidence_reassessment_history_permits_progression(
+                                &project.codeos_dir().join("05-review/reviews/review-log.md"),
+                                &subject.id,
+                                stage,
+                                &r.review_id,
+                            )?
+                        {
+                            unmet.push(
+                                "evidence reassessment lacks a valid immutable composite history"
+                                    .into(),
+                            );
+                            next_action.get_or_insert("restore the exact evidence-repair chain or supply materially new evidence".into());
                         } else if !evidence::review_permits_progression(&r.effective_concern) {
                             unmet.push(format!(
                                 "reviewer concern '{}' does not permit progression",
@@ -1160,6 +1279,55 @@ fn evaluate_checkpoint(
                             next_action.get_or_insert("resolve the reviewer's finding".into());
                         } else {
                             met.push(format!("reviewer record present ({})", r.effective_concern));
+                        }
+                    }
+                }
+            }
+            Requirement::ProductionSourceEvidence => {
+                if subject.reality_claims.is_empty() {
+                    met.push("no reality-dependent Contract claim".into());
+                } else {
+                    let want = verification_bindings(
+                        project,
+                        subject,
+                        c.id,
+                        Some("production_source_evidence"),
+                    )?;
+                    let have = vstore.latest(
+                        subject.workflow.slug(),
+                        &subject.id,
+                        c.id,
+                        "production_source_evidence",
+                    )?;
+                    match verification::evaluate(have, &want) {
+                        RecordState::Current(record) => met.push(format!(
+                            "production-source evidence current ({})",
+                            record
+                                .details
+                                .as_ref()
+                                .and_then(|v| v.get("evidence_sha256"))
+                                .and_then(|v| v.as_str())
+                                .map(short)
+                                .unwrap_or_else(|| "unknown".into())
+                        )),
+                        RecordState::Absent => {
+                            unmet.push(
+                                "reality-dependent claims have no production-source evidence"
+                                    .into(),
+                            );
+                            next_action.get_or_insert(
+                                "run `codeos-workflow check` with production access".into(),
+                            );
+                        }
+                        RecordState::Failed(_) => {
+                            unmet.push("production-source verification failed".into());
+                        }
+                        RecordState::Stale { binding, .. } => {
+                            unmet.push(format!(
+                                "production-source evidence is stale — '{binding}' changed"
+                            ));
+                            next_action
+                                .get_or_insert("produce new production-source evidence".into());
                         }
                     }
                 }
@@ -1361,6 +1529,9 @@ pub fn run_checks(project: &Project, subject: &Subject) -> Result<Vec<String>> {
             .iter()
             .filter_map(|r| match r {
                 Requirement::LiveVerification { mechanic, .. } => Some(*mechanic),
+                Requirement::ProductionSourceEvidence if !subject.reality_claims.is_empty() => {
+                    Some("production_source_evidence")
+                }
                 _ => None,
             })
             .collect();
@@ -1474,6 +1645,49 @@ fn current_bindings(
     Ok(b)
 }
 
+fn selected_production_evidence(project: &Project, subject: &Subject) -> Result<Option<String>> {
+    if subject.reality_claims.is_empty() {
+        return Ok(None);
+    }
+    let store = ReceiptStore::at(&project.codeos_dir());
+    Ok(store
+        .latest(subject.workflow.slug(), &subject.id, "reconciliation")?
+        .and_then(|receipt| receipt.bindings.get("production_evidence").cloned()))
+}
+
+pub fn validate_production_evidence_selection(
+    project: &Project,
+    subject: &Subject,
+    identity: &str,
+) -> Result<()> {
+    if identity.len() != 64 || !identity.chars().all(|c| c.is_ascii_hexdigit()) {
+        anyhow::bail!("production evidence identity must be a sha256 hex digest");
+    }
+    let want = verification_bindings(project, subject, "F5", Some("production_source_evidence"))?;
+    let store = VerificationStore::at(&project.codeos_dir());
+    let matching = store.all()?.into_iter().rev().find(|record| {
+        record.workflow == subject.workflow.slug()
+            && record.subject == subject.id
+            && record.checkpoint == "F5"
+            && record.verification == "production_source_evidence"
+            && record.result == "passed"
+            && record
+                .details
+                .as_ref()
+                .and_then(|details| details.get("evidence_sha256"))
+                .and_then(|value| value.as_str())
+                == Some(identity)
+    });
+    match verification::evaluate(matching, &want) {
+        RecordState::Current(_) => Ok(()),
+        RecordState::Absent => anyhow::bail!("selected production evidence does not exist"),
+        RecordState::Failed(_) => anyhow::bail!("selected production evidence did not pass"),
+        RecordState::Stale { binding, .. } => {
+            anyhow::bail!("selected production evidence is stale because '{binding}' changed")
+        }
+    }
+}
+
 /// The governed inputs a mechanical-verification record for `checkpoint` must be bound to. Public
 /// for `check` and for tests that seed verification records directly.
 pub fn verification_bindings_for(
@@ -1537,7 +1751,7 @@ fn verification_bindings(
             "journey_target".into(),
             hashing::text_sha256(&product_journey_target(project, subject)?),
         );
-        if project.codeos_mechanics_version()? >= 5 {
+        if project.codeos_mechanics_version()? == 5 {
             let definition = journey_definition(project, subject)?;
             for transition in definition.transitions {
                 if let Some(relative) = transition.authority_path {
@@ -1551,6 +1765,60 @@ fn verification_bindings(
         }
     }
     Ok(b)
+}
+
+pub fn semantic_package_revision(project: &Project, feature: &str) -> Result<u64> {
+    let paths = [
+        project.intent(feature),
+        project.contract(feature),
+        project.event_schema(feature),
+    ];
+    let mut revisions = Vec::new();
+    let mut predecessors = Vec::new();
+    let mut changes = Vec::new();
+    for path in paths {
+        let text =
+            std::fs::read_to_string(&path).with_context(|| format!("read {}", path.display()))?;
+        let frontmatter = text
+            .strip_prefix("---\n")
+            .and_then(|rest| rest.split_once("\n---"))
+            .map(|(frontmatter, _)| frontmatter)
+            .context("missing YAML frontmatter")?;
+        let value: serde_yaml::Value = serde_yaml::from_str(frontmatter)?;
+        let revision = value
+            .get("semantic_revision")
+            .and_then(serde_yaml::Value::as_u64)
+            .context("semantic_revision must be a positive integer")?;
+        revisions.push(revision);
+        predecessors.push(
+            value
+                .get("semantic_revision_from")
+                .and_then(serde_yaml::Value::as_u64),
+        );
+        changes.push(
+            value
+                .get("semantic_change")
+                .and_then(serde_yaml::Value::as_str)
+                .unwrap_or_default()
+                .trim()
+                .to_string(),
+        );
+    }
+    if revisions.iter().any(|revision| *revision != revisions[0]) {
+        anyhow::bail!("Intent, Contract, and Event Schema revisions differ");
+    }
+    if predecessors.iter().any(|value| *value != predecessors[0])
+        || changes.iter().any(|value| value != &changes[0])
+        || changes[0].len() < 12
+    {
+        anyhow::bail!("semantic revision lineage or semantic_change declarations differ");
+    }
+    if let Some(from) = predecessors[0] {
+        if from + 1 != revisions[0] {
+            anyhow::bail!("semantic_revision must increment exactly once from its predecessor");
+        }
+    }
+    Ok(revisions[0])
 }
 
 /// Validate `codeos.yaml` against the active configuration's mechanics policy. Runs the authoritative
@@ -1605,6 +1873,7 @@ fn run_mechanic(project: &Project, subject: &Subject, mechanic: &str) -> evidenc
         "baseline" => run_integrated_baseline(project),
         "smoke" => run_smoke(project),
         "product_journey" => run_product_journey(project, subject),
+        "production_source_evidence" => run_production_source_evidence(project, subject),
         "behavior" | "repeatability" | "data_integrity" => run_cargo_tests(project),
         "playwright" => {
             let runtime = match project.runtime_verification() {
@@ -1630,8 +1899,197 @@ fn run_mechanic(project: &Project, subject: &Subject, mechanic: &str) -> evidenc
     }
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ProductionEvidence {
+    schema: u8,
+    subject: String,
+    claims: Vec<String>,
+    source_kind: String,
+    provider: String,
+    observed_at: String,
+    implementation_sha256: String,
+    governed_inputs: BTreeMap<String, String>,
+    observations: Vec<ProductionObservation>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ProductionObservation {
+    claim_ids: Vec<String>,
+    visible_result: serde_json::Value,
+    visible_result_sha256: String,
+    provider_receipts_sha256: String,
+    provider_request_response_receipts: Vec<ProviderReceipt>,
+    details: serde_json::Value,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ProviderReceipt {
+    provider_host: String,
+    provider_path: String,
+    request_sha256: String,
+    response_sha256: String,
+    #[serde(default)]
+    provider_request_id: Option<String>,
+    requested_at: String,
+    received_at: String,
+    http_status: u16,
+}
+
+fn run_production_source_evidence(
+    project: &Project,
+    subject: &Subject,
+) -> evidence::CommandOutcome {
+    let config = match project.reality_verification() {
+        Ok(config) => config,
+        Err(error) => return failure(error.to_string()),
+    };
+    let bindings =
+        match verification_bindings(project, subject, "F5", Some("production_source_evidence")) {
+            Ok(bindings) => bindings,
+            Err(error) => return failure(error.to_string()),
+        };
+    let nonce = format!(
+        "{}-{}-{}",
+        std::process::id(),
+        subject.id,
+        chrono::Utc::now().timestamp_nanos_opt().unwrap_or_default()
+    );
+    let definition_path = std::env::temp_dir().join(format!("codeos-reality-{nonce}.json"));
+    let output_path = std::env::temp_dir().join(format!("codeos-reality-evidence-{nonce}.json"));
+    let definition = serde_json::json!({
+        "schema": 1,
+        "subject": subject.id,
+        "claims": subject.reality_claims,
+        "governed_inputs": bindings,
+    });
+    if let Err(error) = std::fs::write(
+        &definition_path,
+        serde_json::to_vec_pretty(&definition).unwrap_or_default(),
+    ) {
+        return failure(format!("write reality definition: {error}"));
+    }
+    let definition_text = definition_path.to_string_lossy().into_owned();
+    let output_text = output_path.to_string_lossy().into_owned();
+    let mut outcome = evidence::run_env(
+        &project.root,
+        &config.command,
+        &[],
+        &[
+            ("CODEOS_REALITY_DEFINITION_PATH", definition_text.as_str()),
+            ("CODEOS_REALITY_EVIDENCE_PATH", output_text.as_str()),
+            ("CODEOS_REALITY_MODE", "production-source"),
+        ],
+    );
+    let parsed = std::fs::read_to_string(&output_path)
+        .map_err(|error| anyhow::anyhow!("verifier produced no readable evidence: {error}"))
+        .and_then(|text| {
+            serde_json::from_str::<ProductionEvidence>(&text)
+                .map_err(|error| anyhow::anyhow!("invalid production evidence: {error}"))
+        });
+    let _ = std::fs::remove_file(&definition_path);
+    let _ = std::fs::remove_file(&output_path);
+    let expected_implementation = bindings
+        .get("implementation_state")
+        .cloned()
+        .unwrap_or_default();
+    match parsed.and_then(|record| {
+        if !outcome.ok {
+            anyhow::bail!("production verifier exited unsuccessfully");
+        }
+        if record.schema != 1 || record.subject != subject.id {
+            anyhow::bail!("evidence schema or subject does not match");
+        }
+        let expected: BTreeSet<_> = subject.reality_claims.iter().cloned().collect();
+        let actual: BTreeSet<_> = record.claims.iter().cloned().collect();
+        if actual != expected || record.claims.len() != actual.len() {
+            anyhow::bail!("evidence does not cover the exact reality-dependent claim set");
+        }
+        if record.source_kind != "production" || record.provider.trim().is_empty() {
+            anyhow::bail!("evidence source must be an identified production source");
+        }
+        if record.observed_at.trim().is_empty() || record.observations.is_empty() {
+            anyhow::bail!("evidence requires observation time and user-visible observations");
+        }
+        let covered: BTreeSet<_> = record
+            .observations
+            .iter()
+            .flat_map(|observation| observation.claim_ids.iter().cloned())
+            .collect();
+        if covered != expected {
+            anyhow::bail!("production observations do not cover the exact claim set");
+        }
+        for observation in &record.observations {
+            if !is_sha256(&observation.visible_result_sha256)
+                || !is_sha256(&observation.provider_receipts_sha256)
+                || observation.provider_request_response_receipts.is_empty()
+            {
+                anyhow::bail!(
+                    "production observation lacks content-bound visible/provider evidence"
+                );
+            }
+            if hashing::text_sha256(&serde_json::to_string(&observation.visible_result)?)
+                != observation.visible_result_sha256
+                || hashing::text_sha256(&serde_json::to_string(
+                    &observation.provider_request_response_receipts,
+                )?) != observation.provider_receipts_sha256
+            {
+                anyhow::bail!("production observation content hashes do not match their evidence");
+            }
+            for receipt in &observation.provider_request_response_receipts {
+                if receipt.provider_host.trim().is_empty()
+                    || !receipt.provider_path.starts_with('/')
+                    || !is_sha256(&receipt.request_sha256)
+                    || !is_sha256(&receipt.response_sha256)
+                    || receipt.requested_at.trim().is_empty()
+                    || receipt.received_at.trim().is_empty()
+                    || !(200..300).contains(&receipt.http_status)
+                {
+                    anyhow::bail!("provider request/response provenance is incomplete or invalid");
+                }
+            }
+        }
+        if record.implementation_sha256 != expected_implementation
+            || record.governed_inputs != bindings
+        {
+            anyhow::bail!(
+                "evidence bindings do not match the current implementation and governed inputs"
+            );
+        }
+        Ok(record)
+    }) {
+        Ok(record) => {
+            let canonical = serde_json::to_string(&record).unwrap_or_default();
+            let identity = hashing::text_sha256(&canonical);
+            let dir = project.codeos_dir().join("06-workflow/reality-evidence");
+            if let Err(error) = std::fs::create_dir_all(&dir)
+                .and_then(|_| std::fs::write(dir.join(format!("{identity}.json")), &canonical))
+            {
+                return failure(format!("persist production evidence: {error}"));
+            }
+            outcome.details = Some(serde_json::json!({
+                "evidence_sha256": identity,
+                "evidence": record,
+            }));
+            outcome
+        }
+        Err(error) => {
+            outcome.ok = false;
+            outcome.summary = format!("{} -> FAILED ({error})", outcome.command);
+            outcome.details = Some(serde_json::json!({ "validation_error": error.to_string() }));
+            outcome
+        }
+    }
+}
+
+fn is_sha256(value: &str) -> bool {
+    value.len() == 64 && value.chars().all(|character| character.is_ascii_hexdigit())
+}
+
 fn run_product_journey(project: &Project, subject: &Subject) -> evidence::CommandOutcome {
-    if project.codeos_mechanics_version().unwrap_or(4) < 5 {
+    if project.codeos_mechanics_version().unwrap_or(4) != 5 {
         return run_legacy_product_journey(project, subject);
     }
     let definition = match journey_definition(project, subject) {
@@ -2097,6 +2555,7 @@ mod journey_tests {
             gui,
             persistence: false,
             arch_approval_required: false,
+            reality_claims: vec![],
         };
         (dir, project, subject)
     }
@@ -2265,5 +2724,20 @@ mod journey_tests {
         assert_eq!(derived.transition_id, "T-0001");
         assert_eq!(derived.producer_role, "producer");
         assert_eq!(derived.authority_kind, "architecture");
+    }
+
+    #[test]
+    fn reality_classification_is_claim_scoped_and_closed() {
+        let contract = "## Reality Basis\n\n| Claim ID | Claim | Classification | Source | Conditions | Currency | Unavailable | Fixture |\n|---|---|---|---|---|---|---|---|\n| route | Road route | reality-dependent | provider | roads | now | unavailable | test-only |\n| label | Heading | not-reality-dependent | n/a | n/a | n/a | n/a | n/a |\n| demo | Example | simulated | n/a | n/a | n/a | n/a | fixture |\n\n## Scenarios\n";
+        assert_eq!(reality_dependent_claims(contract).unwrap(), vec!["route"]);
+    }
+
+    #[test]
+    fn production_evidence_schema_rejects_fixture_substitution_and_extra_fields() {
+        let fixture = r#"{"schema":1,"subject":"F-1","claims":["route"],"source_kind":"fixture","provider":"test","observed_at":"now","implementation_sha256":"abc","governed_inputs":{},"observations":[{"claim_ids":["route"],"visible_result":{},"visible_result_sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","provider_receipts_sha256":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","provider_request_response_receipts":[],"details":{}}]}"#;
+        let parsed: ProductionEvidence = serde_json::from_str(fixture).unwrap();
+        assert_ne!(parsed.source_kind, "production");
+        let extra = fixture.replace("\"schema\":1", "\"schema\":1,\"made_up\":true");
+        assert!(serde_json::from_str::<ProductionEvidence>(&extra).is_err());
     }
 }

@@ -3,13 +3,17 @@
 //! Tests for the decision command (APPROVE_STAGE, REQUEST_CHANGES verdicts).
 
 mod common;
-use common::{setup_temp_git_repo, binary, repo_root, run};
+use common::{binary, repo_root, run, setup_temp_git_repo};
 use std::process::Command;
 
 #[test]
 fn smoke_decision_bad_verdict_exits_usage() {
     let (code, _, stderr) = run(&[
-        "decision", "UPG-SMOKE", "selfdev-step-0", "WRONG_VERDICT", "reason",
+        "decision",
+        "UPG-SMOKE",
+        "selfdev-step-0",
+        "WRONG_VERDICT",
+        "reason",
     ]);
     assert_ne!(code, 0, "bad verdict should fail");
     assert!(
@@ -18,7 +22,6 @@ fn smoke_decision_bad_verdict_exits_usage() {
         stderr
     );
 }
-
 
 fn write_fake_assessment(
     repo_path: &std::path::Path,
@@ -34,7 +37,10 @@ fn write_fake_assessment(
 
     let packet_content = "FAKE PACKET CONTENT FOR TEST\n";
     let actual_sha = codeos_reviewer_sha256(packet_content);
-    let packet_name = format!("20260101T000000Z-{}-stage-{}-abcdef1.packet.txt", feature, stage);
+    let packet_name = format!(
+        "20260101T000000Z-{}-stage-{}-abcdef1.packet.txt",
+        feature, stage
+    );
     std::fs::write(packets_dir.join(&packet_name), packet_content).expect("write packet");
 
     let stored_sha = packet_sha_override.unwrap_or(&actual_sha);
@@ -55,21 +61,26 @@ fn codeos_reviewer_sha256(s: &str) -> String {
     // Since the test only checks MATCH/MISMATCH behaviour, a stable deterministic value works.
     let mut h = DefaultHasher::new();
     s.hash(&mut h);
-    format!("{:016x}{:016x}{:016x}{:016x}", h.finish(), h.finish() ^ 0xdead, h.finish() ^ 0xbeef, h.finish() ^ 0xcafe)
+    format!(
+        "{:016x}{:016x}{:016x}{:016x}",
+        h.finish(),
+        h.finish() ^ 0xdead,
+        h.finish() ^ 0xbeef,
+        h.finish() ^ 0xcafe
+    )
 }
 
 /// Write a malformed assessment file (exists but has no parseable frontmatter).
-fn write_malformed_assessment(
-    repo_path: &std::path::Path,
-    feature: &str,
-    stage: &str,
-) {
+fn write_malformed_assessment(repo_path: &std::path::Path, feature: &str, stage: &str) {
     let codex_dir = repo_path.join(".codeos/05-review/reviews/codex");
     std::fs::create_dir_all(&codex_dir).expect("create codex dir");
     let filename = format!("20260101T000000Z-{}-stage-{}-abcdef1.md", feature, stage);
     // No YAML frontmatter — just body text, so parse_assessment_frontmatter returns None.
-    std::fs::write(codex_dir.join(&filename), "This assessment has no frontmatter.\n")
-        .expect("write malformed assessment");
+    std::fs::write(
+        codex_dir.join(&filename),
+        "This assessment has no frontmatter.\n",
+    )
+    .expect("write malformed assessment");
 }
 
 /// Write an assessment that has frontmatter but is missing coverage_state (partial provenance).
@@ -113,10 +124,7 @@ fn setup_dba11(repo_path: &std::path::Path) {
     .expect("write project config");
 }
 
-fn run_decision_in(
-    repo_path: &std::path::Path,
-    args: &[&str],
-) -> (i32, String, String) {
+fn run_decision_in(repo_path: &std::path::Path, args: &[&str]) -> (i32, String, String) {
     let out = Command::new(binary())
         .args(args)
         .current_dir(repo_path)
@@ -143,34 +151,51 @@ fn authorize_reentry_is_bound_review_control_not_stage_approval() {
     )
     .expect("write R1-R3 history");
 
-    let (code, _, stderr) = run_decision_in(repo, &[
-        "decision",
-        "FEAT",
-        "8",
-        "AUTHORIZE_REENTRY",
-        "One reviewer execution for repaired findings.",
-        "--after-review",
-        "REV__FEAT__8__R3",
-    ]);
+    let (code, _, stderr) = run_decision_in(
+        repo,
+        &[
+            "decision",
+            "FEAT",
+            "8",
+            "AUTHORIZE_REENTRY",
+            "One reviewer execution for repaired findings.",
+            "--after-review",
+            "REV__FEAT__8__R3",
+        ],
+    );
     assert_eq!(code, 0, "authorization failed: {stderr}");
 
     let log = std::fs::read_to_string(log_path).expect("read log");
     assert!(log.contains("Decision: AUTHORIZE_REENTRY"), "{log}");
     assert!(log.contains("Re-entry after: REV__FEAT__8__R3"), "{log}");
     assert!(!log.contains("Decision: APPROVE_STAGE"), "{log}");
-    assert!(!log.contains("Provenance:"), "review control must not claim assessment provenance: {log}");
+    assert!(
+        !log.contains("Provenance:"),
+        "review control must not claim assessment provenance: {log}"
+    );
 }
 
 #[test]
 fn stage_disposition_rejects_reentry_binding() {
     let (dir, _) = setup_temp_git_repo();
     setup_review_log(dir.path());
-    let (code, _, stderr) = run_decision_in(dir.path(), &[
-        "decision", "FEAT", "8", "APPROVE_STAGE", "reason",
-        "--after-review", "REV__FEAT__8__R3",
-    ]);
+    let (code, _, stderr) = run_decision_in(
+        dir.path(),
+        &[
+            "decision",
+            "FEAT",
+            "8",
+            "APPROVE_STAGE",
+            "reason",
+            "--after-review",
+            "REV__FEAT__8__R3",
+        ],
+    );
     assert_eq!(code, 1);
-    assert!(stderr.contains("valid only with AUTHORIZE_REENTRY"), "{stderr}");
+    assert!(
+        stderr.contains("valid only with AUTHORIZE_REENTRY"),
+        "{stderr}"
+    );
 }
 
 #[test]
@@ -181,21 +206,36 @@ fn smoke_decision_coverage_gate_blocks_critical_omission() {
     let log_path = setup_review_log(p);
     let log_size_before = std::fs::metadata(&log_path).map(|m| m.len()).unwrap_or(0);
 
-    let head = Command::new("git").args(["rev-parse", "HEAD"]).current_dir(p)
-        .output().expect("git rev-parse");
+    let head = Command::new("git")
+        .args(["rev-parse", "HEAD"])
+        .current_dir(p)
+        .output()
+        .expect("git rev-parse");
     let head_sha = String::from_utf8_lossy(&head.stdout).trim().to_string();
 
     write_fake_assessment(p, "FEAT", "my-stage", "CRITICAL_OMISSION", None, &head_sha);
 
-    let (code, _, stderr) = run_decision_in(p, &[
-        "decision", "FEAT", "my-stage", "APPROVE_STAGE", "reason",
-    ]);
+    let (code, _, stderr) = run_decision_in(
+        p,
+        &["decision", "FEAT", "my-stage", "APPROVE_STAGE", "reason"],
+    );
     assert_eq!(code, 1, "coverage gate must exit 1; stderr: {}", stderr);
-    assert!(stderr.contains("APPROVE_STAGE refused"), "must mention refusal: {}", stderr);
-    assert!(stderr.contains("CRITICAL_OMISSION"), "must name coverage_state: {}", stderr);
+    assert!(
+        stderr.contains("APPROVE_STAGE refused"),
+        "must mention refusal: {}",
+        stderr
+    );
+    assert!(
+        stderr.contains("CRITICAL_OMISSION"),
+        "must name coverage_state: {}",
+        stderr
+    );
 
     let log_size_after = std::fs::metadata(&log_path).map(|m| m.len()).unwrap_or(0);
-    assert_eq!(log_size_before, log_size_after, "log must not grow when gate blocks");
+    assert_eq!(
+        log_size_before, log_size_after,
+        "log must not grow when gate blocks"
+    );
 }
 
 #[test]
@@ -205,17 +245,25 @@ fn smoke_decision_coverage_gate_blocks_empty_packet() {
     let p = dir.path();
     setup_review_log(p);
 
-    let head = Command::new("git").args(["rev-parse", "HEAD"]).current_dir(p)
-        .output().expect("git rev-parse");
+    let head = Command::new("git")
+        .args(["rev-parse", "HEAD"])
+        .current_dir(p)
+        .output()
+        .expect("git rev-parse");
     let head_sha = String::from_utf8_lossy(&head.stdout).trim().to_string();
 
     write_fake_assessment(p, "FEAT", "my-stage", "EMPTY_PACKET", None, &head_sha);
 
-    let (code, _, stderr) = run_decision_in(p, &[
-        "decision", "FEAT", "my-stage", "APPROVE_STAGE", "reason",
-    ]);
+    let (code, _, stderr) = run_decision_in(
+        p,
+        &["decision", "FEAT", "my-stage", "APPROVE_STAGE", "reason"],
+    );
     assert_eq!(code, 1, "EMPTY_PACKET must also exit 1; stderr: {}", stderr);
-    assert!(stderr.contains("EMPTY_PACKET"), "must name coverage_state: {}", stderr);
+    assert!(
+        stderr.contains("EMPTY_PACKET"),
+        "must name coverage_state: {}",
+        stderr
+    );
 }
 
 #[test]
@@ -225,23 +273,54 @@ fn smoke_decision_override_lifts_gate_and_records_both() {
     let p = dir.path();
     let log_path = setup_review_log(p);
 
-    let head = Command::new("git").args(["rev-parse", "HEAD"]).current_dir(p)
-        .output().expect("git rev-parse");
+    let head = Command::new("git")
+        .args(["rev-parse", "HEAD"])
+        .current_dir(p)
+        .output()
+        .expect("git rev-parse");
     let head_sha = String::from_utf8_lossy(&head.stdout).trim().to_string();
 
     write_fake_assessment(p, "FEAT", "my-stage", "CRITICAL_OMISSION", None, &head_sha);
 
-    let (code, stdout, stderr) = run_decision_in(p, &[
-        "decision", "FEAT", "my-stage", "APPROVE_STAGE", "reason",
-        "--override", "I accept the risk: packet was empty due to scratch run",
-    ]);
-    assert_eq!(code, 0, "override must lift gate; stderr: {}; stdout: {}", stderr, stdout);
-    assert!(stdout.contains("decision appended"), "must confirm log write: {}", stdout);
+    let (code, stdout, stderr) = run_decision_in(
+        p,
+        &[
+            "decision",
+            "FEAT",
+            "my-stage",
+            "APPROVE_STAGE",
+            "reason",
+            "--override",
+            "I accept the risk: packet was empty due to scratch run",
+        ],
+    );
+    assert_eq!(
+        code, 0,
+        "override must lift gate; stderr: {}; stdout: {}",
+        stderr, stdout
+    );
+    assert!(
+        stdout.contains("decision appended"),
+        "must confirm log write: {}",
+        stdout
+    );
 
     let log_content = std::fs::read_to_string(&log_path).expect("read log");
-    assert!(log_content.contains("CRITICAL_OMISSION"), "log must record coverage_state: {}", log_content);
-    assert!(log_content.contains("COVERAGE_GATE_OVERRIDDEN"), "log must record gate overridden: {}", log_content);
-    assert!(log_content.contains("I accept the risk"), "log must record override rationale: {}", log_content);
+    assert!(
+        log_content.contains("CRITICAL_OMISSION"),
+        "log must record coverage_state: {}",
+        log_content
+    );
+    assert!(
+        log_content.contains("COVERAGE_GATE_OVERRIDDEN"),
+        "log must record gate overridden: {}",
+        log_content
+    );
+    assert!(
+        log_content.contains("I accept the risk"),
+        "log must record override rationale: {}",
+        log_content
+    );
 }
 
 #[test]
@@ -251,16 +330,24 @@ fn smoke_decision_approve_not_gated_for_full_coverage() {
     let p = dir.path();
     setup_review_log(p);
 
-    let head = Command::new("git").args(["rev-parse", "HEAD"]).current_dir(p)
-        .output().expect("git rev-parse");
+    let head = Command::new("git")
+        .args(["rev-parse", "HEAD"])
+        .current_dir(p)
+        .output()
+        .expect("git rev-parse");
     let head_sha = String::from_utf8_lossy(&head.stdout).trim().to_string();
 
     write_fake_assessment(p, "FEAT", "my-stage", "FULL_COVERAGE", None, &head_sha);
 
-    let (code, _, stderr) = run_decision_in(p, &[
-        "decision", "FEAT", "my-stage", "APPROVE_STAGE", "all good",
-    ]);
-    assert_eq!(code, 0, "FULL_COVERAGE must not be gated; stderr: {}", stderr);
+    let (code, _, stderr) = run_decision_in(
+        p,
+        &["decision", "FEAT", "my-stage", "APPROVE_STAGE", "all good"],
+    );
+    assert_eq!(
+        code, 0,
+        "FULL_COVERAGE must not be gated; stderr: {}",
+        stderr
+    );
 }
 
 #[test]
@@ -270,16 +357,30 @@ fn smoke_decision_request_changes_not_gated_even_critical_omission() {
     let p = dir.path();
     setup_review_log(p);
 
-    let head = Command::new("git").args(["rev-parse", "HEAD"]).current_dir(p)
-        .output().expect("git rev-parse");
+    let head = Command::new("git")
+        .args(["rev-parse", "HEAD"])
+        .current_dir(p)
+        .output()
+        .expect("git rev-parse");
     let head_sha = String::from_utf8_lossy(&head.stdout).trim().to_string();
 
     write_fake_assessment(p, "FEAT", "my-stage", "CRITICAL_OMISSION", None, &head_sha);
 
-    let (code, _, stderr) = run_decision_in(p, &[
-        "decision", "FEAT", "my-stage", "REQUEST_CHANGES", "needs rework",
-    ]);
-    assert_eq!(code, 0, "REQUEST_CHANGES must never be gated; stderr: {}", stderr);
+    let (code, _, stderr) = run_decision_in(
+        p,
+        &[
+            "decision",
+            "FEAT",
+            "my-stage",
+            "REQUEST_CHANGES",
+            "needs rework",
+        ],
+    );
+    assert_eq!(
+        code, 0,
+        "REQUEST_CHANGES must never be gated; stderr: {}",
+        stderr
+    );
 }
 
 #[test]
@@ -290,10 +391,21 @@ fn smoke_decision_no_assessment_fallback_exits_zero() {
     setup_review_log(p);
     // Do NOT write any assessment file.
 
-    let (code, _, stderr) = run_decision_in(p, &[
-        "decision", "FEAT-UNKNOWN", "no-stage", "APPROVE_STAGE", "proceeding without review",
-    ]);
-    assert_eq!(code, 0, "no assessment must fall through to exit 0; stderr: {}", stderr);
+    let (code, _, stderr) = run_decision_in(
+        p,
+        &[
+            "decision",
+            "FEAT-UNKNOWN",
+            "no-stage",
+            "APPROVE_STAGE",
+            "proceeding without review",
+        ],
+    );
+    assert_eq!(
+        code, 0,
+        "no assessment must fall through to exit 0; stderr: {}",
+        stderr
+    );
 }
 
 #[test]
@@ -303,25 +415,50 @@ fn smoke_decision_packet_hash_mismatch_warns_but_proceeds() {
     let p = dir.path();
     let log_path = setup_review_log(p);
 
-    let head = Command::new("git").args(["rev-parse", "HEAD"]).current_dir(p)
-        .output().expect("git rev-parse");
+    let head = Command::new("git")
+        .args(["rev-parse", "HEAD"])
+        .current_dir(p)
+        .output()
+        .expect("git rev-parse");
     let head_sha = String::from_utf8_lossy(&head.stdout).trim().to_string();
 
     // Write assessment with a deliberately wrong stored SHA.
-    write_fake_assessment(p, "FEAT", "my-stage", "FULL_COVERAGE",
+    write_fake_assessment(
+        p,
+        "FEAT",
+        "my-stage",
+        "FULL_COVERAGE",
         Some("0000000000000000000000000000000000000000000000000000000000000000"),
-        &head_sha);
+        &head_sha,
+    );
 
-    let (code, _, stderr) = run_decision_in(p, &[
-        "decision", "FEAT", "my-stage", "APPROVE_STAGE", "proceeding",
-    ]);
-    assert_eq!(code, 0, "packet mismatch must not block; stderr: {}", stderr);
-    assert!(stderr.contains("mismatch") || stderr.contains("MISMATCH") || stderr.contains("warning"),
-        "mismatch must produce a warning: {}", stderr);
+    let (code, _, stderr) = run_decision_in(
+        p,
+        &[
+            "decision",
+            "FEAT",
+            "my-stage",
+            "APPROVE_STAGE",
+            "proceeding",
+        ],
+    );
+    assert_eq!(
+        code, 0,
+        "packet mismatch must not block; stderr: {}",
+        stderr
+    );
+    assert!(
+        stderr.contains("mismatch") || stderr.contains("MISMATCH") || stderr.contains("warning"),
+        "mismatch must produce a warning: {}",
+        stderr
+    );
 
     let log_content = std::fs::read_to_string(&log_path).expect("read log");
-    assert!(log_content.contains("MISMATCH"),
-        "log Provenance block must contain MISMATCH: {}", log_content);
+    assert!(
+        log_content.contains("MISMATCH"),
+        "log Provenance block must contain MISMATCH: {}",
+        log_content
+    );
 }
 
 #[test]
@@ -331,21 +468,43 @@ fn smoke_decision_provenance_block_written_to_log() {
     let p = dir.path();
     let log_path = setup_review_log(p);
 
-    let head = Command::new("git").args(["rev-parse", "HEAD"]).current_dir(p)
-        .output().expect("git rev-parse");
+    let head = Command::new("git")
+        .args(["rev-parse", "HEAD"])
+        .current_dir(p)
+        .output()
+        .expect("git rev-parse");
     let head_sha = String::from_utf8_lossy(&head.stdout).trim().to_string();
 
     write_fake_assessment(p, "FEAT", "my-stage", "FULL_COVERAGE", None, &head_sha);
 
-    let (code, _, stderr) = run_decision_in(p, &[
-        "decision", "FEAT", "my-stage", "APPROVE_STAGE", "all verified",
-    ]);
+    let (code, _, stderr) = run_decision_in(
+        p,
+        &[
+            "decision",
+            "FEAT",
+            "my-stage",
+            "APPROVE_STAGE",
+            "all verified",
+        ],
+    );
     assert_eq!(code, 0, "should succeed; stderr: {}", stderr);
 
     let log_content = std::fs::read_to_string(&log_path).expect("read log");
-    assert!(log_content.contains("Provenance:"), "log must contain Provenance block: {}", log_content);
-    assert!(log_content.contains("assessment:"), "provenance must show assessment path: {}", log_content);
-    assert!(log_content.contains("coverage_state:"), "provenance must show coverage_state: {}", log_content);
+    assert!(
+        log_content.contains("Provenance:"),
+        "log must contain Provenance block: {}",
+        log_content
+    );
+    assert!(
+        log_content.contains("assessment:"),
+        "provenance must show assessment path: {}",
+        log_content
+    );
+    assert!(
+        log_content.contains("coverage_state:"),
+        "provenance must show coverage_state: {}",
+        log_content
+    );
 }
 
 #[test]
@@ -359,9 +518,16 @@ fn smoke_decision_commit_drift_warns_and_records_head_drift() {
     let stale_commit = "0000000000000000000000000000000000000000";
     write_fake_assessment(p, "FEAT", "my-stage", "FULL_COVERAGE", None, stale_commit);
 
-    let (code, _, stderr) = run_decision_in(p, &[
-        "decision", "FEAT", "my-stage", "APPROVE_STAGE", "proceeding with drift",
-    ]);
+    let (code, _, stderr) = run_decision_in(
+        p,
+        &[
+            "decision",
+            "FEAT",
+            "my-stage",
+            "APPROVE_STAGE",
+            "proceeding with drift",
+        ],
+    );
     assert_eq!(code, 0, "commit drift must not block; stderr: {}", stderr);
     assert!(
         stderr.contains("warning") || stderr.contains("HEAD") || stderr.contains("drift"),
@@ -370,8 +536,11 @@ fn smoke_decision_commit_drift_warns_and_records_head_drift() {
     );
 
     let log_content = std::fs::read_to_string(&log_path).expect("read log");
-    assert!(log_content.contains("HEAD_DRIFT"),
-        "log Provenance block must contain HEAD_DRIFT: {}", log_content);
+    assert!(
+        log_content.contains("HEAD_DRIFT"),
+        "log Provenance block must contain HEAD_DRIFT: {}",
+        log_content
+    );
 }
 
 #[test]
@@ -384,18 +553,32 @@ fn smoke_decision_malformed_assessment_blocks_without_override() {
 
     write_malformed_assessment(p, "FEAT", "my-stage");
 
-    let (code, _, stderr) = run_decision_in(p, &[
-        "decision", "FEAT", "my-stage", "APPROVE_STAGE", "proceeding",
-    ]);
-    assert_eq!(code, 1,
-        "malformed assessment must block without --override; stderr: {}", stderr);
+    let (code, _, stderr) = run_decision_in(
+        p,
+        &[
+            "decision",
+            "FEAT",
+            "my-stage",
+            "APPROVE_STAGE",
+            "proceeding",
+        ],
+    );
+    assert_eq!(
+        code, 1,
+        "malformed assessment must block without --override; stderr: {}",
+        stderr
+    );
     assert!(
         stderr.contains("provenance") || stderr.contains("assessment") || stderr.contains("parsed"),
-        "must explain provenance issue: {}", stderr
+        "must explain provenance issue: {}",
+        stderr
     );
 
     let log_size_after = std::fs::metadata(&log_path).map(|m| m.len()).unwrap_or(0);
-    assert_eq!(log_size_before, log_size_after, "log must not grow when fail-closed");
+    assert_eq!(
+        log_size_before, log_size_after,
+        "log must not grow when fail-closed"
+    );
 }
 
 #[test]
@@ -406,18 +589,34 @@ fn smoke_decision_partial_frontmatter_also_blocks() {
     let log_path = setup_review_log(p);
     let log_size_before = std::fs::metadata(&log_path).map(|m| m.len()).unwrap_or(0);
 
-    let head = Command::new("git").args(["rev-parse", "HEAD"]).current_dir(p)
-        .output().expect("git rev-parse");
+    let head = Command::new("git")
+        .args(["rev-parse", "HEAD"])
+        .current_dir(p)
+        .output()
+        .expect("git rev-parse");
     let head_sha = String::from_utf8_lossy(&head.stdout).trim().to_string();
     write_partial_frontmatter_assessment(p, "FEAT", "my-stage", &head_sha);
 
-    let (code, _, stderr) = run_decision_in(p, &[
-        "decision", "FEAT", "my-stage", "APPROVE_STAGE", "proceeding",
-    ]);
-    assert_eq!(code, 1,
-        "partial frontmatter (missing coverage_state) must also block; stderr: {}", stderr);
+    let (code, _, stderr) = run_decision_in(
+        p,
+        &[
+            "decision",
+            "FEAT",
+            "my-stage",
+            "APPROVE_STAGE",
+            "proceeding",
+        ],
+    );
+    assert_eq!(
+        code, 1,
+        "partial frontmatter (missing coverage_state) must also block; stderr: {}",
+        stderr
+    );
     let log_size_after = std::fs::metadata(&log_path).map(|m| m.len()).unwrap_or(0);
-    assert_eq!(log_size_before, log_size_after, "log must not grow when fail-closed");
+    assert_eq!(
+        log_size_before, log_size_after,
+        "log must not grow when fail-closed"
+    );
 }
 
 #[test]
@@ -429,19 +628,35 @@ fn smoke_decision_malformed_assessment_override_proceeds_and_records() {
 
     write_malformed_assessment(p, "FEAT", "my-stage");
 
-    let (code, stdout, stderr) = run_decision_in(p, &[
-        "decision", "FEAT", "my-stage", "APPROVE_STAGE", "proceeding despite broken assessment",
-        "--override", "assessment was regenerated and lost; evidence reviewed in session",
-    ]);
-    assert_eq!(code, 0,
+    let (code, stdout, stderr) = run_decision_in(
+        p,
+        &[
+            "decision",
+            "FEAT",
+            "my-stage",
+            "APPROVE_STAGE",
+            "proceeding despite broken assessment",
+            "--override",
+            "assessment was regenerated and lost; evidence reviewed in session",
+        ],
+    );
+    assert_eq!(
+        code, 0,
         "--override must allow proceeding past broken provenance; stderr: {}; stdout: {}",
-        stderr, stdout);
+        stderr, stdout
+    );
 
     let log_content = std::fs::read_to_string(&log_path).expect("read log");
-    assert!(log_content.contains("PROVENANCE_UNVERIFIABLE"),
-        "log must record PROVENANCE_UNVERIFIABLE: {}", log_content);
-    assert!(log_content.contains("assessment was regenerated"),
-        "log must record override rationale: {}", log_content);
+    assert!(
+        log_content.contains("PROVENANCE_UNVERIFIABLE"),
+        "log must record PROVENANCE_UNVERIFIABLE: {}",
+        log_content
+    );
+    assert!(
+        log_content.contains("assessment was regenerated"),
+        "log must record override rationale: {}",
+        log_content
+    );
 }
 
 #[test]
@@ -451,17 +666,31 @@ fn smoke_decision_override_with_request_changes_is_graceful() {
     let p = dir.path();
     setup_review_log(p);
 
-    let head = Command::new("git").args(["rev-parse", "HEAD"]).current_dir(p)
-        .output().expect("git rev-parse");
+    let head = Command::new("git")
+        .args(["rev-parse", "HEAD"])
+        .current_dir(p)
+        .output()
+        .expect("git rev-parse");
     let head_sha = String::from_utf8_lossy(&head.stdout).trim().to_string();
     write_fake_assessment(p, "FEAT", "my-stage", "FULL_COVERAGE", None, &head_sha);
 
-    let (code, _, stderr) = run_decision_in(p, &[
-        "decision", "FEAT", "my-stage", "REQUEST_CHANGES", "needs rework",
-        "--override", "unused rationale",
-    ]);
-    assert_eq!(code, 0,
-        "--override with REQUEST_CHANGES must exit 0; stderr: {}", stderr);
+    let (code, _, stderr) = run_decision_in(
+        p,
+        &[
+            "decision",
+            "FEAT",
+            "my-stage",
+            "REQUEST_CHANGES",
+            "needs rework",
+            "--override",
+            "unused rationale",
+        ],
+    );
+    assert_eq!(
+        code, 0,
+        "--override with REQUEST_CHANGES must exit 0; stderr: {}",
+        stderr
+    );
 }
 
 #[test]
@@ -471,8 +700,11 @@ fn smoke_decision_packet_missing_records_provenance_unverifiable() {
     let p = dir.path();
     let log_path = setup_review_log(p);
 
-    let head = Command::new("git").args(["rev-parse", "HEAD"]).current_dir(p)
-        .output().expect("git rev-parse");
+    let head = Command::new("git")
+        .args(["rev-parse", "HEAD"])
+        .current_dir(p)
+        .output()
+        .expect("git rev-parse");
     let head_sha = String::from_utf8_lossy(&head.stdout).trim().to_string();
 
     // Write assessment that references a packet file that does NOT exist.
@@ -482,22 +714,32 @@ fn smoke_decision_packet_missing_records_provenance_unverifiable() {
         "---\nreviewed:\n  feature: FEAT\n  stage: my-stage\n  review_commit: {}\n  coverage_state: FULL_COVERAGE\n  reviewed_packet: packets/missing-packet.txt\n  reviewed_packet_sha256: abc123\n---\n",
         head_sha
     );
-    std::fs::write(codex_dir.join("20260101T000000Z-FEAT-stage-my-stage-abcdef1.md"), &content)
-        .expect("write assessment");
+    std::fs::write(
+        codex_dir.join("20260101T000000Z-FEAT-stage-my-stage-abcdef1.md"),
+        &content,
+    )
+    .expect("write assessment");
     // Do NOT write the packet file.
 
-    let (code, _, stderr) = run_decision_in(p, &[
-        "decision", "FEAT", "my-stage", "APPROVE_STAGE", "all clear",
-    ]);
+    let (code, _, stderr) = run_decision_in(
+        p,
+        &["decision", "FEAT", "my-stage", "APPROVE_STAGE", "all clear"],
+    );
     assert_eq!(code, 0, "missing packet must not block; stderr: {}", stderr);
     assert!(
-        stderr.contains("warning") || stderr.contains("unverifiable") || stderr.contains("not found"),
-        "must warn about missing packet: {}", stderr
+        stderr.contains("warning")
+            || stderr.contains("unverifiable")
+            || stderr.contains("not found"),
+        "must warn about missing packet: {}",
+        stderr
     );
 
     let log_content = std::fs::read_to_string(&log_path).expect("read log");
-    assert!(log_content.contains("PROVENANCE_UNVERIFIABLE"),
-        "log must show PROVENANCE_UNVERIFIABLE for missing packet: {}", log_content);
+    assert!(
+        log_content.contains("PROVENANCE_UNVERIFIABLE"),
+        "log must show PROVENANCE_UNVERIFIABLE for missing packet: {}",
+        log_content
+    );
 }
 
 #[test]
@@ -507,8 +749,11 @@ fn smoke_decision_no_stored_sha_warns_and_records_provenance_unverifiable() {
     let p = dir.path();
     let log_path = setup_review_log(p);
 
-    let head = Command::new("git").args(["rev-parse", "HEAD"]).current_dir(p)
-        .output().expect("git rev-parse");
+    let head = Command::new("git")
+        .args(["rev-parse", "HEAD"])
+        .current_dir(p)
+        .output()
+        .expect("git rev-parse");
     let head_sha = String::from_utf8_lossy(&head.stdout).trim().to_string();
 
     let codex_dir = p.join(".codeos/05-review/reviews/codex");
@@ -524,20 +769,30 @@ fn smoke_decision_no_stored_sha_warns_and_records_provenance_unverifiable() {
     std::fs::write(
         codex_dir.join("20260101T000000Z-FEAT-stage-my-stage-abcdef1.md"),
         &content,
-    ).expect("write assessment");
+    )
+    .expect("write assessment");
 
-    let (code, _, stderr) = run_decision_in(p, &[
-        "decision", "FEAT", "my-stage", "APPROVE_STAGE", "looks good",
-    ]);
+    let (code, _, stderr) = run_decision_in(
+        p,
+        &[
+            "decision",
+            "FEAT",
+            "my-stage",
+            "APPROVE_STAGE",
+            "looks good",
+        ],
+    );
     assert_eq!(code, 0, "no stored sha must not block; stderr: {}", stderr);
     assert!(
         stderr.contains("no stored sha") || stderr.contains("unverifiable"),
-        "must warn about missing stored sha; stderr: {}", stderr
+        "must warn about missing stored sha; stderr: {}",
+        stderr
     );
 
     let log_content = std::fs::read_to_string(&log_path).expect("read log");
     assert!(
         log_content.contains("PROVENANCE_UNVERIFIABLE"),
-        "log must record PROVENANCE_UNVERIFIABLE for no-stored-sha case: {}", log_content
+        "log must record PROVENANCE_UNVERIFIABLE for no-stored-sha case: {}",
+        log_content
     );
 }

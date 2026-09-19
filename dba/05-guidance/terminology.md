@@ -37,6 +37,8 @@ Ordinary technical vocabulary does not belong here. Git preserves the history of
 | **Event Spine** | The complete ordered set of events a feature is permitted to emit. |
 | **External assessment** | Machine-generated findings supplied by a model Codeos did not invoke. Advisory evidence for human review; it never satisfies a required review round. Contrast with a review, which Codeos obtains itself. |
 | **Evidence source** | The strongest direct basis for a reconciliation result: `runtime`, `test`, `static`, or `none`. It is not a confidence or quality score. |
+| **Evidence-insufficient finding** | An F7 blocker stating that available evidence does not prove an approved claim while alleging no defect in implementation, approved meaning, architecture, safety, integrity, or another governed input. |
+| **Evidence Repair Loop** | The F7 lifecycle in which named evidence-insufficient findings may be reassessed against materially new canonical evidence while implementation and governed inputs remain unchanged, without consuming ordinary review rounds. |
 | **Reconciliation status** | One of `ALIGNED`, `GAP`, `MISMATCH`, or `MISSING`. The row note explains the specific issue; status names do not encode gap subtypes. |
 | **External Event** | A runtime event representing a side effect on a system outside the governed boundary. |
 | **Failure Event** | A runtime event representing a classified error condition. |
@@ -57,6 +59,9 @@ Ordinary technical vocabulary does not belong here. Git preserves the history of
 | **Platform Baseline** | The default set of architectural tiers — PostgreSQL persistence, a Rust backend, a Svelte GUI, and Docker runtime — every solution resolves unless the Solution Charter records why a tier does not apply. |
 | **Product Journey Frontier** | The furthest point on the Charter's primary product journey established by a valid acceptance receipt for a journey-advancing Specification Package. An approved but unaccepted package may propose, but never establish, a new frontier. |
 | **Product Journey Transition** | One step between consecutive primary-journey frontiers. Cross-feature topology is defined by an approved Architecture Scope; runtime verification observes the transition without becoming its authority. |
+| **Production-source evidence** | Canonical evidence produced by a project-configured verifier from an applicable real-world source, bound to the current reality-dependent claims, governed inputs, and implementation. Appending it does not select it for progression. |
+| **Reality-dependent claim** | A governed user-visible claim whose usefulness or truth depends on facts outside the software's controlled state. Fixtures may prove its software mechanics but not its external-world validity, currency, accuracy, or readiness. |
+| **Semantic revision** | The shared positive integer on an approved Intent, Contract, and Event Schema that changes exactly once for a governed semantic specification change and scopes an ordinary Stage 8 review cycle. Cosmetic, implementation, evidence, and configuration changes do not alter it. |
 | **Journey Attempt** | One execution of the canonical product journey whose per-transition runtime observations are retained as verification evidence. A failed extension does not invalidate a successfully re-proven accepted prefix. |
 | **Operational Readiness** | A time- and environment-bound observation that an external provider is currently usable, including credentials, quota, reachability, and a successful live request. It is distinct from deterministic behavioral acceptance through the real provider adapter. |
 | **Protected invariant** | The condition identified before a PROTECTED semantic change that must remain true after implementation. |

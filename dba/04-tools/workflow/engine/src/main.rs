@@ -2,6 +2,7 @@ use anyhow::Result;
 use clap::{Parser, Subcommand};
 use codeos_workflow::checker::{self, Subject};
 use codeos_workflow::contract::Workflow;
+use codeos_workflow::event_evidence::{self, VerifyEventArgs};
 use codeos_workflow::project::Project;
 use codeos_workflow::receipts::{Receipt, ReceiptStore, RECEIPT_CHECKPOINTS};
 use codeos_workflow::{report, EXIT_ERROR, EXIT_SUCCESS, EXIT_USAGE};
@@ -32,6 +33,21 @@ enum Cmd {
     Decide(DecideArgs),
     /// Show the primary journey, accepted/candidate frontiers, and first broken transition.
     Journey(JourneyArgs),
+    /// Execute one verification command and canonically record its exact appended runtime events.
+    VerifyEvents(VerifyEventsCli),
+}
+
+#[derive(clap::Args)]
+struct VerifyEventsCli {
+    #[arg(long)]
+    subject: String,
+    #[arg(long, value_name = "PROJECT_RELATIVE_JSONL")]
+    event_log: String,
+    #[arg(long, value_name = "PROJECT_RELATIVE_JQ")]
+    validator: String,
+    /// Verification command and arguments, following `--`.
+    #[arg(last = true, required = true)]
+    command: Vec<String>,
 }
 
 #[derive(clap::Args)]
@@ -73,6 +89,9 @@ struct DecideArgs {
     /// Extra bindings as name=hash, repeatable.
     #[arg(long = "bind", value_name = "NAME=HASH")]
     bind: Vec<String>,
+    /// Content identity of the production-source evidence explicitly selected by F6.
+    #[arg(long, value_name = "SHA256")]
+    production_evidence: Option<String>,
 }
 
 fn main() {
@@ -90,6 +109,30 @@ fn main() {
 
 fn run(cli: &Cli, start: &std::path::Path) -> Result<i32> {
     match &cli.command {
+        Cmd::VerifyEvents(args) => {
+            let project = Project::discover(start)?;
+            let subject = Subject::resolve(&project, Workflow::Feature, &args.subject)?;
+            let record = event_evidence::verify(
+                &project,
+                VerifyEventArgs {
+                    subject: &subject,
+                    event_log: &args.event_log,
+                    validator: &args.validator,
+                    command: &args.command,
+                },
+            )?;
+            let details = record
+                .details
+                .as_ref()
+                .expect("event evidence always has details");
+            println!(
+                "runtime-event evidence recorded: {} events, sha256 {}, semantic {}",
+                details["event_count"],
+                details["event_set_sha256"].as_str().unwrap_or_default(),
+                details["semantic_sha256"].as_str().unwrap_or_default()
+            );
+            Ok(EXIT_SUCCESS)
+        }
         Cmd::Journey(args) => {
             let project = Project::discover(start)?;
             println!(
@@ -197,6 +240,17 @@ fn run(cli: &Cli, start: &std::path::Path) -> Result<i32> {
             // Compute the bindings the checker will later evaluate this receipt against, plus any
             // explicit --bind pairs.
             let mut bindings = checker::bindings_for_decision(&project, &subject, &a.checkpoint)?;
+            if a.checkpoint == "reconciliation" && !subject.reality_claims.is_empty() {
+                let Some(identity) = a.production_evidence.as_deref() else {
+                    eprintln!("reconciliation for reality-dependent claims requires --production-evidence <sha256>");
+                    return Ok(EXIT_USAGE);
+                };
+                checker::validate_production_evidence_selection(&project, &subject, identity)?;
+                bindings.insert("production_evidence".into(), identity.to_string());
+            } else if a.production_evidence.is_some() {
+                eprintln!("--production-evidence is valid only for reconciliation");
+                return Ok(EXIT_USAGE);
+            }
             if let Some(text) = &observation_text {
                 bindings.insert(
                     "observation".into(),

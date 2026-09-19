@@ -67,13 +67,17 @@ below.
   accepted frontier. For `advance`, traverse through the proposed new frontier. Do not insert an
   intermediate domain object that an implemented upstream journey capability owns. Infrastructure,
   actor accounts, and static reference data may be established as prerequisites.
-- Under Codeos Mechanics v5 or later, read the definition at
+- Under Codeos Mechanics v5, read the definition at
   `CODEOS_JOURNEY_DEFINITION_PATH` and write only runtime observations to
   `CODEOS_JOURNEY_EVIDENCE_PATH`. Do not restate topology. Identify observations by the derived
   transition ID, record a concrete handoff identity on pass, and identify the first failure.
 - For an external provider, exercise the real adapter against a protocol-faithful deterministic
   boundary server. Do not replace the adapter with a repository mock or inject its downstream
   product state.
+- For every reality-dependent claim, keep deterministic fixture coverage but also implement the
+  project-configured production-source verification interface selected by Codeos Mechanics v6.
+  The verifier writes the structured evidence requested through `CODEOS_REALITY_EVIDENCE_PATH`;
+  fixture or simulated observations must never identify themselves as production evidence.
 
 Replay comparisons ignore generated identifiers, timestamps, and other nondeterministic envelope
 fields unless the Contract governs them. Compare governed sequence and deterministic payload

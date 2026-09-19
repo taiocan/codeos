@@ -44,6 +44,8 @@ pub enum Requirement {
     CharterApproved,
     /// Intent + Contract + Event Schema exist and record the joint package approval.
     SpecPackageApproved,
+    /// Feature Workflow v3: the package carries one consistent semantic revision.
+    SemanticPackageRevision,
     /// `codeos.yaml` exists and validates against the active configuration's mechanics policy.
     CodeosYamlValid,
     /// The named `## <heading>` section of the Contract is present and has no unfilled placeholder.
@@ -64,6 +66,8 @@ pub enum Requirement {
         name: &'static str,
         mechanic: &'static str,
     },
+    /// F5 under Feature Workflow v3: required only when the Contract declares reality-dependent claims.
+    ProductionSourceEvidence,
     /// Operation O1: the latest `operation_route` receipt carries a non-empty observation statement.
     ObservationStated,
     /// Operation O4: the resolution evidence appropriate to the recorded route exists.
@@ -108,7 +112,16 @@ pub fn feature_contract(version: u8) -> Vec<Checkpoint> {
             "F1",
             "Specification",
             Applies::Always,
-            vec![SpecPackageApproved, ContractSection("Validation Questions")],
+            if version >= 3 {
+                vec![
+                    SpecPackageApproved,
+                    SemanticPackageRevision,
+                    ContractSection("Validation Questions"),
+                    ContractSection("Reality Basis"),
+                ]
+            } else {
+                vec![SpecPackageApproved, ContractSection("Validation Questions")]
+            },
         ),
         cp(
             "F2",
@@ -154,11 +167,8 @@ pub fn feature_contract(version: u8) -> Vec<Checkpoint> {
                 results: &["direction_confirmed"],
             }],
         ),
-        cp(
-            "F5",
-            "Full Verification",
-            Applies::Always,
-            vec![
+        cp("F5", "Full Verification", Applies::Always, {
+            let mut requirements = vec![
                 LiveVerification {
                     name: "approved behavior",
                     mechanic: "behavior",
@@ -167,8 +177,12 @@ pub fn feature_contract(version: u8) -> Vec<Checkpoint> {
                     name: "repeatability",
                     mechanic: "repeatability",
                 },
-            ],
-        ),
+            ];
+            if version >= 3 {
+                requirements.push(ProductionSourceEvidence);
+            }
+            requirements
+        }),
         cp(
             "F5d",
             "Data-integrity verification",

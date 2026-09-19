@@ -60,6 +60,13 @@ both artifacts in `DRAFT` and revise Intent if Contract work exposes a product g
   `proposed_frontier`. Use `preserve` only when no new journey transition is created, with a reason.
   A change to an existing journey transition still requires continuous journey verification and
   must not be framed as an isolated internal-stage capability.
+- When the selected Feature Workflow policy is v3 or later, classify every governed user-visible
+  claim in Reality Basis. For each reality-dependent claim, state its applicable production source,
+  supported conditions, currency/provenance requirement, truthful unavailable behavior, and the
+  test-only boundary for fixtures. Do not apply one exclusive reality mode to the whole product.
+- Keep `semantic_revision` identical across the Specification Package. Increment it exactly once
+  only when approved governed meaning changes, never for wording, formatting, implementation,
+  evidence, or configuration changes.
 
 If an unresolved Intent decision prevents a sound Contract, present the partial draft with an
 actionable unknown and return to Stage 1.

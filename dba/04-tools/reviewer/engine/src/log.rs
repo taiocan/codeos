@@ -63,7 +63,10 @@ pub fn compute_review_round(log_path: &Path, feature: &str, stage: &str) -> Resu
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(1),
         Err(e) => {
             return Err(e).with_context(|| {
-                format!("could not read review log to compute round: {}", log_path.display())
+                format!(
+                    "could not read review log to compute round: {}",
+                    log_path.display()
+                )
             });
         }
     };
@@ -76,12 +79,42 @@ pub fn compute_review_round(log_path: &Path, feature: &str, stage: &str) -> Resu
     Ok(next)
 }
 
+/// Stage 8 ordinary round within one approved semantic Specification Package revision.
+pub fn compute_semantic_review_round(
+    log_path: &Path,
+    feature: &str,
+    stage: &str,
+    semantic_revision: u64,
+) -> Result<u32> {
+    let content = match std::fs::read_to_string(log_path) {
+        Ok(content) => content,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(1),
+        Err(error) => return Err(error).context("read review log for semantic review round"),
+    };
+    let prefix = format!("REV__{feature}__{stage}__SR{semantic_revision}__R");
+    let count = content
+        .lines()
+        .filter_map(|line| line.strip_prefix("Review ID: "))
+        .filter(|id| id.starts_with(&prefix))
+        .count() as u32;
+    let next = count + 1;
+    if next > ROUND_BUDGET {
+        anyhow::bail!(
+            "ordinary semantic-revision review round {next} would exceed the {ROUND_BUDGET}-round budget"
+        );
+    }
+    Ok(next)
+}
+
 /// Heading verbs that distinguish the two record kinds in the log. `compute_review_round` counts
 /// only `REVIEW`, so recording an external assessment can never advance a required review round —
 /// the exclusion falls out of the heading rather than needing a separate rule to stay in sync.
 pub const REVIEW_HEADING: &str = "REVIEW";
 pub const EXTERNAL_ASSESSMENT_HEADING: &str = "EXTERNAL ASSESSMENT";
 pub const REENTRY_REVIEW_HEADING: &str = "RE-ENTRY REVIEW";
+pub const EVIDENCE_CLOSURE_HEADING: &str = "EVIDENCE CLOSURE REVIEW";
+pub const INFRASTRUCTURE_REVALIDATION_HEADING: &str = "INFRASTRUCTURE REVALIDATION";
+pub const EVIDENCE_REASSESSMENT_HEADING: &str = "EVIDENCE REASSESSMENT";
 
 fn count_entries(content: &str, kind: &str, feature: &str, stage: &str) -> u32 {
     let suffix = format!(" {} — {} — Stage {}", kind, feature, stage);
@@ -102,6 +135,576 @@ pub struct ReentryAuthorization {
     pub scope: String,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct EvidenceClosureAuthorization {
+    pub after_review_id: String,
+    pub decision_timestamp: String,
+    pub scope: String,
+    pub findings: Vec<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct InfrastructureRevalidationAuthorization {
+    pub after_review_id: String,
+    pub decision_timestamp: String,
+    pub scope: String,
+    pub findings: Vec<String>,
+    pub event_evidence_sha: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct EvidenceReassessment {
+    pub after_review_id: String,
+    pub findings: Vec<String>,
+    pub event_evidence_sha: String,
+    pub semantic_sha: String,
+    pub substantive: bool,
+}
+
+pub fn format_evidence_reassessment_id(
+    log_path: &Path,
+    feature: &str,
+    stage: &str,
+) -> Result<String> {
+    let content = std::fs::read_to_string(log_path).unwrap_or_default();
+    let sequence = count_entries(&content, EVIDENCE_REASSESSMENT_HEADING, feature, stage) + 1;
+    Ok(format!(
+        "REV__{}__{}__EVIDENCE-REASSESSMENT-{}",
+        feature, stage, sequence
+    ))
+}
+
+fn canonical_event_evidence(
+    repo_root: &Path,
+    feature: &str,
+    event_evidence_sha: &str,
+) -> Result<(String, serde_json::Map<String, serde_json::Value>)> {
+    anyhow::ensure!(
+        event_evidence_sha.len() == 64 && event_evidence_sha.chars().all(|c| c.is_ascii_hexdigit()),
+        "event evidence identity must be a SHA-256 digest"
+    );
+    let store = repo_root.join(".codeos/06-workflow/verifications.jsonl");
+    let text = std::fs::read_to_string(&store)
+        .with_context(|| format!("read canonical verification store {}", store.display()))?;
+    let record = text
+        .lines()
+        .filter(|line| !line.trim().is_empty())
+        .filter_map(|line| serde_json::from_str::<serde_json::Value>(line).ok())
+        .find(|record| {
+            record.get("workflow").and_then(|v| v.as_str()) == Some("feature")
+                && record.get("subject").and_then(|v| v.as_str()) == Some(feature)
+                && record.get("verification").and_then(|v| v.as_str())
+                    == Some("runtime_event_schema")
+                && record
+                    .pointer("/details/event_set_sha256")
+                    .and_then(|v| v.as_str())
+                    == Some(event_evidence_sha)
+        })
+        .context("no canonical runtime-event verification matches the supplied evidence")?;
+    anyhow::ensure!(
+        record.get("result").and_then(|v| v.as_str()) == Some("passed"),
+        "runtime-event verification did not pass"
+    );
+    anyhow::ensure!(
+        record
+            .pointer("/details/event_schema_conformance")
+            .and_then(|v| v.as_str())
+            == Some("passed"),
+        "runtime-event verification does not establish Event Schema conformance"
+    );
+    let semantic = record
+        .pointer("/details/semantic_sha256")
+        .and_then(|v| v.as_str())
+        .context("runtime-event verification omits semantic_sha256")?
+        .to_string();
+    let bindings = record
+        .get("bindings")
+        .and_then(|v| v.as_object())
+        .context("runtime-event verification has no bindings")?
+        .clone();
+    for name in ["implementation_state", "intent", "contract", "event_schema"] {
+        anyhow::ensure!(
+            bindings.get(name).and_then(|v| v.as_str()).is_some(),
+            "runtime-event verification omits {name} binding"
+        );
+    }
+    let artifact = repo_root.join(format!(
+        ".codeos/06-workflow/event-evidence/{event_evidence_sha}.jsonl"
+    ));
+    anyhow::ensure!(
+        artifact.is_file(),
+        "canonical runtime-event evidence artifact is missing"
+    );
+    anyhow::ensure!(
+        crate::packet::sha256_file(&artifact.to_string_lossy())? == event_evidence_sha,
+        "canonical runtime-event evidence artifact hash mismatch"
+    );
+    Ok((semantic, bindings))
+}
+
+pub fn resolve_evidence_reassessment(
+    log_path: &Path,
+    repo_root: &Path,
+    feature: &str,
+    stage: &str,
+    after_review_id: &str,
+    findings: &[String],
+    event_evidence_sha: &str,
+) -> Result<EvidenceReassessment> {
+    anyhow::ensure!(
+        !findings.is_empty() && findings.iter().all(|f| !f.trim().is_empty()),
+        "evidence reassessment requires named open findings"
+    );
+    let content = std::fs::read_to_string(log_path)
+        .with_context(|| format!("the review log could not be read: {}", log_path.display()))?;
+    let marker = format!("Review ID: {after_review_id}");
+    let (_, predecessor_tail) = content
+        .split_once(&marker)
+        .context("the named reassessment predecessor does not exist")?;
+    let predecessor = predecessor_tail
+        .split("\n## ")
+        .next()
+        .unwrap_or(predecessor_tail);
+    anyhow::ensure!(
+        predecessor
+            .lines()
+            .any(|line| line == "Effective concern: DO NOT ADVANCE"),
+        "the predecessor is not an open negative review boundary"
+    );
+
+    let mut requested = findings
+        .iter()
+        .map(|f| f.trim().to_string())
+        .collect::<Vec<_>>();
+    requested.sort();
+    requested.dedup();
+    let mut open = predecessor
+        .lines()
+        .find_map(|line| line.strip_prefix("Authorized findings: "))
+        .or_else(|| {
+            predecessor
+                .lines()
+                .find_map(|line| line.strip_prefix("Open evidence findings: "))
+        })
+        .unwrap_or_default()
+        .split(',')
+        .map(|f| f.trim().to_string())
+        .filter(|f| !f.is_empty())
+        .collect::<Vec<_>>();
+    open.sort();
+    open.dedup();
+    anyhow::ensure!(
+        requested == open,
+        "requested findings do not exactly match the predecessor's open evidence findings"
+    );
+
+    // DBA-13 bridge: its terminal record is structurally evidence-only. Later reassessments are
+    // eligible only while they remain negative and explicitly carry the same open finding set.
+    let legacy_id = format!("REV__{feature}__{stage}__INFRA-REVALIDATION-1");
+    let reassessment_predecessor =
+        after_review_id.starts_with(&format!("REV__{feature}__{stage}__EVIDENCE-REASSESSMENT-"));
+    anyhow::ensure!(after_review_id == legacy_id || reassessment_predecessor, "the predecessor is neither the DBA-13 terminal evidence record nor an evidence reassessment");
+
+    let (semantic_sha, bindings) =
+        canonical_event_evidence(repo_root, feature, event_evidence_sha)?;
+    let reviewed_store = repo_root.join(".codeos/06-workflow/verifications.jsonl");
+    let verification_text = std::fs::read_to_string(reviewed_store)?;
+    let binding_match = verification_text
+        .lines()
+        .filter_map(|line| serde_json::from_str::<serde_json::Value>(line).ok())
+        .any(|record| {
+            record.get("subject").and_then(|v| v.as_str()) == Some(feature)
+                && record.get("result").and_then(|v| v.as_str()) == Some("passed")
+                && record
+                    .get("bindings")
+                    .and_then(|v| v.as_object())
+                    .is_some_and(|prior| {
+                        ["implementation_state", "intent", "contract", "event_schema"]
+                            .iter()
+                            .all(|name| prior.get(*name) == bindings.get(*name))
+                    })
+        });
+    anyhow::ensure!(
+        binding_match,
+        "event evidence bindings do not match the reviewed verification history"
+    );
+
+    for block in content.split("\n## ") {
+        let same_findings = block
+            .lines()
+            .find_map(|line| line.strip_prefix("Open evidence findings: "))
+            .map(|listed| {
+                let mut values = listed
+                    .split(',')
+                    .map(|v| v.trim().to_string())
+                    .filter(|v| !v.is_empty())
+                    .collect::<Vec<_>>();
+                values.sort();
+                values.dedup();
+                values == requested
+            })
+            .unwrap_or(false);
+        if same_findings
+            && block
+                .lines()
+                .any(|line| line == format!("Evidence semantic SHA-256: {semantic_sha}"))
+            && !block
+                .lines()
+                .any(|line| line.contains("Assessment status: INCOMPLETE"))
+        {
+            anyhow::bail!(
+                "semantically equivalent evidence was already assessed for these findings"
+            );
+        }
+        anyhow::ensure!(
+            !block
+                .lines()
+                .any(|line| line == "Evidence loop state: CLOSED — SUBSTANTIVE"),
+            "a substantive finding closed evidence-loop eligibility"
+        );
+    }
+    Ok(EvidenceReassessment {
+        after_review_id: after_review_id.to_string(),
+        findings: requested,
+        event_evidence_sha: event_evidence_sha.to_string(),
+        semantic_sha,
+        substantive: false,
+    })
+}
+
+pub fn format_infrastructure_revalidation_id(feature: &str, stage: &str) -> String {
+    format!("REV__{}__{}__INFRA-REVALIDATION-1", feature, stage)
+}
+
+fn validate_canonical_event_evidence(
+    repo_root: &Path,
+    feature: &str,
+    event_evidence_sha: &str,
+) -> Result<()> {
+    let _ = canonical_event_evidence(repo_root, feature, event_evidence_sha)?;
+    /* Legacy v8 additionally requires equality with any prior passed verification. */
+    anyhow::ensure!(
+        event_evidence_sha.len() == 64 && event_evidence_sha.chars().all(|c| c.is_ascii_hexdigit()),
+        "event evidence identity must be a SHA-256 digest"
+    );
+    let store = repo_root.join(".codeos/06-workflow/verifications.jsonl");
+    let text = std::fs::read_to_string(&store)
+        .with_context(|| format!("read canonical verification store {}", store.display()))?;
+    let mut matching: Option<serde_json::Value> = None;
+    let mut prior_bindings = Vec::new();
+    for line in text.lines().filter(|line| !line.trim().is_empty()) {
+        let record: serde_json::Value =
+            serde_json::from_str(line).context("malformed canonical verification record")?;
+        if record.get("workflow").and_then(|v| v.as_str()) == Some("feature")
+            && record.get("subject").and_then(|v| v.as_str()) == Some(feature)
+        {
+            if record.get("verification").and_then(|v| v.as_str()) == Some("runtime_event_schema")
+                && record
+                    .pointer("/details/event_set_sha256")
+                    .and_then(|v| v.as_str())
+                    == Some(event_evidence_sha)
+            {
+                matching = Some(record.clone());
+            } else if record.get("result").and_then(|v| v.as_str()) == Some("passed") {
+                if let Some(bindings) = record.get("bindings").and_then(|v| v.as_object()) {
+                    prior_bindings.push(bindings.clone());
+                }
+            }
+        }
+    }
+    let record = matching
+        .context("no canonical runtime-event verification matches the authorized evidence")?;
+    anyhow::ensure!(
+        record.get("result").and_then(|v| v.as_str()) == Some("passed"),
+        "runtime-event verification did not pass"
+    );
+    anyhow::ensure!(
+        record
+            .pointer("/details/event_schema_conformance")
+            .and_then(|v| v.as_str())
+            == Some("passed"),
+        "runtime-event verification does not establish Event Schema conformance"
+    );
+    let bindings = record
+        .get("bindings")
+        .and_then(|v| v.as_object())
+        .context("runtime-event verification has no bindings")?;
+    for name in ["implementation_state", "intent", "contract", "event_schema"] {
+        anyhow::ensure!(
+            bindings.get(name).and_then(|v| v.as_str()).is_some(),
+            "runtime-event verification omits {name} binding"
+        );
+    }
+    anyhow::ensure!(
+        prior_bindings.iter().any(|prior| {
+            ["implementation_state", "intent", "contract", "event_schema"]
+                .iter()
+                .all(|name| prior.get(*name) == bindings.get(*name))
+        }),
+        "runtime-event evidence bindings do not match the prior reviewed verification history"
+    );
+    let artifact = repo_root.join(format!(
+        ".codeos/06-workflow/event-evidence/{event_evidence_sha}.jsonl"
+    ));
+    anyhow::ensure!(
+        artifact.is_file(),
+        "canonical runtime-event evidence artifact is missing"
+    );
+    anyhow::ensure!(
+        crate::packet::sha256_file(&artifact.to_string_lossy())? == event_evidence_sha,
+        "canonical runtime-event evidence artifact hash mismatch"
+    );
+    Ok(())
+}
+
+pub fn validate_infrastructure_revalidation_target(
+    log_path: &Path,
+    repo_root: &Path,
+    feature: &str,
+    stage: &str,
+    after_review_id: &str,
+    event_evidence_sha: &str,
+) -> Result<()> {
+    let content = std::fs::read_to_string(log_path)?;
+    anyhow::ensure!(
+        after_review_id == format_evidence_closure_id(feature, stage),
+        "terminal revalidation must follow the matching EVIDENCE-CLOSURE-1"
+    );
+    let marker = format!("Review ID: {after_review_id}");
+    let (_, tail) = content
+        .split_once(&marker)
+        .context("the named EVIDENCE-CLOSURE-1 does not exist")?;
+    let block = tail.split("\n## ").next().unwrap_or(tail);
+    anyhow::ensure!(
+        block
+            .lines()
+            .any(|line| line == "Effective concern: DO NOT ADVANCE"),
+        "EVIDENCE-CLOSURE-1 is not a negative exhausted boundary"
+    );
+    anyhow::ensure!(
+        count_entries(
+            &content,
+            INFRASTRUCTURE_REVALIDATION_HEADING,
+            feature,
+            stage
+        ) == 0,
+        "Infrastructure Repair Revalidation has already been consumed"
+    );
+    validate_canonical_event_evidence(repo_root, feature, event_evidence_sha)
+}
+
+pub fn resolve_infrastructure_revalidation_authorization(
+    log_path: &Path,
+    repo_root: &Path,
+    feature: &str,
+    stage: &str,
+    after_review_id: &str,
+    findings: &[String],
+    event_evidence_sha: &str,
+) -> Result<InfrastructureRevalidationAuthorization> {
+    validate_infrastructure_revalidation_target(
+        log_path,
+        repo_root,
+        feature,
+        stage,
+        after_review_id,
+        event_evidence_sha,
+    )?;
+    let content = std::fs::read_to_string(log_path)?;
+    let tail = content
+        .split_once(&format!("Review ID: {after_review_id}"))
+        .map(|(_, tail)| tail)
+        .unwrap_or_default();
+    let suffix = format!(" HUMAN DECISION — {feature} — Stage {stage}");
+    let mut selected = None;
+    for block in tail.split("\n## ").skip(1) {
+        let mut lines = block.lines();
+        let heading = lines.next().unwrap_or_default();
+        if heading.ends_with(&suffix) {
+            let lines: Vec<_> = lines.collect();
+            let decision = lines
+                .iter()
+                .find_map(|line| line.strip_prefix("Decision: "));
+            if decision == Some("AUTHORIZE_INFRASTRUCTURE_REVALIDATION")
+                && lines
+                    .iter()
+                    .find_map(|line| line.strip_prefix("Infrastructure revalidation after: "))
+                    == Some(after_review_id)
+                && lines
+                    .iter()
+                    .find_map(|line| line.strip_prefix("Infrastructure repair evidence: "))
+                    == Some(event_evidence_sha)
+            {
+                let scope = lines
+                    .iter()
+                    .find_map(|line| line.strip_prefix("Reason/next: "))
+                    .unwrap_or_default()
+                    .to_string();
+                let authorized = lines
+                    .iter()
+                    .find_map(|line| line.strip_prefix("Authorized findings: "))
+                    .unwrap_or_default()
+                    .split(',')
+                    .map(|v| v.trim().to_string())
+                    .filter(|v| !v.is_empty())
+                    .collect::<Vec<_>>();
+                selected = Some((
+                    heading
+                        .strip_suffix(&suffix)
+                        .unwrap_or_default()
+                        .trim()
+                        .to_string(),
+                    scope,
+                    authorized,
+                ));
+            } else if decision == Some("STOP") && selected.is_some() {
+                selected = None;
+            }
+        }
+    }
+    let (timestamp, scope, authorized) = selected.context("no active Infrastructure Repair Revalidation authorization matches the boundary and evidence")?;
+    let mut requested = findings
+        .iter()
+        .map(|v| v.trim().to_string())
+        .collect::<Vec<_>>();
+    let mut authorized_sorted = authorized.clone();
+    requested.sort();
+    requested.dedup();
+    authorized_sorted.sort();
+    authorized_sorted.dedup();
+    anyhow::ensure!(
+        requested == authorized_sorted && !requested.is_empty(),
+        "requested findings do not exactly match the authorization"
+    );
+    Ok(InfrastructureRevalidationAuthorization {
+        after_review_id: after_review_id.to_string(),
+        decision_timestamp: timestamp,
+        scope,
+        findings: authorized,
+        event_evidence_sha: event_evidence_sha.to_string(),
+    })
+}
+
+pub fn validate_evidence_closure_target(
+    log_path: &Path,
+    feature: &str,
+    stage: &str,
+    after_review_id: &str,
+) -> Result<()> {
+    let content = std::fs::read_to_string(log_path)
+        .with_context(|| format!("the review log could not be read: {}", log_path.display()))?;
+    anyhow::ensure!(
+        after_review_id == format_reentry_id(feature, stage),
+        "{after_review_id} is not the REENTRY-1 for {feature} at stage {stage}"
+    );
+    anyhow::ensure!(
+        content.contains(&format!("Review ID: {after_review_id}")),
+        "{after_review_id} does not exist"
+    );
+    let marker = format!("Review ID: {after_review_id}");
+    let tail = content
+        .split_once(&marker)
+        .map(|(_, t)| t)
+        .unwrap_or_default();
+    let block = tail.split("\n## ").next().unwrap_or(tail);
+    anyhow::ensure!(
+        block
+            .lines()
+            .any(|l| l == "Effective concern: DO NOT ADVANCE"),
+        "{after_review_id} did not end in DO NOT ADVANCE"
+    );
+    anyhow::ensure!(
+        count_entries(&content, EVIDENCE_CLOSURE_HEADING, feature, stage) == 0,
+        "the single evidence closure for {feature} at stage {stage} has already been consumed"
+    );
+    Ok(())
+}
+
+pub fn resolve_evidence_closure_authorization(
+    log_path: &Path,
+    feature: &str,
+    stage: &str,
+    after_review_id: &str,
+    findings: &[String],
+) -> Result<EvidenceClosureAuthorization> {
+    validate_evidence_closure_target(log_path, feature, stage, after_review_id)?;
+    let content = std::fs::read_to_string(log_path)?;
+    let marker = format!("Review ID: {after_review_id}");
+    let tail = content
+        .split_once(&marker)
+        .map(|(_, t)| t)
+        .unwrap_or_default();
+    let human_suffix = format!(" HUMAN DECISION — {feature} — Stage {stage}");
+    let mut selected = None;
+    for block in tail.split("\n## ").skip(1) {
+        let mut lines = block.lines();
+        let heading = lines.next().unwrap_or_default();
+        if heading.ends_with(&human_suffix) {
+            let all: Vec<_> = lines.collect();
+            let decision = all.iter().find_map(|l| l.strip_prefix("Decision: "));
+            let binding = all
+                .iter()
+                .find_map(|l| l.strip_prefix("Evidence closure after: "));
+            if decision == Some("AUTHORIZE_EVIDENCE_CLOSURE") && binding == Some(after_review_id) {
+                let scope = all
+                    .iter()
+                    .find_map(|l| l.strip_prefix("Reason/next: "))
+                    .unwrap_or_default();
+                let listed = all
+                    .iter()
+                    .find_map(|l| l.strip_prefix("Authorized findings: "))
+                    .unwrap_or_default();
+                selected = Some((
+                    heading
+                        .strip_suffix(&human_suffix)
+                        .unwrap_or_default()
+                        .trim()
+                        .to_string(),
+                    scope.to_string(),
+                    listed
+                        .split(',')
+                        .map(|s| s.trim().to_string())
+                        .filter(|s| !s.is_empty())
+                        .collect::<Vec<_>>(),
+                ));
+            } else if decision == Some("STOP") && selected.is_some() {
+                selected = None;
+            }
+        }
+        if heading.ends_with(&format!(
+            " {EVIDENCE_CLOSURE_HEADING} — {feature} — Stage {stage}"
+        )) {
+            break;
+        }
+    }
+    let (timestamp, scope, authorized) = selected.ok_or_else(|| {
+        anyhow::anyhow!("no active AUTHORIZE_EVIDENCE_CLOSURE bound to {after_review_id}")
+    })?;
+    let mut requested = findings
+        .iter()
+        .map(|s| s.trim().to_string())
+        .collect::<Vec<_>>();
+    let mut authorized_sorted = authorized.clone();
+    requested.sort();
+    requested.dedup();
+    authorized_sorted.sort();
+    authorized_sorted.dedup();
+    anyhow::ensure!(
+        requested == authorized_sorted,
+        "requested findings do not exactly match the authorized findings"
+    );
+    Ok(EvidenceClosureAuthorization {
+        after_review_id: after_review_id.to_string(),
+        decision_timestamp: timestamp,
+        scope,
+        findings: authorized,
+    })
+}
+
+pub fn format_evidence_closure_id(feature: &str, stage: &str) -> String {
+    format!("REV__{}__{}__EVIDENCE-CLOSURE-1", feature, stage)
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ReentryDecisionSemantics {
     /// Contract v4 has no rule for ordering conflicting post-R3 decisions. One decision can
@@ -119,13 +722,12 @@ pub fn validate_reentry_authorization_target(
     stage: &str,
     after_review_id: &str,
 ) -> Result<()> {
-    let content = std::fs::read_to_string(log_path).with_context(|| {
-        format!("the review log could not be read: {}", log_path.display())
-    })?;
-    let (round, _) = find_predecessor_entry(&content, feature, stage, after_review_id)
-        .ok_or_else(|| anyhow::anyhow!(
-            "{after_review_id} is not a review for {feature} at stage {stage}"
-        ))?;
+    let content = std::fs::read_to_string(log_path)
+        .with_context(|| format!("the review log could not be read: {}", log_path.display()))?;
+    let (round, _) =
+        find_predecessor_entry(&content, feature, stage, after_review_id).ok_or_else(|| {
+            anyhow::anyhow!("{after_review_id} is not a review for {feature} at stage {stage}")
+        })?;
     anyhow::ensure!(
         round == ROUND_BUDGET,
         "{after_review_id} is round {round}; authorization is available only for R{ROUND_BUDGET}"
@@ -148,12 +750,16 @@ pub fn resolve_reentry_authorization(
     semantics: ReentryDecisionSemantics,
 ) -> Result<ReentryAuthorization> {
     let content = std::fs::read_to_string(log_path).with_context(|| {
-        format!("--reentry-after {after_review_id} was given but the review log could not be read: {}", log_path.display())
+        format!(
+            "--reentry-after {after_review_id} was given but the review log could not be read: {}",
+            log_path.display()
+        )
     })?;
     validate_reentry_authorization_target(log_path, feature, stage, after_review_id)?;
 
     let review_marker = format!("Review ID: {after_review_id}");
-    let review_pos = content.find(&review_marker)
+    let review_pos = content
+        .find(&review_marker)
         .ok_or_else(|| anyhow::anyhow!("could not locate {after_review_id} in the review log"))?;
     let tail = &content[review_pos + review_marker.len()..];
     let human_suffix = format!(" HUMAN DECISION — {feature} — Stage {stage}");
@@ -162,10 +768,18 @@ pub fn resolve_reentry_authorization(
         let mut lines = block.lines();
         let heading = lines.next().unwrap_or_default();
         if heading.ends_with(&human_suffix) {
-            let decision = lines.clone().find_map(|line| line.strip_prefix("Decision: "));
-            let binding = lines.clone().find_map(|line| line.strip_prefix("Re-entry after: "));
+            let decision = lines
+                .clone()
+                .find_map(|line| line.strip_prefix("Decision: "));
+            let binding = lines
+                .clone()
+                .find_map(|line| line.strip_prefix("Re-entry after: "));
             let reason = lines.find_map(|line| line.strip_prefix("Reason/next: "));
-            let timestamp = heading.strip_suffix(&human_suffix).unwrap_or_default().trim().to_string();
+            let timestamp = heading
+                .strip_suffix(&human_suffix)
+                .unwrap_or_default()
+                .trim()
+                .to_string();
             decisions.push((
                 decision.map(str::to_string),
                 reason.map(str::to_string),
@@ -174,7 +788,9 @@ pub fn resolve_reentry_authorization(
             ));
         }
         if heading.ends_with(&format!(" {REVIEW_HEADING} — {feature} — Stage {stage}"))
-            || heading.ends_with(&format!(" {REENTRY_REVIEW_HEADING} — {feature} — Stage {stage}"))
+            || heading.ends_with(&format!(
+                " {REENTRY_REVIEW_HEADING} — {feature} — Stage {stage}"
+            ))
         {
             break;
         }
@@ -217,7 +833,8 @@ pub fn resolve_reentry_authorization(
             decision.as_deref() == Some("REQUEST_CHANGES") && explicit
         }
         ReentryDecisionSemantics::CanonicalLogOrder => {
-            decision.as_deref() == Some("AUTHORIZE_REENTRY") && reason.as_deref().is_some_and(|r| !r.trim().is_empty())
+            decision.as_deref() == Some("AUTHORIZE_REENTRY")
+                && reason.as_deref().is_some_and(|r| !r.trim().is_empty())
         }
     };
     if !authorized_decision {
@@ -353,7 +970,10 @@ pub fn compute_assessment_sequence(log_path: &Path, feature: &str, stage: &str) 
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(1),
         Err(e) => {
             return Err(e).with_context(|| {
-                format!("could not read review log to compute assessment sequence: {}", log_path.display())
+                format!(
+                    "could not read review log to compute assessment sequence: {}",
+                    log_path.display()
+                )
             });
         }
     };
@@ -373,6 +993,15 @@ pub fn format_review_id(feature: &str, stage: &str, round: u32) -> String {
     format!("REV__{}__{}__R{}", feature, stage, round)
 }
 
+pub fn format_semantic_review_id(
+    feature: &str,
+    stage: &str,
+    semantic_revision: u64,
+    round: u32,
+) -> String {
+    format!("REV__{feature}__{stage}__SR{semantic_revision}__R{round}")
+}
+
 /// Append a REVIEW entry to the log. Uses a temp-file + rename for atomicity.
 pub fn append_review(
     log_path: &Path,
@@ -386,11 +1015,18 @@ pub fn append_review(
     packet_hash: &str,
     continues: Option<&str>,
     reentry: Option<&ReentryAuthorization>,
+    closure: Option<&EvidenceClosureAuthorization>,
+    infrastructure: Option<&InfrastructureRevalidationAuthorization>,
+    reassessment: Option<&EvidenceReassessment>,
 ) -> Result<()> {
     ensure_log_exists(log_path)?;
 
     let ts = chrono::Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string();
-    let dirty_text = if packet.workspace_dirty { "true" } else { "false" };
+    let dirty_text = if packet.workspace_dirty {
+        "true"
+    } else {
+        "false"
+    };
     let coverage_note_suffix = if !parsed.coverage_note.is_empty() {
         format!("; note: {}", parsed.coverage_note)
     } else {
@@ -401,33 +1037,129 @@ pub fn append_review(
     entry.push('\n');
     let kind = if raw.is_external() {
         EXTERNAL_ASSESSMENT_HEADING
+    } else if infrastructure.is_some() {
+        INFRASTRUCTURE_REVALIDATION_HEADING
+    } else if reassessment.is_some() {
+        EVIDENCE_REASSESSMENT_HEADING
+    } else if closure.is_some() {
+        EVIDENCE_CLOSURE_HEADING
     } else if reentry.is_some() {
         REENTRY_REVIEW_HEADING
     } else {
         REVIEW_HEADING
     };
-    entry.push_str(&format!("## {} {} — {} — Stage {}\n", ts, kind, packet.feature, packet.stage));
+    entry.push_str(&format!(
+        "## {} {} — {} — Stage {}\n",
+        ts, kind, packet.feature, packet.stage
+    ));
     entry.push_str(&format!(
         "{} ID: {}\n",
-        if raw.is_external() { "Assessment" } else { "Review" },
+        if raw.is_external() {
+            "Assessment"
+        } else {
+            "Review"
+        },
         review_id
     ));
+    if let Some(rest) = review_id.split("__SR").nth(1) {
+        if let Some(revision) = rest.split("__R").next() {
+            entry.push_str(&format!("Semantic revision: {revision}\n"));
+        }
+    }
     if let Some(predecessor) = continues {
         entry.push_str(&format!("Continues: {}\n", predecessor));
     }
     if let Some(auth) = reentry {
         entry.push_str(&format!("Re-entry after: {}\n", auth.after_review_id));
-        entry.push_str(&format!("Human authorization: {} HUMAN DECISION\n", auth.decision_timestamp));
+        entry.push_str(&format!(
+            "Human authorization: {} HUMAN DECISION\n",
+            auth.decision_timestamp
+        ));
         entry.push_str(&format!("Authorized scope: {}\n", auth.scope));
     }
-    entry.push_str(&format!("Base: {}  Review: {}  Branch: {}\n",
-        packet.base_sha, packet.review_sha, packet.branch));
+    if let Some(auth) = closure {
+        entry.push_str(&format!(
+            "Evidence closure after: {}\n",
+            auth.after_review_id
+        ));
+        entry.push_str(&format!(
+            "Human authorization: {} HUMAN DECISION\n",
+            auth.decision_timestamp
+        ));
+        entry.push_str(&format!("Authorized scope: {}\n", auth.scope));
+        entry.push_str(&format!(
+            "Authorized findings: {}\n",
+            auth.findings.join(", ")
+        ));
+    }
+    if let Some(auth) = infrastructure {
+        entry.push_str(&format!(
+            "Infrastructure revalidation after: {}\n",
+            auth.after_review_id
+        ));
+        entry.push_str(&format!(
+            "Human authorization: {} HUMAN DECISION\n",
+            auth.decision_timestamp
+        ));
+        entry.push_str(&format!("Authorized scope: {}\n", auth.scope));
+        entry.push_str(&format!(
+            "Authorized findings: {}\n",
+            auth.findings.join(", ")
+        ));
+        entry.push_str(&format!(
+            "Infrastructure repair evidence: {}\n",
+            auth.event_evidence_sha
+        ));
+    }
+    if let Some(item) = reassessment {
+        entry.push_str(&format!(
+            "Evidence reassessment after: {}\n",
+            item.after_review_id
+        ));
+        entry.push_str(&format!(
+            "Open evidence findings: {}\n",
+            item.findings.join(", ")
+        ));
+        entry.push_str(&format!(
+            "Canonical event evidence: {}\n",
+            item.event_evidence_sha
+        ));
+        entry.push_str(&format!(
+            "Evidence semantic SHA-256: {}\n",
+            item.semantic_sha
+        ));
+        let state = if parsed.assessment_status != "COMPLETE" {
+            "OPEN — INCOMPLETE"
+        } else if item.substantive {
+            "CLOSED — SUBSTANTIVE"
+        } else if parsed.effective_concern != "DO NOT ADVANCE" {
+            "CLOSED — EVIDENCE SATISFIED"
+        } else if parsed.effective_concern == "DO NOT ADVANCE" {
+            "OPEN — EVIDENCE INSUFFICIENT"
+        } else {
+            "CLOSED — SUBSTANTIVE"
+        };
+        entry.push_str(&format!("Evidence loop state: {state}\n"));
+        if let Some(materiality) = &parsed.evidence_materiality {
+            entry.push_str(&format!("Evidence materiality: {materiality}\n"));
+        }
+    }
+    entry.push_str(&format!(
+        "Base: {}  Review: {}  Branch: {}\n",
+        packet.base_sha, packet.review_sha, packet.branch
+    ));
     entry.push_str(&format!("Diff-hash: {}\n", packet.diff_hash));
     entry.push_str(&format!("Reviewer: {}\n", raw.reviewer_field()));
     match &raw.source {
-        RunSource::Codex { reconnect_count, effort, .. } => {
-            entry.push_str(&format!("Effort: {}   Wall time: {}ms   Reconnects: {}\n",
-                effort, raw.elapsed_ms, reconnect_count));
+        RunSource::Codex {
+            reconnect_count,
+            effort,
+            ..
+        } => {
+            entry.push_str(&format!(
+                "Effort: {}   Wall time: {}ms   Reconnects: {}\n",
+                effort, raw.elapsed_ms, reconnect_count
+            ));
             entry.push_str(&format!("Codex concern: {}\n", parsed.codex_concern));
         }
         RunSource::External { .. } => {
@@ -435,7 +1167,10 @@ pub fn append_review(
             entry.push_str(&format!("Reported concern: {}\n", parsed.codex_concern));
         }
     }
-    entry.push_str(&format!("Effective concern: {}\n", parsed.effective_concern));
+    entry.push_str(&format!(
+        "Effective concern: {}\n",
+        parsed.effective_concern
+    ));
     entry.push_str(&format!("Evidence: {}\n", parsed.evidence));
     entry.push_str(&format!(
         "Parse status: {}   Assessment status: {}\n",
@@ -453,21 +1188,41 @@ pub fn append_review(
             parsed.highest_impact_uncertainty
         ));
     }
-    entry.push_str(&format!("Coverage: {}; redactions: {}; workspace_dirty: {}{}\n",
-        packet.coverage_state.as_str(), packet.redaction_count, dirty_text, coverage_note_suffix));
-    entry.push_str(&format!("Log summary: {}\n",
-        parsed.summary_line.trim_start_matches("LOG SUMMARY: ")));
-    entry.push_str(&format!("Full assessment: {} (sha256:{})\n",
-        assessment_file.display(), assessment_hash));
-    entry.push_str(&format!("Reviewed packet: {} (sha256:{})\n",
-        packet_saved.display(), packet_hash));
+    entry.push_str(&format!(
+        "Coverage: {}; redactions: {}; workspace_dirty: {}{}\n",
+        packet.coverage_state.as_str(),
+        packet.redaction_count,
+        dirty_text,
+        coverage_note_suffix
+    ));
+    entry.push_str(&format!(
+        "Log summary: {}\n",
+        parsed.summary_line.trim_start_matches("LOG SUMMARY: ")
+    ));
+    entry.push_str(&format!(
+        "Full assessment: {} (sha256:{})\n",
+        assessment_file.display(),
+        assessment_hash
+    ));
+    entry.push_str(&format!(
+        "Reviewed packet: {} (sha256:{})\n",
+        packet_saved.display(),
+        packet_hash
+    ));
     if packet.secret_flag
         || packet.coverage_state.as_str() == "CRITICAL_OMISSION"
         || packet.coverage_state.as_str() == "EMPTY_PACKET"
     {
-        let excluded: Vec<String> = packet.excluded_paths.iter().map(|(p,_,_)| p.clone()).collect();
-        entry.push_str(&format!("Coverage gap: {} — excluded/redacted [{}] — MANUAL SECURITY REVIEW REQUIRED\n",
-            packet.coverage_state.as_str(), excluded.join(", ")));
+        let excluded: Vec<String> = packet
+            .excluded_paths
+            .iter()
+            .map(|(p, _, _)| p.clone())
+            .collect();
+        entry.push_str(&format!(
+            "Coverage gap: {} — excluded/redacted [{}] — MANUAL SECURITY REVIEW REQUIRED\n",
+            packet.coverage_state.as_str(),
+            excluded.join(", ")
+        ));
     }
     if raw.is_external() {
         entry.push_str("Progression: unchanged — a required review still needs a Codex-backed review round or a recorded Review Waiver.\n");
@@ -495,7 +1250,8 @@ pub fn load_decision_provenance(
 ) -> anyhow::Result<Option<DecisionProvenance>> {
     let pattern = format!("{}-stage-{}-", feature, stage);
     let entries: Vec<_> = match std::fs::read_dir(codex_dir) {
-        Ok(rd) => rd.filter_map(|e| e.ok())
+        Ok(rd) => rd
+            .filter_map(|e| e.ok())
             .filter(|e| {
                 let name = e.file_name().to_string_lossy().into_owned();
                 name.contains(&pattern) && !name.ends_with(".packet.txt")
@@ -512,7 +1268,10 @@ pub fn load_decision_provenance(
 
     // Past this point: an assessment file EXISTS. Failures are fail-closed.
     let content = std::fs::read_to_string(&path).with_context(|| {
-        format!("assessment file exists but could not be read: {}", path.display())
+        format!(
+            "assessment file exists but could not be read: {}",
+            path.display()
+        )
     })?;
 
     let fm = parse_assessment_frontmatter(&content).ok_or_else(|| {
@@ -525,14 +1284,18 @@ pub fn load_decision_provenance(
 
     let head_sha = git_head_sha(repo_root).unwrap_or_else(|_| {
         // HEAD unknown is advisory only.
-        eprintln!("warning: could not determine current HEAD (git rev-parse failed) \
-                   — commit drift check skipped");
+        eprintln!(
+            "warning: could not determine current HEAD (git rev-parse failed) \
+                   — commit drift check skipped"
+        );
         "(unknown)".to_string()
     });
 
     // Re-hash the saved packet file. Unverifiable cases are recorded explicitly.
     let packet_sha_actual = if fm.reviewed_packet.is_empty() {
-        eprintln!("warning: assessment has no reviewed_packet path — packet integrity unverifiable");
+        eprintln!(
+            "warning: assessment has no reviewed_packet path — packet integrity unverifiable"
+        );
         "UNVERIFIABLE:no-packet-path".to_string()
     } else {
         let packet_full = codex_dir.join(&fm.reviewed_packet);
@@ -546,7 +1309,10 @@ pub fn load_decision_provenance(
             match crate::packet::sha256_file(packet_full.to_str().unwrap_or("")) {
                 Ok(sha) => sha,
                 Err(e) => {
-                    eprintln!("warning: could not hash packet file ({}) — packet integrity unverifiable", e);
+                    eprintln!(
+                        "warning: could not hash packet file ({}) — packet integrity unverifiable",
+                        e
+                    );
                     "UNVERIFIABLE:hash-error".to_string()
                 }
             }
@@ -606,10 +1372,16 @@ fn parse_assessment_frontmatter(content: &str) -> Option<AssessmentFrontmatter> 
 
     for line in content.lines() {
         if line == "---" {
-            if !in_fm { in_fm = true; continue; }
-            else { break; }
+            if !in_fm {
+                in_fm = true;
+                continue;
+            } else {
+                break;
+            }
         }
-        if !in_fm { continue; }
+        if !in_fm {
+            continue;
+        }
         let t = line.trim();
         if let Some(v) = t.strip_prefix("review_commit: ") {
             review_commit = v.to_string();
@@ -627,7 +1399,12 @@ fn parse_assessment_frontmatter(content: &str) -> Option<AssessmentFrontmatter> 
     if review_commit.is_empty() || coverage_state.is_empty() {
         return None;
     }
-    Some(AssessmentFrontmatter { review_commit, coverage_state, reviewed_packet, reviewed_packet_sha256 })
+    Some(AssessmentFrontmatter {
+        review_commit,
+        coverage_state,
+        reviewed_packet,
+        reviewed_packet_sha256,
+    })
 }
 
 fn short_sha(sha: &str) -> &str {
@@ -644,6 +1421,8 @@ pub fn append_decision(
     decision: &str,
     reason: &str,
     reentry_after: Option<&str>,
+    closure_findings: Option<&[String]>,
+    event_evidence_sha: Option<&str>,
     provenance: Option<&DecisionProvenance>,
     repo_root: &Path,
     codex_dir: &Path,
@@ -655,11 +1434,29 @@ pub fn append_decision(
 
     let mut entry = String::new();
     entry.push('\n');
-    entry.push_str(&format!("## {} HUMAN DECISION — {} — Stage {}\n", ts, feature, stage));
+    entry.push_str(&format!(
+        "## {} HUMAN DECISION — {} — Stage {}\n",
+        ts, feature, stage
+    ));
     entry.push_str(&format!("Commit at decision: {}\n", sha));
     entry.push_str(&format!("Decision: {}\n", decision));
     if let Some(review_id) = reentry_after {
-        entry.push_str(&format!("Re-entry after: {}\n", review_id));
+        if decision == "AUTHORIZE_EVIDENCE_CLOSURE" {
+            entry.push_str(&format!("Evidence closure after: {}\n", review_id));
+        } else if decision == "AUTHORIZE_INFRASTRUCTURE_REVALIDATION" {
+            entry.push_str(&format!(
+                "Infrastructure revalidation after: {}\n",
+                review_id
+            ));
+        } else {
+            entry.push_str(&format!("Re-entry after: {}\n", review_id));
+        }
+    }
+    if let Some(findings) = closure_findings {
+        entry.push_str(&format!("Authorized findings: {}\n", findings.join(", ")));
+    }
+    if let Some(sha) = event_evidence_sha {
+        entry.push_str(&format!("Infrastructure repair evidence: {}\n", sha));
     }
     entry.push_str(&format!("Reason/next: {}\n", reason));
 
@@ -687,14 +1484,24 @@ pub fn append_decision(
             } else {
                 format!("HEAD_DRIFT: current={}", short_sha(&prov.head_sha))
             };
-            let rc_display = if prov.review_commit.is_empty() { "(unknown)" } else { &prov.review_commit };
-            entry.push_str(&format!("  review_commit: {}  [{}]\n", rc_display, commit_note));
+            let rc_display = if prov.review_commit.is_empty() {
+                "(unknown)"
+            } else {
+                &prov.review_commit
+            };
+            entry.push_str(&format!(
+                "  review_commit: {}  [{}]\n",
+                rc_display, commit_note
+            ));
 
             // Packet hash (AC-4). UNVERIFIABLE cases are explicit, not silent.
             let hash_note = if prov.packet_sha_stored.is_empty() {
                 "PROVENANCE_UNVERIFIABLE: no stored sha in assessment".to_string()
             } else if prov.packet_sha_actual.starts_with("UNVERIFIABLE:") {
-                format!("PROVENANCE_UNVERIFIABLE: {}", &prov.packet_sha_actual["UNVERIFIABLE:".len()..])
+                format!(
+                    "PROVENANCE_UNVERIFIABLE: {}",
+                    &prov.packet_sha_actual["UNVERIFIABLE:".len()..]
+                )
             } else if prov.packet_sha_actual == prov.packet_sha_stored {
                 "MATCH".to_string()
             } else {
@@ -709,8 +1516,10 @@ pub fn append_decision(
             // Coverage gate status (AC-2, AC-8, AC-7).
             // Gate markers only apply when decision == APPROVE_STAGE; other decisions are informational.
             let gate_note = if decision == "APPROVE_STAGE"
-                && matches!(prov.coverage_state.as_str(), "CRITICAL_OMISSION" | "EMPTY_PACKET")
-            {
+                && matches!(
+                    prov.coverage_state.as_str(),
+                    "CRITICAL_OMISSION" | "EMPTY_PACKET"
+                ) {
                 match &prov.override_rationale {
                     Some(rationale) => format!("COVERAGE_GATE_OVERRIDDEN: {}", rationale),
                     None => "COVERAGE_GATE_TRIGGERED".to_string(),
@@ -720,8 +1529,15 @@ pub fn append_decision(
             } else {
                 "INFORMATIONAL".to_string()
             };
-            let cs_display = if prov.coverage_state.is_empty() { "(unknown)" } else { &prov.coverage_state };
-            entry.push_str(&format!("  coverage_state: {}  [{}]\n", cs_display, gate_note));
+            let cs_display = if prov.coverage_state.is_empty() {
+                "(unknown)"
+            } else {
+                &prov.coverage_state
+            };
+            entry.push_str(&format!(
+                "  coverage_state: {}  [{}]\n",
+                cs_display, gate_note
+            ));
         }
     } else {
         // Backward compat: no assessment found — legacy artifact integrity check.
@@ -765,18 +1581,25 @@ fn git_head_sha(repo_root: &Path) -> Result<String> {
     Ok(String::from_utf8_lossy(&out.stdout).trim().to_string())
 }
 
-fn verify_artifacts(feature: &str, stage: &str, codex_dir: &Path) -> (Option<String>, String, bool) {
+fn verify_artifacts(
+    feature: &str,
+    stage: &str,
+    codex_dir: &Path,
+) -> (Option<String>, String, bool) {
     // Find most recent assessment for this feature/stage
     let pattern = format!("{}-stage-{}-", feature, stage);
     let entries: Vec<_> = match std::fs::read_dir(codex_dir) {
-        Ok(rd) => rd.filter_map(|e| e.ok())
-            .filter(|e| e.file_name().to_string_lossy().contains(&pattern) && !e.file_name().to_string_lossy().contains(".packet"))
+        Ok(rd) => rd
+            .filter_map(|e| e.ok())
+            .filter(|e| {
+                e.file_name().to_string_lossy().contains(&pattern)
+                    && !e.file_name().to_string_lossy().contains(".packet")
+            })
             .collect(),
         Err(_) => return (None, String::new(), false),
     };
 
-    let latest = entries.into_iter()
-        .max_by_key(|e| e.file_name());
+    let latest = entries.into_iter().max_by_key(|e| e.file_name());
     let latest = match latest {
         Some(ref e) => e.path(),
         None => return (None, String::new(), false),
@@ -804,9 +1627,12 @@ fn verify_artifacts(feature: &str, stage: &str, codex_dir: &Path) -> (Option<Str
             if now_sha == stored_sha {
                 verify_lines.push_str(&format!("  MATCH   {}\n", current_path));
             } else {
-                verify_lines.push_str(&format!("  CHANGED {} (reviewed {} / now {})\n",
-                    current_path, &stored_sha[..12.min(stored_sha.len())],
-                    &now_sha[..12.min(now_sha.len())]));
+                verify_lines.push_str(&format!(
+                    "  CHANGED {} (reviewed {} / now {})\n",
+                    current_path,
+                    &stored_sha[..12.min(stored_sha.len())],
+                    &now_sha[..12.min(now_sha.len())]
+                ));
                 changed = true;
             }
             current_path.clear();
@@ -834,13 +1660,21 @@ mod tests {
     /// A minimal, correctly-shaped REVIEW header line, exactly as `append_review` emits it
     /// (timestamp value is irrelevant to matching — only the trailing suffix is checked).
     fn review_header(feature: &str, stage: &str) -> String {
-        format!("## 2026-01-01T00:00:00Z REVIEW — {} — Stage {}\n", feature, stage)
+        format!(
+            "## 2026-01-01T00:00:00Z REVIEW — {} — Stage {}\n",
+            feature, stage
+        )
     }
 
     /// A REVIEW entry block exactly as `append_review` emits its first two lines — the only two
     /// lines `resolve_continued_round`'s lookup reads. `continues` mirrors the optional
     /// `Continues:` line `append_review` now writes when a predecessor was supplied.
-    fn review_entry(feature: &str, stage: &str, review_id: &str, continues: Option<&str>) -> String {
+    fn review_entry(
+        feature: &str,
+        stage: &str,
+        review_id: &str,
+        continues: Option<&str>,
+    ) -> String {
         let mut e = review_header(feature, stage);
         e.push_str(&format!("Review ID: {}\n", review_id));
         if let Some(c) = continues {
@@ -886,19 +1720,19 @@ mod tests {
             dir.path(),
             &[
                 &review_entry("F-0004", "8", "REV__F-0004__8__R1", None),
-                &review_entry("F-0004", "8", "REV__isolated-branch__R1", Some("REV__F-0004__8__R1")),
+                &review_entry(
+                    "F-0004",
+                    "8",
+                    "REV__isolated-branch__R1",
+                    Some("REV__F-0004__8__R1"),
+                ),
             ],
         );
         // The second entry is itself round 2 by position (regardless of what its own ID string
         // says — round is derived from position among matching headings, never parsed from the
         // ID), so continuing it resolves to round 3.
-        let round = resolve_continued_round(
-            &log_path,
-            "F-0004",
-            "8",
-            "REV__isolated-branch__R1",
-        )
-        .unwrap();
+        let round =
+            resolve_continued_round(&log_path, "F-0004", "8", "REV__isolated-branch__R1").unwrap();
         assert_eq!(round, 3);
     }
 
@@ -907,12 +1741,18 @@ mod tests {
         let dir = tempfile::tempdir().expect("tempdir");
         let log_path = write_log(
             dir.path(),
-            &[&review_entry("OTHER-FEATURE", "8", "REV__OTHER-FEATURE__8__R1", None)],
+            &[&review_entry(
+                "OTHER-FEATURE",
+                "8",
+                "REV__OTHER-FEATURE__8__R1",
+                None,
+            )],
         );
-        let err =
-            resolve_continued_round(&log_path, "F-0004", "8", "REV__OTHER-FEATURE__8__R1")
-                .unwrap_err();
-        assert!(err.to_string().contains("does not resolve to an existing review"));
+        let err = resolve_continued_round(&log_path, "F-0004", "8", "REV__OTHER-FEATURE__8__R1")
+            .unwrap_err();
+        assert!(err
+            .to_string()
+            .contains("does not resolve to an existing review"));
     }
 
     #[test]
@@ -922,9 +1762,11 @@ mod tests {
             dir.path(),
             &[&review_entry("F-0004", "5", "REV__F-0004__5__R1", None)],
         );
-        let err = resolve_continued_round(&log_path, "F-0004", "8", "REV__F-0004__5__R1")
-            .unwrap_err();
-        assert!(err.to_string().contains("does not resolve to an existing review"));
+        let err =
+            resolve_continued_round(&log_path, "F-0004", "8", "REV__F-0004__5__R1").unwrap_err();
+        assert!(err
+            .to_string()
+            .contains("does not resolve to an existing review"));
     }
 
     #[test]
@@ -934,9 +1776,11 @@ mod tests {
             dir.path(),
             &[&review_entry("F-0004", "8", "REV__F-0004__8__R1", None)],
         );
-        let err = resolve_continued_round(&log_path, "F-0004", "8", "REV__made-up__R9")
-            .unwrap_err();
-        assert!(err.to_string().contains("does not resolve to an existing review"));
+        let err =
+            resolve_continued_round(&log_path, "F-0004", "8", "REV__made-up__R9").unwrap_err();
+        assert!(err
+            .to_string()
+            .contains("does not resolve to an existing review"));
     }
 
     #[test]
@@ -948,12 +1792,22 @@ mod tests {
         let log_path = write_log(
             dir.path(),
             &[
-                &review_entry("F-0004", "8", "REV__F-0004__8__A", Some("REV__F-0004__8__B")),
-                &review_entry("F-0004", "8", "REV__F-0004__8__B", Some("REV__F-0004__8__A")),
+                &review_entry(
+                    "F-0004",
+                    "8",
+                    "REV__F-0004__8__A",
+                    Some("REV__F-0004__8__B"),
+                ),
+                &review_entry(
+                    "F-0004",
+                    "8",
+                    "REV__F-0004__8__B",
+                    Some("REV__F-0004__8__A"),
+                ),
             ],
         );
-        let err = resolve_continued_round(&log_path, "F-0004", "8", "REV__F-0004__8__A")
-            .unwrap_err();
+        let err =
+            resolve_continued_round(&log_path, "F-0004", "8", "REV__F-0004__8__A").unwrap_err();
         assert!(
             err.to_string().contains("cycle") || err.to_string().contains("round budget"),
             "expected a cycle/budget refusal, got: {err}"
@@ -968,12 +1822,22 @@ mod tests {
             dir.path(),
             &[
                 &review_entry("F-0004", "8", "REV__F-0004__8__R1", None),
-                &review_entry("F-0004", "8", "REV__F-0004__8__R2", Some("REV__F-0004__8__R1")),
-                &review_entry("F-0004", "8", "REV__F-0004__8__R3", Some("REV__F-0004__8__R2")),
+                &review_entry(
+                    "F-0004",
+                    "8",
+                    "REV__F-0004__8__R2",
+                    Some("REV__F-0004__8__R1"),
+                ),
+                &review_entry(
+                    "F-0004",
+                    "8",
+                    "REV__F-0004__8__R3",
+                    Some("REV__F-0004__8__R2"),
+                ),
             ],
         );
-        let err = resolve_continued_round(&log_path, "F-0004", "8", "REV__F-0004__8__R3")
-            .unwrap_err();
+        let err =
+            resolve_continued_round(&log_path, "F-0004", "8", "REV__F-0004__8__R3").unwrap_err();
         assert!(
             err.to_string().contains("round budget") || err.to_string().contains("exceed"),
             "expected a round-budget refusal, got: {err}"
@@ -987,8 +1851,18 @@ mod tests {
             dir.path(),
             &[
                 &review_entry("F-0004", "8", "REV__F-0004__8__R1", None),
-                &review_entry("F-0004", "8", "REV__F-0004__8__R2", Some("REV__F-0004__8__R1")),
-                &review_entry("F-0004", "8", "REV__F-0004__8__R3", Some("REV__F-0004__8__R2")),
+                &review_entry(
+                    "F-0004",
+                    "8",
+                    "REV__F-0004__8__R2",
+                    Some("REV__F-0004__8__R1"),
+                ),
+                &review_entry(
+                    "F-0004",
+                    "8",
+                    "REV__F-0004__8__R3",
+                    Some("REV__F-0004__8__R2"),
+                ),
             ],
         );
         let err = compute_review_round(&log_path, "F-0004", "8").unwrap_err();
@@ -1003,8 +1877,18 @@ mod tests {
             dir.path(),
             &[
                 &review_entry("F-0004", "8", "REV__F-0004__8__R1", None),
-                &review_entry("F-0004", "8", "REV__F-0004__8__R2", Some("REV__F-0004__8__R1")),
-                &review_entry("F-0004", "8", "REV__F-0004__8__R3", Some("REV__F-0004__8__R2")),
+                &review_entry(
+                    "F-0004",
+                    "8",
+                    "REV__F-0004__8__R2",
+                    Some("REV__F-0004__8__R1"),
+                ),
+                &review_entry(
+                    "F-0004",
+                    "8",
+                    "REV__F-0004__8__R3",
+                    Some("REV__F-0004__8__R2"),
+                ),
                 &reentry_decision("F-0004", "8", reason),
             ],
         );
@@ -1014,10 +1898,20 @@ mod tests {
             "8",
             "REV__F-0004__8__R3",
             ReentryDecisionSemantics::CanonicalLogOrder,
-        ).unwrap();
+        )
+        .unwrap();
         assert_eq!(authorization.scope, reason);
-        assert_eq!(format_reentry_id("F-0004", "8"), "REV__F-0004__8__REENTRY-1");
-        assert_eq!(compute_review_round(&log_path, "F-0004", "8").unwrap_err().to_string().contains("exceed"), true);
+        assert_eq!(
+            format_reentry_id("F-0004", "8"),
+            "REV__F-0004__8__REENTRY-1"
+        );
+        assert_eq!(
+            compute_review_round(&log_path, "F-0004", "8")
+                .unwrap_err()
+                .to_string()
+                .contains("exceed"),
+            true
+        );
     }
 
     #[test]
@@ -1027,8 +1921,18 @@ mod tests {
             dir.path(),
             &[
                 &review_entry("F-0004", "8", "REV__F-0004__8__R1", None),
-                &review_entry("F-0004", "8", "REV__F-0004__8__R2", Some("REV__F-0004__8__R1")),
-                &review_entry("F-0004", "8", "REV__F-0004__8__R3", Some("REV__F-0004__8__R2")),
+                &review_entry(
+                    "F-0004",
+                    "8",
+                    "REV__F-0004__8__R2",
+                    Some("REV__F-0004__8__R1"),
+                ),
+                &review_entry(
+                    "F-0004",
+                    "8",
+                    "REV__F-0004__8__R3",
+                    Some("REV__F-0004__8__R2"),
+                ),
                 &human_decision(
                     "2026-01-01T00:01:00Z",
                     "F-0004",
@@ -1044,7 +1948,8 @@ mod tests {
             "8",
             "REV__F-0004__8__R3",
             ReentryDecisionSemantics::CanonicalLogOrder,
-        ).unwrap_err();
+        )
+        .unwrap_err();
         assert!(err.to_string().contains("no AUTHORIZE_REENTRY"));
     }
 
@@ -1074,7 +1979,8 @@ mod tests {
             "8",
             "REV__F-0001__8__R3",
             ReentryDecisionSemantics::CanonicalLogOrder,
-        ).unwrap();
+        )
+        .unwrap();
         assert_eq!(authorization.scope, scope);
         assert_eq!(authorization.decision_timestamp, same_timestamp);
     }
@@ -1086,10 +1992,26 @@ mod tests {
             dir.path(),
             &[
                 &review_entry("F-0001", "8", "REV__F-0001__8__R1", None),
-                &review_entry("F-0001", "8", "REV__F-0001__8__R2", Some("REV__F-0001__8__R1")),
-                &review_entry("F-0001", "8", "REV__F-0001__8__R3", Some("REV__F-0001__8__R2")),
+                &review_entry(
+                    "F-0001",
+                    "8",
+                    "REV__F-0001__8__R2",
+                    Some("REV__F-0001__8__R1"),
+                ),
+                &review_entry(
+                    "F-0001",
+                    "8",
+                    "REV__F-0001__8__R3",
+                    Some("REV__F-0001__8__R2"),
+                ),
                 &reentry_decision("F-0001", "8", "Review re-entry authorized."),
-                &human_decision("2026-01-01T00:01:00Z", "F-0001", "8", "STOP", "Do not continue."),
+                &human_decision(
+                    "2026-01-01T00:01:00Z",
+                    "F-0001",
+                    "8",
+                    "STOP",
+                    "Do not continue.",
+                ),
             ],
         );
 
@@ -1099,7 +2021,8 @@ mod tests {
             "8",
             "REV__F-0001__8__R3",
             ReentryDecisionSemantics::CanonicalLogOrder,
-        ).unwrap_err();
+        )
+        .unwrap_err();
         assert!(error.to_string().contains("STOP appended after"));
     }
 
@@ -1111,11 +2034,33 @@ mod tests {
             dir.path(),
             &[
                 &review_entry("F-0001", "8", "REV__F-0001__8__R1", None),
-                &review_entry("F-0001", "8", "REV__F-0001__8__R2", Some("REV__F-0001__8__R1")),
-                &review_entry("F-0001", "8", "REV__F-0001__8__R3", Some("REV__F-0001__8__R2")),
+                &review_entry(
+                    "F-0001",
+                    "8",
+                    "REV__F-0001__8__R2",
+                    Some("REV__F-0001__8__R1"),
+                ),
+                &review_entry(
+                    "F-0001",
+                    "8",
+                    "REV__F-0001__8__R3",
+                    Some("REV__F-0001__8__R2"),
+                ),
                 &reentry_decision("F-0001", "8", scope),
-                &human_decision("2026-01-01T00:02:00Z", "F-0001", "8", "APPROVE_STAGE", "Stage disposition only."),
-                &human_decision("2026-01-01T00:03:00Z", "F-0001", "8", "REQUEST_CHANGES", "Stage disposition only."),
+                &human_decision(
+                    "2026-01-01T00:02:00Z",
+                    "F-0001",
+                    "8",
+                    "APPROVE_STAGE",
+                    "Stage disposition only.",
+                ),
+                &human_decision(
+                    "2026-01-01T00:03:00Z",
+                    "F-0001",
+                    "8",
+                    "REQUEST_CHANGES",
+                    "Stage disposition only.",
+                ),
             ],
         );
 
@@ -1125,7 +2070,8 @@ mod tests {
             "8",
             "REV__F-0001__8__R3",
             ReentryDecisionSemantics::CanonicalLogOrder,
-        ).unwrap();
+        )
+        .unwrap();
         assert_eq!(authorization.scope, scope);
     }
 
@@ -1137,8 +2083,18 @@ mod tests {
             dir.path(),
             &[
                 &review_entry("F-0001", "8", "REV__F-0001__8__R1", None),
-                &review_entry("F-0001", "8", "REV__F-0001__8__R2", Some("REV__F-0001__8__R1")),
-                &review_entry("F-0001", "8", "REV__F-0001__8__R3", Some("REV__F-0001__8__R2")),
+                &review_entry(
+                    "F-0001",
+                    "8",
+                    "REV__F-0001__8__R2",
+                    Some("REV__F-0001__8__R1"),
+                ),
+                &review_entry(
+                    "F-0001",
+                    "8",
+                    "REV__F-0001__8__R3",
+                    Some("REV__F-0001__8__R2"),
+                ),
                 authorization,
             ],
         );
@@ -1149,7 +2105,8 @@ mod tests {
             "8",
             "REV__F-0001__8__R3",
             ReentryDecisionSemantics::CanonicalLogOrder,
-        ).unwrap_err();
+        )
+        .unwrap_err();
         assert!(error.to_string().contains("no AUTHORIZE_REENTRY bound"));
     }
 
@@ -1160,10 +2117,32 @@ mod tests {
             dir.path(),
             &[
                 &review_entry("F-0001", "8", "REV__F-0001__8__R1", None),
-                &review_entry("F-0001", "8", "REV__F-0001__8__R2", Some("REV__F-0001__8__R1")),
-                &review_entry("F-0001", "8", "REV__F-0001__8__R3", Some("REV__F-0001__8__R2")),
-                &human_decision("2026-01-01T00:01:00Z", "F-0001", "8", "APPROVE_STAGE", "Mistaken approval."),
-                &human_decision("2026-01-01T00:02:00Z", "F-0001", "8", "REQUEST_CHANGES", "Review re-entry authorized."),
+                &review_entry(
+                    "F-0001",
+                    "8",
+                    "REV__F-0001__8__R2",
+                    Some("REV__F-0001__8__R1"),
+                ),
+                &review_entry(
+                    "F-0001",
+                    "8",
+                    "REV__F-0001__8__R3",
+                    Some("REV__F-0001__8__R2"),
+                ),
+                &human_decision(
+                    "2026-01-01T00:01:00Z",
+                    "F-0001",
+                    "8",
+                    "APPROVE_STAGE",
+                    "Mistaken approval.",
+                ),
+                &human_decision(
+                    "2026-01-01T00:02:00Z",
+                    "F-0001",
+                    "8",
+                    "REQUEST_CHANGES",
+                    "Review re-entry authorized.",
+                ),
             ],
         );
 
@@ -1173,7 +2152,8 @@ mod tests {
             "8",
             "REV__F-0001__8__R3",
             ReentryDecisionSemantics::LegacySingleDecision,
-        ).unwrap_err();
+        )
+        .unwrap_err();
         assert!(error.to_string().contains("does not define their ordering"));
     }
 
@@ -1185,9 +2165,23 @@ mod tests {
             dir.path(),
             &[
                 &review_entry("F-0004", "8", "REV__F-0004__8__R1", None),
-                &review_entry("F-0004", "8", "REV__F-0004__8__R2", Some("REV__F-0004__8__R1")),
-                &review_entry("F-0004", "8", "REV__F-0004__8__R3", Some("REV__F-0004__8__R2")),
-                &reentry_decision("F-0004", "8", "Review re-entry authorized after R3 budget exhaustion."),
+                &review_entry(
+                    "F-0004",
+                    "8",
+                    "REV__F-0004__8__R2",
+                    Some("REV__F-0004__8__R1"),
+                ),
+                &review_entry(
+                    "F-0004",
+                    "8",
+                    "REV__F-0004__8__R3",
+                    Some("REV__F-0004__8__R2"),
+                ),
+                &reentry_decision(
+                    "F-0004",
+                    "8",
+                    "Review re-entry authorized after R3 budget exhaustion.",
+                ),
                 existing,
             ],
         );
@@ -1197,7 +2191,8 @@ mod tests {
             "8",
             "REV__F-0004__8__R3",
             ReentryDecisionSemantics::CanonicalLogOrder,
-        ).unwrap_err();
+        )
+        .unwrap_err();
         assert!(err.to_string().contains("already been consumed"));
     }
 
@@ -1217,14 +2212,20 @@ mod tests {
     fn round_one_when_log_missing() {
         let dir = tempfile::tempdir().expect("tempdir");
         let missing = dir.path().join("does-not-exist.md");
-        assert_eq!(compute_review_round(&missing, "UPG-0046", "selfdev-step-1").unwrap(), 1);
+        assert_eq!(
+            compute_review_round(&missing, "UPG-0046", "selfdev-step-1").unwrap(),
+            1
+        );
     }
 
     #[test]
     fn round_one_when_log_exists_with_no_matches() {
         let dir = tempfile::tempdir().expect("tempdir");
         let log_path = write_log(dir.path(), &[]);
-        assert_eq!(compute_review_round(&log_path, "UPG-0046", "selfdev-step-1").unwrap(), 1);
+        assert_eq!(
+            compute_review_round(&log_path, "UPG-0046", "selfdev-step-1").unwrap(),
+            1
+        );
     }
 
     #[test]
@@ -1233,7 +2234,10 @@ mod tests {
         let e1 = review_header("UPG-0046", "selfdev-step-1");
         let e2 = review_header("UPG-0046", "selfdev-step-1");
         let log_path = write_log(dir.path(), &[&e1, &e2]);
-        assert_eq!(compute_review_round(&log_path, "UPG-0046", "selfdev-step-1").unwrap(), 3);
+        assert_eq!(
+            compute_review_round(&log_path, "UPG-0046", "selfdev-step-1").unwrap(),
+            3
+        );
     }
 
     #[test]
@@ -1244,7 +2248,8 @@ mod tests {
         let e1 = review_header("FEAT", "10");
         let log_path = write_log(dir.path(), &[&e1]);
         assert_eq!(
-            compute_review_round(&log_path, "FEAT", "1").unwrap(), 1,
+            compute_review_round(&log_path, "FEAT", "1").unwrap(),
+            1,
             "an entry for Stage 10 must not be counted toward Stage 1's round"
         );
         assert_eq!(compute_review_round(&log_path, "FEAT", "10").unwrap(), 2);
@@ -1256,7 +2261,8 @@ mod tests {
         let e1 = review_header("UPG-0046", "selfdev-step-1");
         let log_path = write_log(dir.path(), &[&e1]);
         assert_eq!(
-            compute_review_round(&log_path, "UPG-004", "selfdev-step-1").unwrap(), 1,
+            compute_review_round(&log_path, "UPG-004", "selfdev-step-1").unwrap(),
+            1,
             "an entry for UPG-0046 must not be counted toward UPG-004's round"
         );
     }
@@ -1271,8 +2277,14 @@ mod tests {
         let durable = write_log(dir.path(), &[&e1]);
         let scratch = dir.path().join("scratch-review-log.md");
         std::fs::write(&scratch, LOG_HEADER).expect("write scratch log");
-        assert_eq!(compute_review_round(&durable, "UPG-0046", "selfdev-step-1").unwrap(), 2);
-        assert_eq!(compute_review_round(&scratch, "UPG-0046", "selfdev-step-1").unwrap(), 1);
+        assert_eq!(
+            compute_review_round(&durable, "UPG-0046", "selfdev-step-1").unwrap(),
+            2
+        );
+        assert_eq!(
+            compute_review_round(&scratch, "UPG-0046", "selfdev-step-1").unwrap(),
+            1
+        );
     }
 
     #[test]
@@ -1320,14 +2332,17 @@ mod tests {
 
         assert!(
             result.is_err(),
-            "a permission error must never be silently treated as round 1: {:?}", result
+            "a permission error must never be silently treated as round 1: {:?}",
+            result
         );
     }
 
     /// Minimal, dependency-free euid check (avoids adding a `libc` dependency for one test).
     #[cfg(unix)]
     unsafe fn libc_geteuid_is_zero() -> bool {
-        extern "C" { fn geteuid() -> u32; }
+        extern "C" {
+            fn geteuid() -> u32;
+        }
         geteuid() == 0
     }
 
@@ -1343,22 +2358,47 @@ mod tests {
             format_review_id("checkout-flow", "decomposition", 2),
             "REV__checkout-flow__decomposition__R2"
         );
-        assert_eq!(format_review_id("checkout-flow", "7", 1), "REV__checkout-flow__7__R1");
+        assert_eq!(
+            format_review_id("checkout-flow", "7", 1),
+            "REV__checkout-flow__7__R1"
+        );
     }
 
     /// Set up a temp git repo and build a real `ReviewPacket` against it (needs the real
     /// Codeos repo as `toolkit_root` to find `dba/03-prompts/review/codeos-reviewer-task.md`). Shared by the
     /// tests below that need an actual packet, not just a hand-seeded log file.
     fn build_test_packet(repo_root: &std::path::Path, feature: &str, stage: &str) -> ReviewPacket {
-        std::process::Command::new("git").args(["init"]).current_dir(repo_root).output().expect("git init");
-        std::process::Command::new("git").args(["config", "user.email", "t@t.test"]).current_dir(repo_root).output().ok();
-        std::process::Command::new("git").args(["config", "user.name", "T"]).current_dir(repo_root).output().ok();
+        std::process::Command::new("git")
+            .args(["init"])
+            .current_dir(repo_root)
+            .output()
+            .expect("git init");
+        std::process::Command::new("git")
+            .args(["config", "user.email", "t@t.test"])
+            .current_dir(repo_root)
+            .output()
+            .ok();
+        std::process::Command::new("git")
+            .args(["config", "user.name", "T"])
+            .current_dir(repo_root)
+            .output()
+            .ok();
         std::fs::write(repo_root.join("tracked.md"), "# tracked\n").expect("write");
-        std::process::Command::new("git").args(["add", "tracked.md"]).current_dir(repo_root).output().expect("git add");
-        std::process::Command::new("git").args(["commit", "-m", "init"]).current_dir(repo_root).output().expect("git commit");
+        std::process::Command::new("git")
+            .args(["add", "tracked.md"])
+            .current_dir(repo_root)
+            .output()
+            .expect("git add");
+        std::process::Command::new("git")
+            .args(["commit", "-m", "init"])
+            .current_dir(repo_root)
+            .output()
+            .expect("git commit");
 
         let mut toolkit_root = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        for _ in 0..4 { toolkit_root.pop(); }
+        for _ in 0..4 {
+            toolkit_root.pop();
+        }
 
         let opts = crate::packet::PacketBuildOptions {
             feature: feature.to_string(),
@@ -1404,19 +2444,34 @@ mod tests {
         let repo_root = dir.path();
         let packet = build_test_packet(repo_root, "UPG-TEST", "selfdev-step-1");
         let raw = test_raw();
-        let parsed = crate::assessment::parse_review_output(&raw.text, &packet.coverage_state, 0, 0);
+        let parsed =
+            crate::assessment::parse_review_output(&raw.text, &packet.coverage_state, 0, 0);
 
         let log_path = repo_root.join("review-log.md");
         let review_id = format_review_id(&packet.feature, &packet.stage, 1);
         append_review(
-            &log_path, &review_id, &packet, &raw, &parsed,
-            Path::new("assessment.md"), "deadbeef", Path::new("packet.txt"), "cafefeed", None, None,
-        ).expect("append_review");
+            &log_path,
+            &review_id,
+            &packet,
+            &raw,
+            &parsed,
+            Path::new("assessment.md"),
+            "deadbeef",
+            Path::new("packet.txt"),
+            "cafefeed",
+            None,
+            None,
+            None,
+            None,
+            None,
+        )
+        .expect("append_review");
 
         let content = std::fs::read_to_string(&log_path).expect("read log");
         assert!(
             content.contains(&format!("Review ID: {}\n", review_id)),
-            "log entry must contain the Review ID line: {}", content
+            "log entry must contain the Review ID line: {}",
+            content
         );
     }
 
@@ -1431,7 +2486,8 @@ mod tests {
         let repo_root = dir.path();
         let packet = build_test_packet(repo_root, "UPG-TEST", "selfdev-step-1");
         let raw = test_raw();
-        let parsed = crate::assessment::parse_review_output(&raw.text, &packet.coverage_state, 0, 0);
+        let parsed =
+            crate::assessment::parse_review_output(&raw.text, &packet.coverage_state, 0, 0);
         let log_path = repo_root.join("review-log.md");
 
         // Round 1 (log does not exist yet).
@@ -1440,19 +2496,48 @@ mod tests {
         let review_id1 = format_review_id(&packet.feature, &packet.stage, round1);
         assert!(review_id1.ends_with("__R1"));
         append_review(
-            &log_path, &review_id1, &packet, &raw, &parsed,
-            Path::new("assessment1.md"), "deadbeef1", Path::new("packet1.txt"), "cafefeed1", None, None,
-        ).expect("append_review round 1");
+            &log_path,
+            &review_id1,
+            &packet,
+            &raw,
+            &parsed,
+            Path::new("assessment1.md"),
+            "deadbeef1",
+            Path::new("packet1.txt"),
+            "cafefeed1",
+            None,
+            None,
+            None,
+            None,
+            None,
+        )
+        .expect("append_review round 1");
 
         // Round 2 (log now has exactly one matching entry from round 1).
         let round2 = compute_review_round(&log_path, &packet.feature, &packet.stage).unwrap();
-        assert_eq!(round2, 2, "round must increment after a real append_review call");
+        assert_eq!(
+            round2, 2,
+            "round must increment after a real append_review call"
+        );
         let review_id2 = format_review_id(&packet.feature, &packet.stage, round2);
         assert!(review_id2.ends_with("__R2"));
         append_review(
-            &log_path, &review_id2, &packet, &raw, &parsed,
-            Path::new("assessment2.md"), "deadbeef2", Path::new("packet2.txt"), "cafefeed2", None, None,
-        ).expect("append_review round 2");
+            &log_path,
+            &review_id2,
+            &packet,
+            &raw,
+            &parsed,
+            Path::new("assessment2.md"),
+            "deadbeef2",
+            Path::new("packet2.txt"),
+            "cafefeed2",
+            None,
+            None,
+            None,
+            None,
+            None,
+        )
+        .expect("append_review round 2");
 
         let content = std::fs::read_to_string(&log_path).expect("read log");
         assert!(content.contains(&format!("Review ID: {}\n", review_id1)));
@@ -1461,5 +2546,53 @@ mod tests {
         // A third read must now report round 3, proving the cycle keeps advancing correctly.
         let round3 = compute_review_round(&log_path, &packet.feature, &packet.stage).unwrap();
         assert_eq!(round3, 3);
+    }
+
+    #[test]
+    fn semantic_review_rounds_are_isolated_and_bounded_per_revision() {
+        let dir = tempfile::tempdir().unwrap();
+        let log = dir.path().join("review-log.md");
+        std::fs::write(
+            &log,
+            "Review ID: REV__F-1__8__SR1__R1\nReview ID: REV__F-1__8__SR1__R2\nReview ID: REV__F-1__8__SR1__R3\n",
+        )
+        .unwrap();
+        assert!(compute_semantic_review_round(&log, "F-1", "8", 1).is_err());
+        assert_eq!(
+            compute_semantic_review_round(&log, "F-1", "8", 2).unwrap(),
+            1
+        );
+        assert_eq!(
+            format_semantic_review_id("F-1", "8", 2, 1),
+            "REV__F-1__8__SR2__R1"
+        );
+    }
+
+    #[test]
+    fn evidence_closure_requires_exact_authorized_findings_and_is_single_use() {
+        let dir = tempfile::tempdir().unwrap();
+        let log = dir.path().join("review-log.md");
+        let text = "# log\n\n## t REVIEW — F-1 — Stage 8\nReview ID: REV__F-1__8__R1\n\n## t REVIEW — F-1 — Stage 8\nReview ID: REV__F-1__8__R2\n\n## t REVIEW — F-1 — Stage 8\nReview ID: REV__F-1__8__R3\n\n## t RE-ENTRY REVIEW — F-1 — Stage 8\nReview ID: REV__F-1__8__REENTRY-1\nEffective concern: DO NOT ADVANCE\n\n## t HUMAN DECISION — F-1 — Stage 8\nDecision: AUTHORIZE_EVIDENCE_CLOSURE\nEvidence closure after: REV__F-1__8__REENTRY-1\nAuthorized findings: runtime-evidence\nReason/next: evidence only\n";
+        std::fs::write(&log, text).unwrap();
+        assert!(resolve_evidence_closure_authorization(
+            &log,
+            "F-1",
+            "8",
+            "REV__F-1__8__REENTRY-1",
+            &["runtime-evidence".into()]
+        )
+        .is_ok());
+        assert!(resolve_evidence_closure_authorization(
+            &log,
+            "F-1",
+            "8",
+            "REV__F-1__8__REENTRY-1",
+            &["other".into()]
+        )
+        .is_err());
+        std::fs::write(&log, format!("{text}\n## t EVIDENCE CLOSURE REVIEW — F-1 — Stage 8\nReview ID: REV__F-1__8__EVIDENCE-CLOSURE-1\n")).unwrap();
+        assert!(
+            validate_evidence_closure_target(&log, "F-1", "8", "REV__F-1__8__REENTRY-1").is_err()
+        );
     }
 }

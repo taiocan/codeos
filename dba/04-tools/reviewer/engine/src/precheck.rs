@@ -1,4 +1,4 @@
-use anyhow::{Result, bail};
+use anyhow::{bail, Result};
 use regex::Regex;
 use std::path::Path;
 use std::process::Command;
@@ -180,7 +180,9 @@ mod tests {
     use super::*;
     use std::path::PathBuf;
 
-    fn p(s: &str) -> PathBuf { PathBuf::from(s) }
+    fn p(s: &str) -> PathBuf {
+        PathBuf::from(s)
+    }
 
     #[test]
     fn secret_redaction_detects_api_key() {
@@ -202,7 +204,11 @@ mod tests {
     fn secret_redaction_detects_private_key() {
         let input = "-----BEGIN RSA PRIVATE KEY-----\nABCDEF\n-----END RSA PRIVATE KEY-----\n";
         let (out, count) = redact_secrets(input);
-        assert!(out.contains("[REDACTED PRIVATE KEY]"), "should redact pk: {}", out);
+        assert!(
+            out.contains("[REDACTED PRIVATE KEY]"),
+            "should redact pk: {}",
+            out
+        );
         assert_eq!(count, 1);
     }
 
@@ -216,14 +222,22 @@ mod tests {
     fn placeholder_in_code_span_passes() {
         // Inside inline code span: allowed documentation occurrence
         let result = check_no_unfilled_placeholders(&p("test.md"), "like `UPG-####`\n");
-        assert!(result.is_ok(), "code-span placeholder should pass: {:?}", result);
+        assert!(
+            result.is_ok(),
+            "code-span placeholder should pass: {:?}",
+            result
+        );
     }
 
     #[test]
     fn placeholder_with_prefix_passes() {
         // UPG-####__ prefix is an allowed pattern
         let result = check_no_unfilled_placeholders(&p("test.md"), "UPG-####__CHG-20260702-001\n");
-        assert!(result.is_ok(), "prefixed placeholder should pass: {:?}", result);
+        assert!(
+            result.is_ok(),
+            "prefixed placeholder should pass: {:?}",
+            result
+        );
     }
 
     #[test]
@@ -254,7 +268,10 @@ mod tests {
 
     #[test]
     fn unrelated_diff_paths_finds_only_what_is_not_declared() {
-        let diffed = vec!["modules/a/src/lib.rs".to_string(), "modules/b/src/lib.rs".to_string()];
+        let diffed = vec![
+            "modules/a/src/lib.rs".to_string(),
+            "modules/b/src/lib.rs".to_string(),
+        ];
         let declared = vec!["modules/a/src/lib.rs".to_string()];
         let unrelated = unrelated_diff_paths(&diffed, &declared);
         assert_eq!(unrelated, vec!["modules/b/src/lib.rs".to_string()]);

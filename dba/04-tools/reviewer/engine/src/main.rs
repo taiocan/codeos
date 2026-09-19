@@ -88,6 +88,21 @@ struct ReviewCli {
         conflicts_with = "assessment"
     )]
     reentry_after: Option<String>,
+    /// Run the single evidence-only closure authorized after a consumed REENTRY-1.
+    #[arg(long = "evidence-closure-after", value_name = "REVIEW_ID", conflicts_with_all = ["continues", "reentry_after", "assessment"])]
+    evidence_closure_after: Option<String>,
+    /// Run the terminal revalidation authorized after a negative evidence closure.
+    #[arg(long = "infrastructure-revalidation-after", value_name = "REVIEW_ID", conflicts_with_all = ["continues", "reentry_after", "evidence_closure_after", "assessment"])]
+    infrastructure_revalidation_after: Option<String>,
+    /// Reassess named open F7 evidence findings against materially new canonical evidence.
+    #[arg(long = "evidence-reassessment-after", value_name = "REVIEW_ID", conflicts_with_all = ["continues", "reentry_after", "evidence_closure_after", "infrastructure_revalidation_after", "assessment"])]
+    evidence_reassessment_after: Option<String>,
+    /// Exact evidence finding identities authorized for closure (comma-separated or repeated).
+    #[arg(long = "findings", value_delimiter = ',')]
+    findings: Vec<String>,
+    /// Exact canonical runtime-event evidence set authorized for terminal revalidation.
+    #[arg(long = "event-evidence-sha", value_name = "SHA256")]
+    event_evidence_sha: Option<String>,
 }
 
 #[derive(Args)]
@@ -115,6 +130,10 @@ enum Commands {
         /// Bind a review-control authorization to the identified exhausted R3 boundary.
         #[arg(long = "after-review", value_name = "REVIEW_ID")]
         after_review: Option<String>,
+        #[arg(long = "findings", value_delimiter = ',')]
+        findings: Vec<String>,
+        #[arg(long = "event-evidence-sha", value_name = "SHA256")]
+        event_evidence_sha: Option<String>,
         #[arg(long = "override", value_name = "RATIONALE")]
         override_reason: Option<String>,
     },
@@ -203,6 +222,11 @@ fn run() -> i32 {
                     reviewer_label: args.reviewer_label,
                     continues: args.continues,
                     reentry_after: args.reentry_after,
+                    evidence_closure_after: args.evidence_closure_after,
+                    infrastructure_revalidation_after: args.infrastructure_revalidation_after,
+                    evidence_reassessment_after: args.evidence_reassessment_after,
+                    findings: args.findings,
+                    event_evidence_sha: args.event_evidence_sha,
                 },
                 &cfg,
             )
@@ -222,6 +246,8 @@ fn run() -> i32 {
             verdict,
             reason,
             after_review,
+            findings,
+            event_evidence_sha,
             override_reason,
         } => cmd::decision::run(
             &feature,
@@ -229,6 +255,8 @@ fn run() -> i32 {
             &verdict,
             &reason,
             after_review.as_deref(),
+            &findings,
+            event_evidence_sha.as_deref(),
             override_reason.as_deref(),
             &cfg,
         )

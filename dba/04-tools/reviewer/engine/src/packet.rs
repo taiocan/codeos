@@ -111,6 +111,47 @@ impl ReviewPacket {
         &self.content
     }
 
+    pub fn require_f7_blocker_classification(&mut self) {
+        self.content.push_str(
+            "\n\nF7 BLOCKER CLASSIFICATION\nFor every IN-SCOPE BLOCKER add a separate line `Blocker kind: SUBSTANTIVE` or `Blocker kind: EVIDENCE_INSUFFICIENT`. For EVIDENCE_INSUFFICIENT also add `Evidence required: <specific proof still missing>`. Use EVIDENCE_INSUFFICIENT only when the finding alleges inadequate proof and no defect in implementation, approved meaning, architecture, safety, integrity, or another governed input. Missing classification makes the assessment incomplete.\n"
+        );
+        self.content_sha256 = crate::packet::sha256_str(&self.content);
+    }
+
+    pub fn constrain_to_evidence_closure(&mut self, predecessor: &str, findings: &[String]) {
+        self.content.push_str(&format!(
+            "\n\nEVIDENCE CLOSURE SCOPE\nPredecessor: {predecessor}\nAuthorized findings: {}\nAssess only whether newly supplied evidence closes every named evidence-only finding against the same implementation and governed inputs. Do not perform a general review. Any scope mismatch, contradiction, application defect, incomplete assessment, or unclosed finding requires DO NOT ADVANCE. If and only if every named finding is closed and no blocker is revealed, return ADVANCE / NO OBJECTION in the standard response schema.\n",
+            findings.join(", ")
+        ));
+        self.content_sha256 = crate::packet::sha256_str(&self.content);
+    }
+
+    pub fn constrain_to_infrastructure_revalidation(
+        &mut self,
+        predecessor: &str,
+        findings: &[String],
+        event_evidence_sha: &str,
+    ) {
+        self.content.push_str(&format!(
+            "\n\nINFRASTRUCTURE REPAIR REVALIDATION SCOPE\nPredecessor: {predecessor}\nCanonical event evidence SHA-256: {event_evidence_sha}\nAuthorized findings: {}\nAssess only whether the named evidence-system findings are closed by the supplied canonical evidence against the unchanged implementation and governed inputs. Do not perform a general review. A mismatch, incomplete assessment, unclosed finding, substantive defect, contradiction, or unrelated change requires DO NOT ADVANCE. If and only if every named finding is closed and no blocker is revealed, return ADVANCE / NO OBJECTION in the standard response schema.\n",
+            findings.join(", ")
+        ));
+        self.content_sha256 = crate::packet::sha256_str(&self.content);
+    }
+
+    pub fn constrain_to_evidence_reassessment(
+        &mut self,
+        predecessor: &str,
+        findings: &[String],
+        event_evidence_sha: &str,
+    ) {
+        self.content.push_str(&format!(
+            "\n\nF7 EVIDENCE REASSESSMENT SCOPE\nPredecessor: {predecessor}\nCanonical event evidence SHA-256: {event_evidence_sha}\nOpen evidence findings: {}\nAssess only whether this canonical evidence materially addresses and closes the named evidence-insufficient findings. The engine has established evidence identity, bindings, and non-equivalence; do not infer mechanical validity. Do not perform a general review. If all named findings close and no substantive blocker is revealed, return ADVANCE / NO OBJECTION. If evidence is materially relevant but insufficient, return DO NOT ADVANCE, state the remaining evidence required, and emit `EVIDENCE MATERIALITY: MATERIAL` before the standard final three lines. If it does not address the requirement, emit `EVIDENCE MATERIALITY: NOT_MATERIAL`. If a substantive blocker is revealed, classify it explicitly as SUBSTANTIVE; that closes evidence-loop eligibility.\n",
+            findings.join(", ")
+        ));
+        self.content_sha256 = crate::packet::sha256_str(&self.content);
+    }
+
     /// Restore a packet from an exported sidecar plus the exported bytes. The bytes are adopted
     /// verbatim: nothing is rebuilt, so the reviewed packet and the recorded packet are the same
     /// bytes by construction rather than by a later comparison.
@@ -199,9 +240,10 @@ fn resolve_reader_output_guidance(repo_root: &Path, toolkit_root: &Path) -> Path
         return fallback;
     }
     let resolved = String::from_utf8_lossy(&output.stdout);
-    let selected = resolved
-        .lines()
-        .find_map(|line| line.strip_prefix("reader_output_policy=").map(str::to_string));
+    let selected = resolved.lines().find_map(|line| {
+        line.strip_prefix("reader_output_policy=")
+            .map(str::to_string)
+    });
     match selected {
         Some(rel) if toolkit_root.join(&rel).is_file() => toolkit_root.join(rel),
         _ => fallback,
@@ -566,21 +608,20 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
     }
 
     // Coverage state (most severe wins)
-    let coverage_state =
-        if untracked_shown == 0
-            && ((opts.delta_mode && delta_diff_count == 0 && redacted_diff.trim().is_empty())
-                || (!opts.delta_mode && shown_count == 0 && redacted_diff.trim().is_empty()))
-        {
-            CoverageState::EmptyPacket
-        } else if artifact_excluded || untracked_unavailable {
-            CoverageState::CriticalOmission
-        } else if secret_flag {
-            CoverageState::SecretRedaction
-        } else if !excluded_paths.is_empty() {
-            CoverageState::PartialCoverage
-        } else {
-            CoverageState::FullCoverage
-        };
+    let coverage_state = if untracked_shown == 0
+        && ((opts.delta_mode && delta_diff_count == 0 && redacted_diff.trim().is_empty())
+            || (!opts.delta_mode && shown_count == 0 && redacted_diff.trim().is_empty()))
+    {
+        CoverageState::EmptyPacket
+    } else if artifact_excluded || untracked_unavailable {
+        CoverageState::CriticalOmission
+    } else if secret_flag {
+        CoverageState::SecretRedaction
+    } else if !excluded_paths.is_empty() {
+        CoverageState::PartialCoverage
+    } else {
+        CoverageState::FullCoverage
+    };
 
     // workspace_dirty check
     let workspace_dirty = git_is_dirty(&opts.repo_root);
@@ -702,7 +743,10 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
     }
 
     content.push_str(&format!("\nWORKFLOW/STAGE-SPECIFIC CHECKS\n{}\n", checks));
-    content.push_str(&format!("\nEXPECTED WORKFLOW/STAGE OUTPUT\n  {}\n", expected));
+    content.push_str(&format!(
+        "\nEXPECTED WORKFLOW/STAGE OUTPUT\n  {}\n",
+        expected
+    ));
     content.push_str("\nARTIFACTS TO REVIEW\n");
     content.push_str(&artifacts_block);
 
@@ -1155,7 +1199,10 @@ mod tests {
         // leading OR trailing '*' and compared the remainder literally -- including the second
         // '*' character itself.
         assert!(glob_match("*runtime_events*.jsonl", "runtime_events.jsonl"));
-        assert!(glob_match("*runtime_events*.jsonl", "events/runtime_events.jsonl"));
+        assert!(glob_match(
+            "*runtime_events*.jsonl",
+            "events/runtime_events.jsonl"
+        ));
         assert!(!glob_match("*runtime_events*.jsonl", "runtime_events.txt"));
         assert!(!glob_match("*runtime_events*.jsonl", "other.jsonl"));
     }
@@ -1181,7 +1228,9 @@ mod tests {
     #[test]
     fn looks_like_events_log_does_not_match_an_ordinary_artifact() {
         assert!(!looks_like_events_log("modules/source_fitness/src/lib.rs"));
-        assert!(!looks_like_events_log("tests/behavioral/F-0004_behavior.test.rs"));
+        assert!(!looks_like_events_log(
+            "tests/behavioral/F-0004_behavior.test.rs"
+        ));
     }
 
     #[test]
@@ -1197,7 +1246,13 @@ mod tests {
 
     #[test]
     fn stage_expected_new_downstream_identifiers_are_real_not_placeholder() {
-        for stage in ["framing", "decomposition", "intake", "charter", "architecture"] {
+        for stage in [
+            "framing",
+            "decomposition",
+            "intake",
+            "charter",
+            "architecture",
+        ] {
             let text = stage_expected(stage);
             assert_ne!(
                 text, "(no expected-output template for stage)",
@@ -1209,7 +1264,13 @@ mod tests {
 
     #[test]
     fn stage_checks_new_downstream_identifiers_are_real_not_placeholder() {
-        for stage in ["framing", "decomposition", "intake", "charter", "architecture"] {
+        for stage in [
+            "framing",
+            "decomposition",
+            "intake",
+            "charter",
+            "architecture",
+        ] {
             let text = stage_checks(stage);
             assert!(
                 !text.contains("no stage-specific checklist"),

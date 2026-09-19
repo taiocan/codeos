@@ -8,6 +8,7 @@
 
 pub mod checker;
 pub mod contract;
+pub mod event_evidence;
 pub mod evidence;
 pub mod hashing;
 pub mod project;

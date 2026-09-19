@@ -19,7 +19,7 @@ awk '
   /^### Delivery$/      { print "  delivery:";      next }
   /^### Validation$/    { print "  validation:";    next }
   /^### Communication$/ { print "  communication:"; next }
-  /^\| `[a-z_]+` \| (always|always_when_gui|always_when_persistence) \|/ {
+  /^\| `[a-z_]+` \| (always|always_when_gui|always_when_persistence|when_reality_dependent) \|/ {
     line = $0
     sub(/^\| `/, "", line)
     name = line; sub(/`.*/, "", name)

@@ -64,6 +64,15 @@ without implementation knowledge. This is the solution concept, not architecture
 [One concise statement naming the primary actor and primary decision supported by the solution.
 This is an alignment lens, not an acceptance requirement or feature behavior.]
 
+## Reality-Dependent Claims
+
+<!-- This is solution-wide policy, not one exclusive mode for the whole product. Contracts classify
+individual governed user-visible claims. -->
+
+present: [true | false]
+policy: [how reality-dependent claims are sourced, presented truthfully, and withheld when their
+production source is unavailable, stale, unsupported, or invalid]
+
 ## Outcomes
 
 <!--

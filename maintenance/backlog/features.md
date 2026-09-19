@@ -6,3 +6,4 @@ implemented changes; this file is planning context, not workflow state or implem
 
 | Feature ID | File | Title | Priority | Status |
 |---|---|---|---|---|
+| JAMFREE-F0001 | `JAMFREE-F0001-bound-event-evidence.md` | Canonically Bound Runtime-Event Verification | High | Implemented — downstream revalidation remained blocked |

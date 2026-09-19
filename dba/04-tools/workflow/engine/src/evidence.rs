@@ -164,9 +164,11 @@ fn has_unfilled_placeholder(line: &str) -> bool {
 /// A reviewer assessment record, parsed from its frontmatter.
 #[derive(Debug, Clone)]
 pub struct ReviewRecord {
+    pub review_id: String,
     pub review_commit: String,
     pub reviewed_packet_sha256: String,
     pub effective_concern: String,
+    pub production_evidence: Option<String>,
 }
 
 /// The most recent reviewer record for `feature` at `stage`, by filename timestamp order.
@@ -217,7 +219,10 @@ pub fn latest_review_record(
         if f != Some(feature) || !stage_matches {
             continue;
         }
-        let name = path.file_name().and_then(|v| v.to_str()).unwrap_or_default();
+        let name = path
+            .file_name()
+            .and_then(|v| v.to_str())
+            .unwrap_or_default();
         if latest_name.as_deref() == Some(name) {
             anyhow::bail!(
                 "ambiguous reviewer records for {feature} at stage {stage}: duplicate canonical filename {name}"
@@ -228,6 +233,11 @@ pub fn latest_review_record(
         }
         latest_name = Some(name.to_string());
         latest = Some(ReviewRecord {
+            review_id: doc
+                .get("review_id")
+                .and_then(|v| v.as_str())
+                .unwrap_or_default()
+                .to_string(),
             review_commit: reviewed
                 .and_then(|r| r.get("review_commit"))
                 .and_then(|v| v.as_str())
@@ -244,14 +254,257 @@ pub fn latest_review_record(
                 .and_then(|v| v.as_str())
                 .unwrap_or_default()
                 .to_string(),
+            production_evidence: reviewed
+                .and_then(|r| r.get("artifacts"))
+                .and_then(|v| v.as_sequence())
+                .and_then(|artifacts| {
+                    artifacts.iter().find_map(|artifact| {
+                        let path = artifact.get("path")?.as_str()?;
+                        let identity = path
+                            .strip_prefix(".codeos/06-workflow/reality-evidence/")?
+                            .strip_suffix(".json")?;
+                        (identity.len() == 64
+                            && artifact.get("sha256").and_then(|v| v.as_str()) == Some(identity)
+                            && artifact.get("visibility").and_then(|v| v.as_str()) == Some("shown"))
+                        .then(|| identity.to_string())
+                    })
+                }),
         });
     }
     Ok(latest)
 }
 
+pub fn evidence_reassessment_history_permits_progression(
+    log_path: &Path,
+    feature: &str,
+    stage: &str,
+    latest_review_id: &str,
+) -> Result<bool> {
+    let Ok(content) = std::fs::read_to_string(log_path) else {
+        return Ok(false);
+    };
+    let prefix = format!("REV__{feature}__{stage}__EVIDENCE-REASSESSMENT-");
+    if !latest_review_id.starts_with(&prefix) {
+        return Ok(false);
+    }
+    let legacy = format!("REV__{feature}__{stage}__INFRA-REVALIDATION-1");
+    let mut current = latest_review_id.to_string();
+    let mut seen = std::collections::BTreeSet::new();
+    let mut expected_findings: Option<String> = None;
+    loop {
+        if !seen.insert(current.clone()) {
+            return Ok(false);
+        }
+        let Some((_, tail)) = content.split_once(&format!("Review ID: {current}")) else {
+            return Ok(false);
+        };
+        let block = tail.split("\n## ").next().unwrap_or(tail);
+        let legacy_mapping_defect = current == latest_review_id
+            && block
+                .lines()
+                .any(|line| line == "Evidence loop state: CLOSED — SUBSTANTIVE")
+            && block
+                .lines()
+                .any(|line| line == "Codex concern: NO OBJECTION")
+            && block
+                .lines()
+                .any(|line| line == "Effective concern: CHANGES ADVISED")
+            && block
+                .lines()
+                .any(|line| line == "Parse status: OK   Assessment status: COMPLETE");
+        if block
+            .lines()
+            .any(|line| line == "Evidence loop state: CLOSED — SUBSTANTIVE")
+            && !legacy_mapping_defect
+        {
+            return Ok(false);
+        }
+        let Some(findings) = block
+            .lines()
+            .find_map(|line| line.strip_prefix("Open evidence findings: "))
+        else {
+            return Ok(false);
+        };
+        if let Some(expected) = &expected_findings {
+            if expected != findings {
+                return Ok(false);
+            }
+        } else {
+            expected_findings = Some(findings.to_string());
+        }
+        let Some(previous) = block
+            .lines()
+            .find_map(|line| line.strip_prefix("Evidence reassessment after: "))
+        else {
+            return Ok(false);
+        };
+        if current == latest_review_id
+            && !block
+                .lines()
+                .any(|line| line == "Evidence loop state: CLOSED — EVIDENCE SATISFIED")
+            && !legacy_mapping_defect
+        {
+            return Ok(false);
+        }
+        if previous == legacy {
+            let Some((_, legacy_tail)) = content.split_once(&format!("Review ID: {legacy}")) else {
+                return Ok(false);
+            };
+            let legacy_block = legacy_tail.split("\n## ").next().unwrap_or(legacy_tail);
+            return Ok(legacy_block
+                .lines()
+                .any(|line| line == "Effective concern: DO NOT ADVANCE")
+                && legacy_block
+                    .lines()
+                    .find_map(|line| line.strip_prefix("Authorized findings: "))
+                    == expected_findings.as_deref());
+        }
+        if !previous.starts_with(&prefix) {
+            return Ok(false);
+        }
+        current = previous.to_string();
+    }
+}
+
 /// A review outcome permits progression unless it is an unresolved "DO NOT ADVANCE".
 pub fn review_permits_progression(concern: &str) -> bool {
     !concern.trim().eq_ignore_ascii_case("DO NOT ADVANCE")
+}
+
+/// Validate the immutable composite history required by Review Policy v5. This is deliberately
+/// stricter than treating the closure assessment as a replacement for REENTRY-1.
+pub fn evidence_closure_history_permits_progression(
+    log_path: &Path,
+    feature: &str,
+    stage: &str,
+) -> Result<bool> {
+    let Ok(content) = std::fs::read_to_string(log_path) else {
+        return Ok(false);
+    };
+    let ordinary_suffix = format!(" REVIEW — {feature} — Stage {stage}");
+    if content
+        .lines()
+        .filter(|l| l.starts_with("## ") && l.ends_with(&ordinary_suffix))
+        .count()
+        < 3
+    {
+        return Ok(false);
+    }
+    let reentry_id = format!("REV__{feature}__{stage}__REENTRY-1");
+    let closure_id = format!("REV__{feature}__{stage}__EVIDENCE-CLOSURE-1");
+    let Some((_, after_reentry)) = content.split_once(&format!("Review ID: {reentry_id}")) else {
+        return Ok(false);
+    };
+    let reentry_block = after_reentry.split("\n## ").next().unwrap_or(after_reentry);
+    if !reentry_block
+        .lines()
+        .any(|l| l == "Effective concern: DO NOT ADVANCE")
+    {
+        return Ok(false);
+    }
+    let Some((before_closure, after_closure)) =
+        content.split_once(&format!("Review ID: {closure_id}"))
+    else {
+        return Ok(false);
+    };
+    let closure_block = after_closure.split("\n## ").next().unwrap_or(after_closure);
+    if !closure_block
+        .lines()
+        .any(|l| l == "Effective concern: EVIDENCE CLOSED — PROGRESSION PERMITTED")
+        || !closure_block
+            .lines()
+            .any(|l| l == format!("Evidence closure after: {reentry_id}"))
+    {
+        return Ok(false);
+    }
+    let authorization = before_closure.rsplit("\n## ").find(|block| {
+        block
+            .lines()
+            .any(|l| l == "Decision: AUTHORIZE_EVIDENCE_CLOSURE")
+            && block
+                .lines()
+                .any(|l| l == format!("Evidence closure after: {reentry_id}"))
+    });
+    let Some(auth) = authorization else {
+        return Ok(false);
+    };
+    let auth_findings = auth
+        .lines()
+        .find_map(|l| l.strip_prefix("Authorized findings: "));
+    let closure_findings = closure_block
+        .lines()
+        .find_map(|l| l.strip_prefix("Authorized findings: "));
+    Ok(auth_findings.is_some() && auth_findings == closure_findings)
+}
+
+pub fn infrastructure_revalidation_history_permits_progression(
+    log_path: &Path,
+    feature: &str,
+    stage: &str,
+) -> Result<bool> {
+    let Ok(content) = std::fs::read_to_string(log_path) else {
+        return Ok(false);
+    };
+    let reentry_id = format!("REV__{feature}__{stage}__REENTRY-1");
+    let closure_id = format!("REV__{feature}__{stage}__EVIDENCE-CLOSURE-1");
+    let terminal_id = format!("REV__{feature}__{stage}__INFRA-REVALIDATION-1");
+    let block_after = |id: &str| {
+        content
+            .split_once(&format!("Review ID: {id}"))
+            .map(|(_, tail)| tail.split("\n## ").next().unwrap_or(tail))
+    };
+    if !block_after(&reentry_id).is_some_and(|block| {
+        block
+            .lines()
+            .any(|line| line == "Effective concern: DO NOT ADVANCE")
+    }) || !block_after(&closure_id).is_some_and(|block| {
+        block
+            .lines()
+            .any(|line| line == "Effective concern: DO NOT ADVANCE")
+    }) {
+        return Ok(false);
+    }
+    let Some((before_terminal, terminal_tail)) =
+        content.split_once(&format!("Review ID: {terminal_id}"))
+    else {
+        return Ok(false);
+    };
+    let terminal = terminal_tail.split("\n## ").next().unwrap_or(terminal_tail);
+    if !terminal.lines().any(|line| {
+        line == "Effective concern: INFRASTRUCTURE EVIDENCE REVALIDATED — PROGRESSION PERMITTED"
+    }) || !terminal
+        .lines()
+        .any(|line| line == format!("Infrastructure revalidation after: {closure_id}"))
+    {
+        return Ok(false);
+    }
+    let terminal_findings = terminal
+        .lines()
+        .find_map(|line| line.strip_prefix("Authorized findings: "));
+    let terminal_evidence = terminal
+        .lines()
+        .find_map(|line| line.strip_prefix("Infrastructure repair evidence: "));
+    let authorization = before_terminal.rsplit("\n## ").find(|block| {
+        block
+            .lines()
+            .any(|line| line == "Decision: AUTHORIZE_INFRASTRUCTURE_REVALIDATION")
+            && block
+                .lines()
+                .any(|line| line == format!("Infrastructure revalidation after: {closure_id}"))
+    });
+    let Some(authorization) = authorization else {
+        return Ok(false);
+    };
+    Ok(terminal_findings.is_some()
+        && terminal_findings
+            == authorization
+                .lines()
+                .find_map(|line| line.strip_prefix("Authorized findings: "))
+        && terminal_evidence.is_some()
+        && terminal_evidence
+            == authorization
+                .lines()
+                .find_map(|line| line.strip_prefix("Infrastructure repair evidence: ")))
 }
 
 /// Result of live-executing a verification command.
@@ -403,16 +656,22 @@ mod tests {
         fs::write(
             dir.path().join("20260101T000000Z-F-ROOT-stage-8-abc.md"),
             review_record("F-ROOT", "8", "REV__F-ROOT__8__R1"),
-        ).unwrap();
+        )
+        .unwrap();
         let codex = dir.path().join("codex");
         fs::create_dir(&codex).unwrap();
         fs::write(
             codex.join("20260101T000001Z-F-NESTED-stage-8-abc.md"),
             canonical_review_record("F-NESTED", 8, "REV__F-NESTED__8__R1"),
-        ).unwrap();
+        )
+        .unwrap();
 
-        assert!(latest_review_record(dir.path(), "F-ROOT", "8").unwrap().is_some());
-        assert!(latest_review_record(dir.path(), "F-NESTED", "8").unwrap().is_some());
+        assert!(latest_review_record(dir.path(), "F-ROOT", "8")
+            .unwrap()
+            .is_some());
+        assert!(latest_review_record(dir.path(), "F-NESTED", "8")
+            .unwrap()
+            .is_some());
     }
 
     #[test]
@@ -423,9 +682,47 @@ mod tests {
         fs::write(
             codex.join("20260101T000001Z-F-0004-stage-8-abc.md"),
             canonical_review_record("F-0004", 8, "REV__F-0004__8__REENTRY-1"),
-        ).unwrap();
-        let record = latest_review_record(dir.path(), "F-0004", "8").unwrap().unwrap();
+        )
+        .unwrap();
+        let record = latest_review_record(dir.path(), "F-0004", "8")
+            .unwrap()
+            .unwrap();
         assert_eq!(record.effective_concern, "NO OBJECTION");
+    }
+
+    #[test]
+    fn evidence_reassessment_requires_closed_chain_back_to_negative_terminal_record() {
+        let dir = tempfile::tempdir().unwrap();
+        let log = dir.path().join("review-log.md");
+        std::fs::write(&log, "## t INFRASTRUCTURE REVALIDATION — F-1 — Stage 8\nReview ID: REV__F-1__8__INFRA-REVALIDATION-1\nAuthorized findings: runtime-evidence\nEffective concern: DO NOT ADVANCE\n\n## t EVIDENCE REASSESSMENT — F-1 — Stage 8\nReview ID: REV__F-1__8__EVIDENCE-REASSESSMENT-1\nEvidence reassessment after: REV__F-1__8__INFRA-REVALIDATION-1\nOpen evidence findings: runtime-evidence\nEvidence loop state: CLOSED — EVIDENCE SATISFIED\nEffective concern: NO OBJECTION\n").unwrap();
+        assert!(evidence_reassessment_history_permits_progression(
+            &log,
+            "F-1",
+            "8",
+            "REV__F-1__8__EVIDENCE-REASSESSMENT-1"
+        )
+        .unwrap());
+
+        let text = std::fs::read_to_string(&log)
+            .unwrap()
+            .replace("CLOSED — EVIDENCE SATISFIED", "CLOSED — SUBSTANTIVE");
+        std::fs::write(&log, text).unwrap();
+        assert!(!evidence_reassessment_history_permits_progression(
+            &log,
+            "F-1",
+            "8",
+            "REV__F-1__8__EVIDENCE-REASSESSMENT-1"
+        )
+        .unwrap());
+
+        std::fs::write(&log, "## t INFRASTRUCTURE REVALIDATION — F-1 — Stage 8\nReview ID: REV__F-1__8__INFRA-REVALIDATION-1\nAuthorized findings: runtime-evidence\nEffective concern: DO NOT ADVANCE\n\n## t EVIDENCE REASSESSMENT — F-1 — Stage 8\nReview ID: REV__F-1__8__EVIDENCE-REASSESSMENT-1\nEvidence reassessment after: REV__F-1__8__INFRA-REVALIDATION-1\nOpen evidence findings: runtime-evidence\nEvidence loop state: CLOSED — SUBSTANTIVE\nCodex concern: NO OBJECTION\nEffective concern: CHANGES ADVISED\nParse status: OK   Assessment status: COMPLETE\n").unwrap();
+        assert!(evidence_reassessment_history_permits_progression(
+            &log,
+            "F-1",
+            "8",
+            "REV__F-1__8__EVIDENCE-REASSESSMENT-1"
+        )
+        .unwrap());
     }
 
     #[test]
@@ -433,14 +730,42 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         fs::write(dir.path().join("notes.md"), "not a review").unwrap();
         fs::write(dir.path().join("packet.txt"), "not a review").unwrap();
-        assert!(latest_review_record(dir.path(), "F-0004", "8").unwrap().is_none());
+        assert!(latest_review_record(dir.path(), "F-0004", "8")
+            .unwrap()
+            .is_none());
 
         let name = "20260101T000001Z-F-0004-stage-8-abc.md";
-        fs::write(dir.path().join(name), review_record("F-0004", "8", "REV__F-0004__8__R3")).unwrap();
+        fs::write(
+            dir.path().join(name),
+            review_record("F-0004", "8", "REV__F-0004__8__R3"),
+        )
+        .unwrap();
         let codex = dir.path().join("codex");
         fs::create_dir(&codex).unwrap();
-        fs::write(codex.join(name), review_record("F-0004", "8", "REV__F-0004__8__REENTRY-1")).unwrap();
+        fs::write(
+            codex.join(name),
+            review_record("F-0004", "8", "REV__F-0004__8__REENTRY-1"),
+        )
+        .unwrap();
         let error = latest_review_record(dir.path(), "F-0004", "8").unwrap_err();
         assert!(error.to_string().contains("ambiguous reviewer records"));
+    }
+
+    #[test]
+    fn evidence_closure_requires_the_complete_composite_chain() {
+        let dir = tempfile::tempdir().unwrap();
+        let log = dir.path().join("review-log.md");
+        let text = "## t REVIEW — F-1 — Stage 8\n## t REVIEW — F-1 — Stage 8\n## t REVIEW — F-1 — Stage 8\nReview ID: REV__F-1__8__REENTRY-1\nEffective concern: DO NOT ADVANCE\n## t HUMAN DECISION — F-1 — Stage 8\nDecision: AUTHORIZE_EVIDENCE_CLOSURE\nEvidence closure after: REV__F-1__8__REENTRY-1\nAuthorized findings: runtime-evidence\n## t EVIDENCE CLOSURE REVIEW — F-1 — Stage 8\nReview ID: REV__F-1__8__EVIDENCE-CLOSURE-1\nEvidence closure after: REV__F-1__8__REENTRY-1\nAuthorized findings: runtime-evidence\nEffective concern: EVIDENCE CLOSED — PROGRESSION PERMITTED\n";
+        fs::write(&log, text).unwrap();
+        assert!(evidence_closure_history_permits_progression(&log, "F-1", "8").unwrap());
+        fs::write(
+            &log,
+            text.replace(
+                "Authorized findings: runtime-evidence\nEffective concern",
+                "Authorized findings: other\nEffective concern",
+            ),
+        )
+        .unwrap();
+        assert!(!evidence_closure_history_permits_progression(&log, "F-1", "8").unwrap());
     }
 }

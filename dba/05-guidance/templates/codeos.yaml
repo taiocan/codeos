@@ -29,6 +29,11 @@ platform:
 #   backend_health_url: http://127.0.0.1:8080/health
 #   web_url: http://127.0.0.1:3000/
 
+# Required when an approved Contract contains a reality-dependent claim. The executable is
+# project-relative and writes the structured object named by CODEOS_REALITY_EVIDENCE_PATH.
+# reality_verification:
+#   command: scripts/verify-production-claims
+
 # The fixed `mechanics:` block is written here by `dba-init.sh`, rendered from the Codeos Mechanics
 # policy the active DBA configuration selects (see dba/04-tools/configuration/render-mechanics-block.sh).
 # It is transparency only — a project cannot change a value; project-config-contract.sh fails closed
