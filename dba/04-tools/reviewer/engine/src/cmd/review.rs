@@ -147,18 +147,10 @@ fn validate_semantic_predecessor(
             .get("review_id")
             .and_then(|v| v.as_str())
             .unwrap_or_default();
-        let revision = id
-            .split("__SR")
-            .nth(1)
-            .and_then(|tail| tail.split("__R").next())
-            .and_then(|value| value.parse::<u64>().ok())
-            .unwrap_or(0);
-        if revision != from
-            || !id
-                .rsplit("__R")
-                .next()
-                .is_some_and(|v| v.parse::<u32>().is_ok())
-        {
+        let Some(review_id) = review_log::parse_ordinary_review_id(id, &packet.feature, "8") else {
+            continue;
+        };
+        if review_id.semantic_revision != Some(from) {
             continue;
         }
         if let Some(artifacts) = reviewed

@@ -91,11 +91,11 @@ pub fn compute_semantic_review_round(
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(1),
         Err(error) => return Err(error).context("read review log for semantic review round"),
     };
-    let prefix = format!("REV__{feature}__{stage}__SR{semantic_revision}__R");
     let count = content
         .lines()
         .filter_map(|line| line.strip_prefix("Review ID: "))
-        .filter(|id| id.starts_with(&prefix))
+        .filter_map(|id| parse_ordinary_review_id(id, feature, stage))
+        .filter(|id| id.semantic_revision == Some(semantic_revision))
         .count() as u32;
     let next = count + 1;
     if next > ROUND_BUDGET {
@@ -117,11 +117,88 @@ pub const INFRASTRUCTURE_REVALIDATION_HEADING: &str = "INFRASTRUCTURE REVALIDATI
 pub const EVIDENCE_REASSESSMENT_HEADING: &str = "EVIDENCE REASSESSMENT";
 
 fn count_entries(content: &str, kind: &str, feature: &str, stage: &str) -> u32 {
-    let suffix = format!(" {} — {} — Stage {}", kind, feature, stage);
+    let record = format!("{} — {} — Stage {}", kind, feature, stage);
     content
         .lines()
-        .filter(|line| line.starts_with("## ") && line.ends_with(&suffix))
+        .filter(|line| {
+            line.strip_prefix("## ")
+                .and_then(|line| line.split_once(' '))
+                .is_some_and(|(_, body)| body == record)
+        })
         .count() as u32
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct OrdinaryReviewId {
+    pub feature: String,
+    pub stage: String,
+    pub semantic_revision: Option<u64>,
+    pub round: u32,
+}
+
+fn canonical_positive_u64(value: &str) -> Option<u64> {
+    let parsed = value.parse::<u64>().ok()?;
+    (parsed > 0 && parsed.to_string() == value).then_some(parsed)
+}
+
+fn canonical_round(value: &str) -> Option<u32> {
+    let parsed = value.parse::<u32>().ok()?;
+    ((1..=ROUND_BUDGET).contains(&parsed) && parsed.to_string() == value).then_some(parsed)
+}
+
+/// Parse an ordinary review ID for an already-known feature and stage. Special review records use
+/// different terminal components and are deliberately excluded.
+pub(crate) fn parse_ordinary_review_id(
+    review_id: &str,
+    feature: &str,
+    stage: &str,
+) -> Option<OrdinaryReviewId> {
+    let tail = review_id.strip_prefix(&format!("REV__{feature}__{stage}__"))?;
+    let (semantic_revision, round) = if let Some(round) = tail.strip_prefix('R') {
+        (None, canonical_round(round)?)
+    } else {
+        let semantic = tail.strip_prefix("SR")?;
+        let (revision, round) = semantic.split_once("__R")?;
+        (
+            Some(canonical_positive_u64(revision)?),
+            canonical_round(round)?,
+        )
+    };
+    Some(OrdinaryReviewId {
+        feature: feature.to_string(),
+        stage: stage.to_string(),
+        semantic_revision,
+        round,
+    })
+}
+
+fn ordinary_review_ids<'a>(content: &'a str, feature: &str, stage: &str) -> Vec<&'a str> {
+    let record = format!("{REVIEW_HEADING} — {feature} — Stage {stage}");
+    let lines: Vec<&str> = content.lines().collect();
+    let mut ids = Vec::new();
+    let mut index = 0;
+    while index < lines.len() {
+        let ordinary_heading = lines[index]
+            .strip_prefix("## ")
+            .and_then(|line| line.split_once(' '))
+            .is_some_and(|(_, body)| body == record);
+        if !ordinary_heading {
+            index += 1;
+            continue;
+        }
+        index += 1;
+        while index < lines.len() && !lines[index].starts_with("## ") {
+            if let Some(id) = lines[index].strip_prefix("Review ID: ") {
+                ids.push(id.trim());
+                break;
+            }
+            index += 1;
+        }
+        while index < lines.len() && !lines[index].starts_with("## ") {
+            index += 1;
+        }
+    }
+    ids
 }
 
 /// The round budget stated in `dba/02-policies/review/v2.md`: rounds 1-3 run automatically; an
@@ -724,13 +801,17 @@ pub fn validate_reentry_authorization_target(
 ) -> Result<()> {
     let content = std::fs::read_to_string(log_path)
         .with_context(|| format!("the review log could not be read: {}", log_path.display()))?;
-    let (round, _) =
-        find_predecessor_entry(&content, feature, stage, after_review_id).ok_or_else(|| {
-            anyhow::anyhow!("{after_review_id} is not a review for {feature} at stage {stage}")
-        })?;
+    let target = parse_ordinary_review_id(after_review_id, feature, stage).ok_or_else(|| {
+        anyhow::anyhow!("{after_review_id} is not a canonical ordinary review ID for {feature} at stage {stage}")
+    })?;
     anyhow::ensure!(
-        round == ROUND_BUDGET,
-        "{after_review_id} is round {round}; authorization is available only for R{ROUND_BUDGET}"
+        ordinary_review_ids(&content, feature, stage).contains(&after_review_id),
+        "{after_review_id} is not an ordinary review record for {feature} at stage {stage}"
+    );
+    anyhow::ensure!(
+        target.round == ROUND_BUDGET,
+        "{after_review_id} is round {}; authorization is available only for R{ROUND_BUDGET}",
+        target.round
     );
     anyhow::ensure!(
         count_entries(&content, REENTRY_REVIEW_HEADING, feature, stage) == 0,
@@ -1061,10 +1142,10 @@ pub fn append_review(
         },
         review_id
     ));
-    if let Some(rest) = review_id.split("__SR").nth(1) {
-        if let Some(revision) = rest.split("__R").next() {
-            entry.push_str(&format!("Semantic revision: {revision}\n"));
-        }
+    if let Some(revision) = parse_ordinary_review_id(review_id, &packet.feature, &packet.stage)
+        .and_then(|id| id.semantic_revision)
+    {
+        entry.push_str(&format!("Semantic revision: {revision}\n"));
     }
     if let Some(predecessor) = continues {
         entry.push_str(&format!("Continues: {}\n", predecessor));
@@ -2566,6 +2647,98 @@ mod tests {
             format_semantic_review_id("F-1", "8", 2, 1),
             "REV__F-1__8__SR2__R1"
         );
+    }
+
+    #[test]
+    fn ordinary_review_id_parser_distinguishes_stage_revision_and_round() {
+        let legacy = parse_ordinary_review_id("REV__F-0001__8__R3", "F-0001", "8").unwrap();
+        assert_eq!(legacy.feature, "F-0001");
+        assert_eq!(legacy.stage, "8");
+        assert_eq!(legacy.semantic_revision, None);
+        assert_eq!(legacy.round, 3);
+
+        for revision in [1, 2, 3] {
+            let review_id = format!("REV__F-0001__8__SR{revision}__R3");
+            let parsed = parse_ordinary_review_id(&review_id, "F-0001", "8").unwrap();
+            assert_eq!(parsed.feature, "F-0001");
+            assert_eq!(parsed.stage, "8");
+            assert_eq!(parsed.semantic_revision, Some(revision));
+            assert_eq!(parsed.round, 3);
+        }
+    }
+
+    #[test]
+    fn semantic_r1_and_r2_parse_but_are_not_reentry_targets() {
+        for round in [1, 2] {
+            let review_id = format!("REV__F-0001__8__SR2__R{round}");
+            let parsed = parse_ordinary_review_id(&review_id, "F-0001", "8").unwrap();
+            assert_eq!(parsed.round, round);
+
+            let dir = tempfile::tempdir().unwrap();
+            let log = write_log(
+                dir.path(),
+                &[&review_entry("F-0001", "8", &review_id, None)],
+            );
+            let error =
+                validate_reentry_authorization_target(&log, "F-0001", "8", &review_id).unwrap_err();
+            assert!(error.to_string().contains("available only for R3"));
+        }
+    }
+
+    #[test]
+    fn malformed_ordinary_review_ids_fail_closed() {
+        for review_id in [
+            "REV__F-0001__R3__SR2__8",
+            "REV__F-0001__8__R3__garbage",
+            "REV__F-0001__8__SR2__R3__R3",
+            "something__R3",
+            "REV__F-0001__8__SR2__R4",
+            "REV__F-0001__8__SR2",
+            "REV__F-0001__8__SR0__R3",
+            "REV__F-0001__8__SR02__R3",
+            "REV__F-0001__8__SR2__R03",
+        ] {
+            assert!(
+                parse_ordinary_review_id(review_id, "F-0001", "8").is_none(),
+                "malformed ID parsed: {review_id}"
+            );
+        }
+    }
+
+    #[test]
+    fn reentry_target_uses_structured_round_not_matching_record_ordinal() {
+        let dir = tempfile::tempdir().unwrap();
+        let log = write_log(
+            dir.path(),
+            &[
+                &review_entry("F-0001", "8", "REV__F-0001__8__R1", None),
+                &review_entry("F-0001", "8", "REV__F-0001__8__R2", None),
+                &review_entry("F-0001", "8", "REV__F-0001__8__R3", None),
+                "## 2026-01-01T00:03:00Z EVIDENCE CLOSURE REVIEW — F-0001 — Stage 8\nReview ID: unrelated-closure-1\n",
+                "## 2026-01-01T00:04:00Z EVIDENCE CLOSURE REVIEW — F-0001 — Stage 8\nReview ID: unrelated-closure-2\n",
+                &review_entry("F-0001", "8", "REV__F-0001__8__SR2__R1", None),
+                &review_entry("F-0001", "8", "REV__F-0001__8__SR2__R2", None),
+                &review_entry("F-0001", "8", "REV__F-0001__8__SR2__R3", None),
+            ],
+        );
+
+        validate_reentry_authorization_target(&log, "F-0001", "8", "REV__F-0001__8__SR2__R3")
+            .unwrap();
+    }
+
+    #[test]
+    fn ordinary_round_count_ignores_compound_review_headings() {
+        let dir = tempfile::tempdir().unwrap();
+        let log = write_log(
+            dir.path(),
+            &[
+                &review_entry("F-0001", "8", "REV__F-0001__8__R1", None),
+                "## 2026-01-01T00:03:00Z RE-ENTRY REVIEW — F-0001 — Stage 8\nReview ID: REV__F-0001__8__REENTRY-1\n",
+                "## 2026-01-01T00:04:00Z EVIDENCE CLOSURE REVIEW — F-0001 — Stage 8\nReview ID: REV__F-0001__8__EVIDENCE-CLOSURE-1\n",
+            ],
+        );
+
+        assert_eq!(compute_review_round(&log, "F-0001", "8").unwrap(), 2);
     }
 
     #[test]

@@ -132,6 +132,10 @@ fn r1_r3_history() -> &'static str {
 }
 
 fn authorize_reentry(repo: &std::path::Path) -> (i32, String, String) {
+    authorize_reentry_after(repo, "REV__FEAT__8__R3")
+}
+
+fn authorize_reentry_after(repo: &std::path::Path, after_review: &str) -> (i32, String, String) {
     run_decision_in(
         repo,
         &[
@@ -141,7 +145,7 @@ fn authorize_reentry(repo: &std::path::Path) -> (i32, String, String) {
             "AUTHORIZE_REENTRY",
             "One reviewer execution for repaired findings.",
             "--after-review",
-            "REV__FEAT__8__R3",
+            after_review,
         ],
     )
 }
@@ -215,6 +219,29 @@ fn contract_v10_accepts_valid_reentry_authorization() {
     assert_eq!(code, 0, "v10 authorization failed: {stderr}");
     let log = std::fs::read_to_string(log_path).expect("read log");
     assert!(log.contains("Decision: AUTHORIZE_REENTRY"), "{log}");
+}
+
+#[test]
+fn contract_v10_accepts_semantic_revision_r3_authorization() {
+    let (dir, _) = setup_temp_git_repo();
+    let repo = dir.path();
+    setup_dba(repo, "DBA-15");
+    let log_path = setup_review_log(repo);
+    let history = "# Codeos Review Log (append-only, v0)\n\
+## 2026-01-01T00:00:00Z REVIEW — FEAT — Stage 8\nReview ID: REV__FEAT__8__SR2__R1\n\
+## 2026-01-01T00:01:00Z REVIEW — FEAT — Stage 8\nReview ID: REV__FEAT__8__SR2__R2\n\
+## 2026-01-01T00:02:00Z REVIEW — FEAT — Stage 8\nReview ID: REV__FEAT__8__SR2__R3\n";
+    std::fs::write(&log_path, history).expect("write semantic R1-R3 history");
+
+    let (code, _, stderr) = authorize_reentry_after(repo, "REV__FEAT__8__SR2__R3");
+    assert_eq!(code, 0, "v10 semantic R3 authorization failed: {stderr}");
+    let log = std::fs::read_to_string(log_path).expect("read log");
+    assert!(log.starts_with(history), "{log}");
+    assert!(
+        log.contains("Re-entry after: REV__FEAT__8__SR2__R3"),
+        "{log}"
+    );
+    assert!(!log.contains("REENTRY-1"), "{log}");
 }
 
 #[test]
