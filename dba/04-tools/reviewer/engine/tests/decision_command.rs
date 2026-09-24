@@ -113,15 +113,37 @@ fn setup_review_log(repo_path: &std::path::Path) -> std::path::PathBuf {
     log_path
 }
 
-fn setup_dba11(repo_path: &std::path::Path) {
+fn setup_dba(repo_path: &std::path::Path, configuration: &str) {
     std::fs::create_dir_all(repo_path.join(".codeos/00-project")).expect("create project config");
     std::os::unix::fs::symlink(repo_root(), repo_path.join(".codeos/toolkit"))
         .expect("create toolkit symlink");
     std::fs::write(
         repo_path.join(".codeos/00-project/codeos.yaml"),
-        "codeos_schema: 2\ndba_configuration: DBA-11\n",
+        format!("codeos_schema: 2\ndba_configuration: {configuration}\n"),
     )
     .expect("write project config");
+}
+
+fn r1_r3_history() -> &'static str {
+    "# Codeos Review Log (append-only, v0)\n\
+## 2026-01-01T00:00:00Z REVIEW — FEAT — Stage 8\nReview ID: REV__FEAT__8__R1\n\
+## 2026-01-01T00:01:00Z REVIEW — FEAT — Stage 8\nReview ID: REV__FEAT__8__R2\n\
+## 2026-01-01T00:02:00Z REVIEW — FEAT — Stage 8\nReview ID: REV__FEAT__8__R3\n"
+}
+
+fn authorize_reentry(repo: &std::path::Path) -> (i32, String, String) {
+    run_decision_in(
+        repo,
+        &[
+            "decision",
+            "FEAT",
+            "8",
+            "AUTHORIZE_REENTRY",
+            "One reviewer execution for repaired findings.",
+            "--after-review",
+            "REV__FEAT__8__R3",
+        ],
+    )
 }
 
 fn run_decision_in(repo_path: &std::path::Path, args: &[&str]) -> (i32, String, String) {
@@ -140,38 +162,158 @@ fn run_decision_in(repo_path: &std::path::Path, args: &[&str]) -> (i32, String, 
 fn authorize_reentry_is_bound_review_control_not_stage_approval() {
     let (dir, _) = setup_temp_git_repo();
     let repo = dir.path();
-    setup_dba11(repo);
+    setup_dba(repo, "DBA-11");
     let log_path = setup_review_log(repo);
-    std::fs::write(
-        &log_path,
-        "# Codeos Review Log (append-only, v0)\n\
-## 2026-01-01T00:00:00Z REVIEW — FEAT — Stage 8\nReview ID: REV__FEAT__8__R1\n\
-## 2026-01-01T00:01:00Z REVIEW — FEAT — Stage 8\nReview ID: REV__FEAT__8__R2\n\
-## 2026-01-01T00:02:00Z REVIEW — FEAT — Stage 8\nReview ID: REV__FEAT__8__R3\n",
-    )
-    .expect("write R1-R3 history");
+    let original_history = r1_r3_history();
+    std::fs::write(&log_path, original_history).expect("write R1-R3 history");
 
-    let (code, _, stderr) = run_decision_in(
+    let (code, _, stderr) = authorize_reentry(repo);
+    assert_eq!(code, 0, "authorization failed: {stderr}");
+
+    let log = std::fs::read_to_string(log_path).expect("read log");
+    assert!(
+        log.starts_with(original_history),
+        "authorization must preserve R1-R3 byte-for-byte: {log}"
+    );
+    assert!(log.contains("Decision: AUTHORIZE_REENTRY"), "{log}");
+    assert!(log.contains("Re-entry after: REV__FEAT__8__R3"), "{log}");
+    assert!(!log.contains("Decision: APPROVE_STAGE"), "{log}");
+    assert!(!log.contains("Effective concern: NO OBJECTION"), "{log}");
+    assert!(
+        !log.contains("REENTRY-1"),
+        "authorization must not execute review: {log}"
+    );
+    assert!(
+        !log.contains("Provenance:"),
+        "review control must not claim assessment provenance: {log}"
+    );
+}
+
+#[test]
+fn contract_v9_accepts_valid_reentry_authorization() {
+    let (dir, _) = setup_temp_git_repo();
+    let repo = dir.path();
+    setup_dba(repo, "DBA-14");
+    let log_path = setup_review_log(repo);
+    std::fs::write(&log_path, r1_r3_history()).expect("write R1-R3 history");
+
+    let (code, _, stderr) = authorize_reentry(repo);
+    assert_eq!(code, 0, "v9 authorization failed: {stderr}");
+    let log = std::fs::read_to_string(log_path).expect("read log");
+    assert!(log.contains("Decision: AUTHORIZE_REENTRY"), "{log}");
+}
+
+#[test]
+fn contract_v10_accepts_valid_reentry_authorization() {
+    let (dir, _) = setup_temp_git_repo();
+    let repo = dir.path();
+    setup_dba(repo, "DBA-15");
+    let log_path = setup_review_log(repo);
+    std::fs::write(&log_path, r1_r3_history()).expect("write R1-R3 history");
+
+    let (code, _, stderr) = authorize_reentry(repo);
+    assert_eq!(code, 0, "v10 authorization failed: {stderr}");
+    let log = std::fs::read_to_string(log_path).expect("read log");
+    assert!(log.contains("Decision: AUTHORIZE_REENTRY"), "{log}");
+}
+
+#[test]
+fn contracts_v7_and_v8_retain_reentry_authorization() {
+    for configuration in ["DBA-12", "DBA-13"] {
+        let (dir, _) = setup_temp_git_repo();
+        let repo = dir.path();
+        setup_dba(repo, configuration);
+        let log_path = setup_review_log(repo);
+        std::fs::write(&log_path, r1_r3_history()).expect("write R1-R3 history");
+
+        let (code, _, stderr) = authorize_reentry(repo);
+        assert_eq!(
+            code, 0,
+            "{configuration} re-entry authorization failed: {stderr}"
+        );
+        let log = std::fs::read_to_string(log_path).expect("read log");
+        assert!(log.contains("Decision: AUTHORIZE_REENTRY"), "{log}");
+    }
+}
+
+#[test]
+fn contract_without_reentry_authority_fails_closed() {
+    let (dir, _) = setup_temp_git_repo();
+    let repo = dir.path();
+    setup_dba(repo, "DBA-10");
+    let log_path = setup_review_log(repo);
+    let original_history = r1_r3_history();
+    std::fs::write(&log_path, original_history).expect("write R1-R3 history");
+
+    let (code, _, stderr) = authorize_reentry(repo);
+    assert_eq!(code, 1);
+    assert!(stderr.contains("not supported"), "{stderr}");
+    assert_eq!(
+        std::fs::read_to_string(log_path).expect("read log"),
+        original_history
+    );
+}
+
+#[test]
+fn reentry_authorization_requires_reason_and_r3_reference() {
+    let (dir, _) = setup_temp_git_repo();
+    let repo = dir.path();
+    setup_dba(repo, "DBA-15");
+    let log_path = setup_review_log(repo);
+    let original_history = r1_r3_history();
+    std::fs::write(&log_path, original_history).expect("write R1-R3 history");
+
+    let (missing_reason, _, reason_error) = run_decision_in(
         repo,
         &[
             "decision",
             "FEAT",
             "8",
             "AUTHORIZE_REENTRY",
-            "One reviewer execution for repaired findings.",
+            "",
             "--after-review",
             "REV__FEAT__8__R3",
         ],
     );
-    assert_eq!(code, 0, "authorization failed: {stderr}");
+    assert_eq!(missing_reason, 1);
+    assert!(reason_error.contains("non-empty reason and scope"));
 
-    let log = std::fs::read_to_string(log_path).expect("read log");
-    assert!(log.contains("Decision: AUTHORIZE_REENTRY"), "{log}");
-    assert!(log.contains("Re-entry after: REV__FEAT__8__R3"), "{log}");
-    assert!(!log.contains("Decision: APPROVE_STAGE"), "{log}");
-    assert!(
-        !log.contains("Provenance:"),
-        "review control must not claim assessment provenance: {log}"
+    let (missing_reference, _, reference_error) = run_decision_in(
+        repo,
+        &[
+            "decision",
+            "FEAT",
+            "8",
+            "AUTHORIZE_REENTRY",
+            "Bounded scope.",
+        ],
+    );
+    assert_eq!(missing_reference, 1);
+    assert!(reference_error.contains("requires --after-review"));
+    assert_eq!(
+        std::fs::read_to_string(log_path).expect("read log"),
+        original_history
+    );
+}
+
+#[test]
+fn consumed_reentry_cannot_be_authorized_again_under_v10() {
+    let (dir, _) = setup_temp_git_repo();
+    let repo = dir.path();
+    setup_dba(repo, "DBA-15");
+    let log_path = setup_review_log(repo);
+    let consumed_history = format!(
+        "{}\n## 2026-01-01T00:03:00Z HUMAN DECISION — FEAT — Stage 8\nDecision: AUTHORIZE_REENTRY\nRe-entry after: REV__FEAT__8__R3\nReason/next: First bounded review.\n\n## 2026-01-01T00:04:00Z RE-ENTRY REVIEW — FEAT — Stage 8\nReview ID: REV__FEAT__8__REENTRY-1\n",
+        r1_r3_history()
+    );
+    std::fs::write(&log_path, &consumed_history).expect("write consumed history");
+
+    let (code, _, stderr) = authorize_reentry(repo);
+    assert_eq!(code, 1);
+    assert!(stderr.contains("already been consumed"), "{stderr}");
+    assert_eq!(
+        std::fs::read_to_string(log_path).expect("read log"),
+        consumed_history
     );
 }
 

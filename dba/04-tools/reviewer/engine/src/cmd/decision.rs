@@ -48,6 +48,8 @@ pub fn run(
                     "dba/04-tools/reviewer/contract/v6.md"
                         | "dba/04-tools/reviewer/contract/v7.md"
                         | "dba/04-tools/reviewer/contract/v8.md"
+                        | "dba/04-tools/reviewer/contract/v9.md"
+                        | "dba/04-tools/reviewer/contract/v10.md"
                 ) => {}
             Ok(contract) => {
                 eprintln!(
