@@ -179,6 +179,7 @@ dependencies = [
  "anyhow",
  "chrono",
  "clap",
+ "codeos-workflow",
  "hex",
  "regex",
  "serde",
@@ -187,6 +188,20 @@ dependencies = [
  "sha2",
  "tempfile",
  "toml",
+]
+
+[[package]]
+name = "codeos-workflow"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "clap",
+ "hex",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "sha2",
 ]
 
 [[package]]

@@ -51,6 +51,20 @@ case "${CODEOS_FAKE_MODE:-success}" in
   failure) printf '%s\n' 'simulated Codex failure' >&2; exit 9 ;;
   malformed) printf '%s\n' 'not-json'; exit 0 ;;
   mutate) printf '%s\n' 'fake reviewer mutation' >> "${CODEOS_FAKE_REPO:?}/tracked.md" ;;
+  blocking)
+    printf '%s\n' \
+      'Finding: repaired behavior is still defective / Severity: High / Classification: IN-SCOPE BLOCKER  ' \
+      'Evidence: tracked.md does not satisfy the approved behavior / Why: the implementation remains incorrect / Required action: fix now  ' \
+      'Scope reason: the defect is within the reviewed implementation' \
+      'Blocker kind: SUBSTANTIVE' \
+      '' \
+      'PR decision: DO NOT ADVANCE' \
+      'LOG SUMMARY: DO NOT ADVANCE — substantive implementation defect' \
+      'EVIDENCE: A' \
+      'HIGHEST-IMPACT UNCERTAINTY: none' > "$output_file"
+    printf '{"type":"thread.started","thread_id":"%s"}\n' "${CODEOS_FAKE_SESSION:-fake-session}"
+    exit 0
+    ;;
 esac
 printf '%s\n' 'LOG SUMMARY: NO OBJECTION — fixture review' 'EVIDENCE: A' 'HIGHEST-IMPACT UNCERTAINTY: none' > "$output_file"
 printf '{"type":"thread.started","thread_id":"%s"}\n' "${CODEOS_FAKE_SESSION:-fake-session}"

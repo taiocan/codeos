@@ -115,6 +115,7 @@ pub const REENTRY_REVIEW_HEADING: &str = "RE-ENTRY REVIEW";
 pub const EVIDENCE_CLOSURE_HEADING: &str = "EVIDENCE CLOSURE REVIEW";
 pub const INFRASTRUCTURE_REVALIDATION_HEADING: &str = "INFRASTRUCTURE REVALIDATION";
 pub const EVIDENCE_REASSESSMENT_HEADING: &str = "EVIDENCE REASSESSMENT";
+pub const TERMINAL_CLOSURE_HEADING: &str = "TERMINAL REVIEW CLOSURE";
 
 fn count_entries(content: &str, kind: &str, feature: &str, stage: &str) -> u32 {
     let record = format!("{} — {} — Stage {}", kind, feature, stage);
@@ -1199,6 +1200,7 @@ pub fn append_review(
     closure: Option<&EvidenceClosureAuthorization>,
     infrastructure: Option<&InfrastructureRevalidationAuthorization>,
     reassessment: Option<&EvidenceReassessment>,
+    terminal_closure: Option<&crate::terminal_closure::TerminalClosureExecution>,
 ) -> Result<()> {
     ensure_log_exists(log_path)?;
 
@@ -1220,6 +1222,8 @@ pub fn append_review(
         EXTERNAL_ASSESSMENT_HEADING
     } else if infrastructure.is_some() {
         INFRASTRUCTURE_REVALIDATION_HEADING
+    } else if terminal_closure.is_some() {
+        TERMINAL_CLOSURE_HEADING
     } else if reassessment.is_some() {
         EVIDENCE_REASSESSMENT_HEADING
     } else if closure.is_some() {
@@ -1324,6 +1328,29 @@ pub fn append_review(
         if let Some(materiality) = &parsed.evidence_materiality {
             entry.push_str(&format!("Evidence materiality: {materiality}\n"));
         }
+    }
+    if let Some(item) = terminal_closure {
+        entry.push_str(&format!(
+            "Terminal closure after: {}\n",
+            item.scope.scope.terminal_review_id
+        ));
+        entry.push_str(&format!(
+            "Human authorization: {} HUMAN DECISION\n",
+            item.decision_timestamp
+        ));
+        entry.push_str(&format!("Authorized scope: {}\n", item.reason));
+        entry.push_str(&format!(
+            "Terminal closure scope SHA-256: {}\n",
+            item.scope.sha256
+        ));
+        entry.push_str(&format!(
+            "Repair manifest SHA-256: {}\n",
+            item.repair.sha256
+        ));
+        entry.push_str(&format!(
+            "Authorized conditions: {}\n",
+            item.repair.condition_ids.join(", ")
+        ));
     }
     entry.push_str(&format!(
         "Base: {}  Review: {}  Branch: {}\n",
@@ -1604,6 +1631,7 @@ pub fn append_decision(
     reentry_after: Option<&str>,
     closure_findings: Option<&[String]>,
     event_evidence_sha: Option<&str>,
+    terminal_scope: Option<&crate::terminal_closure::ValidatedScope>,
     provenance: Option<&DecisionProvenance>,
     repo_root: &Path,
     codex_dir: &Path,
@@ -1629,6 +1657,8 @@ pub fn append_decision(
                 "Infrastructure revalidation after: {}\n",
                 review_id
             ));
+        } else if decision == "AUTHORIZE_TERMINAL_REVIEW_CLOSURE" {
+            entry.push_str(&format!("Terminal closure after: {}\n", review_id));
         } else {
             entry.push_str(&format!("Re-entry after: {}\n", review_id));
         }
@@ -1638,6 +1668,20 @@ pub fn append_decision(
     }
     if let Some(sha) = event_evidence_sha {
         entry.push_str(&format!("Infrastructure repair evidence: {}\n", sha));
+    }
+    if let Some(scope) = terminal_scope {
+        entry.push_str(&format!(
+            "Terminal closure assessment SHA-256: {}\n",
+            scope.scope.assessment_sha256
+        ));
+        entry.push_str(&format!(
+            "Terminal closure scope SHA-256: {}\n",
+            scope.sha256
+        ));
+        entry.push_str(&format!(
+            "Terminal closure scope JSON: {}\n",
+            scope.raw.trim()
+        ));
     }
     entry.push_str(&format!("Reason/next: {}\n", reason));
 
@@ -2645,6 +2689,7 @@ mod tests {
             None,
             None,
             None,
+            None,
         )
         .expect("append_review");
 
@@ -2691,6 +2736,7 @@ mod tests {
             None,
             None,
             None,
+            None,
         )
         .expect("append_review round 1");
 
@@ -2712,6 +2758,7 @@ mod tests {
             "deadbeef2",
             Path::new("packet2.txt"),
             "cafefeed2",
+            None,
             None,
             None,
             None,

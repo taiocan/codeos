@@ -10,6 +10,7 @@ mod log;
 mod packet;
 mod precheck;
 mod run;
+mod terminal_closure;
 
 pub const EXIT_SUCCESS: i32 = 0;
 pub const EXIT_USAGE: i32 = 1;
@@ -97,6 +98,16 @@ struct ReviewCli {
     /// Reassess named open F7 evidence findings against materially new canonical evidence.
     #[arg(long = "evidence-reassessment-after", value_name = "REVIEW_ID", conflicts_with_all = ["continues", "reentry_after", "evidence_closure_after", "infrastructure_revalidation_after", "assessment"])]
     evidence_reassessment_after: Option<String>,
+    /// Close the finite repaired conditions from one consumed terminal REENTRY-1.
+    #[arg(long = "terminal-review-closure-after", value_name = "REVIEW_ID", conflicts_with_all = ["continues", "reentry_after", "evidence_closure_after", "infrastructure_revalidation_after", "evidence_reassessment_after", "assessment"])]
+    terminal_review_closure_after: Option<String>,
+    /// Repair manifest for Terminal Review Closure.
+    #[arg(
+        long = "repair-manifest",
+        value_name = "JSON",
+        requires = "terminal_review_closure_after"
+    )]
+    repair_manifest: Option<PathBuf>,
     /// Exact evidence finding identities authorized for closure (comma-separated or repeated).
     #[arg(long = "findings", value_delimiter = ',')]
     findings: Vec<String>,
@@ -134,6 +145,9 @@ enum Commands {
         findings: Vec<String>,
         #[arg(long = "event-evidence-sha", value_name = "SHA256")]
         event_evidence_sha: Option<String>,
+        /// Immutable-source condition manifest for Terminal Review Closure authorization.
+        #[arg(long = "closure-scope", value_name = "JSON")]
+        closure_scope: Option<PathBuf>,
         #[arg(long = "override", value_name = "RATIONALE")]
         override_reason: Option<String>,
     },
@@ -225,6 +239,8 @@ fn run() -> i32 {
                     evidence_closure_after: args.evidence_closure_after,
                     infrastructure_revalidation_after: args.infrastructure_revalidation_after,
                     evidence_reassessment_after: args.evidence_reassessment_after,
+                    terminal_review_closure_after: args.terminal_review_closure_after,
+                    repair_manifest: args.repair_manifest,
                     findings: args.findings,
                     event_evidence_sha: args.event_evidence_sha,
                 },
@@ -248,6 +264,7 @@ fn run() -> i32 {
             after_review,
             findings,
             event_evidence_sha,
+            closure_scope,
             override_reason,
         } => cmd::decision::run(
             &feature,
@@ -257,6 +274,7 @@ fn run() -> i32 {
             after_review.as_deref(),
             &findings,
             event_evidence_sha.as_deref(),
+            closure_scope.as_deref(),
             override_reason.as_deref(),
             &cfg,
         )

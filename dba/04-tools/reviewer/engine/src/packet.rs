@@ -152,6 +152,19 @@ impl ReviewPacket {
         self.content_sha256 = crate::packet::sha256_str(&self.content);
     }
 
+    pub fn constrain_to_terminal_review_closure(
+        &mut self,
+        terminal_review_id: &str,
+        terminal_assessment: &str,
+        scope_json: &str,
+        repair_manifest_json: &str,
+    ) {
+        self.content.push_str(&format!(
+            "\n\nTERMINAL REVIEW CLOSURE — EVIDENCE OF REPAIR ONLY\nTerminal review: {terminal_review_id}\nImmutable terminal assessment:\n{terminal_assessment}\nAuthorized immutable-source conditions: {scope_json}\nRepair manifest: {repair_manifest_json}\nAnswer only: (1) were every authorized condition repaired, (2) is the applicable evidence valid and fresh where implementation changed, and (3) did the repair introduce an obvious blocker within the reviewed repair surface? Judge whether the changes actually remain within the authorized repair scope. Do not reopen the feature, architecture, Contract, or unrelated implementation for general review. Any scope excess, unclosed condition, invalid evidence, new in-scope blocker, ambiguity, or incomplete response requires DO NOT ADVANCE. Only complete closure of every condition permits NO OBJECTION.\n"
+        ));
+        self.content_sha256 = crate::packet::sha256_str(&self.content);
+    }
+
     /// Restore a packet from an exported sidecar plus the exported bytes. The bytes are adopted
     /// verbatim: nothing is rebuilt, so the reviewed packet and the recorded packet are the same
     /// bytes by construction rather than by a later comparison.

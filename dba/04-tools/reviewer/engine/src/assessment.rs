@@ -678,16 +678,25 @@ pub fn validate_schema(
     if !valid_coverage.contains(&packet.coverage_state.as_str()) {
         errs.push("enum:coverage_state");
     }
-    let valid_concern = [
+    let valid_reported_concern = [
         "NO OBJECTION",
         "CHANGES ADVISED",
         "DO NOT ADVANCE",
         "UNCLASSIFIED",
     ];
-    if !valid_concern.contains(&parsed.codex_concern.as_str()) {
+    if !valid_reported_concern.contains(&parsed.codex_concern.as_str()) {
         errs.push("enum:codex_concern");
     }
-    if !valid_concern.contains(&parsed.effective_concern.as_str()) {
+    let valid_effective_concern = [
+        "NO OBJECTION",
+        "CHANGES ADVISED",
+        "DO NOT ADVANCE",
+        "UNCLASSIFIED",
+        "EVIDENCE CLOSED — PROGRESSION PERMITTED",
+        "INFRASTRUCTURE EVIDENCE REVALIDATED — PROGRESSION PERMITTED",
+        "TERMINAL REVIEW CLOSED — PROGRESSION PERMITTED",
+    ];
+    if !valid_effective_concern.contains(&parsed.effective_concern.as_str()) {
         errs.push("enum:effective_concern");
     }
     let valid_evidence = ["A", "B", "C", "D", "E", "not reported"];

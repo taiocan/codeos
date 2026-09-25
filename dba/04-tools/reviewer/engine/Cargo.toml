@@ -19,3 +19,6 @@ serde_yaml = "0.9.34"
 sha2 = "0.10"
 tempfile = "3"
 toml = "0.8"
+
+[dev-dependencies]
+codeos-workflow = { path = "../../workflow/engine" }

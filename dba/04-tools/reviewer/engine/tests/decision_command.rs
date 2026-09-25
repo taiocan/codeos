@@ -4,6 +4,7 @@
 
 mod common;
 use common::{binary, repo_root, run, setup_temp_git_repo};
+use sha2::{Digest, Sha256};
 use std::process::Command;
 
 #[test]
@@ -306,6 +307,61 @@ fn contract_v11_resolves_legacy_stage8_cycle_as_revision_zero() {
     assert!(std::fs::read_to_string(log_path)
         .unwrap()
         .contains("Re-entry after: REV__FEAT__8__R3"));
+}
+
+#[test]
+fn contract_v12_authorizes_only_immutable_source_terminal_conditions() {
+    let (dir, head) = setup_temp_git_repo();
+    let repo = dir.path();
+    setup_dba(repo, "DBA-17");
+    write_approved_package(repo, Some(2));
+    let reviews = repo.join(".codeos/05-review/reviews");
+    std::fs::create_dir_all(&reviews).unwrap();
+    let assessment = reviews.join("terminal-assessment.md");
+    let assessment_text = "---\nfindings:\n  - finding_id: TERM__F1\n    classification: IN-SCOPE BLOCKER\nassessment_status: COMPLETE\n---\n\nFinding: implementation defect\n";
+    std::fs::write(&assessment, assessment_text).unwrap();
+    let assessment_sha = hex::encode(Sha256::digest(assessment_text.as_bytes()));
+    let packet = reviews.join("terminal.packet.txt");
+    std::fs::write(&packet, "packet").unwrap();
+    let packet_sha = hex::encode(Sha256::digest(b"packet"));
+    let log = setup_review_log(repo);
+    std::fs::write(
+        &log,
+        format!(
+            "# log\n## t RE-ENTRY REVIEW — FEAT — Stage 8\nReview ID: REV__FEAT__8__SR2__REENTRY-1\nBase: {head}  Review: {head}  Branch: main\nDiff-hash: original-diff\nEffective concern: DO NOT ADVANCE\nParse status: OK   Assessment status: COMPLETE\nFull assessment: {} (sha256:{assessment_sha})\nReviewed packet: {} (sha256:{packet_sha})\n",
+            assessment.display(), packet.display()
+        ),
+    )
+    .unwrap();
+    let scope = repo.join("scope.json");
+    std::fs::write(
+        &scope,
+        serde_json::json!({
+            "terminal_review_id":"REV__FEAT__8__SR2__REENTRY-1",
+            "assessment_sha256":assessment_sha,
+            "conditions":[{"id":"C1","description":"Repair implementation defect","source":{"kind":"parsed_finding","finding_id":"TERM__F1"}}]
+        }).to_string(),
+    ).unwrap();
+    let scope_arg = scope.to_str().unwrap();
+    let (code, _, stderr) = run_decision_in(
+        repo,
+        &[
+            "decision",
+            "FEAT",
+            "8",
+            "AUTHORIZE_TERMINAL_REVIEW_CLOSURE",
+            "Close only the repaired terminal condition.",
+            "--after-review",
+            "REV__FEAT__8__SR2__REENTRY-1",
+            "--closure-scope",
+            scope_arg,
+        ],
+    );
+    assert_eq!(code, 0, "authorization failed: {stderr}");
+    let history = std::fs::read_to_string(log).unwrap();
+    assert!(history.contains("Decision: AUTHORIZE_TERMINAL_REVIEW_CLOSURE"));
+    assert!(history.contains("Terminal closure scope JSON:"));
+    assert!(!history.contains("TERMINAL-CLOSURE-1"));
 }
 
 #[test]

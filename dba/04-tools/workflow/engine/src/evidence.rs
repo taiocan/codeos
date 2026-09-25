@@ -371,6 +371,82 @@ pub fn review_permits_progression(concern: &str) -> bool {
     !concern.trim().eq_ignore_ascii_case("DO NOT ADVANCE")
 }
 
+pub fn terminal_review_closure_history_permits_progression(
+    log_path: &Path,
+    feature: &str,
+    stage: &str,
+    closure_id: &str,
+) -> Result<bool> {
+    let Ok(content) = std::fs::read_to_string(log_path) else {
+        return Ok(false);
+    };
+    if !closure_id.starts_with(&format!("REV__{feature}__{stage}__"))
+        || !closure_id.ends_with("__TERMINAL-CLOSURE-1")
+        || content.matches(&format!("Review ID: {closure_id}")).count() != 1
+    {
+        return Ok(false);
+    }
+    let Some((before_closure, closure_tail)) =
+        content.split_once(&format!("Review ID: {closure_id}"))
+    else {
+        return Ok(false);
+    };
+    let closure = closure_tail.split("\n## ").next().unwrap_or(closure_tail);
+    if !closure
+        .lines()
+        .any(|line| line == "Effective concern: TERMINAL REVIEW CLOSED — PROGRESSION PERMITTED")
+        || !closure
+            .lines()
+            .any(|line| line == "Parse status: OK   Assessment status: COMPLETE")
+    {
+        return Ok(false);
+    }
+    let Some(terminal_id) = closure
+        .lines()
+        .find_map(|line| line.strip_prefix("Terminal closure after: "))
+    else {
+        return Ok(false);
+    };
+    if !terminal_id.ends_with("__REENTRY-1") {
+        return Ok(false);
+    }
+    let Some((_, terminal_tail)) = before_closure.split_once(&format!("Review ID: {terminal_id}"))
+    else {
+        return Ok(false);
+    };
+    let terminal = terminal_tail.split("\n## ").next().unwrap_or(terminal_tail);
+    if !terminal
+        .lines()
+        .any(|line| line == "Effective concern: DO NOT ADVANCE")
+        && !terminal
+            .lines()
+            .any(|line| line.contains("Assessment status: INCOMPLETE"))
+    {
+        return Ok(false);
+    }
+    let authorization = before_closure.rsplit("\n## ").find(|block| {
+        block
+            .lines()
+            .any(|line| line == "Decision: AUTHORIZE_TERMINAL_REVIEW_CLOSURE")
+            && block
+                .lines()
+                .any(|line| line == format!("Terminal closure after: {terminal_id}"))
+    });
+    let Some(authorization) = authorization else {
+        return Ok(false);
+    };
+    let auth_scope = authorization
+        .lines()
+        .find_map(|line| line.strip_prefix("Terminal closure scope SHA-256: "));
+    let closure_scope = closure
+        .lines()
+        .find_map(|line| line.strip_prefix("Terminal closure scope SHA-256: "));
+    let conditions = closure
+        .lines()
+        .find_map(|line| line.strip_prefix("Authorized conditions: "));
+    Ok(auth_scope.is_some() && auth_scope == closure_scope && conditions.is_some())
+}
+
 /// Validate the immutable composite history required by Review Policy v5. This is deliberately
 /// stricter than treating the closure assessment as a replacement for REENTRY-1.
 pub fn evidence_closure_history_permits_progression(
@@ -767,5 +843,28 @@ mod tests {
         )
         .unwrap();
         assert!(!evidence_closure_history_permits_progression(&log, "F-1", "8").unwrap());
+    }
+
+    #[test]
+    fn terminal_closure_requires_exact_authorized_composite_history() {
+        let dir = tempfile::tempdir().unwrap();
+        let log = dir.path().join("review-log.md");
+        let terminal = "REV__F-1__8__SR2__REENTRY-1";
+        let closure = "REV__F-1__8__SR2__TERMINAL-CLOSURE-1";
+        std::fs::write(&log, format!(
+            "## t RE-ENTRY REVIEW — F-1 — Stage 8\nReview ID: {terminal}\nEffective concern: DO NOT ADVANCE\nParse status: OK   Assessment status: COMPLETE\n\n## t HUMAN DECISION — F-1 — Stage 8\nDecision: AUTHORIZE_TERMINAL_REVIEW_CLOSURE\nTerminal closure after: {terminal}\nTerminal closure scope SHA-256: abc\n\n## t TERMINAL REVIEW CLOSURE — F-1 — Stage 8\nReview ID: {closure}\nTerminal closure after: {terminal}\nTerminal closure scope SHA-256: abc\nAuthorized conditions: C1\nEffective concern: TERMINAL REVIEW CLOSED — PROGRESSION PERMITTED\nParse status: OK   Assessment status: COMPLETE\n"
+        )).unwrap();
+        assert!(
+            terminal_review_closure_history_permits_progression(&log, "F-1", "8", closure).unwrap()
+        );
+        let bad = std::fs::read_to_string(&log).unwrap().replace(
+            "Terminal closure scope SHA-256: abc\nAuthorized conditions",
+            "Terminal closure scope SHA-256: different\nAuthorized conditions",
+        );
+        std::fs::write(&log, bad).unwrap();
+        assert!(
+            !terminal_review_closure_history_permits_progression(&log, "F-1", "8", closure)
+                .unwrap()
+        );
     }
 }

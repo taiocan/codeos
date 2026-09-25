@@ -283,6 +283,8 @@ pub struct ReviewArgs {
     pub evidence_closure_after: Option<String>,
     pub infrastructure_revalidation_after: Option<String>,
     pub evidence_reassessment_after: Option<String>,
+    pub terminal_review_closure_after: Option<String>,
+    pub repair_manifest: Option<PathBuf>,
     pub findings: Vec<String>,
     pub event_evidence_sha: Option<String>,
 }
@@ -559,7 +561,11 @@ pub fn run(args: ReviewArgs, cfg: &Config) -> Result<i32> {
     if evidence.stage == "8"
         && matches!(
             selected_contract.as_deref(),
-            Some("dba/04-tools/reviewer/contract/v10.md" | "dba/04-tools/reviewer/contract/v11.md")
+            Some(
+                "dba/04-tools/reviewer/contract/v10.md"
+                    | "dba/04-tools/reviewer/contract/v11.md"
+                    | "dba/04-tools/reviewer/contract/v12.md"
+            )
         )
         && args.continues.is_some()
     {
@@ -575,6 +581,7 @@ pub fn run(args: ReviewArgs, cfg: &Config) -> Result<i32> {
                 "dba/04-tools/reviewer/contract/v9.md"
                     | "dba/04-tools/reviewer/contract/v10.md"
                     | "dba/04-tools/reviewer/contract/v11.md"
+                    | "dba/04-tools/reviewer/contract/v12.md"
             )
         )
     {
@@ -609,6 +616,12 @@ pub fn run(args: ReviewArgs, cfg: &Config) -> Result<i32> {
             return Ok(crate::EXIT_USAGE);
         }
         review_packet.constrain_to_evidence_closure(predecessor, &args.findings);
+    } else if args.terminal_review_closure_after.is_some() && args.repair_manifest.is_none() {
+        eprintln!("error: --terminal-review-closure-after requires --repair-manifest");
+        return Ok(crate::EXIT_USAGE);
+    } else if args.terminal_review_closure_after.is_none() && args.repair_manifest.is_some() {
+        eprintln!("error: --repair-manifest requires --terminal-review-closure-after");
+        return Ok(crate::EXIT_USAGE);
     } else if !args.findings.is_empty() || args.event_evidence_sha.is_some() {
         eprintln!(
             "error: --findings and --event-evidence-sha require a bounded exceptional review mode"
@@ -656,6 +669,7 @@ pub fn run(args: ReviewArgs, cfg: &Config) -> Result<i32> {
     let mut closure_authorization = None;
     let mut infrastructure_authorization = None;
     let mut evidence_reassessment = None;
+    let mut terminal_closure = None;
     let review_id = if args.assessment.is_some() {
         match review_log::compute_assessment_sequence(
             &review_log_path,
@@ -677,7 +691,8 @@ pub fn run(args: ReviewArgs, cfg: &Config) -> Result<i32> {
                 contract.as_deref(),
                 Ok("dba/04-tools/reviewer/contract/v9.md"
                     | "dba/04-tools/reviewer/contract/v10.md"
-                    | "dba/04-tools/reviewer/contract/v11.md")
+                    | "dba/04-tools/reviewer/contract/v11.md"
+                    | "dba/04-tools/reviewer/contract/v12.md")
             ) {
                 eprintln!(
                     "error: --evidence-reassessment-after requires Reviewer Tool Contract v9"
@@ -772,6 +787,61 @@ pub fn run(args: ReviewArgs, cfg: &Config) -> Result<i32> {
                     return Ok(crate::EXIT_WRITE);
                 }
             }
+        } else if let Some(predecessor) = args.terminal_review_closure_after.as_deref() {
+            if selected_contract.as_deref() != Some("dba/04-tools/reviewer/contract/v12.md") {
+                eprintln!(
+                    "error: --terminal-review-closure-after requires Reviewer Tool Contract v12"
+                );
+                return Ok(crate::EXIT_USAGE);
+            }
+            let current_revision = match approved_stage8_cycle(cfg, &evidence.feature) {
+                Ok(revision) => revision,
+                Err(error) => {
+                    eprintln!(
+                        "error: could not resolve the approved Stage 8 review cycle: {error}"
+                    );
+                    return Ok(crate::EXIT_CONFIG);
+                }
+            };
+            match crate::terminal_closure::resolve_execution(
+                &review_log_path,
+                &cfg.repo_root,
+                &evidence.feature,
+                &evidence.stage,
+                predecessor,
+                current_revision,
+                &review_packet,
+                args.repair_manifest.as_deref().unwrap(),
+            ) {
+                Ok(execution) => {
+                    let terminal_assessment =
+                        match std::fs::read_to_string(&execution.scope.assessment_path) {
+                            Ok(assessment) => assessment,
+                            Err(error) => {
+                                eprintln!(
+                                    "error: could not read immutable terminal assessment: {error}"
+                                );
+                                return Ok(crate::EXIT_WRITE);
+                            }
+                        };
+                    review_packet.constrain_to_terminal_review_closure(
+                        predecessor,
+                        &terminal_assessment,
+                        &execution.scope.raw,
+                        &execution.repair.raw,
+                    );
+                    let id = crate::terminal_closure::format_terminal_closure_id(
+                        &evidence.feature,
+                        current_revision,
+                    );
+                    terminal_closure = Some(execution);
+                    id
+                }
+                Err(error) => {
+                    eprintln!("error: Terminal Review Closure refused: {error}");
+                    return Ok(crate::EXIT_WRITE);
+                }
+            }
         } else if let Some(predecessor) = args.reentry_after.as_deref() {
             let semantics = match crate::config::resolve_reviewer_tool_contract(cfg) {
                 Ok(contract) if contract == "dba/04-tools/reviewer/contract/v4.md" => {
@@ -790,7 +860,11 @@ pub fn run(args: ReviewArgs, cfg: &Config) -> Result<i32> {
                     review_log::ReentryDecisionSemantics::CanonicalLogOrder
                 }
                 Ok(contract)
-                    if matches!(contract.as_str(), "dba/04-tools/reviewer/contract/v11.md") =>
+                    if matches!(
+                        contract.as_str(),
+                        "dba/04-tools/reviewer/contract/v11.md"
+                            | "dba/04-tools/reviewer/contract/v12.md"
+                    ) =>
                 {
                     let current_semantic_revision = if evidence.stage == "8" {
                         match approved_stage8_cycle(cfg, &evidence.feature) {
@@ -864,6 +938,7 @@ pub fn run(args: ReviewArgs, cfg: &Config) -> Result<i32> {
                             contract,
                             "dba/04-tools/reviewer/contract/v10.md"
                                 | "dba/04-tools/reviewer/contract/v11.md"
+                                | "dba/04-tools/reviewer/contract/v12.md"
                         )
                     }) =>
                 {
@@ -974,6 +1049,7 @@ pub fn run(args: ReviewArgs, cfg: &Config) -> Result<i32> {
                 "dba/04-tools/reviewer/contract/v9.md"
                     | "dba/04-tools/reviewer/contract/v10.md"
                     | "dba/04-tools/reviewer/contract/v11.md"
+                    | "dba/04-tools/reviewer/contract/v12.md"
             )
         )
     {
@@ -1013,11 +1089,15 @@ pub fn run(args: ReviewArgs, cfg: &Config) -> Result<i32> {
                 "a negative evidence reassessment omitted EVIDENCE MATERIALITY".to_string();
         }
     }
-    if (closure_authorization.is_some() || infrastructure_authorization.is_some())
+    if (closure_authorization.is_some()
+        || infrastructure_authorization.is_some()
+        || terminal_closure.is_some())
         && parsed.assessment_status == "COMPLETE"
         && parsed.effective_concern == "NO OBJECTION"
     {
-        parsed.effective_concern = if infrastructure_authorization.is_some() {
+        parsed.effective_concern = if terminal_closure.is_some() {
+            "TERMINAL REVIEW CLOSED — PROGRESSION PERMITTED".to_string()
+        } else if infrastructure_authorization.is_some() {
             "INFRASTRUCTURE EVIDENCE REVALIDATED — PROGRESSION PERMITTED".to_string()
         } else {
             "EVIDENCE CLOSED — PROGRESSION PERMITTED".to_string()
@@ -1119,6 +1199,7 @@ pub fn run(args: ReviewArgs, cfg: &Config) -> Result<i32> {
         closure_authorization.as_ref(),
         infrastructure_authorization.as_ref(),
         evidence_reassessment.as_ref(),
+        terminal_closure.as_ref(),
     ) {
         eprintln!("error: log append failed: {error}");
         eprintln!("  assessment was written to: {}", assessment_file.display());

@@ -1,6 +1,7 @@
 use crate::config::Config;
 use crate::log::{self as review_log, DecisionProvenance};
 use anyhow::Result;
+use std::path::Path;
 
 const VALID_DECISIONS: &[&str] = &[
     "APPROVE_STAGE",
@@ -9,6 +10,7 @@ const VALID_DECISIONS: &[&str] = &[
     "AUTHORIZE_REENTRY",
     "AUTHORIZE_EVIDENCE_CLOSURE",
     "AUTHORIZE_INFRASTRUCTURE_REVALIDATION",
+    "AUTHORIZE_TERMINAL_REVIEW_CLOSURE",
 ];
 
 pub fn run(
@@ -19,12 +21,13 @@ pub fn run(
     after_review: Option<&str>,
     findings: &[String],
     event_evidence_sha: Option<&str>,
+    closure_scope_path: Option<&Path>,
     override_reason: Option<&str>,
     cfg: &Config,
 ) -> Result<i32> {
     if !VALID_DECISIONS.contains(&decision) {
         eprintln!(
-            "decision must be APPROVE_STAGE | REQUEST_CHANGES | STOP | AUTHORIZE_REENTRY | AUTHORIZE_EVIDENCE_CLOSURE | AUTHORIZE_INFRASTRUCTURE_REVALIDATION"
+            "decision must be APPROVE_STAGE | REQUEST_CHANGES | STOP | AUTHORIZE_REENTRY | AUTHORIZE_EVIDENCE_CLOSURE | AUTHORIZE_INFRASTRUCTURE_REVALIDATION | AUTHORIZE_TERMINAL_REVIEW_CLOSURE"
         );
         return Ok(crate::EXIT_USAGE);
     }
@@ -32,6 +35,8 @@ pub fn run(
     let is_reentry_authorization = decision == "AUTHORIZE_REENTRY";
     let is_closure_authorization = decision == "AUTHORIZE_EVIDENCE_CLOSURE";
     let is_infrastructure_authorization = decision == "AUTHORIZE_INFRASTRUCTURE_REVALIDATION";
+    let is_terminal_closure_authorization = decision == "AUTHORIZE_TERMINAL_REVIEW_CLOSURE";
+    let mut terminal_scope = None;
     if is_reentry_authorization {
         if reason.trim().is_empty() {
             eprintln!("error: AUTHORIZE_REENTRY requires a non-empty reason and scope");
@@ -55,7 +60,11 @@ pub fn run(
                 review_log::ReentryDecisionSemantics::CanonicalLogOrder
             }
             Ok(contract)
-                if matches!(contract.as_str(), "dba/04-tools/reviewer/contract/v11.md") =>
+                if matches!(
+                    contract.as_str(),
+                    "dba/04-tools/reviewer/contract/v11.md"
+                        | "dba/04-tools/reviewer/contract/v12.md"
+                ) =>
             {
                 let current_semantic_revision = if stage == "8" {
                     match super::review::approved_stage8_cycle(cfg, feature) {
@@ -172,10 +181,55 @@ pub fn run(
             eprintln!("error: AUTHORIZE_INFRASTRUCTURE_REVALIDATION refused: {error}");
             return Ok(crate::EXIT_USAGE);
         }
+    } else if is_terminal_closure_authorization {
+        let Some(review_id) = after_review else {
+            eprintln!("error: AUTHORIZE_TERMINAL_REVIEW_CLOSURE requires --after-review");
+            return Ok(crate::EXIT_USAGE);
+        };
+        let Some(scope_path) = closure_scope_path else {
+            eprintln!("error: AUTHORIZE_TERMINAL_REVIEW_CLOSURE requires --closure-scope");
+            return Ok(crate::EXIT_USAGE);
+        };
+        if reason.trim().is_empty() {
+            eprintln!("error: AUTHORIZE_TERMINAL_REVIEW_CLOSURE requires a bounded reason");
+            return Ok(crate::EXIT_USAGE);
+        }
+        match crate::config::resolve_reviewer_tool_contract(cfg) {
+            Ok(contract) if contract == "dba/04-tools/reviewer/contract/v12.md" => {}
+            Ok(contract) => {
+                eprintln!("error: Terminal Review Closure is not supported by {contract}");
+                return Ok(crate::EXIT_USAGE);
+            }
+            Err(error) => {
+                eprintln!("error: could not resolve Terminal Review Closure semantics: {error}");
+                return Ok(crate::EXIT_CONFIG);
+            }
+        }
+        let current_revision = match super::review::approved_stage8_cycle(cfg, feature) {
+            Ok(revision) => revision,
+            Err(error) => {
+                eprintln!("error: could not resolve the approved Stage 8 review cycle: {error}");
+                return Ok(crate::EXIT_CONFIG);
+            }
+        };
+        match crate::terminal_closure::load_and_validate_scope(
+            &cfg.review_log,
+            feature,
+            stage,
+            review_id,
+            current_revision,
+            scope_path,
+        ) {
+            Ok(scope) => terminal_scope = Some(scope),
+            Err(error) => {
+                eprintln!("error: Terminal Review Closure authorization refused: {error}");
+                return Ok(crate::EXIT_USAGE);
+            }
+        }
     } else if after_review.is_some() {
-        eprintln!("error: --after-review is valid only with AUTHORIZE_REENTRY, AUTHORIZE_EVIDENCE_CLOSURE, or AUTHORIZE_INFRASTRUCTURE_REVALIDATION");
+        eprintln!("error: --after-review is valid only with AUTHORIZE_REENTRY, AUTHORIZE_EVIDENCE_CLOSURE, AUTHORIZE_INFRASTRUCTURE_REVALIDATION, or AUTHORIZE_TERMINAL_REVIEW_CLOSURE");
         return Ok(crate::EXIT_USAGE);
-    } else if !findings.is_empty() || event_evidence_sha.is_some() {
+    } else if !findings.is_empty() || event_evidence_sha.is_some() || closure_scope_path.is_some() {
         eprintln!("error: --findings and --event-evidence-sha are valid only with their bounded authorization");
         return Ok(crate::EXIT_USAGE);
     }
@@ -187,6 +241,7 @@ pub fn run(
     let provenance = if is_reentry_authorization
         || is_closure_authorization
         || is_infrastructure_authorization
+        || is_terminal_closure_authorization
     {
         None
     } else {
@@ -271,6 +326,7 @@ pub fn run(
         } else {
             None
         },
+        terminal_scope.as_ref(),
         provenance.as_ref(),
         &cfg.repo_root,
         &cfg.codex_dir,
