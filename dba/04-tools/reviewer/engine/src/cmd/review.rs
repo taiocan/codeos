@@ -91,6 +91,58 @@ fn semantic_revision(cfg: &Config, feature: &str) -> Result<SemanticRevision> {
     })
 }
 
+/// Resolve the approved Stage 8 package cycle for v11 re-entry. Absence across all three package
+/// artifacts is the legacy revision-0 cycle; mixed or unapproved package identity fails closed.
+pub(crate) fn approved_stage8_cycle(cfg: &Config, feature: &str) -> Result<Option<u64>> {
+    let paths = [
+        cfg.repo_root
+            .join(format!(".codeos/01-specification/intents/{feature}.md")),
+        cfg.repo_root.join(format!(
+            ".codeos/01-specification/contracts/{feature}_contract.md"
+        )),
+        cfg.repo_root.join(format!(
+            ".codeos/01-specification/event-schemas/{feature}_schema.md"
+        )),
+    ];
+    let mut revisions = Vec::new();
+    for path in paths {
+        let text = std::fs::read_to_string(&path)?;
+        let frontmatter = text
+            .strip_prefix("---\n")
+            .and_then(|rest| rest.split_once("\n---"))
+            .map(|(frontmatter, _)| frontmatter)
+            .ok_or_else(|| anyhow::anyhow!("{} has no YAML frontmatter", path.display()))?;
+        let yaml: serde_yaml::Value = serde_yaml::from_str(frontmatter)?;
+        anyhow::ensure!(
+            yaml.get("status").and_then(serde_yaml::Value::as_str) == Some("APPROVED")
+                && yaml
+                    .get("approved_by")
+                    .and_then(serde_yaml::Value::as_str)
+                    .is_some_and(|value| !value.trim().is_empty())
+                && yaml.get("approved_at").is_some(),
+            "{} is not an approved Specification Package artifact",
+            path.display()
+        );
+        let revision = yaml
+            .get("semantic_revision")
+            .map(|value| {
+                value
+                    .as_u64()
+                    .filter(|revision| *revision > 0)
+                    .ok_or_else(|| {
+                        anyhow::anyhow!("{} has an invalid semantic_revision", path.display())
+                    })
+            })
+            .transpose()?;
+        revisions.push(revision);
+    }
+    anyhow::ensure!(
+        revisions.iter().all(|revision| *revision == revisions[0]),
+        "Intent, Contract, and Event Schema semantic_revision values differ"
+    );
+    Ok(revisions[0])
+}
+
 fn validate_semantic_predecessor(
     cfg: &Config,
     packet: &ReviewPacket,
@@ -505,7 +557,10 @@ pub fn run(args: ReviewArgs, cfg: &Config) -> Result<i32> {
 
     let selected_contract = crate::config::resolve_reviewer_tool_contract(cfg).ok();
     if evidence.stage == "8"
-        && selected_contract.as_deref() == Some("dba/04-tools/reviewer/contract/v10.md")
+        && matches!(
+            selected_contract.as_deref(),
+            Some("dba/04-tools/reviewer/contract/v10.md" | "dba/04-tools/reviewer/contract/v11.md")
+        )
         && args.continues.is_some()
     {
         eprintln!(
@@ -516,7 +571,11 @@ pub fn run(args: ReviewArgs, cfg: &Config) -> Result<i32> {
     if evidence.stage == "8"
         && matches!(
             selected_contract.as_deref(),
-            Some("dba/04-tools/reviewer/contract/v9.md" | "dba/04-tools/reviewer/contract/v10.md")
+            Some(
+                "dba/04-tools/reviewer/contract/v9.md"
+                    | "dba/04-tools/reviewer/contract/v10.md"
+                    | "dba/04-tools/reviewer/contract/v11.md"
+            )
         )
     {
         review_packet.require_f7_blocker_classification();
@@ -617,7 +676,8 @@ pub fn run(args: ReviewArgs, cfg: &Config) -> Result<i32> {
             if !matches!(
                 contract.as_deref(),
                 Ok("dba/04-tools/reviewer/contract/v9.md"
-                    | "dba/04-tools/reviewer/contract/v10.md")
+                    | "dba/04-tools/reviewer/contract/v10.md"
+                    | "dba/04-tools/reviewer/contract/v11.md")
             ) {
                 eprintln!(
                     "error: --evidence-reassessment-after requires Reviewer Tool Contract v9"
@@ -729,6 +789,24 @@ pub fn run(args: ReviewArgs, cfg: &Config) -> Result<i32> {
                 {
                     review_log::ReentryDecisionSemantics::CanonicalLogOrder
                 }
+                Ok(contract)
+                    if matches!(contract.as_str(), "dba/04-tools/reviewer/contract/v11.md") =>
+                {
+                    let current_semantic_revision = if evidence.stage == "8" {
+                        match approved_stage8_cycle(cfg, &evidence.feature) {
+                            Ok(revision) => revision,
+                            Err(error) => {
+                                eprintln!("error: could not resolve the approved Stage 8 review cycle: {error}");
+                                return Ok(crate::EXIT_CONFIG);
+                            }
+                        }
+                    } else {
+                        None
+                    };
+                    review_log::ReentryDecisionSemantics::PackageBoundCanonicalLogOrder {
+                        current_semantic_revision,
+                    }
+                }
                 Ok(contract) => {
                     eprintln!(
                         "error: --reentry-after is not supported by the selected reviewer contract: {contract}"
@@ -748,7 +826,19 @@ pub fn run(args: ReviewArgs, cfg: &Config) -> Result<i32> {
                 semantics,
             ) {
                 Ok(authorization) => {
-                    let id = review_log::format_reentry_id(&evidence.feature, &evidence.stage);
+                    let id = if matches!(
+                        semantics,
+                        review_log::ReentryDecisionSemantics::PackageBoundCanonicalLogOrder { .. }
+                    ) && evidence.stage == "8"
+                    {
+                        review_log::format_package_reentry_id(
+                            &evidence.feature,
+                            &evidence.stage,
+                            authorization.semantic_revision,
+                        )
+                    } else {
+                        review_log::format_reentry_id(&evidence.feature, &evidence.stage)
+                    };
                     reentry_authorization = Some(authorization);
                     id
                 }
@@ -769,8 +859,13 @@ pub fn run(args: ReviewArgs, cfg: &Config) -> Result<i32> {
                     review_log::format_review_id(&evidence.feature, &evidence.stage, round)
                 }),
                 None if evidence.stage == "8"
-                    && selected_contract.as_deref()
-                        == Some("dba/04-tools/reviewer/contract/v10.md") =>
+                    && selected_contract.as_deref().is_some_and(|contract| {
+                        matches!(
+                            contract,
+                            "dba/04-tools/reviewer/contract/v10.md"
+                                | "dba/04-tools/reviewer/contract/v11.md"
+                        )
+                    }) =>
                 {
                     match semantic_revision(cfg, &evidence.feature).and_then(|semantic| {
                         validate_semantic_predecessor(cfg, &review_packet, &semantic)?;
@@ -875,7 +970,11 @@ pub fn run(args: ReviewArgs, cfg: &Config) -> Result<i32> {
     if evidence.stage == "8"
         && matches!(
             selected_contract.as_deref(),
-            Some("dba/04-tools/reviewer/contract/v9.md" | "dba/04-tools/reviewer/contract/v10.md")
+            Some(
+                "dba/04-tools/reviewer/contract/v9.md"
+                    | "dba/04-tools/reviewer/contract/v10.md"
+                    | "dba/04-tools/reviewer/contract/v11.md"
+            )
         )
     {
         let invalid = findings.iter().any(|finding| {

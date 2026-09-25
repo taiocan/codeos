@@ -56,6 +56,7 @@ supported_runtime_paths=(
   "${CODEOS_ROOT}/dba/00-entry/configurations/DBA-13.yaml"
   "${CODEOS_ROOT}/dba/00-entry/configurations/DBA-14.yaml"
   "${CODEOS_ROOT}/dba/00-entry/configurations/DBA-15.yaml"
+  "${CODEOS_ROOT}/dba/00-entry/configurations/DBA-16.yaml"
   "${CODEOS_ROOT}/dba/03-prompts"
   "${CODEOS_ROOT}/dba/04-tools/initializer"
   "${CODEOS_ROOT}/dba/04-tools/reviewer"

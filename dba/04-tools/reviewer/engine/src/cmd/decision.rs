@@ -41,7 +41,7 @@ pub fn run(
             eprintln!("error: AUTHORIZE_REENTRY requires --after-review <R3-review-id>");
             return Ok(crate::EXIT_USAGE);
         };
-        match crate::config::resolve_reviewer_tool_contract(cfg) {
+        let semantics = match crate::config::resolve_reviewer_tool_contract(cfg) {
             Ok(contract)
                 if matches!(
                     contract.as_str(),
@@ -50,7 +50,28 @@ pub fn run(
                         | "dba/04-tools/reviewer/contract/v8.md"
                         | "dba/04-tools/reviewer/contract/v9.md"
                         | "dba/04-tools/reviewer/contract/v10.md"
-                ) => {}
+                ) =>
+            {
+                review_log::ReentryDecisionSemantics::CanonicalLogOrder
+            }
+            Ok(contract)
+                if matches!(contract.as_str(), "dba/04-tools/reviewer/contract/v11.md") =>
+            {
+                let current_semantic_revision = if stage == "8" {
+                    match super::review::approved_stage8_cycle(cfg, feature) {
+                        Ok(revision) => revision,
+                        Err(error) => {
+                            eprintln!("error: could not resolve the approved Stage 8 review cycle: {error}");
+                            return Ok(crate::EXIT_CONFIG);
+                        }
+                    }
+                } else {
+                    None
+                };
+                review_log::ReentryDecisionSemantics::PackageBoundCanonicalLogOrder {
+                    current_semantic_revision,
+                }
+            }
             Ok(contract) => {
                 eprintln!(
                     "error: AUTHORIZE_REENTRY is not supported by the selected reviewer contract: {contract}"
@@ -61,12 +82,13 @@ pub fn run(
                 eprintln!("error: could not resolve Review re-entry semantics: {error}");
                 return Ok(crate::EXIT_CONFIG);
             }
-        }
-        if let Err(error) = review_log::validate_reentry_authorization_target(
+        };
+        if let Err(error) = review_log::validate_reentry_authorization_target_with_semantics(
             &cfg.review_log,
             feature,
             stage,
             review_id,
+            semantics,
         ) {
             eprintln!("error: AUTHORIZE_REENTRY refused: {error}");
             return Ok(crate::EXIT_USAGE);

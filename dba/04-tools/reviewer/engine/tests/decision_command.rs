@@ -124,6 +124,28 @@ fn setup_dba(repo_path: &std::path::Path, configuration: &str) {
     .expect("write project config");
 }
 
+fn write_approved_package(repo_path: &std::path::Path, revision: Option<u64>) {
+    let specs = repo_path.join(".codeos/01-specification");
+    for (directory, file) in [
+        ("intents", "FEAT.md"),
+        ("contracts", "FEAT_contract.md"),
+        ("event-schemas", "FEAT_schema.md"),
+    ] {
+        let dir = specs.join(directory);
+        std::fs::create_dir_all(&dir).expect("create specification directory");
+        let revision = revision
+            .map(|value| format!("semantic_revision: {value}\n"))
+            .unwrap_or_default();
+        std::fs::write(
+            dir.join(file),
+            format!(
+                "---\nstatus: APPROVED\napproved_by: Human\napproved_at: 2026-09-24\n{revision}---\n# Package\n"
+            ),
+        )
+        .expect("write approved package artifact");
+    }
+}
+
 fn r1_r3_history() -> &'static str {
     "# Codeos Review Log (append-only, v0)\n\
 ## 2026-01-01T00:00:00Z REVIEW — FEAT — Stage 8\nReview ID: REV__FEAT__8__R1\n\
@@ -242,6 +264,48 @@ fn contract_v10_accepts_semantic_revision_r3_authorization() {
         "{log}"
     );
     assert!(!log.contains("REENTRY-1"), "{log}");
+}
+
+#[test]
+fn contract_v11_binds_authorization_to_current_semantic_revision() {
+    let (dir, _) = setup_temp_git_repo();
+    let repo = dir.path();
+    setup_dba(repo, "DBA-16");
+    write_approved_package(repo, Some(2));
+    let log_path = setup_review_log(repo);
+    let history = "# Codeos Review Log (append-only, v0)\n\
+## 2026-01-01T00:00:00Z REVIEW — FEAT — Stage 8\nReview ID: REV__FEAT__8__SR1__R3\n\
+## 2026-01-01T00:01:00Z RE-ENTRY REVIEW — FEAT — Stage 8\nReview ID: REV__FEAT__8__SR1__REENTRY-1\n\
+## 2026-01-01T00:02:00Z REVIEW — FEAT — Stage 8\nReview ID: REV__FEAT__8__SR2__R3\n";
+    std::fs::write(&log_path, history).expect("write package-bound history");
+
+    let (code, _, stderr) = authorize_reentry_after(repo, "REV__FEAT__8__SR2__R3");
+    assert_eq!(code, 0, "v11 authorization failed: {stderr}");
+    let log = std::fs::read_to_string(&log_path).expect("read log");
+    assert!(log.starts_with(history), "history changed: {log}");
+    assert!(log.contains("Re-entry after: REV__FEAT__8__SR2__R3"));
+
+    let before = log.clone();
+    let (code, _, stderr) = authorize_reentry_after(repo, "REV__FEAT__8__SR1__R3");
+    assert_eq!(code, 1);
+    assert!(stderr.contains("current approved package"), "{stderr}");
+    assert_eq!(std::fs::read_to_string(log_path).unwrap(), before);
+}
+
+#[test]
+fn contract_v11_resolves_legacy_stage8_cycle_as_revision_zero() {
+    let (dir, _) = setup_temp_git_repo();
+    let repo = dir.path();
+    setup_dba(repo, "DBA-16");
+    write_approved_package(repo, None);
+    let log_path = setup_review_log(repo);
+    std::fs::write(&log_path, r1_r3_history()).expect("write legacy history");
+
+    let (code, _, stderr) = authorize_reentry(repo);
+    assert_eq!(code, 0, "legacy v11 authorization failed: {stderr}");
+    assert!(std::fs::read_to_string(log_path)
+        .unwrap()
+        .contains("Re-entry after: REV__FEAT__8__R3"));
 }
 
 #[test]

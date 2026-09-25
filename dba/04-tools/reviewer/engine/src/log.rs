@@ -172,8 +172,13 @@ pub(crate) fn parse_ordinary_review_id(
     })
 }
 
-fn ordinary_review_ids<'a>(content: &'a str, feature: &str, stage: &str) -> Vec<&'a str> {
-    let record = format!("{REVIEW_HEADING} — {feature} — Stage {stage}");
+fn review_ids_for_kind<'a>(
+    content: &'a str,
+    kind: &str,
+    feature: &str,
+    stage: &str,
+) -> Vec<&'a str> {
+    let record = format!("{kind} — {feature} — Stage {stage}");
     let lines: Vec<&str> = content.lines().collect();
     let mut ids = Vec::new();
     let mut index = 0;
@@ -201,6 +206,34 @@ fn ordinary_review_ids<'a>(content: &'a str, feature: &str, stage: &str) -> Vec<
     ids
 }
 
+fn ordinary_review_ids<'a>(content: &'a str, feature: &str, stage: &str) -> Vec<&'a str> {
+    review_ids_for_kind(content, REVIEW_HEADING, feature, stage)
+}
+
+fn reentry_bindings<'a>(content: &'a str, feature: &str, stage: &str) -> Vec<&'a str> {
+    let record = format!("{REENTRY_REVIEW_HEADING} — {feature} — Stage {stage}");
+    let lines: Vec<&str> = content.lines().collect();
+    let mut bindings = Vec::new();
+    let mut index = 0;
+    while index < lines.len() {
+        let reentry_heading = lines[index]
+            .strip_prefix("## ")
+            .and_then(|line| line.split_once(' '))
+            .is_some_and(|(_, body)| body == record);
+        index += 1;
+        if !reentry_heading {
+            continue;
+        }
+        while index < lines.len() && !lines[index].starts_with("## ") {
+            if let Some(binding) = lines[index].strip_prefix("Re-entry after: ") {
+                bindings.push(binding);
+            }
+            index += 1;
+        }
+    }
+    bindings
+}
+
 /// The round budget stated in `dba/02-policies/review/v2.md`: rounds 1-3 run automatically; an
 /// ordinary fourth round is rejected. One separately authorized Review re-entry may follow.
 const ROUND_BUDGET: u32 = 3;
@@ -210,6 +243,7 @@ pub struct ReentryAuthorization {
     pub after_review_id: String,
     pub decision_timestamp: String,
     pub scope: String,
+    pub semantic_revision: Option<u64>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -791,13 +825,35 @@ pub enum ReentryDecisionSemantics {
     /// review-control authority; a later STOP revokes it before consumption. Stage dispositions
     /// neither create nor consume that authority. Timestamps remain evidence only.
     CanonicalLogOrder,
+    /// Contract v11 retains canonical decision ordering while scoping Stage 8 consumption to the
+    /// target review cycle. `None` is the legacy revision-0 cycle.
+    PackageBoundCanonicalLogOrder {
+        current_semantic_revision: Option<u64>,
+    },
 }
 
+#[cfg(test)]
 pub fn validate_reentry_authorization_target(
     log_path: &Path,
     feature: &str,
     stage: &str,
     after_review_id: &str,
+) -> Result<()> {
+    validate_reentry_authorization_target_with_semantics(
+        log_path,
+        feature,
+        stage,
+        after_review_id,
+        ReentryDecisionSemantics::CanonicalLogOrder,
+    )
+}
+
+pub fn validate_reentry_authorization_target_with_semantics(
+    log_path: &Path,
+    feature: &str,
+    stage: &str,
+    after_review_id: &str,
+    semantics: ReentryDecisionSemantics,
 ) -> Result<()> {
     let content = std::fs::read_to_string(log_path)
         .with_context(|| format!("the review log could not be read: {}", log_path.display()))?;
@@ -813,6 +869,28 @@ pub fn validate_reentry_authorization_target(
         "{after_review_id} is round {}; authorization is available only for R{ROUND_BUDGET}",
         target.round
     );
+    if let ReentryDecisionSemantics::PackageBoundCanonicalLogOrder {
+        current_semantic_revision,
+    } = semantics
+    {
+        if stage == "8" {
+            anyhow::ensure!(
+                target.semantic_revision == current_semantic_revision,
+                "{after_review_id} belongs to semantic revision {:?}, but the current approved package is revision {:?}",
+                target.semantic_revision,
+                current_semantic_revision
+            );
+            let reentry_id = format_package_reentry_id(feature, stage, target.semantic_revision);
+            anyhow::ensure!(
+                !review_ids_for_kind(&content, REENTRY_REVIEW_HEADING, feature, stage)
+                    .contains(&reentry_id.as_str())
+                    && !reentry_bindings(&content, feature, stage)
+                        .contains(&after_review_id),
+                "the single re-entry for {feature} at stage {stage} in this review cycle has already been consumed"
+            );
+            return Ok(());
+        }
+    }
     anyhow::ensure!(
         count_entries(&content, REENTRY_REVIEW_HEADING, feature, stage) == 0,
         "the single re-entry for {feature} at stage {stage} has already been consumed"
@@ -836,7 +914,15 @@ pub fn resolve_reentry_authorization(
             log_path.display()
         )
     })?;
-    validate_reentry_authorization_target(log_path, feature, stage, after_review_id)?;
+    validate_reentry_authorization_target_with_semantics(
+        log_path,
+        feature,
+        stage,
+        after_review_id,
+        semantics,
+    )?;
+    let target = parse_ordinary_review_id(after_review_id, feature, stage)
+        .expect("validated ordinary review ID must remain parseable");
 
     let review_marker = format!("Review ID: {after_review_id}");
     let review_pos = content
@@ -885,7 +971,8 @@ pub fn resolve_reentry_authorization(
                 "multiple human decisions follow {after_review_id}; the selected reviewer contract does not define their ordering"
             ),
         },
-        ReentryDecisionSemantics::CanonicalLogOrder => {
+        ReentryDecisionSemantics::CanonicalLogOrder
+        | ReentryDecisionSemantics::PackageBoundCanonicalLogOrder { .. } => {
             let authorization_index = decisions.iter().rposition(|(decision, _, binding, _)| {
                 decision.as_deref() == Some("AUTHORIZE_REENTRY")
                     && binding.as_deref() == Some(after_review_id)
@@ -913,7 +1000,8 @@ pub fn resolve_reentry_authorization(
         ReentryDecisionSemantics::LegacySingleDecision => {
             decision.as_deref() == Some("REQUEST_CHANGES") && explicit
         }
-        ReentryDecisionSemantics::CanonicalLogOrder => {
+        ReentryDecisionSemantics::CanonicalLogOrder
+        | ReentryDecisionSemantics::PackageBoundCanonicalLogOrder { .. } => {
             decision.as_deref() == Some("AUTHORIZE_REENTRY")
                 && reason.as_deref().is_some_and(|r| !r.trim().is_empty())
         }
@@ -925,11 +1013,23 @@ pub fn resolve_reentry_authorization(
         after_review_id: after_review_id.to_string(),
         decision_timestamp: timestamp.clone(),
         scope: reason.as_deref().unwrap().trim().to_string(),
+        semantic_revision: target.semantic_revision,
     })
 }
 
 pub fn format_reentry_id(feature: &str, stage: &str) -> String {
     format!("REV__{}__{}__REENTRY-1", feature, stage)
+}
+
+pub fn format_package_reentry_id(
+    feature: &str,
+    stage: &str,
+    semantic_revision: Option<u64>,
+) -> String {
+    match semantic_revision {
+        Some(revision) => format!("REV__{feature}__{stage}__SR{revision}__REENTRY-1"),
+        None => format_reentry_id(feature, stage),
+    }
 }
 
 /// Resolve the round for a review that explicitly `--continues` an existing one, instead of
@@ -2724,6 +2824,57 @@ mod tests {
 
         validate_reentry_authorization_target(&log, "F-0001", "8", "REV__F-0001__8__SR2__R3")
             .unwrap();
+    }
+
+    #[test]
+    fn package_bound_reentry_consumption_is_exact_to_the_stage8_cycle() {
+        let dir = tempfile::tempdir().unwrap();
+        let log = write_log(
+            dir.path(),
+            &[
+                &review_entry("F-0001", "8", "REV__F-0001__8__SR1__R3", None),
+                "## t RE-ENTRY REVIEW — F-0001 — Stage 8\nReview ID: REV__F-0001__8__REENTRY-1\nRe-entry after: REV__F-0001__8__SR1__R3\n",
+                &review_entry("F-0001", "8", "REV__F-0001__8__SR2__R3", None),
+            ],
+        );
+
+        validate_reentry_authorization_target_with_semantics(
+            &log,
+            "F-0001",
+            "8",
+            "REV__F-0001__8__SR2__R3",
+            ReentryDecisionSemantics::PackageBoundCanonicalLogOrder {
+                current_semantic_revision: Some(2),
+            },
+        )
+        .unwrap();
+
+        let error = validate_reentry_authorization_target_with_semantics(
+            &log,
+            "F-0001",
+            "8",
+            "REV__F-0001__8__SR1__R3",
+            ReentryDecisionSemantics::PackageBoundCanonicalLogOrder {
+                current_semantic_revision: Some(1),
+            },
+        )
+        .unwrap_err();
+        assert!(
+            error.to_string().contains("already been consumed"),
+            "{error}"
+        );
+    }
+
+    #[test]
+    fn package_bound_reentry_ids_are_deterministic_and_legacy_compatible() {
+        assert_eq!(
+            format_package_reentry_id("F-0001", "8", Some(2)),
+            "REV__F-0001__8__SR2__REENTRY-1"
+        );
+        assert_eq!(
+            format_package_reentry_id("F-0001", "8", None),
+            "REV__F-0001__8__REENTRY-1"
+        );
     }
 
     #[test]
