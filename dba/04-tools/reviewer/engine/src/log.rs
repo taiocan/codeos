@@ -1216,6 +1216,8 @@ pub fn append_review(
         String::new()
     };
 
+    let structural_closure_failure =
+        terminal_closure.is_some() && review_id.contains("__TERMINAL-CLOSURE-FAILURE-");
     let mut entry = String::new();
     entry.push('\n');
     let kind = if raw.is_external() {
@@ -1223,7 +1225,11 @@ pub fn append_review(
     } else if infrastructure.is_some() {
         INFRASTRUCTURE_REVALIDATION_HEADING
     } else if terminal_closure.is_some() {
-        TERMINAL_CLOSURE_HEADING
+        if structural_closure_failure {
+            "TERMINAL REVIEW CLOSURE EXECUTION FAILURE"
+        } else {
+            TERMINAL_CLOSURE_HEADING
+        }
     } else if reassessment.is_some() {
         EVIDENCE_REASSESSMENT_HEADING
     } else if closure.is_some() {
@@ -1351,6 +1357,34 @@ pub fn append_review(
             "Authorized conditions: {}\n",
             item.repair.condition_ids.join(", ")
         ));
+        if let Some(sha) = &item.assessability_correction_sha256 {
+            entry.push_str("Evidence change classification: ASSESSABILITY_CORRECTION\n");
+            entry.push_str(&format!("Assessability correction SHA-256: {sha}\n"));
+        }
+        if !item.input_sha256.is_empty() {
+            entry.push_str(&format!("Closure input SHA-256: {}\n", item.input_sha256));
+            if structural_closure_failure {
+                entry.push_str("Closure execution status: STRUCTURAL FAILURE\n");
+                entry.push_str(&format!(
+                    "Retry status: {}\n",
+                    if item.attempt == 1 {
+                        "ONE BOUNDED BRIDGE RETRY AVAILABLE"
+                    } else {
+                        "EXHAUSTED"
+                    }
+                ));
+            } else {
+                entry.push_str(&format!(
+                    "Closure semantic disposition: {}\n",
+                    if parsed.effective_concern == "TERMINAL REVIEW CLOSED — PROGRESSION PERMITTED"
+                    {
+                        "CLOSED"
+                    } else {
+                        "OPEN"
+                    }
+                ));
+            }
+        }
     }
     entry.push_str(&format!(
         "Base: {}  Review: {}  Branch: {}\n",
@@ -1368,18 +1402,24 @@ pub fn append_review(
                 "Effort: {}   Wall time: {}ms   Reconnects: {}\n",
                 effort, raw.elapsed_ms, reconnect_count
             ));
-            entry.push_str(&format!("Codex concern: {}\n", parsed.codex_concern));
+            if !structural_closure_failure {
+                entry.push_str(&format!("Codex concern: {}\n", parsed.codex_concern));
+            }
         }
         RunSource::External { .. } => {
             entry.push_str("Source: external — advisory findings only; does NOT satisfy a required review round.\n");
-            entry.push_str(&format!("Reported concern: {}\n", parsed.codex_concern));
+            if !structural_closure_failure {
+                entry.push_str(&format!("Reported concern: {}\n", parsed.codex_concern));
+            }
         }
     }
-    entry.push_str(&format!(
-        "Effective concern: {}\n",
-        parsed.effective_concern
-    ));
-    entry.push_str(&format!("Evidence: {}\n", parsed.evidence));
+    if !structural_closure_failure {
+        entry.push_str(&format!(
+            "Effective concern: {}\n",
+            parsed.effective_concern
+        ));
+        entry.push_str(&format!("Evidence: {}\n", parsed.evidence));
+    }
     entry.push_str(&format!(
         "Parse status: {}   Assessment status: {}\n",
         parsed.parse_status, parsed.assessment_status
@@ -1390,7 +1430,7 @@ pub fn append_review(
             parsed.incomplete_reason
         ));
     }
-    if !parsed.highest_impact_uncertainty.is_empty() {
+    if !structural_closure_failure && !parsed.highest_impact_uncertainty.is_empty() {
         entry.push_str(&format!(
             "Highest-impact uncertainty: {}\n",
             parsed.highest_impact_uncertainty
@@ -1403,10 +1443,12 @@ pub fn append_review(
         dirty_text,
         coverage_note_suffix
     ));
-    entry.push_str(&format!(
-        "Log summary: {}\n",
-        parsed.summary_line.trim_start_matches("LOG SUMMARY: ")
-    ));
+    if !structural_closure_failure {
+        entry.push_str(&format!(
+            "Log summary: {}\n",
+            parsed.summary_line.trim_start_matches("LOG SUMMARY: ")
+        ));
+    }
     entry.push_str(&format!(
         "Full assessment: {} (sha256:{})\n",
         assessment_file.display(),

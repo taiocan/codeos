@@ -172,6 +172,50 @@ impl ReviewPacket {
         self.content = content;
         self
     }
+
+    /// Reconstruct an immutable packet from the metadata stored in its assessment and the exact
+    /// packet bytes. Used only by the bounded Terminal Review Closure retry path.
+    #[allow(clippy::too_many_arguments)]
+    pub fn from_immutable_record(
+        feature: String,
+        stage: String,
+        branch: String,
+        review_sha: String,
+        base_sha: String,
+        diff_hash: String,
+        coverage_state: CoverageState,
+        workspace_dirty: bool,
+        redaction_count: usize,
+        secret_flag: bool,
+        artifacts: Vec<ArtifactEntry>,
+        excluded_paths: Vec<(String, String, String)>,
+        content: String,
+    ) -> Self {
+        let review_content_bytes = content.len() as u64;
+        let content_sha256 = crate::packet::sha256_str(&content);
+        Self {
+            feature,
+            stage,
+            branch,
+            review_sha,
+            base_sha,
+            diff_hash,
+            coverage_state,
+            workspace_dirty,
+            redaction_count,
+            secret_flag,
+            artifacts,
+            excluded_paths,
+            review_content_bytes,
+            estimated_review_tokens: review_content_bytes / 4,
+            budget_bytes: 512 * 1024,
+            over_budget: review_content_bytes > 512 * 1024,
+            diff_bytes: 0,
+            budget_contributors: Vec::new(),
+            content_sha256,
+            content,
+        }
+    }
 }
 
 pub struct PacketBuildOptions {

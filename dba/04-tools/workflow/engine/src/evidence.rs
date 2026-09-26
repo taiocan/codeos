@@ -209,6 +209,13 @@ pub fn latest_review_record(
             Ok(d) => d,
             Err(_) => continue,
         };
+        if doc
+            .get("counts_as_semantic_closure")
+            .and_then(|value| value.as_bool())
+            == Some(false)
+        {
+            continue;
+        }
         let reviewed = doc.get("reviewed");
         let f = reviewed
             .and_then(|r| r.get("feature"))
@@ -380,8 +387,10 @@ pub fn terminal_review_closure_history_permits_progression(
     let Ok(content) = std::fs::read_to_string(log_path) else {
         return Ok(false);
     };
+    let normal = closure_id.ends_with("__TERMINAL-CLOSURE-1");
+    let legacy_retry = closure_id.ends_with("__TERMINAL-CLOSURE-RETRY-1");
     if !closure_id.starts_with(&format!("REV__{feature}__{stage}__"))
-        || !closure_id.ends_with("__TERMINAL-CLOSURE-1")
+        || (!normal && !legacy_retry)
         || content.matches(&format!("Review ID: {closure_id}")).count() != 1
     {
         return Ok(false);
@@ -409,6 +418,30 @@ pub fn terminal_review_closure_history_permits_progression(
     };
     if !terminal_id.ends_with("__REENTRY-1") {
         return Ok(false);
+    }
+    if legacy_retry {
+        let legacy_id = closure_id
+            .trim_end_matches("__TERMINAL-CLOSURE-RETRY-1")
+            .to_string()
+            + "__TERMINAL-CLOSURE-1";
+        if before_closure
+            .matches(&format!("Review ID: {legacy_id}"))
+            .count()
+            != 1
+        {
+            return Ok(false);
+        }
+        let Some((_, legacy_tail)) = before_closure.split_once(&format!("Review ID: {legacy_id}"))
+        else {
+            return Ok(false);
+        };
+        let legacy = legacy_tail.split("\n## ").next().unwrap_or(legacy_tail);
+        if !(legacy.contains("Parse status: FAILED")
+            || legacy.contains("Assessment status: INCOMPLETE"))
+            || legacy.contains("Closure semantic disposition:")
+        {
+            return Ok(false);
+        }
     }
     let Some((_, terminal_tail)) = before_closure.split_once(&format!("Review ID: {terminal_id}"))
     else {
@@ -865,6 +898,47 @@ mod tests {
         assert!(
             !terminal_review_closure_history_permits_progression(&log, "F-1", "8", closure)
                 .unwrap()
+        );
+    }
+
+    #[test]
+    fn structural_closure_failure_is_not_a_semantic_review_record() {
+        let dir = tempfile::tempdir().unwrap();
+        let codex = dir.path().join("codex");
+        fs::create_dir(&codex).unwrap();
+        fs::write(
+            codex.join("2026-01-01T000000Z-F-1-stage-8-abc.md"),
+            review_record("F-1", "8", "REV__F-1__8__SR2__REENTRY-1"),
+        )
+        .unwrap();
+        fs::write(
+            codex.join("2026-01-01T000001Z-F-1-stage-8-abc.md"),
+            "---\nreview_id: REV__F-1__8__SR2__TERMINAL-CLOSURE-FAILURE-1\ncounts_as_semantic_closure: false\nreviewed:\n  feature: F-1\n  stage: 8\n  review_commit: abc\n  reviewed_packet_sha256: failed-packet\n  effective_concern: DO NOT ADVANCE\n---\n",
+        )
+        .unwrap();
+        let latest = latest_review_record(dir.path(), "F-1", "8")
+            .unwrap()
+            .unwrap();
+        assert_eq!(latest.review_id, "REV__F-1__8__SR2__REENTRY-1");
+    }
+
+    #[test]
+    fn legacy_retry_requires_a_preserved_malformed_v12_closure() {
+        let dir = tempfile::tempdir().unwrap();
+        let log = dir.path().join("review-log.md");
+        let terminal = "REV__F-1__8__SR2__REENTRY-1";
+        let legacy = "REV__F-1__8__SR2__TERMINAL-CLOSURE-1";
+        let retry = "REV__F-1__8__SR2__TERMINAL-CLOSURE-RETRY-1";
+        let text = format!(
+            "## t RE-ENTRY REVIEW — F-1 — Stage 8\nReview ID: {terminal}\nEffective concern: DO NOT ADVANCE\n\n## t HUMAN DECISION — F-1 — Stage 8\nDecision: AUTHORIZE_TERMINAL_REVIEW_CLOSURE\nTerminal closure after: {terminal}\nTerminal closure scope SHA-256: abc\n\n## t TERMINAL REVIEW CLOSURE — F-1 — Stage 8\nReview ID: {legacy}\nParse status: FAILED   Assessment status: INCOMPLETE\n\n## t TERMINAL REVIEW CLOSURE — F-1 — Stage 8\nReview ID: {retry}\nTerminal closure after: {terminal}\nTerminal closure scope SHA-256: abc\nAuthorized conditions: C1\nEffective concern: TERMINAL REVIEW CLOSED — PROGRESSION PERMITTED\nParse status: OK   Assessment status: COMPLETE\n"
+        );
+        fs::write(&log, &text).unwrap();
+        assert!(
+            terminal_review_closure_history_permits_progression(&log, "F-1", "8", retry).unwrap()
+        );
+        fs::write(&log, text.replace("Parse status: FAILED   Assessment status: INCOMPLETE", "Parse status: OK   Assessment status: COMPLETE\nClosure semantic disposition: OPEN")).unwrap();
+        assert!(
+            !terminal_review_closure_history_permits_progression(&log, "F-1", "8", retry).unwrap()
         );
     }
 }

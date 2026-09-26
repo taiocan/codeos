@@ -88,6 +88,16 @@ grep -Fxq 'reviewer_tool_contract=dba/04-tools/reviewer/contract/v12.md' <<<"${e
 grep -Fxq 'doctrine=dba/01-doctrine/v9.md' <<<"${explicit}" || fail 'DBA-17 did not preserve DBA-16 doctrine'
 grep -Fxq 'workflow_feature_policy=dba/02-policies/workflow-feature/v3.md' <<<"${explicit}" || fail 'DBA-17 did not preserve DBA-16 Feature Workflow'
 
+cat > "${WORK}/.codeos/00-project/codeos.yaml" <<'YAML'
+codeos_schema: 2
+dba_configuration: DBA-18
+YAML
+explicit="$(bash "${RESOLVER}" "${WORK}")"
+grep -Fxq 'review_policy=dba/02-policies/review/v11.md' <<<"${explicit}" || fail 'DBA-18 did not select Review Policy v11'
+grep -Fxq 'reviewer_tool_contract=dba/04-tools/reviewer/contract/v13.md' <<<"${explicit}" || fail 'DBA-18 did not select Reviewer Contract v13'
+grep -Fxq 'doctrine=dba/01-doctrine/v9.md' <<<"${explicit}" || fail 'DBA-18 did not preserve DBA-17 doctrine'
+grep -Fxq 'workflow_feature_policy=dba/02-policies/workflow-feature/v3.md' <<<"${explicit}" || fail 'DBA-18 did not preserve DBA-17 Feature Workflow'
+
 printf 'codeos_schema: 2\n' > "${WORK}/.codeos/00-project/codeos.yaml"
 if bash "${RESOLVER}" "${WORK}" >/dev/null 2>&1; then fail 'missing schema-2 binding was accepted'; fi
 

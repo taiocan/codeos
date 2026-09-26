@@ -64,6 +64,7 @@ pub fn run(
                     contract.as_str(),
                     "dba/04-tools/reviewer/contract/v11.md"
                         | "dba/04-tools/reviewer/contract/v12.md"
+                        | "dba/04-tools/reviewer/contract/v13.md"
                 ) =>
             {
                 let current_semantic_revision = if stage == "8" {
@@ -195,7 +196,12 @@ pub fn run(
             return Ok(crate::EXIT_USAGE);
         }
         match crate::config::resolve_reviewer_tool_contract(cfg) {
-            Ok(contract) if contract == "dba/04-tools/reviewer/contract/v12.md" => {}
+            Ok(contract)
+                if matches!(
+                    contract.as_str(),
+                    "dba/04-tools/reviewer/contract/v12.md"
+                        | "dba/04-tools/reviewer/contract/v13.md"
+                ) => {}
             Ok(contract) => {
                 eprintln!("error: Terminal Review Closure is not supported by {contract}");
                 return Ok(crate::EXIT_USAGE);

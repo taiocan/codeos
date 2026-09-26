@@ -45,7 +45,7 @@ struct EvidenceCli {
     #[arg(long)]
     skip_prechecks: bool,
     /// Files to include as review evidence.
-    #[arg(value_name = "ARTIFACT", required = true)]
+    #[arg(value_name = "ARTIFACT")]
     artifacts: Vec<String>,
 }
 
@@ -101,6 +101,16 @@ struct ReviewCli {
     /// Close the finite repaired conditions from one consumed terminal REENTRY-1.
     #[arg(long = "terminal-review-closure-after", value_name = "REVIEW_ID", conflicts_with_all = ["continues", "reentry_after", "evidence_closure_after", "infrastructure_revalidation_after", "evidence_reassessment_after", "assessment"])]
     terminal_review_closure_after: Option<String>,
+    /// Retry one structurally failed Terminal Review Closure with its exact saved payload.
+    #[arg(long = "retry-terminal-review-closure-after", value_name = "REVIEW_ID", conflicts_with_all = ["continues", "reentry_after", "evidence_closure_after", "infrastructure_revalidation_after", "evidence_reassessment_after", "terminal_review_closure_after", "repair_manifest", "assessment", "packet", "findings", "event_evidence_sha"])]
+    retry_terminal_review_closure_after: Option<String>,
+    /// Supply one bounded evidence-representation correction for a closure retry.
+    #[arg(
+        long = "assessability-correction",
+        value_name = "JSON",
+        requires = "retry_terminal_review_closure_after"
+    )]
+    assessability_correction: Option<PathBuf>,
     /// Repair manifest for Terminal Review Closure.
     #[arg(
         long = "repair-manifest",
@@ -240,6 +250,8 @@ fn run() -> i32 {
                     infrastructure_revalidation_after: args.infrastructure_revalidation_after,
                     evidence_reassessment_after: args.evidence_reassessment_after,
                     terminal_review_closure_after: args.terminal_review_closure_after,
+                    retry_terminal_review_closure_after: args.retry_terminal_review_closure_after,
+                    assessability_correction: args.assessability_correction,
                     repair_manifest: args.repair_manifest,
                     findings: args.findings,
                     event_evidence_sha: args.event_evidence_sha,
@@ -251,11 +263,19 @@ fn run() -> i32 {
                 EXIT_WRITE
             })
         }
-        Commands::Plan(args) => cmd::plan::run(args.evidence.into(), args.emit_packet, &cfg)
-            .unwrap_or_else(|error| {
-                eprintln!("internal error: {error}");
-                EXIT_WRITE
-            }),
+        Commands::Plan(args) => {
+            if args.evidence.artifacts.is_empty() {
+                eprintln!("error: plan requires at least one ARTIFACT");
+                EXIT_USAGE
+            } else {
+                cmd::plan::run(args.evidence.into(), args.emit_packet, &cfg).unwrap_or_else(
+                    |error| {
+                        eprintln!("internal error: {error}");
+                        EXIT_WRITE
+                    },
+                )
+            }
+        }
         Commands::Decision {
             feature,
             stage,

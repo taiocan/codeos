@@ -284,6 +284,8 @@ pub struct ReviewArgs {
     pub infrastructure_revalidation_after: Option<String>,
     pub evidence_reassessment_after: Option<String>,
     pub terminal_review_closure_after: Option<String>,
+    pub retry_terminal_review_closure_after: Option<String>,
+    pub assessability_correction: Option<PathBuf>,
     pub repair_manifest: Option<PathBuf>,
     pub findings: Vec<String>,
     pub event_evidence_sha: Option<String>,
@@ -530,10 +532,72 @@ fn stage8_readiness(args: &EvidenceArgs, packet: &ReviewPacket) -> Stage8Readine
 }
 
 pub fn run(args: ReviewArgs, cfg: &Config) -> Result<i32> {
+    if args.retry_terminal_review_closure_after.is_none() && args.evidence.artifacts.is_empty() {
+        eprintln!("error: review requires at least one ARTIFACT unless retrying an exact saved Terminal Review Closure payload");
+        return Ok(crate::EXIT_USAGE);
+    }
+    let selected_contract = crate::config::resolve_reviewer_tool_contract(cfg).ok();
+    let review_log_path = if args.scratch {
+        let scratch = cfg.state_dir.join("reviewer-scratch");
+        if let Err(error) = std::fs::create_dir_all(&scratch) {
+            eprintln!(
+                "error: could not create scratch dir {}: {error}",
+                scratch.display()
+            );
+            return Ok(crate::EXIT_WRITE);
+        }
+        scratch.join("review-log.md")
+    } else {
+        cfg.review_log.clone()
+    };
+    let mut retry_execution = None;
+    if let Some(failure_id) = args.retry_terminal_review_closure_after.as_deref() {
+        if !args.evidence.artifacts.is_empty()
+            || !args.evidence.sha_only.is_empty()
+            || !args.evidence.guard_clean.is_empty()
+            || args.evidence.base.is_some()
+            || args.evidence.skip_prechecks
+        {
+            eprintln!("error: Terminal Review Closure retry accepts no general replacement packet-building inputs");
+            return Ok(crate::EXIT_USAGE);
+        }
+        if selected_contract.as_deref() != Some("dba/04-tools/reviewer/contract/v13.md") {
+            eprintln!(
+                "error: --retry-terminal-review-closure-after requires Reviewer Tool Contract v13"
+            );
+            return Ok(crate::EXIT_USAGE);
+        }
+        let current_revision = match approved_stage8_cycle(cfg, &args.evidence.feature) {
+            Ok(revision) => revision,
+            Err(error) => {
+                eprintln!("error: could not resolve the approved Stage 8 review cycle: {error}");
+                return Ok(crate::EXIT_CONFIG);
+            }
+        };
+        match crate::terminal_closure::resolve_retry_execution(
+            &review_log_path,
+            &cfg.repo_root,
+            &args.evidence.feature,
+            &args.evidence.stage,
+            failure_id,
+            current_revision,
+            args.assessability_correction.as_deref(),
+        ) {
+            Ok(retry) => retry_execution = Some(retry),
+            Err(error) => {
+                eprintln!("error: Terminal Review Closure retry refused: {error}");
+                return Ok(crate::EXIT_WRITE);
+            }
+        }
+    }
     // Two ways to obtain the packet, and only one of them builds anything. The import path adopts
     // the exported bytes: the packet the model read and the packet recorded as reviewed are the
     // same bytes, not two builds that happen to agree.
-    let (evidence, mut review_packet) = if let Some(packet_path) = args.packet.as_ref() {
+    let mut retry_terminal_closure = None;
+    let (evidence, mut review_packet) = if let Some(retry) = retry_execution.take() {
+        retry_terminal_closure = Some(retry.execution);
+        (args.evidence.clone(), retry.packet)
+    } else if let Some(packet_path) = args.packet.as_ref() {
         match load_exported_packet(packet_path, &args.evidence) {
             Ok(packet) => (args.evidence.clone(), packet),
             Err(failure) => {
@@ -557,7 +621,6 @@ pub fn run(args: ReviewArgs, cfg: &Config) -> Result<i32> {
         }
     };
 
-    let selected_contract = crate::config::resolve_reviewer_tool_contract(cfg).ok();
     if evidence.stage == "8"
         && matches!(
             selected_contract.as_deref(),
@@ -565,6 +628,7 @@ pub fn run(args: ReviewArgs, cfg: &Config) -> Result<i32> {
                 "dba/04-tools/reviewer/contract/v10.md"
                     | "dba/04-tools/reviewer/contract/v11.md"
                     | "dba/04-tools/reviewer/contract/v12.md"
+                    | "dba/04-tools/reviewer/contract/v13.md"
             )
         )
         && args.continues.is_some()
@@ -582,8 +646,10 @@ pub fn run(args: ReviewArgs, cfg: &Config) -> Result<i32> {
                     | "dba/04-tools/reviewer/contract/v10.md"
                     | "dba/04-tools/reviewer/contract/v11.md"
                     | "dba/04-tools/reviewer/contract/v12.md"
+                    | "dba/04-tools/reviewer/contract/v13.md"
             )
         )
+        && args.retry_terminal_review_closure_after.is_none()
     {
         review_packet.require_f7_blocker_classification();
     }
@@ -649,28 +715,14 @@ pub fn run(args: ReviewArgs, cfg: &Config) -> Result<i32> {
             return Ok(crate::EXIT_PACKET);
         }
     }
-    let review_log_path = if args.scratch {
-        let scratch = cfg.state_dir.join("reviewer-scratch");
-        if let Err(error) = std::fs::create_dir_all(&scratch) {
-            eprintln!(
-                "error: could not create scratch dir {}: {error}",
-                scratch.display()
-            );
-            return Ok(crate::EXIT_WRITE);
-        }
-        scratch.join("review-log.md")
-    } else {
-        cfg.review_log.clone()
-    };
-
     // An external assessment is sequenced separately from review rounds, so importing one can
     // never consume a round the human still owes the boundary.
     let mut reentry_authorization = None;
     let mut closure_authorization = None;
     let mut infrastructure_authorization = None;
     let mut evidence_reassessment = None;
-    let mut terminal_closure = None;
-    let review_id = if args.assessment.is_some() {
+    let mut terminal_closure = retry_terminal_closure;
+    let mut review_id = if args.assessment.is_some() {
         match review_log::compute_assessment_sequence(
             &review_log_path,
             &evidence.feature,
@@ -685,14 +737,27 @@ pub fn run(args: ReviewArgs, cfg: &Config) -> Result<i32> {
             }
         }
     } else {
-        if let Some(predecessor) = args.evidence_reassessment_after.as_deref() {
+        if let Some(execution) = terminal_closure.as_ref() {
+            if execution.legacy_retry {
+                crate::terminal_closure::format_legacy_retry_id(
+                    &evidence.feature,
+                    approved_stage8_cycle(cfg, &evidence.feature).unwrap_or(None),
+                )
+            } else {
+                crate::terminal_closure::format_terminal_closure_id(
+                    &evidence.feature,
+                    approved_stage8_cycle(cfg, &evidence.feature).unwrap_or(None),
+                )
+            }
+        } else if let Some(predecessor) = args.evidence_reassessment_after.as_deref() {
             let contract = crate::config::resolve_reviewer_tool_contract(cfg);
             if !matches!(
                 contract.as_deref(),
                 Ok("dba/04-tools/reviewer/contract/v9.md"
                     | "dba/04-tools/reviewer/contract/v10.md"
                     | "dba/04-tools/reviewer/contract/v11.md"
-                    | "dba/04-tools/reviewer/contract/v12.md")
+                    | "dba/04-tools/reviewer/contract/v12.md"
+                    | "dba/04-tools/reviewer/contract/v13.md")
             ) {
                 eprintln!(
                     "error: --evidence-reassessment-after requires Reviewer Tool Contract v9"
@@ -788,7 +853,13 @@ pub fn run(args: ReviewArgs, cfg: &Config) -> Result<i32> {
                 }
             }
         } else if let Some(predecessor) = args.terminal_review_closure_after.as_deref() {
-            if selected_contract.as_deref() != Some("dba/04-tools/reviewer/contract/v12.md") {
+            if !matches!(
+                selected_contract.as_deref(),
+                Some(
+                    "dba/04-tools/reviewer/contract/v12.md"
+                        | "dba/04-tools/reviewer/contract/v13.md"
+                )
+            ) {
                 eprintln!(
                     "error: --terminal-review-closure-after requires Reviewer Tool Contract v12"
                 );
@@ -803,6 +874,20 @@ pub fn run(args: ReviewArgs, cfg: &Config) -> Result<i32> {
                     return Ok(crate::EXIT_CONFIG);
                 }
             };
+            if selected_contract.as_deref() == Some("dba/04-tools/reviewer/contract/v13.md") {
+                let failure_id = crate::terminal_closure::format_terminal_failure_id(
+                    &evidence.feature,
+                    current_revision,
+                    1,
+                );
+                if std::fs::read_to_string(&review_log_path)
+                    .unwrap_or_default()
+                    .contains(&format!("Review ID: {failure_id}"))
+                {
+                    eprintln!("error: Terminal Review Closure initial execution already failed; use the bounded bridge retry");
+                    return Ok(crate::EXIT_WRITE);
+                }
+            }
             match crate::terminal_closure::resolve_execution(
                 &review_log_path,
                 &cfg.repo_root,
@@ -864,6 +949,7 @@ pub fn run(args: ReviewArgs, cfg: &Config) -> Result<i32> {
                         contract.as_str(),
                         "dba/04-tools/reviewer/contract/v11.md"
                             | "dba/04-tools/reviewer/contract/v12.md"
+                            | "dba/04-tools/reviewer/contract/v13.md"
                     ) =>
                 {
                     let current_semantic_revision = if evidence.stage == "8" {
@@ -939,6 +1025,7 @@ pub fn run(args: ReviewArgs, cfg: &Config) -> Result<i32> {
                             "dba/04-tools/reviewer/contract/v10.md"
                                 | "dba/04-tools/reviewer/contract/v11.md"
                                 | "dba/04-tools/reviewer/contract/v12.md"
+                                | "dba/04-tools/reviewer/contract/v13.md"
                         )
                     }) =>
                 {
@@ -1050,6 +1137,7 @@ pub fn run(args: ReviewArgs, cfg: &Config) -> Result<i32> {
                     | "dba/04-tools/reviewer/contract/v10.md"
                     | "dba/04-tools/reviewer/contract/v11.md"
                     | "dba/04-tools/reviewer/contract/v12.md"
+                    | "dba/04-tools/reviewer/contract/v13.md"
             )
         )
     {
@@ -1103,6 +1191,27 @@ pub fn run(args: ReviewArgs, cfg: &Config) -> Result<i32> {
             "EVIDENCE CLOSED — PROGRESSION PERMITTED".to_string()
         };
     }
+    if selected_contract.as_deref() == Some("dba/04-tools/reviewer/contract/v13.md") {
+        if let Some(execution) = terminal_closure.as_mut() {
+            let revision = approved_stage8_cycle(cfg, &evidence.feature)?;
+            let packet_sha = crate::packet::sha256_str(review_packet.content());
+            execution.input_sha256 = crate::terminal_closure::closure_input_sha(
+                &evidence.feature,
+                &evidence.stage,
+                revision,
+                execution,
+                &packet_sha,
+            );
+            if parsed.parse_status != "OK" || parsed.assessment_status != "COMPLETE" {
+                review_id = crate::terminal_closure::format_terminal_failure_id(
+                    &evidence.feature,
+                    revision,
+                    execution.attempt,
+                );
+                parsed.effective_concern = "DO NOT ADVANCE".to_string();
+            }
+        }
+    }
     // The recorded count covers every finding the reply declared but that never reached the record:
     // malformed blocks plus declarations in a shape the parser does not accept.
     let declared_findings = assessment::count_declared_findings(&raw.text);
@@ -1124,9 +1233,13 @@ pub fn run(args: ReviewArgs, cfg: &Config) -> Result<i32> {
 
     let timestamp = chrono::Utc::now().format("%Y%m%dT%H%M%SZ").to_string();
     let short_sha = &review_packet.review_sha[..7.min(review_packet.review_sha.len())];
+    let closure_suffix = review_id
+        .contains("__TERMINAL-CLOSURE-")
+        .then(|| format!("-{}", &crate::packet::sha256_str(&review_id)[..8]))
+        .unwrap_or_default();
     let packet_saved = packets_dir.join(format!(
-        "{}-{}-stage-{}-{}.packet.txt",
-        timestamp, evidence.feature, evidence.stage, short_sha
+        "{}-{}-stage-{}-{}{}.packet.txt",
+        timestamp, evidence.feature, evidence.stage, short_sha, closure_suffix
     ));
     if let Err(error) = std::fs::write(&packet_saved, review_packet.content()) {
         eprintln!(

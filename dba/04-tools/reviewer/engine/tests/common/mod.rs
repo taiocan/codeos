@@ -65,6 +65,17 @@ case "${CODEOS_FAKE_MODE:-success}" in
     printf '{"type":"thread.started","thread_id":"%s"}\n' "${CODEOS_FAKE_SESSION:-fake-session}"
     exit 0
     ;;
+  structural_failure)
+    printf '%s\n' \
+      'Finding: malformed closure output / Severity: High' \
+      'Evidence: partial output / Why: unusable structure / Required action: emit the required structure  ' \
+      '' \
+      'LOG SUMMARY: DO NOT ADVANCE — structurally incomplete closure response' \
+      'EVIDENCE: A' \
+      'HIGHEST-IMPACT UNCERTAINTY: response structure' > "$output_file"
+    printf '{"type":"thread.started","thread_id":"%s"}\n' "${CODEOS_FAKE_SESSION:-fake-session}"
+    exit 0
+    ;;
 esac
 printf '%s\n' 'LOG SUMMARY: NO OBJECTION — fixture review' 'EVIDENCE: A' 'HIGHEST-IMPACT UNCERTAINTY: none' > "$output_file"
 printf '{"type":"thread.started","thread_id":"%s"}\n' "${CODEOS_FAKE_SESSION:-fake-session}"

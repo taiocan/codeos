@@ -1271,7 +1271,8 @@ fn evaluate_checkpoint(
                                     .into(),
                             );
                             next_action.get_or_insert("restore the exact evidence-repair chain or supply materially new evidence".into());
-                        } else if r.review_id.ends_with("__TERMINAL-CLOSURE-1")
+                        } else if (r.review_id.ends_with("__TERMINAL-CLOSURE-1")
+                            || r.review_id.ends_with("__TERMINAL-CLOSURE-RETRY-1"))
                             && !evidence::terminal_review_closure_history_permits_progression(
                                 &project.codeos_dir().join("05-review/reviews/review-log.md"),
                                 &subject.id,

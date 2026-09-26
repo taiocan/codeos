@@ -1,4 +1,4 @@
-//! Executable proof of the complete DBA-17 terminal-review-closure path.
+//! Executable proof of DBA-17 closure and DBA-18 structural-failure recovery.
 //! No real provider or downstream project is used.
 
 mod common;
@@ -17,6 +17,7 @@ const REVISION: u64 = 2;
 const R3: &str = "REV__FEAT__8__SR2__R3";
 const REENTRY: &str = "REV__FEAT__8__SR2__REENTRY-1";
 const CLOSURE: &str = "REV__FEAT__8__SR2__TERMINAL-CLOSURE-1";
+const FAILURE_1: &str = "REV__FEAT__8__SR2__TERMINAL-CLOSURE-FAILURE-1";
 
 fn sha256(value: &str) -> String {
     hex::encode(Sha256::digest(value.as_bytes()))
@@ -48,7 +49,7 @@ fn commit(repo: &Path, path: &str, content: &str, message: &str) {
     git(repo, &["commit", "-m", message]);
 }
 
-fn setup_project(repo: &Path) -> Vec<String> {
+fn setup_project(repo: &Path, dba: &str) -> Vec<String> {
     std::fs::create_dir_all(repo.join(".codeos/00-project")).unwrap();
     std::os::unix::fs::symlink(repo_root(), repo.join(".codeos/toolkit")).unwrap();
     write(
@@ -57,7 +58,7 @@ fn setup_project(repo: &Path) -> Vec<String> {
     );
     write(
         &repo.join(".codeos/00-project/codeos.yaml"),
-        "codeos_schema: 2\ndba_configuration: DBA-17\n",
+        &format!("codeos_schema: 2\ndba_configuration: {dba}\n"),
     );
 
     let artifacts = vec![
@@ -145,11 +146,11 @@ fn referenced_path(block: &str, prefix: &str) -> PathBuf {
 }
 
 #[test]
-fn package_cycle_terminal_repair_closes_through_the_complete_executable_chain() {
+fn structural_failure_retries_exact_payload_through_the_complete_executable_chain() {
     let (temp, _) = setup_temp_git_repo();
     let repo = temp.path();
     let fake = setup_fake_codex();
-    let artifacts = setup_project(repo);
+    let artifacts = setup_project(repo, "DBA-18");
 
     review(repo, &fake, &artifacts, "success", &[]);
     commit(
@@ -314,7 +315,7 @@ fn package_cycle_terminal_repair_closes_through_the_complete_executable_chain() 
         repo,
         &fake,
         &closure_artifacts,
-        "success",
+        "structural_failure",
         &[
             "--terminal-review-closure-after",
             REENTRY,
@@ -323,12 +324,52 @@ fn package_cycle_terminal_repair_closes_through_the_complete_executable_chain() 
         ],
     );
 
+    let failed_log = std::fs::read_to_string(&log_path).unwrap();
+    let failed = record_block(&failed_log, FAILURE_1);
+    assert!(failed.contains("Closure execution status: STRUCTURAL FAILURE"));
+    assert!(failed.contains("Retry status: ONE BOUNDED BRIDGE RETRY AVAILABLE"));
+    assert!(!failed_log.contains(&format!("Review ID: {CLOSURE}")));
+
+    let (code, _, stderr) = run_with_fake_codex(
+        repo,
+        &fake,
+        &[
+            "review",
+            FEATURE,
+            "8",
+            "--retry-terminal-review-closure-after",
+            FAILURE_1,
+            "tracked.md",
+        ],
+        "success",
+    );
+    assert_ne!(code, 0, "retry accepted replacement review inputs");
+    assert!(
+        stderr.contains("accepts no general replacement"),
+        "{stderr}"
+    );
+
+    let (code, stdout, stderr) = run_with_fake_codex(
+        repo,
+        &fake,
+        &[
+            "review",
+            FEATURE,
+            "8",
+            "--retry-terminal-review-closure-after",
+            FAILURE_1,
+        ],
+        "success",
+    );
+    assert_eq!(code, 0, "retry failed:\n{stdout}\n{stderr}");
+
     let final_log = std::fs::read_to_string(&log_path).unwrap();
     for required in [
         R3,
         "Decision: AUTHORIZE_REENTRY",
         REENTRY,
         "Decision: AUTHORIZE_TERMINAL_REVIEW_CLOSURE",
+        FAILURE_1,
         CLOSURE,
         "Effective concern: TERMINAL REVIEW CLOSED — PROGRESSION PERMITTED",
     ] {
@@ -342,4 +383,18 @@ fn package_cycle_terminal_repair_closes_through_the_complete_executable_chain() 
             .unwrap(),
         "the exact composite history consumed by F7 did not permit progression"
     );
+    let (code, _, stderr) = run_with_fake_codex(
+        repo,
+        &fake,
+        &[
+            "review",
+            FEATURE,
+            "8",
+            "--retry-terminal-review-closure-after",
+            FAILURE_1,
+        ],
+        "success",
+    );
+    assert_ne!(code, 0, "a second retry unexpectedly succeeded");
+    assert!(stderr.contains("already been consumed"), "{stderr}");
 }

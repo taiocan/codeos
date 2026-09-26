@@ -492,9 +492,13 @@ pub fn write_assessment(
     let ts = chrono::Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string();
     let short_sha = &packet.review_sha[..7.min(packet.review_sha.len())];
     let ts_clean = ts.replace(':', "");
+    let closure_suffix = review_id
+        .contains("__TERMINAL-CLOSURE-")
+        .then(|| format!("-{}", &crate::packet::sha256_str(review_id)[..8]))
+        .unwrap_or_default();
     let filename = format!(
-        "{}-{}-stage-{}-{}.md",
-        ts_clean, packet.feature, packet.stage, short_sha
+        "{}-{}-stage-{}-{}{}.md",
+        ts_clean, packet.feature, packet.stage, short_sha, closure_suffix
     );
     let assessment_file = outdir.join(&filename);
 
@@ -503,6 +507,9 @@ pub fn write_assessment(
     let mut content = String::new();
     content.push_str("---\n");
     content.push_str(&format!("review_id: {}\n", review_id));
+    if review_id.contains("__TERMINAL-CLOSURE-FAILURE-") {
+        content.push_str("counts_as_semantic_closure: false\n");
+    }
     if findings.is_empty() {
         content.push_str("findings: []\n");
     } else {
