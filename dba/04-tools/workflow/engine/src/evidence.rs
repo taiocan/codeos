@@ -169,6 +169,14 @@ pub struct ReviewRecord {
     pub reviewed_packet_sha256: String,
     pub effective_concern: String,
     pub production_evidence: Option<String>,
+    pub artifacts: Vec<ReviewArtifact>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ReviewArtifact {
+    pub path: String,
+    pub sha256: String,
+    pub visibility: String,
 }
 
 /// The most recent reviewer record for `feature` at `stage`, by filename timestamp order.
@@ -239,6 +247,30 @@ pub fn latest_review_record(
             break;
         }
         latest_name = Some(name.to_string());
+        let artifacts = reviewed
+            .and_then(|r| r.get("artifacts"))
+            .and_then(|v| v.as_sequence())
+            .map(|artifacts| {
+                artifacts
+                    .iter()
+                    .filter_map(|artifact| {
+                        Some(ReviewArtifact {
+                            path: artifact.get("path")?.as_str()?.to_string(),
+                            sha256: artifact.get("sha256")?.as_str()?.to_string(),
+                            visibility: artifact.get("visibility")?.as_str()?.to_string(),
+                        })
+                    })
+                    .collect::<Vec<_>>()
+            })
+            .unwrap_or_default();
+        let production_evidence = artifacts.iter().find_map(|artifact| {
+            let identity = artifact
+                .path
+                .strip_prefix(".codeos/06-workflow/reality-evidence/")?
+                .strip_suffix(".json")?;
+            (identity.len() == 64 && artifact.sha256 == identity && artifact.visibility == "shown")
+                .then(|| identity.to_string())
+        });
         latest = Some(ReviewRecord {
             review_id: doc
                 .get("review_id")
@@ -261,24 +293,124 @@ pub fn latest_review_record(
                 .and_then(|v| v.as_str())
                 .unwrap_or_default()
                 .to_string(),
-            production_evidence: reviewed
-                .and_then(|r| r.get("artifacts"))
-                .and_then(|v| v.as_sequence())
-                .and_then(|artifacts| {
-                    artifacts.iter().find_map(|artifact| {
-                        let path = artifact.get("path")?.as_str()?;
-                        let identity = path
-                            .strip_prefix(".codeos/06-workflow/reality-evidence/")?
-                            .strip_suffix(".json")?;
-                        (identity.len() == 64
-                            && artifact.get("sha256").and_then(|v| v.as_str()) == Some(identity)
-                            && artifact.get("visibility").and_then(|v| v.as_str()) == Some("shown"))
-                        .then(|| identity.to_string())
-                    })
-                }),
+            production_evidence,
+            artifacts,
         });
     }
     Ok(latest)
+}
+
+/// A DBA-18 assessability correction is an inspectable derivative, not replacement production
+/// evidence. Accept its lineage only when the immutable retry record contains the selected F6
+/// source, the superseded evidence, and the corrected evidence, and every on-disk identity and
+/// implementation binding agrees.
+pub fn review_binds_production_evidence(
+    repo_root: &Path,
+    review: &ReviewRecord,
+    selected: &str,
+) -> Result<bool> {
+    if review.production_evidence.as_deref() == Some(selected) {
+        return Ok(true);
+    }
+    if !review.review_id.ends_with("__TERMINAL-CLOSURE-RETRY-1") {
+        return Ok(false);
+    }
+    let selected_path = format!(".codeos/06-workflow/reality-evidence/{selected}.json");
+    let selected_artifact = review
+        .artifacts
+        .iter()
+        .find(|artifact| artifact.path == selected_path && artifact.sha256 == selected);
+    let Some(selected_artifact) = selected_artifact else {
+        return Ok(false);
+    };
+    if selected_artifact.visibility != "path_sha_only"
+        || crate::hashing::file_sha256(&repo_root.join(&selected_artifact.path))?.as_deref()
+            != Some(selected)
+    {
+        return Ok(false);
+    }
+    let selected_json: serde_json::Value =
+        serde_json::from_slice(&std::fs::read(repo_root.join(&selected_artifact.path))?)?;
+    let selected_implementation = selected_json
+        .get("implementation_sha256")
+        .and_then(|value| value.as_str());
+    let selected_governed = selected_json.get("governed_inputs");
+    let Some(selected_implementation) = selected_implementation else {
+        return Ok(false);
+    };
+
+    for correction_artifact in review
+        .artifacts
+        .iter()
+        .filter(|artifact| artifact.visibility == "assessability_correction")
+    {
+        let correction_path = repo_root.join(&correction_artifact.path);
+        if crate::hashing::file_sha256(&correction_path)?.as_deref()
+            != Some(correction_artifact.sha256.as_str())
+        {
+            continue;
+        }
+        let correction: serde_json::Value =
+            serde_json::from_slice(&std::fs::read(correction_path)?)?;
+        if correction
+            .get("classification")
+            .and_then(|value| value.as_str())
+            != Some("ASSESSABILITY_CORRECTION")
+            || correction
+                .get("production_evidence_sha256")
+                .and_then(|value| value.as_str())
+                != Some(selected)
+            || correction
+                .get("implementation_sha256")
+                .and_then(|value| value.as_str())
+                != Some(selected_implementation)
+        {
+            continue;
+        }
+        let Some(superseded_sha) = correction
+            .get("superseded_review_evidence_sha256")
+            .and_then(|value| value.as_str())
+        else {
+            continue;
+        };
+        let Some(superseded_artifact) = review
+            .artifacts
+            .iter()
+            .find(|artifact| artifact.sha256 == superseded_sha && artifact.visibility == "shown")
+        else {
+            continue;
+        };
+        let superseded_path = repo_root.join(&superseded_artifact.path);
+        if crate::hashing::file_sha256(&superseded_path)?.as_deref() != Some(superseded_sha) {
+            continue;
+        }
+        let superseded: serde_json::Value =
+            serde_json::from_slice(&std::fs::read(superseded_path)?)?;
+        if superseded
+            .get("implementation_sha256")
+            .and_then(|value| value.as_str())
+            != Some(selected_implementation)
+            || superseded
+                .pointer("/production/evidence_sha256")
+                .and_then(|value| value.as_str())
+                != Some(selected)
+        {
+            continue;
+        }
+        // Governed scope remains owned by the selected canonical evidence. A correction may not
+        // introduce an alternative governed-input set.
+        if correction
+            .get("governed_inputs")
+            .is_some_and(|value| Some(value) != selected_governed)
+            || superseded
+                .get("governed_inputs")
+                .is_some_and(|value| Some(value) != selected_governed)
+        {
+            continue;
+        }
+        return Ok(true);
+    }
+    Ok(false)
 }
 
 pub fn evidence_reassessment_history_permits_progression(
@@ -762,6 +894,122 @@ mod tests {
         assert!(review_permits_progression("NO OBJECTION"));
         assert!(review_permits_progression("CHANGES ADVISED"));
         assert!(!review_permits_progression("DO NOT ADVANCE"));
+    }
+
+    fn correction_lineage_fixture() -> (tempfile::TempDir, ReviewRecord, String) {
+        let dir = tempfile::tempdir().unwrap();
+        let selected_body = serde_json::json!({
+            "implementation_sha256": "implementation",
+            "governed_inputs": {"intent": "intent", "contract": "contract"}
+        });
+        let selected_bytes = serde_json::to_vec(&selected_body).unwrap();
+        let selected = crate::hashing::bytes_sha256(&selected_bytes);
+        let selected_path = format!(".codeos/06-workflow/reality-evidence/{selected}.json");
+        fs::create_dir_all(dir.path().join(".codeos/06-workflow/reality-evidence")).unwrap();
+        fs::write(dir.path().join(&selected_path), &selected_bytes).unwrap();
+
+        let superseded = serde_json::json!({
+            "implementation_sha256": "implementation",
+            "production": {"evidence_sha256": selected}
+        });
+        let superseded_bytes = serde_json::to_vec(&superseded).unwrap();
+        let superseded_sha = crate::hashing::bytes_sha256(&superseded_bytes);
+        let superseded_path = "evidence/review/compact.json";
+        fs::create_dir_all(dir.path().join("evidence/review")).unwrap();
+        fs::write(dir.path().join(superseded_path), &superseded_bytes).unwrap();
+
+        let correction = serde_json::json!({
+            "classification": "ASSESSABILITY_CORRECTION",
+            "implementation_sha256": "implementation",
+            "production_evidence_sha256": selected,
+            "superseded_review_evidence_sha256": superseded_sha
+        });
+        let correction_bytes = serde_json::to_vec(&correction).unwrap();
+        let correction_sha = crate::hashing::bytes_sha256(&correction_bytes);
+        let correction_path = "evidence/review/correction.json";
+        fs::write(dir.path().join(correction_path), &correction_bytes).unwrap();
+
+        let record = ReviewRecord {
+            review_id: "REV__F-1__8__SR2__TERMINAL-CLOSURE-RETRY-1".into(),
+            review_commit: "commit".into(),
+            reviewed_packet_sha256: "packet".into(),
+            effective_concern: "TERMINAL REVIEW CLOSED — PROGRESSION PERMITTED".into(),
+            production_evidence: None,
+            artifacts: vec![
+                ReviewArtifact {
+                    path: selected_path,
+                    sha256: selected.clone(),
+                    visibility: "path_sha_only".into(),
+                },
+                ReviewArtifact {
+                    path: superseded_path.into(),
+                    sha256: superseded_sha,
+                    visibility: "shown".into(),
+                },
+                ReviewArtifact {
+                    path: correction_path.into(),
+                    sha256: correction_sha,
+                    visibility: "assessability_correction".into(),
+                },
+            ],
+        };
+        (dir, record, selected)
+    }
+
+    #[test]
+    fn production_lineage_accepts_direct_and_authorized_correction_bindings() {
+        let (dir, mut record, selected) = correction_lineage_fixture();
+        assert!(review_binds_production_evidence(dir.path(), &record, &selected).unwrap());
+        record.production_evidence = Some(selected.clone());
+        record.artifacts.clear();
+        assert!(review_binds_production_evidence(dir.path(), &record, &selected).unwrap());
+    }
+
+    #[test]
+    fn production_lineage_rejects_unrelated_or_broken_supersession() {
+        let (dir, mut record, selected) = correction_lineage_fixture();
+        let correction = record
+            .artifacts
+            .iter_mut()
+            .find(|artifact| artifact.visibility == "assessability_correction")
+            .unwrap();
+        correction.sha256 = "0".repeat(64);
+        assert!(!review_binds_production_evidence(dir.path(), &record, &selected).unwrap());
+
+        let (dir, mut record, selected) = correction_lineage_fixture();
+        record
+            .artifacts
+            .iter_mut()
+            .find(|artifact| artifact.visibility == "shown")
+            .unwrap()
+            .sha256 = "1".repeat(64);
+        assert!(!review_binds_production_evidence(dir.path(), &record, &selected).unwrap());
+    }
+
+    #[test]
+    fn production_lineage_rejects_changed_implementation_or_governed_scope() {
+        let (dir, record, selected) = correction_lineage_fixture();
+        let correction_path = dir.path().join("evidence/review/correction.json");
+        let mut correction: serde_json::Value =
+            serde_json::from_slice(&fs::read(&correction_path).unwrap()).unwrap();
+        correction["implementation_sha256"] = "changed".into();
+        fs::write(&correction_path, serde_json::to_vec(&correction).unwrap()).unwrap();
+        assert!(!review_binds_production_evidence(dir.path(), &record, &selected).unwrap());
+
+        let (dir, mut record, selected) = correction_lineage_fixture();
+        let correction_path = dir.path().join("evidence/review/correction.json");
+        let mut correction: serde_json::Value =
+            serde_json::from_slice(&fs::read(&correction_path).unwrap()).unwrap();
+        correction["governed_inputs"] = serde_json::json!({"intent": "different"});
+        let bytes = serde_json::to_vec(&correction).unwrap();
+        fs::write(&correction_path, &bytes).unwrap();
+        record
+            .artifacts
+            .iter_mut()
+            .find(|artifact| artifact.visibility == "assessability_correction")
+            .unwrap()
+            .sha256 = crate::hashing::bytes_sha256(&bytes);
+        assert!(!review_binds_production_evidence(dir.path(), &record, &selected).unwrap());
     }
 
     fn review_record(feature: &str, stage: &str, id: &str) -> String {

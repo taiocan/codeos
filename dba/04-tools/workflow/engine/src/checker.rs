@@ -1214,7 +1214,11 @@ fn evaluate_checkpoint(
                     }
                     Some(r) => {
                         if let Some(selected) = selected_production_evidence(project, subject)? {
-                            if r.production_evidence.as_deref() != Some(selected.as_str()) {
+                            if !evidence::review_binds_production_evidence(
+                                &project.root,
+                                &r,
+                                &selected,
+                            )? {
                                 unmet.push("reviewer packet is not bound to the production evidence selected at F6".into());
                                 next_action.get_or_insert(
                                     "review the exact selected production-evidence artifact".into(),
