@@ -2,7 +2,7 @@ use crate::assessment;
 use crate::codex;
 use crate::config::Config;
 use crate::log as review_log;
-use crate::packet::{self, PacketBuildOptions, ReviewPacket};
+use crate::packet::{self, CoverageState, PacketBuildOptions, ReviewPacket};
 use crate::precheck;
 use crate::run::{ReviewerRun, RunSource};
 use anyhow::Result;
@@ -12,6 +12,23 @@ struct SemanticRevision {
     revision: u64,
     from: Option<u64>,
     change: String,
+}
+
+fn terminal_closure_can_close(
+    assessment_status: &str,
+    codex_concern: &str,
+    coverage: &CoverageState,
+    has_in_scope_blocker: bool,
+) -> bool {
+    assessment_status == "COMPLETE"
+        && codex_concern == "NO OBJECTION"
+        && !has_in_scope_blocker
+        && matches!(
+            coverage,
+            CoverageState::FullCoverage
+                | CoverageState::PartialCoverage
+                | CoverageState::SecretRedaction
+        )
 }
 
 fn semantic_revision(cfg: &Config, feature: &str) -> Result<SemanticRevision> {
@@ -1177,13 +1194,21 @@ pub fn run(args: ReviewArgs, cfg: &Config) -> Result<i32> {
                 "a negative evidence reassessment omitted EVIDENCE MATERIALITY".to_string();
         }
     }
-    if (closure_authorization.is_some()
-        || infrastructure_authorization.is_some()
-        || terminal_closure.is_some())
+    let terminal_closure_closed = terminal_closure.is_some()
+        && terminal_closure_can_close(
+            &parsed.assessment_status,
+            &parsed.codex_concern,
+            &review_packet.coverage_state,
+            findings
+                .iter()
+                .any(|finding| finding.classification == "IN-SCOPE BLOCKER"),
+        );
+    let other_closure_closed = (closure_authorization.is_some()
+        || infrastructure_authorization.is_some())
         && parsed.assessment_status == "COMPLETE"
-        && parsed.effective_concern == "NO OBJECTION"
-    {
-        parsed.effective_concern = if terminal_closure.is_some() {
+        && parsed.effective_concern == "NO OBJECTION";
+    if terminal_closure_closed || other_closure_closed {
+        parsed.effective_concern = if terminal_closure_closed {
             "TERMINAL REVIEW CLOSED — PROGRESSION PERMITTED".to_string()
         } else if infrastructure_authorization.is_some() {
             "INFRASTRUCTURE EVIDENCE REVALIDATED — PROGRESSION PERMITTED".to_string()
@@ -1533,4 +1558,49 @@ fn git_status(repo_root: &Path) -> Option<Vec<u8>> {
         .ok()
         .filter(|output| output.status.success())
         .map(|output| output.stdout)
+}
+
+#[cfg(test)]
+mod terminal_closure_disposition_tests {
+    use super::*;
+
+    #[test]
+    fn nonblocking_coverage_floor_does_not_reopen_closed_conditions() {
+        for coverage in [
+            CoverageState::FullCoverage,
+            CoverageState::PartialCoverage,
+            CoverageState::SecretRedaction,
+        ] {
+            assert!(terminal_closure_can_close(
+                "COMPLETE",
+                "NO OBJECTION",
+                &coverage,
+                false
+            ));
+        }
+    }
+
+    #[test]
+    fn actual_blockers_and_critical_or_empty_coverage_remain_open() {
+        assert!(!terminal_closure_can_close(
+            "COMPLETE",
+            "NO OBJECTION",
+            &CoverageState::SecretRedaction,
+            true
+        ));
+        assert!(!terminal_closure_can_close(
+            "COMPLETE",
+            "DO NOT ADVANCE",
+            &CoverageState::FullCoverage,
+            false
+        ));
+        for coverage in [CoverageState::CriticalOmission, CoverageState::EmptyPacket] {
+            assert!(!terminal_closure_can_close(
+                "COMPLETE",
+                "NO OBJECTION",
+                &coverage,
+                false
+            ));
+        }
+    }
 }

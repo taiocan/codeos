@@ -401,13 +401,30 @@ pub fn terminal_review_closure_history_permits_progression(
         return Ok(false);
     };
     let closure = closure_tail.split("\n## ").next().unwrap_or(closure_tail);
-    if !closure
+    let structurally_complete = closure
         .lines()
-        .any(|line| line == "Effective concern: TERMINAL REVIEW CLOSED — PROGRESSION PERMITTED")
-        || !closure
+        .any(|line| line == "Parse status: OK   Assessment status: COMPLETE");
+    let explicitly_closed = closure
+        .lines()
+        .any(|line| line == "Effective concern: TERMINAL REVIEW CLOSED — PROGRESSION PERMITTED");
+    let legacy_nonblocking_coverage_mapping = legacy_retry
+        && closure
             .lines()
-            .any(|line| line == "Parse status: OK   Assessment status: COMPLETE")
-    {
+            .any(|line| line == "Evidence change classification: ASSESSABILITY_CORRECTION")
+        && closure
+            .lines()
+            .any(|line| line == "Closure semantic disposition: OPEN")
+        && closure
+            .lines()
+            .any(|line| line == "Codex concern: NO OBJECTION")
+        && closure
+            .lines()
+            .any(|line| line == "Effective concern: CHANGES ADVISED")
+        && closure.lines().any(|line| {
+            line.starts_with("Coverage: SECRET_REDACTION")
+                || line.starts_with("Coverage: PARTIAL_COVERAGE")
+        });
+    if !structurally_complete || (!explicitly_closed && !legacy_nonblocking_coverage_mapping) {
         return Ok(false);
     }
     let Some(terminal_id) = closure
@@ -937,6 +954,30 @@ mod tests {
             terminal_review_closure_history_permits_progression(&log, "F-1", "8", retry).unwrap()
         );
         fs::write(&log, text.replace("Parse status: FAILED   Assessment status: INCOMPLETE", "Parse status: OK   Assessment status: COMPLETE\nClosure semantic disposition: OPEN")).unwrap();
+        assert!(
+            !terminal_review_closure_history_permits_progression(&log, "F-1", "8", retry).unwrap()
+        );
+    }
+
+    #[test]
+    fn legacy_retry_derives_closed_when_only_nonblocking_coverage_floor_caused_open_mapping() {
+        let dir = tempfile::tempdir().unwrap();
+        let log = dir.path().join("review-log.md");
+        let terminal = "REV__F-1__8__SR2__REENTRY-1";
+        let legacy = "REV__F-1__8__SR2__TERMINAL-CLOSURE-1";
+        let retry = "REV__F-1__8__SR2__TERMINAL-CLOSURE-RETRY-1";
+        let text = format!(
+            "## t RE-ENTRY REVIEW — F-1 — Stage 8\nReview ID: {terminal}\nEffective concern: DO NOT ADVANCE\n\n## t HUMAN DECISION — F-1 — Stage 8\nDecision: AUTHORIZE_TERMINAL_REVIEW_CLOSURE\nTerminal closure after: {terminal}\nTerminal closure scope SHA-256: abc\n\n## t TERMINAL REVIEW CLOSURE — F-1 — Stage 8\nReview ID: {legacy}\nParse status: FAILED   Assessment status: INCOMPLETE\n\n## t TERMINAL REVIEW CLOSURE — F-1 — Stage 8\nReview ID: {retry}\nTerminal closure after: {terminal}\nTerminal closure scope SHA-256: abc\nAuthorized conditions: C1, C2, C3\nEvidence change classification: ASSESSABILITY_CORRECTION\nClosure semantic disposition: OPEN\nCodex concern: NO OBJECTION\nEffective concern: CHANGES ADVISED\nParse status: OK   Assessment status: COMPLETE\nCoverage: SECRET_REDACTION; redactions: 1\n"
+        );
+        fs::write(&log, &text).unwrap();
+        assert!(
+            terminal_review_closure_history_permits_progression(&log, "F-1", "8", retry).unwrap()
+        );
+        fs::write(
+            &log,
+            text.replace("Coverage: SECRET_REDACTION", "Coverage: CRITICAL_OMISSION"),
+        )
+        .unwrap();
         assert!(
             !terminal_review_closure_history_permits_progression(&log, "F-1", "8", retry).unwrap()
         );
