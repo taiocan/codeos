@@ -270,6 +270,52 @@ fn stage8_plan_passes_with_canonical_inputs_and_does_not_infer_undeclared_eviden
 }
 
 #[test]
+fn stage8_delta_includes_complete_current_canonical_context() {
+    let (repo, base) = setup_temp_git_repo();
+    setup_codeos_symlink(repo.path());
+    let paths = add_stage8_inputs(repo.path(), "F-0042");
+    let evidence = "evidence.md";
+    std::fs::write(repo.path().join(evidence), "before\n").unwrap();
+    Command::new("git")
+        .args(["add", evidence])
+        .current_dir(repo.path())
+        .output()
+        .unwrap();
+    Command::new("git")
+        .args(["commit", "-m", "add evidence"])
+        .current_dir(repo.path())
+        .output()
+        .unwrap();
+    std::fs::write(repo.path().join(evidence), "after\n").unwrap();
+    let export = repo.path().join(".codeos-state/stage8-delta.packet.txt");
+    assert!(!export.parent().unwrap().exists());
+    let mut args = vec!["plan", "F-0042", "8", "--base", &base, evidence];
+    args.extend(paths.iter().map(String::as_str));
+    args.extend(["--emit-packet", export.to_str().unwrap()]);
+
+    let (code, stdout, stderr) = run_in_dir(repo.path(), &args);
+
+    assert_eq!(code, 0, "{stderr}");
+    assert!(stdout.contains("stage8_readiness: PASS"), "{stdout}");
+    assert!(stdout.contains("evidence.md (delta_diff"), "{stdout}");
+    for path in &paths {
+        assert!(stdout.contains(&format!("{path} (shown")), "{stdout}");
+    }
+    let packet = std::fs::read_to_string(export).unwrap();
+    for path in &paths {
+        assert!(
+            packet.contains(&format!("--- {path} (mode: full_current_context")),
+            "{packet}"
+        );
+        assert!(packet.contains(&format!("# {path}")), "{packet}");
+    }
+    assert!(
+        packet.contains("diff --git a/evidence.md b/evidence.md"),
+        "{packet}"
+    );
+}
+
+#[test]
 fn stage8_secret_redaction_label_alone_does_not_fail_readiness() {
     let (repo, _) = setup_temp_git_repo();
     setup_codeos_symlink(repo.path());

@@ -312,6 +312,72 @@ pub fn review_binds_production_evidence(
     if review.production_evidence.as_deref() == Some(selected) {
         return Ok(true);
     }
+    if review.review_id.ends_with("__TERMINAL-CLOSURE-1") {
+        let selected_path = format!(".codeos/06-workflow/reality-evidence/{selected}.json");
+        let Some(selected_artifact) = review
+            .artifacts
+            .iter()
+            .find(|artifact| artifact.path == selected_path && artifact.sha256 == selected)
+        else {
+            return Ok(false);
+        };
+        if selected_artifact.visibility != "path_sha_only"
+            || crate::hashing::file_sha256(&repo_root.join(&selected_artifact.path))?.as_deref()
+                != Some(selected)
+        {
+            return Ok(false);
+        }
+        let selected_json: serde_json::Value =
+            serde_json::from_slice(&std::fs::read(repo_root.join(&selected_artifact.path))?)?;
+        let Some(selected_implementation) = selected_json
+            .get("implementation_sha256")
+            .and_then(|value| value.as_str())
+        else {
+            return Ok(false);
+        };
+        let selected_governed = selected_json.get("governed_inputs");
+        for artifact in review.artifacts.iter().filter(|artifact| {
+            matches!(artifact.visibility.as_str(), "shown" | "added_file")
+                && artifact.path.starts_with("evidence/review/")
+        }) {
+            let path = repo_root.join(&artifact.path);
+            if crate::hashing::file_sha256(&path)?.as_deref() != Some(&artifact.sha256) {
+                continue;
+            }
+            let evidence: serde_json::Value = serde_json::from_slice(&std::fs::read(path)?)?;
+            let bindings = evidence.get("bindings");
+            let production = evidence
+                .get("verification")
+                .and_then(|value| value.get("production_source"));
+            let workflow = evidence
+                .get("verification")
+                .and_then(|value| value.get("workflow"));
+            if bindings
+                .and_then(|value| value.get("implementation_state"))
+                .and_then(|value| value.as_str())
+                == Some(selected_implementation)
+                && production
+                    .and_then(|value| value.get("evidence_sha256"))
+                    .and_then(|value| value.as_str())
+                    == Some(selected)
+                && workflow
+                    .and_then(|value| value.get("selected_production_evidence"))
+                    .and_then(|value| value.as_str())
+                    == Some(selected)
+                && selected_governed.is_some_and(|governed| {
+                    ["intent", "contract", "event_schema"].iter().all(|key| {
+                        governed.get(key).and_then(|value| value.as_str())
+                            == bindings
+                                .and_then(|value| value.get(key))
+                                .and_then(|value| value.as_str())
+                    })
+                })
+            {
+                return Ok(true);
+            }
+        }
+        return Ok(false);
+    }
     if !review.review_id.ends_with("__TERMINAL-CLOSURE-RETRY-1") {
         return Ok(false);
     }

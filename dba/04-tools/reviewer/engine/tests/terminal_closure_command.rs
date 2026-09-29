@@ -262,6 +262,10 @@ fn structural_failure_retries_exact_payload_through_the_complete_executable_chai
         "fresh proof for repaired implementation\n",
         "record fresh repair evidence",
     );
+    write(
+        &repo.join("unrelated-untracked.txt"),
+        "must not enter a bounded closure packet\n",
+    );
 
     let packet_path = control.path().join("closure.packet.txt");
     let mut plan_args = vec![
@@ -271,12 +275,18 @@ fn structural_failure_retries_exact_payload_through_the_complete_executable_chai
         "--skip-prechecks",
         "--emit-packet",
         packet_path.to_str().unwrap(),
+        "--terminal-review-closure-after",
+        REENTRY,
     ];
     let mut closure_artifacts = artifacts.clone();
     closure_artifacts.push("fresh-evidence.txt".into());
     plan_args.extend(closure_artifacts.iter().map(String::as_str));
     let (code, _, stderr) = run_in_dir(repo, &plan_args);
     assert_eq!(code, 0, "closure plan failed: {stderr}");
+    let closure_packet = std::fs::read_to_string(&packet_path).unwrap();
+    assert!(!closure_packet.contains("unrelated-untracked.txt"));
+    assert!(closure_packet.contains("DELTA DIFF"));
+    assert!(closure_packet.contains("fresh-evidence.txt (mode: added_file"));
     let sidecar: Value = serde_json::from_str(
         &std::fs::read_to_string(format!("{}.meta.json", packet_path.display())).unwrap(),
     )

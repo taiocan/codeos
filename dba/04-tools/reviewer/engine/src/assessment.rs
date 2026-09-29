@@ -91,9 +91,9 @@ fn yaml_escape(s: &str) -> String {
     s.replace('\\', "\\\\").replace('"', "\\\"")
 }
 
-/// Parse `Finding: / Severity: / Classification:` blocks from a reviewer's raw response text
-/// into structured `Finding`s, plus a count of `Finding:` lines that did not match the full
-/// expected shape (never silently dropped).
+/// Parse canonical `Finding` / `Severity` / `Classification` fields from either the required
+/// slash-delimited header or three consecutive field lines. Both normalize to the same structured
+/// `Finding`; incomplete, conflicting, or non-canonical fields are never silently dropped.
 ///
 /// Only the region **before the first line-anchored `LOG SUMMARY:`** is scanned. This is not
 /// an arbitrary truncation: `raw_text` is the full CLI transcript, which — after the real
@@ -131,10 +131,13 @@ pub fn parse_findings(raw_text: &str, review_id: &str) -> (Vec<Finding>, usize) 
     // The optional `N. ` prefix is a real recurring shape: reviewers number their findings. It was
     // silently dropping those findings entirely — they matched no header, so they were neither
     // parsed nor counted unparsed.
-    let finding_re = Regex::new(
+    let combined_finding_re = Regex::new(
         r"^(?:\d+\.\s+)?Finding: (.+?) / Severity: (High|Medium|Low) / Classification: (.+?)\s*$",
     )
     .expect("valid regex");
+    let finding_only_re = Regex::new(r"^(?:\d+\.\s+)?Finding: (.+?)\s*$").expect("valid regex");
+    let severity_only_re = Regex::new(r"^Severity: (High|Medium|Low)\s*$").expect("valid regex");
+    let classification_only_re = Regex::new(r"^Classification: (.+?)\s*$").expect("valid regex");
     let combined_re = Regex::new(r"^Evidence: (.+?) / Why: (.+?) / Required action: (fix now|optional fix|backlog|reject)\s*$")
         .expect("valid regex");
     // A third real, historical shape: Evidence/Why/Required action/Scope reason all combined
@@ -163,14 +166,41 @@ pub fn parse_findings(raw_text: &str, review_id: &str) -> (Vec<Finding>, usize) 
             continue;
         }
 
-        let Some(fcaps) = finding_re.captures(line) else {
+        let header = if let Some(captures) = combined_finding_re.captures(line) {
+            Some((
+                captures[1].trim().to_string(),
+                captures[2].to_string(),
+                captures[3].trim().to_string(),
+                1usize,
+            ))
+        } else if !line.contains(" / Severity:") && !line.contains(" / Classification:") {
+            finding_only_re.captures(line).and_then(|finding| {
+                let severity = lines
+                    .get(i + 1)
+                    .and_then(|line| severity_only_re.captures(line));
+                let classification = lines
+                    .get(i + 2)
+                    .and_then(|line| classification_only_re.captures(line));
+                match (severity, classification) {
+                    (Some(severity), Some(classification)) => Some((
+                        finding[1].trim().to_string(),
+                        severity[1].to_string(),
+                        classification[1].trim().to_string(),
+                        3usize,
+                    )),
+                    _ => None,
+                }
+            })
+        } else {
+            None
+        };
+        let Some((summary, severity, classification, header_lines)) = header else {
             unparsed_count += 1;
-            eprintln!("warning: malformed finding block (Finding/Severity/Classification line did not match the expected shape): {}", line);
+            eprintln!("warning: malformed finding block (Finding/Severity/Classification fields did not match an accepted canonical shape): {}", line);
             i += 1;
             continue;
         };
 
-        let classification = fcaps[3].trim().to_string();
         if !CANONICAL_CLASSIFICATIONS.contains(&classification.as_str()) {
             unparsed_count += 1;
             eprintln!(
@@ -189,11 +219,16 @@ pub fn parse_findings(raw_text: &str, review_id: &str) -> (Vec<Finding>, usize) 
         let mut scope_reason: Option<String> = None;
         let mut blocker_kind: Option<String> = None;
         let mut evidence_required: Option<String> = None;
-        let mut k = i + 1;
-        let window_end = (i + 1 + 9).min(lines.len());
+        let mut duplicate_header_field = false;
+        let mut k = i + header_lines;
+        let window_end = (k + 9).min(lines.len());
         while k < window_end {
             let l = lines[k];
             if l.trim().is_empty() || l.starts_with("Finding:") || l.starts_with("PR decision:") {
+                break;
+            }
+            if l.starts_with("Severity:") || l.starts_with("Classification:") {
+                duplicate_header_field = true;
                 break;
             }
             if evidence.is_none()
@@ -271,13 +306,21 @@ pub fn parse_findings(raw_text: &str, review_id: &str) -> (Vec<Finding>, usize) 
             i += 1;
             continue;
         };
+        if duplicate_header_field {
+            unparsed_count += 1;
+            eprintln!(
+                "warning: malformed finding block (duplicate or conflicting header field) near: {}",
+                line
+            );
+            i += 1;
+            continue;
+        }
 
         seq += 1;
-        let summary = fcaps[1].trim().to_string();
         let acceptance_criterion = ac_re.find(&summary).map(|m| m.as_str().to_string());
         findings.push(Finding {
             finding_id: format!("FND__{}__{:02}", review_id, seq),
-            severity: fcaps[2].to_string(),
+            severity,
             classification,
             summary,
             acceptance_criterion,
@@ -296,7 +339,7 @@ pub fn parse_findings(raw_text: &str, review_id: &str) -> (Vec<Finding>, usize) 
 
 /// Parse LOG SUMMARY, EVIDENCE, HIGHEST-IMPACT UNCERTAINTY from reviewer output.
 /// Count finding declarations the reply made, however it shaped them. `parse_findings` accepts one
-/// specific header line; a model that declares findings in any other shape would otherwise leave
+/// accepted canonical header shape; a model that declares findings in any other shape would otherwise leave
 /// `findings: []` with nothing recorded as dropped. Every canonical classification label the reply
 /// applies is one declared finding, so comparing that count against what parsed turns a silent loss
 /// into a visible one.
@@ -591,7 +634,8 @@ pub fn write_assessment(
     if !parsed.coverage_note.is_empty() {
         content.push_str(&format!(
             "  effective_concern_note: {}\n",
-            parsed.coverage_note
+            serde_json::to_string(&parsed.coverage_note)
+                .context("serialize effective concern note")?
         ));
     }
     content.push_str(&format!("  evidence: {}\n", parsed.evidence));
@@ -818,6 +862,86 @@ mod tests {
     }
 
     #[test]
+    fn assessment_writer_quotes_effective_concern_note_as_valid_yaml() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let repo_root = dir.path();
+        for args in [
+            ["init"].as_slice(),
+            ["config", "user.email", "t@t.test"].as_slice(),
+            ["config", "user.name", "T"].as_slice(),
+        ] {
+            assert!(std::process::Command::new("git")
+                .args(args)
+                .current_dir(repo_root)
+                .status()
+                .expect("git command")
+                .success());
+        }
+        std::fs::write(repo_root.join("tracked.md"), "# tracked\n").expect("write");
+        assert!(std::process::Command::new("git")
+            .args(["add", "tracked.md"])
+            .current_dir(repo_root)
+            .status()
+            .expect("git add")
+            .success());
+        assert!(std::process::Command::new("git")
+            .args(["commit", "-m", "init"])
+            .current_dir(repo_root)
+            .status()
+            .expect("git commit")
+            .success());
+
+        let mut toolkit_root = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        for _ in 0..4 {
+            toolkit_root.pop();
+        }
+        let packet = crate::packet::build(&crate::packet::PacketBuildOptions {
+            feature: "UPG-TEST".to_string(),
+            stage: "selfdev-step-1".to_string(),
+            artifacts: vec!["tracked.md".to_string()],
+            sha_only_paths: vec![],
+            basis: crate::packet::ReviewBasis::Ordinary { base: None },
+            repo_root: repo_root.to_string_lossy().into_owned(),
+            toolkit_root: toolkit_root.to_string_lossy().into_owned(),
+        })
+        .expect("build packet");
+        let raw = make_raw(
+            "LOG SUMMARY: NO OBJECTION — ok\nEVIDENCE: A\nHIGHEST-IMPACT UNCERTAINTY: none\n",
+        );
+        let mut parsed = parse_review_output(&raw.text, &packet.coverage_state, 0, 0);
+        parsed.coverage_note =
+            "raised to DO NOT ADVANCE: assessment INCOMPLETE — exact historical shape".into();
+        let outdir = dir.path().join("codex-out");
+        let (path, _) = write_assessment(
+            "REV__UPG-TEST__selfdev-step-1__R1",
+            &[],
+            0,
+            &packet,
+            &raw,
+            &parsed,
+            &outdir,
+            Path::new("packet.txt"),
+            "cafefeed",
+        )
+        .expect("write assessment");
+        let content = std::fs::read_to_string(path).expect("read assessment");
+        let frontmatter = content
+            .strip_prefix("---\n")
+            .unwrap()
+            .split_once("\n---")
+            .unwrap()
+            .0;
+        let yaml: serde_yaml::Value = serde_yaml::from_str(frontmatter).expect("valid YAML");
+        assert_eq!(
+            yaml["reviewed"]["effective_concern_note"].as_str(),
+            Some(parsed.coverage_note.as_str())
+        );
+        assert!(content.contains(
+            "  effective_concern_note: \"raised to DO NOT ADVANCE: assessment INCOMPLETE"
+        ));
+    }
+
+    #[test]
     fn missing_summary_gives_unclassified() {
         let text = "No summary line here.\n";
         let parsed = parse_review_output(text, &CoverageState::FullCoverage, 0, 0);
@@ -866,8 +990,7 @@ mod tests {
             stage: "selfdev-step-1".to_string(),
             artifacts: vec!["tracked.md".to_string()],
             sha_only_paths: vec![],
-            delta_mode: false,
-            delta_base: None,
+            basis: crate::packet::ReviewBasis::Ordinary { base: None },
             repo_root: repo_root.to_string_lossy().into_owned(),
             toolkit_root: toolkit_root.to_string_lossy().into_owned(),
         };
@@ -934,6 +1057,45 @@ mod tests {
         assert_eq!(f.evidence, "diff shows renamed tests");
         assert_eq!(f.why, "breaks traceability");
         assert_eq!(f.scope_reason.as_deref(), Some("directly affects AC-7."));
+    }
+
+    #[test]
+    fn sr3_reentry_multiline_header_normalizes_like_the_required_single_line() {
+        let single = "Finding: Departure correspondence ignores the origin’s timezone / Severity: High / Classification: IN-SCOPE BLOCKER\nEvidence: backend/src/provider.rs:421 / Why: the represented instant is not validated in the origin timezone / Required action: fix now\nScope reason: explicit targeted repair\nBlocker kind: SUBSTANTIVE\n\nLOG SUMMARY: CHANGES ADVISED — departure validation incomplete\nEVIDENCE: B\nHIGHEST-IMPACT UNCERTAINTY: provider offset guarantee\n";
+        let multiline = "Finding: Departure correspondence ignores the origin’s timezone  \nSeverity: High\nClassification: IN-SCOPE BLOCKER\nEvidence: backend/src/provider.rs:421\nWhy: the represented instant is not validated in the origin timezone\nRequired action: fix now\nScope reason: explicit targeted repair\nBlocker kind: SUBSTANTIVE\n\nLOG SUMMARY: CHANGES ADVISED — departure validation incomplete\nEVIDENCE: B\nHIGHEST-IMPACT UNCERTAINTY: provider offset guarantee\n";
+
+        let (single_findings, single_unparsed) = parse_findings(single, RID);
+        let (multiline_findings, multiline_unparsed) = parse_findings(multiline, RID);
+
+        assert_eq!(single_unparsed, 0);
+        assert_eq!(multiline_unparsed, 0);
+        assert_eq!(single_findings.len(), 1);
+        assert_eq!(multiline_findings.len(), 1);
+        let single = &single_findings[0];
+        let multiline = &multiline_findings[0];
+        assert_eq!(multiline.finding_id, single.finding_id);
+        assert_eq!(multiline.summary, single.summary);
+        assert_eq!(multiline.severity, single.severity);
+        assert_eq!(multiline.classification, single.classification);
+        assert_eq!(multiline.required_action, single.required_action);
+        assert_eq!(multiline.evidence, single.evidence);
+        assert_eq!(multiline.why, single.why);
+        assert_eq!(multiline.scope_reason, single.scope_reason);
+        assert_eq!(multiline.blocker_kind, single.blocker_kind);
+    }
+
+    #[test]
+    fn multiline_header_remains_fail_closed_for_missing_invalid_or_duplicate_fields() {
+        for text in [
+            "Finding: missing severity\nClassification: IN-SCOPE BLOCKER\nEvidence: e\nWhy: w\nRequired action: fix now\n",
+            "Finding: invalid severity\nSeverity: Critical\nClassification: IN-SCOPE BLOCKER\nEvidence: e\nWhy: w\nRequired action: fix now\n",
+            "Finding: invalid classification\nSeverity: High\nClassification: MAYBE\nEvidence: e\nWhy: w\nRequired action: fix now\n",
+            "Finding: conflicting severity\nSeverity: High\nClassification: IN-SCOPE BLOCKER\nSeverity: Low\nEvidence: e\nWhy: w\nRequired action: fix now\n",
+        ] {
+            let (findings, unparsed) = parse_findings(text, RID);
+            assert!(findings.is_empty(), "{text}");
+            assert!(unparsed > 0, "{text}");
+        }
     }
 
     #[test]

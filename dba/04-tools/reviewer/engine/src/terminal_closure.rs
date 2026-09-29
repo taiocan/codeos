@@ -105,138 +105,6 @@ pub struct TerminalClosureRetry {
     pub execution: TerminalClosureExecution,
 }
 
-fn packet_manifest_hashes(content: &str) -> BTreeMap<String, String> {
-    let Some((_, manifest_tail)) = content.split_once("PACKET MANIFEST\n") else {
-        return BTreeMap::new();
-    };
-    let manifest = manifest_tail
-        .split_once("\nREVIEW CONTEXT\n")
-        .map(|(value, _)| value)
-        .unwrap_or(manifest_tail);
-    let mut result = BTreeMap::new();
-    let mut current_path: Option<String> = None;
-    for line in manifest.lines() {
-        if let Some(path) = line.strip_prefix("    - path: ") {
-            current_path = (path != "(diff)").then(|| path.to_string());
-        } else if let (Some(path), Some(hash)) =
-            (current_path.as_ref(), line.strip_prefix("      sha256: "))
-        {
-            result.insert(path.clone(), hash.to_string());
-            current_path = None;
-        }
-    }
-    result
-}
-
-fn packet_diff_paths(content: &str) -> BTreeSet<String> {
-    let diff = content
-        .split_once("DIFF TO REVIEW (base->review, secret/size filtered)\n")
-        .map(|(_, value)| value)
-        .unwrap_or_default()
-        .split_once("\nUNTRACKED FILES (")
-        .map(|(value, _)| value)
-        .unwrap_or_else(|| {
-            content
-                .split_once("DIFF TO REVIEW (base->review, secret/size filtered)\n")
-                .map(|(_, value)| value)
-                .unwrap_or_default()
-        });
-    diff.lines()
-        .filter_map(|line| {
-            let value = line.strip_prefix("diff --git a/")?;
-            let (_, path) = value.split_once(" b/")?;
-            Some(path.to_string())
-        })
-        .collect()
-}
-
-fn packet_untracked_hashes(content: &str) -> BTreeMap<String, String> {
-    content
-        .lines()
-        .filter_map(|line| {
-            let value = line.strip_prefix("  --- ")?;
-            let (path, metadata) =
-                value.split_once(" (untracked — new file, not in any diff; sha256: ")?;
-            let (hash, _) = metadata.split_once(',')?;
-            Some((path.to_string(), hash.to_string()))
-        })
-        .collect()
-}
-
-fn git_output(repo_root: &Path, args: &[&str], context: &str) -> Result<String> {
-    let output = std::process::Command::new("git")
-        .args(args)
-        .current_dir(repo_root)
-        .output()?;
-    anyhow::ensure!(output.status.success(), "{context}");
-    Ok(String::from_utf8_lossy(&output.stdout).to_string())
-}
-
-fn terminal_snapshot_delta_paths(
-    repo_root: &Path,
-    scope: &ValidatedScope,
-) -> Result<BTreeSet<String>> {
-    let original_packet = std::fs::read_to_string(&scope.original_packet_path)?;
-    let manifest_hashes = packet_manifest_hashes(&original_packet);
-    let original_diff_paths = packet_diff_paths(&original_packet);
-    let original_untracked = packet_untracked_hashes(&original_packet);
-    let review_commit = scope
-        .original_implementation_identity
-        .split(':')
-        .next()
-        .unwrap_or_default();
-
-    let mut candidate_paths = git_output(
-        repo_root,
-        &["diff", "--name-only", review_commit],
-        "could not derive current changed paths",
-    )?
-    .lines()
-    .map(str::to_string)
-    .collect::<BTreeSet<_>>();
-    candidate_paths.extend(
-        git_output(
-            repo_root,
-            &["ls-files", "--others", "--exclude-standard"],
-            "could not derive current untracked paths",
-        )?
-        .lines()
-        .map(str::to_string),
-    );
-    candidate_paths.extend(original_diff_paths.iter().cloned());
-    candidate_paths.extend(original_untracked.keys().cloned());
-
-    let mut post_review_paths = BTreeSet::new();
-    for path in candidate_paths {
-        let absolute = repo_root.join(&path);
-        let current_hash = absolute
-            .is_file()
-            .then(|| sha256_file(absolute.to_string_lossy().as_ref()))
-            .transpose()?;
-        let matches_manifest = current_hash.as_ref().is_some_and(|hash| {
-            manifest_hashes.get(&path) == Some(hash)
-                || manifest_hashes.get(absolute.to_string_lossy().as_ref()) == Some(hash)
-                || original_untracked.get(&path) == Some(hash)
-        });
-        if matches_manifest {
-            continue;
-        }
-
-        if original_diff_paths.contains(&path) {
-            let current_diff = git_output(
-                repo_root,
-                &["diff", review_commit, "--", &path],
-                "could not derive current path diff",
-            )?;
-            if !current_diff.is_empty() && original_packet.contains(&current_diff) {
-                continue;
-            }
-        }
-        post_review_paths.insert(path);
-    }
-    Ok(post_review_paths)
-}
-
 fn record_block<'a>(content: &'a str, review_id: &str) -> Result<&'a str> {
     let marker = format!("Review ID: {review_id}");
     let (_, tail) = content
@@ -261,7 +129,75 @@ fn parsed_assessment(assessment: &str) -> Result<serde_yaml::Value> {
         .and_then(|rest| rest.split_once("\n---"))
         .map(|(frontmatter, _)| frontmatter)
         .context("terminal assessment has no readable YAML frontmatter")?;
-    serde_yaml::from_str(frontmatter).context("terminal assessment frontmatter is malformed")
+    match serde_yaml::from_str(frontmatter) {
+        Ok(value) => Ok(value),
+        Err(original_error) => {
+            recover_historical_effective_concern_note(frontmatter).with_context(|| {
+                format!("terminal assessment frontmatter is malformed: {original_error}")
+            })
+        }
+    }
+}
+
+/// Recover the one historical writer defect without changing the immutable assessment. The
+/// recovery is deliberately field-specific and reconstructs YAML only in memory. Anything other
+/// than one exact, non-empty plain-scalar line containing the known `: ` trigger stays closed.
+fn recover_historical_effective_concern_note(frontmatter: &str) -> Result<serde_yaml::Value> {
+    const PREFIX: &str = "  effective_concern_note: ";
+    let candidates = frontmatter
+        .lines()
+        .enumerate()
+        .filter(|(_, line)| line.trim_start().starts_with("effective_concern_note:"))
+        .collect::<Vec<_>>();
+    anyhow::ensure!(
+        candidates.len() == 1,
+        "historical effective_concern_note recovery requires exactly one field"
+    );
+    let (line_index, line) = candidates[0];
+    let value = line
+        .strip_prefix(PREFIX)
+        .context("historical effective_concern_note has an ambiguous field boundary")?;
+    anyhow::ensure!(
+        !value.is_empty()
+            && value.contains(": ")
+            && !value.contains('\t')
+            && !value.contains(" #")
+            && !matches!(
+                value.chars().next(),
+                Some(
+                    '"' | '\''
+                        | '['
+                        | ']'
+                        | '{'
+                        | '}'
+                        | '|'
+                        | '>'
+                        | '&'
+                        | '*'
+                        | '!'
+                        | '%'
+                        | '@'
+                        | '`'
+                )
+            ),
+        "historical effective_concern_note value is missing or ambiguous"
+    );
+
+    let mut repaired = frontmatter.lines().map(str::to_string).collect::<Vec<_>>();
+    repaired[line_index] = format!(
+        "{PREFIX}{}",
+        serde_json::to_string(value).context("quote historical effective_concern_note")?
+    );
+    let yaml: serde_yaml::Value = serde_yaml::from_str(&repaired.join("\n"))
+        .context("frontmatter remains malformed after bounded historical recovery")?;
+    anyhow::ensure!(
+        yaml.get("reviewed")
+            .and_then(|reviewed| reviewed.get("effective_concern_note"))
+            .and_then(serde_yaml::Value::as_str)
+            == Some(value),
+        "historical effective_concern_note did not round-trip exactly"
+    );
+    Ok(yaml)
 }
 
 pub fn load_and_validate_scope(
@@ -984,6 +920,64 @@ mod tests {
     use super::*;
     use sha2::{Digest, Sha256};
 
+    const HISTORICAL_SR3_FRONTMATTER: &str = "---\nreview_id: REV__F-0001__8__SR3__REENTRY-1\nfindings: []\nunparsed_findings_count: 1\nreviewed:\n  feature: F-0001\n  stage: 8\n  coverage_state: FULL_COVERAGE\n  codex_concern: CHANGES ADVISED\n  effective_concern: DO NOT ADVANCE\n  effective_concern_note: raised to DO NOT ADVANCE: assessment INCOMPLETE — 1 finding block(s) were malformed and could not be recorded\n  evidence: B\n  parse_status: FAILED\n  assessment_status: INCOMPLETE\n  incomplete_reason: \"1 finding block(s) were malformed and could not be recorded\"\n---\n\nHistorical body remains immutable.\n";
+
+    #[test]
+    fn historical_sr3_note_is_recovered_exactly_without_changing_bytes() {
+        let frontmatter = HISTORICAL_SR3_FRONTMATTER
+            .strip_prefix("---\n")
+            .unwrap()
+            .split_once("\n---")
+            .unwrap()
+            .0;
+        let parse_error = serde_yaml::from_str::<serde_yaml::Value>(frontmatter)
+            .unwrap_err()
+            .to_string();
+        assert!(
+            parse_error.contains("mapping values are not allowed"),
+            "unexpected exact parse failure: {parse_error}"
+        );
+
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("immutable-assessment.md");
+        std::fs::write(&path, HISTORICAL_SR3_FRONTMATTER).unwrap();
+        let before = std::fs::read(&path).unwrap();
+        let before_sha = sha256_file(path.to_string_lossy().as_ref()).unwrap();
+        let parsed = parsed_assessment(HISTORICAL_SR3_FRONTMATTER).unwrap();
+        assert_eq!(
+            parsed["reviewed"]["effective_concern_note"].as_str(),
+            Some(
+                "raised to DO NOT ADVANCE: assessment INCOMPLETE — 1 finding block(s) were malformed and could not be recorded"
+            )
+        );
+        assert_eq!(std::fs::read(&path).unwrap(), before);
+        assert_eq!(
+            sha256_file(path.to_string_lossy().as_ref()).unwrap(),
+            before_sha
+        );
+    }
+
+    #[test]
+    fn historical_recovery_rejects_ambiguous_missing_and_duplicate_fields() {
+        let ambiguous = HISTORICAL_SR3_FRONTMATTER.replace(
+            "assessment INCOMPLETE — 1 finding",
+            "assessment INCOMPLETE # comment: 1 finding",
+        );
+        assert!(parsed_assessment(&ambiguous).is_err());
+
+        let missing = HISTORICAL_SR3_FRONTMATTER.replace(
+            "  effective_concern_note: raised to DO NOT ADVANCE: assessment INCOMPLETE — 1 finding block(s) were malformed and could not be recorded\n",
+            "  another_broken_field: still: malformed\n",
+        );
+        assert!(parsed_assessment(&missing).is_err());
+
+        let duplicate = HISTORICAL_SR3_FRONTMATTER.replace(
+            "  evidence: B\n",
+            "  effective_concern_note: conflicting: duplicate value\n  evidence: B\n",
+        );
+        assert!(parsed_assessment(&duplicate).is_err());
+    }
+
     fn fixture() -> (tempfile::TempDir, PathBuf, PathBuf, String) {
         let dir = tempfile::tempdir().unwrap();
         let assessment = dir.path().join("assessment.md");
@@ -1119,7 +1113,7 @@ mod tests {
             .ancestors()
             .nth(4)
             .unwrap();
-        let packet = build(&PacketBuildOptions {
+        let mut packet = build(&PacketBuildOptions {
             feature: "FEAT".into(),
             stage: "8".into(),
             artifacts: vec![
@@ -1127,12 +1121,15 @@ mod tests {
                 evidence_path.display().to_string(),
             ],
             sha_only_paths: vec![],
-            delta_mode: false,
-            delta_base: None,
+            basis: crate::packet::ReviewBasis::Ordinary { base: None },
             repo_root: repo.path().display().to_string(),
             toolkit_root: toolkit_root.display().to_string(),
         })
         .unwrap();
+        packet.bounded_changed_paths = Some(BTreeSet::from([
+            "fresh-evidence.txt".to_string(),
+            "implementation.txt".to_string(),
+        ]));
         let evidence_sha = sha256_file(evidence_path.to_str().unwrap()).unwrap();
         let original_packet_file = tempfile::NamedTempFile::new().unwrap();
         std::fs::write(original_packet_file.path(), "old evidence identity").unwrap();
@@ -1234,8 +1231,7 @@ mod tests {
                     .to_string(),
             ],
             sha_only_paths: vec![],
-            delta_mode: false,
-            delta_base: None,
+            basis: crate::packet::ReviewBasis::Ordinary { base: None },
             repo_root: repo.path().display().to_string(),
             toolkit_root: toolkit_root.display().to_string(),
         })
@@ -1268,7 +1264,7 @@ mod tests {
         std::fs::write(repo.path().join("implementation.txt"), "repaired\n").unwrap();
         let evidence = repo.path().join("fresh-evidence.txt");
         std::fs::write(&evidence, "fresh proof\n").unwrap();
-        let current = build(&PacketBuildOptions {
+        let mut current = build(&PacketBuildOptions {
             feature: "FEAT".into(),
             stage: "8".into(),
             artifacts: vec![
@@ -1277,12 +1273,15 @@ mod tests {
                 evidence.display().to_string(),
             ],
             sha_only_paths: vec![],
-            delta_mode: false,
-            delta_base: None,
+            basis: crate::packet::ReviewBasis::Ordinary { base: None },
             repo_root: repo.path().display().to_string(),
             toolkit_root: toolkit_root.display().to_string(),
         })
         .unwrap();
+        current.bounded_changed_paths = Some(BTreeSet::from([
+            "fresh-evidence.txt".to_string(),
+            "implementation.txt".to_string(),
+        ]));
         let evidence_sha = sha256_file(evidence.to_str().unwrap()).unwrap();
         let manifest_path = control.path().join("repair-manifest.json");
         let manifest = serde_json::json!({
@@ -1297,7 +1296,7 @@ mod tests {
         validate_repair_manifest(repo.path(), &current, &scope, &manifest_path).unwrap();
 
         std::fs::write(&governed, "post-review governed drift\n").unwrap();
-        let drifted = build(&PacketBuildOptions {
+        let mut drifted = build(&PacketBuildOptions {
             feature: "FEAT".into(),
             stage: "8".into(),
             artifacts: vec![
@@ -1306,12 +1305,16 @@ mod tests {
                 evidence.display().to_string(),
             ],
             sha_only_paths: vec![],
-            delta_mode: false,
-            delta_base: None,
+            basis: crate::packet::ReviewBasis::Ordinary { base: None },
             repo_root: repo.path().display().to_string(),
             toolkit_root: toolkit_root.display().to_string(),
         })
         .unwrap();
+        drifted.bounded_changed_paths = Some(BTreeSet::from([
+            ".codeos/01-specification/intents/FEAT.md".to_string(),
+            "fresh-evidence.txt".to_string(),
+            "implementation.txt".to_string(),
+        ]));
         let mut drift_manifest = manifest;
         drift_manifest["current_implementation_identity"] =
             serde_json::json!(format!("{}:{}", drifted.review_sha, drifted.diff_hash));
@@ -1561,7 +1564,7 @@ mod tests {
 }
 
 pub fn validate_repair_manifest(
-    repo_root: &Path,
+    _repo_root: &Path,
     packet: &ReviewPacket,
     scope: &ValidatedScope,
     manifest_path: &Path,
@@ -1606,7 +1609,10 @@ pub fn validate_repair_manifest(
         "repair manifest contains an empty rationale"
     );
 
-    let repository_paths = terminal_snapshot_delta_paths(repo_root, scope)?;
+    let repository_paths = packet
+        .bounded_changed_paths
+        .clone()
+        .context("Terminal Review Closure packet has no resolved bounded delta")?;
     anyhow::ensure!(
         !repository_paths.iter().any(|path| {
             path == ".codeos/00-project/charter.md"

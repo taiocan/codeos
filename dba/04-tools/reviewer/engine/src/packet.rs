@@ -2,9 +2,50 @@ use crate::precheck::redact_secrets;
 use anyhow::{bail, Context, Result};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
-use std::collections::HashSet;
+use std::collections::{BTreeSet, HashSet};
 use std::path::{Path, PathBuf};
 use std::process::Command;
+
+#[derive(Debug, Clone)]
+pub struct ReviewedSnapshot {
+    pub lineage: Vec<ReviewedPacketRecord>,
+}
+
+#[derive(Debug, Clone)]
+pub struct ReviewedPacketRecord {
+    pub packet_path: PathBuf,
+    pub packet_sha256: String,
+    pub review_commit: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct BoundedDelta {
+    pub diff: String,
+    pub changed_paths: BTreeSet<String>,
+    pub new_paths: BTreeSet<String>,
+}
+
+#[derive(Debug, Clone)]
+pub enum ReviewBasis {
+    Ordinary {
+        base: Option<String>,
+    },
+    Bounded {
+        predecessor_packet_sha256: String,
+        provenance: String,
+        delta: BoundedDelta,
+    },
+}
+
+impl ReviewBasis {
+    fn is_bounded(&self) -> bool {
+        matches!(self, Self::Bounded { .. })
+    }
+
+    pub(crate) fn is_delta(&self) -> bool {
+        self.is_bounded() || matches!(self, Self::Ordinary { base: Some(_) })
+    }
+}
 
 const SIZE_LIMIT_BYTES: u64 = 256 * 1024;
 
@@ -74,6 +115,11 @@ pub struct ReviewPacket {
     pub secret_flag: bool,
     pub artifacts: Vec<ArtifactEntry>,
     pub excluded_paths: Vec<(String, String, String)>, // (path, reason, section)
+    /// The single changed-path authority for a fresh bounded review. It is intentionally omitted
+    /// from sidecars: exact retry replays immutable bytes and never rebuilds or revalidates a
+    /// fresh repair manifest.
+    #[serde(skip)]
+    pub bounded_changed_paths: Option<BTreeSet<String>>,
     /// Total bytes counted toward the packet budget (full-mode artifact bytes + diff bytes;
     /// mirrors the same accumulation `build()` already performs for the budget warning).
     pub review_content_bytes: u64,
@@ -206,6 +252,7 @@ impl ReviewPacket {
             secret_flag,
             artifacts,
             excluded_paths,
+            bounded_changed_paths: None,
             review_content_bytes,
             estimated_review_tokens: review_content_bytes / 4,
             budget_bytes: 512 * 1024,
@@ -223,10 +270,27 @@ pub struct PacketBuildOptions {
     pub stage: String,
     pub artifacts: Vec<String>,
     pub sha_only_paths: Vec<String>,
-    pub delta_mode: bool,
-    pub delta_base: Option<String>,
+    pub basis: ReviewBasis,
     pub repo_root: String,
     pub toolkit_root: String,
+}
+
+fn is_stage8_mandatory_context(opts: &PacketBuildOptions, path: &str) -> bool {
+    if opts.stage != "8" {
+        return false;
+    }
+    path == ".codeos/00-project/charter.md"
+        || path == format!(".codeos/01-specification/intents/{}.md", opts.feature)
+        || path
+            == format!(
+                ".codeos/01-specification/contracts/{}_contract.md",
+                opts.feature
+            )
+        || path
+            == format!(
+                ".codeos/01-specification/event-schemas/{}_schema.md",
+                opts.feature
+            )
 }
 
 struct CommunicationSource {
@@ -367,7 +431,252 @@ fn communication_context(opts: &PacketBuildOptions) -> Result<String> {
     Ok(context)
 }
 
+fn packet_diff_section(packet: &str) -> Result<&str> {
+    let full = "\nDIFF TO REVIEW (base->review, secret/size filtered)\n";
+    let delta_prefix = "\nDELTA DIFF (";
+    let start = if let Some(position) = packet.find(full) {
+        position + full.len()
+    } else if let Some(position) = packet.find(delta_prefix) {
+        let header_end = packet[position + 1..]
+            .find('\n')
+            .map(|offset| position + 1 + offset + 1)
+            .ok_or_else(|| anyhow::anyhow!("reviewed packet has a malformed delta-diff header"))?;
+        header_end
+    } else {
+        bail!("reviewed packet has no reconstructible review diff")
+    };
+    let tail = &packet[start..];
+    let end = ["\nUNTRACKED FILES (", "\nFull Context Diff ("]
+        .iter()
+        .filter_map(|marker| tail.find(marker))
+        .min()
+        .unwrap_or(tail.len());
+    Ok(&tail[..end])
+}
+
+fn diff_blocks_for_paths(diff: &str, paths: &[String]) -> String {
+    let wanted: HashSet<&str> = paths.iter().map(String::as_str).collect();
+    let mut result = String::new();
+    let starts: Vec<usize> = diff
+        .match_indices("diff --git a/")
+        .map(|(index, _)| index)
+        .collect();
+    for (position, start) in starts.iter().enumerate() {
+        let end = starts.get(position + 1).copied().unwrap_or(diff.len());
+        let normalized = &diff[*start..end];
+        let Some(header) = normalized.lines().next() else {
+            continue;
+        };
+        let Some(path) = header
+            .strip_prefix("diff --git a/")
+            .and_then(|rest| rest.split_once(" b/").map(|(path, _)| path))
+        else {
+            continue;
+        };
+        if wanted.contains(path) {
+            result.push_str(normalized);
+            if !normalized.ends_with('\n') {
+                result.push('\n');
+            }
+        }
+    }
+    result
+}
+
+fn embedded_path_bytes(packet: &str, path: &str) -> Result<Option<Vec<u8>>> {
+    let prefix = format!("  --- {path} (mode: ");
+    let matches = packet
+        .lines()
+        .enumerate()
+        .filter(|(_, line)| line.starts_with(&prefix))
+        .collect::<Vec<_>>();
+    anyhow::ensure!(
+        matches.len() <= 1,
+        "immutable packet contains duplicate embedded records for {path}"
+    );
+    let Some((line_index, header)) = matches.first().copied() else {
+        return Ok(None);
+    };
+    if !header.contains("mode: added_file") && !header.contains("mode: full_current_context") {
+        return Ok(None);
+    }
+    let expected = header
+        .split("sha256: ")
+        .nth(1)
+        .and_then(|value| value.split([',', ')']).next())
+        .context("embedded artifact header has no SHA-256")?;
+    let mut content = String::new();
+    for line in packet.lines().skip(line_index + 1) {
+        if line.is_empty() || line.starts_with("  --- ") {
+            break;
+        }
+        let value = line
+            .strip_prefix("    ")
+            .context("embedded artifact content has an ambiguous boundary")?;
+        content.push_str(value);
+        content.push('\n');
+    }
+    anyhow::ensure!(
+        sha256_str(&content) == expected,
+        "embedded bytes for {path} do not match their immutable hash"
+    );
+    Ok(Some(content.into_bytes()))
+}
+
+fn packet_manifest_hashes(packet: &str) -> std::collections::BTreeMap<String, String> {
+    let manifest = packet
+        .split_once("PACKET MANIFEST\n")
+        .map(|(_, tail)| tail)
+        .unwrap_or_default()
+        .split_once("\nREVIEW CONTEXT\n")
+        .map(|(value, _)| value)
+        .unwrap_or_default();
+    let mut hashes = std::collections::BTreeMap::new();
+    let mut path = None;
+    for line in manifest.lines() {
+        if let Some(value) = line.strip_prefix("    - path: ") {
+            path = (value != "(diff)").then(|| value.to_string());
+        } else if let (Some(current), Some(hash)) =
+            (path.take(), line.strip_prefix("      sha256: "))
+        {
+            hashes.insert(current, hash.to_string());
+        }
+    }
+    hashes
+}
+
+/// Reconstruct the requested paths from the immutable packet's recorded commit plus the exact
+/// working-tree patch the reviewer saw, then compare that reviewed truth with the current files.
+/// A redacted, missing, or non-applicable patch fails closed instead of silently falling back to
+/// repository HEAD.
+pub fn reviewed_snapshot_diff(
+    snapshot: &ReviewedSnapshot,
+    paths: &[String],
+    repo_root: &str,
+) -> Result<BoundedDelta> {
+    anyhow::ensure!(
+        !snapshot.lineage.is_empty(),
+        "reviewed packet lineage is empty"
+    );
+    let temp = tempfile::tempdir().context("create reviewed-snapshot workspace")?;
+    let root = &snapshot.lineage[0];
+    for path in paths {
+        let output = Command::new("git")
+            .args(["show", &format!("{}:{path}", root.review_commit)])
+            .current_dir(repo_root)
+            .output()
+            .context("read reviewed snapshot base file")?;
+        if output.status.success() {
+            let destination = temp.path().join(path);
+            if let Some(parent) = destination.parent() {
+                std::fs::create_dir_all(parent)?;
+            }
+            std::fs::write(destination, output.stdout)?;
+        }
+    }
+
+    for (index, record) in snapshot.lineage.iter().enumerate() {
+        let actual_packet_sha = sha256_file(record.packet_path.to_string_lossy().as_ref())?;
+        anyhow::ensure!(
+            actual_packet_sha == record.packet_sha256,
+            "reviewed packet integrity mismatch: recorded {} but {} hashes to {}",
+            record.packet_sha256,
+            record.packet_path.display(),
+            actual_packet_sha
+        );
+        let packet = std::fs::read_to_string(&record.packet_path)?;
+        let selected_patch = diff_blocks_for_paths(packet_diff_section(&packet)?, paths);
+        anyhow::ensure!(
+            !selected_patch.contains("[REDACTED]"),
+            "reviewed snapshot patch for requested paths contains redaction"
+        );
+        if !selected_patch.is_empty() {
+            let patch_path = temp.path().join(format!("reviewed-{index}.patch"));
+            std::fs::write(&patch_path, selected_patch)?;
+            let output = Command::new("git")
+                .arg("apply")
+                .arg(&patch_path)
+                .current_dir(temp.path())
+                .output()
+                .context("apply immutable reviewed-workspace patch")?;
+            if !output.status.success() {
+                bail!(
+                    "could not reconstruct reviewed workspace from immutable packet {}: {}",
+                    record.packet_sha256,
+                    String::from_utf8_lossy(&output.stderr).trim()
+                );
+            }
+        }
+        for path in paths {
+            if let Some(bytes) = embedded_path_bytes(&packet, path)? {
+                let destination = temp.path().join(path);
+                if let Some(parent) = destination.parent() {
+                    std::fs::create_dir_all(parent)?;
+                }
+                std::fs::write(destination, bytes)?;
+            }
+        }
+        let hashes = packet_manifest_hashes(&packet);
+        for path in paths {
+            if let Some(expected) = hashes.get(path) {
+                let reconstructed = temp.path().join(path);
+                anyhow::ensure!(
+                    reconstructed.is_file(),
+                    "immutable packet records {path} but its required pre-image bytes are unavailable"
+                );
+                let actual = sha256_file(reconstructed.to_string_lossy().as_ref())?;
+                anyhow::ensure!(
+                    &actual == expected,
+                    "reconstructed path {path} does not match immutable packet hash"
+                );
+            }
+        }
+    }
+    let mut combined = String::new();
+    let mut changed = BTreeSet::new();
+    let mut new_paths = BTreeSet::new();
+    for path in paths {
+        let before = temp.path().join(path);
+        let after = Path::new(repo_root).join(path);
+        let was_present = before.is_file();
+        let output = Command::new("git")
+            .args([
+                "diff",
+                "--no-index",
+                "--",
+                before.to_string_lossy().as_ref(),
+                after.to_string_lossy().as_ref(),
+            ])
+            .output()
+            .context("compare reviewed snapshot with current workspace")?;
+        if !matches!(output.status.code(), Some(0 | 1)) {
+            bail!("could not compare reviewed snapshot path {path}");
+        }
+        if output.status.code() == Some(1) {
+            changed.insert(path.clone());
+            if !was_present && after.is_file() {
+                new_paths.insert(path.clone());
+            }
+            let text = String::from_utf8_lossy(&output.stdout)
+                .replace(&format!("a{}", before.display()), &format!("a/{path}"))
+                .replace(&format!("b{}", after.display()), &format!("b/{path}"));
+            combined.push_str(&text);
+        }
+    }
+    Ok(BoundedDelta {
+        diff: combined,
+        changed_paths: changed,
+        new_paths,
+    })
+}
+
 pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
+    if let ReviewBasis::Bounded { provenance, .. } = &opts.basis {
+        anyhow::ensure!(
+            !provenance.trim().is_empty(),
+            "bounded review basis has no provenance"
+        );
+    }
     // Validate sha_only paths exist before doing anything.
     for so in &opts.sha_only_paths {
         if !Path::new(so).exists() {
@@ -384,11 +693,19 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
         "n/a (non-numeric review target)".to_string()
     };
 
-    let base_sha = opts.delta_base.clone().unwrap_or_default();
+    let base_sha = match &opts.basis {
+        ReviewBasis::Ordinary { base } => base.clone().unwrap_or_default(),
+        ReviewBasis::Bounded { .. } => String::new(),
+    };
+    let delta_mode = opts.basis.is_delta();
 
     // Build diff
-    let (_raw_diff, changed_files) = if opts.delta_mode {
-        let base = opts.delta_base.as_deref().unwrap_or("HEAD");
+    let (_raw_diff, changed_files) = if let ReviewBasis::Bounded { delta, .. } = &opts.basis {
+        (
+            delta.diff.clone(),
+            delta.changed_paths.iter().cloned().collect(),
+        )
+    } else if let ReviewBasis::Ordinary { base: Some(base) } = &opts.basis {
         let diff = git_diff_range(base, &opts.artifacts, &opts.repo_root)?;
         let files = git_diff_names(base, &opts.artifacts, &opts.repo_root)?;
         (diff, files)
@@ -417,8 +734,9 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
     }
 
     let filtered_diff = if !keep_files.is_empty() {
-        if opts.delta_mode {
-            let base = opts.delta_base.as_deref().unwrap_or("HEAD");
+        if let ReviewBasis::Bounded { delta, .. } = &opts.basis {
+            diff_blocks_for_paths(&delta.diff, &keep_files)
+        } else if let ReviewBasis::Ordinary { base: Some(base) } = &opts.basis {
             git_diff_range(base, &keep_files, &opts.repo_root)?
         } else if !base_sha.is_empty() && base_sha != "(no base pin)" {
             git_diff_range(&base_sha, &keep_files, &opts.repo_root)?
@@ -521,16 +839,105 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
 
         let sha = sha256_file(a)?;
 
-        if opts.delta_mode {
-            let base = opts.delta_base.as_deref().unwrap_or("HEAD");
-            // fail-closed: untracked files can't be compared to a base commit; clear diagnostic.
-            if !git_is_tracked(a, &opts.repo_root) {
-                bail!(
-                    "artifact is untracked; delta review cannot compare it to base: {}\n       Stage and commit the file, or omit --base for a full review.",
-                    a
-                );
+        if delta_mode {
+            let base = match &opts.basis {
+                ReviewBasis::Ordinary { base: Some(base) } => base.as_str(),
+                _ => "HEAD",
+            };
+            let bounded_new = matches!(&opts.basis, ReviewBasis::Bounded { delta, .. } if delta.new_paths.contains(a));
+            let ordinary_untracked =
+                !opts.basis.is_bounded() && !git_is_tracked(a, &opts.repo_root);
+            if bounded_new || ordinary_untracked {
+                // An explicit untracked artifact is the added-file part of this delta. There is no
+                // historical version to compare, so show its complete current content rather than
+                // synthesizing a base or requiring a Git mutation before review.
+                let raw = std::fs::read_to_string(a)
+                    .with_context(|| format!("could not read added artifact {}", a))?;
+                let (redacted, rc) = redact_secrets(&raw);
+                if rc > 0 {
+                    secret_flag = true;
+                    redaction_count += rc;
+                    excluded_paths.push((
+                        a.clone(),
+                        "secret value redacted in place".to_string(),
+                        "artifact".to_string(),
+                    ));
+                }
+                let indented: String = redacted.lines().map(|l| format!("    {}\n", l)).collect();
+                artifacts_block.push_str(&format!(
+                    "  --- {} (mode: added_file, sha256: {}, bytes: {}) ---\n{}\n",
+                    a, sha, bytes, indented
+                ));
+                artifacts.push(ArtifactEntry {
+                    path: a.clone(),
+                    sha256: sha.clone(),
+                    visibility: "added_file".to_string(),
+                    bytes,
+                });
+                manifest_full.push_str(&format!(
+                    "    - path: {}\n      mode: added_file\n      bytes: {}\n      sha256: {}{}\n",
+                    a,
+                    bytes,
+                    sha,
+                    if rc > 0 {
+                        "\n      note: secret value redacted in place"
+                    } else {
+                        ""
+                    }
+                ));
+                review_content_bytes += redacted.len() as u64;
+                file_contributors.push((a.clone(), redacted.len() as u64));
+                delta_diff_count += 1;
+                shown_count += 1;
+                continue;
             }
-            let changed = !git_diff_quiet(base, a, &opts.repo_root)?;
+            if is_stage8_mandatory_context(opts, a) {
+                let raw = std::fs::read_to_string(a)
+                    .with_context(|| format!("could not read mandatory Stage-8 context {}", a))?;
+                let (redacted, rc) = redact_secrets(&raw);
+                let vis = if rc > 0 {
+                    secret_flag = true;
+                    redaction_count += rc;
+                    excluded_paths.push((
+                        a.clone(),
+                        "secret value redacted in place".to_string(),
+                        "artifact".to_string(),
+                    ));
+                    "shown_redacted"
+                } else {
+                    "shown"
+                };
+                let indented: String = redacted.lines().map(|l| format!("    {}\n", l)).collect();
+                artifacts_block.push_str(&format!(
+                    "  --- {} (mode: full_current_context, sha256: {}, bytes: {}, visibility: {}) ---\n{}\n",
+                    a, sha, bytes, vis, indented
+                ));
+                artifacts.push(ArtifactEntry {
+                    path: a.clone(),
+                    sha256: sha.clone(),
+                    visibility: vis.to_string(),
+                    bytes,
+                });
+                manifest_full.push_str(&format!(
+                    "    - path: {}\n      mode: full_current_context\n      bytes: {}\n      sha256: {}{}\n",
+                    a,
+                    bytes,
+                    sha,
+                    if rc > 0 {
+                        "\n      note: secret value redacted in place"
+                    } else {
+                        ""
+                    }
+                ));
+                review_content_bytes += redacted.len() as u64;
+                file_contributors.push((a.clone(), redacted.len() as u64));
+                shown_count += 1;
+                continue;
+            }
+            let changed = match &opts.basis {
+                ReviewBasis::Bounded { delta, .. } => delta.changed_paths.contains(a),
+                ReviewBasis::Ordinary { .. } => !git_diff_quiet(base, a, &opts.repo_root)?,
+            };
             let vis = if changed {
                 "delta_diff"
             } else {
@@ -605,7 +1012,13 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
     // cannot report FULL_COVERAGE while withholding a new file.
     let mut untracked_block = String::new();
     let mut untracked_shown = 0usize;
-    let untracked = git_untracked_files(&opts.repo_root);
+    let untracked = if opts.basis.is_bounded() {
+        // Package-bound re-entry includes explicitly selected new evidence. Unchanged historical
+        // untracked material stays bound by identity instead of being embedded again.
+        Some(Vec::new())
+    } else {
+        git_untracked_files(&opts.repo_root)
+    };
     let untracked_unavailable = untracked.is_none();
     if untracked_unavailable {
         excluded_paths.push((
@@ -666,8 +1079,8 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
 
     // Coverage state (most severe wins)
     let coverage_state = if untracked_shown == 0
-        && ((opts.delta_mode && delta_diff_count == 0 && redacted_diff.trim().is_empty())
-            || (!opts.delta_mode && shown_count == 0 && redacted_diff.trim().is_empty()))
+        && ((delta_mode && delta_diff_count == 0 && redacted_diff.trim().is_empty())
+            || (!delta_mode && shown_count == 0 && redacted_diff.trim().is_empty()))
     {
         CoverageState::EmptyPacket
     } else if artifact_excluded || untracked_unavailable {
@@ -757,9 +1170,9 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
 
     content.push_str(&format!(
         "\nPACKET MANIFEST\n  generated: {now}\n  task_prompt: {task_prompt_path} ({task_prompt_bytes} bytes)\n  review_content_bytes: {review_content_bytes}\n  estimated_review_tokens: ~{estimated_tokens}\n  budget_status: {budget_status}\n  packet_mode: {mode}\n  delta_base: {delta_base}\n  items:\n{manifest_sha_only}{manifest_full}    - path: (diff)\n      mode: {diff_mode}\n      bytes: {diff_bytes}\n",
-        mode = if opts.delta_mode { "delta" } else { "full" },
-        delta_base = opts.delta_base.as_deref().unwrap_or("none"),
-        diff_mode = if opts.delta_mode { "delta_diff" } else { "full_file" },
+        mode = if delta_mode { "delta" } else { "full" },
+        delta_base = match &opts.basis { ReviewBasis::Bounded { predecessor_packet_sha256, .. } => predecessor_packet_sha256.as_str(), ReviewBasis::Ordinary { base } => base.as_deref().unwrap_or("none") },
+        diff_mode = if delta_mode { "delta_diff" } else { "full_file" },
     ));
 
     let dirty_note = if workspace_dirty {
@@ -772,7 +1185,7 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
         feature = opts.feature,
         stage = opts.stage,
         branch = branch,
-        base_sha = if base_sha.is_empty() { "(no base pin)".to_string() } else { base_sha.clone() },
+        base_sha = match &opts.basis { ReviewBasis::Bounded { predecessor_packet_sha256, .. } => format!("reviewed-packet-sha256:{predecessor_packet_sha256}"), ReviewBasis::Ordinary { .. } => if base_sha.is_empty() { "(no base pin)".to_string() } else { base_sha.clone() } },
         review_sha = review_sha,
         preceding_stage = preceding_stage,
         coverage = coverage_state.as_str(),
@@ -807,8 +1220,14 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
     content.push_str("\nARTIFACTS TO REVIEW\n");
     content.push_str(&artifacts_block);
 
-    if opts.delta_mode {
-        let base = opts.delta_base.as_deref().unwrap_or("HEAD");
+    if delta_mode {
+        let base = match &opts.basis {
+            ReviewBasis::Bounded {
+                predecessor_packet_sha256,
+                ..
+            } => predecessor_packet_sha256.as_str(),
+            ReviewBasis::Ordinary { base } => base.as_deref().unwrap_or("HEAD"),
+        };
         content.push_str(&format!(
             "DELTA DIFF ({}->working tree, artifact paths only, secret/size filtered)\n",
             base
@@ -835,64 +1254,65 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
     }
 
     // Full Context Diff (AC-1: auto-appended when delta_mode AND delta_base are both active).
-    if opts.delta_mode {
-        if let Some(ref base) = opts.delta_base {
-            content.push_str(&format!(
-                "\nFull Context Diff (informational — all changed files since {}):\n",
-                base
-            ));
+    if let ReviewBasis::Ordinary { base: Some(base) } = &opts.basis {
+        content.push_str(&format!(
+            "\nFull Context Diff (informational — all changed files since {}):\n",
+            base
+        ));
 
-            match git_diff_range(base, &[], &opts.repo_root) {
-                Err(e) => {
-                    // Fail-closed: mark the section as unavailable rather than silently showing empty.
-                    content.push_str(&format!(
-                        "[ERROR: git diff failed — full context diff unavailable: {}]\n",
-                        e
-                    ));
+        match git_diff_range(base, &[], &opts.repo_root) {
+            Err(e) => {
+                // Fail-closed: mark the section as unavailable rather than silently showing empty.
+                content.push_str(&format!(
+                    "[ERROR: git diff failed — full context diff unavailable: {}]\n",
+                    e
+                ));
+            }
+            Ok(full_raw) => {
+                let (full_redacted, full_rc) = redact_secrets(&full_raw);
+                if full_rc > 0 {
+                    secret_flag = true;
+                    redaction_count += full_rc;
                 }
-                Ok(full_raw) => {
-                    let (full_redacted, full_rc) = redact_secrets(&full_raw);
-                    if full_rc > 0 {
-                        secret_flag = true;
-                        redaction_count += full_rc;
-                    }
 
-                    // remaining = budget minus content bytes already counted (approximation;
-                    // task prompt and section headers are excluded from review_content_bytes).
-                    let remaining = budget.saturating_sub(review_content_bytes);
-                    let full_total = full_redacted.len() as u64;
+                // remaining = budget minus content bytes already counted (approximation;
+                // task prompt and section headers are excluded from review_content_bytes).
+                let remaining = budget.saturating_sub(review_content_bytes);
+                let full_total = full_redacted.len() as u64;
 
-                    if full_total == 0 {
-                        content.push_str("(no changes detected outside named artifacts)\n");
-                    } else if remaining == 0 {
-                        content.push_str(&format!(
+                if full_total == 0 {
+                    content.push_str("(no changes detected outside named artifacts)\n");
+                } else if remaining == 0 {
+                    content.push_str(&format!(
                             "[CLIPPED: full diff exceeded packet budget — showing first 0 of {} bytes]\n",
                             full_total
                         ));
-                    } else if full_total > remaining {
-                        // Clip at a line boundary within the budget.
-                        let head = &full_redacted[..remaining as usize];
-                        let cutpoint = head
-                            .rfind('\n')
-                            .map(|n| n + 1)
-                            .unwrap_or(remaining as usize);
-                        content.push_str(&full_redacted[..cutpoint]);
-                        content.push_str(&format!(
+                } else if full_total > remaining {
+                    // Clip at a line boundary within the budget.
+                    let head = &full_redacted[..remaining as usize];
+                    let cutpoint = head
+                        .rfind('\n')
+                        .map(|n| n + 1)
+                        .unwrap_or(remaining as usize);
+                    content.push_str(&full_redacted[..cutpoint]);
+                    content.push_str(&format!(
                             "\n[CLIPPED: full diff exceeded packet budget — showing first {} of {} bytes]\n",
                             cutpoint, full_total
                         ));
-                    } else {
-                        content.push_str(&full_redacted);
-                    }
+                } else {
+                    content.push_str(&full_redacted);
                 }
             }
         }
     }
 
-    let final_base_sha = if base_sha.is_empty() {
-        "(no base pin)".to_string()
-    } else {
-        base_sha
+    let final_base_sha = match &opts.basis {
+        ReviewBasis::Bounded {
+            predecessor_packet_sha256,
+            ..
+        } => format!("reviewed-packet-sha256:{predecessor_packet_sha256}"),
+        ReviewBasis::Ordinary { .. } if base_sha.is_empty() => "(no base pin)".to_string(),
+        ReviewBasis::Ordinary { .. } => base_sha,
     };
 
     Ok(ReviewPacket {
@@ -908,6 +1328,10 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
         secret_flag,
         artifacts,
         excluded_paths,
+        bounded_changed_paths: match &opts.basis {
+            ReviewBasis::Bounded { delta, .. } => Some(delta.changed_paths.clone()),
+            _ => None,
+        },
         review_content_bytes,
         estimated_review_tokens: estimated_tokens,
         budget_bytes: budget,
@@ -1573,5 +1997,69 @@ mod tests {
             resolve_reader_output_guidance(root, root),
             root.join("dba/02-policies/reader-output/v1.md")
         );
+    }
+
+    #[test]
+    fn reviewed_dirty_workspace_is_the_delta_baseline_instead_of_head() {
+        let repo = tempfile::tempdir().unwrap();
+        for args in [
+            vec!["init", "-q"],
+            vec!["config", "user.email", "test@example.com"],
+            vec!["config", "user.name", "Test"],
+        ] {
+            assert!(Command::new("git")
+                .args(args)
+                .current_dir(repo.path())
+                .status()
+                .unwrap()
+                .success());
+        }
+        std::fs::write(repo.path().join("target.txt"), "head\n").unwrap();
+        std::fs::write(repo.path().join("historical.txt"), "head history\n").unwrap();
+        assert!(Command::new("git")
+            .args(["add", "."])
+            .current_dir(repo.path())
+            .status()
+            .unwrap()
+            .success());
+        assert!(Command::new("git")
+            .args(["commit", "-qm", "base"])
+            .current_dir(repo.path())
+            .status()
+            .unwrap()
+            .success());
+        let commit = git_rev_parse("HEAD", repo.path().to_str().unwrap()).unwrap();
+        std::fs::write(repo.path().join("target.txt"), "reviewed\n").unwrap();
+        std::fs::write(repo.path().join("historical.txt"), "reviewed history\n").unwrap();
+        let reviewed_diff = git_diff_range("HEAD", &[], repo.path().to_str().unwrap()).unwrap();
+        let packet =
+            format!("header\nDIFF TO REVIEW (base->review, secret/size filtered)\n{reviewed_diff}");
+        let packet_path = repo.path().join("reviewed.packet.txt");
+        std::fs::write(&packet_path, &packet).unwrap();
+        let snapshot = ReviewedSnapshot {
+            lineage: vec![ReviewedPacketRecord {
+                packet_path,
+                packet_sha256: sha256_str(&packet),
+                review_commit: commit,
+            }],
+        };
+        std::fs::write(repo.path().join("target.txt"), "reviewed\nrepair\n").unwrap();
+
+        let delta = reviewed_snapshot_diff(
+            &snapshot,
+            &["target.txt".into()],
+            repo.path().to_str().unwrap(),
+        )
+        .unwrap();
+
+        assert_eq!(
+            delta.changed_paths,
+            BTreeSet::from(["target.txt".to_string()])
+        );
+        assert!(delta.diff.contains("+repair"), "{}", delta.diff);
+        assert!(!delta.diff.contains("-head"), "{}", delta.diff);
+        let head_diff = git_diff_range("HEAD", &[], repo.path().to_str().unwrap()).unwrap();
+        assert!(head_diff.contains("historical.txt"));
+        assert!(head_diff.len() > delta.diff.len());
     }
 }

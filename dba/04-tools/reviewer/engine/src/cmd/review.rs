@@ -8,6 +8,106 @@ use crate::run::{ReviewerRun, RunSource};
 use anyhow::Result;
 use std::path::{Path, PathBuf};
 
+pub(crate) fn resolve_reviewed_snapshot(
+    cfg: &Config,
+    review_id: &str,
+) -> Result<crate::packet::ReviewedSnapshot> {
+    let codex_dir = cfg
+        .review_log
+        .parent()
+        .unwrap_or(&cfg.repo_root)
+        .join("codex");
+    #[derive(Clone)]
+    struct Record {
+        review_id: String,
+        packet_path: PathBuf,
+        packet_sha256: String,
+        review_commit: String,
+    }
+    let mut records = Vec::new();
+    for entry in std::fs::read_dir(&codex_dir)? {
+        let path = entry?.path();
+        if path.extension().and_then(|value| value.to_str()) != Some("md") {
+            continue;
+        }
+        let text = std::fs::read_to_string(&path)?;
+        let Some(frontmatter) = text
+            .strip_prefix("---\n")
+            .and_then(|rest| rest.split_once("\n---"))
+            .map(|(frontmatter, _)| frontmatter)
+        else {
+            continue;
+        };
+        let field = |name: &str| {
+            frontmatter.lines().find_map(|line| {
+                line.trim()
+                    .strip_prefix(&format!("{name}: "))
+                    .map(str::trim)
+            })
+        };
+        let Some(id) = field("review_id") else {
+            continue;
+        };
+        let Some(packet_rel) = field("reviewed_packet") else {
+            continue;
+        };
+        let Some(packet_sha256) = field("reviewed_packet_sha256").filter(|v| !v.is_empty()) else {
+            continue;
+        };
+        let Some(review_commit) = field("review_commit").filter(|v| !v.is_empty()) else {
+            continue;
+        };
+        records.push(Record {
+            review_id: id.to_string(),
+            packet_path: codex_dir.join(packet_rel),
+            packet_sha256: packet_sha256.to_string(),
+            review_commit: review_commit.to_string(),
+        });
+    }
+    let matches = records
+        .iter()
+        .filter(|record| record.review_id == review_id)
+        .collect::<Vec<_>>();
+    anyhow::ensure!(
+        matches.len() == 1,
+        "immutable reviewed snapshot for {review_id} is missing or ambiguous"
+    );
+    let mut current = matches[0].clone();
+    let mut reversed = Vec::new();
+    let mut seen = std::collections::BTreeSet::new();
+    loop {
+        anyhow::ensure!(
+            seen.insert(current.packet_sha256.clone()),
+            "immutable reviewed packet lineage contains a cycle"
+        );
+        let packet = std::fs::read_to_string(&current.packet_path)?;
+        let parent = packet.lines().find_map(|line| {
+            line.trim()
+                .strip_prefix("Base commit:")?
+                .trim()
+                .strip_prefix("reviewed-packet-sha256:")
+                .map(str::to_string)
+        });
+        reversed.push(crate::packet::ReviewedPacketRecord {
+            packet_path: current.packet_path.clone(),
+            packet_sha256: current.packet_sha256.clone(),
+            review_commit: current.review_commit.clone(),
+        });
+        let Some(parent_sha) = parent else { break };
+        let parents = records
+            .iter()
+            .filter(|record| record.packet_sha256 == parent_sha)
+            .collect::<Vec<_>>();
+        anyhow::ensure!(
+            parents.len() == 1,
+            "immutable parent packet {parent_sha} is missing or ambiguous"
+        );
+        current = parents[0].clone();
+    }
+    reversed.reverse();
+    Ok(crate::packet::ReviewedSnapshot { lineage: reversed })
+}
+
 struct SemanticRevision {
     revision: u64,
     from: Option<u64>,
@@ -280,6 +380,41 @@ pub struct EvidenceArgs {
     pub guard_clean: Vec<String>,
     pub base: Option<String>,
     pub skip_prechecks: bool,
+    pub basis: crate::packet::ReviewBasis,
+}
+
+fn bounded_basis(
+    cfg: &Config,
+    review_id: &str,
+    paths: &[String],
+    provenance: &str,
+) -> Result<crate::packet::ReviewBasis> {
+    let snapshot = resolve_reviewed_snapshot(cfg, review_id)?;
+    let predecessor_packet_sha256 = snapshot
+        .lineage
+        .last()
+        .expect("non-empty lineage")
+        .packet_sha256
+        .clone();
+    let delta =
+        crate::packet::reviewed_snapshot_diff(&snapshot, paths, &cfg.repo_root.to_string_lossy())?;
+    Ok(crate::packet::ReviewBasis::Bounded {
+        predecessor_packet_sha256,
+        provenance: provenance.to_string(),
+        delta,
+    })
+}
+
+pub(crate) fn resolve_bounded_basis(
+    args: &mut EvidenceArgs,
+    cfg: &Config,
+    review_id: &str,
+    provenance: &str,
+) -> Result<()> {
+    args.artifacts = normalize_paths(&args.artifacts, cfg, true, "artifact")
+        .map_err(|failure| anyhow::anyhow!(failure.message))?;
+    args.basis = bounded_basis(cfg, review_id, &args.artifacts, provenance)?;
+    Ok(())
 }
 
 pub struct ReviewArgs {
@@ -432,16 +567,18 @@ pub fn prepare(
         }
         // Best-effort: a diff that can't be computed (unexpected repo state) is not grounds to
         // fail an otherwise-successful prepare over a warning-only check.
-        if let Ok(diffed) =
-            packet::diff_changed_paths(args.base.as_deref(), &cfg.repo_root.to_string_lossy())
-        {
-            let mut declared = args.artifacts.clone();
-            declared.extend(args.sha_only.clone());
-            for path in precheck::unrelated_diff_paths(&diffed, &declared) {
-                eprintln!(
-                    "warning: precheck — {path} changed in the reviewed diff but is not a \
+        if !matches!(args.basis, crate::packet::ReviewBasis::Bounded { .. }) {
+            if let Ok(diffed) =
+                packet::diff_changed_paths(args.base.as_deref(), &cfg.repo_root.to_string_lossy())
+            {
+                let mut declared = args.artifacts.clone();
+                declared.extend(args.sha_only.clone());
+                for path in precheck::unrelated_diff_paths(&diffed, &declared) {
+                    eprintln!(
+                        "warning: precheck — {path} changed in the reviewed diff but is not a \
                      declared artifact (unrelated-file drift)"
-                );
+                    );
+                }
             }
         }
     }
@@ -451,8 +588,7 @@ pub fn prepare(
         stage: args.stage.clone(),
         artifacts: args.artifacts.clone(),
         sha_only_paths: args.sha_only.clone(),
-        delta_mode: args.base.is_some(),
-        delta_base: args.base.clone(),
+        basis: args.basis.clone(),
         repo_root: cfg.repo_root.to_string_lossy().into_owned(),
         toolkit_root: cfg.toolkit_root.to_string_lossy().into_owned(),
     })
@@ -548,7 +684,7 @@ fn stage8_readiness(args: &EvidenceArgs, packet: &ReviewPacket) -> Stage8Readine
     }
 }
 
-pub fn run(args: ReviewArgs, cfg: &Config) -> Result<i32> {
+pub fn run(mut args: ReviewArgs, cfg: &Config) -> Result<i32> {
     if args.retry_terminal_review_closure_after.is_none() && args.evidence.artifacts.is_empty() {
         eprintln!("error: review requires at least one ARTIFACT unless retrying an exact saved Terminal Review Closure payload");
         return Ok(crate::EXIT_USAGE);
@@ -567,6 +703,57 @@ pub fn run(args: ReviewArgs, cfg: &Config) -> Result<i32> {
     } else {
         cfg.review_log.clone()
     };
+    if let Some(predecessor) = args.reentry_after.as_deref() {
+        if args.evidence.stage == "8" {
+            match resolve_bounded_basis(
+                &mut args.evidence,
+                cfg,
+                predecessor,
+                "package-bound REENTRY",
+            ) {
+                Ok(()) => {}
+                Err(error) => {
+                    eprintln!("error: package-bound re-entry has no valid reviewed-workspace snapshot: {error}");
+                    return Ok(crate::EXIT_PACKET);
+                }
+            }
+        }
+    }
+    if let Some(predecessor) = args.terminal_review_closure_after.as_deref() {
+        match resolve_bounded_basis(
+            &mut args.evidence,
+            cfg,
+            predecessor,
+            "Terminal Review Closure",
+        ) {
+            Ok(()) => {}
+            Err(error) => {
+                eprintln!("error: Terminal Review Closure has no valid immutable predecessor state: {error}");
+                return Ok(crate::EXIT_PACKET);
+            }
+        }
+    }
+    let other_bounded = args
+        .evidence_reassessment_after
+        .as_deref()
+        .map(|id| (id, "F7 Evidence Reassessment"))
+        .or_else(|| {
+            args.infrastructure_revalidation_after
+                .as_deref()
+                .map(|id| (id, "Infrastructure Repair Revalidation"))
+        })
+        .or_else(|| {
+            args.evidence_closure_after
+                .as_deref()
+                .map(|id| (id, "Evidence Closure"))
+        });
+    if let Some((predecessor, provenance)) = other_bounded {
+        if let Err(error) = resolve_bounded_basis(&mut args.evidence, cfg, predecessor, provenance)
+        {
+            eprintln!("error: {provenance} has no valid immutable predecessor state: {error}");
+            return Ok(crate::EXIT_PACKET);
+        }
+    }
     let mut retry_execution = None;
     if let Some(failure_id) = args.retry_terminal_review_closure_after.as_deref() {
         if !args.evidence.artifacts.is_empty()

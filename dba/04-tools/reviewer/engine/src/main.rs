@@ -133,6 +133,16 @@ struct PlanCli {
     /// Write the exact packet `review` would send to this file, for assessment by an external model.
     #[arg(long = "emit-packet", value_name = "FILE")]
     emit_packet: Option<PathBuf>,
+    /// Preview a package-bound re-entry against the exact immutable workspace reviewed by R3.
+    #[arg(long = "reentry-after", value_name = "REVIEW_ID")]
+    reentry_after: Option<String>,
+    /// Preview Terminal Review Closure against its immutable terminal predecessor.
+    #[arg(
+        long = "terminal-review-closure-after",
+        value_name = "REVIEW_ID",
+        conflicts_with = "reentry_after"
+    )]
+    terminal_review_closure_after: Option<String>,
 }
 
 #[derive(Subcommand)]
@@ -176,6 +186,9 @@ enum Commands {
 
 impl From<EvidenceCli> for cmd::review::EvidenceArgs {
     fn from(value: EvidenceCli) -> Self {
+        let basis = crate::packet::ReviewBasis::Ordinary {
+            base: value.base.clone(),
+        };
         Self {
             feature: value.feature,
             stage: value.stage,
@@ -184,6 +197,7 @@ impl From<EvidenceCli> for cmd::review::EvidenceArgs {
             guard_clean: value.guard_clean,
             base: value.base,
             skip_prechecks: value.skip_prechecks,
+            basis,
         }
     }
 }
@@ -268,12 +282,39 @@ fn run() -> i32 {
                 eprintln!("error: plan requires at least one ARTIFACT");
                 EXIT_USAGE
             } else {
-                cmd::plan::run(args.evidence.into(), args.emit_packet, &cfg).unwrap_or_else(
-                    |error| {
-                        eprintln!("internal error: {error}");
-                        EXIT_WRITE
-                    },
-                )
+                let mut evidence: cmd::review::EvidenceArgs = args.evidence.into();
+                if let Some(predecessor) = args.reentry_after.as_deref() {
+                    match cmd::review::resolve_bounded_basis(
+                        &mut evidence,
+                        &cfg,
+                        predecessor,
+                        "package-bound REENTRY plan",
+                    ) {
+                        Ok(()) => {}
+                        Err(error) => {
+                            eprintln!("error: package-bound re-entry has no valid reviewed-workspace snapshot: {error}");
+                            return EXIT_PACKET;
+                        }
+                    }
+                }
+                if let Some(predecessor) = args.terminal_review_closure_after.as_deref() {
+                    match cmd::review::resolve_bounded_basis(
+                        &mut evidence,
+                        &cfg,
+                        predecessor,
+                        "Terminal Review Closure plan",
+                    ) {
+                        Ok(()) => {}
+                        Err(error) => {
+                            eprintln!("error: Terminal Review Closure has no valid immutable predecessor state: {error}");
+                            return EXIT_PACKET;
+                        }
+                    }
+                }
+                cmd::plan::run(evidence, args.emit_packet, &cfg).unwrap_or_else(|error| {
+                    eprintln!("internal error: {error}");
+                    EXIT_WRITE
+                })
             }
         }
         Commands::Decision {

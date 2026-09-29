@@ -31,12 +31,15 @@ fn plan_rejects_missing_artifact() {
 }
 
 #[test]
-fn delta_rejects_untracked_artifact() {
+fn delta_represents_untracked_artifact_as_complete_added_file() {
     let (dir, base) = setup_temp_git_repo();
     setup_codeos_symlink(dir.path());
-    std::fs::write(dir.path().join("untracked.md"), "# untracked\n").unwrap();
+    let content = "# untracked evidence\n\ncomplete current content\n";
+    std::fs::write(dir.path().join("untracked.md"), content).unwrap();
+    let export = dir.path().join(".codeos-state/untracked.packet.txt");
+    std::fs::create_dir_all(export.parent().unwrap()).unwrap();
 
-    let (code, _, stderr) = run_in_dir(
+    let (code, stdout, stderr) = run_in_dir(
         dir.path(),
         &[
             "plan",
@@ -45,10 +48,58 @@ fn delta_rejects_untracked_artifact() {
             "--base",
             &base,
             "untracked.md",
+            "--emit-packet",
+            export.to_str().unwrap(),
         ],
     );
-    assert_eq!(code, 4);
-    assert!(stderr.contains("untracked"), "{stderr}");
+    assert_eq!(code, 0, "{stderr}");
+    assert!(stdout.contains("untracked.md (added_file"), "{stdout}");
+    let packet = std::fs::read_to_string(export).unwrap();
+    assert!(packet.contains("mode: added_file"), "{packet}");
+    assert!(packet.contains("complete current content"), "{packet}");
+    assert!(!dir.path().join(".git/index.lock").exists());
+    let tracked = Command::new("git")
+        .args(["ls-files", "--error-unmatch", "untracked.md"])
+        .current_dir(dir.path())
+        .output()
+        .unwrap();
+    assert!(
+        !tracked.status.success(),
+        "packet construction must not mutate Git"
+    );
+}
+
+#[test]
+fn delta_added_file_still_runs_secret_redaction() {
+    let (dir, base) = setup_temp_git_repo();
+    setup_codeos_symlink(dir.path());
+    std::fs::write(
+        dir.path().join("evidence.md"),
+        "result=passed\nTOKEN=abcdefghijk\n",
+    )
+    .unwrap();
+    let export = dir.path().join(".codeos-state/redacted.packet.txt");
+    std::fs::create_dir_all(export.parent().unwrap()).unwrap();
+
+    let (code, stdout, stderr) = run_in_dir(
+        dir.path(),
+        &[
+            "plan",
+            "UPG-SMOKE",
+            "selfdev-step-1",
+            "--base",
+            &base,
+            "evidence.md",
+            "--emit-packet",
+            export.to_str().unwrap(),
+        ],
+    );
+    assert_eq!(code, 0, "{stderr}");
+    assert!(stdout.contains("coverage: SECRET_REDACTION"), "{stdout}");
+    let packet = std::fs::read_to_string(export).unwrap();
+    assert!(packet.contains("mode: added_file"), "{packet}");
+    assert!(!packet.contains("abcdefghijk"), "{packet}");
+    assert!(packet.contains("[REDACTED]"), "{packet}");
 }
 
 #[test]

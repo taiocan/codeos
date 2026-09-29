@@ -30,6 +30,18 @@ pub fn run(args: EvidenceArgs, emit_packet: Option<PathBuf>, cfg: &Config) -> Re
     }
     if let Some(path) = emit_packet {
         warn_if_export_pollutes_evidence(&path, &cfg.repo_root, &cfg.state_dir);
+        if let Some(parent) = path
+            .parent()
+            .filter(|parent| !parent.as_os_str().is_empty())
+        {
+            if let Err(error) = std::fs::create_dir_all(parent) {
+                eprintln!(
+                    "error: could not create packet directory {}: {error}",
+                    parent.display()
+                );
+                return Ok(crate::EXIT_WRITE);
+            }
+        }
         if let Err(error) = std::fs::write(&path, prepared.packet.content()) {
             eprintln!(
                 "error: could not write packet file {}: {error}",
@@ -100,10 +112,20 @@ fn print_plan_summary(
     println!("review plan: {} {}", args.feature, args.stage);
     println!(
         "  mode: {}",
-        if args.base.is_some() { "delta" } else { "full" }
+        if args.basis.is_delta() {
+            "delta"
+        } else {
+            "full"
+        }
     );
     if let Some(base) = &args.base {
         println!("  base: {base}");
+    } else if let crate::packet::ReviewBasis::Bounded {
+        predecessor_packet_sha256,
+        ..
+    } = &args.basis
+    {
+        println!("  base: reviewed packet sha256:{predecessor_packet_sha256}");
     }
     println!("  coverage: {}", packet.coverage_state.as_str());
     println!("  artifacts:");

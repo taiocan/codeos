@@ -2672,8 +2672,7 @@ mod tests {
             stage: stage.to_string(),
             artifacts: vec!["tracked.md".to_string()],
             sha_only_paths: vec![],
-            delta_mode: false,
-            delta_base: None,
+            basis: crate::packet::ReviewBasis::Ordinary { base: None },
             repo_root: repo_root.to_string_lossy().into_owned(),
             toolkit_root: toolkit_root.to_string_lossy().into_owned(),
         };
