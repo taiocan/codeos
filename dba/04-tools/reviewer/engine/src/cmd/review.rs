@@ -437,6 +437,7 @@ pub struct ReviewArgs {
     pub evidence_reassessment_after: Option<String>,
     pub terminal_review_closure_after: Option<String>,
     pub retry_terminal_review_closure_after: Option<String>,
+    pub replace_invalid_lineage_after: Option<String>,
     pub assessability_correction: Option<PathBuf>,
     pub repair_manifest: Option<PathBuf>,
     pub findings: Vec<String>,
@@ -765,7 +766,10 @@ pub fn run(mut args: ReviewArgs, cfg: &Config) -> Result<i32> {
             eprintln!("error: Terminal Review Closure retry accepts no general replacement packet-building inputs");
             return Ok(crate::EXIT_USAGE);
         }
-        if selected_contract.as_deref() != Some("dba/04-tools/reviewer/contract/v13.md") {
+        if !matches!(
+            selected_contract.as_deref(),
+            Some("dba/04-tools/reviewer/contract/v13.md" | "dba/04-tools/reviewer/contract/v14.md")
+        ) {
             eprintln!(
                 "error: --retry-terminal-review-closure-after requires Reviewer Tool Contract v13"
             );
@@ -826,6 +830,19 @@ pub fn run(mut args: ReviewArgs, cfg: &Config) -> Result<i32> {
     };
 
     if evidence.stage == "8"
+        && selected_contract.as_deref() == Some("dba/04-tools/reviewer/contract/v14.md")
+    {
+        if let Err(error) = crate::lineage_replacement::validate_current_lineage(
+            cfg,
+            &evidence.feature,
+            &review_packet,
+        ) {
+            eprintln!("error: Stage 8 review-input lineage preflight failed: {error}");
+            return Ok(crate::EXIT_PACKET);
+        }
+    }
+
+    if evidence.stage == "8"
         && matches!(
             selected_contract.as_deref(),
             Some(
@@ -833,6 +850,7 @@ pub fn run(mut args: ReviewArgs, cfg: &Config) -> Result<i32> {
                     | "dba/04-tools/reviewer/contract/v11.md"
                     | "dba/04-tools/reviewer/contract/v12.md"
                     | "dba/04-tools/reviewer/contract/v13.md"
+                    | "dba/04-tools/reviewer/contract/v14.md"
             )
         )
         && args.continues.is_some()
@@ -851,6 +869,7 @@ pub fn run(mut args: ReviewArgs, cfg: &Config) -> Result<i32> {
                     | "dba/04-tools/reviewer/contract/v11.md"
                     | "dba/04-tools/reviewer/contract/v12.md"
                     | "dba/04-tools/reviewer/contract/v13.md"
+                    | "dba/04-tools/reviewer/contract/v14.md"
             )
         )
         && args.retry_terminal_review_closure_after.is_none()
@@ -925,6 +944,7 @@ pub fn run(mut args: ReviewArgs, cfg: &Config) -> Result<i32> {
     let mut closure_authorization = None;
     let mut infrastructure_authorization = None;
     let mut evidence_reassessment = None;
+    let mut lineage_replacement = false;
     let mut terminal_closure = retry_terminal_closure;
     let mut review_id = if args.assessment.is_some() {
         match review_log::compute_assessment_sequence(
@@ -953,6 +973,47 @@ pub fn run(mut args: ReviewArgs, cfg: &Config) -> Result<i32> {
                     approved_stage8_cycle(cfg, &evidence.feature).unwrap_or(None),
                 )
             }
+        } else if let Some(predecessor) = args.replace_invalid_lineage_after.as_deref() {
+            if selected_contract.as_deref() != Some("dba/04-tools/reviewer/contract/v14.md") {
+                eprintln!(
+                    "error: --replace-invalid-lineage-after requires Reviewer Tool Contract v14"
+                );
+                return Ok(crate::EXIT_USAGE);
+            }
+            let log = std::fs::read_to_string(&review_log_path).unwrap_or_default();
+            let (applicability, _) = match crate::lineage_replacement::resolve_authorization(
+                &log,
+                &evidence.feature,
+                &evidence.stage,
+                predecessor,
+            ) {
+                Ok(value) => value,
+                Err(error) => {
+                    eprintln!("error: lineage replacement refused: {error}");
+                    return Ok(crate::EXIT_WRITE);
+                }
+            };
+            match crate::lineage_replacement::validate_current_lineage(
+                cfg,
+                &evidence.feature,
+                &review_packet,
+            ) {
+                Ok(Some(_)) => {}
+                Ok(None) => {
+                    eprintln!("error: lineage replacement requires an explicit F6-selected production evidence identity");
+                    return Ok(crate::EXIT_PACKET);
+                }
+                Err(error) => {
+                    eprintln!("error: lineage replacement preflight failed: {error}");
+                    return Ok(crate::EXIT_PACKET);
+                }
+            }
+            review_packet.constrain_to_lineage_replacement(predecessor, &applicability);
+            let revision = approved_stage8_cycle(cfg, &evidence.feature)
+                .unwrap_or(None)
+                .unwrap_or(0);
+            lineage_replacement = true;
+            crate::lineage_replacement::replacement_id(&evidence.feature, revision)
         } else if let Some(predecessor) = args.evidence_reassessment_after.as_deref() {
             let contract = crate::config::resolve_reviewer_tool_contract(cfg);
             if !matches!(
@@ -961,7 +1022,8 @@ pub fn run(mut args: ReviewArgs, cfg: &Config) -> Result<i32> {
                     | "dba/04-tools/reviewer/contract/v10.md"
                     | "dba/04-tools/reviewer/contract/v11.md"
                     | "dba/04-tools/reviewer/contract/v12.md"
-                    | "dba/04-tools/reviewer/contract/v13.md")
+                    | "dba/04-tools/reviewer/contract/v13.md"
+                    | "dba/04-tools/reviewer/contract/v14.md")
             ) {
                 eprintln!(
                     "error: --evidence-reassessment-after requires Reviewer Tool Contract v9"
@@ -1062,6 +1124,7 @@ pub fn run(mut args: ReviewArgs, cfg: &Config) -> Result<i32> {
                 Some(
                     "dba/04-tools/reviewer/contract/v12.md"
                         | "dba/04-tools/reviewer/contract/v13.md"
+                        | "dba/04-tools/reviewer/contract/v14.md"
                 )
             ) {
                 eprintln!(
@@ -1078,7 +1141,13 @@ pub fn run(mut args: ReviewArgs, cfg: &Config) -> Result<i32> {
                     return Ok(crate::EXIT_CONFIG);
                 }
             };
-            if selected_contract.as_deref() == Some("dba/04-tools/reviewer/contract/v13.md") {
+            if matches!(
+                selected_contract.as_deref(),
+                Some(
+                    "dba/04-tools/reviewer/contract/v13.md"
+                        | "dba/04-tools/reviewer/contract/v14.md"
+                )
+            ) {
                 let failure_id = crate::terminal_closure::format_terminal_failure_id(
                     &evidence.feature,
                     current_revision,
@@ -1154,6 +1223,7 @@ pub fn run(mut args: ReviewArgs, cfg: &Config) -> Result<i32> {
                         "dba/04-tools/reviewer/contract/v11.md"
                             | "dba/04-tools/reviewer/contract/v12.md"
                             | "dba/04-tools/reviewer/contract/v13.md"
+                            | "dba/04-tools/reviewer/contract/v14.md"
                     ) =>
                 {
                     let current_semantic_revision = if evidence.stage == "8" {
@@ -1230,6 +1300,7 @@ pub fn run(mut args: ReviewArgs, cfg: &Config) -> Result<i32> {
                                 | "dba/04-tools/reviewer/contract/v11.md"
                                 | "dba/04-tools/reviewer/contract/v12.md"
                                 | "dba/04-tools/reviewer/contract/v13.md"
+                                | "dba/04-tools/reviewer/contract/v14.md"
                         )
                     }) =>
                 {
@@ -1342,6 +1413,7 @@ pub fn run(mut args: ReviewArgs, cfg: &Config) -> Result<i32> {
                     | "dba/04-tools/reviewer/contract/v11.md"
                     | "dba/04-tools/reviewer/contract/v12.md"
                     | "dba/04-tools/reviewer/contract/v13.md"
+                    | "dba/04-tools/reviewer/contract/v14.md"
             )
         )
     {
@@ -1403,7 +1475,20 @@ pub fn run(mut args: ReviewArgs, cfg: &Config) -> Result<i32> {
             "EVIDENCE CLOSED — PROGRESSION PERMITTED".to_string()
         };
     }
-    if selected_contract.as_deref() == Some("dba/04-tools/reviewer/contract/v13.md") {
+    if lineage_replacement
+        && parsed.parse_status == "OK"
+        && parsed.assessment_status == "COMPLETE"
+        && parsed.codex_concern == "NO OBJECTION"
+        && !findings
+            .iter()
+            .any(|finding| finding.classification == "IN-SCOPE BLOCKER")
+    {
+        parsed.effective_concern = "LINEAGE REPLACEMENT CLOSED — PROGRESSION PERMITTED".to_string();
+    }
+    if matches!(
+        selected_contract.as_deref(),
+        Some("dba/04-tools/reviewer/contract/v13.md" | "dba/04-tools/reviewer/contract/v14.md")
+    ) {
         if let Some(execution) = terminal_closure.as_mut() {
             let revision = approved_stage8_cycle(cfg, &evidence.feature)?;
             let packet_sha = crate::packet::sha256_str(review_packet.content());

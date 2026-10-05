@@ -211,6 +211,17 @@ impl ReviewPacket {
         self.content_sha256 = crate::packet::sha256_str(&self.content);
     }
 
+    pub fn constrain_to_lineage_replacement(
+        &mut self,
+        invalid_review_id: &str,
+        applicability_record: &str,
+    ) {
+        self.content.push_str(&format!(
+            "\n\nINVALID REVIEW INPUT LINEAGE — SINGLE REPLACEMENT ASSESSMENT\nInvalid review: {invalid_review_id}\nImmutable applicability record:\n{applicability_record}\nAssess the original authorized semantic scope anew from the complete current context and current F6-selected evidence. Do not inherit any conclusion, finding disposition, or progression state from the invalid review. Do not perform an unrestricted feature review or expand scope. Any input ambiguity, scope drift, blocker, malformed response, or incomplete response requires DO NOT ADVANCE. This is the only replacement assessment.\n"
+        ));
+        self.content_sha256 = crate::packet::sha256_str(&self.content);
+    }
+
     /// Restore a packet from an exported sidecar plus the exported bytes. The bytes are adopted
     /// verbatim: nothing is rebuilt, so the reviewed packet and the recorded packet are the same
     /// bytes by construction rather than by a later comparison.

@@ -1275,6 +1275,18 @@ fn evaluate_checkpoint(
                                     .into(),
                             );
                             next_action.get_or_insert("restore the exact evidence-repair chain or supply materially new evidence".into());
+                        } else if r.review_id.ends_with("__LINEAGE-REPLACEMENT-1")
+                            && !evidence::lineage_replacement_history_permits_progression(
+                                &project.codeos_dir().join("05-review/reviews/review-log.md"),
+                                &subject.id,
+                                stage,
+                                &r.review_id,
+                            )?
+                        {
+                            unmet.push("lineage replacement lacks the required immutable invalid-applicability history".into());
+                            next_action.get_or_insert(
+                                "restore the exact authorized lineage-replacement chain".into(),
+                            );
                         } else if (r.review_id.ends_with("__TERMINAL-CLOSURE-1")
                             || r.review_id.ends_with("__TERMINAL-CLOSURE-RETRY-1"))
                             && !evidence::terminal_review_closure_history_permits_progression(
@@ -1655,6 +1667,13 @@ fn current_bindings(
             put(&mut b, "intent", &project.intent(&subject.id))?;
             put(&mut b, "contract", &project.contract(&subject.id))?;
             put(&mut b, "event_schema", &project.event_schema(&subject.id))?;
+            if project.feature_workflow_version()? >= 4 {
+                put(&mut b, "codeos_yaml", &project.codeos_yaml())?;
+                b.insert(
+                    "implementation_state".into(),
+                    hashing::working_tree_state(&project.root, &project.implementation_paths())?,
+                );
+            }
         }
         "operation_route" | "no_action_closure" => {
             // Bound to the observation statement's hash, supplied at decide time; nothing to

@@ -11,6 +11,7 @@ const VALID_DECISIONS: &[&str] = &[
     "AUTHORIZE_EVIDENCE_CLOSURE",
     "AUTHORIZE_INFRASTRUCTURE_REVALIDATION",
     "AUTHORIZE_TERMINAL_REVIEW_CLOSURE",
+    "AUTHORIZE_LINEAGE_REPLACEMENT",
 ];
 
 pub fn run(
@@ -22,12 +23,13 @@ pub fn run(
     findings: &[String],
     event_evidence_sha: Option<&str>,
     closure_scope_path: Option<&Path>,
+    applicability_record_sha: Option<&str>,
     override_reason: Option<&str>,
     cfg: &Config,
 ) -> Result<i32> {
     if !VALID_DECISIONS.contains(&decision) {
         eprintln!(
-            "decision must be APPROVE_STAGE | REQUEST_CHANGES | STOP | AUTHORIZE_REENTRY | AUTHORIZE_EVIDENCE_CLOSURE | AUTHORIZE_INFRASTRUCTURE_REVALIDATION | AUTHORIZE_TERMINAL_REVIEW_CLOSURE"
+            "decision must be APPROVE_STAGE | REQUEST_CHANGES | STOP | AUTHORIZE_REENTRY | AUTHORIZE_EVIDENCE_CLOSURE | AUTHORIZE_INFRASTRUCTURE_REVALIDATION | AUTHORIZE_TERMINAL_REVIEW_CLOSURE | AUTHORIZE_LINEAGE_REPLACEMENT"
         );
         return Ok(crate::EXIT_USAGE);
     }
@@ -36,6 +38,7 @@ pub fn run(
     let is_closure_authorization = decision == "AUTHORIZE_EVIDENCE_CLOSURE";
     let is_infrastructure_authorization = decision == "AUTHORIZE_INFRASTRUCTURE_REVALIDATION";
     let is_terminal_closure_authorization = decision == "AUTHORIZE_TERMINAL_REVIEW_CLOSURE";
+    let is_lineage_replacement_authorization = decision == "AUTHORIZE_LINEAGE_REPLACEMENT";
     let mut terminal_scope = None;
     if is_reentry_authorization {
         if reason.trim().is_empty() {
@@ -65,6 +68,7 @@ pub fn run(
                     "dba/04-tools/reviewer/contract/v11.md"
                         | "dba/04-tools/reviewer/contract/v12.md"
                         | "dba/04-tools/reviewer/contract/v13.md"
+                        | "dba/04-tools/reviewer/contract/v14.md"
                 ) =>
             {
                 let current_semantic_revision = if stage == "8" {
@@ -201,6 +205,7 @@ pub fn run(
                     contract.as_str(),
                     "dba/04-tools/reviewer/contract/v12.md"
                         | "dba/04-tools/reviewer/contract/v13.md"
+                        | "dba/04-tools/reviewer/contract/v14.md"
                 ) => {}
             Ok(contract) => {
                 eprintln!("error: Terminal Review Closure is not supported by {contract}");
@@ -232,11 +237,51 @@ pub fn run(
                 return Ok(crate::EXIT_USAGE);
             }
         }
+    } else if is_lineage_replacement_authorization {
+        let Some(review_id) = after_review else {
+            eprintln!("error: AUTHORIZE_LINEAGE_REPLACEMENT requires --after-review");
+            return Ok(crate::EXIT_USAGE);
+        };
+        let Some(expected_sha) = applicability_record_sha else {
+            eprintln!("error: AUTHORIZE_LINEAGE_REPLACEMENT requires --applicability-record-sha");
+            return Ok(crate::EXIT_USAGE);
+        };
+        if reason.trim().is_empty() {
+            eprintln!("error: AUTHORIZE_LINEAGE_REPLACEMENT requires a bounded reason");
+            return Ok(crate::EXIT_USAGE);
+        }
+        if crate::config::resolve_reviewer_tool_contract(cfg)?.as_str()
+            != "dba/04-tools/reviewer/contract/v14.md"
+        {
+            eprintln!("error: lineage replacement requires Reviewer Tool Contract v14");
+            return Ok(crate::EXIT_USAGE);
+        }
+        let log = std::fs::read_to_string(&cfg.review_log)?;
+        let (_, actual_sha) =
+            match crate::lineage_replacement::applicability_record(&log, review_id) {
+                Ok(value) => value,
+                Err(error) => {
+                    eprintln!("error: AUTHORIZE_LINEAGE_REPLACEMENT refused: {error}");
+                    return Ok(crate::EXIT_USAGE);
+                }
+            };
+        if actual_sha != expected_sha {
+            eprintln!("error: applicability record SHA-256 does not match immutable history");
+            return Ok(crate::EXIT_USAGE);
+        }
+        if log.contains(&format!("Lineage replacement after: {review_id}")) {
+            eprintln!("error: lineage replacement already authorized or executed");
+            return Ok(crate::EXIT_USAGE);
+        }
     } else if after_review.is_some() {
         eprintln!("error: --after-review is valid only with AUTHORIZE_REENTRY, AUTHORIZE_EVIDENCE_CLOSURE, AUTHORIZE_INFRASTRUCTURE_REVALIDATION, or AUTHORIZE_TERMINAL_REVIEW_CLOSURE");
         return Ok(crate::EXIT_USAGE);
-    } else if !findings.is_empty() || event_evidence_sha.is_some() || closure_scope_path.is_some() {
-        eprintln!("error: --findings and --event-evidence-sha are valid only with their bounded authorization");
+    } else if !findings.is_empty()
+        || event_evidence_sha.is_some()
+        || closure_scope_path.is_some()
+        || applicability_record_sha.is_some()
+    {
+        eprintln!("error: bounded authorization inputs are valid only with their corresponding authorization decision");
         return Ok(crate::EXIT_USAGE);
     }
 
@@ -248,6 +293,7 @@ pub fn run(
         || is_closure_authorization
         || is_infrastructure_authorization
         || is_terminal_closure_authorization
+        || is_lineage_replacement_authorization
     {
         None
     } else {
@@ -333,6 +379,11 @@ pub fn run(
             None
         },
         terminal_scope.as_ref(),
+        if is_lineage_replacement_authorization {
+            applicability_record_sha
+        } else {
+            None
+        },
         provenance.as_ref(),
         &cfg.repo_root,
         &cfg.codex_dir,

@@ -6,6 +6,7 @@ mod assessment;
 mod cmd;
 mod codex;
 mod config;
+mod lineage_replacement;
 mod log;
 mod packet;
 mod precheck;
@@ -104,6 +105,9 @@ struct ReviewCli {
     /// Retry one structurally failed Terminal Review Closure with its exact saved payload.
     #[arg(long = "retry-terminal-review-closure-after", value_name = "REVIEW_ID", conflicts_with_all = ["continues", "reentry_after", "evidence_closure_after", "infrastructure_revalidation_after", "evidence_reassessment_after", "terminal_review_closure_after", "repair_manifest", "assessment", "packet", "findings", "event_evidence_sha"])]
     retry_terminal_review_closure_after: Option<String>,
+    /// Replace one complete assessment whose mandatory input lineage was mechanically invalid.
+    #[arg(long = "replace-invalid-lineage-after", value_name = "REVIEW_ID", conflicts_with_all = ["continues", "reentry_after", "evidence_closure_after", "infrastructure_revalidation_after", "evidence_reassessment_after", "terminal_review_closure_after", "retry_terminal_review_closure_after", "assessment"])]
+    replace_invalid_lineage_after: Option<String>,
     /// Supply one bounded evidence-representation correction for a closure retry.
     #[arg(
         long = "assessability-correction",
@@ -168,6 +172,9 @@ enum Commands {
         /// Immutable-source condition manifest for Terminal Review Closure authorization.
         #[arg(long = "closure-scope", value_name = "JSON")]
         closure_scope: Option<PathBuf>,
+        /// Exact immutable applicability record authorizing a lineage replacement.
+        #[arg(long = "applicability-record-sha", value_name = "SHA256")]
+        applicability_record_sha: Option<String>,
         #[arg(long = "override", value_name = "RATIONALE")]
         override_reason: Option<String>,
     },
@@ -176,6 +183,14 @@ enum Commands {
         feature: Option<String>,
         #[arg(value_name = "WORKFLOW_OR_STAGE")]
         stage: Option<String>,
+    },
+    /// Deterministically record that a complete review had invalid mandatory input lineage.
+    AuditReviewApplicability {
+        feature: String,
+        #[arg(value_name = "WORKFLOW_OR_STAGE")]
+        stage: String,
+        #[arg(long = "review-id")]
+        review_id: String,
     },
     /// Deterministically read and validate Architecture Scope metadata.
     InspectArchitectureScopes {
@@ -265,6 +280,7 @@ fn run() -> i32 {
                     evidence_reassessment_after: args.evidence_reassessment_after,
                     terminal_review_closure_after: args.terminal_review_closure_after,
                     retry_terminal_review_closure_after: args.retry_terminal_review_closure_after,
+                    replace_invalid_lineage_after: args.replace_invalid_lineage_after,
                     assessability_correction: args.assessability_correction,
                     repair_manifest: args.repair_manifest,
                     findings: args.findings,
@@ -326,6 +342,7 @@ fn run() -> i32 {
             findings,
             event_evidence_sha,
             closure_scope,
+            applicability_record_sha,
             override_reason,
         } => cmd::decision::run(
             &feature,
@@ -336,6 +353,7 @@ fn run() -> i32 {
             &findings,
             event_evidence_sha.as_deref(),
             closure_scope.as_deref(),
+            applicability_record_sha.as_deref(),
             override_reason.as_deref(),
             &cfg,
         )
@@ -346,6 +364,24 @@ fn run() -> i32 {
         Commands::Diagnose { feature, stage } => {
             cmd::diagnose::run(feature.as_deref(), stage.as_deref(), &cfg);
             EXIT_SUCCESS
+        }
+        Commands::AuditReviewApplicability {
+            feature,
+            stage,
+            review_id,
+        } => {
+            match lineage_replacement::audit(&cfg, &feature, &stage, &review_id)
+                .and_then(|record| lineage_replacement::append_audit(&cfg, &record))
+            {
+                Ok(sha) => {
+                    println!("review applicability recorded: INVALID_REVIEW_INPUT_LINEAGE ({sha})");
+                    EXIT_SUCCESS
+                }
+                Err(error) => {
+                    eprintln!("error: review applicability audit refused: {error}");
+                    EXIT_WRITE
+                }
+            }
         }
         Commands::InspectArchitectureScopes { .. } => EXIT_SUCCESS,
     }

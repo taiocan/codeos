@@ -695,6 +695,58 @@ pub fn terminal_review_closure_history_permits_progression(
     Ok(auth_scope.is_some() && auth_scope == closure_scope && conditions.is_some())
 }
 
+pub fn lineage_replacement_history_permits_progression(
+    log_path: &Path,
+    feature: &str,
+    stage: &str,
+    replacement_id: &str,
+) -> Result<bool> {
+    let Ok(content) = std::fs::read_to_string(log_path) else {
+        return Ok(false);
+    };
+    if !replacement_id.starts_with(&format!("REV__{feature}__{stage}__"))
+        || !replacement_id.ends_with("__LINEAGE-REPLACEMENT-1")
+        || content
+            .matches(&format!("Review ID: {replacement_id}"))
+            .count()
+            != 1
+    {
+        return Ok(false);
+    }
+    let (_, tail) = content
+        .split_once(&format!("Review ID: {replacement_id}"))
+        .context("replacement record missing")?;
+    let replacement = tail.split("\n## ").next().unwrap_or(tail);
+    if !replacement
+        .lines()
+        .any(|line| line == "Parse status: OK   Assessment status: COMPLETE")
+        || !replacement.lines().any(|line| {
+            line == "Effective concern: LINEAGE REPLACEMENT CLOSED — PROGRESSION PERMITTED"
+        })
+    {
+        return Ok(false);
+    }
+    let target = content.split("\n## ").find_map(|block| {
+        if block
+            .lines()
+            .any(|line| line == "Decision: AUTHORIZE_LINEAGE_REPLACEMENT")
+        {
+            block
+                .lines()
+                .find_map(|line| line.strip_prefix("Lineage replacement after: "))
+        } else {
+            None
+        }
+    });
+    let Some(target) = target else {
+        return Ok(false);
+    };
+    Ok(content.contains(&format!(
+        "Review applicability target: {target}\nApplicability: INVALID_REVIEW_INPUT_LINEAGE"
+    )) && content.contains(&format!("Review ID: {target}"))
+        && content.contains("Applicability record SHA-256:"))
+}
+
 /// Validate the immutable composite history required by Review Policy v5. This is deliberately
 /// stricter than treating the closure assessment as a replacement for REENTRY-1.
 pub fn evidence_closure_history_permits_progression(

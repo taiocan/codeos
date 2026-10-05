@@ -1674,6 +1674,7 @@ pub fn append_decision(
     closure_findings: Option<&[String]>,
     event_evidence_sha: Option<&str>,
     terminal_scope: Option<&crate::terminal_closure::ValidatedScope>,
+    applicability_record_sha: Option<&str>,
     provenance: Option<&DecisionProvenance>,
     repo_root: &Path,
     codex_dir: &Path,
@@ -1701,6 +1702,8 @@ pub fn append_decision(
             ));
         } else if decision == "AUTHORIZE_TERMINAL_REVIEW_CLOSURE" {
             entry.push_str(&format!("Terminal closure after: {}\n", review_id));
+        } else if decision == "AUTHORIZE_LINEAGE_REPLACEMENT" {
+            entry.push_str(&format!("Lineage replacement after: {}\n", review_id));
         } else {
             entry.push_str(&format!("Re-entry after: {}\n", review_id));
         }
@@ -1724,6 +1727,9 @@ pub fn append_decision(
             "Terminal closure scope JSON: {}\n",
             scope.raw.trim()
         ));
+    }
+    if let Some(sha) = applicability_record_sha {
+        entry.push_str(&format!("Applicability record SHA-256: {}\n", sha));
     }
     entry.push_str(&format!("Reason/next: {}\n", reason));
 
@@ -1837,6 +1843,11 @@ fn append_to_log(log_path: &Path, entry: &str) -> Result<()> {
         .with_context(|| format!("could not write to log: {}", log_path.display()))?;
     file.flush().context("could not flush log")?;
     Ok(())
+}
+
+pub(crate) fn append_raw(log_path: &Path, entry: &str) -> Result<()> {
+    ensure_log_exists(log_path)?;
+    append_to_log(log_path, entry)
 }
 
 fn git_head_sha(repo_root: &Path) -> Result<String> {

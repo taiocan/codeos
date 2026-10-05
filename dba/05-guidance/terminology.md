@@ -72,6 +72,8 @@ Ordinary technical vocabulary does not belong here. Git preserves the history of
 | **Reader Model** | The declared reader-oriented progression (Stable Topic, Known-to-New, Whole Before Parts, or Preview Then Traverse) a substantial narrative artifact states it uses, making its application inspectable rather than only instructed. |
 | **Replay Verification** | Confirmation that a runtime event log conforms to its approved schema and contract sequence. |
 | **Review re-entry** | A single exceptional Codex-backed review after the ordinary R1-R3 budget is exhausted, enabled and bounded by an explicit human decision without resetting or extending the ordinary round sequence. |
+| **Review applicability** | The mechanically derived ability of a structurally valid reviewer conclusion to govern progression for the exact inputs it assessed; it is distinct from execution validity and semantic conclusion. |
+| **Invalid Review Input Lineage** | A review-applicability state proving from immutable evidence that a mandatory governed input was contradictory before reviewer execution. The review remains immutable and consumed, but contributes no progression authority. |
 | **Runtime Verification Profile** | Optional project configuration naming only the runtime locations that mechanical workflow checks cannot safely derive. It describes where an already-declared project topology is verified; it neither defines that topology nor changes checkpoint semantics. |
 | **Representation Ban Rule** | Domain logic must not store, compare, branch on, or pattern-match vocabulary representations; it uses resolved Concept identity. |
 | **Resolution** | Mapping an Alias or canonical representation to its Concept through the vocabulary owner's API. |
