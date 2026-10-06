@@ -240,9 +240,11 @@ pub fn audit(
 ) -> Result<CorrectionRecord> {
     anyhow::ensure!(stage == "8", "assessment input correction is Stage 8 only");
     anyhow::ensure!(
-        crate::config::resolve_reviewer_tool_contract(cfg)?
-            == "dba/04-tools/reviewer/contract/v16.md",
-        "assessment input correction requires Reviewer Tool Contract v16"
+        matches!(
+            crate::config::resolve_reviewer_tool_contract(cfg)?.as_str(),
+            "dba/04-tools/reviewer/contract/v16.md" | "dba/04-tools/reviewer/contract/v17.md"
+        ),
+        "assessment input correction requires Reviewer Tool Contract v16 or later"
     );
     anyhow::ensure!(
         review_id.ends_with("__LINEAGE-REPLACEMENT-1"),

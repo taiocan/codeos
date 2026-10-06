@@ -449,6 +449,9 @@ pub struct PreparedReview {
     pub args: EvidenceArgs,
     pub packet: ReviewPacket,
     pub readiness: Stage8Readiness,
+    /// Present when Reviewer Tool Contract v17 governs; the Review Readiness Gate then replaces
+    /// Stage-8 readiness.
+    pub manifest: Option<crate::manifest::ReviewInputManifest>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -585,6 +588,17 @@ pub fn prepare(
         }
     }
 
+    let contract = crate::config::resolve_reviewer_tool_contract(cfg).ok();
+    let manifest = crate::manifest::selected(contract.as_deref()).then(|| {
+        let manifest = crate::manifest::derive(cfg, &args.feature, &args.stage, &args.artifacts);
+        for path in manifest.existing_required_inputs(&cfg.repo_root) {
+            if !args.artifacts.contains(&path) && !args.sha_only.contains(&path) {
+                args.artifacts.push(path);
+            }
+        }
+        manifest
+    });
+
     let packet = packet::build(&PacketBuildOptions {
         feature: args.feature.clone(),
         stage: args.stage.clone(),
@@ -599,12 +613,20 @@ pub fn prepare(
     // This integrity condition is intentionally outside the optional precheck block. Stage 8 may
     // not spend a reviewer round on a packet whose canonical inputs are absent or not actually
     // visible to the isolated reviewer, even when the caller skips advisory artifact prechecks.
-    let readiness = stage8_readiness(&args, &packet);
+    let readiness = if manifest.is_some() {
+        Stage8Readiness {
+            applicable: false,
+            issues: Vec::new(),
+        }
+    } else {
+        stage8_readiness(&args, &packet)
+    };
 
     Ok(PreparedReview {
         args,
         packet,
         readiness,
+        manifest,
     })
 }
 
@@ -686,6 +708,38 @@ fn stage8_readiness(args: &EvidenceArgs, packet: &ReviewPacket) -> Stage8Readine
     }
 }
 
+/// A bounded operation whose targeted lineage is absent or inconsistent refuses before invocation.
+/// Under Reviewer Tool Contract v17 the refusal is reported as `REVIEW_NOT_READY`.
+fn refuse_lineage(contract: Option<&str>, message: &str) -> i32 {
+    if crate::manifest::selected(contract) {
+        crate::readiness::Readiness::refusal(
+            crate::readiness::Reason::LineageInvalid,
+            "lineage",
+            message,
+        )
+        .print_refusal();
+    } else {
+        eprintln!("error: {message}");
+    }
+    crate::EXIT_WRITE
+}
+
+/// A reviewed snapshot that cannot be reconstructed refuses before packet construction. Under
+/// Reviewer Tool Contract v17 the refusal is reported as `REVIEW_NOT_READY`.
+fn refuse_snapshot(contract: Option<&str>, predecessor: &str, message: &str) -> i32 {
+    if crate::manifest::selected(contract) {
+        crate::readiness::Readiness::refusal(
+            crate::readiness::Reason::SnapshotNotReconstructible,
+            predecessor,
+            message,
+        )
+        .print_refusal();
+    } else {
+        eprintln!("error: {message}");
+    }
+    crate::EXIT_PACKET
+}
+
 pub fn run(mut args: ReviewArgs, cfg: &Config) -> Result<i32> {
     if args.retry_terminal_review_closure_after.is_none() && args.evidence.artifacts.is_empty() {
         eprintln!("error: review requires at least one ARTIFACT unless retrying an exact saved Terminal Review Closure payload");
@@ -715,8 +769,11 @@ pub fn run(mut args: ReviewArgs, cfg: &Config) -> Result<i32> {
             ) {
                 Ok(()) => {}
                 Err(error) => {
-                    eprintln!("error: package-bound re-entry has no valid reviewed-workspace snapshot: {error}");
-                    return Ok(crate::EXIT_PACKET);
+                    return Ok(refuse_snapshot(
+                        selected_contract.as_deref(),
+                        predecessor,
+                        &format!("package-bound re-entry has no valid reviewed-workspace snapshot: {error}"),
+                    ));
                 }
             }
         }
@@ -730,8 +787,13 @@ pub fn run(mut args: ReviewArgs, cfg: &Config) -> Result<i32> {
         ) {
             Ok(()) => {}
             Err(error) => {
-                eprintln!("error: Terminal Review Closure has no valid immutable predecessor state: {error}");
-                return Ok(crate::EXIT_PACKET);
+                return Ok(refuse_snapshot(
+                    selected_contract.as_deref(),
+                    predecessor,
+                    &format!(
+                        "Terminal Review Closure has no valid immutable predecessor state: {error}"
+                    ),
+                ));
             }
         }
     }
@@ -752,8 +814,11 @@ pub fn run(mut args: ReviewArgs, cfg: &Config) -> Result<i32> {
     if let Some((predecessor, provenance)) = other_bounded {
         if let Err(error) = resolve_bounded_basis(&mut args.evidence, cfg, predecessor, provenance)
         {
-            eprintln!("error: {provenance} has no valid immutable predecessor state: {error}");
-            return Ok(crate::EXIT_PACKET);
+            return Ok(refuse_snapshot(
+                selected_contract.as_deref(),
+                predecessor,
+                &format!("{provenance} has no valid immutable predecessor state: {error}"),
+            ));
         }
     }
     let mut retry_execution = None;
@@ -774,6 +839,7 @@ pub fn run(mut args: ReviewArgs, cfg: &Config) -> Result<i32> {
                     | "dba/04-tools/reviewer/contract/v14.md"
                     | "dba/04-tools/reviewer/contract/v15.md"
                     | "dba/04-tools/reviewer/contract/v16.md"
+                    | "dba/04-tools/reviewer/contract/v17.md"
             )
         ) {
             eprintln!(
@@ -842,9 +908,11 @@ pub fn run(mut args: ReviewArgs, cfg: &Config) -> Result<i32> {
                 "dba/04-tools/reviewer/contract/v14.md"
                     | "dba/04-tools/reviewer/contract/v15.md"
                     | "dba/04-tools/reviewer/contract/v16.md"
+                    | "dba/04-tools/reviewer/contract/v17.md"
             )
         )
         && args.correct_lineage_replacement_after.is_none()
+        && !crate::manifest::selected(selected_contract.as_deref())
     {
         if let Err(error) = crate::lineage_replacement::validate_current_lineage(
             cfg,
@@ -867,6 +935,7 @@ pub fn run(mut args: ReviewArgs, cfg: &Config) -> Result<i32> {
                     | "dba/04-tools/reviewer/contract/v14.md"
                     | "dba/04-tools/reviewer/contract/v15.md"
                     | "dba/04-tools/reviewer/contract/v16.md"
+                    | "dba/04-tools/reviewer/contract/v17.md"
             )
         )
         && args.continues.is_some()
@@ -888,6 +957,7 @@ pub fn run(mut args: ReviewArgs, cfg: &Config) -> Result<i32> {
                     | "dba/04-tools/reviewer/contract/v14.md"
                     | "dba/04-tools/reviewer/contract/v15.md"
                     | "dba/04-tools/reviewer/contract/v16.md"
+                    | "dba/04-tools/reviewer/contract/v17.md"
             )
         )
         && args.retry_terminal_review_closure_after.is_none()
@@ -993,8 +1063,14 @@ pub fn run(mut args: ReviewArgs, cfg: &Config) -> Result<i32> {
                 )
             }
         } else if let Some(predecessor) = args.correct_lineage_replacement_after.as_deref() {
-            if selected_contract.as_deref() != Some("dba/04-tools/reviewer/contract/v16.md") {
-                eprintln!("error: --correct-lineage-replacement-after requires Reviewer Tool Contract v16");
+            if !matches!(
+                selected_contract.as_deref(),
+                Some(
+                    "dba/04-tools/reviewer/contract/v16.md"
+                        | "dba/04-tools/reviewer/contract/v17.md"
+                )
+            ) {
+                eprintln!("error: --correct-lineage-replacement-after requires Reviewer Tool Contract v16 or later");
                 return Ok(crate::EXIT_USAGE);
             }
             let log = std::fs::read_to_string(&review_log_path).unwrap_or_default();
@@ -1004,8 +1080,10 @@ pub fn run(mut args: ReviewArgs, cfg: &Config) -> Result<i32> {
             ) {
                 Ok(value) => value,
                 Err(error) => {
-                    eprintln!("error: assessment input correction refused: {error}");
-                    return Ok(crate::EXIT_WRITE);
+                    return Ok(refuse_lineage(
+                        selected_contract.as_deref(),
+                        &format!("assessment input correction refused: {error}"),
+                    ));
                 }
             };
             let raw = match crate::assessment_input_correction::preflight(
@@ -1036,6 +1114,7 @@ pub fn run(mut args: ReviewArgs, cfg: &Config) -> Result<i32> {
                     "dba/04-tools/reviewer/contract/v14.md"
                         | "dba/04-tools/reviewer/contract/v15.md"
                         | "dba/04-tools/reviewer/contract/v16.md"
+                        | "dba/04-tools/reviewer/contract/v17.md"
                 )
             ) {
                 eprintln!(
@@ -1052,8 +1131,10 @@ pub fn run(mut args: ReviewArgs, cfg: &Config) -> Result<i32> {
             ) {
                 Ok(value) => value,
                 Err(error) => {
-                    eprintln!("error: lineage replacement refused: {error}");
-                    return Ok(crate::EXIT_WRITE);
+                    return Ok(refuse_lineage(
+                        selected_contract.as_deref(),
+                        &format!("lineage replacement refused: {error}"),
+                    ));
                 }
             };
             match crate::lineage_replacement::validate_current_lineage(
@@ -1088,7 +1169,8 @@ pub fn run(mut args: ReviewArgs, cfg: &Config) -> Result<i32> {
                     | "dba/04-tools/reviewer/contract/v13.md"
                     | "dba/04-tools/reviewer/contract/v14.md"
                     | "dba/04-tools/reviewer/contract/v15.md"
-                    | "dba/04-tools/reviewer/contract/v16.md")
+                    | "dba/04-tools/reviewer/contract/v16.md"
+                    | "dba/04-tools/reviewer/contract/v17.md")
             ) {
                 eprintln!(
                     "error: --evidence-reassessment-after requires Reviewer Tool Contract v9"
@@ -1121,8 +1203,10 @@ pub fn run(mut args: ReviewArgs, cfg: &Config) -> Result<i32> {
                     }
                 }
                 Err(error) => {
-                    eprintln!("error: evidence reassessment refused: {error}");
-                    return Ok(crate::EXIT_WRITE);
+                    return Ok(refuse_lineage(
+                        selected_contract.as_deref(),
+                        &format!("evidence reassessment refused: {error}"),
+                    ));
                 }
             }
         } else if let Some(predecessor) = args.infrastructure_revalidation_after.as_deref() {
@@ -1179,8 +1263,10 @@ pub fn run(mut args: ReviewArgs, cfg: &Config) -> Result<i32> {
                     id
                 }
                 Err(error) => {
-                    eprintln!("error: could not authorize evidence closure: {error}");
-                    return Ok(crate::EXIT_WRITE);
+                    return Ok(refuse_lineage(
+                        selected_contract.as_deref(),
+                        &format!("could not authorize evidence closure: {error}"),
+                    ));
                 }
             }
         } else if let Some(predecessor) = args.terminal_review_closure_after.as_deref() {
@@ -1192,6 +1278,7 @@ pub fn run(mut args: ReviewArgs, cfg: &Config) -> Result<i32> {
                         | "dba/04-tools/reviewer/contract/v14.md"
                         | "dba/04-tools/reviewer/contract/v15.md"
                         | "dba/04-tools/reviewer/contract/v16.md"
+                        | "dba/04-tools/reviewer/contract/v17.md"
                 )
             ) {
                 eprintln!(
@@ -1215,6 +1302,7 @@ pub fn run(mut args: ReviewArgs, cfg: &Config) -> Result<i32> {
                         | "dba/04-tools/reviewer/contract/v14.md"
                         | "dba/04-tools/reviewer/contract/v15.md"
                         | "dba/04-tools/reviewer/contract/v16.md"
+                        | "dba/04-tools/reviewer/contract/v17.md"
                 )
             ) {
                 let failure_id = crate::terminal_closure::format_terminal_failure_id(
@@ -1265,8 +1353,10 @@ pub fn run(mut args: ReviewArgs, cfg: &Config) -> Result<i32> {
                     id
                 }
                 Err(error) => {
-                    eprintln!("error: Terminal Review Closure refused: {error}");
-                    return Ok(crate::EXIT_WRITE);
+                    return Ok(refuse_lineage(
+                        selected_contract.as_deref(),
+                        &format!("Terminal Review Closure refused: {error}"),
+                    ));
                 }
             }
         } else if let Some(predecessor) = args.reentry_after.as_deref() {
@@ -1295,6 +1385,7 @@ pub fn run(mut args: ReviewArgs, cfg: &Config) -> Result<i32> {
                             | "dba/04-tools/reviewer/contract/v14.md"
                             | "dba/04-tools/reviewer/contract/v15.md"
                             | "dba/04-tools/reviewer/contract/v16.md"
+                            | "dba/04-tools/reviewer/contract/v17.md"
                     ) =>
                 {
                     let current_semantic_revision = if evidence.stage == "8" {
@@ -1348,8 +1439,10 @@ pub fn run(mut args: ReviewArgs, cfg: &Config) -> Result<i32> {
                     id
                 }
                 Err(error) => {
-                    eprintln!("error: could not authorize review re-entry: {error}");
-                    return Ok(crate::EXIT_WRITE);
+                    return Ok(refuse_lineage(
+                        selected_contract.as_deref(),
+                        &format!("could not authorize review re-entry: {error}"),
+                    ));
                 }
             }
         } else {
@@ -1374,6 +1467,7 @@ pub fn run(mut args: ReviewArgs, cfg: &Config) -> Result<i32> {
                                 | "dba/04-tools/reviewer/contract/v14.md"
                                 | "dba/04-tools/reviewer/contract/v15.md"
                                 | "dba/04-tools/reviewer/contract/v16.md"
+                                | "dba/04-tools/reviewer/contract/v17.md"
                         )
                     }) =>
                 {
@@ -1417,6 +1511,22 @@ pub fn run(mut args: ReviewArgs, cfg: &Config) -> Result<i32> {
             }
         }
     };
+
+    // Review Readiness Gate: the last step before reviewer invocation, after every operation has
+    // finished constraining the packet, and before provider access or any durable review write.
+    if crate::manifest::selected(selected_contract.as_deref()) && args.assessment.is_none() {
+        let mut manifest =
+            crate::manifest::derive(cfg, &evidence.feature, &evidence.stage, &evidence.artifacts);
+        review_packet.include_verification_records(&manifest.records_missing_from(&review_packet));
+        manifest.seal(&review_id, &review_packet);
+        let readiness =
+            crate::readiness::evaluate(cfg, &manifest, &review_packet, &evidence.sha_only);
+        if !readiness.passes() {
+            readiness.print_refusal();
+            return Ok(crate::EXIT_PACKET);
+        }
+        review_packet.manifest = Some(manifest);
+    }
 
     let raw = match &args.assessment {
         // Import path: no process is started, so there is no read-only violation to detect. The text
@@ -1489,6 +1599,7 @@ pub fn run(mut args: ReviewArgs, cfg: &Config) -> Result<i32> {
                     | "dba/04-tools/reviewer/contract/v14.md"
                     | "dba/04-tools/reviewer/contract/v15.md"
                     | "dba/04-tools/reviewer/contract/v16.md"
+                    | "dba/04-tools/reviewer/contract/v17.md"
             )
         )
     {
@@ -1578,6 +1689,7 @@ pub fn run(mut args: ReviewArgs, cfg: &Config) -> Result<i32> {
                 | "dba/04-tools/reviewer/contract/v14.md"
                 | "dba/04-tools/reviewer/contract/v15.md"
                 | "dba/04-tools/reviewer/contract/v16.md"
+                | "dba/04-tools/reviewer/contract/v17.md"
         )
     ) {
         if let Some(execution) = terminal_closure.as_mut() {
@@ -1635,6 +1747,19 @@ pub fn run(mut args: ReviewArgs, cfg: &Config) -> Result<i32> {
             packet_saved.display()
         );
         return Ok(crate::EXIT_WRITE);
+    }
+    if review_packet.manifest.is_some() {
+        let sidecar = crate::cmd::plan::sidecar_path(&packet_saved);
+        let written = serde_json::to_string_pretty(&review_packet)
+            .map_err(anyhow::Error::from)
+            .and_then(|json| Ok(std::fs::write(&sidecar, format!("{json}\n"))?));
+        if let Err(error) = written {
+            eprintln!(
+                "error: could not write Review Input Manifest {}: {error}",
+                sidecar.display()
+            );
+            return Ok(crate::EXIT_WRITE);
+        }
     }
     let packet_path = match packet_saved.to_str() {
         Some(path) => path,

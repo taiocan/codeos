@@ -132,6 +132,7 @@ pub fn audit(
             "dba/04-tools/reviewer/contract/v14.md"
                 | "dba/04-tools/reviewer/contract/v15.md"
                 | "dba/04-tools/reviewer/contract/v16.md"
+                | "dba/04-tools/reviewer/contract/v17.md"
         ),
         "invalid-lineage recovery requires Reviewer Tool Contract v14"
     );
@@ -364,7 +365,10 @@ pub fn validate_current_lineage(
             .starts_with(".codeos/06-workflow/reality-evidence/")
     });
     let contract = crate::config::resolve_reviewer_tool_contract(cfg)?;
-    if contract == "dba/04-tools/reviewer/contract/v16.md" {
+    if matches!(
+        contract.as_str(),
+        "dba/04-tools/reviewer/contract/v16.md" | "dba/04-tools/reviewer/contract/v17.md"
+    ) {
         let canonical_config = sha256_file(
             cfg.repo_root
                 .join(".codeos/00-project/codeos.yaml")

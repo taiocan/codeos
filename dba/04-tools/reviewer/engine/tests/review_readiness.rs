@@ -1,0 +1,419 @@
+//! Executable proof of the Review Readiness Gate (Review Policy v15, Reviewer Tool Contract v17):
+//! every refusal happens before the reviewer is invoked. No real provider is used.
+
+mod common;
+
+use codeos_workflow::project::Project;
+use common::{
+    repo_root, run_in_dir_with_env, run_with_fake_codex, setup_fake_codex, setup_temp_git_repo,
+};
+use serde_json::{json, Value};
+use sha2::{Digest, Sha256};
+use std::path::{Path, PathBuf};
+use std::process::Command;
+
+const FEATURE: &str = "FEAT";
+const CANDIDATE: &str = "DBA-999";
+
+fn sha256(bytes: &[u8]) -> String {
+    hex::encode(Sha256::digest(bytes))
+}
+
+fn write(path: &Path, value: &str) {
+    std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+    std::fs::write(path, value).unwrap();
+}
+
+fn file_sha(path: &Path) -> String {
+    sha256(&std::fs::read(path).unwrap())
+}
+
+fn git(repo: &Path, args: &[&str]) {
+    let output = Command::new("git")
+        .args(args)
+        .current_dir(repo)
+        .output()
+        .unwrap();
+    assert!(output.status.success(), "git {}", args.join(" "));
+}
+
+fn copy_tree(from: &Path, to: &Path) {
+    std::fs::create_dir_all(to).unwrap();
+    for entry in std::fs::read_dir(from).unwrap() {
+        let entry = entry.unwrap();
+        let name = entry.file_name();
+        if name == "target" {
+            continue;
+        }
+        let (source, dest) = (entry.path(), to.join(&name));
+        if source.is_dir() {
+            copy_tree(&source, &dest);
+        } else {
+            std::fs::copy(&source, &dest).unwrap();
+        }
+    }
+}
+
+/// A private toolkit whose only addition is one approved candidate configuration selecting the
+/// v15/v17 drafts, so no real configuration is activated by these tests.
+fn candidate_toolkit() -> tempfile::TempDir {
+    let toolkit = tempfile::tempdir().unwrap();
+    copy_tree(&repo_root().join("dba"), &toolkit.path().join("dba"));
+    for file in ["dba-system.md", "CLAUDE.md", "AGENTS.md"] {
+        let source = repo_root().join(file);
+        if source.is_file() {
+            std::fs::copy(&source, toolkit.path().join(file)).unwrap();
+        }
+    }
+    let configurations = toolkit.path().join("dba/00-entry/configurations");
+    let base = std::fs::read_to_string(configurations.join("DBA-21.yaml")).unwrap();
+    let candidate = base
+        .replace("review/v14.md", "review/v15.md")
+        .replace("contract/v16.md", "contract/v17.md");
+    write(
+        &configurations.join(format!("{CANDIDATE}.yaml")),
+        &candidate,
+    );
+    toolkit
+}
+
+struct Fixture {
+    repo: tempfile::TempDir,
+    _toolkit: tempfile::TempDir,
+    toolkit: PathBuf,
+}
+
+impl Fixture {
+    fn path(&self) -> &Path {
+        self.repo.path()
+    }
+}
+
+/// A Stage-8 project whose canonical evidence is complete and current.
+fn ready_project(reality: bool) -> Fixture {
+    let (repo, _) = setup_temp_git_repo();
+    let toolkit = candidate_toolkit();
+    let root = repo.path();
+    std::fs::create_dir_all(root.join(".codeos")).unwrap();
+    std::os::unix::fs::symlink(toolkit.path(), root.join(".codeos/toolkit")).unwrap();
+    write(
+        &root.join(".git/info/exclude"),
+        "/.codeos/toolkit\n/.codeos/05-review/\n",
+    );
+    write(
+        &root.join(".codeos/00-project/codeos.yaml"),
+        &format!("codeos_schema: 2\ndba_configuration: {CANDIDATE}\n"),
+    );
+    write(
+        &root.join(".codeos/00-project/charter.md"),
+        "---\nartifact_type: charter\napproval:\n  by: Human\n  at: 2026-10-06\n---\n# Charter\n",
+    );
+    let header = |kind: &str| {
+        format!(
+            "---\nartifact_type: {kind}\nfeature_id: {FEATURE}\nsemantic_revision: 2\nsemantic_revision_from: 1\nsemantic_change: readiness fixture\nstatus: APPROVED\napproved_by: Human\napproved_at: 2026-10-06\n---\n# {kind}\n"
+        )
+    };
+    let mut contract = header("contract");
+    if reality {
+        contract.push_str(
+            "\n## Reality Basis\n\n| Claim ID | Claim | Classification | Source | Freshness | Coverage | Failure | Disclosure |\n|---|---|---|---|---|---|---|---|\n| C1 | live departures | reality-dependent | provider | 5m | route | unavailable | shown |\n",
+        );
+    }
+    write(&root.join(intent()), &header("intent"));
+    write(&root.join(contract_path()), &contract);
+    write(&root.join(schema()), &header("event_schema"));
+    write(&root.join("src/lib.rs"), "pub fn feature() {}\n");
+    git(root, &["add", "."]);
+    git(
+        root,
+        &["commit", "-m", "approved package and implementation"],
+    );
+
+    let fixture = Fixture {
+        toolkit: toolkit.path().to_path_buf(),
+        repo,
+        _toolkit: toolkit,
+    };
+    record_current_evidence(&fixture, reality);
+    git(fixture.path(), &["add", ".codeos/06-workflow"]);
+    git(fixture.path(), &["commit", "-m", "record current evidence"]);
+    fixture
+}
+
+fn intent() -> String {
+    format!(".codeos/01-specification/intents/{FEATURE}.md")
+}
+fn contract_path() -> String {
+    format!(".codeos/01-specification/contracts/{FEATURE}_contract.md")
+}
+fn schema() -> String {
+    format!(".codeos/01-specification/event-schemas/{FEATURE}_schema.md")
+}
+
+fn implementation_state(root: &Path) -> String {
+    let project = Project::discover(root).unwrap();
+    codeos_workflow::hashing::working_tree_state(&project.root, &project.implementation_paths())
+        .unwrap()
+}
+
+fn record_current_evidence(fixture: &Fixture, reality: bool) {
+    let root = fixture.path();
+    let implementation = implementation_state(root);
+    let bindings = json!({
+        "intent": file_sha(&root.join(intent())),
+        "contract": file_sha(&root.join(contract_path())),
+        "event_schema": file_sha(&root.join(schema())),
+        "implementation_state": implementation,
+    });
+    let events = "{\"event\":\"feature_completed\"}\n";
+    let events_sha = sha256(events.as_bytes());
+    let events_path = format!(".codeos/06-workflow/event-evidence/{events_sha}.jsonl");
+    write(&root.join(&events_path), events);
+
+    let mut required = vec![
+        ("F3", "smoke", Value::Null),
+        ("F3", "product_journey", Value::Null),
+        ("F5", "behavior", Value::Null),
+        ("F5", "repeatability", Value::Null),
+        (
+            "F7",
+            "runtime_event_schema",
+            json!({ "event_evidence": events_path }),
+        ),
+    ];
+    let mut f6 = json!({
+        "codeos_yaml": file_sha(&root.join(".codeos/00-project/codeos.yaml")),
+        "implementation_state": implementation,
+    });
+    if reality {
+        let evidence = json!({ "implementation_sha256": implementation, "observations": [] });
+        let bytes = serde_json::to_vec(&evidence).unwrap();
+        let selected = sha256(&bytes);
+        let path = root.join(format!(
+            ".codeos/06-workflow/reality-evidence/{selected}.json"
+        ));
+        std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+        std::fs::write(path, bytes).unwrap();
+        required.push((
+            "F5",
+            "production_source_evidence",
+            json!({ "evidence_sha256": selected }),
+        ));
+        f6["production_evidence"] = json!(selected);
+    }
+    let mut store = String::new();
+    for (checkpoint, verification, details) in required {
+        let mut record = json!({
+            "workflow": "feature", "subject": FEATURE, "checkpoint": checkpoint,
+            "verification": verification, "result": "passed", "bindings": bindings,
+            "command": "fixture", "timestamp": "2026-10-06T10:00:00Z",
+        });
+        if !details.is_null() {
+            record["details"] = details;
+        }
+        store.push_str(&serde_json::to_string(&record).unwrap());
+        store.push('\n');
+    }
+    write(
+        &root.join(".codeos/06-workflow/verifications.jsonl"),
+        &store,
+    );
+    let receipt = json!({
+        "workflow": "feature", "subject": FEATURE, "checkpoint": "reconciliation",
+        "result": "completed", "bindings": f6, "timestamp": "2026-10-06T10:05:00Z",
+    });
+    write(
+        &root.join(".codeos/06-workflow/decisions.jsonl"),
+        &format!("{}\n", serde_json::to_string(&receipt).unwrap()),
+    );
+}
+
+fn review(fixture: &Fixture, fake: &common::FakeCodex, extra: &[&str]) -> (i32, String, String) {
+    let mut args = vec!["review", FEATURE, "8", "--skip-prechecks"];
+    args.extend_from_slice(extra);
+    args.push("src/lib.rs");
+    run_with_fake_codex(fixture.path(), fake, &args, "success")
+}
+
+fn invoked(fake: &common::FakeCodex) -> bool {
+    fake.packet_log.exists()
+}
+
+fn assert_not_ready(
+    fixture: &Fixture,
+    result: (i32, String, String),
+    code: &str,
+    fake: &common::FakeCodex,
+) {
+    let (status, stdout, stderr) = result;
+    assert_ne!(status, 0, "review unexpectedly passed:\n{stdout}\n{stderr}");
+    assert!(
+        stderr.contains(&format!("REVIEW_NOT_READY: {code}")),
+        "expected {code}:\n{stderr}"
+    );
+    assert!(!invoked(fake), "reviewer must not be invoked");
+    assert!(
+        !fixture.path().join(".codeos/05-review/reviews").exists(),
+        "no review record may be written"
+    );
+}
+
+#[test]
+fn complete_current_evidence_reaches_the_reviewer_with_machine_owned_inputs() {
+    let fixture = ready_project(true);
+    let fake = setup_fake_codex();
+    let (status, stdout, stderr) = review(&fixture, &fake, &[]);
+    assert_eq!(status, 0, "review failed:\n{stdout}\n{stderr}");
+    assert!(invoked(&fake));
+
+    let packet = std::fs::read_to_string(&fake.packet_log).unwrap();
+    assert!(packet.contains("REQUIRED VERIFICATION RECORDS"));
+    assert!(packet.contains("\"verification\":\"production_source_evidence\""));
+    assert!(packet.contains(".codeos/06-workflow/reality-evidence/"));
+    assert!(packet.contains(".codeos/06-workflow/event-evidence/"));
+
+    let packets = fixture
+        .path()
+        .join(".codeos/05-review/reviews/codex/packets");
+    let sidecar = std::fs::read_dir(&packets)
+        .unwrap()
+        .map(|entry| entry.unwrap().path())
+        .find(|path| path.to_string_lossy().ends_with(".packet.txt.meta.json"))
+        .expect("Review Input Manifest sidecar");
+    let manifest: Value = serde_json::from_str(&std::fs::read_to_string(sidecar).unwrap()).unwrap();
+    let manifest = &manifest["manifest"];
+    assert_eq!(manifest["operation"], "REV__FEAT__8__SR2__R1");
+    assert_eq!(
+        manifest["implementation"],
+        implementation_state(fixture.path())
+    );
+    assert_eq!(manifest["verification"].as_object().unwrap().len(), 6);
+    assert!(manifest["reviewed_snapshot"].as_str().unwrap().len() == 64);
+}
+
+#[test]
+fn unavailable_reviewer_cli_is_an_environment_block() {
+    let fixture = ready_project(false);
+    let fake = setup_fake_codex();
+    let result = run_in_dir_with_env(
+        fixture.path(),
+        &["review", FEATURE, "8", "--skip-prechecks", "src/lib.rs"],
+        &[("PATH", "/usr/bin:/bin")],
+    );
+    assert_not_ready(&fixture, result, "EXECUTION_ENVIRONMENT_BLOCKED", &fake);
+}
+
+#[test]
+fn stale_reviewer_binary_is_refused() {
+    let fixture = ready_project(false);
+    let fake = setup_fake_codex();
+    let main = fixture
+        .toolkit
+        .join("dba/04-tools/reviewer/engine/src/main.rs");
+    let mut source = std::fs::read_to_string(&main).unwrap();
+    source.push_str("// newer source than the running binary\n");
+    std::fs::write(&main, source).unwrap();
+    assert_not_ready(
+        &fixture,
+        review(&fixture, &fake, &[]),
+        "REVIEWER_BUILD_MISMATCH",
+        &fake,
+    );
+}
+
+#[test]
+fn transcribed_configuration_identity_must_match_the_artifact() {
+    let fixture = ready_project(false);
+    let fake = setup_fake_codex();
+    write(
+        &fixture.path().join("evidence/review/claims.json"),
+        &json!({ "bindings": { "codeos_yaml": "0".repeat(64) } }).to_string(),
+    );
+    let result = review(&fixture, &fake, &["evidence/review/claims.json"]);
+    assert_not_ready(&fixture, result, "CONFIGURATION_MISMATCH", &fake);
+}
+
+#[test]
+fn unsupported_implementation_identity_is_refused() {
+    let fixture = ready_project(false);
+    let fake = setup_fake_codex();
+    write(
+        &fixture.path().join("evidence/review/claims.json"),
+        &json!({ "bindings": { "implementation_state": "f".repeat(64) } }).to_string(),
+    );
+    let result = review(&fixture, &fake, &["evidence/review/claims.json"]);
+    assert_not_ready(&fixture, result, "IMPLEMENTATION_IDENTITY_INVALID", &fake);
+}
+
+#[test]
+fn wrong_f6_production_evidence_binding_is_refused() {
+    let fixture = ready_project(true);
+    let fake = setup_fake_codex();
+    let store = fixture
+        .path()
+        .join(".codeos/06-workflow/verifications.jsonl");
+    let text = std::fs::read_to_string(&store).unwrap();
+    let rebound: Vec<String> = text
+        .lines()
+        .map(|line| {
+            let mut record: Value = serde_json::from_str(line).unwrap();
+            if record["verification"] == "production_source_evidence" {
+                record["details"]["evidence_sha256"] = json!("a".repeat(64));
+            }
+            serde_json::to_string(&record).unwrap()
+        })
+        .collect();
+    std::fs::write(&store, rebound.join("\n") + "\n").unwrap();
+    assert_not_ready(
+        &fixture,
+        review(&fixture, &fake, &[]),
+        "F6_SELECTED_EVIDENCE_MISMATCH",
+        &fake,
+    );
+}
+
+#[test]
+fn missing_required_verification_is_refused() {
+    let fixture = ready_project(false);
+    let fake = setup_fake_codex();
+    let store = fixture
+        .path()
+        .join(".codeos/06-workflow/verifications.jsonl");
+    let text = std::fs::read_to_string(&store).unwrap();
+    let kept: Vec<&str> = text
+        .lines()
+        .filter(|line| !line.contains("\"behavior\""))
+        .collect();
+    std::fs::write(&store, kept.join("\n") + "\n").unwrap();
+    assert_not_ready(
+        &fixture,
+        review(&fixture, &fake, &[]),
+        "REQUIRED_INPUT_MISSING",
+        &fake,
+    );
+}
+
+#[test]
+fn implementation_changed_after_verification_is_stale() {
+    let fixture = ready_project(false);
+    let fake = setup_fake_codex();
+    write(
+        &fixture.path().join("src/lib.rs"),
+        "pub fn feature() { changed() }\n",
+    );
+    assert_not_ready(
+        &fixture,
+        review(&fixture, &fake, &[]),
+        "EVIDENCE_STALE",
+        &fake,
+    );
+}
+
+#[test]
+fn caller_cannot_narrow_a_required_input_to_its_hash() {
+    let fixture = ready_project(false);
+    let fake = setup_fake_codex();
+    let contract = contract_path();
+    let result = review(&fixture, &fake, &["--sha-only", &contract]);
+    assert_not_ready(&fixture, result, "REQUIRED_INPUT_NOT_INSPECTABLE", &fake);
+}

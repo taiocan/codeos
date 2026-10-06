@@ -44,6 +44,7 @@ Ordinary technical vocabulary does not belong here. Git preserves the history of
 | **Failure Event** | A runtime event representing a classified error condition. |
 | **Feature ID** | The stable `F-####` identity assigned when an Intent is created. It is never reused; partial Specification Packages remain valid identities. |
 | **Feature Impact Accounting** | A feature's recorded changed-or-unchanged, with-reason account of its effect on each Platform Baseline tier, replacing any requirement to touch every tier regardless of need. |
+| **Full coverage** | `FULL_COVERAGE`: every input in a review's required input set is inspectable in the packet. Material outside the required input set does not lower coverage. |
 | **Governed workflow** | One of the three named workflows enclosing the nine-stage lifecycle — Solution Bootstrap, Feature Development, Operation & Learning — each an ordered set of checkpoints whose progression is mechanically verified against real evidence. A governed workflow adds no lifecycle stage, approval, or source of product authority. |
 | **Implementation Profile** | An approved project-level statement of preferred implementation language and scope that implementation must consult. |
 | **Intent** | Why a feature exists, expressed as actor and desired outcome without implementation details. |
@@ -74,6 +75,11 @@ Ordinary technical vocabulary does not belong here. Git preserves the history of
 | **Replay Verification** | Confirmation that a runtime event log conforms to its approved schema and contract sequence. |
 | **Review re-entry** | A single exceptional Codex-backed review after the ordinary R1-R3 budget is exhausted, enabled and bounded by an explicit human decision without resetting or extending the ordinary round sequence. |
 | **Review applicability** | The mechanically derived ability of a structurally valid reviewer conclusion to govern progression for the exact inputs it assessed; it is distinct from execution validity and semantic conclusion. |
+| **Review Readiness Gate** | The single deterministic check every reviewer invocation must pass. Failure is `REVIEW_NOT_READY` and consumes no review capacity. |
+| **Review Input Manifest** | The deterministic per-review record of the complete input identity graph. It is the single source for packet construction and review lineage validation. |
+| **Reviewed-state snapshot** | The content-addressed identity of every input a review assessed, including uncommitted and untracked files. Later deltas compare against it, not against a Git commit. |
+| **`REVIEW_NOT_READY`** | The result of a failed Review Readiness Gate. The reviewer is not invoked, no capacity is consumed, and no governance state changes. |
+| **`REVIEW_EXECUTION_INVALID`** | The result of a reviewer response that fails structural validation. It is preserved, carries no semantic conclusion, consumes no capacity, and may be re-executed with identical inputs. |
 | **Invalid Review Input Lineage** | A review-applicability state proving from immutable evidence that a mandatory governed input was contradictory before reviewer execution. The review remains immutable and consumed, but contributes no progression authority. |
 | **Runtime Verification Profile** | Optional project configuration naming only the runtime locations that mechanical workflow checks cannot safely derive. It describes where an already-declared project topology is verified; it neither defines that topology nor changes checkpoint semantics. |
 | **Representation Ban Rule** | Domain logic must not store, compare, branch on, or pattern-match vocabulary representations; it uses resolved Concept identity. |

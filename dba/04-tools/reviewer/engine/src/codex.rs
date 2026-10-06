@@ -286,7 +286,7 @@ fn filesystem_config(executable_dir: &Path, workdir: &Path) -> Result<String> {
     ))
 }
 
-fn resolve_codex_executable() -> Result<PathBuf> {
+pub(crate) fn resolve_codex_executable() -> Result<PathBuf> {
     let path = std::env::var_os("PATH").context("PATH is not set; cannot locate Codex CLI")?;
     for directory in std::env::split_paths(&path) {
         let candidate = directory.join("codex");

@@ -4,13 +4,16 @@ use std::process;
 
 mod assessment;
 mod assessment_input_correction;
+mod build_identity;
 mod cmd;
 mod codex;
 mod config;
 mod lineage_replacement;
 mod log;
+mod manifest;
 mod packet;
 mod precheck;
+mod readiness;
 mod run;
 mod terminal_closure;
 

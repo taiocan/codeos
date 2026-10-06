@@ -74,6 +74,7 @@ pub fn run(
                         | "dba/04-tools/reviewer/contract/v14.md"
                         | "dba/04-tools/reviewer/contract/v15.md"
                         | "dba/04-tools/reviewer/contract/v16.md"
+                        | "dba/04-tools/reviewer/contract/v17.md"
                 ) =>
             {
                 let current_semantic_revision = if stage == "8" {
@@ -213,6 +214,7 @@ pub fn run(
                         | "dba/04-tools/reviewer/contract/v14.md"
                         | "dba/04-tools/reviewer/contract/v15.md"
                         | "dba/04-tools/reviewer/contract/v16.md"
+                        | "dba/04-tools/reviewer/contract/v17.md"
                 ) => {}
             Ok(contract) => {
                 eprintln!("error: Terminal Review Closure is not supported by {contract}");
@@ -262,6 +264,7 @@ pub fn run(
             "dba/04-tools/reviewer/contract/v14.md"
                 | "dba/04-tools/reviewer/contract/v15.md"
                 | "dba/04-tools/reviewer/contract/v16.md"
+                | "dba/04-tools/reviewer/contract/v17.md"
         ) {
             eprintln!("error: lineage replacement requires Reviewer Tool Contract v14");
             return Ok(crate::EXIT_USAGE);
@@ -298,10 +301,13 @@ pub fn run(
             eprintln!("error: AUTHORIZE_ASSESSMENT_INPUT_CORRECTION requires a bounded reason");
             return Ok(crate::EXIT_USAGE);
         }
-        if crate::config::resolve_reviewer_tool_contract(cfg)?
-            != "dba/04-tools/reviewer/contract/v16.md"
-        {
-            eprintln!("error: assessment input correction requires Reviewer Tool Contract v16");
+        if !matches!(
+            crate::config::resolve_reviewer_tool_contract(cfg)?.as_str(),
+            "dba/04-tools/reviewer/contract/v16.md" | "dba/04-tools/reviewer/contract/v17.md"
+        ) {
+            eprintln!(
+                "error: assessment input correction requires Reviewer Tool Contract v16 or later"
+            );
             return Ok(crate::EXIT_USAGE);
         }
         let log = std::fs::read_to_string(&cfg.review_log)?;

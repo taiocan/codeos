@@ -11,7 +11,7 @@ use std::path::{Path, PathBuf};
 /// construction path: both commands share `review::prepare`, so the exported file is the canonical
 /// packet and stays byte-identical to what a Codex-backed review would receive.
 pub fn run(args: EvidenceArgs, emit_packet: Option<PathBuf>, cfg: &Config) -> Result<i32> {
-    let prepared = match review::prepare(args, cfg) {
+    let mut prepared = match review::prepare(args, cfg) {
         Ok(prepared) => prepared,
         Err(failure) => {
             eprintln!("error: {}", failure.message);
@@ -23,6 +23,18 @@ pub fn run(args: EvidenceArgs, emit_packet: Option<PathBuf>, cfg: &Config) -> Re
     prepared.readiness.print_plan();
     if !prepared.readiness.passes() {
         return Ok(crate::EXIT_PACKET);
+    }
+    if let Some(mut manifest) = prepared.manifest.take() {
+        let records = manifest.records_missing_from(&prepared.packet);
+        prepared.packet.include_verification_records(&records);
+        manifest.seal("plan", &prepared.packet);
+        let readiness =
+            crate::readiness::evaluate(cfg, &manifest, &prepared.packet, &prepared.args.sha_only);
+        readiness.print_plan();
+        if !readiness.passes() {
+            return Ok(crate::EXIT_PACKET);
+        }
+        prepared.packet.manifest = Some(manifest);
     }
     if matches!(prepared.packet.coverage_state, CoverageState::EmptyPacket) {
         // An empty packet fails before invocation, so there is nothing legitimate to export either.

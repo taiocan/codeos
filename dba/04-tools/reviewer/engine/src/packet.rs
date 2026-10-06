@@ -146,6 +146,10 @@ pub struct ReviewPacket {
     /// this field existed still import, with a warning rather than silent acceptance.
     #[serde(default)]
     pub content_sha256: String,
+    /// The Review Input Manifest this packet was built and gated from (Reviewer Tool Contract
+    /// v17). Absent for packets built under earlier contracts.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub manifest: Option<crate::manifest::ReviewInputManifest>,
     /// The packet bytes. Held out of the sidecar: they live in the exported packet file itself, and
     /// storing them twice would create two copies that could disagree about what was reviewed.
     #[serde(skip)]
@@ -155,6 +159,19 @@ pub struct ReviewPacket {
 impl ReviewPacket {
     pub fn content(&self) -> &str {
         &self.content
+    }
+
+    /// Machine-owned packet construction: include the exact required verification records the
+    /// manifest names, redacted like every other packet input.
+    pub fn include_verification_records(&mut self, lines: &[String]) {
+        if lines.is_empty() {
+            return;
+        }
+        let (redacted, _) = redact_secrets(&lines.join("\n"));
+        self.content.push_str(&format!(
+            "\n\nREQUIRED VERIFICATION RECORDS\n```jsonl\n{redacted}\n```\n"
+        ));
+        self.content_sha256 = crate::packet::sha256_str(&self.content);
     }
 
     pub fn require_f7_blocker_classification(&mut self) {
@@ -283,6 +300,7 @@ impl ReviewPacket {
             diff_bytes: 0,
             budget_contributors: Vec::new(),
             content_sha256,
+            manifest: None,
             content,
         }
     }
@@ -1362,6 +1380,7 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
         diff_bytes,
         budget_contributors: file_contributors,
         content_sha256: sha256_str(&content),
+        manifest: None,
         content,
     })
 }
