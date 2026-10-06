@@ -105,7 +105,14 @@ pub(crate) fn resolve_reviewed_snapshot(
         current = parents[0].clone();
     }
     reversed.reverse();
-    Ok(crate::packet::ReviewedSnapshot { lineage: reversed })
+    Ok(crate::packet::ReviewedSnapshot {
+        lineage: reversed,
+        full_file_preimages: crate::manifest::selected(
+            crate::config::resolve_reviewer_tool_contract(cfg)
+                .ok()
+                .as_deref(),
+        ),
+    })
 }
 
 struct SemanticRevision {
@@ -554,6 +561,15 @@ pub fn prepare(
         args.base = Some(resolve_base(base, cfg)?);
     }
 
+    let contract = crate::config::resolve_reviewer_tool_contract(cfg).ok();
+    if crate::manifest::selected(contract.as_deref()) && args.stage == "8" && args.base.is_some() {
+        return Err(PrepareFailure::packet(
+            "REVIEW_NOT_READY: SNAPSHOT_NOT_RECONSTRUCTIBLE\n  - --base: a Git commit is not reviewed \
+             state; a Stage-8 delta must use a bounded operation against its reviewed snapshot\n  \
+             The reviewer was not invoked. No review capacity was consumed.",
+        ));
+    }
+
     if !args.skip_prechecks {
         for artifact in &args.artifacts {
             let content = std::fs::read_to_string(artifact).map_err(|error| {
@@ -588,7 +604,6 @@ pub fn prepare(
         }
     }
 
-    let contract = crate::config::resolve_reviewer_tool_contract(cfg).ok();
     let manifest = crate::manifest::selected(contract.as_deref()).then(|| {
         let manifest = crate::manifest::derive(
             cfg,

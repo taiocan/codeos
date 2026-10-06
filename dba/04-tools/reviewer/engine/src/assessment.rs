@@ -607,6 +607,12 @@ pub fn write_assessment(
         .unwrap_or("");
     content.push_str(&format!("  reviewed_packet: packets/{}\n", packet_basename));
     content.push_str(&format!("  reviewed_packet_sha256: {}\n", packet_hash));
+    if let Some(manifest) = &packet.manifest {
+        content.push_str(&format!(
+            "  reviewed_snapshot: {}\n",
+            manifest.reviewed_snapshot
+        ));
+    }
     content.push_str(&format!(
         "  source: {}\n",
         if raw.is_external() {

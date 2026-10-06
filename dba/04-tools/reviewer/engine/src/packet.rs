@@ -9,6 +9,9 @@ use std::process::Command;
 #[derive(Debug, Clone)]
 pub struct ReviewedSnapshot {
     pub lineage: Vec<ReviewedPacketRecord>,
+    /// Reviewer Tool Contract v17: full-file artifacts embedded in a reviewed packet are pre-images
+    /// too, so a dirty or untracked reviewed workspace remains reconstructible.
+    pub full_file_preimages: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -537,12 +540,22 @@ fn diff_blocks_for_paths(diff: &str, paths: &[String]) -> String {
     result
 }
 
-fn embedded_path_bytes(packet: &str, path: &str) -> Result<Option<Vec<u8>>> {
+fn embedded_path_bytes(
+    packet: &str,
+    path: &str,
+    full_file_preimages: bool,
+) -> Result<Option<Vec<u8>>> {
     let prefix = format!("  --- {path} (mode: ");
+    let full_file = format!("  --- {path} (sha256: ");
     let matches = packet
         .lines()
         .enumerate()
-        .filter(|(_, line)| line.starts_with(&prefix))
+        .filter(|(_, line)| {
+            line.starts_with(&prefix)
+                || (full_file_preimages
+                    && line.starts_with(&full_file)
+                    && line.ends_with(", visibility: shown) ---"))
+        })
         .collect::<Vec<_>>();
     anyhow::ensure!(
         matches.len() <= 1,
@@ -551,7 +564,10 @@ fn embedded_path_bytes(packet: &str, path: &str) -> Result<Option<Vec<u8>>> {
     let Some((line_index, header)) = matches.first().copied() else {
         return Ok(None);
     };
-    if !header.contains("mode: added_file") && !header.contains("mode: full_current_context") {
+    if !header.contains("mode: added_file")
+        && !header.contains("mode: full_current_context")
+        && !header.starts_with(&full_file)
+    {
         return Ok(None);
     }
     let expected = header
@@ -662,7 +678,7 @@ pub fn reviewed_snapshot_diff(
             }
         }
         for path in paths {
-            if let Some(bytes) = embedded_path_bytes(&packet, path)? {
+            if let Some(bytes) = embedded_path_bytes(&packet, path, snapshot.full_file_preimages)? {
                 let destination = temp.path().join(path);
                 if let Some(parent) = destination.parent() {
                     std::fs::create_dir_all(parent)?;
@@ -2099,6 +2115,7 @@ mod tests {
         let packet_path = repo.path().join("reviewed.packet.txt");
         std::fs::write(&packet_path, &packet).unwrap();
         let snapshot = ReviewedSnapshot {
+            full_file_preimages: false,
             lineage: vec![ReviewedPacketRecord {
                 packet_path,
                 packet_sha256: sha256_str(&packet),
@@ -2123,5 +2140,75 @@ mod tests {
         let head_diff = git_diff_range("HEAD", &[], repo.path().to_str().unwrap()).unwrap();
         assert!(head_diff.contains("historical.txt"));
         assert!(head_diff.len() > delta.diff.len());
+    }
+
+    #[test]
+    fn reviewed_untracked_full_file_is_reconstructible_only_under_v17() {
+        let repo = tempfile::tempdir().unwrap();
+        let root = repo.path().to_str().unwrap();
+        for args in [
+            vec!["init", "-q"],
+            vec!["config", "user.email", "test@example.com"],
+            vec!["config", "user.name", "Test"],
+        ] {
+            assert!(Command::new("git")
+                .args(args)
+                .current_dir(root)
+                .status()
+                .unwrap()
+                .success());
+        }
+        std::fs::write(repo.path().join("tracked.txt"), "base\n").unwrap();
+        for args in [vec!["add", "."], vec!["commit", "-qm", "base"]] {
+            assert!(Command::new("git")
+                .args(args)
+                .current_dir(root)
+                .status()
+                .unwrap()
+                .success());
+        }
+        let commit = git_rev_parse("HEAD", root).unwrap();
+        // The reviewed workspace held an untracked evidence file, embedded in full.
+        let reviewed = "{\"observation\":1}\n";
+        std::fs::write(repo.path().join("evidence.json"), reviewed).unwrap();
+        let sha = sha256_str(reviewed);
+        let packet = format!(
+            "PACKET MANIFEST\n  items:\n    - path: evidence.json\n      mode: full_file\n      bytes: {}\n      sha256: {sha}\n\nARTIFACTS TO REVIEW\n  --- evidence.json (sha256: {sha}, visibility: shown) ---\n    {{\"observation\":1}}\n\nDIFF TO REVIEW (base->review, secret/size filtered)\n",
+            reviewed.len()
+        );
+        let packet_path = repo.path().join("reviewed.packet.txt");
+        std::fs::write(&packet_path, &packet).unwrap();
+        let snapshot = |full_file_preimages| ReviewedSnapshot {
+            full_file_preimages,
+            lineage: vec![ReviewedPacketRecord {
+                packet_path: packet_path.clone(),
+                packet_sha256: sha256_str(&packet),
+                review_commit: commit.clone(),
+            }],
+        };
+        let paths = ["evidence.json".to_string()];
+
+        // Without full-file pre-images the reviewed file is misreported as new material.
+        let legacy = reviewed_snapshot_diff(&snapshot(false), &paths, root).unwrap();
+        assert!(legacy.new_paths.contains("evidence.json"));
+
+        let unchanged = reviewed_snapshot_diff(&snapshot(true), &paths, root).unwrap();
+        assert!(unchanged.changed_paths.is_empty(), "{}", unchanged.diff);
+
+        std::fs::write(repo.path().join("evidence.json"), "{\"observation\":2}\n").unwrap();
+        let repaired = reviewed_snapshot_diff(&snapshot(true), &paths, root).unwrap();
+        assert_eq!(
+            repaired.changed_paths,
+            BTreeSet::from(["evidence.json".to_string()])
+        );
+        assert!(
+            repaired.new_paths.is_empty(),
+            "reviewed file must not count as new"
+        );
+        assert!(
+            repaired.diff.contains("+{\"observation\":2}"),
+            "{}",
+            repaired.diff
+        );
     }
 }

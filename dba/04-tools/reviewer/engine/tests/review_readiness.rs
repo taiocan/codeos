@@ -610,3 +610,11 @@ fn authorization_record_hashes_are_derived_under_v17() {
         );
     }
 }
+
+#[test]
+fn stage8_base_commit_delta_is_not_reviewed_state() {
+    let fixture = ready_project(false);
+    let fake = setup_fake_codex();
+    let result = review(&fixture, &fake, &["--base", "HEAD"]);
+    assert_not_ready(&fixture, result, "SNAPSHOT_NOT_RECONSTRUCTIBLE", &fake);
+}
