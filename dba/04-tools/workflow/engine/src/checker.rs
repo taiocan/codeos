@@ -740,6 +740,9 @@ fn accepted_frontier_excluding(
         if excluded_subject == Some(receipt.subject.as_str()) {
             continue;
         }
+        if !crate::revalidation::current_acceptance_valid(project, &receipt.subject)? {
+            continue;
+        }
         let contract = project.contract(&receipt.subject);
         let Some(now) = hashing::file_sha256(&contract)? else {
             continue;
@@ -1275,6 +1278,18 @@ fn evaluate_checkpoint(
                                     .into(),
                             );
                             next_action.get_or_insert("restore the exact evidence-repair chain or supply materially new evidence".into());
+                        } else if r.review_id.ends_with("__LINEAGE-REPLACEMENT-CORRECTION-1")
+                            && !evidence::lineage_replacement_correction_history_permits_progression(
+                                &project.codeos_dir().join("05-review/reviews/review-log.md"),
+                                &subject.id,
+                                stage,
+                                &r.review_id,
+                            )?
+                        {
+                            unmet.push("lineage replacement correction lacks the required immutable correction history".into());
+                            next_action.get_or_insert(
+                                "restore the exact authorized assessment-input correction chain".into(),
+                            );
                         } else if r.review_id.ends_with("__LINEAGE-REPLACEMENT-1")
                             && !evidence::lineage_replacement_history_permits_progression(
                                 &project.codeos_dir().join("05-review/reviews/review-log.md"),

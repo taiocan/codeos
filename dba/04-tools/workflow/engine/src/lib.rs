@@ -11,9 +11,11 @@ pub mod contract;
 pub mod event_evidence;
 pub mod evidence;
 pub mod hashing;
+pub mod monitor;
 pub mod project;
 pub mod receipts;
 pub mod report;
+pub mod revalidation;
 pub mod verification;
 
 pub const EXIT_SUCCESS: i32 = 0;

@@ -3,6 +3,7 @@ use std::path::PathBuf;
 use std::process;
 
 mod assessment;
+mod assessment_input_correction;
 mod cmd;
 mod codex;
 mod config;
@@ -108,6 +109,9 @@ struct ReviewCli {
     /// Replace one complete assessment whose mandatory input lineage was mechanically invalid.
     #[arg(long = "replace-invalid-lineage-after", value_name = "REVIEW_ID", conflicts_with_all = ["continues", "reentry_after", "evidence_closure_after", "infrastructure_revalidation_after", "evidence_reassessment_after", "terminal_review_closure_after", "retry_terminal_review_closure_after", "assessment"])]
     replace_invalid_lineage_after: Option<String>,
+    /// Reassess one consumed lineage replacement using only corrected pre-existing inputs.
+    #[arg(long = "correct-lineage-replacement-after", value_name = "REVIEW_ID", conflicts_with_all = ["continues", "reentry_after", "evidence_closure_after", "infrastructure_revalidation_after", "evidence_reassessment_after", "terminal_review_closure_after", "retry_terminal_review_closure_after", "replace_invalid_lineage_after", "assessment"])]
+    correct_lineage_replacement_after: Option<String>,
     /// Supply one bounded evidence-representation correction for a closure retry.
     #[arg(
         long = "assessability-correction",
@@ -175,6 +179,9 @@ enum Commands {
         /// Exact immutable applicability record authorizing a lineage replacement.
         #[arg(long = "applicability-record-sha", value_name = "SHA256")]
         applicability_record_sha: Option<String>,
+        /// Exact immutable eligibility record authorizing an assessment-input correction.
+        #[arg(long = "correction-record-sha", value_name = "SHA256")]
+        correction_record_sha: Option<String>,
         #[arg(long = "override", value_name = "RATIONALE")]
         override_reason: Option<String>,
     },
@@ -186,6 +193,14 @@ enum Commands {
     },
     /// Deterministically record that a complete review had invalid mandatory input lineage.
     AuditReviewApplicability {
+        feature: String,
+        #[arg(value_name = "WORKFLOW_OR_STAGE")]
+        stage: String,
+        #[arg(long = "review-id")]
+        review_id: String,
+    },
+    /// Audit whether a consumed lineage replacement failed only from correctable pre-existing inputs.
+    AuditAssessmentInputCorrection {
         feature: String,
         #[arg(value_name = "WORKFLOW_OR_STAGE")]
         stage: String,
@@ -281,6 +296,7 @@ fn run() -> i32 {
                     terminal_review_closure_after: args.terminal_review_closure_after,
                     retry_terminal_review_closure_after: args.retry_terminal_review_closure_after,
                     replace_invalid_lineage_after: args.replace_invalid_lineage_after,
+                    correct_lineage_replacement_after: args.correct_lineage_replacement_after,
                     assessability_correction: args.assessability_correction,
                     repair_manifest: args.repair_manifest,
                     findings: args.findings,
@@ -343,6 +359,7 @@ fn run() -> i32 {
             event_evidence_sha,
             closure_scope,
             applicability_record_sha,
+            correction_record_sha,
             override_reason,
         } => cmd::decision::run(
             &feature,
@@ -354,6 +371,7 @@ fn run() -> i32 {
             event_evidence_sha.as_deref(),
             closure_scope.as_deref(),
             applicability_record_sha.as_deref(),
+            correction_record_sha.as_deref(),
             override_reason.as_deref(),
             &cfg,
         )
@@ -379,6 +397,24 @@ fn run() -> i32 {
                 }
                 Err(error) => {
                     eprintln!("error: review applicability audit refused: {error}");
+                    EXIT_WRITE
+                }
+            }
+        }
+        Commands::AuditAssessmentInputCorrection {
+            feature,
+            stage,
+            review_id,
+        } => {
+            match assessment_input_correction::audit(&cfg, &feature, &stage, &review_id)
+                .and_then(|record| assessment_input_correction::append_audit(&cfg, &record))
+            {
+                Ok(sha) => {
+                    println!("assessment input correction eligibility recorded: {sha}");
+                    EXIT_SUCCESS
+                }
+                Err(error) => {
+                    eprintln!("error: assessment input correction audit refused: {error}");
                     EXIT_WRITE
                 }
             }

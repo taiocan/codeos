@@ -5,7 +5,8 @@ use codeos_workflow::contract::Workflow;
 use codeos_workflow::event_evidence::{self, VerifyEventArgs};
 use codeos_workflow::project::Project;
 use codeos_workflow::receipts::{Receipt, ReceiptStore, RECEIPT_CHECKPOINTS};
-use codeos_workflow::{report, EXIT_ERROR, EXIT_SUCCESS, EXIT_USAGE};
+use codeos_workflow::revalidation;
+use codeos_workflow::{monitor, report, EXIT_BLOCKED, EXIT_ERROR, EXIT_SUCCESS, EXIT_USAGE};
 use std::path::PathBuf;
 use std::process;
 
@@ -23,7 +24,7 @@ struct Cli {
 #[derive(Subcommand)]
 enum Cmd {
     /// Report every checkpoint's state for a subject. Read-only; never executes a test.
-    Status(Target),
+    Status(StatusArgs),
     /// Report the first blocked or waiting checkpoint and its next action. Read-only.
     Next(Target),
     /// Execute the pending mechanical verifications for a subject and persist a record per pass,
@@ -35,6 +36,45 @@ enum Cmd {
     Journey(JourneyArgs),
     /// Execute one verification command and canonically record its exact appended runtime events.
     VerifyEvents(VerifyEventsCli),
+    /// Build the bounded packet for post-acceptance dependency revalidation.
+    RevalidationPlan(RevalidationPlanArgs),
+    /// Record one independent post-acceptance revalidation assessment.
+    RevalidationRecord(RevalidationRecordArgs),
+}
+
+#[derive(clap::Args)]
+struct RevalidationPlanArgs {
+    #[arg(long)]
+    subject: String,
+    /// The later commit that invalidated the accepted implementation evidence; must be HEAD.
+    #[arg(long)]
+    trigger: String,
+    #[arg(long)]
+    output: PathBuf,
+}
+
+#[derive(clap::Args)]
+struct RevalidationRecordArgs {
+    #[arg(long)]
+    subject: String,
+    #[arg(long)]
+    trigger: String,
+    /// Independent JSON assessment containing only `decision` and `summary`.
+    #[arg(long)]
+    assessment: PathBuf,
+}
+
+#[derive(clap::Args)]
+struct StatusArgs {
+    /// bootstrap | feature | operation; omit together with --subject for a project-wide summary.
+    #[arg(long, requires = "subject", conflicts_with = "json")]
+    workflow: Option<String>,
+    /// The workflow subject; omit together with --workflow for a project-wide summary.
+    #[arg(long, requires = "workflow", conflicts_with = "json")]
+    subject: Option<String>,
+    /// Emit the project-wide status projection as JSON.
+    #[arg(long)]
+    json: bool,
 }
 
 #[derive(clap::Args)]
@@ -109,6 +149,39 @@ fn main() {
 
 fn run(cli: &Cli, start: &std::path::Path) -> Result<i32> {
     match &cli.command {
+        Cmd::RevalidationPlan(args) => {
+            let project = Project::discover(start)?;
+            let case = revalidation::build_case(&project, &args.subject, &args.trigger)?;
+            let packet = revalidation::packet(&project, &case)?;
+            if let Some(parent) = args.output.parent() {
+                std::fs::create_dir_all(parent)?;
+            }
+            std::fs::write(&args.output, packet)?;
+            println!(
+                "POST_ACCEPTANCE_REVALIDATION packet: {}",
+                args.output.display()
+            );
+            Ok(EXIT_SUCCESS)
+        }
+        Cmd::RevalidationRecord(args) => {
+            let project = Project::discover(start)?;
+            let case = revalidation::build_case(&project, &args.subject, &args.trigger)?;
+            let record = revalidation::record(&project, case, &args.assessment)?;
+            println!(
+                "recorded {} / {} = {} -> {}",
+                record.operation,
+                record.subject,
+                record.decision,
+                revalidation::RevalidationStore::at(&project.codeos_dir())
+                    .path()
+                    .display()
+            );
+            Ok(if record.decision == "REVALIDATED" {
+                EXIT_SUCCESS
+            } else {
+                EXIT_BLOCKED
+            })
+        }
         Cmd::VerifyEvents(args) => {
             let project = Project::discover(start)?;
             let subject = Subject::resolve(&project, Workflow::Feature, &args.subject)?;
@@ -141,7 +214,37 @@ fn run(cli: &Cli, start: &std::path::Path) -> Result<i32> {
             );
             Ok(EXIT_SUCCESS)
         }
-        Cmd::Status(t) | Cmd::Next(t) | Cmd::Check(t) => {
+        Cmd::Status(args) => {
+            let project = Project::discover(start)?;
+            if let (Some(workflow), Some(subject_id)) =
+                (args.workflow.as_deref(), args.subject.as_deref())
+            {
+                let Some(workflow) = Workflow::parse(workflow) else {
+                    eprintln!("workflow must be bootstrap | feature | operation");
+                    return Ok(EXIT_USAGE);
+                };
+                let subject = Subject::resolve(&project, workflow, subject_id)?;
+                let reports = checker::evaluate(&project, &subject)?;
+                println!(
+                    "{}",
+                    report::render_status(workflow.slug(), subject_id, &reports)
+                );
+                Ok(report::overall_exit(&reports))
+            } else {
+                let status = monitor::ProjectStatus::derive(&project)?;
+                if args.json {
+                    println!("{}", serde_json::to_string_pretty(&status)?);
+                } else {
+                    println!("{}", monitor::render(&status));
+                }
+                Ok(if status.is_blocked() {
+                    EXIT_BLOCKED
+                } else {
+                    EXIT_SUCCESS
+                })
+            }
+        }
+        Cmd::Next(t) | Cmd::Check(t) => {
             let Some(workflow) = Workflow::parse(&t.workflow) else {
                 eprintln!("workflow must be bootstrap | feature | operation");
                 return Ok(EXIT_USAGE);
@@ -160,10 +263,11 @@ fn run(cli: &Cli, start: &std::path::Path) -> Result<i32> {
             let reports = checker::evaluate(&project, &subject)?;
             match &cli.command {
                 Cmd::Next(_) => println!("{}", report::render_next(&reports)),
-                _ => println!(
+                Cmd::Check(_) => println!(
                     "{}",
                     report::render_status(workflow.slug(), &t.subject, &reports)
                 ),
+                _ => unreachable!(),
             }
             Ok(report::overall_exit(&reports))
         }

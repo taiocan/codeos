@@ -1704,6 +1704,11 @@ pub fn append_decision(
             entry.push_str(&format!("Terminal closure after: {}\n", review_id));
         } else if decision == "AUTHORIZE_LINEAGE_REPLACEMENT" {
             entry.push_str(&format!("Lineage replacement after: {}\n", review_id));
+        } else if decision == "AUTHORIZE_ASSESSMENT_INPUT_CORRECTION" {
+            entry.push_str(&format!(
+                "Assessment input correction after: {}\n",
+                review_id
+            ));
         } else {
             entry.push_str(&format!("Re-entry after: {}\n", review_id));
         }
@@ -1729,7 +1734,11 @@ pub fn append_decision(
         ));
     }
     if let Some(sha) = applicability_record_sha {
-        entry.push_str(&format!("Applicability record SHA-256: {}\n", sha));
+        if decision == "AUTHORIZE_ASSESSMENT_INPUT_CORRECTION" {
+            entry.push_str(&format!("Correction record SHA-256: {}\n", sha));
+        } else {
+            entry.push_str(&format!("Applicability record SHA-256: {}\n", sha));
+        }
     }
     entry.push_str(&format!("Reason/next: {}\n", reason));
 

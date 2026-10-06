@@ -127,8 +127,12 @@ pub fn audit(
 ) -> Result<ApplicabilityRecord> {
     anyhow::ensure!(stage == "8", "invalid-lineage recovery is Stage 8 only");
     anyhow::ensure!(
-        crate::config::resolve_reviewer_tool_contract(cfg)?
-            == "dba/04-tools/reviewer/contract/v14.md",
+        matches!(
+            crate::config::resolve_reviewer_tool_contract(cfg)?.as_str(),
+            "dba/04-tools/reviewer/contract/v14.md"
+                | "dba/04-tools/reviewer/contract/v15.md"
+                | "dba/04-tools/reviewer/contract/v16.md"
+        ),
         "invalid-lineage recovery requires Reviewer Tool Contract v14"
     );
     let log_text = std::fs::read_to_string(&cfg.review_log)?;
@@ -359,6 +363,30 @@ pub fn validate_current_lineage(
             .path
             .starts_with(".codeos/06-workflow/reality-evidence/")
     });
+    let contract = crate::config::resolve_reviewer_tool_contract(cfg)?;
+    if contract == "dba/04-tools/reviewer/contract/v16.md" {
+        let canonical_config = sha256_file(
+            cfg.repo_root
+                .join(".codeos/00-project/codeos.yaml")
+                .to_string_lossy()
+                .as_ref(),
+        )?;
+        let mut supplied = Vec::new();
+        for artifact in packet.artifacts.iter().filter(|item| {
+            item.path.starts_with("evidence/review/") && item.path.ends_with(".json")
+        }) {
+            let value: Value =
+                serde_json::from_slice(&std::fs::read(cfg.repo_root.join(&artifact.path))?)?;
+            supplied.push(value);
+        }
+        validate_v16_supplied_inputs(
+            &canonical_config,
+            &supplied,
+            packet.artifacts.iter().any(|a| {
+                a.path == ".codeos/06-workflow/verifications.jsonl" && a.visibility == "shown"
+            }),
+        )?;
+    }
     if selected.is_none() && !has_production_artifact {
         return Ok(None);
     }
@@ -411,6 +439,31 @@ pub fn validate_current_lineage(
         }
     }
     Ok(Some(selected))
+}
+
+fn validate_v16_supplied_inputs(
+    canonical_config: &str,
+    supplied: &[Value],
+    has_underlying_verifications: bool,
+) -> Result<()> {
+    let mut claims_verification_summary = false;
+    for value in supplied {
+        if let Some(claimed) = value
+            .pointer("/bindings/codeos_yaml")
+            .and_then(Value::as_str)
+        {
+            anyhow::ensure!(
+                claimed == canonical_config,
+                "review evidence codeos.yaml identity is not the canonical artifact hash"
+            );
+        }
+        claims_verification_summary |= value.get("verification").is_some();
+    }
+    anyhow::ensure!(
+        !claims_verification_summary || has_underlying_verifications,
+        "summary-only verification evidence is prohibited; include underlying inspectable verification records"
+    );
+    Ok(())
 }
 
 #[cfg(test)]
@@ -534,5 +587,28 @@ mod tests {
             "\"review_id\":\"REV__F-1__8__SR2__R3\"",
         );
         assert!(applicability_record(&tampered, &id).is_err());
+    }
+
+    #[test]
+    fn v16_rejects_transcribed_configuration_hash_before_review_capacity() {
+        let supplied = vec![serde_json::json!({
+            "bindings": {"codeos_yaml": "manually-expanded-wrong-hash"}
+        })];
+        let error = validate_v16_supplied_inputs("canonical-hash", &supplied, true)
+            .unwrap_err()
+            .to_string();
+        assert!(error.contains("not the canonical artifact hash"));
+    }
+
+    #[test]
+    fn v16_rejects_summary_only_verification_before_review_capacity() {
+        let supplied = vec![serde_json::json!({
+            "bindings": {"codeos_yaml": "canonical-hash"},
+            "verification": {"browser": {"result": "passed"}}
+        })];
+        let error = validate_v16_supplied_inputs("canonical-hash", &supplied, false)
+            .unwrap_err()
+            .to_string();
+        assert!(error.contains("summary-only verification evidence"));
     }
 }

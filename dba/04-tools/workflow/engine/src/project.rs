@@ -60,13 +60,24 @@ pub struct Project {
 }
 
 impl Project {
+    /// Resolve the immutable DBA configuration governing this project through the same adapter
+    /// used for all selected-policy lookups.
+    pub fn dba_configuration(&self) -> Result<String> {
+        let resolved = self.resolved_project_configuration("dba_configuration")?;
+        resolved
+            .lines()
+            .find_map(|line| line.strip_prefix("dba_configuration="))
+            .map(str::to_owned)
+            .context("resolved project configuration names no dba_configuration")
+    }
+
     /// Resolve the selected feature-workflow policy through the project's adopted composition.
     /// Older projects with no reachable resolver retain workflow v1 compatibility.
     pub fn feature_workflow_version(&self) -> Result<u8> {
         self.selected_policy_version(
             "workflow_feature_policy",
             "dba/02-policies/workflow-feature/v1.md",
-            &[1, 2, 3, 4],
+            &[1, 2, 3, 4, 5, 6],
         )
     }
 
@@ -92,6 +103,16 @@ impl Project {
         legacy_default: &str,
         supported: &[u8],
     ) -> Result<u8> {
+        let resolved = self.resolved_project_configuration(key)?;
+        let prefix = format!("{key}=");
+        let selected = resolved
+            .lines()
+            .find_map(|line| line.strip_prefix(&prefix))
+            .unwrap_or(legacy_default);
+        version_from_policy(selected, supported)
+    }
+
+    fn resolved_project_configuration(&self, key: &str) -> Result<String> {
         let resolver = if self.self_dev {
             self.root
                 .join("dba/04-tools/configuration/resolve-project-configuration.sh")
@@ -108,7 +129,7 @@ impl Project {
                     "explicit project configuration cannot resolve {key} because the toolkit resolver is unavailable"
                 );
             }
-            return version_from_policy(legacy_default, supported);
+            return Ok("codeos_schema=legacy\nresolution_mode=legacy-dba-7-cutover\ndba_configuration=DBA-7\n".into());
         }
         let output = Command::new("bash")
             .arg(&resolver)
@@ -122,13 +143,7 @@ impl Project {
                 String::from_utf8_lossy(&output.stderr).trim()
             );
         }
-        let resolved = String::from_utf8_lossy(&output.stdout);
-        let prefix = format!("{key}=");
-        let selected = resolved
-            .lines()
-            .find_map(|line| line.strip_prefix(&prefix))
-            .unwrap_or(legacy_default);
-        version_from_policy(selected, supported)
+        String::from_utf8(output.stdout).context("project configuration output is not UTF-8")
     }
 
     /// Resolve upward from `start` to the directory that holds `.codeos/` (downstream) or

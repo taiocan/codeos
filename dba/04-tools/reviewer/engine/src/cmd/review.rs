@@ -438,6 +438,7 @@ pub struct ReviewArgs {
     pub terminal_review_closure_after: Option<String>,
     pub retry_terminal_review_closure_after: Option<String>,
     pub replace_invalid_lineage_after: Option<String>,
+    pub correct_lineage_replacement_after: Option<String>,
     pub assessability_correction: Option<PathBuf>,
     pub repair_manifest: Option<PathBuf>,
     pub findings: Vec<String>,
@@ -768,7 +769,12 @@ pub fn run(mut args: ReviewArgs, cfg: &Config) -> Result<i32> {
         }
         if !matches!(
             selected_contract.as_deref(),
-            Some("dba/04-tools/reviewer/contract/v13.md" | "dba/04-tools/reviewer/contract/v14.md")
+            Some(
+                "dba/04-tools/reviewer/contract/v13.md"
+                    | "dba/04-tools/reviewer/contract/v14.md"
+                    | "dba/04-tools/reviewer/contract/v15.md"
+                    | "dba/04-tools/reviewer/contract/v16.md"
+            )
         ) {
             eprintln!(
                 "error: --retry-terminal-review-closure-after requires Reviewer Tool Contract v13"
@@ -830,7 +836,15 @@ pub fn run(mut args: ReviewArgs, cfg: &Config) -> Result<i32> {
     };
 
     if evidence.stage == "8"
-        && selected_contract.as_deref() == Some("dba/04-tools/reviewer/contract/v14.md")
+        && matches!(
+            selected_contract.as_deref(),
+            Some(
+                "dba/04-tools/reviewer/contract/v14.md"
+                    | "dba/04-tools/reviewer/contract/v15.md"
+                    | "dba/04-tools/reviewer/contract/v16.md"
+            )
+        )
+        && args.correct_lineage_replacement_after.is_none()
     {
         if let Err(error) = crate::lineage_replacement::validate_current_lineage(
             cfg,
@@ -851,6 +865,8 @@ pub fn run(mut args: ReviewArgs, cfg: &Config) -> Result<i32> {
                     | "dba/04-tools/reviewer/contract/v12.md"
                     | "dba/04-tools/reviewer/contract/v13.md"
                     | "dba/04-tools/reviewer/contract/v14.md"
+                    | "dba/04-tools/reviewer/contract/v15.md"
+                    | "dba/04-tools/reviewer/contract/v16.md"
             )
         )
         && args.continues.is_some()
@@ -870,6 +886,8 @@ pub fn run(mut args: ReviewArgs, cfg: &Config) -> Result<i32> {
                     | "dba/04-tools/reviewer/contract/v12.md"
                     | "dba/04-tools/reviewer/contract/v13.md"
                     | "dba/04-tools/reviewer/contract/v14.md"
+                    | "dba/04-tools/reviewer/contract/v15.md"
+                    | "dba/04-tools/reviewer/contract/v16.md"
             )
         )
         && args.retry_terminal_review_closure_after.is_none()
@@ -945,6 +963,7 @@ pub fn run(mut args: ReviewArgs, cfg: &Config) -> Result<i32> {
     let mut infrastructure_authorization = None;
     let mut evidence_reassessment = None;
     let mut lineage_replacement = false;
+    let mut lineage_replacement_correction = false;
     let mut terminal_closure = retry_terminal_closure;
     let mut review_id = if args.assessment.is_some() {
         match review_log::compute_assessment_sequence(
@@ -973,8 +992,52 @@ pub fn run(mut args: ReviewArgs, cfg: &Config) -> Result<i32> {
                     approved_stage8_cycle(cfg, &evidence.feature).unwrap_or(None),
                 )
             }
+        } else if let Some(predecessor) = args.correct_lineage_replacement_after.as_deref() {
+            if selected_contract.as_deref() != Some("dba/04-tools/reviewer/contract/v16.md") {
+                eprintln!("error: --correct-lineage-replacement-after requires Reviewer Tool Contract v16");
+                return Ok(crate::EXIT_USAGE);
+            }
+            let log = std::fs::read_to_string(&review_log_path).unwrap_or_default();
+            let correction = match crate::assessment_input_correction::resolve_authorization(
+                &log,
+                predecessor,
+            ) {
+                Ok(value) => value,
+                Err(error) => {
+                    eprintln!("error: assessment input correction refused: {error}");
+                    return Ok(crate::EXIT_WRITE);
+                }
+            };
+            let raw = match crate::assessment_input_correction::preflight(
+                cfg,
+                &correction,
+                &review_packet,
+            ) {
+                Ok(value) => value,
+                Err(error) => {
+                    eprintln!("error: assessment input correction preflight failed: {error}");
+                    return Ok(crate::EXIT_PACKET);
+                }
+            };
+            review_packet.constrain_to_assessment_input_correction(
+                predecessor,
+                &serde_json::to_string(&correction)?,
+                &raw,
+            );
+            lineage_replacement_correction = true;
+            crate::assessment_input_correction::correction_id(
+                &evidence.feature,
+                correction.semantic_revision,
+            )
         } else if let Some(predecessor) = args.replace_invalid_lineage_after.as_deref() {
-            if selected_contract.as_deref() != Some("dba/04-tools/reviewer/contract/v14.md") {
+            if !matches!(
+                selected_contract.as_deref(),
+                Some(
+                    "dba/04-tools/reviewer/contract/v14.md"
+                        | "dba/04-tools/reviewer/contract/v15.md"
+                        | "dba/04-tools/reviewer/contract/v16.md"
+                )
+            ) {
                 eprintln!(
                     "error: --replace-invalid-lineage-after requires Reviewer Tool Contract v14"
                 );
@@ -1023,7 +1086,9 @@ pub fn run(mut args: ReviewArgs, cfg: &Config) -> Result<i32> {
                     | "dba/04-tools/reviewer/contract/v11.md"
                     | "dba/04-tools/reviewer/contract/v12.md"
                     | "dba/04-tools/reviewer/contract/v13.md"
-                    | "dba/04-tools/reviewer/contract/v14.md")
+                    | "dba/04-tools/reviewer/contract/v14.md"
+                    | "dba/04-tools/reviewer/contract/v15.md"
+                    | "dba/04-tools/reviewer/contract/v16.md")
             ) {
                 eprintln!(
                     "error: --evidence-reassessment-after requires Reviewer Tool Contract v9"
@@ -1125,6 +1190,8 @@ pub fn run(mut args: ReviewArgs, cfg: &Config) -> Result<i32> {
                     "dba/04-tools/reviewer/contract/v12.md"
                         | "dba/04-tools/reviewer/contract/v13.md"
                         | "dba/04-tools/reviewer/contract/v14.md"
+                        | "dba/04-tools/reviewer/contract/v15.md"
+                        | "dba/04-tools/reviewer/contract/v16.md"
                 )
             ) {
                 eprintln!(
@@ -1146,6 +1213,8 @@ pub fn run(mut args: ReviewArgs, cfg: &Config) -> Result<i32> {
                 Some(
                     "dba/04-tools/reviewer/contract/v13.md"
                         | "dba/04-tools/reviewer/contract/v14.md"
+                        | "dba/04-tools/reviewer/contract/v15.md"
+                        | "dba/04-tools/reviewer/contract/v16.md"
                 )
             ) {
                 let failure_id = crate::terminal_closure::format_terminal_failure_id(
@@ -1224,6 +1293,8 @@ pub fn run(mut args: ReviewArgs, cfg: &Config) -> Result<i32> {
                             | "dba/04-tools/reviewer/contract/v12.md"
                             | "dba/04-tools/reviewer/contract/v13.md"
                             | "dba/04-tools/reviewer/contract/v14.md"
+                            | "dba/04-tools/reviewer/contract/v15.md"
+                            | "dba/04-tools/reviewer/contract/v16.md"
                     ) =>
                 {
                     let current_semantic_revision = if evidence.stage == "8" {
@@ -1301,6 +1372,8 @@ pub fn run(mut args: ReviewArgs, cfg: &Config) -> Result<i32> {
                                 | "dba/04-tools/reviewer/contract/v12.md"
                                 | "dba/04-tools/reviewer/contract/v13.md"
                                 | "dba/04-tools/reviewer/contract/v14.md"
+                                | "dba/04-tools/reviewer/contract/v15.md"
+                                | "dba/04-tools/reviewer/contract/v16.md"
                         )
                     }) =>
                 {
@@ -1414,6 +1487,8 @@ pub fn run(mut args: ReviewArgs, cfg: &Config) -> Result<i32> {
                     | "dba/04-tools/reviewer/contract/v12.md"
                     | "dba/04-tools/reviewer/contract/v13.md"
                     | "dba/04-tools/reviewer/contract/v14.md"
+                    | "dba/04-tools/reviewer/contract/v15.md"
+                    | "dba/04-tools/reviewer/contract/v16.md"
             )
         )
     {
@@ -1485,9 +1560,25 @@ pub fn run(mut args: ReviewArgs, cfg: &Config) -> Result<i32> {
     {
         parsed.effective_concern = "LINEAGE REPLACEMENT CLOSED — PROGRESSION PERMITTED".to_string();
     }
+    if lineage_replacement_correction
+        && parsed.parse_status == "OK"
+        && parsed.assessment_status == "COMPLETE"
+        && parsed.codex_concern == "NO OBJECTION"
+        && !findings
+            .iter()
+            .any(|finding| finding.classification == "IN-SCOPE BLOCKER")
+    {
+        parsed.effective_concern =
+            "LINEAGE REPLACEMENT CORRECTION CLOSED — PROGRESSION PERMITTED".to_string();
+    }
     if matches!(
         selected_contract.as_deref(),
-        Some("dba/04-tools/reviewer/contract/v13.md" | "dba/04-tools/reviewer/contract/v14.md")
+        Some(
+            "dba/04-tools/reviewer/contract/v13.md"
+                | "dba/04-tools/reviewer/contract/v14.md"
+                | "dba/04-tools/reviewer/contract/v15.md"
+                | "dba/04-tools/reviewer/contract/v16.md"
+        )
     ) {
         if let Some(execution) = terminal_closure.as_mut() {
             let revision = approved_stage8_cycle(cfg, &evidence.feature)?;

@@ -747,6 +747,50 @@ pub fn lineage_replacement_history_permits_progression(
         && content.contains("Applicability record SHA-256:"))
 }
 
+pub fn lineage_replacement_correction_history_permits_progression(
+    log_path: &Path,
+    feature: &str,
+    stage: &str,
+    correction_id: &str,
+) -> Result<bool> {
+    let Ok(content) = std::fs::read_to_string(log_path) else {
+        return Ok(false);
+    };
+    if !correction_id.starts_with(&format!("REV__{feature}__{stage}__"))
+        || !correction_id.ends_with("__LINEAGE-REPLACEMENT-CORRECTION-1")
+        || content
+            .matches(&format!("Review ID: {correction_id}"))
+            .count()
+            != 1
+    {
+        return Ok(false);
+    }
+    let (_, tail) = content
+        .split_once(&format!("Review ID: {correction_id}"))
+        .context("correction assessment record missing")?;
+    let correction = tail.split("\n## ").next().unwrap_or(tail);
+    if !correction
+        .lines()
+        .any(|line| line == "Parse status: OK   Assessment status: COMPLETE")
+        || !correction.lines().any(|line| {
+            line == "Effective concern: LINEAGE REPLACEMENT CORRECTION CLOSED — PROGRESSION PERMITTED"
+        })
+    {
+        return Ok(false);
+    }
+    let failed_id = correction_id.trim_end_matches("-CORRECTION-1").to_string() + "-1";
+    if !content.contains(&format!("Review ID: {failed_id}"))
+        || !content.contains(&format!(
+            "Correction eligibility target: {failed_id}\nEligibility: ASSESSMENT_INPUT_CORRECTION"
+        ))
+        || !content.contains(&format!("Assessment input correction after: {failed_id}"))
+        || !content.contains("Correction record SHA-256:")
+    {
+        return Ok(false);
+    }
+    Ok(true)
+}
+
 /// Validate the immutable composite history required by Review Policy v5. This is deliberately
 /// stricter than treating the closure assessment as a replacement for REENTRY-1.
 pub fn evidence_closure_history_permits_progression(
@@ -1347,5 +1391,33 @@ mod tests {
         assert!(
             !terminal_review_closure_history_permits_progression(&log, "F-1", "8", retry).unwrap()
         );
+    }
+
+    #[test]
+    fn lineage_replacement_correction_requires_the_complete_immutable_chain() {
+        let dir = tempfile::tempdir().unwrap();
+        let log = dir.path().join("review-log.md");
+        let failed = "REV__F-2__8__SR3__LINEAGE-REPLACEMENT-1";
+        let correction = "REV__F-2__8__SR3__LINEAGE-REPLACEMENT-CORRECTION-1";
+        let text = format!(
+            "## t REVIEW — F-2 — Stage 8\nReview ID: {failed}\nEffective concern: DO NOT ADVANCE\nParse status: OK   Assessment status: COMPLETE\n\n## t ASSESSMENT INPUT CORRECTION ELIGIBILITY — F-2 — Stage 8\nCorrection eligibility target: {failed}\nEligibility: ASSESSMENT_INPUT_CORRECTION\nCorrection record SHA-256: abc\n\n## t HUMAN DECISION — F-2 — Stage 8\nDecision: AUTHORIZE_ASSESSMENT_INPUT_CORRECTION\nAssessment input correction after: {failed}\nCorrection record SHA-256: abc\n\n## t REVIEW — F-2 — Stage 8\nReview ID: {correction}\nEffective concern: LINEAGE REPLACEMENT CORRECTION CLOSED — PROGRESSION PERMITTED\nParse status: OK   Assessment status: COMPLETE\n"
+        );
+        fs::write(&log, &text).unwrap();
+        assert!(lineage_replacement_correction_history_permits_progression(
+            &log, "F-2", "8", correction
+        )
+        .unwrap());
+        fs::write(
+            &log,
+            text.replace(
+                "Eligibility: ASSESSMENT_INPUT_CORRECTION",
+                "Eligibility: DENIED",
+            ),
+        )
+        .unwrap();
+        assert!(!lineage_replacement_correction_history_permits_progression(
+            &log, "F-2", "8", correction
+        )
+        .unwrap());
     }
 }

@@ -222,6 +222,18 @@ impl ReviewPacket {
         self.content_sha256 = crate::packet::sha256_str(&self.content);
     }
 
+    pub fn constrain_to_assessment_input_correction(
+        &mut self,
+        failed_replacement: &str,
+        correction_record: &str,
+        verification_records: &str,
+    ) {
+        self.content.push_str(&format!(
+            "\n\nASSESSMENT INPUT CORRECTION — SINGLE CORRECTED ASSESSMENT\nFailed replacement: {failed_replacement}\nImmutable correction record:\n{correction_record}\n\nUNDERLYING INSPECTABLE VERIFICATION RECORDS\n```jsonl\n{verification_records}\n```\nReassess only the same replacement-review question using these corrected pre-existing inputs. The failed assessment remains immutable and DO NOT ADVANCE. Do not expand scope, accept new evidence, or respond to substantive repairs. Any mismatch or blocker requires DO NOT ADVANCE.\n"
+        ));
+        self.content_sha256 = crate::packet::sha256_str(&self.content);
+    }
+
     /// Restore a packet from an exported sidecar plus the exported bytes. The bytes are adopted
     /// verbatim: nothing is rebuilt, so the reviewed packet and the recorded packet are the same
     /// bytes by construction rather than by a later comparison.

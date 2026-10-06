@@ -51,13 +51,16 @@ The command paths:
    `Subject::resolve` reads the Feature Impact Accounting table and GUI-visible-outcome marker from
    the Contract to fix `gui` / `persistence` applicability. Without a runtime profile, the shipped
    skeleton's existing service and endpoint defaults remain in effect.
-2. `status` and `next` call `checker::evaluate`, which is strictly read-only. For a Feature subject
-   with no prior acceptance receipt it first synthesizes a `bootstrap-entry` report by evaluating
-   the Bootstrap subject and checking B1–B4. It then walks the contract in order: a non-applicable
-   checkpoint is `n/a`; once any checkpoint is not `PASS`, every later one is `BLOCKED` behind it;
-   otherwise `evaluate_checkpoint` resolves each `Requirement` against the three evidence classes.
-   A checkpoint with unmet conditions is `WAITING` when the only thing missing is a human decision,
-   `BLOCKED` otherwise.
+2. Targeted `status` and `next` call `checker::evaluate`, which is strictly read-only. For a
+   Feature subject with no prior acceptance receipt it first synthesizes a `bootstrap-entry` report
+   by evaluating the Bootstrap subject and checking B1–B4. It then walks the contract in order: a
+   non-applicable checkpoint is `n/a`; once any checkpoint is not `PASS`, every later one is
+   `BLOCKED` behind it; otherwise `evaluate_checkpoint` resolves each `Requirement` against the
+   three evidence classes. A checkpoint with unmet conditions is `WAITING` when the only thing
+   missing is a human decision, `BLOCKED` otherwise.
+   Project-wide `status` calls that same evaluator for Bootstrap and every Feature ID found in the
+   Specification Package directories, then renders the resulting read-only projection as terminal
+   text or JSON. It identifies a current feature only when exactly one feature is incomplete.
 3. `check` calls `run_checks`, which loops: `evaluate` read-only, find the first `BLOCKED` /
    `WAITING` checkpoint, stop if it is blocked behind an earlier checkpoint or waits on a
    non-mechanical condition, otherwise run each of its `LiveVerification` mechanics whose record is
@@ -116,7 +119,8 @@ The three contracts as they flow end to end:
 - `hashing.rs` — `file_sha256`, `working_tree_state` (committed tree entries + tracked diff +
   untracked bytes for resolved implementation paths, so previews bind to uncommitted work without
   drifting on unrelated commits), `text_sha256`, and `binding_drift` shared by both stores.
-- `project.rs` / `report.rs` / `main.rs` — path resolution, `status` / `next` rendering, CLI.
+- `project.rs` / `monitor.rs` / `report.rs` / `main.rs` — path and configuration resolution,
+  project and subject status rendering, and CLI.
 
 ## Data and state
 

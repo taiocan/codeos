@@ -12,6 +12,7 @@ const VALID_DECISIONS: &[&str] = &[
     "AUTHORIZE_INFRASTRUCTURE_REVALIDATION",
     "AUTHORIZE_TERMINAL_REVIEW_CLOSURE",
     "AUTHORIZE_LINEAGE_REPLACEMENT",
+    "AUTHORIZE_ASSESSMENT_INPUT_CORRECTION",
 ];
 
 pub fn run(
@@ -24,12 +25,13 @@ pub fn run(
     event_evidence_sha: Option<&str>,
     closure_scope_path: Option<&Path>,
     applicability_record_sha: Option<&str>,
+    correction_record_sha: Option<&str>,
     override_reason: Option<&str>,
     cfg: &Config,
 ) -> Result<i32> {
     if !VALID_DECISIONS.contains(&decision) {
         eprintln!(
-            "decision must be APPROVE_STAGE | REQUEST_CHANGES | STOP | AUTHORIZE_REENTRY | AUTHORIZE_EVIDENCE_CLOSURE | AUTHORIZE_INFRASTRUCTURE_REVALIDATION | AUTHORIZE_TERMINAL_REVIEW_CLOSURE | AUTHORIZE_LINEAGE_REPLACEMENT"
+            "decision must be APPROVE_STAGE | REQUEST_CHANGES | STOP | AUTHORIZE_REENTRY | AUTHORIZE_EVIDENCE_CLOSURE | AUTHORIZE_INFRASTRUCTURE_REVALIDATION | AUTHORIZE_TERMINAL_REVIEW_CLOSURE | AUTHORIZE_LINEAGE_REPLACEMENT | AUTHORIZE_ASSESSMENT_INPUT_CORRECTION"
         );
         return Ok(crate::EXIT_USAGE);
     }
@@ -39,6 +41,7 @@ pub fn run(
     let is_infrastructure_authorization = decision == "AUTHORIZE_INFRASTRUCTURE_REVALIDATION";
     let is_terminal_closure_authorization = decision == "AUTHORIZE_TERMINAL_REVIEW_CLOSURE";
     let is_lineage_replacement_authorization = decision == "AUTHORIZE_LINEAGE_REPLACEMENT";
+    let is_input_correction_authorization = decision == "AUTHORIZE_ASSESSMENT_INPUT_CORRECTION";
     let mut terminal_scope = None;
     if is_reentry_authorization {
         if reason.trim().is_empty() {
@@ -69,6 +72,8 @@ pub fn run(
                         | "dba/04-tools/reviewer/contract/v12.md"
                         | "dba/04-tools/reviewer/contract/v13.md"
                         | "dba/04-tools/reviewer/contract/v14.md"
+                        | "dba/04-tools/reviewer/contract/v15.md"
+                        | "dba/04-tools/reviewer/contract/v16.md"
                 ) =>
             {
                 let current_semantic_revision = if stage == "8" {
@@ -206,6 +211,8 @@ pub fn run(
                     "dba/04-tools/reviewer/contract/v12.md"
                         | "dba/04-tools/reviewer/contract/v13.md"
                         | "dba/04-tools/reviewer/contract/v14.md"
+                        | "dba/04-tools/reviewer/contract/v15.md"
+                        | "dba/04-tools/reviewer/contract/v16.md"
                 ) => {}
             Ok(contract) => {
                 eprintln!("error: Terminal Review Closure is not supported by {contract}");
@@ -250,9 +257,12 @@ pub fn run(
             eprintln!("error: AUTHORIZE_LINEAGE_REPLACEMENT requires a bounded reason");
             return Ok(crate::EXIT_USAGE);
         }
-        if crate::config::resolve_reviewer_tool_contract(cfg)?.as_str()
-            != "dba/04-tools/reviewer/contract/v14.md"
-        {
+        if !matches!(
+            crate::config::resolve_reviewer_tool_contract(cfg)?.as_str(),
+            "dba/04-tools/reviewer/contract/v14.md"
+                | "dba/04-tools/reviewer/contract/v15.md"
+                | "dba/04-tools/reviewer/contract/v16.md"
+        ) {
             eprintln!("error: lineage replacement requires Reviewer Tool Contract v14");
             return Ok(crate::EXIT_USAGE);
         }
@@ -273,6 +283,38 @@ pub fn run(
             eprintln!("error: lineage replacement already authorized or executed");
             return Ok(crate::EXIT_USAGE);
         }
+    } else if is_input_correction_authorization {
+        let Some(review_id) = after_review else {
+            eprintln!("error: AUTHORIZE_ASSESSMENT_INPUT_CORRECTION requires --after-review");
+            return Ok(crate::EXIT_USAGE);
+        };
+        let Some(expected_sha) = correction_record_sha else {
+            eprintln!(
+                "error: AUTHORIZE_ASSESSMENT_INPUT_CORRECTION requires --correction-record-sha"
+            );
+            return Ok(crate::EXIT_USAGE);
+        };
+        if reason.trim().is_empty() {
+            eprintln!("error: AUTHORIZE_ASSESSMENT_INPUT_CORRECTION requires a bounded reason");
+            return Ok(crate::EXIT_USAGE);
+        }
+        if crate::config::resolve_reviewer_tool_contract(cfg)?
+            != "dba/04-tools/reviewer/contract/v16.md"
+        {
+            eprintln!("error: assessment input correction requires Reviewer Tool Contract v16");
+            return Ok(crate::EXIT_USAGE);
+        }
+        let log = std::fs::read_to_string(&cfg.review_log)?;
+        let (_, actual_sha) =
+            crate::assessment_input_correction::correction_record(&log, review_id)?;
+        if actual_sha != expected_sha {
+            eprintln!("error: correction record SHA-256 does not match immutable history");
+            return Ok(crate::EXIT_USAGE);
+        }
+        if log.contains(&format!("Assessment input correction after: {review_id}")) {
+            eprintln!("error: assessment input correction already authorized or executed");
+            return Ok(crate::EXIT_USAGE);
+        }
     } else if after_review.is_some() {
         eprintln!("error: --after-review is valid only with AUTHORIZE_REENTRY, AUTHORIZE_EVIDENCE_CLOSURE, AUTHORIZE_INFRASTRUCTURE_REVALIDATION, or AUTHORIZE_TERMINAL_REVIEW_CLOSURE");
         return Ok(crate::EXIT_USAGE);
@@ -280,6 +322,7 @@ pub fn run(
         || event_evidence_sha.is_some()
         || closure_scope_path.is_some()
         || applicability_record_sha.is_some()
+        || correction_record_sha.is_some()
     {
         eprintln!("error: bounded authorization inputs are valid only with their corresponding authorization decision");
         return Ok(crate::EXIT_USAGE);
@@ -294,6 +337,7 @@ pub fn run(
         || is_infrastructure_authorization
         || is_terminal_closure_authorization
         || is_lineage_replacement_authorization
+        || is_input_correction_authorization
     {
         None
     } else {
@@ -381,6 +425,8 @@ pub fn run(
         terminal_scope.as_ref(),
         if is_lineage_replacement_authorization {
             applicability_record_sha
+        } else if is_input_correction_authorization {
+            correction_record_sha
         } else {
             None
         },

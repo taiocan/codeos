@@ -45,6 +45,7 @@ Canonical durable locations are:
 | Review measurement | `.codeos/05-review/measurements/<name>.md` | Only when it has durable value |
 | Workflow decision receipts | `.codeos/06-workflow/decisions.jsonl` | Created and owned by `codeos-workflow` under DBA-6 and later; append-only, non-authoritative |
 | Workflow verification records | `.codeos/06-workflow/verifications.jsonl` | Created and owned by `codeos-workflow` under DBA-6 and later; append-only, non-authoritative |
+| Post-acceptance revalidations | `.codeos/06-workflow/revalidations.jsonl` | Created and owned by `codeos-workflow` under DBA-20 and later; append-only, non-authoritative |
 | Production-source evidence | `.codeos/06-workflow/reality-evidence/<sha256>.json` | Created by `codeos-workflow` when a reality-dependent claim is verified; immutable and explicitly selected at F6 |
 
 Implementation Profile replacement may additionally use
