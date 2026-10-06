@@ -19,6 +19,8 @@ pub struct ReviewInputManifest {
     pub stage: String,
     /// The review identity this manifest was derived for; it names the review operation.
     pub operation: String,
+    /// The predecessor review a bounded operation targets; `None` for an ordinary review.
+    pub lineage_target: Option<String>,
     pub semantic_revision: Option<u64>,
     pub configuration: Option<String>,
     pub implementation: Option<String>,
@@ -44,6 +46,8 @@ pub(crate) struct Derived {
     /// `<checkpoint>/<verification>` -> (exact stored line, parsed record).
     pub records: BTreeMap<String, (String, VerificationRecord)>,
     pub project_error: Option<String>,
+    /// Architecture Scopes could not be read, so the applicable scope is unknown.
+    pub scope_error: Option<String>,
 }
 
 pub fn selected(contract: Option<&str>) -> bool {
@@ -92,6 +96,11 @@ pub fn derive(
             .filter(|path| path.starts_with(".codeos/02-architecture/scopes/"))
             .cloned(),
     );
+    match crate::cmd::inspect_architecture_scopes::owning_scope_path(root, feature) {
+        Ok(Some(scope)) if !governed.contains(&scope) => governed.push(scope),
+        Ok(_) => {}
+        Err(error) => manifest.derived.scope_error = Some(error),
+    }
     for path in governed {
         manifest.governed_context.insert(path.clone(), hash(&path));
         manifest.required_inputs.insert(path);

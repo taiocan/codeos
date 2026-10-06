@@ -1,5 +1,22 @@
-//! Executable proof of the Review Readiness Gate (Review Policy v15, Reviewer Tool Contract v17):
-//! every refusal happens before the reviewer is invoked. No real provider is used.
+//! Executable conformance proof for Review Policy v15 and Reviewer Tool Contract v17. Every
+//! refusal happens before the reviewer is invoked and writes no review record. No real provider
+//! is used; the fake reviewer counts invocations.
+//!
+//! | v15 rule | v17 clause | Implementation | Tests |
+//! |---|---|---|---|
+//! | Readiness before every invocation | Readiness and coverage | `readiness::evaluate`, gate in `cmd/review.rs` | every `*_refused`, `*_not_ready*` test |
+//! | Environment usable | `EXECUTION_ENVIRONMENT_BLOCKED` | `readiness::environment`, `docker_available` | `unavailable_reviewer_cli_*`, `unavailable_docker_*` |
+//! | Toolchain usable | `REVIEWER_BUILD_MISMATCH` | `build_identity`, `readiness::toolchain` | `stale_reviewer_binary_is_refused` |
+//! | Machine-owned identities | `CONFIGURATION_MISMATCH`, `IMPLEMENTATION_IDENTITY_INVALID`, supplied hashes are expectations | `manifest::derive`, `readiness::identities`, `cmd/decision.rs` | `transcribed_configuration_*`, `unsupported_implementation_*`, `supplied_event_evidence_*`, `authorization_record_hashes_*` |
+//! | Evidence current and coherent | `EVIDENCE_STALE`, `F6_SELECTED_EVIDENCE_MISMATCH` | `readiness::evidence` | `implementation_changed_*`, `wrong_f6_*` |
+//! | Required inputs inspectable | `REQUIRED_INPUT_MISSING`, `REQUIRED_INPUT_NOT_INSPECTABLE` | `readiness::inspectability`, prepare governed-context check | `missing_required_verification_*`, `missing_governed_context_*`, `caller_cannot_narrow_*`, `caller_cannot_omit_*`, `owning_architecture_scope_*`, `unreadable_architecture_scopes_*` |
+//! | One manifest drives the packet | Review Input Manifest, incl. lineage target | `manifest.rs`, `packet::include_verification_records`, sidecar | `complete_current_evidence_*`, `owning_architecture_scope_*` |
+//! | Scope-aware coverage and budget | `FULL_COVERAGE` over the required set | `PacketBuildOptions::scope`, `readiness::coverage` | `coverage_and_budget_are_scoped_*` |
+//! | Reviewed-state snapshot | `SNAPSHOT_NOT_RECONSTRUCTIBLE`, snapshot deltas | `ReviewedSnapshot::full_file_preimages`, `--base` refusal | `stage8_base_commit_*`, `packet::tests::reviewed_untracked_full_file_*` |
+//! | Bounded lineage | `LINEAGE_INVALID` | `refuse_lineage` | `absent_bounded_lineage_is_refused` |
+//! | Execution failure is not semantic | `REVIEW_EXECUTION_INVALID`, two automatic re-executions | execution loop in `cmd/review.rs`, `log::append_execution_invalid` | `structurally_invalid_*`, `automatic_reexecution_*`, `invalid_execution_is_invisible_*` |
+//! | Only development failures block | `DO NOT ADVANCE` unchanged | assessment parsing | `genuine_defects_still_block_progression` |
+//! | End to end | manifest → gate → packet → review → record → workflow/decision | all of the above | `ready_review_is_consumed_by_workflow_and_decision` |
 
 mod common;
 
@@ -448,7 +465,10 @@ fn add_unrelated_history(fixture: &Fixture) {
     );
     write(
         &root.join("notes/unrelated.md"),
-        &"UNRELATED-HISTORY-MARKER\n".repeat(6000),
+        &format!(
+            "api_key=UNRELATEDSECRETVALUE\n{}",
+            "UNRELATED-HISTORY-MARKER\n".repeat(6000)
+        ),
     );
 }
 
@@ -489,6 +509,10 @@ fn coverage_and_budget_are_scoped_to_required_inputs() {
 
     let sidecar = sidecar(&fixture);
     assert_eq!(sidecar["coverage_state"], "FullCoverage");
+    assert_eq!(
+        sidecar["redaction_count"], 0,
+        "unrelated secrets must not affect coverage"
+    );
     let required = sidecar["manifest"]["required_inputs"].as_array().unwrap();
     assert!(required.iter().any(|path| path == "src/new.rs"));
     assert!(!required.iter().any(|path| path == "notes/unrelated.md"));
@@ -714,5 +738,191 @@ fn automatic_reexecution_recovers_with_identical_inputs() {
         std::fs::read_dir(preserved).unwrap().count(),
         2,
         "packet plus one attempt"
+    );
+}
+
+fn assert_refused_with(
+    fixture: &Fixture,
+    result: (i32, String, String),
+    code: &str,
+    fake: &common::FakeCodex,
+) {
+    let (status, _, stderr) = result;
+    assert_ne!(status, 0, "{stderr}");
+    assert!(stderr.contains("REVIEW_NOT_READY"), "{stderr}");
+    assert!(
+        stderr.contains(&format!("  - {code}:")),
+        "expected {code}:\n{stderr}"
+    );
+    assert!(!invoked(fake));
+    assert!(!fixture.path().join(".codeos/05-review/reviews").exists());
+}
+
+#[test]
+fn unavailable_docker_is_reported_as_the_environment_cause() {
+    let fixture = ready_project(false);
+    write(&fixture.path().join("docker-compose.yml"), "services: {}\n");
+    let fake = setup_fake_codex();
+    write(
+        &fake.dir.path().join("docker"),
+        "#!/usr/bin/env bash\nexit 1\n",
+    );
+    use std::os::unix::fs::PermissionsExt;
+    std::fs::set_permissions(
+        fake.dir.path().join("docker"),
+        std::fs::Permissions::from_mode(0o755),
+    )
+    .unwrap();
+    // The new compose file changes the implementation, so evidence must be refreshed with Docker.
+    assert_not_ready(
+        &fixture,
+        review(&fixture, &fake, &[]),
+        "EXECUTION_ENVIRONMENT_BLOCKED",
+        &fake,
+    );
+}
+
+#[test]
+fn missing_governed_context_is_refused() {
+    let fixture = ready_project(false);
+    std::fs::remove_file(fixture.path().join(schema())).unwrap();
+    let fake = setup_fake_codex();
+    assert_refused_with(
+        &fixture,
+        review(&fixture, &fake, &[]),
+        "REQUIRED_INPUT_MISSING",
+        &fake,
+    );
+}
+
+#[test]
+fn absent_bounded_lineage_is_refused() {
+    let fixture = ready_project(false);
+    let fake = setup_fake_codex();
+    let result = review(
+        &fixture,
+        &fake,
+        &["--replace-invalid-lineage-after", "REV__FEAT__8__SR2__R3"],
+    );
+    assert_not_ready(&fixture, result, "LINEAGE_INVALID", &fake);
+}
+
+#[test]
+fn genuine_defects_still_block_progression() {
+    let fixture = ready_project(false);
+    let fake = setup_fake_codex();
+    let (status, stdout, stderr) = review_mode(&fixture, &fake, "blocking");
+    assert_eq!(status, 0, "{stdout}\n{stderr}");
+    let record = codeos_workflow::evidence::latest_review_record(
+        &fixture.path().join(".codeos/05-review/reviews"),
+        FEATURE,
+        "8",
+    )
+    .unwrap()
+    .expect("semantic review record");
+    assert_eq!(record.review_id, "REV__FEAT__8__SR2__R1");
+    assert_eq!(record.effective_concern, "DO NOT ADVANCE");
+    assert!(!codeos_workflow::evidence::review_permits_progression(
+        &record.effective_concern
+    ));
+}
+
+/// End to end: project state -> manifest -> readiness PASS -> full-coverage packet -> reviewer ->
+/// valid assessment -> record -> workflow reader and human decision consume it.
+#[test]
+fn ready_review_is_consumed_by_workflow_and_decision() {
+    let fixture = ready_project(true);
+    let fake = setup_fake_codex();
+    let (status, stdout, stderr) = review_mode(&fixture, &fake, "success");
+    assert_eq!(status, 0, "{stdout}\n{stderr}");
+    assert_eq!(invocations(&fake), 1);
+    assert_eq!(sidecar(&fixture)["coverage_state"], "FullCoverage");
+
+    let record = codeos_workflow::evidence::latest_review_record(
+        &fixture.path().join(".codeos/05-review/reviews"),
+        FEATURE,
+        "8",
+    )
+    .unwrap()
+    .expect("semantic review record");
+    assert_eq!(record.review_id, "REV__FEAT__8__SR2__R1");
+    assert!(codeos_workflow::evidence::review_permits_progression(
+        &record.effective_concern
+    ));
+
+    let (status, _, stderr) = run_in_dir_with_env(
+        fixture.path(),
+        &[
+            "decision",
+            FEATURE,
+            "8",
+            "APPROVE_STAGE",
+            "ready review accepted",
+        ],
+        &[],
+    );
+    assert_eq!(status, 0, "{stderr}");
+    assert!(review_log(&fixture).contains("APPROVE_STAGE"));
+}
+
+#[test]
+fn invalid_execution_is_invisible_to_the_workflow() {
+    let fixture = ready_project(false);
+    let fake = setup_fake_codex();
+    let _ = review_mode(&fixture, &fake, "structural_failure");
+    let record = codeos_workflow::evidence::latest_review_record(
+        &fixture.path().join(".codeos/05-review/reviews"),
+        FEATURE,
+        "8",
+    )
+    .unwrap();
+    assert!(
+        record.is_none(),
+        "an invalid execution is not a review record"
+    );
+}
+
+#[test]
+fn owning_architecture_scope_is_required_and_included() {
+    let fixture = ready_project(false);
+    let scope = ".codeos/02-architecture/scopes/core.md";
+    write(
+        &fixture.path().join(scope),
+        "---\nartifact_type: architecture\nreader_model: stable-topic\nfeatures:\n  - FEAT\napproval:\n  by: Human\n  at: 2026-10-06\n---\n# Core SCOPE-MARKER\n",
+    );
+    git(fixture.path(), &["add", scope]);
+    git(
+        fixture.path(),
+        &["commit", "-m", "approve architecture scope"],
+    );
+    let fake = setup_fake_codex();
+    let (status, stdout, stderr) = review(&fixture, &fake, &[]);
+    assert_eq!(status, 0, "{stdout}\n{stderr}");
+    assert!(std::fs::read_to_string(&fake.packet_log)
+        .unwrap()
+        .contains("SCOPE-MARKER"));
+    let manifest = &sidecar(&fixture)["manifest"];
+    assert!(
+        manifest["governed_context"].get(scope).is_some(),
+        "{manifest}"
+    );
+    assert!(manifest["lineage_target"].is_null());
+}
+
+#[test]
+fn unreadable_architecture_scopes_are_refused() {
+    let fixture = ready_project(false);
+    write(
+        &fixture
+            .path()
+            .join(".codeos/02-architecture/scopes/core.md"),
+        "---\nfeatures: []\napproval: null\n---\n# Invalid scope\n",
+    );
+    let fake = setup_fake_codex();
+    assert_refused_with(
+        &fixture,
+        review(&fixture, &fake, &[]),
+        "REQUIRED_INPUT_NOT_INSPECTABLE",
+        &fake,
     );
 }

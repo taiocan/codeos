@@ -120,6 +120,14 @@ pub fn run(feature: Option<&str>, repo_root: &Path) -> i32 {
     }
 }
 
+/// The repository-relative path of the Architecture Scope that owns `feature`, if any.
+pub(crate) fn owning_scope_path(repo_root: &Path, feature: &str) -> Result<Option<String>, String> {
+    Ok(inspect(repo_root)?
+        .into_iter()
+        .find(|scope| scope.features.iter().any(|member| member == feature))
+        .map(|scope| scope.path))
+}
+
 fn inspect(repo_root: &Path) -> Result<Vec<Scope>, String> {
     let directory = repo_root.join(".codeos/02-architecture/scopes");
     if !directory.exists() {

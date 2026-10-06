@@ -619,6 +619,19 @@ pub fn prepare(
         }
         manifest
     });
+    // Round naming reads the governed package, so its absence must be reported before that.
+    if let Some(missing) = manifest.as_ref().and_then(|manifest| {
+        manifest
+            .governed_context
+            .iter()
+            .find(|(_, sha)| sha.is_none())
+            .map(|(path, _)| path.clone())
+    }) {
+        return Err(PrepareFailure::packet(format!(
+            "REVIEW_NOT_READY: REQUIRED_INPUT_MISSING\n  - REQUIRED_INPUT_MISSING: {missing}: governed artifact is absent\n  \
+             The reviewer was not invoked. No review capacity was consumed."
+        )));
+    }
 
     let packet = packet::build(&PacketBuildOptions {
         feature: args.feature.clone(),
@@ -1639,6 +1652,18 @@ pub fn run(mut args: ReviewArgs, cfg: &Config) -> Result<i32> {
             &evidence.basis,
         );
         review_packet.include_verification_records(&manifest.records_missing_from(&review_packet));
+        manifest.lineage_target = [
+            &args.reentry_after,
+            &args.evidence_closure_after,
+            &args.infrastructure_revalidation_after,
+            &args.evidence_reassessment_after,
+            &args.terminal_review_closure_after,
+            &args.retry_terminal_review_closure_after,
+            &args.replace_invalid_lineage_after,
+            &args.correct_lineage_replacement_after,
+        ]
+        .into_iter()
+        .find_map(Clone::clone);
         manifest.seal(&review_id, &review_packet);
         let readiness =
             crate::readiness::evaluate(cfg, &manifest, &review_packet, &evidence.sha_only);

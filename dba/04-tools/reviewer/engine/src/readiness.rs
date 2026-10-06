@@ -7,7 +7,9 @@ use crate::packet::{sha256_file, ReviewPacket};
 use serde_json::Value;
 use std::path::Path;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+/// Declared in contract order, which is also report order: environment and toolchain causes come
+/// before the input defects they can produce.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Reason {
     ExecutionEnvironmentBlocked,
     ReviewerBuildMismatch,
@@ -120,6 +122,7 @@ pub fn evaluate(
     }
     inspectability(manifest, packet, caller_sha_only, &mut readiness);
     coverage(packet, &mut readiness);
+    readiness.issues.sort_by_key(|issue| issue.reason);
     readiness
 }
 
@@ -431,6 +434,13 @@ fn inspectability(
                 format!("content is not inspectable (visibility: {visibility})"),
             ),
         }
+    }
+    if let Some(error) = &manifest.derived.scope_error {
+        readiness.fail(
+            Reason::RequiredInputNotInspectable,
+            ".codeos/02-architecture/scopes",
+            format!("the applicable Architecture Scope cannot be determined: {error}"),
+        );
     }
     for line in manifest.records_missing_from(packet) {
         let key = serde_json::from_str::<Value>(&line)
