@@ -176,6 +176,27 @@ pub fn derive(
     manifest
 }
 
+/// The event-set identity of the latest passing F7 runtime-event verification for `feature`.
+pub fn current_event_evidence(root: &std::path::Path, feature: &str) -> Option<String> {
+    let store =
+        std::fs::read_to_string(root.join(".codeos/06-workflow/verifications.jsonl")).ok()?;
+    store.lines().rev().find_map(|line| {
+        let record: VerificationRecord = serde_json::from_str(line).ok()?;
+        (record.workflow == "feature"
+            && record.subject == feature
+            && record.verification == "runtime_event_schema"
+            && record.result == "passed")
+            .then(|| {
+                record
+                    .details?
+                    .get("event_set_sha256")?
+                    .as_str()
+                    .map(str::to_string)
+            })
+            .flatten()
+    })
+}
+
 /// Every path in the implementation delta: the bounded delta from the reviewed snapshot, or the
 /// working-tree change from `--base`/HEAD plus untracked files.
 fn changed_paths(root: &std::path::Path, basis: &ReviewBasis) -> BTreeSet<String> {

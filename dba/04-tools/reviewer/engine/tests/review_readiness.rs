@@ -178,7 +178,7 @@ fn record_current_evidence(fixture: &Fixture, reality: bool) {
         (
             "F7",
             "runtime_event_schema",
-            json!({ "event_evidence": events_path }),
+            json!({ "event_evidence": events_path, "event_set_sha256": events_sha }),
         ),
     ];
     let mut f6 = json!({
@@ -506,4 +506,107 @@ fn caller_cannot_omit_a_changed_implementation_file() {
     let fake = setup_fake_codex();
     let result = review(&fixture, &fake, &["--sha-only", "src/new.rs"]);
     assert_not_ready(&fixture, result, "REQUIRED_INPUT_NOT_INSPECTABLE", &fake);
+}
+
+fn current_event_sha(fixture: &Fixture) -> String {
+    let store = std::fs::read_to_string(
+        fixture
+            .path()
+            .join(".codeos/06-workflow/verifications.jsonl"),
+    )
+    .unwrap();
+    store
+        .lines()
+        .filter_map(|line| serde_json::from_str::<Value>(line).ok())
+        .find_map(|record| {
+            record["details"]["event_set_sha256"]
+                .as_str()
+                .map(str::to_string)
+        })
+        .unwrap()
+}
+
+fn reassessment(
+    fixture: &Fixture,
+    fake: &common::FakeCodex,
+    sha: Option<&str>,
+) -> (i32, String, String) {
+    let mut extra = vec![
+        "--evidence-reassessment-after",
+        "REV__FEAT__8__SR2__R3",
+        "--findings",
+        "F1",
+    ];
+    if let Some(sha) = sha {
+        extra.extend(["--event-evidence-sha", sha]);
+    }
+    review(fixture, fake, &extra)
+}
+
+#[test]
+fn supplied_event_evidence_hash_is_only_an_expectation() {
+    let fixture = ready_project(false);
+    let fake = setup_fake_codex();
+    let wrong = "e".repeat(64);
+    assert_not_ready(
+        &fixture,
+        reassessment(&fixture, &fake, Some(&wrong)),
+        "EVIDENCE_STALE",
+        &fake,
+    );
+
+    // Omitted and correct hashes both pass identity derivation; this fixture then stops at its
+    // deliberately absent predecessor, never at a missing-hash usage error.
+    let current = current_event_sha(&fixture);
+    for sha in [None, Some(current.as_str())] {
+        let result = reassessment(&fixture, &fake, sha);
+        assert!(
+            !result
+                .2
+                .contains("requires --findings and --event-evidence-sha"),
+            "{}",
+            result.2
+        );
+        assert_not_ready(&fixture, result, "SNAPSHOT_NOT_RECONSTRUCTIBLE", &fake);
+    }
+}
+
+#[test]
+fn authorization_record_hashes_are_derived_under_v17() {
+    let fixture = ready_project(false);
+    write(
+        &fixture
+            .path()
+            .join(".codeos/05-review/reviews/review-log.md"),
+        "# Review log\n",
+    );
+    for (decision, flag) in [
+        (
+            "AUTHORIZE_LINEAGE_REPLACEMENT",
+            "--applicability-record-sha",
+        ),
+        (
+            "AUTHORIZE_ASSESSMENT_INPUT_CORRECTION",
+            "--correction-record-sha",
+        ),
+    ] {
+        let (status, _, stderr) = run_in_dir_with_env(
+            fixture.path(),
+            &[
+                "decision",
+                FEATURE,
+                "8",
+                decision,
+                "bounded reason",
+                "--after-review",
+                "REV__FEAT__8__SR2__LINEAGE-REPLACEMENT-1",
+            ],
+            &[],
+        );
+        assert_ne!(status, 0);
+        assert!(
+            !stderr.contains(&format!("requires {flag}")),
+            "{decision}: {stderr}"
+        );
+    }
 }

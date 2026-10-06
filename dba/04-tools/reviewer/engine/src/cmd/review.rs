@@ -768,6 +768,30 @@ pub fn run(mut args: ReviewArgs, cfg: &Config) -> Result<i32> {
     } else {
         cfg.review_log.clone()
     };
+    // Under v17 the event-evidence identity is derived; a supplied value is only an expectation.
+    if crate::manifest::selected(selected_contract.as_deref())
+        && args.evidence_reassessment_after.is_some()
+    {
+        use crate::readiness::{Readiness, Reason};
+        let derived =
+            crate::manifest::current_event_evidence(&cfg.repo_root, &args.evidence.feature);
+        let refusal = match (&derived, &args.event_evidence_sha) {
+            (None, _) => Some((
+                Reason::RequiredInputMissing,
+                "no passing runtime-event verification identifies the event evidence",
+            )),
+            (Some(derived), Some(supplied)) if derived != supplied => Some((
+                Reason::EvidenceStale,
+                "supplied event evidence differs from the current runtime-event verification",
+            )),
+            _ => None,
+        };
+        if let Some((reason, detail)) = refusal {
+            Readiness::refusal(reason, "F7/runtime_event_schema", detail).print_refusal();
+            return Ok(crate::EXIT_PACKET);
+        }
+        args.event_evidence_sha = derived;
+    }
     if let Some(predecessor) = args.reentry_after.as_deref() {
         if args.evidence.stage == "8" {
             match resolve_bounded_basis(

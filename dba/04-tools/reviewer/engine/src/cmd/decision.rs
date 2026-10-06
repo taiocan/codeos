@@ -42,6 +42,8 @@ pub fn run(
     let is_terminal_closure_authorization = decision == "AUTHORIZE_TERMINAL_REVIEW_CLOSURE";
     let is_lineage_replacement_authorization = decision == "AUTHORIZE_LINEAGE_REPLACEMENT";
     let is_input_correction_authorization = decision == "AUTHORIZE_ASSESSMENT_INPUT_CORRECTION";
+    // The record identity an authorization binds to, always derived from immutable history.
+    let mut record_identity: Option<String> = None;
     let mut terminal_scope = None;
     if is_reentry_authorization {
         if reason.trim().is_empty() {
@@ -251,10 +253,16 @@ pub fn run(
             eprintln!("error: AUTHORIZE_LINEAGE_REPLACEMENT requires --after-review");
             return Ok(crate::EXIT_USAGE);
         };
-        let Some(expected_sha) = applicability_record_sha else {
+        // Under v17 the record identity is derived; a supplied hash is only an expectation.
+        let derived_identity = crate::manifest::selected(
+            crate::config::resolve_reviewer_tool_contract(cfg)
+                .ok()
+                .as_deref(),
+        );
+        if applicability_record_sha.is_none() && !derived_identity {
             eprintln!("error: AUTHORIZE_LINEAGE_REPLACEMENT requires --applicability-record-sha");
             return Ok(crate::EXIT_USAGE);
-        };
+        }
         if reason.trim().is_empty() {
             eprintln!("error: AUTHORIZE_LINEAGE_REPLACEMENT requires a bounded reason");
             return Ok(crate::EXIT_USAGE);
@@ -278,10 +286,11 @@ pub fn run(
                     return Ok(crate::EXIT_USAGE);
                 }
             };
-        if actual_sha != expected_sha {
+        if applicability_record_sha.is_some_and(|expected| actual_sha != expected) {
             eprintln!("error: applicability record SHA-256 does not match immutable history");
             return Ok(crate::EXIT_USAGE);
         }
+        record_identity = Some(actual_sha);
         if log.contains(&format!("Lineage replacement after: {review_id}")) {
             eprintln!("error: lineage replacement already authorized or executed");
             return Ok(crate::EXIT_USAGE);
@@ -291,12 +300,18 @@ pub fn run(
             eprintln!("error: AUTHORIZE_ASSESSMENT_INPUT_CORRECTION requires --after-review");
             return Ok(crate::EXIT_USAGE);
         };
-        let Some(expected_sha) = correction_record_sha else {
+        // Under v17 the record identity is derived; a supplied hash is only an expectation.
+        let derived_identity = crate::manifest::selected(
+            crate::config::resolve_reviewer_tool_contract(cfg)
+                .ok()
+                .as_deref(),
+        );
+        if correction_record_sha.is_none() && !derived_identity {
             eprintln!(
                 "error: AUTHORIZE_ASSESSMENT_INPUT_CORRECTION requires --correction-record-sha"
             );
             return Ok(crate::EXIT_USAGE);
-        };
+        }
         if reason.trim().is_empty() {
             eprintln!("error: AUTHORIZE_ASSESSMENT_INPUT_CORRECTION requires a bounded reason");
             return Ok(crate::EXIT_USAGE);
@@ -313,10 +328,11 @@ pub fn run(
         let log = std::fs::read_to_string(&cfg.review_log)?;
         let (_, actual_sha) =
             crate::assessment_input_correction::correction_record(&log, review_id)?;
-        if actual_sha != expected_sha {
+        if correction_record_sha.is_some_and(|expected| actual_sha != expected) {
             eprintln!("error: correction record SHA-256 does not match immutable history");
             return Ok(crate::EXIT_USAGE);
         }
+        record_identity = Some(actual_sha);
         if log.contains(&format!("Assessment input correction after: {review_id}")) {
             eprintln!("error: assessment input correction already authorized or executed");
             return Ok(crate::EXIT_USAGE);
@@ -429,13 +445,7 @@ pub fn run(
             None
         },
         terminal_scope.as_ref(),
-        if is_lineage_replacement_authorization {
-            applicability_record_sha
-        } else if is_input_correction_authorization {
-            correction_record_sha
-        } else {
-            None
-        },
+        record_identity.as_deref(),
         provenance.as_ref(),
         &cfg.repo_root,
         &cfg.codex_dir,
