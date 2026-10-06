@@ -2,7 +2,7 @@
 //! review. Every identity here is computed from its canonical artifact; nothing is transcribed.
 
 use crate::config::Config;
-use crate::packet::{sha256_file, sha256_str, ReviewPacket};
+use crate::packet::{sha256_file, sha256_str, ReviewBasis, ReviewPacket};
 use codeos_workflow::checker::Subject;
 use codeos_workflow::contract::Workflow;
 use codeos_workflow::project::Project;
@@ -57,6 +57,7 @@ pub fn derive(
     feature: &str,
     stage: &str,
     declared: &[String],
+    basis: &ReviewBasis,
 ) -> ReviewInputManifest {
     let root = &cfg.repo_root;
     let hash = |rel: &str| {
@@ -103,11 +104,17 @@ pub fn derive(
             return manifest;
         }
     };
-    manifest.implementation = codeos_workflow::hashing::working_tree_state(
-        &project.root,
-        &project.implementation_paths(),
-    )
-    .ok();
+    let implementation_paths = project.implementation_paths();
+    manifest.implementation =
+        codeos_workflow::hashing::working_tree_state(&project.root, &implementation_paths).ok();
+    for path in changed_paths(root, basis) {
+        if implementation_paths
+            .iter()
+            .any(|scope| path == *scope || path.starts_with(&format!("{scope}/")))
+        {
+            manifest.required_inputs.insert(path);
+        }
+    }
 
     let decisions = std::fs::read_to_string(root.join(".codeos/06-workflow/decisions.jsonl"))
         .unwrap_or_default();
@@ -167,6 +174,28 @@ pub fn derive(
         manifest.required_inputs.insert(path.clone());
     }
     manifest
+}
+
+/// Every path in the implementation delta: the bounded delta from the reviewed snapshot, or the
+/// working-tree change from `--base`/HEAD plus untracked files.
+fn changed_paths(root: &std::path::Path, basis: &ReviewBasis) -> BTreeSet<String> {
+    let root = root.to_string_lossy();
+    match basis {
+        ReviewBasis::Bounded { delta, .. } => delta
+            .changed_paths
+            .union(&delta.new_paths)
+            .cloned()
+            .collect(),
+        ReviewBasis::Ordinary { base } => {
+            let mut paths: BTreeSet<String> =
+                crate::packet::diff_changed_paths(base.as_deref(), &root)
+                    .unwrap_or_default()
+                    .into_iter()
+                    .collect();
+            paths.extend(crate::packet::git_untracked_files(&root).unwrap_or_default());
+            paths
+        }
+    }
 }
 
 impl ReviewInputManifest {

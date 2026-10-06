@@ -172,6 +172,12 @@ impl ReviewPacket {
             "\n\nREQUIRED VERIFICATION RECORDS\n```jsonl\n{redacted}\n```\n"
         ));
         self.content_sha256 = crate::packet::sha256_str(&self.content);
+        let bytes = redacted.len() as u64;
+        self.review_content_bytes += bytes;
+        self.estimated_review_tokens = self.review_content_bytes / 4;
+        self.over_budget = self.review_content_bytes > self.budget_bytes;
+        self.budget_contributors
+            .push(("(required verification records)".to_string(), bytes));
     }
 
     pub fn require_f7_blocker_classification(&mut self) {
@@ -314,6 +320,13 @@ pub struct PacketBuildOptions {
     pub basis: ReviewBasis,
     pub repo_root: String,
     pub toolkit_root: String,
+    /// The required input set under Reviewer Tool Contract v17. Only these paths may enter the
+    /// diff, untracked, exclusion, and budget accounting; `None` keeps whole-repository behavior.
+    pub scope: Option<BTreeSet<String>>,
+}
+
+fn in_scope(opts: &PacketBuildOptions, path: &str) -> bool {
+    opts.scope.as_ref().is_none_or(|scope| scope.contains(path))
 }
 
 fn is_stage8_mandatory_context(opts: &PacketBuildOptions, path: &str) -> bool {
@@ -760,6 +773,10 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
         (diff, files)
     };
 
+    let changed_files: Vec<String> = changed_files
+        .into_iter()
+        .filter(|path| in_scope(opts, path))
+        .collect();
     let mut excluded_paths: Vec<(String, String, String)> = Vec::new();
     let mut keep_files: Vec<String> = Vec::new();
     for f in &changed_files {
@@ -1070,8 +1087,11 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
         ));
     }
     for path in untracked.unwrap_or_default() {
-        if opts.artifacts.contains(&path) || opts.sha_only_paths.contains(&path) {
-            continue; // already shown in its own right
+        if opts.artifacts.contains(&path)
+            || opts.sha_only_paths.contains(&path)
+            || !in_scope(opts, &path)
+        {
+            continue; // already shown in its own right, or outside the required review scope
         }
         if is_path_excluded(&path) {
             excluded_paths.push((
@@ -1503,7 +1523,7 @@ fn git_is_tracked(path: &str, repo_root: &str) -> bool {
 /// Files git knows nothing about yet, honouring .gitignore. A diff cannot show them, so without
 /// this they would be invisible to review while coverage still claimed to be full — which is how a
 /// new implementation module can be added and reviewed as if it did not exist.
-fn git_untracked_files(repo_root: &str) -> Option<Vec<String>> {
+pub(crate) fn git_untracked_files(repo_root: &str) -> Option<Vec<String>> {
     let output = Command::new("git")
         .args([
             "ls-files",

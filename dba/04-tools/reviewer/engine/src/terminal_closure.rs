@@ -1124,6 +1124,7 @@ mod tests {
             basis: crate::packet::ReviewBasis::Ordinary { base: None },
             repo_root: repo.path().display().to_string(),
             toolkit_root: toolkit_root.display().to_string(),
+            scope: None,
         })
         .unwrap();
         packet.bounded_changed_paths = Some(BTreeSet::from([
@@ -1234,6 +1235,7 @@ mod tests {
             basis: crate::packet::ReviewBasis::Ordinary { base: None },
             repo_root: repo.path().display().to_string(),
             toolkit_root: toolkit_root.display().to_string(),
+            scope: None,
         })
         .unwrap();
         let control = tempfile::tempdir().unwrap();
@@ -1276,6 +1278,7 @@ mod tests {
             basis: crate::packet::ReviewBasis::Ordinary { base: None },
             repo_root: repo.path().display().to_string(),
             toolkit_root: toolkit_root.display().to_string(),
+            scope: None,
         })
         .unwrap();
         current.bounded_changed_paths = Some(BTreeSet::from([
@@ -1308,6 +1311,7 @@ mod tests {
             basis: crate::packet::ReviewBasis::Ordinary { base: None },
             repo_root: repo.path().display().to_string(),
             toolkit_root: toolkit_root.display().to_string(),
+            scope: None,
         })
         .unwrap();
         drifted.bounded_changed_paths = Some(BTreeSet::from([

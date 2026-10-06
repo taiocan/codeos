@@ -590,7 +590,13 @@ pub fn prepare(
 
     let contract = crate::config::resolve_reviewer_tool_contract(cfg).ok();
     let manifest = crate::manifest::selected(contract.as_deref()).then(|| {
-        let manifest = crate::manifest::derive(cfg, &args.feature, &args.stage, &args.artifacts);
+        let manifest = crate::manifest::derive(
+            cfg,
+            &args.feature,
+            &args.stage,
+            &args.artifacts,
+            &args.basis,
+        );
         for path in manifest.existing_required_inputs(&cfg.repo_root) {
             if !args.artifacts.contains(&path) && !args.sha_only.contains(&path) {
                 args.artifacts.push(path);
@@ -607,6 +613,9 @@ pub fn prepare(
         basis: args.basis.clone(),
         repo_root: cfg.repo_root.to_string_lossy().into_owned(),
         toolkit_root: cfg.toolkit_root.to_string_lossy().into_owned(),
+        scope: manifest
+            .as_ref()
+            .map(|manifest| manifest.required_inputs.clone()),
     })
     .map_err(|error| PrepareFailure::packet(format!("error building packet: {error}")))?;
 
@@ -1515,8 +1524,13 @@ pub fn run(mut args: ReviewArgs, cfg: &Config) -> Result<i32> {
     // Review Readiness Gate: the last step before reviewer invocation, after every operation has
     // finished constraining the packet, and before provider access or any durable review write.
     if crate::manifest::selected(selected_contract.as_deref()) && args.assessment.is_none() {
-        let mut manifest =
-            crate::manifest::derive(cfg, &evidence.feature, &evidence.stage, &evidence.artifacts);
+        let mut manifest = crate::manifest::derive(
+            cfg,
+            &evidence.feature,
+            &evidence.stage,
+            &evidence.artifacts,
+            &evidence.basis,
+        );
         review_packet.include_verification_records(&manifest.records_missing_from(&review_packet));
         manifest.seal(&review_id, &review_packet);
         let readiness =

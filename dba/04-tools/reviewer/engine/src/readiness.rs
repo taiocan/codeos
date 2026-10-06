@@ -119,6 +119,7 @@ pub fn evaluate(
         evidence(cfg, manifest, &claims, &mut readiness);
     }
     inspectability(manifest, packet, caller_sha_only, &mut readiness);
+    coverage(packet, &mut readiness);
     readiness
 }
 
@@ -447,6 +448,27 @@ fn inspectability(
             key,
             "required verification record content is not in the packet",
         );
+    }
+}
+
+/// The packet is scoped to required inputs, so any remaining exclusion or omission is a required
+/// change the reviewer could not see. Redaction keeps its own coverage treatment.
+fn coverage(packet: &ReviewPacket, readiness: &mut Readiness) {
+    use crate::packet::CoverageState;
+    if matches!(
+        packet.coverage_state,
+        CoverageState::PartialCoverage | CoverageState::CriticalOmission
+    ) {
+        for (path, reason, _) in &packet.excluded_paths {
+            if reason.contains("redacted") {
+                continue;
+            }
+            readiness.fail(
+                Reason::RequiredInputNotInspectable,
+                path,
+                format!("required change is not in the packet ({reason})"),
+            );
+        }
     }
 }
 

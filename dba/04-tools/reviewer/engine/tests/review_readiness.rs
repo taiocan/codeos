@@ -417,3 +417,93 @@ fn caller_cannot_narrow_a_required_input_to_its_hash() {
     let result = review(&fixture, &fake, &["--sha-only", &contract]);
     assert_not_ready(&fixture, result, "REQUIRED_INPUT_NOT_INSPECTABLE", &fake);
 }
+
+/// Change the implementation (one modified, one new untracked file), then re-record current
+/// evidence for that exact working tree, as the workflow would before Stage 8.
+fn change_implementation(fixture: &Fixture, reality: bool) {
+    let root = fixture.path();
+    write(&root.join("src/lib.rs"), "pub fn feature() { helper() }\n");
+    write(
+        &root.join("src/new.rs"),
+        "pub fn helper() { /* NEW-IMPLEMENTATION-MARKER */ }\n",
+    );
+    record_current_evidence(fixture, reality);
+    git(root, &["add", ".codeos/06-workflow"]);
+    git(
+        root,
+        &[
+            "commit",
+            "-m",
+            "re-record evidence for the changed implementation",
+        ],
+    );
+}
+
+/// Material outside any review scope: old evidence, generated logs, unrelated notes.
+fn add_unrelated_history(fixture: &Fixture) {
+    let root = fixture.path();
+    write(
+        &root.join(".codeos/06-workflow/reality-evidence/historical.json"),
+        "{\"marker\":\"UNRELATED-HISTORY-MARKER\"}\n",
+    );
+    write(
+        &root.join("notes/unrelated.md"),
+        &"UNRELATED-HISTORY-MARKER\n".repeat(6000),
+    );
+}
+
+fn sidecar(fixture: &Fixture) -> Value {
+    let packets = fixture
+        .path()
+        .join(".codeos/05-review/reviews/codex/packets");
+    let path = std::fs::read_dir(&packets)
+        .unwrap()
+        .map(|entry| entry.unwrap().path())
+        .find(|path| path.to_string_lossy().ends_with(".packet.txt.meta.json"))
+        .expect("Review Input Manifest sidecar");
+    serde_json::from_str(&std::fs::read_to_string(path).unwrap()).unwrap()
+}
+
+#[test]
+fn coverage_and_budget_are_scoped_to_required_inputs() {
+    let fixture = ready_project(true);
+    change_implementation(&fixture, true);
+    add_unrelated_history(&fixture);
+    let fake = setup_fake_codex();
+    let (status, stdout, stderr) = review(&fixture, &fake, &[]);
+    assert_eq!(status, 0, "review failed:\n{stdout}\n{stderr}");
+
+    let packet = std::fs::read_to_string(&fake.packet_log).unwrap();
+    assert!(
+        packet.contains("NEW-IMPLEMENTATION-MARKER"),
+        "new file must be reviewed"
+    );
+    assert!(
+        packet.contains("helper()"),
+        "modified file must be reviewed"
+    );
+    assert!(
+        !packet.contains("UNRELATED-HISTORY-MARKER"),
+        "unrelated history entered the packet"
+    );
+
+    let sidecar = sidecar(&fixture);
+    assert_eq!(sidecar["coverage_state"], "FullCoverage");
+    let required = sidecar["manifest"]["required_inputs"].as_array().unwrap();
+    assert!(required.iter().any(|path| path == "src/new.rs"));
+    assert!(!required.iter().any(|path| path == "notes/unrelated.md"));
+    // The unrelated 100+ KB note would exceed the default budget if it were counted.
+    assert!(
+        sidecar["review_content_bytes"].as_u64().unwrap()
+            < sidecar["budget_bytes"].as_u64().unwrap()
+    );
+}
+
+#[test]
+fn caller_cannot_omit_a_changed_implementation_file() {
+    let fixture = ready_project(false);
+    change_implementation(&fixture, false);
+    let fake = setup_fake_codex();
+    let result = review(&fixture, &fake, &["--sha-only", "src/new.rs"]);
+    assert_not_ready(&fixture, result, "REQUIRED_INPUT_NOT_INSPECTABLE", &fake);
+}
