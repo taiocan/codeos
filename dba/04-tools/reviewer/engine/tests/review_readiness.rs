@@ -618,3 +618,101 @@ fn stage8_base_commit_delta_is_not_reviewed_state() {
     let result = review(&fixture, &fake, &["--base", "HEAD"]);
     assert_not_ready(&fixture, result, "SNAPSHOT_NOT_RECONSTRUCTIBLE", &fake);
 }
+
+fn invocations(fake: &common::FakeCodex) -> usize {
+    let mut count = fake.args_log.clone().into_os_string();
+    count.push(".count");
+    std::fs::read_to_string(PathBuf::from(count))
+        .map(|text| text.lines().count())
+        .unwrap_or(0)
+}
+
+fn review_log(fixture: &Fixture) -> String {
+    std::fs::read_to_string(
+        fixture
+            .path()
+            .join(".codeos/05-review/reviews/review-log.md"),
+    )
+    .unwrap_or_default()
+}
+
+fn review_mode(fixture: &Fixture, fake: &common::FakeCodex, mode: &str) -> (i32, String, String) {
+    run_with_fake_codex(
+        fixture.path(),
+        fake,
+        &["review", FEATURE, "8", "--skip-prechecks", "src/lib.rs"],
+        mode,
+    )
+}
+
+#[test]
+fn structurally_invalid_responses_consume_no_review_capacity() {
+    for mode in ["structural_failure", "malformed_finding"] {
+        let fixture = ready_project(false);
+        let fake = setup_fake_codex();
+        let (status, stdout, stderr) = review_mode(&fixture, &fake, mode);
+        assert_ne!(status, 0, "{mode}: {stdout}\n{stderr}");
+        assert!(
+            stderr.contains("REVIEW_EXECUTION_INVALID"),
+            "{mode}: {stderr}"
+        );
+        assert_eq!(
+            invocations(&fake),
+            3,
+            "{mode}: one execution plus two automatic re-executions"
+        );
+
+        let log = review_log(&fixture);
+        assert!(
+            log.contains("REVIEW EXECUTION INVALID — FEAT — Stage 8"),
+            "{log}"
+        );
+        assert!(
+            !log.contains("Review ID:"),
+            "an invalid execution is not a review: {log}"
+        );
+        let codex = fixture.path().join(".codeos/05-review/reviews/codex");
+        let assessments = std::fs::read_dir(&codex)
+            .unwrap()
+            .filter(|entry| {
+                entry
+                    .as_ref()
+                    .unwrap()
+                    .path()
+                    .extension()
+                    .is_some_and(|e| e == "md")
+            })
+            .count();
+        assert_eq!(assessments, 0, "no semantic assessment may be written");
+        let preserved = std::fs::read_dir(codex.join("execution-invalid"))
+            .unwrap()
+            .count();
+        assert_eq!(preserved, 4, "identical packet plus three raw attempts");
+
+        // Capacity is unchanged: the next valid review is still round 1.
+        let fake = setup_fake_codex();
+        let (status, stdout, stderr) = review_mode(&fixture, &fake, "success");
+        assert_eq!(status, 0, "{stdout}\n{stderr}");
+        assert!(review_log(&fixture).contains("Review ID: REV__FEAT__8__SR2__R1"));
+    }
+}
+
+#[test]
+fn automatic_reexecution_recovers_with_identical_inputs() {
+    let fixture = ready_project(false);
+    let fake = setup_fake_codex();
+    let (status, stdout, stderr) = review_mode(&fixture, &fake, "structural_once");
+    assert_eq!(status, 0, "{stdout}\n{stderr}");
+    assert_eq!(invocations(&fake), 2);
+    let log = review_log(&fixture);
+    assert!(log.contains("Review ID: REV__FEAT__8__SR2__R1"), "{log}");
+    assert!(!log.contains("REVIEW EXECUTION INVALID"));
+    let preserved = fixture
+        .path()
+        .join(".codeos/05-review/reviews/codex/execution-invalid");
+    assert_eq!(
+        std::fs::read_dir(preserved).unwrap().count(),
+        2,
+        "packet plus one attempt"
+    );
+}

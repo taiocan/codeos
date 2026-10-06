@@ -732,6 +732,74 @@ fn stage8_readiness(args: &EvidenceArgs, packet: &ReviewPacket) -> Stage8Readine
     }
 }
 
+/// Automatic re-executions of a structurally invalid response within one `review` command.
+const MAX_AUTOMATIC_REEXECUTIONS: usize = 2;
+
+/// Preserve the identical packet once and every invalid raw attempt beside it.
+fn preserve_invalid_attempts(
+    cfg: &Config,
+    scratch: bool,
+    review_id: &str,
+    packet: &ReviewPacket,
+    attempts: &[String],
+) -> Result<Vec<PathBuf>> {
+    let root = if scratch {
+        cfg.state_dir.join("reviewer-scratch")
+    } else {
+        cfg.codex_dir.clone()
+    };
+    let dir = root.join("execution-invalid");
+    std::fs::create_dir_all(&dir)?;
+    let stem = format!(
+        "{}-{review_id}",
+        chrono::Utc::now().format("%Y%m%dT%H%M%SZ")
+    );
+    let packet_path = dir.join(format!("{stem}.packet.txt"));
+    std::fs::write(&packet_path, packet.content())?;
+    let mut paths = vec![packet_path];
+    for (index, text) in attempts.iter().enumerate() {
+        let path = dir.join(format!("{stem}-attempt-{}.txt", index + 1));
+        std::fs::write(&path, text)?;
+        paths.push(path);
+    }
+    Ok(paths)
+}
+
+/// Every automatic execution was structurally invalid: preserve the attempts, record the
+/// non-semantic result, and stop without any assessment or capacity use.
+fn record_execution_invalid(
+    cfg: &Config,
+    review_log_path: &Path,
+    scratch: bool,
+    evidence: &EvidenceArgs,
+    review_id: &str,
+    packet: &ReviewPacket,
+    attempts: &[String],
+) -> i32 {
+    let recorded =
+        preserve_invalid_attempts(cfg, scratch, review_id, packet, attempts).and_then(|paths| {
+            review_log::append_execution_invalid(
+                review_log_path,
+                &evidence.feature,
+                &evidence.stage,
+                review_id,
+                &crate::packet::sha256_str(packet.content()),
+                &paths,
+            )
+        });
+    if let Err(error) = recorded {
+        eprintln!("error: could not record REVIEW_EXECUTION_INVALID: {error}");
+        return crate::EXIT_WRITE;
+    }
+    eprintln!(
+        "REVIEW_EXECUTION_INVALID: {} attempts returned no structurally valid assessment.",
+        attempts.len()
+    );
+    eprintln!("  No semantic conclusion was recorded and no review capacity was consumed.");
+    eprintln!("  Rerun the same review command once the reviewer is behaving normally.");
+    crate::EXIT_PROVIDER
+}
+
 /// A bounded operation whose targeted lineage is absent or inconsistent refuses before invocation.
 /// Under Reviewer Tool Contract v17 the refusal is reported as `REVIEW_NOT_READY`.
 fn refuse_lineage(contract: Option<&str>, message: &str) -> i32 {
@@ -1581,115 +1649,164 @@ pub fn run(mut args: ReviewArgs, cfg: &Config) -> Result<i32> {
         review_packet.manifest = Some(manifest);
     }
 
-    let raw = match &args.assessment {
-        // Import path: no process is started, so there is no read-only violation to detect. The text
-        // is taken verbatim; it flows through the same parser and the
-        // same fail-closed schema check as a Codex reply.
-        Some(path) => match std::fs::read_to_string(path) {
-            Ok(text) if text.trim().is_empty() => {
-                eprintln!(
-                    "error: external assessment file is empty: {}",
-                    path.display()
-                );
-                return Ok(crate::EXIT_PROVIDER);
-            }
-            Ok(text) => ReviewerRun {
-                text,
-                elapsed_ms: 0,
-                source: RunSource::External {
-                    label: args.reviewer_label.clone(),
-                },
-            },
-            Err(error) => {
-                eprintln!(
-                    "error: could not read external assessment {}: {error}",
-                    path.display()
-                );
-                return Ok(crate::EXIT_PROVIDER);
-            }
-        },
-        None => {
-            let pre_invoke_status = git_status(&cfg.repo_root);
-            let invoke_result = codex::invoke(&review_packet, cfg);
-            if let (Some(before), Some(after)) = (pre_invoke_status, git_status(&cfg.repo_root)) {
-                if before != after {
+    // Reviewer Tool Contract v17: a structurally invalid response is preserved, carries no
+    // semantic conclusion, and is re-executed with the identical packet a bounded number of times.
+    let v17_execution =
+        crate::manifest::selected(selected_contract.as_deref()) && args.assessment.is_none();
+    let mut invalid_attempts: Vec<String> = Vec::new();
+    let (raw, findings, unparsed_findings_count, mut parsed) = loop {
+        let raw = match &args.assessment {
+            // Import path: no process is started, so there is no read-only violation to detect. The text
+            // is taken verbatim; it flows through the same parser and the
+            // same fail-closed schema check as a Codex reply.
+            Some(path) => match std::fs::read_to_string(path) {
+                Ok(text) if text.trim().is_empty() => {
                     eprintln!(
-                        "WARNING: working tree changed during review — reviewer should be read-only"
+                        "error: external assessment file is empty: {}",
+                        path.display()
                     );
-                }
-            }
-            match invoke_result {
-                Ok(codex::InvokeOutcome::Completed(raw)) => raw,
-                Ok(codex::InvokeOutcome::RefusedOverBudget(refusal)) => {
-                    report_budget_refusal(refusal);
-                    return Ok(crate::EXIT_PACKET);
-                }
-                Err(error) => {
-                    eprintln!("error: Codex invocation failed: {error}");
                     return Ok(crate::EXIT_PROVIDER);
                 }
+                Ok(text) => ReviewerRun {
+                    text,
+                    elapsed_ms: 0,
+                    source: RunSource::External {
+                        label: args.reviewer_label.clone(),
+                    },
+                },
+                Err(error) => {
+                    eprintln!(
+                        "error: could not read external assessment {}: {error}",
+                        path.display()
+                    );
+                    return Ok(crate::EXIT_PROVIDER);
+                }
+            },
+            None => {
+                let pre_invoke_status = git_status(&cfg.repo_root);
+                let invoke_result = codex::invoke(&review_packet, cfg);
+                if let (Some(before), Some(after)) = (pre_invoke_status, git_status(&cfg.repo_root))
+                {
+                    if before != after {
+                        eprintln!(
+                            "WARNING: working tree changed during review — reviewer should be read-only"
+                        );
+                    }
+                }
+                match invoke_result {
+                    Ok(codex::InvokeOutcome::Completed(raw)) => raw,
+                    Ok(codex::InvokeOutcome::RefusedOverBudget(refusal)) => {
+                        report_budget_refusal(refusal);
+                        return Ok(crate::EXIT_PACKET);
+                    }
+                    Err(error) => {
+                        eprintln!("error: Codex invocation failed: {error}");
+                        return Ok(crate::EXIT_PROVIDER);
+                    }
+                }
+            }
+        };
+
+        // Findings first: whether they all parsed is an input to whether the assessment is usable.
+        let (findings, unparsed_findings_count) = assessment::parse_findings(&raw.text, &review_id);
+        let mut parsed = assessment::parse_review_output(
+            &raw.text,
+            &review_packet.coverage_state,
+            findings.len(),
+            unparsed_findings_count,
+        );
+        if evidence.stage == "8"
+            && matches!(
+                selected_contract.as_deref(),
+                Some(
+                    "dba/04-tools/reviewer/contract/v9.md"
+                        | "dba/04-tools/reviewer/contract/v10.md"
+                        | "dba/04-tools/reviewer/contract/v11.md"
+                        | "dba/04-tools/reviewer/contract/v12.md"
+                        | "dba/04-tools/reviewer/contract/v13.md"
+                        | "dba/04-tools/reviewer/contract/v14.md"
+                        | "dba/04-tools/reviewer/contract/v15.md"
+                        | "dba/04-tools/reviewer/contract/v16.md"
+                        | "dba/04-tools/reviewer/contract/v17.md"
+                )
+            )
+        {
+            let invalid = findings.iter().any(|finding| {
+                finding.classification == "IN-SCOPE BLOCKER"
+                    && (finding.blocker_kind.is_none()
+                        || (finding.blocker_kind.as_deref() == Some("EVIDENCE_INSUFFICIENT")
+                            && finding
+                                .evidence_required
+                                .as_deref()
+                                .unwrap_or("")
+                                .trim()
+                                .is_empty()))
+            });
+            if invalid {
+                parsed.parse_status = "FAILED".to_string();
+                parsed.assessment_status = "INCOMPLETE".to_string();
+                parsed.incomplete_reason =
+                    "an F7 blocker omitted its required blocker kind or evidence requirement"
+                        .to_string();
+                parsed.effective_concern = "DO NOT ADVANCE".to_string();
             }
         }
-    };
-
-    // Findings first: whether they all parsed is an input to whether the assessment is usable.
-    let (findings, unparsed_findings_count) = assessment::parse_findings(&raw.text, &review_id);
-    let mut parsed = assessment::parse_review_output(
-        &raw.text,
-        &review_packet.coverage_state,
-        findings.len(),
-        unparsed_findings_count,
-    );
-    if evidence.stage == "8"
-        && matches!(
-            selected_contract.as_deref(),
-            Some(
-                "dba/04-tools/reviewer/contract/v9.md"
-                    | "dba/04-tools/reviewer/contract/v10.md"
-                    | "dba/04-tools/reviewer/contract/v11.md"
-                    | "dba/04-tools/reviewer/contract/v12.md"
-                    | "dba/04-tools/reviewer/contract/v13.md"
-                    | "dba/04-tools/reviewer/contract/v14.md"
-                    | "dba/04-tools/reviewer/contract/v15.md"
-                    | "dba/04-tools/reviewer/contract/v16.md"
-                    | "dba/04-tools/reviewer/contract/v17.md"
-            )
-        )
-    {
-        let invalid = findings.iter().any(|finding| {
-            finding.classification == "IN-SCOPE BLOCKER"
-                && (finding.blocker_kind.is_none()
-                    || (finding.blocker_kind.as_deref() == Some("EVIDENCE_INSUFFICIENT")
-                        && finding
-                            .evidence_required
-                            .as_deref()
-                            .unwrap_or("")
-                            .trim()
-                            .is_empty()))
-        });
-        if invalid {
-            parsed.parse_status = "FAILED".to_string();
-            parsed.assessment_status = "INCOMPLETE".to_string();
-            parsed.incomplete_reason =
-                "an F7 blocker omitted its required blocker kind or evidence requirement"
-                    .to_string();
-            parsed.effective_concern = "DO NOT ADVANCE".to_string();
+        if let Some(item) = evidence_reassessment.as_mut() {
+            item.substantive = findings.iter().any(|finding| {
+                finding.classification == "IN-SCOPE BLOCKER"
+                    && finding.blocker_kind.as_deref() == Some("SUBSTANTIVE")
+            });
+            if parsed.assessment_status == "COMPLETE"
+                && parsed.effective_concern == "DO NOT ADVANCE"
+                && !item.substantive
+                && parsed.evidence_materiality.is_none()
+            {
+                parsed.parse_status = "FAILED".to_string();
+                parsed.assessment_status = "INCOMPLETE".to_string();
+                parsed.incomplete_reason =
+                    "a negative evidence reassessment omitted EVIDENCE MATERIALITY".to_string();
+            }
         }
-    }
-    if let Some(item) = evidence_reassessment.as_mut() {
-        item.substantive = findings.iter().any(|finding| {
-            finding.classification == "IN-SCOPE BLOCKER"
-                && finding.blocker_kind.as_deref() == Some("SUBSTANTIVE")
-        });
-        if parsed.assessment_status == "COMPLETE"
-            && parsed.effective_concern == "DO NOT ADVANCE"
-            && !item.substantive
-            && parsed.evidence_materiality.is_none()
+        if v17_execution && (parsed.parse_status != "OK" || parsed.assessment_status != "COMPLETE")
         {
-            parsed.parse_status = "FAILED".to_string();
-            parsed.assessment_status = "INCOMPLETE".to_string();
-            parsed.incomplete_reason =
-                "a negative evidence reassessment omitted EVIDENCE MATERIALITY".to_string();
+            invalid_attempts.push(raw.text);
+            if invalid_attempts.len() <= MAX_AUTOMATIC_REEXECUTIONS {
+                eprintln!(
+                    "REVIEW_EXECUTION_INVALID: attempt {} is structurally invalid ({}); re-executing with identical inputs",
+                    invalid_attempts.len(),
+                    parsed.incomplete_reason
+                );
+                continue;
+            }
+            return Ok(record_execution_invalid(
+                cfg,
+                &review_log_path,
+                args.scratch,
+                &evidence,
+                &review_id,
+                &review_packet,
+                &invalid_attempts,
+            ));
+        }
+        break (raw, findings, unparsed_findings_count, parsed);
+    };
+    if !invalid_attempts.is_empty() {
+        match preserve_invalid_attempts(
+            cfg,
+            args.scratch,
+            &review_id,
+            &review_packet,
+            &invalid_attempts,
+        ) {
+            Ok(paths) => {
+                for path in paths {
+                    eprintln!("preserved invalid execution attempt: {}", path.display());
+                }
+            }
+            Err(error) => {
+                eprintln!("error: could not preserve invalid execution attempts: {error}");
+                return Ok(crate::EXIT_WRITE);
+            }
         }
     }
     let terminal_closure_closed = terminal_closure.is_some()

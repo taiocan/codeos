@@ -117,6 +117,31 @@ pub const INFRASTRUCTURE_REVALIDATION_HEADING: &str = "INFRASTRUCTURE REVALIDATI
 pub const EVIDENCE_REASSESSMENT_HEADING: &str = "EVIDENCE REASSESSMENT";
 pub const TERMINAL_CLOSURE_HEADING: &str = "TERMINAL REVIEW CLOSURE";
 
+/// `REVIEW_EXECUTION_INVALID` (Reviewer Tool Contract v17). The entry carries an execution
+/// target, never a `Review ID:`, and its heading matches no counted kind, so no round or bounded
+/// mechanism can consume it.
+pub const EXECUTION_INVALID_HEADING: &str = "REVIEW EXECUTION INVALID";
+
+pub fn append_execution_invalid(
+    log_path: &Path,
+    feature: &str,
+    stage: &str,
+    target: &str,
+    packet_sha256: &str,
+    attempts: &[std::path::PathBuf],
+) -> Result<()> {
+    ensure_log_exists(log_path)?;
+    let ts = chrono::Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string();
+    let mut entry = format!(
+        "\n## {ts} {EXECUTION_INVALID_HEADING} — {feature} — Stage {stage}\nExecution target: {target}\nResult: REVIEW_EXECUTION_INVALID\nReviewed packet SHA-256: {packet_sha256}\n"
+    );
+    for attempt in attempts {
+        entry.push_str(&format!("Raw attempt: {}\n", attempt.display()));
+    }
+    entry.push_str("Semantic conclusion: none. Review capacity consumed: none.\n");
+    append_to_log(log_path, &entry)
+}
+
 fn count_entries(content: &str, kind: &str, feature: &str, stage: &str) -> u32 {
     let record = format!("{} — {} — Stage {}", kind, feature, stage);
     content

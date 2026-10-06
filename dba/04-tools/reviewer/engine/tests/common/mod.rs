@@ -36,6 +36,7 @@ if [[ "${1:-}" == "sandbox" ]]; then
   exit 0
 fi
 printf '%s\n' "$*" > "${CODEOS_FAKE_ARGS:?}"
+printf 'x\n' >> "${CODEOS_FAKE_ARGS}.count"
 output_file=''
 while (( $# )); do
   case "$1" in
@@ -47,7 +48,21 @@ while (( $# )); do
   esac
 done
 cat > "${CODEOS_FAKE_PACKET:?}"
-case "${CODEOS_FAKE_MODE:-success}" in
+mode="${CODEOS_FAKE_MODE:-success}"
+if [[ "${mode}" == "structural_once" ]]; then
+  if [[ -e "${CODEOS_FAKE_ARGS}.once" ]]; then mode=success; else : > "${CODEOS_FAKE_ARGS}.once"; mode=structural_failure; fi
+fi
+case "${mode}" in
+  malformed_finding)
+    printf '%s\n' \
+      'Finding: incomplete finding block / Severity: High' \
+      '' \
+      'LOG SUMMARY: NO OBJECTION — finding block malformed' \
+      'EVIDENCE: A' \
+      'HIGHEST-IMPACT UNCERTAINTY: none' > "$output_file"
+    printf '{"type":"thread.started","thread_id":"%s"}\n' "${CODEOS_FAKE_SESSION:-fake-session}"
+    exit 0
+    ;;
   failure) printf '%s\n' 'simulated Codex failure' >&2; exit 9 ;;
   malformed) printf '%s\n' 'not-json'; exit 0 ;;
   mutate) printf '%s\n' 'fake reviewer mutation' >> "${CODEOS_FAKE_REPO:?}/tracked.md" ;;
