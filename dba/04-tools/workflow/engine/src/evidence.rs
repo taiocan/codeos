@@ -1032,6 +1032,9 @@ pub fn run_env(cwd: &Path, program: &str, args: &[&str], env: &[(&str, &str)]) -
                 .filter(|l| {
                     let t = l.trim();
                     (t.starts_with("test result:") && !t.contains("0 passed; 0 failed"))
+                        // Vitest's file and test totals.
+                        || t.starts_with("Test Files ")
+                        || t.starts_with("Tests ")
                         || t.starts_with("FAILED")
                         || t.contains("panicked")
                         || t.ends_with("FAILED")

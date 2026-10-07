@@ -2011,7 +2011,8 @@ fn run_mechanic(project: &Project, subject: &Subject, mechanic: &str) -> evidenc
         "smoke" => run_smoke(project),
         "product_journey" => run_product_journey(project, subject),
         "production_source_evidence" => run_production_source_evidence(project, subject),
-        "behavior" | "repeatability" | "data_integrity" => run_cargo_tests(project),
+        "behavior" | "repeatability" => run_behavior_tests(project),
+        "data_integrity" => run_cargo_tests(project),
         "playwright" => {
             let runtime = match project.runtime_verification() {
                 Ok(runtime) => runtime,
@@ -2542,6 +2543,26 @@ fn run_cargo_tests(project: &Project) -> evidence::CommandOutcome {
         &["test", "--workspace", "--quiet"],
         &[("DATABASE_URL", database_url.as_str())],
     )
+}
+
+/// Approved Contract behavior spans every tier the project ships tests for: the Rust workspace and,
+/// when present, the web unit/component suite (Codeos Mechanics: `behavior`, `repeatability`).
+fn run_behavior_tests(project: &Project) -> evidence::CommandOutcome {
+    let backend = run_cargo_tests(project);
+    let web = project.root.join("web");
+    if !web.is_dir() || !project.web_has_script("test:unit") {
+        return backend;
+    }
+    let frontend = evidence::run(&web, "npm", &["run", "test:unit", "--", "--run"]);
+    evidence::CommandOutcome {
+        ok: backend.ok && frontend.ok,
+        command: format!("{} && (cd web && {})", backend.command, frontend.command),
+        summary: format!(
+            "backend: {} | web unit/component: {}",
+            backend.summary, frontend.summary
+        ),
+        details: backend.details,
+    }
 }
 
 /// B3: bring the declared integrated stack up, prove DB<->backend<->GUI reachability and a clean

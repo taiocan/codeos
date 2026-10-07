@@ -18,7 +18,7 @@ Observed while running JamFree F-0003 under DBA-22 (2026-10-07).
 1. **[Done — human-approved]** **Test-only edits stale human receipts.** The implementation identity covers every file under
    `web/`, so a Playwright-only fix invalidated the `early_preview` receipt and required a second
    human direction call although the previewed UI was unchanged.
-2. **Behavior mechanic omits web tests.** JamFree's F5 `behavior` mechanic runs only
+2. **[Done — conformance repair]** **Behavior mechanic omits web tests.** JamFree's F5 `behavior` mechanic runs only
    `cargo test --workspace`; web unit and component tests appear in no workflow verification
    record, so GUI-only features must cite them outside the workflow.
 3. **Preserve-mode journey check targets `@frontier:entry`.** For a feature preserving the accepted
