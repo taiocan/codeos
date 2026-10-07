@@ -389,6 +389,24 @@ fn evidence(
             );
         }
     }
+    if let Some(referenced) = manifest.referenced_production_evidence() {
+        let path = cfg.repo_root.join(format!(
+            ".codeos/06-workflow/reality-evidence/{referenced}.json"
+        ));
+        match sha256_file(path.to_string_lossy().as_ref()) {
+            Err(_) => readiness.fail(
+                Reason::RequiredInputMissing,
+                "F5/production_source_evidence",
+                "referenced production evidence is absent",
+            ),
+            Ok(actual) if actual != referenced => readiness.fail(
+                Reason::F6SelectedEvidenceMismatch,
+                "F5/production_source_evidence",
+                "referenced production evidence content does not match its identity",
+            ),
+            Ok(_) => {}
+        }
+    }
     if let Some((_, record)) = manifest
         .derived
         .records

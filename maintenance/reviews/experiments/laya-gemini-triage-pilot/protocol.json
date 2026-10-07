@@ -1,0 +1,46 @@
+{
+  "protocol_version": "1.0.0",
+  "model": "gemini-3.7-flash",
+  "sampling_parameters": "omitted",
+  "labels": [
+    "IN-SCOPE BLOCKER",
+    "IN-SCOPE NON-BLOCKER",
+    "OUT-OF-SCOPE BACKLOG",
+    "REJECTED",
+    "SELF-REFERENCE / REVIEW-BOOKKEEPING"
+  ],
+  "blocker_kinds": ["substantive", "evidence_insufficient", "not_applicable"],
+  "limits": {
+    "requests": 150,
+    "input_tokens": 600000,
+    "output_tokens": 75000,
+    "estimated_usd": 4.0,
+    "retries_per_case": 1,
+    "prospective_findings": 40,
+    "prospective_weeks": 8,
+    "adjudicated_cases": 80,
+    "reviewer_hours": 12
+  },
+  "pricing_usd_per_million_tokens": {
+    "input": 0.50,
+    "output": 3.00,
+    "note": "Frozen pilot accounting assumption; verify against the provider before a paid run."
+  },
+  "phase0": {
+    "minimum_observed_decisions": 10,
+    "minimum_occurrence_rate": 0.20,
+    "minimum_projected_hours_per_month": 2.0,
+    "minimum_corrections_per_month": 2.0,
+    "minimum_diagnostic_blockers": 20,
+    "minimum_diagnostic_non_blockers": 20
+  },
+  "calibrated_operating_point": {
+    "reported_confidence_threshold": 0.8,
+    "status": "placeholder; replace using calibration data before freeze"
+  },
+  "laya": {
+    "version": "1.9.3",
+    "commit": "bbd6c799a255ff7eee1731effe1d23ec78538de9",
+    "enabled": false
+  }
+}

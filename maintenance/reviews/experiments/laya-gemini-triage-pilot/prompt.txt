@@ -1,0 +1,14 @@
+Classify one already-generated CodeOS review finding. Do not decide whether the finding is true,
+approve anything, or change workflow state.
+
+Labels:
+- IN-SCOPE BLOCKER: breaks the stated goal, creates a material false claim, violates an applicable
+  contract, or must be fixed before the reviewed work advances.
+- IN-SCOPE NON-BLOCKER: relevant and useful, but not required before advancement.
+- OUT-OF-SCOPE BACKLOG: potentially valid work outside the reviewed change's stated scope.
+- REJECTED: unsupported, incorrect, or not actionable from the supplied evidence.
+- SELF-REFERENCE / REVIEW-BOOKKEEPING: stale or circular review metadata rather than a substantive
+  defect in the reviewed deliverable.
+
+Return only the requested structured object. Confidence is an uncalibrated self-report from 0 to 1.
+Use abstain=true when the supplied finding and scope are insufficient for a defensible label.

@@ -34,6 +34,6 @@ Observed while running JamFree F-0003 under DBA-22 (2026-10-07).
 7. **[Done — conformance repair]** **Committing the review record stales F7.** F7 binds the reviewer record to the exact HEAD
    commit, so committing the record itself (or any later workflow receipt) moves HEAD and requires
    re-review unless acceptance is recorded before those records are committed.
-8. **Required verification inputs dominate packet size.** The F6-selected production evidence and
+8. **[Done — tooling hardening + per-project budget]** **Required verification inputs dominate packet size.** The F6-selected production evidence and
    its verification record alone exceed the 50 KB packet budget, so every JamFree Stage-8 review
    needs `CODEOS_PACKET_BUDGET_MODE=warn`.

@@ -2207,10 +2207,8 @@ fn run_production_source_evidence(
             {
                 return failure(format!("persist production evidence: {error}"));
             }
-            outcome.details = Some(serde_json::json!({
-                "evidence_sha256": identity,
-                "evidence": record,
-            }));
+            // The evidence file is the canonical copy; the record references it by identity.
+            outcome.details = Some(serde_json::json!({ "evidence_sha256": identity }));
             outcome
         }
         Err(error) => {

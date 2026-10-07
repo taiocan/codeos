@@ -1688,6 +1688,7 @@ pub fn run(mut args: ReviewArgs, cfg: &Config) -> Result<i32> {
             readiness.print_refusal();
             return Ok(crate::EXIT_PACKET);
         }
+        manifest.print_size(&review_packet);
         review_packet.manifest = Some(manifest);
     }
 

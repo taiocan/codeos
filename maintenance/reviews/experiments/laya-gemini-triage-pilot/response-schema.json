@@ -1,0 +1,18 @@
+{
+  "type": "object",
+  "properties": {
+    "classification": {
+      "type": "string",
+      "enum": ["IN-SCOPE BLOCKER", "IN-SCOPE NON-BLOCKER", "OUT-OF-SCOPE BACKLOG", "REJECTED", "SELF-REFERENCE / REVIEW-BOOKKEEPING"]
+    },
+    "blocker_kind": {
+      "type": "string",
+      "enum": ["substantive", "evidence_insufficient", "not_applicable"]
+    },
+    "abstain": {"type": "boolean"},
+    "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+    "reason": {"type": "string", "maxLength": 500}
+  },
+  "required": ["classification", "blocker_kind", "abstain", "confidence", "reason"],
+  "additionalProperties": false
+}

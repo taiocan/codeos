@@ -19,6 +19,7 @@
 //! | v17 incorporates v16 | inherited mechanisms complete | bounded-basis required inputs, contract lists | `inherited_reentry_*`, `inherited_lineage_replacement_*`, `inherited_evidence_reassessment_*`, `lineage_replacement_completes_under_dba21` |
 //! | F7 binds to reviewed identities | "what would be reviewed now" is the recorded manifest identity | `codeos_workflow::evidence::review_identity_drift` | `v17_review_binding_survives_*`, `pre_v17_review_records_keep_head_binding` |
 //! | UX receipts bind the judged product (DBA-22+) | F4/F8 bind `product_state`; evidence keeps full binding | `checker::bindings_for_decision`, `hashing::product_state` | `ux_receipts_ignore_test_only_edits_*`, `existing_receipts_and_earlier_configurations_*` |
+//! | Required evidence by identity; explicit budget | referenced evidence present and intact; size split; per-project budget | `ReviewInputManifest::referenced_production_evidence`, `print_size`, `config::packet_budget_bytes` | `referenced_production_evidence_*`, `packet_size_report_*`, `project_reviewer_toml_*` |
 //! | End to end | manifest → gate → packet → review → record → workflow/decision | all of the above | `ready_review_is_consumed_by_workflow_and_decision` |
 
 mod common;
@@ -1703,4 +1704,81 @@ fn existing_receipts_and_earlier_configurations_keep_full_binding() {
     let (recorded, _) = ux_bindings(&earlier, "early_preview");
     assert!(recorded.contains_key("implementation_state"));
     assert!(!recorded.contains_key("product_state"));
+}
+
+fn referenced_evidence(fixture: &Fixture) -> PathBuf {
+    fixture.path().join(format!(
+        ".codeos/06-workflow/reality-evidence/{}.json",
+        current_selection(fixture)
+    ))
+}
+
+/// Production-source records reference evidence by identity; the evidence itself must be present,
+/// intact, and inspectable before review.
+#[test]
+fn referenced_production_evidence_must_be_present_and_intact() {
+    let fixture = ready_project(true);
+    std::fs::remove_file(referenced_evidence(&fixture)).unwrap();
+    let fake = setup_fake_codex();
+    let result = review(&fixture, &fake, &[]);
+    assert!(
+        result
+            .2
+            .contains("F5/production_source_evidence: referenced production evidence is absent"),
+        "{}",
+        result.2
+    );
+    assert_refused_with(&fixture, result, "REQUIRED_INPUT_MISSING", &fake);
+
+    let fixture = ready_project(true);
+    std::fs::write(referenced_evidence(&fixture), "{\"tampered\":true}\n").unwrap();
+    let fake = setup_fake_codex();
+    let result = review(&fixture, &fake, &[]);
+    assert!(
+        result
+            .2
+            .contains("referenced production evidence content does not match its identity"),
+        "{}",
+        result.2
+    );
+    assert_refused_with(&fixture, result, "F6_SELECTED_EVIDENCE_MISMATCH", &fake);
+}
+
+#[test]
+fn packet_size_report_separates_derived_and_declared_inputs() {
+    let fixture = ready_project(true);
+    let (status, stdout, stderr) = run_in_dir_with_env(
+        fixture.path(),
+        &["plan", FEATURE, "8", "--skip-prechecks", "src/lib.rs"],
+        &[],
+    );
+    assert_eq!(status, 0, "{stdout}\n{stderr}");
+    for line in [
+        "required inputs (derived):",
+        "declared inputs:",
+        "total:",
+        "budget:",
+    ] {
+        assert!(stderr.contains(line), "missing {line}:\n{stderr}");
+    }
+}
+
+#[test]
+fn project_reviewer_toml_sets_the_packet_budget() {
+    let fixture = ready_project(false);
+    write(
+        &fixture.path().join(".codeos/05-review/reviewer.toml"),
+        "packet_budget_bytes = 204800\n",
+    );
+    let (status, stdout, stderr) = run_in_dir_with_env(
+        fixture.path(),
+        &["plan", FEATURE, "8", "--skip-prechecks", "src/lib.rs"],
+        &[],
+    );
+    assert_eq!(status, 0, "{stdout}\n{stderr}");
+    assert!(stdout.contains("budget 204800"), "{stdout}");
+    assert!(
+        stderr.contains("budget:                    200 KB"),
+        "{stderr}"
+    );
 }

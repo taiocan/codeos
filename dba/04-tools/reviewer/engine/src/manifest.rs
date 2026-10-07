@@ -33,6 +33,9 @@ pub struct ReviewInputManifest {
     /// The runtime event evidence bound by the F7 runtime-event verification.
     pub runtime_evidence: Option<String>,
     pub required_inputs: BTreeSet<String>,
+    /// The subset of required inputs CodeOS derived itself, as opposed to caller-declared ones.
+    #[serde(default)]
+    pub derived_inputs: BTreeSet<String>,
     /// Content identity of everything the reviewer receives; set once the packet is final.
     pub reviewed_snapshot: String,
     #[serde(skip)]
@@ -103,6 +106,7 @@ pub fn derive(
     }
     for path in governed {
         manifest.governed_context.insert(path.clone(), hash(&path));
+        manifest.derived_inputs.insert(path.clone());
         manifest.required_inputs.insert(path);
     }
 
@@ -121,6 +125,7 @@ pub fn derive(
             .iter()
             .any(|scope| path == *scope || path.starts_with(&format!("{scope}/")))
         {
+            manifest.derived_inputs.insert(path.clone());
             manifest.required_inputs.insert(path);
         }
     }
@@ -141,9 +146,9 @@ pub fn derive(
         .as_ref()
         .and_then(|receipt| receipt.bindings.get("production_evidence").cloned());
     if let Some(selected) = &manifest.production_evidence {
-        manifest.required_inputs.insert(format!(
-            ".codeos/06-workflow/reality-evidence/{selected}.json"
-        ));
+        let path = format!(".codeos/06-workflow/reality-evidence/{selected}.json");
+        manifest.derived_inputs.insert(path.clone());
+        manifest.required_inputs.insert(path);
     }
 
     let store = std::fs::read_to_string(root.join(".codeos/06-workflow/verifications.jsonl"))
@@ -192,7 +197,15 @@ pub fn derive(
         .and_then(|value| value.as_str())
         .map(str::to_string);
     if let Some(path) = &manifest.runtime_evidence {
+        manifest.derived_inputs.insert(path.clone());
         manifest.required_inputs.insert(path.clone());
+    }
+    // A production-source record references its evidence by identity; the evidence itself is the
+    // inspectable required input.
+    if let Some(referenced) = manifest.referenced_production_evidence() {
+        let path = format!(".codeos/06-workflow/reality-evidence/{referenced}.json");
+        manifest.derived_inputs.insert(path.clone());
+        manifest.required_inputs.insert(path);
     }
     manifest
 }
@@ -241,6 +254,46 @@ fn changed_paths(root: &std::path::Path, basis: &ReviewBasis) -> BTreeSet<String
 }
 
 impl ReviewInputManifest {
+    /// The production evidence identity the F5 production-source record references.
+    pub fn referenced_production_evidence(&self) -> Option<String> {
+        let (_, record) = self.derived.records.get("F5/production_source_evidence")?;
+        record
+            .details
+            .as_ref()?
+            .get("evidence_sha256")?
+            .as_str()
+            .map(str::to_string)
+    }
+
+    /// (CodeOS-derived required bytes, caller-declared bytes) counted toward the packet budget.
+    pub fn size_split(&self, packet: &ReviewPacket) -> (u64, u64) {
+        packet
+            .budget_contributors
+            .iter()
+            .fold((0, 0), |(derived, declared), (path, bytes)| {
+                if path.starts_with('(') || self.derived_inputs.contains(path) {
+                    (derived + bytes, declared)
+                } else {
+                    (derived, declared + bytes)
+                }
+            })
+    }
+
+    pub fn print_size(&self, packet: &ReviewPacket) {
+        let (derived, declared) = self.size_split(packet);
+        let kb = |bytes: u64| bytes.div_ceil(1024);
+        eprintln!("  required inputs (derived): {} KB", kb(derived));
+        eprintln!("  declared inputs:           {} KB", kb(declared));
+        eprintln!(
+            "  total:                     {} KB",
+            kb(packet.review_content_bytes)
+        );
+        eprintln!(
+            "  budget:                    {} KB",
+            kb(packet.budget_bytes)
+        );
+    }
+
     /// Required verification record lines the packet does not already carry verbatim.
     pub fn records_missing_from(&self, packet: &ReviewPacket) -> Vec<String> {
         self.derived

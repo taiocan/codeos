@@ -1,3 +1,5 @@
 # Optional reviewer overrides. Omit this file to use built-in defaults.
 # Canonical downstream path: .codeos/05-review/reviewer.toml
 reasoning_effort = "high"
+# Packet budget in bytes (default 50000). CODEOS_PACKET_BUDGET_BYTES overrides it per run.
+# packet_budget_bytes = 50000

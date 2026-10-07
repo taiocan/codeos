@@ -1175,10 +1175,7 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
 
     // Packet construction measures and explains size. Codex invocation policy is enforced at the
     // model-spawning boundary, not here.
-    let budget = std::env::var("CODEOS_PACKET_BUDGET_BYTES")
-        .ok()
-        .and_then(|v| v.parse::<u64>().ok())
-        .unwrap_or(50_000);
+    let budget = crate::config::packet_budget_bytes(Path::new(&opts.repo_root));
     if review_content_bytes > budget {
         // Enhanced warning: show overage, top contributors, and actionable suggestions
         let overage_multiple = (review_content_bytes as f64 / budget as f64).ceil() as u64;

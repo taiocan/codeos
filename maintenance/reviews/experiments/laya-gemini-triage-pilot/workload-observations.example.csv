@@ -1,0 +1,2 @@
+decision_id,observed_at,classification_checked,classification_minutes,classification_corrected,monthly_weight,notes
+EXAMPLE-REMOVE,2026-09-26T00:00:00Z,true,2.5,false,1,Replace this row with a blinded observation

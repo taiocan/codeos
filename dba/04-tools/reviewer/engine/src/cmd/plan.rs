@@ -31,6 +31,7 @@ pub fn run(args: EvidenceArgs, emit_packet: Option<PathBuf>, cfg: &Config) -> Re
         let readiness =
             crate::readiness::evaluate(cfg, &manifest, &prepared.packet, &prepared.args.sha_only);
         readiness.print_plan();
+        manifest.print_size(&prepared.packet);
         if !readiness.passes() {
             return Ok(crate::EXIT_PACKET);
         }

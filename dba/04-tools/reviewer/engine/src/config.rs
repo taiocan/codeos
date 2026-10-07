@@ -64,6 +64,17 @@ pub fn resolve_reviewer_tool_contract(config: &Config) -> Result<String> {
 #[serde(deny_unknown_fields)]
 struct ReviewerToml {
     reasoning_effort: Option<String>,
+    packet_budget_bytes: Option<u64>,
+}
+
+/// Packet budget precedence: `CODEOS_PACKET_BUDGET_BYTES`, then the project's `reviewer.toml`,
+/// then the 50,000-byte default. A malformed `reviewer.toml` fails `resolve` before any build.
+pub(crate) fn packet_budget_bytes(repo_root: &Path) -> u64 {
+    std::env::var("CODEOS_PACKET_BUDGET_BYTES")
+        .ok()
+        .and_then(|v| v.parse::<u64>().ok())
+        .or_else(|| load_reviewer_toml(repo_root).ok()?.packet_budget_bytes)
+        .unwrap_or(50_000)
 }
 
 /// Resolve reviewer configuration. Reasoning effort precedence is environment, TOML, default.
