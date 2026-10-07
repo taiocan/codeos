@@ -4,6 +4,17 @@ Classification: NORMAL candidates — not yet analyzed or approved
 
 Observed while running JamFree F-0003 under DBA-22 (2026-10-07).
 
+## Direction (human decision, 2026-10-07)
+
+- DBA-22 semantics are frozen. These items are DBA-22 conformance or tooling hardening; a new DBA
+  version requires a genuinely new governance rule, not a bug fix.
+- DBA-22 becomes the default only after three normal features complete without a new DBA version,
+  an exceptional recovery mechanism, or manual history surgery. Progress: 1/3 (JamFree F-0003).
+  F-0002 stays frozen and does not count.
+- Priority order: items 7, 1, 2, 8 below. Everything else waits.
+
+## Candidates
+
 1. **Test-only edits stale human receipts.** The implementation identity covers every file under
    `web/`, so a Playwright-only fix invalidated the `early_preview` receipt and required a second
    human direction call although the previewed UI was unchanged.
