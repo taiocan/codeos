@@ -170,6 +170,9 @@ pub struct ReviewRecord {
     pub effective_concern: String,
     pub production_evidence: Option<String>,
     pub artifacts: Vec<ReviewArtifact>,
+    /// The Review Input Manifest sidecar (Reviewer Tool Contract v17), present only when its packet
+    /// hash equals the review's recorded `reviewed_packet_sha256`.
+    pub manifest_sidecar: Option<serde_json::Value>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -180,6 +183,70 @@ pub struct ReviewArtifact {
 }
 
 /// The most recent reviewer record for `feature` at `stage`, by filename timestamp order.
+/// Load the v17 manifest sidecar written beside a review's packet, bound to that exact packet.
+fn manifest_sidecar(assessment: &Path, reviewed: Option<&serde_yaml::Value>) -> Option<serde_json::Value> {
+    let field = |name: &str| reviewed?.get(name)?.as_str().map(str::to_string);
+    let packet = assessment.parent()?.join(field("reviewed_packet")?);
+    let sidecar: serde_json::Value =
+        serde_json::from_slice(&std::fs::read(format!("{}.meta.json", packet.display())).ok()?)
+            .ok()?;
+    (sidecar.get("manifest").is_some()
+        && sidecar.get("content_sha256").and_then(|v| v.as_str())
+            == field("reviewed_packet_sha256").as_deref())
+    .then_some(sidecar)
+}
+
+/// For a review carrying a v17 manifest, every identity it recorded that differs from the identity
+/// derived from current state. `None` when the review has no manifest, so its HEAD binding applies.
+pub fn review_identity_drift(
+    root: &Path,
+    implementation_paths: &[String],
+    record: &ReviewRecord,
+) -> Result<Option<Vec<String>>> {
+    let Some(sidecar) = &record.manifest_sidecar else {
+        return Ok(None);
+    };
+    let manifest = &sidecar["manifest"];
+    let mut drift = Vec::new();
+    let file_sha = |rel: &str| crate::hashing::file_sha256(&root.join(rel)).ok().flatten();
+
+    if manifest["implementation"].as_str()
+        != Some(crate::hashing::working_tree_state(root, implementation_paths)?.as_str())
+    {
+        drift.push("implementation".to_string());
+    }
+    if manifest["configuration"].as_str() != file_sha(".codeos/00-project/codeos.yaml").as_deref() {
+        drift.push(".codeos/00-project/codeos.yaml".to_string());
+    }
+    for artifact in sidecar["artifacts"].as_array().into_iter().flatten() {
+        let (Some(path), Some(sha)) = (artifact["path"].as_str(), artifact["sha256"].as_str()) else {
+            continue;
+        };
+        if !sha.is_empty() && file_sha(path).as_deref() != Some(sha) {
+            drift.push(path.to_string());
+        }
+    }
+    let store = std::fs::read_to_string(root.join(".codeos/06-workflow/verifications.jsonl"))
+        .unwrap_or_default();
+    for (key, recorded) in manifest["verification"].as_object().into_iter().flatten() {
+        let Some((checkpoint, verification)) = key.split_once('/') else {
+            continue;
+        };
+        let current = store.lines().rev().find_map(|line| {
+            let record: serde_json::Value = serde_json::from_str(line).ok()?;
+            (record["workflow"] == "feature"
+                && record["subject"].as_str() == manifest["feature"].as_str()
+                && record["checkpoint"] == checkpoint
+                && record["verification"] == verification)
+                .then(|| crate::hashing::bytes_sha256(line.as_bytes()))
+        });
+        if recorded.as_str() != current.as_deref() {
+            drift.push(key.clone());
+        }
+    }
+    Ok(Some(drift))
+}
+
 pub fn latest_review_record(
     dir: &Path,
     feature: &str,
@@ -295,6 +362,7 @@ pub fn latest_review_record(
                 .to_string(),
             production_evidence,
             artifacts,
+            manifest_sidecar: manifest_sidecar(&path, reviewed),
         });
     }
     Ok(latest)
@@ -1097,6 +1165,7 @@ mod tests {
             reviewed_packet_sha256: "packet".into(),
             effective_concern: "TERMINAL REVIEW CLOSED — PROGRESSION PERMITTED".into(),
             production_evidence: None,
+            manifest_sidecar: None,
             artifacts: vec![
                 ReviewArtifact {
                     path: selected_path,

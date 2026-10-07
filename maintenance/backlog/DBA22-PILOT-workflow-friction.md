@@ -31,7 +31,7 @@ Observed while running JamFree F-0003 under DBA-22 (2026-10-07).
    so records written within one second have an undefined order.
 6. **`plan` suggests a refused option.** Over budget, `plan` still recommends
    `review ... --base <last-review-commit>`, which Reviewer Tool Contract v17 refuses at Stage 8.
-7. **Committing the review record stales F7.** F7 binds the reviewer record to the exact HEAD
+7. **[Done — conformance repair]** **Committing the review record stales F7.** F7 binds the reviewer record to the exact HEAD
    commit, so committing the record itself (or any later workflow receipt) moves HEAD and requires
    re-review unless acceptance is recorded before those records are committed.
 8. **Required verification inputs dominate packet size.** The F6-selected production evidence and

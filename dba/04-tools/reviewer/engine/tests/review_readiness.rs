@@ -17,6 +17,7 @@
 //! | Execution failure is not semantic | `REVIEW_EXECUTION_INVALID`, two automatic re-executions | execution loop in `cmd/review.rs`, `log::append_execution_invalid` | `structurally_invalid_*`, `automatic_reexecution_*`, `invalid_execution_is_invisible_*` |
 //! | Only development failures block | `DO NOT ADVANCE` unchanged | assessment parsing | `genuine_defects_still_block_progression` |
 //! | v17 incorporates v16 | inherited mechanisms complete | bounded-basis required inputs, contract lists | `inherited_reentry_*`, `inherited_lineage_replacement_*`, `inherited_evidence_reassessment_*`, `lineage_replacement_completes_under_dba21` |
+//! | F7 binds to reviewed identities | "what would be reviewed now" is the recorded manifest identity | `codeos_workflow::evidence::review_identity_drift` | `v17_review_binding_survives_*`, `pre_v17_review_records_keep_head_binding` |
 //! | End to end | manifest → gate → packet → review → record → workflow/decision | all of the above | `ready_review_is_consumed_by_workflow_and_decision` |
 
 mod common;
@@ -1531,4 +1532,67 @@ fn workflow_required_data_integrity_is_required_for_review() {
     let result = review(&fixture, &fake, &[]);
     assert!(result.2.contains("F5d/data_integrity"), "{}", result.2);
     assert_not_ready(&fixture, result, "REQUIRED_INPUT_MISSING", &fake);
+}
+
+fn reviewed_identity_drift(fixture: &Fixture) -> Option<Vec<String>> {
+    let project = Project::discover(fixture.path()).unwrap();
+    let record = codeos_workflow::evidence::latest_review_record(
+        &fixture.path().join(".codeos/05-review/reviews"),
+        FEATURE,
+        "8",
+    )
+    .unwrap()
+    .expect("semantic review record");
+    codeos_workflow::evidence::review_identity_drift(
+        &project.root,
+        &project.implementation_paths(),
+        &record,
+    )
+    .unwrap()
+}
+
+/// F7 binds a v17 review to its recorded identities, not to repository HEAD.
+#[test]
+fn v17_review_binding_survives_governance_only_commits() {
+    let fixture = ready_project(true);
+    let fake = setup_fake_codex();
+    let (status, stdout, stderr) = review(&fixture, &fake, &[]);
+    assert_eq!(status, 0, "{stdout}\n{stderr}");
+    // Committing the review record and a later receipt moves HEAD but changes no reviewed identity.
+    std::fs::write(
+        fixture.path().join(".git/info/exclude"),
+        "/.codeos/toolkit\n",
+    )
+    .unwrap();
+    git(fixture.path(), &["add", ".codeos/05-review"]);
+    git(fixture.path(), &["commit", "-m", "record review"]);
+    let decisions = fixture.path().join(".codeos/06-workflow/decisions.jsonl");
+    let mut text = std::fs::read_to_string(&decisions).unwrap();
+    text.push_str("{\"workflow\":\"feature\",\"subject\":\"FEAT\",\"checkpoint\":\"final_ux_validation\",\"result\":\"accepted\",\"bindings\":{},\"timestamp\":\"2026-10-07T12:00:00Z\"}\n");
+    std::fs::write(&decisions, text).unwrap();
+    git(fixture.path(), &["commit", "-am", "record receipt"]);
+    assert_eq!(reviewed_identity_drift(&fixture), Some(vec![]));
+
+    // Any reviewed identity change is drift.
+    write(
+        &fixture.path().join("src/lib.rs"),
+        "pub fn feature() { changed() }\n",
+    );
+    assert_eq!(
+        reviewed_identity_drift(&fixture),
+        Some(vec!["implementation".to_string(), "src/lib.rs".to_string()])
+    );
+}
+
+/// Records without a v17 manifest keep the reviewed-commit (HEAD) binding.
+#[test]
+fn pre_v17_review_records_keep_head_binding() {
+    let fixture = ready_project(false);
+    bind(&fixture, "DBA-21", false);
+    let fake = setup_fake_codex();
+    assert_ok(
+        governed_review(&fixture, &fake, "success", &[]),
+        "DBA-21 review",
+    );
+    assert_eq!(reviewed_identity_drift(&fixture), None);
 }

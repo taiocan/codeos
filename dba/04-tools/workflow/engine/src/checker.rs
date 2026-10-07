@@ -1255,15 +1255,34 @@ fn evaluate_checkpoint(
                                 continue;
                             }
                         }
+                        // A v17 review binds to the identities it recorded; older records bind to
+                        // the reviewed commit.
+                        let drift = evidence::review_identity_drift(
+                            &project.root,
+                            &project.implementation_paths(),
+                            &r,
+                        )?;
                         let head = current_head(&project.root);
-                        let bound = r.review_commit.is_empty()
-                            || head.is_empty()
-                            || r.review_commit == head;
+                        let bound = match &drift {
+                            Some(drift) => drift.is_empty(),
+                            None => {
+                                r.review_commit.is_empty()
+                                    || head.is_empty()
+                                    || r.review_commit == head
+                            }
+                        };
                         if !bound {
-                            unmet.push(format!(
-                                "reviewer record is bound to {} but HEAD is {} — re-review current evidence",
-                                short(&r.review_commit), short(&head)
-                            ));
+                            unmet.push(match &drift {
+                                Some(drift) => format!(
+                                    "reviewer record no longer matches current reviewed identities ({}) — re-review current evidence",
+                                    drift.join(", ")
+                                ),
+                                None => format!(
+                                    "reviewer record is bound to {} but HEAD is {} — re-review current evidence",
+                                    short(&r.review_commit),
+                                    short(&head)
+                                ),
+                            });
                             next_action.get_or_insert(
                                 "re-run the reviewer against the current commit".into(),
                             );
