@@ -992,6 +992,32 @@ fn current_proposals(project: &Project) -> Result<Vec<String>> {
     Ok(proposals)
 }
 
+/// The (checkpoint, verification) records the feature workflow requires before review, exactly as
+/// `evaluate` applies them to this subject.
+pub fn required_verification_records(
+    project: &Project,
+    subject: &Subject,
+) -> Result<Vec<(&'static str, &'static str)>> {
+    let mut required = Vec::new();
+    for checkpoint in contract_for(subject.workflow, project.feature_workflow_version()?) {
+        if !applies(checkpoint.applies, subject) {
+            continue;
+        }
+        for requirement in &checkpoint.requirements {
+            match requirement {
+                Requirement::LiveVerification { mechanic, .. } => {
+                    required.push((checkpoint.id, *mechanic))
+                }
+                Requirement::ProductionSourceEvidence if !subject.reality_claims.is_empty() => {
+                    required.push((checkpoint.id, "production_source_evidence"))
+                }
+                _ => {}
+            }
+        }
+    }
+    Ok(required)
+}
+
 fn applies(a: Applies, s: &Subject) -> bool {
     match a {
         Applies::Always => true,

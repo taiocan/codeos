@@ -149,10 +149,22 @@ pub fn derive(
     let store = std::fs::read_to_string(root.join(".codeos/06-workflow/verifications.jsonl"))
         .unwrap_or_default();
     let subject = Subject::resolve(&project, Workflow::Feature, feature);
-    let required = subject
+    let mut required = subject
         .as_ref()
-        .map(codeos_workflow::revalidation::required_verifications)
+        .ok()
+        .and_then(|subject| {
+            codeos_workflow::checker::required_verification_records(&project, subject).ok()
+        })
         .unwrap_or_default();
+    // Runtime-event verification is optional evidence; when recorded it is bound like the rest.
+    let has_runtime_events = store.lines().any(|line| {
+        serde_json::from_str::<VerificationRecord>(line).is_ok_and(|record| {
+            record.subject == feature && record.verification == "runtime_event_schema"
+        })
+    });
+    if has_runtime_events {
+        required.push(("F7", "runtime_event_schema"));
+    }
     for (checkpoint, verification) in required {
         let key = format!("{checkpoint}/{verification}");
         let latest = store.lines().rev().find_map(|line| {

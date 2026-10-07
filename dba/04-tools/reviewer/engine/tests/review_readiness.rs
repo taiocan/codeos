@@ -1488,3 +1488,47 @@ fn inherited_evidence_reassessment_completes_under_v17() {
         "{reassessment}"
     );
 }
+
+#[test]
+fn runtime_event_verification_is_required_only_when_recorded() {
+    let fixture = ready_project(false);
+    let store = fixture
+        .path()
+        .join(".codeos/06-workflow/verifications.jsonl");
+    let text = std::fs::read_to_string(&store).unwrap();
+    let kept: Vec<&str> = text
+        .lines()
+        .filter(|line| !line.contains("runtime_event_schema"))
+        .collect();
+    std::fs::write(&store, kept.join("\n") + "\n").unwrap();
+    git(
+        fixture.path(),
+        &["commit", "-am", "external-observation feature"],
+    );
+    let fake = setup_fake_codex();
+    let (status, stdout, stderr) = review(&fixture, &fake, &[]);
+    assert_eq!(status, 0, "{stdout}\n{stderr}");
+    let manifest = &sidecar(&fixture)["manifest"];
+    assert!(
+        manifest["verification"]
+            .get("F7/runtime_event_schema")
+            .is_none(),
+        "{manifest}"
+    );
+}
+
+#[test]
+fn workflow_required_data_integrity_is_required_for_review() {
+    let fixture = ready_project(false);
+    let contract = fixture.path().join(contract_path());
+    let mut text = std::fs::read_to_string(&contract).unwrap();
+    text.push_str("\n## Feature Impact Accounting\n\n| Tier | Changed / Unchanged | Reason |\n|---|---|---|\n| Persistence (PostgreSQL) | changed | stores feature state |\n");
+    std::fs::write(&contract, text).unwrap();
+    record_current_evidence(&fixture, false);
+    git(fixture.path(), &["add", "."]);
+    git(fixture.path(), &["commit", "-m", "persistence feature"]);
+    let fake = setup_fake_codex();
+    let result = review(&fixture, &fake, &[]);
+    assert!(result.2.contains("F5d/data_integrity"), "{}", result.2);
+    assert_not_ready(&fixture, result, "REQUIRED_INPUT_MISSING", &fake);
+}
