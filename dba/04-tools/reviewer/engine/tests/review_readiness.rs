@@ -5,7 +5,7 @@
 //! | v15 rule | v17 clause | Implementation | Tests |
 //! |---|---|---|---|
 //! | Readiness before every invocation | Readiness and coverage | `readiness::evaluate`, gate in `cmd/review.rs` | every `*_refused`, `*_not_ready*` test |
-//! | Environment usable | `EXECUTION_ENVIRONMENT_BLOCKED` | `readiness::environment`, `docker_available` | `unavailable_reviewer_cli_*`, `unavailable_docker_*` |
+//! | Environment usable | `EXECUTION_ENVIRONMENT_BLOCKED` | `readiness::environment`, `docker_available` | `unavailable_reviewer_cli_*`, `missing_reviewer_credentials_*`, `unavailable_docker_*` |
 //! | Toolchain usable | `REVIEWER_BUILD_MISMATCH` | `build_identity`, `readiness::toolchain` | `stale_reviewer_binary_is_refused` |
 //! | Machine-owned identities | `CONFIGURATION_MISMATCH`, `IMPLEMENTATION_IDENTITY_INVALID`, supplied hashes are expectations | `manifest::derive`, `readiness::identities`, `cmd/decision.rs` | `transcribed_configuration_*`, `unsupported_implementation_*`, `supplied_event_evidence_*`, `authorization_record_hashes_*` |
 //! | Evidence current and coherent | `EVIDENCE_STALE`, `F6_SELECTED_EVIDENCE_MISMATCH` | `readiness::evidence` | `implementation_changed_*`, `wrong_f6_*` |
@@ -925,4 +925,19 @@ fn unreadable_architecture_scopes_are_refused() {
         "REQUIRED_INPUT_NOT_INSPECTABLE",
         &fake,
     );
+}
+
+#[test]
+fn missing_reviewer_credentials_are_an_environment_block() {
+    let fixture = ready_project(false);
+    let fake = setup_fake_codex();
+    let result = common::run_with_fake_codex_env(
+        fixture.path(),
+        &fake,
+        &["review", FEATURE, "8", "--skip-prechecks", "src/lib.rs"],
+        "success",
+        &[("CODEOS_FAKE_AUTH", "none")],
+    );
+    assert!(result.2.contains("codex credentials"), "{}", result.2);
+    assert_not_ready(&fixture, result, "EXECUTION_ENVIRONMENT_BLOCKED", &fake);
 }

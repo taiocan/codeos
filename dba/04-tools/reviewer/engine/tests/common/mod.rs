@@ -27,6 +27,14 @@ if [[ "${1:-}" == "--version" ]]; then
   printf '%s\n' 'codex-cli fake-1.0'
   exit 0
 fi
+if [[ "${1:-}" == "login" && "${2:-}" == "status" ]]; then
+  if [[ "${CODEOS_FAKE_AUTH:-ok}" == "none" ]]; then
+    printf '%s\n' 'Not logged in'
+    exit 1
+  fi
+  printf '%s\n' 'Logged in using fake credentials'
+  exit 0
+fi
 if [[ "${1:-}" == "sandbox" ]]; then
   if [[ "${CODEOS_FAKE_MODE:-success}" == "isolation_failure" ]]; then
     printf '%s\n' 'CODEOS_ISOLATION_READABLE simulated'

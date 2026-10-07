@@ -127,11 +127,29 @@ pub fn evaluate(
 }
 
 fn environment(readiness: &mut Readiness) {
-    if let Err(error) = crate::codex::resolve_codex_executable() {
+    let codex = match crate::codex::resolve_codex_executable() {
+        Ok(codex) => codex,
+        Err(error) => {
+            readiness.fail(
+                Reason::ExecutionEnvironmentBlocked,
+                "codex",
+                error.to_string(),
+            );
+            return;
+        }
+    };
+    // Local credential probe; it makes no model request.
+    let authenticated = std::process::Command::new(&codex)
+        .args(["login", "status"])
+        .stdout(std::process::Stdio::null())
+        .stderr(std::process::Stdio::null())
+        .status()
+        .is_ok_and(|status| status.success());
+    if !authenticated {
         readiness.fail(
             Reason::ExecutionEnvironmentBlocked,
-            "codex",
-            error.to_string(),
+            "codex credentials",
+            "`codex login status` reports no usable login",
         );
     }
 }
