@@ -138,7 +138,9 @@ pub fn parse_findings(raw_text: &str, review_id: &str) -> (Vec<Finding>, usize) 
     let finding_only_re = Regex::new(r"^(?:\d+\.\s+)?Finding: (.+?)\s*$").expect("valid regex");
     let severity_only_re = Regex::new(r"^Severity: (High|Medium|Low)\s*$").expect("valid regex");
     let classification_only_re = Regex::new(r"^Classification: (.+?)\s*$").expect("valid regex");
-    let combined_re = Regex::new(r"^Evidence: (.+?) / Why: (.+?) / Required action: (fix now|optional fix|backlog|reject)\s*$")
+    // The action is one exact canonical token. A real reviewer shape follows it with a dash and an
+    // explanation; only the token carries meaning, and any other wording stays malformed.
+    let combined_re = Regex::new(r"^Evidence: (.+?) / Why: (.+?) / Required action: (fix now|optional fix|backlog|reject)(?:\s+[—–-]\s+\S.*?)?\s*$")
         .expect("valid regex");
     // A third real, historical shape: Evidence/Why/Required action/Scope reason all combined
     // onto one line (earliest corpus era, e.g. 2026-06-30/2026-07-01 rounds).
@@ -146,8 +148,10 @@ pub fn parse_findings(raw_text: &str, review_id: &str) -> (Vec<Finding>, usize) 
         .expect("valid regex");
     let evidence_only_re = Regex::new(r"^Evidence: (.+?)\s*$").expect("valid regex");
     let why_only_re = Regex::new(r"^Why: (.+?)\s*$").expect("valid regex");
-    let action_only_re = Regex::new(r"^Required action: (fix now|optional fix|backlog|reject)\s*$")
-        .expect("valid regex");
+    let action_only_re = Regex::new(
+        r"^Required action: (fix now|optional fix|backlog|reject)(?:\s+[—–-]\s+\S.*?)?\s*$",
+    )
+    .expect("valid regex");
     let scope_re = Regex::new(r"^Scope reason: (.+)$").expect("valid regex");
     let blocker_kind_re =
         Regex::new(r"^Blocker kind: (SUBSTANTIVE|EVIDENCE_INSUFFICIENT)\s*$").expect("valid regex");
@@ -1067,6 +1071,32 @@ mod tests {
         assert_eq!(f.evidence, "diff shows renamed tests");
         assert_eq!(f.why, "breaks traceability");
         assert_eq!(f.scope_reason.as_deref(), Some("directly affects AC-7."));
+    }
+
+    /// Real shape from the JamFree F-0003 DBA-22 pilot: each field on its own line and the exact
+    /// action token followed by an explanation.
+    #[test]
+    fn parse_findings_accepts_exact_action_token_with_explanation() {
+        let text = "Finding: Production evidence reports the wrong observed journey. / Severity: Medium / Classification: IN-SCOPE BLOCKER  \nEvidence: `scripts/verify-production-claims.mjs:98`.  \nWhy: `details.journey` states the wrong route.  \nRequired action: fix now — derive the journey description from the observed route labels.  \nScope reason: Truthful evidence belongs to the stated verification output.  \nBlocker kind: SUBSTANTIVE\n\nLOG SUMMARY: CHANGES ADVISED — correct the evidence\nEVIDENCE: B\nHIGHEST-IMPACT UNCERTAINTY: none\n";
+        let (findings, unparsed) = parse_findings(text, RID);
+        assert_eq!(unparsed, 0);
+        assert_eq!(findings.len(), 1);
+        assert_eq!(findings[0].required_action, "fix now");
+        assert_eq!(findings[0].blocker_kind.as_deref(), Some("SUBSTANTIVE"));
+
+        let combined = "Finding: x / Severity: Low / Classification: IN-SCOPE NON-BLOCKER\nEvidence: e / Why: w / Required action: backlog – track separately\nScope reason: s\n\nLOG SUMMARY: NO OBJECTION — fine\nEVIDENCE: A\nHIGHEST-IMPACT UNCERTAINTY: none\n";
+        let (findings, unparsed) = parse_findings(combined, RID);
+        assert_eq!((findings.len(), unparsed), (1, 0));
+        assert_eq!(findings[0].required_action, "backlog");
+    }
+
+    #[test]
+    fn parse_findings_rejects_non_canonical_action_wording() {
+        for action in ["fix later — after release", "fix now-ish", "must fix now"] {
+            let text = format!("Finding: x / Severity: Low / Classification: IN-SCOPE NON-BLOCKER\nEvidence: e\nWhy: w\nRequired action: {action}\nScope reason: s\n\nLOG SUMMARY: NO OBJECTION — fine\nEVIDENCE: A\nHIGHEST-IMPACT UNCERTAINTY: none\n");
+            let (findings, unparsed) = parse_findings(&text, RID);
+            assert_eq!((findings.len(), unparsed), (0, 1), "{action}");
+        }
     }
 
     #[test]
