@@ -941,3 +941,403 @@ fn missing_reviewer_credentials_are_an_environment_block() {
     assert!(result.2.contains("codex credentials"), "{}", result.2);
     assert_not_ready(&fixture, result, "EXECUTION_ENVIRONMENT_BLOCKED", &fake);
 }
+
+fn governed_review(
+    fixture: &Fixture,
+    fake: &common::FakeCodex,
+    mode: &str,
+    extra: &[&str],
+) -> (i32, String, String) {
+    let (intent, contract, schema) = (intent(), contract_path(), schema());
+    let mut args = vec!["review", FEATURE, "8", "--skip-prechecks"];
+    args.extend_from_slice(extra);
+    args.extend([
+        ".codeos/00-project/charter.md",
+        intent.as_str(),
+        contract.as_str(),
+        schema.as_str(),
+        "src/lib.rs",
+    ]);
+    run_with_fake_codex(fixture.path(), fake, &args, mode)
+}
+
+fn decide(fixture: &Fixture, args: &[&str]) {
+    let (status, stdout, stderr) = run_in_dir_with_env(fixture.path(), args, &[]);
+    assert_eq!(status, 0, "decision failed:\n{stdout}\n{stderr}");
+}
+
+fn assert_ok(result: (i32, String, String), what: &str) {
+    assert_eq!(result.0, 0, "{what} failed:\n{}\n{}", result.1, result.2);
+}
+
+/// Inherited v16 mechanism: bounded re-entry completes under v17 readiness and snapshot rules.
+#[test]
+fn inherited_reentry_completes_under_v17() {
+    let fixture = ready_project(false);
+    let fake = setup_fake_codex();
+    for mode in ["success", "success", "blocking"] {
+        assert_ok(
+            governed_review(&fixture, &fake, mode, &[]),
+            "ordinary round",
+        );
+    }
+    decide(
+        &fixture,
+        &[
+            "decision",
+            FEATURE,
+            "8",
+            "AUTHORIZE_REENTRY",
+            "One bounded repair review.",
+            "--after-review",
+            "REV__FEAT__8__SR2__R3",
+        ],
+    );
+    change_implementation(&fixture, false);
+    assert_ok(
+        governed_review(
+            &fixture,
+            &fake,
+            "success",
+            &["--reentry-after", "REV__FEAT__8__SR2__R3"],
+        ),
+        "re-entry",
+    );
+    let log = review_log(&fixture);
+    assert!(
+        log.contains("Review ID: REV__FEAT__8__SR2__REENTRY-1"),
+        "{log}"
+    );
+    let record = codeos_workflow::evidence::latest_review_record(
+        &fixture.path().join(".codeos/05-review/reviews"),
+        FEATURE,
+        "8",
+    )
+    .unwrap()
+    .unwrap();
+    assert_eq!(record.review_id, "REV__FEAT__8__SR2__REENTRY-1");
+    assert!(codeos_workflow::evidence::review_permits_progression(
+        &record.effective_concern
+    ));
+}
+
+/// Rebind the project to another approved configuration and refresh the F6/verification records
+/// that bind `codeos.yaml`, as an explicit human-authorized adoption would.
+fn bind(fixture: &Fixture, configuration: &str, reality: bool) {
+    write(
+        &fixture.path().join(".codeos/00-project/codeos.yaml"),
+        &format!("codeos_schema: 2\ndba_configuration: {configuration}\n"),
+    );
+    record_current_evidence(fixture, reality);
+    git(
+        fixture.path(),
+        &["add", ".codeos/00-project", ".codeos/06-workflow"],
+    );
+    git(
+        fixture.path(),
+        &["commit", "-m", &format!("bind {configuration}")],
+    );
+}
+
+fn record_block(log: &str, review_id: &str) -> String {
+    log.split_once(&format!("Review ID: {review_id}"))
+        .unwrap_or_else(|| panic!("missing {review_id}:\n{log}"))
+        .1
+        .split("\n## ")
+        .next()
+        .unwrap()
+        .to_string()
+}
+
+fn first_finding_id(fixture: &Fixture, review_id: &str) -> (String, String) {
+    let block = record_block(&review_log(fixture), review_id);
+    let reference = block
+        .lines()
+        .find_map(|line| line.strip_prefix("Full assessment: "))
+        .unwrap();
+    let path = reference.rsplit_once(" (sha256:").unwrap().0;
+    let text = std::fs::read_to_string(path).unwrap();
+    let yaml: Value = serde_yaml::from_str(
+        text.strip_prefix("---\n")
+            .unwrap()
+            .split_once("\n---")
+            .unwrap()
+            .0,
+    )
+    .unwrap();
+    let id = yaml["findings"][0]["finding_id"]
+        .as_str()
+        .unwrap()
+        .to_string();
+    (id, sha256(text.as_bytes()))
+}
+
+/// Inherited v14 mechanism: a lineage replacement of a pre-v14 closure that cited production
+/// evidence F6 never selected completes under v17 with derived authorization identity.
+#[test]
+fn inherited_lineage_replacement_completes_under_v17() {
+    lineage_replacement_flow(CANDIDATE);
+}
+
+/// Conformance repair: a progression-permitting replacement is also recordable under DBA-21.
+#[test]
+fn lineage_replacement_completes_under_dba21() {
+    lineage_replacement_flow("DBA-21");
+}
+
+fn lineage_replacement_flow(recovery: &str) {
+    const R3: &str = "REV__FEAT__8__SR2__R3";
+    const REENTRY: &str = "REV__FEAT__8__SR2__REENTRY-1";
+    const CLOSURE: &str = "REV__FEAT__8__SR2__TERMINAL-CLOSURE-1";
+    let fixture = ready_project(true);
+    bind(&fixture, "DBA-18", true);
+    let fake = setup_fake_codex();
+
+    // History under DBA-18.
+    for (round, mode) in ["success", "success", "blocking"].into_iter().enumerate() {
+        write(
+            &fixture.path().join("src/lib.rs"),
+            &format!("pub fn feature() {{ round_{round}() }}\n"),
+        );
+        git(fixture.path(), &["commit", "-am", "next round"]);
+        assert_ok(
+            governed_review(&fixture, &fake, mode, &[]),
+            "ordinary round",
+        );
+    }
+    decide(
+        &fixture,
+        &[
+            "decision",
+            FEATURE,
+            "8",
+            "AUTHORIZE_REENTRY",
+            "bounded repair",
+            "--after-review",
+            R3,
+        ],
+    );
+    write(
+        &fixture.path().join("src/lib.rs"),
+        "pub fn feature() { candidate() }\n",
+    );
+    git(fixture.path(), &["commit", "-am", "re-entry candidate"]);
+    assert_ok(
+        governed_review(&fixture, &fake, "blocking", &["--reentry-after", R3]),
+        "re-entry",
+    );
+    let (finding, assessment_sha) = first_finding_id(&fixture, REENTRY);
+    let control = tempfile::tempdir().unwrap();
+    let scope = control.path().join("scope.json");
+    write(
+        &scope,
+        &json!({
+            "terminal_review_id": REENTRY,
+            "assessment_sha256": assessment_sha,
+            "conditions": [{
+                "id": "C1",
+                "description": "Repair the terminal implementation defect",
+                "source": {"kind": "parsed_finding", "finding_id": finding}
+            }]
+        })
+        .to_string(),
+    );
+    decide(
+        &fixture,
+        &[
+            "decision",
+            FEATURE,
+            "8",
+            "AUTHORIZE_TERMINAL_REVIEW_CLOSURE",
+            "repaired condition only",
+            "--after-review",
+            REENTRY,
+            "--closure-scope",
+            scope.to_str().unwrap(),
+        ],
+    );
+    let reentry_block = record_block(&review_log(&fixture), REENTRY);
+    let original = reentry_block
+        .lines()
+        .find_map(|line| line.strip_prefix("Base: "))
+        .unwrap()
+        .split("  Review: ")
+        .nth(1)
+        .unwrap()
+        .split("  Branch:")
+        .next()
+        .unwrap()
+        .to_string();
+    let original_diff = reentry_block
+        .lines()
+        .find_map(|line| line.strip_prefix("Diff-hash: "))
+        .unwrap()
+        .to_string();
+
+    change_implementation(&fixture, true);
+    // The defect being recovered: the closure cites production evidence F6 never selected.
+    let unselected = "{\"implementation_sha256\":\"unselected\"}\n";
+    let unselected_path = format!(
+        ".codeos/06-workflow/reality-evidence/{}.json",
+        sha256(unselected.as_bytes())
+    );
+    write(&fixture.path().join(&unselected_path), unselected);
+    git(fixture.path(), &["add", "."]);
+    git(fixture.path(), &["commit", "-m", "repair and evidence"]);
+
+    let (intent, contract, schema) = (intent(), contract_path(), schema());
+    let closure_artifacts = [
+        ".codeos/00-project/charter.md",
+        intent.as_str(),
+        contract.as_str(),
+        schema.as_str(),
+        "src/lib.rs",
+        "src/new.rs",
+        unselected_path.as_str(),
+    ];
+    let packet = control.path().join("closure.packet.txt");
+    let mut plan = vec![
+        "plan",
+        FEATURE,
+        "8",
+        "--skip-prechecks",
+        "--emit-packet",
+        packet.to_str().unwrap(),
+        "--terminal-review-closure-after",
+        REENTRY,
+    ];
+    plan.extend(closure_artifacts);
+    let (status, stdout, stderr) = run_in_dir_with_env(fixture.path(), &plan, &[]);
+    assert_eq!(status, 0, "closure plan failed:\n{stdout}\n{stderr}");
+    let sidecar: Value = serde_json::from_str(
+        &std::fs::read_to_string(format!("{}.meta.json", packet.display())).unwrap(),
+    )
+    .unwrap();
+    let artifacts = sidecar["artifacts"].as_array().unwrap();
+    let changed: Vec<&str> = artifacts
+        .iter()
+        .filter(|a| matches!(a["visibility"].as_str(), Some("delta_diff" | "added_file")))
+        .map(|a| a["path"].as_str().unwrap())
+        .filter(|path| !path.starts_with(".codeos/"))
+        .collect();
+    let evidence: Vec<&str> = artifacts
+        .iter()
+        .filter(|a| {
+            a["path"]
+                .as_str()
+                .unwrap()
+                .starts_with(".codeos/06-workflow/")
+        })
+        .map(|a| a["sha256"].as_str().unwrap())
+        .collect();
+    let manifest = control.path().join("repair-manifest.json");
+    write(
+        &manifest,
+        &json!({
+            "terminal_review_id": REENTRY,
+            "original_implementation_identity": format!("{original}:{original_diff}"),
+            "current_implementation_identity": format!(
+                "{}:{}",
+                sidecar["review_sha"].as_str().unwrap(),
+                sidecar["diff_hash"].as_str().unwrap()
+            ),
+            "changed_paths": changed,
+            "evidence_identities": evidence,
+            "links": [{
+                "condition_id": "C1",
+                "changed_paths": changed,
+                "evidence_identities": evidence,
+                "rationale": "The repair and its evidence close C1."
+            }]
+        })
+        .to_string(),
+    );
+    let mut closure = vec![
+        "review",
+        FEATURE,
+        "8",
+        "--skip-prechecks",
+        "--terminal-review-closure-after",
+        REENTRY,
+        "--repair-manifest",
+        manifest.to_str().unwrap(),
+    ];
+    closure.extend(closure_artifacts);
+    assert_ok(
+        run_with_fake_codex(fixture.path(), &fake, &closure, "success"),
+        "closure",
+    );
+    assert!(record_block(&review_log(&fixture), CLOSURE).contains("PROGRESSION PERMITTED"));
+
+    // Recovery under the selected configuration.
+    bind(&fixture, recovery, true);
+    let (status, stdout, stderr) = run_in_dir_with_env(
+        fixture.path(),
+        &[
+            "audit-review-applicability",
+            FEATURE,
+            "8",
+            "--review-id",
+            CLOSURE,
+        ],
+        &[],
+    );
+    assert_eq!(status, 0, "audit failed:\n{stdout}\n{stderr}");
+    let record_sha = stdout
+        .trim()
+        .rsplit_once('(')
+        .unwrap()
+        .1
+        .trim_end_matches(')')
+        .to_string();
+    let mut authorize = vec![
+        "decision",
+        FEATURE,
+        "8",
+        "AUTHORIZE_LINEAGE_REPLACEMENT",
+        "replace invalid lineage",
+        "--after-review",
+        CLOSURE,
+    ];
+    if recovery != CANDIDATE {
+        authorize.extend(["--applicability-record-sha", record_sha.as_str()]);
+    }
+    decide(&fixture, &authorize);
+    let selected = format!(
+        ".codeos/06-workflow/reality-evidence/{}.json",
+        current_selection(&fixture)
+    );
+    let mut replace = vec!["--replace-invalid-lineage-after", CLOSURE];
+    if recovery != CANDIDATE {
+        // Earlier contracts require the caller to declare the F6-selected evidence.
+        replace.push(selected.as_str());
+    }
+    assert_ok(
+        governed_review(&fixture, &fake, "success", &replace),
+        "lineage replacement",
+    );
+    let replacement = record_block(
+        &review_log(&fixture),
+        "REV__FEAT__8__SR2__LINEAGE-REPLACEMENT-1",
+    );
+    assert!(
+        replacement.contains("LINEAGE REPLACEMENT CLOSED — PROGRESSION PERMITTED"),
+        "{replacement}"
+    );
+}
+
+fn current_selection(fixture: &Fixture) -> String {
+    let decisions =
+        std::fs::read_to_string(fixture.path().join(".codeos/06-workflow/decisions.jsonl"))
+            .unwrap();
+    decisions
+        .lines()
+        .filter_map(|line| serde_json::from_str::<Value>(line).ok())
+        .filter_map(|receipt| {
+            receipt["bindings"]["production_evidence"]
+                .as_str()
+                .map(str::to_string)
+        })
+        .last()
+        .unwrap()
+}

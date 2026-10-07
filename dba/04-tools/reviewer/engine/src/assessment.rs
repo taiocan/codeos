@@ -752,6 +752,8 @@ pub fn validate_schema(
         "EVIDENCE CLOSED — PROGRESSION PERMITTED",
         "INFRASTRUCTURE EVIDENCE REVALIDATED — PROGRESSION PERMITTED",
         "TERMINAL REVIEW CLOSED — PROGRESSION PERMITTED",
+        "LINEAGE REPLACEMENT CLOSED — PROGRESSION PERMITTED",
+        "LINEAGE REPLACEMENT CORRECTION CLOSED — PROGRESSION PERMITTED",
     ];
     if !valid_effective_concern.contains(&parsed.effective_concern.as_str()) {
         errs.push("enum:effective_concern");
