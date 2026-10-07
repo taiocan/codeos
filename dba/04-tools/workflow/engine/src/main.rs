@@ -46,7 +46,7 @@ enum Cmd {
 struct RevalidationPlanArgs {
     #[arg(long)]
     subject: String,
-    /// The later commit that invalidated the accepted implementation evidence; must be HEAD.
+    /// The latest commit changing the accepted surface; later commits must leave it unchanged.
     #[arg(long)]
     trigger: String,
     #[arg(long)]

@@ -42,6 +42,8 @@ pub struct RevalidationCase {
     pub original_acceptance_timestamp: String,
     pub original_implementation_state: String,
     pub trigger_commit: String,
+    /// Base of the identified change: the commit before the first surface change since acceptance
+    /// was last current. For a single-commit change it is the trigger's parent.
     pub trigger_parent: String,
     pub trigger_diff_sha256: String,
     pub affected_surface: Vec<String>,
@@ -132,6 +134,123 @@ impl RevalidationStore {
     }
 }
 
+/// The later change a revalidation assesses.
+#[derive(Debug)]
+pub(crate) struct IdentifiedChange {
+    pub base: String,
+    pub affected_surface: Vec<String>,
+}
+
+/// Validate `trigger_commit` and derive its identified change: the trigger is the latest commit
+/// changing the accepted surface, and the change runs from the point acceptance was last current.
+pub(crate) fn identified_change(
+    project: &Project,
+    subject_id: &str,
+    trigger_commit: &str,
+    acceptance_timestamp: &str,
+) -> Result<IdentifiedChange> {
+    // Evidence binds to the implementation state, so the trigger is the latest commit changing the
+    // accepted surface; later commits and the working tree must leave that surface unchanged.
+    let implementation_paths = project.implementation_paths();
+    let surface_args = |mut args: Vec<String>| {
+        args.push("--".into());
+        args.extend(implementation_paths.iter().cloned());
+        args
+    };
+    let run = |args: Vec<String>| {
+        git(
+            project,
+            &args.iter().map(String::as_str).collect::<Vec<_>>(),
+        )
+    };
+    if !run(surface_args(vec![
+        "log".into(),
+        "--format=%H".into(),
+        format!("{trigger_commit}..HEAD"),
+    ]))?
+    .is_empty()
+        || !run(surface_args(vec!["status".into(), "--porcelain".into()]))?.is_empty()
+    {
+        anyhow::bail!("trigger must be the latest change to the accepted surface so evidence binds exactly to it");
+    }
+    if run(surface_args(vec![
+        "diff".into(),
+        "--name-only".into(),
+        format!("{trigger_commit}^"),
+        trigger_commit.to_string(),
+    ]))?
+    .is_empty()
+    {
+        anyhow::bail!("trigger does not change the accepted implementation/dependency surface");
+    }
+    // Commit times carry their local offset and receipts are UTC, so compare instants.
+    let instant = |value: &str| {
+        chrono::DateTime::parse_from_rfc3339(value.trim())
+            .with_context(|| format!("unreadable timestamp {value}"))
+    };
+    let commit_time = git(project, &["show", "-s", "--format=%cI", trigger_commit])?;
+    if instant(&commit_time)? <= instant(acceptance_timestamp)? {
+        anyhow::bail!("trigger is not a mechanically later change after F9 acceptance");
+    }
+    // The identified change runs from the point acceptance was last current (the latest
+    // REVALIDATED record, otherwise F9) through the trigger; `trigger_parent` is its base.
+    let last_current = RevalidationStore::at(&project.codeos_dir())
+        .all()?
+        .into_iter()
+        .filter(|r| {
+            r.subject == subject_id
+                && r.decision == "REVALIDATED"
+                && r.timestamp.as_str() > acceptance_timestamp
+        })
+        .map(|r| r.timestamp)
+        .max()
+        .unwrap_or_else(|| acceptance_timestamp.to_string());
+    let surface_commits = run(surface_args(vec![
+        "log".into(),
+        "--format=%H %cI".into(),
+        "--reverse".into(),
+        trigger_commit.to_string(),
+    ]))?;
+    let last_current = instant(&last_current)?;
+    let mut first_change = None;
+    for (sha, time) in surface_commits
+        .lines()
+        .filter_map(|line| line.split_once(' '))
+    {
+        if instant(time)? > last_current {
+            first_change = Some(sha.to_string());
+            break;
+        }
+    }
+    let first_change = first_change
+        .context("no change to the accepted surface since acceptance was last current")?;
+    let trigger_parent = git(project, &["rev-parse", &format!("{first_change}^")])?;
+    let architecture_diff = git(
+        project,
+        &[
+            "diff",
+            "--name-only",
+            &trigger_parent,
+            trigger_commit,
+            "--",
+            ".codeos/02-architecture",
+        ],
+    )?;
+    if !architecture_diff.trim().is_empty() {
+        anyhow::bail!("architecture meaning changed; normal governed recovery is required");
+    }
+    let changed = run(surface_args(vec![
+        "diff".into(),
+        "--name-only".into(),
+        trigger_parent.clone(),
+        trigger_commit.to_string(),
+    ]))?;
+    Ok(IdentifiedChange {
+        base: trigger_parent,
+        affected_surface: changed.lines().map(str::to_string).collect(),
+    })
+}
+
 pub fn build_case(project: &Project, subject_id: &str, trigger: &str) -> Result<RevalidationCase> {
     if project.feature_workflow_version()? < 5 {
         anyhow::bail!("POST_ACCEPTANCE_REVALIDATION requires Feature Workflow v5");
@@ -150,52 +269,11 @@ pub fn build_case(project: &Project, subject_id: &str, trigger: &str) -> Result<
         project,
         &["rev-parse", "--verify", &format!("{trigger}^{{commit}}")],
     )?;
-    let head = git(project, &["rev-parse", "HEAD"])?;
-    if trigger_commit != head {
-        anyhow::bail!("trigger must be current HEAD so evidence can bind exactly to it");
-    }
-    let trigger_parent = git(project, &["rev-parse", &format!("{trigger_commit}^")])?;
-    let commit_time = git(project, &["show", "-s", "--format=%cI", &trigger_commit])?;
-    if commit_time.as_str() <= acceptance.timestamp.as_str() {
-        anyhow::bail!("trigger is not a mechanically later change after F9 acceptance");
-    }
-    let architecture_diff = git(
-        project,
-        &[
-            "diff",
-            "--name-only",
-            &trigger_parent,
-            &trigger_commit,
-            "--",
-            ".codeos/02-architecture",
-        ],
-    )?;
-    if !architecture_diff.trim().is_empty() {
-        anyhow::bail!("architecture meaning changed; normal governed recovery is required");
-    }
-    let changed = git(
-        project,
-        &[
-            "diff",
-            "--name-only",
-            &trigger_parent,
-            &trigger_commit,
-            "--",
-        ],
-    )?;
+    let IdentifiedChange {
+        base: trigger_parent,
+        affected_surface,
+    } = identified_change(project, subject_id, &trigger_commit, &acceptance.timestamp)?;
     let implementation_paths = project.implementation_paths();
-    let affected_surface: Vec<_> = changed
-        .lines()
-        .filter(|path| {
-            implementation_paths
-                .iter()
-                .any(|root| path == root || path.starts_with(&format!("{root}/")))
-        })
-        .map(str::to_string)
-        .collect();
-    if affected_surface.is_empty() {
-        anyhow::bail!("trigger does not intersect the accepted implementation/dependency surface");
-    }
     let original = latest_impl_before(project, subject_id, &acceptance.timestamp)?;
     let current = hashing::working_tree_state(&project.root, &implementation_paths)?;
     if original == current {
@@ -239,10 +317,7 @@ pub fn build_case(project: &Project, subject_id: &str, trigger: &str) -> Result<
     }
     let semantic_revision =
         semantic_revision(&std::fs::read_to_string(project.intent(subject_id))?)?;
-    let diff = git_bytes(
-        project,
-        &["diff", "--binary", &trigger_parent, &trigger_commit, "--"],
-    )?;
+    let diff = surface_diff(project, &trigger_parent, &trigger_commit, true)?;
     Ok(RevalidationCase {
         subject: subject_id.into(),
         semantic_revision,
@@ -262,7 +337,7 @@ pub fn build_case(project: &Project, subject_id: &str, trigger: &str) -> Result<
 
 pub fn packet(project: &Project, case: &RevalidationCase) -> Result<String> {
     let context = |path: PathBuf| -> Result<String> { Ok(std::fs::read_to_string(path)?) };
-    Ok(format!("# POST_ACCEPTANCE_REVALIDATION\n\nDecide exactly `REVALIDATED` or `REVALIDATION FAILED`. Answer only whether the previously accepted feature still satisfies its unchanged approved meaning after the identified later change. Do not reopen historical findings or propose a new semantic revision.\n\n## Mechanical case\n```json\n{}\n```\n\n## Unchanged Intent\n{}\n\n## Unchanged Contract\n{}\n\n## Unchanged Event Schema\n{}\n\n## Trigger diff\n```diff\n{}\n```\n", serde_json::to_string_pretty(case)?, context(project.intent(&case.subject))?, context(project.contract(&case.subject))?, context(project.event_schema(&case.subject))?, git(project, &["diff", &case.trigger_parent, &case.trigger_commit, "--"])?))
+    Ok(format!("# POST_ACCEPTANCE_REVALIDATION\n\nDecide exactly `REVALIDATED` or `REVALIDATION FAILED`. Answer only whether the previously accepted feature still satisfies its unchanged approved meaning after the identified later change. Do not reopen historical findings or propose a new semantic revision.\n\n## Mechanical case\n```json\n{}\n```\n\n## Unchanged Intent\n{}\n\n## Unchanged Contract\n{}\n\n## Unchanged Event Schema\n{}\n\n## Trigger diff\n```diff\n{}\n```\n", serde_json::to_string_pretty(case)?, context(project.intent(&case.subject))?, context(project.contract(&case.subject))?, context(project.event_schema(&case.subject))?, String::from_utf8(surface_diff(project, &case.trigger_parent, &case.trigger_commit, false)?)?))
 }
 
 pub fn record(
@@ -387,6 +462,19 @@ fn semantic_revision(text: &str) -> Result<u64> {
         .parse()
         .context("semantic_revision is not a positive integer")
 }
+/// The identified change: the diff from its base through the trigger, limited to the accepted
+/// implementation surface.
+fn surface_diff(project: &Project, base: &str, trigger: &str, binary: bool) -> Result<Vec<u8>> {
+    let mut args = vec!["diff"];
+    if binary {
+        args.push("--binary");
+    }
+    args.extend([base, trigger, "--"]);
+    let paths = project.implementation_paths();
+    args.extend(paths.iter().map(String::as_str));
+    git_bytes(project, &args)
+}
+
 fn git(project: &Project, args: &[&str]) -> Result<String> {
     Ok(String::from_utf8(git_bytes(project, args)?)?
         .trim()
@@ -411,6 +499,94 @@ fn git_bytes(project: &Project, args: &[&str]) -> Result<Vec<u8>> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// A repository with commits at fixed instants: base (before F9 at 2026-01-01T00:00Z), a product
+    /// change, a test-only change, and a governance-only commit.
+    fn change_history() -> (tempfile::TempDir, Project, Vec<String>) {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path();
+        let git = |args: &[&str], date: &str| {
+            let out = Command::new("git")
+                .args(args)
+                .current_dir(root)
+                .env("GIT_AUTHOR_DATE", date)
+                .env("GIT_COMMITTER_DATE", date)
+                .output()
+                .unwrap();
+            assert!(out.status.success(), "git {args:?}");
+            String::from_utf8_lossy(&out.stdout).trim().to_string()
+        };
+        git(&["init", "-q"], "2025-12-31T00:00:00+01:00");
+        git(
+            &["config", "user.email", "t@t"],
+            "2025-12-31T00:00:00+01:00",
+        );
+        git(&["config", "user.name", "t"], "2025-12-31T00:00:00+01:00");
+        let mut commits = Vec::new();
+        for (path, content, date) in [
+            ("src/lib.rs", "base", "2025-12-31T12:00:00+01:00"),
+            ("src/lib.rs", "product change", "2026-01-02T12:00:00+01:00"),
+            (
+                "src/lib.spec.ts",
+                "test change",
+                "2026-01-03T12:00:00+01:00",
+            ),
+            (
+                ".codeos/06-workflow/decisions.jsonl",
+                "receipt",
+                "2026-01-04T12:00:00+01:00",
+            ),
+        ] {
+            let full = root.join(path);
+            std::fs::create_dir_all(full.parent().unwrap()).unwrap();
+            std::fs::write(full, content).unwrap();
+            git(&["add", "."], date);
+            git(&["commit", "-qm", path], date);
+            commits.push(git(&["rev-parse", "HEAD"], date));
+        }
+        let project = Project::discover(root).unwrap();
+        (dir, project, commits)
+    }
+
+    #[test]
+    fn identified_change_spans_every_surface_commit_since_acceptance_was_current() {
+        let (_dir, project, c) = change_history();
+        let change = identified_change(&project, "F-0001", &c[2], "2026-01-01T00:00:00Z").unwrap();
+        assert_eq!(change.base, c[0]);
+        assert_eq!(
+            change.affected_surface,
+            vec!["src/lib.rs", "src/lib.spec.ts"]
+        );
+
+        let earlier = identified_change(&project, "F-0001", &c[1], "2026-01-01T00:00:00Z");
+        assert!(earlier.unwrap_err().to_string().contains("latest change"));
+        let governance = identified_change(&project, "F-0001", &c[3], "2026-01-01T00:00:00Z");
+        assert!(governance
+            .unwrap_err()
+            .to_string()
+            .contains("does not change"));
+    }
+
+    #[test]
+    fn identified_change_starts_after_the_latest_revalidation() {
+        let (_dir, project, c) = change_history();
+        let mut revalidated = record(&c[1]);
+        revalidated.timestamp = "2026-01-02T18:00:00Z".into();
+        RevalidationStore::at(&project.codeos_dir())
+            .append(&revalidated)
+            .unwrap();
+        let change = identified_change(&project, "F-0001", &c[2], "2026-01-01T00:00:00Z").unwrap();
+        assert_eq!(change.base, c[1]);
+        assert_eq!(change.affected_surface, vec!["src/lib.spec.ts"]);
+    }
+
+    #[test]
+    fn identified_change_refuses_uncommitted_surface_drift() {
+        let (dir, project, c) = change_history();
+        std::fs::write(dir.path().join("src/lib.rs"), "uncommitted").unwrap();
+        let drift = identified_change(&project, "F-0001", &c[2], "2026-01-01T00:00:00Z");
+        assert!(drift.unwrap_err().to_string().contains("latest change"));
+    }
 
     fn record(trigger: &str) -> RevalidationRecord {
         RevalidationRecord {
