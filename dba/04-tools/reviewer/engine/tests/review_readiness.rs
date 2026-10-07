@@ -16,6 +16,7 @@
 //! | Bounded lineage | `LINEAGE_INVALID` | `refuse_lineage` | `absent_bounded_lineage_is_refused` |
 //! | Execution failure is not semantic | `REVIEW_EXECUTION_INVALID`, two automatic re-executions | execution loop in `cmd/review.rs`, `log::append_execution_invalid` | `structurally_invalid_*`, `automatic_reexecution_*`, `invalid_execution_is_invisible_*` |
 //! | Only development failures block | `DO NOT ADVANCE` unchanged | assessment parsing | `genuine_defects_still_block_progression` |
+//! | v17 incorporates v16 | inherited mechanisms complete | bounded-basis required inputs, contract lists | `inherited_reentry_*`, `inherited_lineage_replacement_*`, `inherited_evidence_reassessment_*`, `lineage_replacement_completes_under_dba21` |
 //! | End to end | manifest → gate → packet → review → record → workflow/decision | all of the above | `ready_review_is_consumed_by_workflow_and_decision` |
 
 mod common;
@@ -174,6 +175,10 @@ fn implementation_state(root: &Path) -> String {
 }
 
 fn record_current_evidence(fixture: &Fixture, reality: bool) {
+    record_evidence_with_events(fixture, reality, "{\"event\":\"feature_completed\"}\n");
+}
+
+fn record_evidence_with_events(fixture: &Fixture, reality: bool, events: &str) {
     let root = fixture.path();
     let implementation = implementation_state(root);
     let bindings = json!({
@@ -182,7 +187,6 @@ fn record_current_evidence(fixture: &Fixture, reality: bool) {
         "event_schema": file_sha(&root.join(schema())),
         "implementation_state": implementation,
     });
-    let events = "{\"event\":\"feature_completed\"}\n";
     let events_sha = sha256(events.as_bytes());
     let events_path = format!(".codeos/06-workflow/event-evidence/{events_sha}.jsonl");
     write(&root.join(&events_path), events);
@@ -195,7 +199,12 @@ fn record_current_evidence(fixture: &Fixture, reality: bool) {
         (
             "F7",
             "runtime_event_schema",
-            json!({ "event_evidence": events_path, "event_set_sha256": events_sha }),
+            json!({
+                "event_evidence": events_path,
+                "event_set_sha256": events_sha,
+                "semantic_sha256": events_sha,
+                "event_schema_conformance": "passed",
+            }),
         ),
     ];
     let mut f6 = json!({
@@ -1340,4 +1349,156 @@ fn current_selection(fixture: &Fixture) -> String {
         })
         .last()
         .unwrap()
+}
+
+/// Inherited v9 mechanism: evidence reassessment continues DBA-13 infrastructure-revalidation
+/// history and completes under v17 with the event-evidence identity derived, not transcribed.
+#[test]
+fn inherited_evidence_reassessment_completes_under_v17() {
+    const R3: &str = "REV__FEAT__8__R3";
+    const REENTRY: &str = "REV__FEAT__8__REENTRY-1";
+    const CLOSURE: &str = "REV__FEAT__8__EVIDENCE-CLOSURE-1";
+    const INFRA: &str = "REV__FEAT__8__INFRA-REVALIDATION-1";
+    let fixture = ready_project(false);
+    bind(&fixture, "DBA-13", false);
+    let fake = setup_fake_codex();
+    let step = |label: &str| {
+        write(
+            &fixture.path().join("src/lib.rs"),
+            &format!("pub fn feature() {{ {label}() }}\n"),
+        );
+        git(fixture.path(), &["commit", "-am", label]);
+    };
+
+    // History under DBA-13.
+    for (round, mode) in ["success", "success", "blocking"].into_iter().enumerate() {
+        step(&format!("round_{round}"));
+        assert_ok(
+            governed_review(&fixture, &fake, mode, &[]),
+            "ordinary round",
+        );
+    }
+    decide(
+        &fixture,
+        &[
+            "decision",
+            FEATURE,
+            "8",
+            "AUTHORIZE_REENTRY",
+            "bounded repair",
+            "--after-review",
+            R3,
+        ],
+    );
+    step("reentry");
+    assert_ok(
+        governed_review(&fixture, &fake, "blocking", &["--reentry-after", R3]),
+        "re-entry",
+    );
+    let (finding, _) = first_finding_id(&fixture, REENTRY);
+    decide(
+        &fixture,
+        &[
+            "decision",
+            FEATURE,
+            "8",
+            "AUTHORIZE_EVIDENCE_CLOSURE",
+            "evidence only",
+            "--after-review",
+            REENTRY,
+            "--findings",
+            &finding,
+        ],
+    );
+    step("closure");
+    assert_ok(
+        governed_review(
+            &fixture,
+            &fake,
+            "blocking",
+            &["--evidence-closure-after", REENTRY, "--findings", &finding],
+        ),
+        "evidence closure",
+    );
+    record_current_evidence(&fixture, false);
+    git(fixture.path(), &["add", ".codeos/06-workflow"]);
+    git(
+        fixture.path(),
+        &["commit", "-m", "repaired evidence system"],
+    );
+    let infra_sha = current_event_sha(&fixture);
+    decide(
+        &fixture,
+        &[
+            "decision",
+            FEATURE,
+            "8",
+            "AUTHORIZE_INFRASTRUCTURE_REVALIDATION",
+            "evidence system repaired",
+            "--after-review",
+            CLOSURE,
+            "--findings",
+            &finding,
+            "--event-evidence-sha",
+            &infra_sha,
+        ],
+    );
+    step("infra");
+    assert_ok(
+        governed_review(
+            &fixture,
+            &fake,
+            "blocking",
+            &[
+                "--infrastructure-revalidation-after",
+                CLOSURE,
+                "--findings",
+                &finding,
+                "--event-evidence-sha",
+                &infra_sha,
+            ],
+        ),
+        "infrastructure revalidation",
+    );
+    assert!(review_log(&fixture).contains(&format!("Review ID: {INFRA}")));
+
+    // Continuation under the candidate v17 configuration, with materially new evidence.
+    write(
+        &fixture.path().join(".codeos/00-project/codeos.yaml"),
+        &format!("codeos_schema: 2\ndba_configuration: {CANDIDATE}\n"),
+    );
+    record_evidence_with_events(
+        &fixture,
+        false,
+        "{\"event\":\"feature_completed\",\"run\":2}\n",
+    );
+    git(fixture.path(), &["add", ".codeos"]);
+    git(
+        fixture.path(),
+        &["commit", "-m", "bind candidate with new runtime evidence"],
+    );
+    assert_ok(
+        governed_review(
+            &fixture,
+            &fake,
+            "success",
+            &[
+                "--evidence-reassessment-after",
+                INFRA,
+                "--findings",
+                &finding,
+            ],
+        ),
+        "evidence reassessment",
+    );
+    let log = review_log(&fixture);
+    let reassessment = record_block(&log, "REV__FEAT__8__EVIDENCE-REASSESSMENT-1");
+    assert!(
+        reassessment.contains(&current_event_sha(&fixture)),
+        "{reassessment}"
+    );
+    assert!(
+        !reassessment.contains("Effective concern: DO NOT ADVANCE"),
+        "{reassessment}"
+    );
 }

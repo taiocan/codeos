@@ -420,6 +420,23 @@ pub(crate) fn resolve_bounded_basis(
 ) -> Result<()> {
     args.artifacts = normalize_paths(&args.artifacts, cfg, true, "artifact")
         .map_err(|failure| anyhow::anyhow!(failure.message))?;
+    // Under v17 the reviewed-snapshot delta covers every required input, not only declared ones,
+    // so new canonical evidence is compared with what was reviewed.
+    let contract = crate::config::resolve_reviewer_tool_contract(cfg).ok();
+    if crate::manifest::selected(contract.as_deref()) {
+        let manifest = crate::manifest::derive(
+            cfg,
+            &args.feature,
+            &args.stage,
+            &args.artifacts,
+            &crate::packet::ReviewBasis::Ordinary { base: None },
+        );
+        for path in manifest.existing_required_inputs(&cfg.repo_root) {
+            if !args.artifacts.contains(&path) && !args.sha_only.contains(&path) {
+                args.artifacts.push(path);
+            }
+        }
+    }
     args.basis = bounded_basis(cfg, review_id, &args.artifacts, provenance)?;
     Ok(())
 }
