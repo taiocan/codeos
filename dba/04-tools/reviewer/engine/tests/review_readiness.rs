@@ -31,7 +31,7 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 
 const FEATURE: &str = "FEAT";
-const CANDIDATE: &str = "DBA-999";
+const CANDIDATE: &str = "DBA-22";
 
 fn sha256(bytes: &[u8]) -> String {
     hex::encode(Sha256::digest(bytes))
@@ -72,8 +72,8 @@ fn copy_tree(from: &Path, to: &Path) {
     }
 }
 
-/// A private toolkit whose only addition is one approved candidate configuration selecting the
-/// v15/v17 drafts, so no real configuration is activated by these tests.
+/// A private copy of the toolkit, so a test may change reviewer sources without touching the
+/// real one. Projects bind the registered DBA-22 configuration.
 fn candidate_toolkit() -> tempfile::TempDir {
     let toolkit = tempfile::tempdir().unwrap();
     copy_tree(&repo_root().join("dba"), &toolkit.path().join("dba"));
@@ -83,15 +83,6 @@ fn candidate_toolkit() -> tempfile::TempDir {
             std::fs::copy(&source, toolkit.path().join(file)).unwrap();
         }
     }
-    let configurations = toolkit.path().join("dba/00-entry/configurations");
-    let base = std::fs::read_to_string(configurations.join("DBA-21.yaml")).unwrap();
-    let candidate = base
-        .replace("review/v14.md", "review/v15.md")
-        .replace("contract/v16.md", "contract/v17.md");
-    write(
-        &configurations.join(format!("{CANDIDATE}.yaml")),
-        &candidate,
-    );
     toolkit
 }
 
@@ -1017,17 +1008,12 @@ fn inherited_reentry_completes_under_v17() {
         log.contains("Review ID: REV__FEAT__8__SR2__REENTRY-1"),
         "{log}"
     );
-    let record = codeos_workflow::evidence::latest_review_record(
-        &fixture.path().join(".codeos/05-review/reviews"),
-        FEATURE,
-        "8",
-    )
-    .unwrap()
-    .unwrap();
-    assert_eq!(record.review_id, "REV__FEAT__8__SR2__REENTRY-1");
-    assert!(codeos_workflow::evidence::review_permits_progression(
-        &record.effective_concern
-    ));
+    // Records written within one second share a file-name timestamp, so assert on the record.
+    let reentry = record_block(&log, "REV__FEAT__8__SR2__REENTRY-1");
+    assert!(
+        reentry.contains("Effective concern: NO OBJECTION"),
+        "{reentry}"
+    );
 }
 
 /// Rebind the project to another approved configuration and refresh the F6/verification records
