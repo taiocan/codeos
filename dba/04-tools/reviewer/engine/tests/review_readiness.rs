@@ -18,6 +18,7 @@
 //! | Only development failures block | `DO NOT ADVANCE` unchanged | assessment parsing | `genuine_defects_still_block_progression` |
 //! | v17 incorporates v16 | inherited mechanisms complete | bounded-basis required inputs, contract lists | `inherited_reentry_*`, `inherited_lineage_replacement_*`, `inherited_evidence_reassessment_*`, `lineage_replacement_completes_under_dba21` |
 //! | F7 binds to reviewed identities | "what would be reviewed now" is the recorded manifest identity | `codeos_workflow::evidence::review_identity_drift` | `v17_review_binding_survives_*`, `pre_v17_review_records_keep_head_binding` |
+//! | UX receipts bind the judged product (DBA-22+) | F4/F8 bind `product_state`; evidence keeps full binding | `checker::bindings_for_decision`, `hashing::product_state` | `ux_receipts_ignore_test_only_edits_*`, `existing_receipts_and_earlier_configurations_*` |
 //! | End to end | manifest → gate → packet → review → record → workflow/decision | all of the above | `ready_review_is_consumed_by_workflow_and_decision` |
 
 mod common;
@@ -1595,4 +1596,111 @@ fn pre_v17_review_records_keep_head_binding() {
         "DBA-21 review",
     );
     assert_eq!(reviewed_identity_drift(&fixture), None);
+}
+
+fn ux_bindings(
+    fixture: &Fixture,
+    checkpoint: &str,
+) -> (
+    std::collections::BTreeMap<String, String>,
+    std::collections::BTreeMap<String, String>,
+) {
+    let project = Project::discover(fixture.path()).unwrap();
+    let subject = codeos_workflow::checker::Subject::resolve(
+        &project,
+        codeos_workflow::contract::Workflow::Feature,
+        FEATURE,
+    )
+    .unwrap();
+    (
+        codeos_workflow::checker::bindings_for_decision(&project, &subject, checkpoint).unwrap(),
+        codeos_workflow::checker::bindings_for_evaluation(&project, &subject, checkpoint).unwrap(),
+    )
+}
+
+fn f5_bindings(fixture: &Fixture) -> std::collections::BTreeMap<String, String> {
+    let project = Project::discover(fixture.path()).unwrap();
+    let subject = codeos_workflow::checker::Subject::resolve(
+        &project,
+        codeos_workflow::contract::Workflow::Feature,
+        FEATURE,
+    )
+    .unwrap();
+    codeos_workflow::checker::verification_bindings_for(&project, &subject, "F5").unwrap()
+}
+
+/// Under DBA-22, human UX receipts bind the judged product; test files still bind the evidence.
+#[test]
+fn ux_receipts_ignore_test_only_edits_but_evidence_does_not() {
+    use codeos_workflow::hashing::binding_drift;
+    let fixture = ready_project(false);
+    for checkpoint in ["early_preview", "final_ux_validation"] {
+        let (recorded, _) = ux_bindings(&fixture, checkpoint);
+        assert!(
+            recorded.contains_key("product_state"),
+            "{checkpoint}: {recorded:?}"
+        );
+        assert!(
+            !recorded.contains_key("implementation_state"),
+            "{checkpoint}"
+        );
+    }
+    let (preview, _) = ux_bindings(&fixture, "early_preview");
+    let (ux, _) = ux_bindings(&fixture, "final_ux_validation");
+    let evidence = f5_bindings(&fixture);
+
+    write(
+        &fixture.path().join("src/summary.spec.ts"),
+        "test('x', () => {});\n",
+    );
+    write(
+        &fixture.path().join("src/tests/journey.rs"),
+        "#[test] fn j() {}\n",
+    );
+    assert_eq!(
+        binding_drift(&preview, &ux_bindings(&fixture, "early_preview").1),
+        None
+    );
+    assert_eq!(
+        binding_drift(&ux, &ux_bindings(&fixture, "final_ux_validation").1),
+        None
+    );
+    assert_eq!(
+        binding_drift(&evidence, &f5_bindings(&fixture)).map(|drift| drift.0),
+        Some("implementation_state".to_string()),
+        "test-only edits must still stale verification evidence"
+    );
+
+    write(
+        &fixture.path().join("src/lib.rs"),
+        "pub fn feature() { changed() }\n",
+    );
+    assert_eq!(
+        binding_drift(&preview, &ux_bindings(&fixture, "early_preview").1).map(|drift| drift.0),
+        Some("product_state".to_string())
+    );
+}
+
+/// Receipts recorded with full implementation binding keep it; earlier configurations are unchanged.
+#[test]
+fn existing_receipts_and_earlier_configurations_keep_full_binding() {
+    use codeos_workflow::hashing::binding_drift;
+    let fixture = ready_project(false);
+    let (_, evaluation) = ux_bindings(&fixture, "early_preview");
+    let mut legacy = evaluation.clone();
+    legacy.remove("product_state");
+    write(
+        &fixture.path().join("src/summary.spec.ts"),
+        "test('x', () => {});\n",
+    );
+    assert_eq!(
+        binding_drift(&legacy, &ux_bindings(&fixture, "early_preview").1).map(|drift| drift.0),
+        Some("implementation_state".to_string())
+    );
+
+    let earlier = ready_project(false);
+    bind(&earlier, "DBA-21", false);
+    let (recorded, _) = ux_bindings(&earlier, "early_preview");
+    assert!(recorded.contains_key("implementation_state"));
+    assert!(!recorded.contains_key("product_state"));
 }

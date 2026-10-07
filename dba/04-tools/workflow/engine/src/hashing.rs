@@ -61,6 +61,47 @@ pub fn working_tree_state(repo_root: &Path, paths: &[String]) -> Result<String> 
     Ok(hex::encode(hasher.finalize()))
 }
 
+/// Whether a repository-relative path is a test file rather than product code.
+pub fn is_test_path(rel: &str) -> bool {
+    let name = rel.rsplit('/').next().unwrap_or(rel);
+    [".spec.", ".test.", ".e2e."]
+        .iter()
+        .any(|marker| name.contains(marker))
+        || rel
+            .split('/')
+            .any(|part| matches!(part, "tests" | "__tests__" | "e2e"))
+}
+
+/// A hash over the current content of every non-test file under `paths`: the product a human
+/// judges at Early Development Preview and Final UX Validation. Tracked, modified, and untracked
+/// files count alike; a deleted tracked file is recorded as absent.
+pub fn product_state(repo_root: &Path, paths: &[String]) -> Result<String> {
+    let mut args = vec![
+        "ls-files",
+        "--cached",
+        "--others",
+        "--exclude-standard",
+        "--",
+    ];
+    args.extend(paths.iter().map(String::as_str));
+    let listed = git(repo_root, &args)?;
+    let files: std::collections::BTreeSet<&str> = listed
+        .lines()
+        .filter(|line| !line.is_empty() && !is_test_path(line))
+        .collect();
+    let mut hasher = Sha256::new();
+    for rel in files {
+        hasher.update(b"\0FILE\0");
+        hasher.update(rel.as_bytes());
+        hasher.update(b"\0");
+        match std::fs::read(repo_root.join(rel)) {
+            Ok(bytes) => hasher.update(&bytes),
+            Err(_) => hasher.update(b"\0ABSENT\0"),
+        }
+    }
+    Ok(hex::encode(hasher.finalize()))
+}
+
 /// Hex sha256 of a string, after trimming — so trailing-whitespace edits don't count as drift.
 pub fn text_sha256(s: &str) -> String {
     hex_digest(s.trim().as_bytes())

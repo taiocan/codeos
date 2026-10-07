@@ -1688,7 +1688,33 @@ pub fn bindings_for_decision(
     subject: &Subject,
     checkpoint: &str,
 ) -> Result<BTreeMap<String, String>> {
+    let mut bindings = current_bindings(project, subject, checkpoint)?;
+    // A new human UX judgment binds the product it judged, not the test files that verify it.
+    if bindings.contains_key("product_state") {
+        bindings.remove("implementation_state");
+    }
+    Ok(bindings)
+}
+
+/// The bindings `status`/`check` evaluate a recorded receipt against. They include every binding
+/// any recorded receipt for `checkpoint` may carry, so receipts recorded before product scoping keep
+/// their exact behavior.
+pub fn bindings_for_evaluation(
+    project: &Project,
+    subject: &Subject,
+    checkpoint: &str,
+) -> Result<BTreeMap<String, String>> {
     current_bindings(project, subject, checkpoint)
+}
+
+/// DBA-22 and later scope F4/F8 receipts to product files (Workflow Governance v1: bindings name
+/// the inputs the decision depended on).
+fn product_scoped_ux_receipts(project: &Project) -> bool {
+    project
+        .dba_configuration()
+        .ok()
+        .and_then(|id| id.strip_prefix("DBA-").and_then(|n| n.parse::<u32>().ok()))
+        .is_some_and(|n| n >= 22)
 }
 
 /// The bindings a receipt for `checkpoint` should currently be evaluated against.
@@ -1722,6 +1748,12 @@ fn current_bindings(
                 "implementation_state".into(),
                 hashing::working_tree_state(&project.root, &project.implementation_paths())?,
             );
+            if product_scoped_ux_receipts(project) {
+                b.insert(
+                    "product_state".into(),
+                    hashing::product_state(&project.root, &project.implementation_paths())?,
+                );
+            }
         }
         "reconciliation" | "final_ux_validation" | "acceptance" => {
             put(&mut b, "intent", &project.intent(&subject.id))?;
@@ -1733,6 +1765,12 @@ fn current_bindings(
                     "implementation_state".into(),
                     hashing::working_tree_state(&project.root, &project.implementation_paths())?,
                 );
+                if checkpoint == "final_ux_validation" && product_scoped_ux_receipts(project) {
+                    b.insert(
+                        "product_state".into(),
+                        hashing::product_state(&project.root, &project.implementation_paths())?,
+                    );
+                }
             }
         }
         "operation_route" | "no_action_closure" => {

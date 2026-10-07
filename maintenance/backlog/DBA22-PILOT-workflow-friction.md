@@ -15,7 +15,7 @@ Observed while running JamFree F-0003 under DBA-22 (2026-10-07).
 
 ## Candidates
 
-1. **Test-only edits stale human receipts.** The implementation identity covers every file under
+1. **[Done — human-approved]** **Test-only edits stale human receipts.** The implementation identity covers every file under
    `web/`, so a Playwright-only fix invalidated the `early_preview` receipt and required a second
    human direction call although the previewed UI was unchanged.
 2. **Behavior mechanic omits web tests.** JamFree's F5 `behavior` mechanic runs only

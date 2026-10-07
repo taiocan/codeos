@@ -184,7 +184,10 @@ pub struct ReviewArtifact {
 
 /// The most recent reviewer record for `feature` at `stage`, by filename timestamp order.
 /// Load the v17 manifest sidecar written beside a review's packet, bound to that exact packet.
-fn manifest_sidecar(assessment: &Path, reviewed: Option<&serde_yaml::Value>) -> Option<serde_json::Value> {
+fn manifest_sidecar(
+    assessment: &Path,
+    reviewed: Option<&serde_yaml::Value>,
+) -> Option<serde_json::Value> {
     let field = |name: &str| reviewed?.get(name)?.as_str().map(str::to_string);
     let packet = assessment.parent()?.join(field("reviewed_packet")?);
     let sidecar: serde_json::Value =
@@ -219,7 +222,8 @@ pub fn review_identity_drift(
         drift.push(".codeos/00-project/codeos.yaml".to_string());
     }
     for artifact in sidecar["artifacts"].as_array().into_iter().flatten() {
-        let (Some(path), Some(sha)) = (artifact["path"].as_str(), artifact["sha256"].as_str()) else {
+        let (Some(path), Some(sha)) = (artifact["path"].as_str(), artifact["sha256"].as_str())
+        else {
             continue;
         };
         if !sha.is_empty() && file_sha(path).as_deref() != Some(sha) {
