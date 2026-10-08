@@ -159,36 +159,41 @@ pub fn prepare(
             hashing::bytes_sha256(&serde_json::to_vec(&record)?),
         );
     }
-    let runtime = store
-        .latest("feature", &subject.id, "F7", "runtime_event_schema")?
-        .context("candidate requires current F7/runtime_event_schema verification")?;
-    let runtime_want = checker::verification_bindings_for_mechanic(
-        project,
-        subject,
-        "F7",
-        "runtime_event_schema",
-    )?;
-    anyhow::ensure!(
-        matches!(
-            crate::verification::evaluate(Some(runtime.clone()), &runtime_want),
-            crate::verification::RecordState::Current(_)
-        ),
-        "candidate F7/runtime_event_schema verification is stale"
-    );
-    let runtime_evidence = runtime
-        .details
-        .as_ref()
-        .and_then(|d| d.get("event_evidence"))
-        .and_then(|v| v.as_str())
-        .map(str::to_string);
-    anyhow::ensure!(
-        runtime_evidence.is_some(),
-        "candidate runtime verification has no inspectable event evidence binding"
-    );
-    verification_records.insert(
-        "F7/runtime_event_schema".into(),
-        hashing::bytes_sha256(&serde_json::to_vec(&runtime)?),
-    );
+    let runtime_evidence = if observation_mode(project, &subject.id)? == "events" {
+        let runtime = store
+            .latest("feature", &subject.id, "F7", "runtime_event_schema")?
+            .context("candidate requires current F7/runtime_event_schema verification")?;
+        let runtime_want = checker::verification_bindings_for_mechanic(
+            project,
+            subject,
+            "F7",
+            "runtime_event_schema",
+        )?;
+        anyhow::ensure!(
+            matches!(
+                crate::verification::evaluate(Some(runtime.clone()), &runtime_want),
+                crate::verification::RecordState::Current(_)
+            ),
+            "candidate F7/runtime_event_schema verification is stale"
+        );
+        let evidence = runtime
+            .details
+            .as_ref()
+            .and_then(|d| d.get("event_evidence"))
+            .and_then(|v| v.as_str())
+            .map(str::to_string);
+        anyhow::ensure!(
+            evidence.is_some(),
+            "candidate runtime verification has no inspectable event evidence binding"
+        );
+        verification_records.insert(
+            "F7/runtime_event_schema".into(),
+            hashing::bytes_sha256(&serde_json::to_vec(&runtime)?),
+        );
+        evidence
+    } else {
+        None
+    };
 
     let dependency_additions = validate_additions(project, additions)?;
     let implementation_inputs = derive_inputs(project, &subject.id, &dependency_additions)?;
@@ -442,6 +447,23 @@ fn semantic_revision(text: &str) -> Result<u64> {
         .parse()
         .context("invalid semantic_revision")
 }
+
+fn observation_mode(project: &Project, feature: &str) -> Result<&'static str> {
+    let schema = std::fs::read_to_string(project.event_schema(feature))?;
+    if schema
+        .lines()
+        .any(|line| line.trim() == "**Mode:** `events`")
+    {
+        Ok("events")
+    } else if schema
+        .lines()
+        .any(|line| line.trim() == "**Mode:** `external-observation`")
+    {
+        Ok("external-observation")
+    } else {
+        anyhow::bail!("Event Schema must declare exactly one supported Observation Mode")
+    }
+}
 fn yaml_string(text: &str, key: &str) -> Option<String> {
     let fm = text.strip_prefix("---\n")?.split_once("\n---")?.0;
     let value: serde_yaml::Value = serde_yaml::from_str(fm).ok()?;
@@ -539,5 +561,24 @@ mod tests {
     fn explicit_dependency_additions_cannot_escape_the_project() {
         let (_dir, project, _) = fixture();
         assert!(validate_additions(&project, &["../outside".into()]).is_err());
+    }
+
+    #[test]
+    fn runtime_evidence_applicability_follows_the_governed_observation_mode() {
+        let (_dir, project, _) = fixture();
+        let schema = project.event_schema("F-1");
+        fs::write(
+            &schema,
+            "# Event Schema\n\n**Mode:** `external-observation`\n",
+        )
+        .unwrap();
+        assert_eq!(
+            observation_mode(&project, "F-1").unwrap(),
+            "external-observation"
+        );
+        fs::write(&schema, "# Event Schema\n\n**Mode:** `events`\n").unwrap();
+        assert_eq!(observation_mode(&project, "F-1").unwrap(), "events");
+        fs::write(&schema, "# Event Schema\n").unwrap();
+        assert!(observation_mode(&project, "F-1").is_err());
     }
 }
