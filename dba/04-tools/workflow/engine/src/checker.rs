@@ -743,6 +743,22 @@ fn accepted_frontier_excluding(
         if !crate::revalidation::current_acceptance_valid(project, &receipt.subject)? {
             continue;
         }
+        if project.workflow_governance_version()? >= 3 {
+            if let Some(bundle_id) = receipt.bindings.get("candidate_bundle") {
+                let bundle =
+                    crate::candidate::CandidateStore::at(&project.codeos_dir()).read(bundle_id)?;
+                if bundle.journey_previous != frontier {
+                    anyhow::bail!(
+                        "accepted candidate journey conflict: {} expected previous '{}' but accepted frontier is '{}'",
+                        receipt.subject,
+                        bundle.journey_previous,
+                        frontier
+                    );
+                }
+                frontier = bundle.journey_target;
+                continue;
+            }
+        }
         let contract = project.contract(&receipt.subject);
         let Some(now) = hashing::file_sha256(&contract)? else {
             continue;
@@ -864,6 +880,7 @@ pub fn render_journey(project: &Project, selected_subject: Option<&str>) -> Resu
         &accepted,
         &current,
         &stale,
+        project.workflow_governance_version()? >= 3,
     );
 
     let subjects = if let Some(id) = selected_subject {
@@ -884,6 +901,7 @@ pub fn render_journey(project: &Project, selected_subject: Option<&str>) -> Resu
             &definition,
             &current,
             &stale,
+            project.workflow_governance_version()? >= 3,
         );
     }
     if let Some((timestamp, error)) = latest_error {
@@ -900,6 +918,7 @@ fn render_definition_status(
     definition: &JourneyDefinition,
     current: &BTreeMap<String, (JourneyObservation, ExpectedTransition, String)>,
     stale: &BTreeSet<String>,
+    unobserved_vocabulary: bool,
 ) {
     let first = definition.transitions.iter().find_map(|expected| {
         if let Some((observed, _, timestamp)) = current.get(&expected.transition_id) {
@@ -916,7 +935,16 @@ fn render_definition_status(
         } else if stale.contains(&expected.transition_id) {
             Some(("STALE", expected, None, None))
         } else {
-            Some(("MISSING", expected, None, None))
+            Some((
+                if unobserved_vocabulary {
+                    "UNOBSERVED"
+                } else {
+                    "MISSING"
+                },
+                expected,
+                None,
+                None,
+            ))
         }
     });
     match first {
@@ -1242,6 +1270,26 @@ fn evaluate_checkpoint(
                             .get_or_insert("run the reviewer at the final review boundary".into());
                     }
                     Some(r) => {
+                        if project.workflow_governance_version()? >= 3 {
+                            let current = crate::candidate::unique_current(project, &subject.id)?;
+                            if current.as_deref() != r.candidate_bundle.as_deref() {
+                                unmet.push("candidate assessment is not bound to the unique current Candidate Bundle".into());
+                                next_action.get_or_insert(
+                                    "prepare and assess the current candidate".into(),
+                                );
+                                continue;
+                            }
+                            if r.candidate_outcome.as_deref() != Some("PASSED") {
+                                unmet
+                                    .push("current candidate assessment outcome is BLOCKED".into());
+                                next_action.get_or_insert(
+                                    "repair the finding and prepare a different candidate".into(),
+                                );
+                                continue;
+                            }
+                            met.push("current Candidate Bundle assessment PASSED".into());
+                            continue;
+                        }
                         if let Some(selected) = selected_production_evidence(project, subject)? {
                             if !evidence::review_binds_production_evidence(
                                 &project.root,
@@ -1771,6 +1819,14 @@ fn current_bindings(
                         hashing::product_state(&project.root, &project.implementation_paths())?,
                     );
                 }
+            }
+            if project.workflow_governance_version()? >= 3
+                && matches!(checkpoint, "final_ux_validation" | "acceptance")
+            {
+                let bundle = crate::candidate::unique_current(project, &subject.id)?.context(
+                    "no unique current Candidate Bundle; run prepare-candidate after F6",
+                )?;
+                b.insert("candidate_bundle".into(), bundle);
             }
         }
         "operation_route" | "no_action_closure" => {
@@ -2819,13 +2875,21 @@ mod journey_tests {
             transitions: vec![accepted.transitions[0].clone(), second],
         };
         let mut out = String::new();
-        render_definition_status(&mut out, "Accepted", &accepted, &current, &BTreeSet::new());
+        render_definition_status(
+            &mut out,
+            "Accepted",
+            &accepted,
+            &current,
+            &BTreeSet::new(),
+            false,
+        );
         render_definition_status(
             &mut out,
             "Candidate",
             &candidate,
             &current,
             &BTreeSet::new(),
+            false,
         );
         assert!(out.contains("Accepted: PASS"));
         assert!(out.contains("Candidate: BLOCKED"));

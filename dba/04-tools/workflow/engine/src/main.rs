@@ -1,5 +1,6 @@
-use anyhow::Result;
+use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
+use codeos_workflow::candidate;
 use codeos_workflow::checker::{self, Subject};
 use codeos_workflow::contract::Workflow;
 use codeos_workflow::event_evidence::{self, VerifyEventArgs};
@@ -40,6 +41,20 @@ enum Cmd {
     RevalidationPlan(RevalidationPlanArgs),
     /// Record one independent post-acceptance revalidation assessment.
     RevalidationRecord(RevalidationRecordArgs),
+    /// Materialize the immutable, content-addressed candidate used by F7 through F9.
+    PrepareCandidate(PrepareCandidateArgs),
+}
+
+#[derive(clap::Args)]
+struct PrepareCandidateArgs {
+    #[arg(long)]
+    subject: String,
+    /// Add a dynamic dependency that cannot be derived mechanically. May be repeated.
+    #[arg(long = "include", value_name = "PROJECT_RELATIVE_PATH")]
+    include: Vec<String>,
+    /// Build a post-acceptance revalidation candidate rather than an ordinary F7 candidate.
+    #[arg(long)]
+    revalidation: bool,
 }
 
 #[derive(clap::Args)]
@@ -149,6 +164,18 @@ fn main() {
 
 fn run(cli: &Cli, start: &std::path::Path) -> Result<i32> {
     match &cli.command {
+        Cmd::PrepareCandidate(args) => {
+            let project = Project::discover(start)?;
+            let subject = Subject::resolve(&project, Workflow::Feature, &args.subject)?;
+            let kind = if args.revalidation {
+                "post_acceptance_revalidation"
+            } else {
+                "ordinary"
+            };
+            let (id, _) = candidate::prepare(&project, &subject, &args.include, kind)?;
+            println!("candidate bundle: {id}");
+            Ok(EXIT_SUCCESS)
+        }
         Cmd::RevalidationPlan(args) => {
             let project = Project::discover(start)?;
             let case = revalidation::build_case(&project, &args.subject, &args.trigger)?;
@@ -223,6 +250,22 @@ fn run(cli: &Cli, start: &std::path::Path) -> Result<i32> {
                     eprintln!("workflow must be bootstrap | feature | operation");
                     return Ok(EXIT_USAGE);
                 };
+                if workflow == Workflow::Feature && project.workflow_governance_version()? >= 3 {
+                    let status = monitor::ProjectStatus::derive(&project)?;
+                    let feature = status
+                        .features
+                        .iter()
+                        .find(|feature| feature.id == subject_id)
+                        .with_context(|| format!("unknown feature {subject_id}"))?;
+                    println!("{}", monitor::render_targeted_feature(feature));
+                    return Ok(
+                        if feature.workflow.status == monitor::DisplayStatus::Complete {
+                            EXIT_SUCCESS
+                        } else {
+                            EXIT_BLOCKED
+                        },
+                    );
+                }
                 let subject = Subject::resolve(&project, workflow, subject_id)?;
                 let reports = checker::evaluate(&project, &subject)?;
                 println!(
@@ -250,6 +293,36 @@ fn run(cli: &Cli, start: &std::path::Path) -> Result<i32> {
                 return Ok(EXIT_USAGE);
             };
             let project = Project::discover(start)?;
+            if matches!(cli.command, Cmd::Next(_))
+                && workflow == Workflow::Feature
+                && project.workflow_governance_version()? >= 3
+            {
+                let status = monitor::ProjectStatus::derive(&project)?;
+                let feature = status
+                    .features
+                    .iter()
+                    .find(|feature| feature.id == t.subject)
+                    .with_context(|| format!("unknown feature {}", t.subject))?;
+                match feature.workflow.next_action.as_deref() {
+                    Some(action) => println!(
+                        "{}\n{}",
+                        feature
+                            .workflow
+                            .current_checkpoint
+                            .as_deref()
+                            .unwrap_or("CURRENT VALIDITY"),
+                        action
+                    ),
+                    None => println!("nothing blocked — accepted snapshot is current"),
+                }
+                return Ok(
+                    if feature.workflow.status == monitor::DisplayStatus::Complete {
+                        EXIT_SUCCESS
+                    } else {
+                        EXIT_BLOCKED
+                    },
+                );
+            }
             let subject = Subject::resolve(&project, workflow, &t.subject)?;
             if matches!(cli.command, Cmd::Check(_)) {
                 let log = checker::run_checks(&project, &subject)?;

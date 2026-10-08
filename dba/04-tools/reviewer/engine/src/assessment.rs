@@ -616,6 +616,15 @@ pub fn write_assessment(
             "  reviewed_snapshot: {}\n",
             manifest.reviewed_snapshot
         ));
+        if let Some(bundle) = &manifest.candidate_bundle {
+            content.push_str(&format!("  candidate_bundle: {}\n", bundle));
+            let outcome = if parsed.parse_status == "OK"
+                && parsed.assessment_status == "COMPLETE"
+                && parsed.effective_concern == "NO OBJECTION"
+                && !findings.iter().any(|finding| finding.classification == "IN-SCOPE BLOCKER")
+            { "PASSED" } else { "BLOCKED" };
+            content.push_str(&format!("  candidate_outcome: {}\n", outcome));
+        }
     }
     content.push_str(&format!(
         "  source: {}\n",

@@ -388,6 +388,11 @@ pub fn current_acceptance_valid(project: &Project, subject: &str) -> Result<bool
         Ok(value) => value,
         Err(_) => return Ok(false),
     };
+    if project.workflow_governance_version()? >= 3 {
+        if let Some(bundle) = acceptance.bindings.get("candidate_bundle") {
+            return crate::candidate::acceptance_current(project, bundle);
+        }
+    }
     let original = latest_impl_before(project, subject, &acceptance.timestamp)?;
     let current = hashing::working_tree_state(&project.root, &project.implementation_paths())?;
     if original == current {

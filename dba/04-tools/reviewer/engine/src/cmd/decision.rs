@@ -35,6 +35,13 @@ pub fn run(
         );
         return Ok(crate::EXIT_USAGE);
     }
+    if crate::manifest::candidate_lifecycle(
+        crate::config::resolve_reviewer_tool_contract(cfg).ok().as_deref(),
+    ) && decision.starts_with("AUTHORIZE_")
+    {
+        eprintln!("error: DBA-23 has no review-recovery authorization; repair the blocked candidate and prepare a new immutable Candidate Bundle");
+        return Ok(crate::EXIT_USAGE);
+    }
 
     let is_reentry_authorization = decision == "AUTHORIZE_REENTRY";
     let is_closure_authorization = decision == "AUTHORIZE_EVIDENCE_CLOSURE";

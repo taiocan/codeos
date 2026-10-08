@@ -2,9 +2,12 @@
 
 use crate::checker::{self, CheckpointReport, State, Subject};
 use crate::contract::Workflow;
+use crate::evidence;
 use crate::project::Project;
+use crate::receipts::ReceiptStore;
 use anyhow::Result;
 use serde::Serialize;
+use sha2::{Digest, Sha256};
 use std::collections::BTreeSet;
 use std::path::Path;
 
@@ -33,6 +36,8 @@ pub struct CheckpointStatus {
     pub id: String,
     pub title: String,
     pub status: DisplayStatus,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub basis: Option<String>,
 }
 
 #[derive(Debug, Serialize)]
@@ -54,9 +59,39 @@ pub struct FeatureStatus {
     pub historically_accepted: bool,
     pub current_acceptance_valid: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub accepted_snapshot: Option<AcceptedSnapshot>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub current_validity: Option<CurrentValidity>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub acceptance_reason: Option<String>,
     #[serde(flatten)]
     pub workflow: WorkflowStatus,
+}
+
+#[derive(Debug, Serialize)]
+pub struct AcceptedSnapshot {
+    pub receipt_sha256: String,
+    pub accepted_at: String,
+    pub semantic_revision: Option<u64>,
+    pub bindings: std::collections::BTreeMap<String, String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub candidate_bundle_id: Option<String>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct CurrentValidity {
+    pub status: String,
+    pub reasons: Vec<String>,
+}
+
+/// An informational feature candidate from a non-governed Feature Decomposition artifact.
+/// Candidates have no Feature ID or lifecycle state and cannot affect workflow progression.
+#[derive(Debug, Serialize)]
+pub struct PlannedFeatureCandidate {
+    pub name: String,
+    pub human_outcome: String,
+    pub boundary_or_dependency: String,
+    pub source: String,
 }
 
 #[derive(Debug, Serialize)]
@@ -72,6 +107,8 @@ pub struct ProjectStatus {
     pub bootstrap: WorkflowStatus,
     pub current_feature: Option<String>,
     pub features: Vec<FeatureStatus>,
+    pub planned_feature_candidates: Vec<PlannedFeatureCandidate>,
+    pub feature_inventory_warnings: Vec<String>,
 }
 
 impl ProjectStatus {
@@ -85,6 +122,7 @@ impl ProjectStatus {
             let historically_accepted = crate::revalidation::historically_accepted(project, &id)?;
             let current_acceptance_valid = historically_accepted
                 && crate::revalidation::current_acceptance_valid(project, &id)?;
+            let governance_v3 = project.workflow_governance_version()? >= 3;
             let mut workflow = summarize(&checker::evaluate(project, &subject)?);
             let acceptance_reason = if historically_accepted && !current_acceptance_valid {
                 workflow.status = DisplayStatus::Blocked;
@@ -106,15 +144,55 @@ impl ProjectStatus {
             } else {
                 None
             };
+            let accepted_snapshot = if governance_v3 {
+                acceptance_snapshot(project, &id)?
+            } else {
+                None
+            };
+            let current_validity = governance_v3.then(|| CurrentValidity {
+                status: if !historically_accepted {
+                    "NOT_ACCEPTED"
+                } else if current_acceptance_valid {
+                    "VALID"
+                } else {
+                    "STALE"
+                }
+                .into(),
+                reasons: if historically_accepted && !current_acceptance_valid {
+                    vec!["REVALIDATION_REQUIRED".into()]
+                } else {
+                    vec![]
+                },
+            });
+            if governance_v3 && historically_accepted {
+                snapshot_completed_checkpoints(&mut workflow);
+                if !current_acceptance_valid {
+                    workflow.status = DisplayStatus::Blocked;
+                    workflow.current_checkpoint = Some("POST_ACCEPTANCE_REVALIDATION".into());
+                    workflow.primary_issue = Some("historical F9 acceptance is preserved; current acceptance validity is stale".into());
+                    workflow.additional_issue_count = 0;
+                    workflow.next_action =
+                        Some("revalidate only the affected accepted surface".into());
+                }
+            }
             features.push(FeatureStatus {
                 name: feature_name(project, &id),
                 id,
                 historically_accepted,
                 current_acceptance_valid,
+                accepted_snapshot,
+                current_validity,
                 acceptance_reason,
                 workflow,
             });
         }
+
+        let started_names = features
+            .iter()
+            .map(|feature| normalized_name(&feature.name))
+            .collect::<BTreeSet<_>>();
+        let (planned_feature_candidates, feature_inventory_warnings) =
+            planned_feature_candidates(project, &started_names)?;
 
         let incomplete: Vec<_> = features
             .iter()
@@ -124,7 +202,11 @@ impl ProjectStatus {
         let current_feature = (incomplete.len() == 1).then(|| incomplete[0].clone());
 
         Ok(Self {
-            schema_version: 1,
+            schema_version: if project.workflow_governance_version()? >= 3 {
+                3
+            } else {
+                2
+            },
             project: ProjectIdentity {
                 name: project_name(project),
                 configuration: project.dba_configuration()?,
@@ -132,6 +214,8 @@ impl ProjectStatus {
             bootstrap,
             current_feature,
             features,
+            planned_feature_candidates,
+            feature_inventory_warnings,
         })
     }
 
@@ -142,6 +226,46 @@ impl ProjectStatus {
                 .iter()
                 .any(|feature| feature.workflow.status != DisplayStatus::Complete)
     }
+}
+
+fn acceptance_snapshot(project: &Project, subject: &str) -> Result<Option<AcceptedSnapshot>> {
+    let Some(receipt) = ReceiptStore::at(&project.codeos_dir())
+        .latest("feature", subject, "acceptance")?
+        .filter(|receipt| receipt.result == "accepted")
+    else {
+        return Ok(None);
+    };
+    let bytes = serde_json::to_vec(&receipt)?;
+    let semantic_revision = std::fs::read_to_string(project.intent(subject))
+        .ok()
+        .and_then(|text| yaml_u64(&text, "semantic_revision"));
+    Ok(Some(AcceptedSnapshot {
+        receipt_sha256: hex::encode(Sha256::digest(bytes)),
+        accepted_at: receipt.timestamp.clone(),
+        semantic_revision,
+        candidate_bundle_id: receipt.bindings.get("candidate_bundle").cloned(),
+        bindings: receipt.bindings,
+    }))
+}
+
+fn yaml_u64(text: &str, key: &str) -> Option<u64> {
+    let frontmatter = text.strip_prefix("---\n")?.split_once("\n---")?.0;
+    let value: serde_yaml::Value = serde_yaml::from_str(frontmatter).ok()?;
+    value.get(key)?.as_u64()
+}
+
+fn snapshot_completed_checkpoints(workflow: &mut WorkflowStatus) {
+    for checkpoint in &mut workflow.checkpoints {
+        if checkpoint.status != DisplayStatus::NotApplicable {
+            checkpoint.status = DisplayStatus::Complete;
+            checkpoint.basis = Some("ACCEPTED_SNAPSHOT".into());
+        }
+    }
+    workflow.completed = workflow
+        .checkpoints
+        .iter()
+        .filter(|checkpoint| checkpoint.status == DisplayStatus::Complete)
+        .count();
 }
 
 pub fn render(status: &ProjectStatus) -> String {
@@ -194,6 +318,18 @@ pub fn render(status: &ProjectStatus) -> String {
             ));
         }
     }
+    for candidate in &status.planned_feature_candidates {
+        out.push_str(&format!(
+            "  —  {}  CANDIDATE (NOT STARTED)\n",
+            candidate.name
+        ));
+    }
+    if !status.feature_inventory_warnings.is_empty() {
+        out.push_str("\nFEATURE INVENTORY WARNINGS\n");
+        for warning in &status.feature_inventory_warnings {
+            out.push_str(&format!("  {warning}\n"));
+        }
+    }
 
     if let Some(id) = status.current_feature.as_deref() {
         let feature = status
@@ -239,6 +375,40 @@ pub fn render(status: &ProjectStatus) -> String {
                 out.push_str(&format!("  {} — {}\n", feature.id, issue));
             }
         }
+    }
+    out.trim_end().to_string()
+}
+
+pub fn render_targeted_feature(feature: &FeatureStatus) -> String {
+    let mut out = format!("workflow: feature   subject: {}\n", feature.id);
+    if let Some(snapshot) = &feature.accepted_snapshot {
+        out.push_str(&format!(
+            "\nACCEPTED SNAPSHOT\n  receipt: {}\n  accepted_at: {}\n",
+            snapshot.receipt_sha256, snapshot.accepted_at
+        ));
+    }
+    if let Some(validity) = &feature.current_validity {
+        out.push_str(&format!("CURRENT VALIDITY\n  {}\n", validity.status));
+        for reason in &validity.reasons {
+            out.push_str(&format!("  - {reason}\n"));
+        }
+    }
+    for checkpoint in &feature.workflow.checkpoints {
+        out.push_str(&format!(
+            "\n{} — {}: {}{}\n",
+            checkpoint.id,
+            checkpoint.title,
+            checkpoint.status.label(),
+            checkpoint
+                .basis
+                .as_deref()
+                .map(|b| format!(" ({b})"))
+                .unwrap_or_default()
+        ));
+    }
+    match feature.workflow.next_action.as_deref() {
+        Some(action) => out.push_str(&format!("\nNEXT\n  {action}\n")),
+        None => out.push_str("\nNEXT\n  nothing blocked — accepted snapshot is current\n"),
     }
     out.trim_end().to_string()
 }
@@ -298,6 +468,7 @@ fn summarize(reports: &[CheckpointReport]) -> WorkflowStatus {
                     State::Blocked => DisplayStatus::Blocked,
                     State::NotApplicable => DisplayStatus::NotApplicable,
                 },
+                basis: None,
             })
             .collect(),
     }
@@ -310,6 +481,135 @@ fn specification_feature_ids(project: &Project) -> Result<Vec<String>> {
     collect_ids(&specification.join("contracts"), "_contract.md", &mut ids)?;
     collect_ids(&specification.join("event-schemas"), "_schema.md", &mut ids)?;
     Ok(ids.into_iter().collect())
+}
+
+fn planned_feature_candidates(
+    project: &Project,
+    started_names: &BTreeSet<String>,
+) -> Result<(Vec<PlannedFeatureCandidate>, Vec<String>)> {
+    let discovery = project.codeos_dir().join("00-discovery");
+    if !discovery.is_dir() {
+        return Ok((vec![], vec![]));
+    }
+
+    let mut paths = std::fs::read_dir(&discovery)?
+        .filter_map(|entry| entry.ok().map(|entry| entry.path()))
+        .filter(|path| path.extension().and_then(|value| value.to_str()) == Some("md"))
+        .collect::<Vec<_>>();
+    paths.sort();
+
+    let mut candidates = Vec::new();
+    let mut warnings = Vec::new();
+    for path in paths {
+        let source = path
+            .strip_prefix(&project.root)
+            .unwrap_or(&path)
+            .display()
+            .to_string();
+        let text = match std::fs::read_to_string(&path) {
+            Ok(text) => text,
+            Err(error) => {
+                warnings.push(format!(
+                    "{source}: cannot read feature decomposition: {error}"
+                ));
+                continue;
+            }
+        };
+        let (Some(frontmatter), body) = evidence::split_frontmatter(&text) else {
+            continue;
+        };
+        let Ok(frontmatter) = serde_yaml::from_str::<serde_yaml::Value>(frontmatter) else {
+            continue;
+        };
+        if frontmatter
+            .get("artifact_type")
+            .and_then(serde_yaml::Value::as_str)
+            != Some("feature_decomposition")
+        {
+            continue;
+        }
+
+        match parse_candidate_table(body, &source) {
+            Ok(rows) => {
+                for candidate in rows {
+                    let key = normalized_name(&candidate.name);
+                    if started_names.contains(&key) {
+                        continue;
+                    }
+                    candidates.push(candidate);
+                }
+            }
+            Err(warning) => warnings.push(warning),
+        }
+    }
+    Ok((candidates, warnings))
+}
+
+fn parse_candidate_table(
+    body: &str,
+    source: &str,
+) -> std::result::Result<Vec<PlannedFeatureCandidate>, String> {
+    let section = body
+        .split_once("## Candidate Feature Boundaries")
+        .map(|(_, rest)| rest.split("\n## ").next().unwrap_or(rest))
+        .ok_or_else(|| format!("{source}: missing 'Candidate Feature Boundaries' section"))?;
+    let mut lines = section
+        .lines()
+        .map(str::trim)
+        .filter(|line| !line.is_empty());
+    let header = lines
+        .find(|line| line.starts_with('|'))
+        .ok_or_else(|| format!("{source}: missing candidate table"))?;
+    if table_cells(header) != ["Candidate", "Human outcome", "Boundary or dependency"] {
+        return Err(format!("{source}: candidate table has unexpected columns"));
+    }
+    let separator = lines
+        .next()
+        .ok_or_else(|| format!("{source}: candidate table has no separator"))?;
+    if table_cells(separator).len() != 3
+        || table_cells(separator).iter().any(|cell| {
+            !cell
+                .chars()
+                .all(|ch| ch == '-' || ch == ':' || ch.is_whitespace())
+        })
+    {
+        return Err(format!(
+            "{source}: candidate table has an invalid separator"
+        ));
+    }
+
+    let mut rows = Vec::new();
+    for (index, line) in lines.filter(|line| line.starts_with('|')).enumerate() {
+        let cells = table_cells(line);
+        if cells.len() != 3 || cells.iter().any(|cell| cell.is_empty()) {
+            return Err(format!(
+                "{source}: candidate table row {} must contain three non-empty cells",
+                index + 1
+            ));
+        }
+        if cells[0].contains("[short name]") {
+            continue;
+        }
+        rows.push(PlannedFeatureCandidate {
+            name: cells[0].to_string(),
+            human_outcome: cells[1].to_string(),
+            boundary_or_dependency: cells[2].to_string(),
+            source: source.to_string(),
+        });
+    }
+    Ok(rows)
+}
+
+fn table_cells(line: &str) -> Vec<&str> {
+    line.trim_matches('|').split('|').map(str::trim).collect()
+}
+
+fn normalized_name(value: &str) -> String {
+    value
+        .split_whitespace()
+        .collect::<Vec<_>>()
+        .join(" ")
+        .to_lowercase()
 }
 
 fn collect_ids(dir: &Path, suffix: &str, ids: &mut BTreeSet<String>) -> Result<()> {
@@ -410,6 +710,23 @@ mod tests {
         );
         assert_eq!(summary.additional_issue_count, 1);
         assert_eq!((summary.completed, summary.total), (1, 3));
+    }
+
+    #[test]
+    fn accepted_snapshot_keeps_historical_checkpoints_complete_when_current_state_is_stale() {
+        let mut workflow = summarize(&[
+            report("F1", State::Pass, &[]),
+            report("F2", State::Blocked, &["current implementation drifted"]),
+            report("F3", State::Blocked, &["earlier checkpoint F2 is not PASS"]),
+        ]);
+
+        snapshot_completed_checkpoints(&mut workflow);
+
+        assert_eq!(workflow.completed, 3);
+        assert!(workflow.checkpoints.iter().all(|checkpoint| {
+            checkpoint.status == DisplayStatus::Complete
+                && checkpoint.basis.as_deref() == Some("ACCEPTED_SNAPSHOT")
+        }));
     }
 
     #[test]

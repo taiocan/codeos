@@ -863,11 +863,29 @@ fn refuse_snapshot(contract: Option<&str>, predecessor: &str, message: &str) -> 
 }
 
 pub fn run(mut args: ReviewArgs, cfg: &Config) -> Result<i32> {
-    if args.retry_terminal_review_closure_after.is_none() && args.evidence.artifacts.is_empty() {
+    let selected_contract = crate::config::resolve_reviewer_tool_contract(cfg).ok();
+    let candidate_lifecycle = crate::manifest::candidate_lifecycle(selected_contract.as_deref());
+    if !candidate_lifecycle
+        && args.retry_terminal_review_closure_after.is_none()
+        && args.evidence.artifacts.is_empty()
+    {
         eprintln!("error: review requires at least one ARTIFACT unless retrying an exact saved Terminal Review Closure payload");
         return Ok(crate::EXIT_USAGE);
     }
-    let selected_contract = crate::config::resolve_reviewer_tool_contract(cfg).ok();
+    if candidate_lifecycle
+        && (args.continues.is_some()
+            || args.reentry_after.is_some()
+            || args.evidence_closure_after.is_some()
+            || args.infrastructure_revalidation_after.is_some()
+            || args.evidence_reassessment_after.is_some()
+            || args.terminal_review_closure_after.is_some()
+            || args.retry_terminal_review_closure_after.is_some()
+            || args.replace_invalid_lineage_after.is_some()
+            || args.correct_lineage_replacement_after.is_some())
+    {
+        eprintln!("error: DBA-23 candidate assessments do not permit review rounds or legacy recovery operations; repair the inputs and prepare a new candidate");
+        return Ok(crate::EXIT_USAGE);
+    }
     let review_log_path = if args.scratch {
         let scratch = cfg.state_dir.join("reviewer-scratch");
         if let Err(error) = std::fs::create_dir_all(&scratch) {
@@ -1195,6 +1213,36 @@ pub fn run(mut args: ReviewArgs, cfg: &Config) -> Result<i32> {
                 return Ok(crate::EXIT_WRITE);
             }
         }
+    } else if candidate_lifecycle && evidence.stage == "8" {
+        let project = match codeos_workflow::project::Project::discover(&cfg.repo_root) {
+            Ok(project) => project,
+            Err(error) => {
+                eprintln!("REVIEW_NOT_READY: REQUIRED_INPUT_MISSING\n  - candidate_bundle: {error}");
+                return Ok(crate::EXIT_PACKET);
+            }
+        };
+        let bundle = match codeos_workflow::candidate::unique_current(&project, &evidence.feature) {
+            Ok(Some(bundle)) => bundle,
+            Ok(None) => {
+                eprintln!("REVIEW_NOT_READY: REQUIRED_INPUT_MISSING\n  - candidate_bundle: run codeos-workflow prepare-candidate");
+                return Ok(crate::EXIT_PACKET);
+            }
+            Err(error) => {
+                eprintln!("REVIEW_NOT_READY: LINEAGE_INVALID\n  - candidate_bundle: {error}");
+                return Ok(crate::EXIT_PACKET);
+            }
+        };
+        let id = format!("ASSESS__{}__{}__CANDIDATE-{}", evidence.feature, evidence.stage, &bundle[..12]);
+        let already_assessed = std::fs::read_dir(&cfg.codex_dir).ok().into_iter().flatten()
+            .filter_map(Result::ok).map(|entry| entry.path())
+            .filter(|path| path.extension().and_then(|v| v.to_str()) == Some("md"))
+            .filter_map(|path| std::fs::read_to_string(path).ok())
+            .any(|text| text.lines().any(|line| line.trim() == format!("review_id: {id}")));
+        if already_assessed {
+            eprintln!("error: candidate {bundle} already has a valid semantic assessment; prepare a different candidate after repair");
+            return Ok(crate::EXIT_USAGE);
+        }
+        id
     } else {
         if let Some(execution) = terminal_closure.as_ref() {
             if execution.legacy_retry {

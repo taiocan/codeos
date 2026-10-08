@@ -6,6 +6,7 @@
 //! good, whether UX is understandable, whether evidence is persuasive, or which operational route
 //! an observation belongs to.
 
+pub mod candidate;
 pub mod checker;
 pub mod contract;
 pub mod event_evidence;

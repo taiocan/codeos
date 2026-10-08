@@ -19,12 +19,16 @@ Ordinary technical vocabulary does not belong here. Git preserves the history of
 | **Behavioral Contract** | Observable truths derived from Intent, normally expressed as Given/When/Then conditions. |
 | **Behavioral Event** | A runtime event representing a verified outcome. |
 | **Behavioral invariant** | A condition that must remain true in externally observable behavior, independent of internal implementation structure. |
+| **Accepted Snapshot** | The immutable F9 identity of a feature's completed lifecycle, governed inputs, judged implementation, and applicable Candidate Bundle; later state never rewrites it. |
 | **Canonical** | The single stable runtime identifier that names a Concept within a vocabulary. |
 | **Checkpoint** | An ordered point in a governed workflow with a defined entry condition, required evidence, required human decisions, exit condition, and valid return routes. Its state is derived from canonical evidence as `PASS`, `BLOCKED`, or `WAITING`; a later checkpoint is never treated as satisfied while a required earlier one is unresolved. |
+| **Candidate Assessment** | The one valid semantic assessment permitted for one immutable candidate identity, resulting in `BLOCKED` or `PASSED`; readiness and structurally invalid executions are not semantic assessments. |
+| **Candidate Bundle** | The immutable content-addressed set of governed inputs, dependency-scoped implementation identities, verification records, and selected production/runtime evidence that F7, F8, and F9 assess as one candidate. |
 | **Codeos Mechanic** | A fixed delivery, verification, or communication obligation named by the Codeos Mechanics policy; a project's configuration may display it but not disable it. |
 | **DBA configuration** | An immutable, approved composition selecting compatible doctrine, policies, prompts, and tool contracts. Its identity and number do not imply a doctrine version. |
 | **Legacy DBA-7 cutover compatibility baseline** | The DBA-7 composition applied by a DBA-8-or-later-capable toolkit to a schema-less project for compatibility; it is not evidence that the project historically adopted DBA-7. Changing such a project's toolkit mount is a controlled, human-authorized compatibility action. |
 | **Concept** | The semantic identity used by domain logic, independent of its string or storage representation. |
+| **Current Validity** | The derived fact that an Accepted Snapshot still applies to the current governed meaning and its recorded product/dependency surface; it is distinct from historical acceptance. |
 | **Concept Dependency Rule** | Domain logic compares resolved Concept identity rather than vocabulary representations. |
 | **Concept leak** | A defect in which a vocabulary representation escapes the resolution boundary into domain logic. |
 | **Consequential conformance repair** | A change that restores already-approved behavior where an incorrect repair could have consequential effects; it is not a new semantic decision. |

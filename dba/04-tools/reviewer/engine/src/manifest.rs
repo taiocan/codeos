@@ -12,6 +12,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
 
 pub const CONTRACT: &str = "dba/04-tools/reviewer/contract/v17.md";
+pub const CONTRACT_V18: &str = "dba/04-tools/reviewer/contract/v18.md";
 
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 pub struct ReviewInputManifest {
@@ -24,6 +25,9 @@ pub struct ReviewInputManifest {
     pub semantic_revision: Option<u64>,
     pub configuration: Option<String>,
     pub implementation: Option<String>,
+    /// DBA-23's immutable F6-to-F9 candidate identity.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub candidate_bundle: Option<String>,
     /// Canonical governed path -> SHA-256, or `None` when the artifact is absent.
     pub governed_context: BTreeMap<String, Option<String>>,
     /// `<checkpoint>/<verification>` -> SHA-256 of the latest record line, or `None` when absent.
@@ -54,8 +58,10 @@ pub(crate) struct Derived {
 }
 
 pub fn selected(contract: Option<&str>) -> bool {
-    contract == Some(CONTRACT)
+    matches!(contract, Some(CONTRACT) | Some(CONTRACT_V18))
 }
+
+pub fn candidate_lifecycle(contract: Option<&str>) -> bool { contract == Some(CONTRACT_V18) }
 
 /// Derive the manifest from canonical artifacts. It precedes packet construction, which takes its
 /// required inputs from here; `seal` later binds it to the final packet.
@@ -117,6 +123,22 @@ pub fn derive(
             return manifest;
         }
     };
+    if candidate_lifecycle(crate::config::resolve_reviewer_tool_contract(cfg).ok().as_deref())
+        && stage == "8"
+    {
+        match codeos_workflow::candidate::unique_current(&project, feature) {
+            Ok(Some(id)) => {
+                let path = format!(".codeos/06-workflow/candidates/{id}.json");
+                manifest.candidate_bundle = Some(id);
+                manifest.derived_inputs.insert(path.clone());
+                manifest.required_inputs.insert(path);
+            }
+            Ok(None) => manifest.derived.project_error = Some(
+                "no unique current Candidate Bundle; run codeos-workflow prepare-candidate".into(),
+            ),
+            Err(error) => manifest.derived.project_error = Some(error.to_string()),
+        }
+    }
     let implementation_paths = project.implementation_paths();
     manifest.implementation =
         codeos_workflow::hashing::working_tree_state(&project.root, &implementation_paths).ok();

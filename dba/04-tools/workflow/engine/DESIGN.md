@@ -60,7 +60,12 @@ The command paths:
    missing is a human decision, `BLOCKED` otherwise.
    Project-wide `status` calls that same evaluator for Bootstrap and every Feature ID found in the
    Specification Package directories, then renders the resulting read-only projection as terminal
-   text or JSON. It identifies a current feature only when exactly one feature is incomplete.
+   text or JSON. It identifies a current feature only when exactly one feature is incomplete. Its
+   feature inventory also projects unstarted rows from non-governed Feature Decomposition artifacts
+   as `CANDIDATE (NOT STARTED)`. Those rows have no Feature ID or lifecycle state and do not affect
+   the current feature, completion, next actions, or exit status. JSON schema v2 exposes them in the
+   separate `planned_feature_candidates` field and reports non-fatal parsing problems in
+   `feature_inventory_warnings`; the existing `features` shape is unchanged.
 3. `check` calls `run_checks`, which loops: `evaluate` read-only, find the first `BLOCKED` /
    `WAITING` checkpoint, stop if it is blocked behind an earlier checkpoint or waits on a
    non-mechanical condition, otherwise run each of its `LiveVerification` mechanics whose record is

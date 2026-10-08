@@ -12,6 +12,10 @@ multiple features or the boundary reasoning has durable value. Simple work proce
 an Intent. This decomposition has no feature ID, status, approval, or lifecycle gate and never
 overrides an Intent, Contract, or Event Schema.
 
+The project-wide workflow status reads the Candidate Feature Boundaries table as an informational
+inventory. Keep its three column headings unchanged. This display use grants the candidates no
+workflow state or authority; an Intent remains the authoritative start of a feature.
+
 Canonical path when saved: .codeos/00-discovery/<topic-slug>.md
 -->
 

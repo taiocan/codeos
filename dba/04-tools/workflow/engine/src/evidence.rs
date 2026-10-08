@@ -168,6 +168,8 @@ pub struct ReviewRecord {
     pub review_commit: String,
     pub reviewed_packet_sha256: String,
     pub effective_concern: String,
+    pub candidate_bundle: Option<String>,
+    pub candidate_outcome: Option<String>,
     pub production_evidence: Option<String>,
     pub artifacts: Vec<ReviewArtifact>,
     /// The Review Input Manifest sidecar (Reviewer Tool Contract v17), present only when its packet
@@ -364,6 +366,14 @@ pub fn latest_review_record(
                 .and_then(|v| v.as_str())
                 .unwrap_or_default()
                 .to_string(),
+            candidate_bundle: reviewed
+                .and_then(|r| r.get("candidate_bundle"))
+                .and_then(|v| v.as_str())
+                .map(str::to_string),
+            candidate_outcome: reviewed
+                .and_then(|r| r.get("candidate_outcome"))
+                .and_then(|v| v.as_str())
+                .map(str::to_string),
             production_evidence,
             artifacts,
             manifest_sidecar: manifest_sidecar(&path, reviewed),
@@ -1171,6 +1181,8 @@ mod tests {
             review_commit: "commit".into(),
             reviewed_packet_sha256: "packet".into(),
             effective_concern: "TERMINAL REVIEW CLOSED — PROGRESSION PERMITTED".into(),
+            candidate_bundle: None,
+            candidate_outcome: None,
             production_evidence: None,
             manifest_sidecar: None,
             artifacts: vec![
