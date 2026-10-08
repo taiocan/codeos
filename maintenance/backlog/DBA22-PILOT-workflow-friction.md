@@ -37,3 +37,11 @@ Observed while running JamFree F-0003 under DBA-22 (2026-10-07).
 8. **[Done — tooling hardening + per-project budget]** **Required verification inputs dominate packet size.** The F6-selected production evidence and
    its verification record alone exceed the 50 KB packet budget, so every JamFree Stage-8 review
    needs `CODEOS_PACKET_BUDGET_MODE=warn`.
+9. **[Done — conformance repair]** **Revalidation trigger required HEAD.** Governance-only commits
+   after a multi-commit dependency change made post-acceptance revalidation impossible (JamFree
+   F-0001 after F-0003). Fixed in `62bec4e`.
+10. **Journey reachability view has no data.** `codeos-workflow journey` reports accepted
+    reachability MISSING because JamFree's product-journey verification records carry no
+    structured per-transition observations; F-checkpoints are unaffected.
+11. **Flaky implementer check.** `OUTPUT terminology authority boundary` in
+    `dba/04-tools/implementer/tests/codeos-implement-tests.sh` fails intermittently.
