@@ -1,4 +1,5 @@
 //! Shared test helpers for codeos-reviewer integration tests.
+#![allow(dead_code)]
 //!
 //! These helpers are used across reviewer command tests.
 
@@ -24,7 +25,7 @@ pub fn setup_fake_codex() -> FakeCodex {
         r#"#!/usr/bin/env bash
 set -euo pipefail
 if [[ "${1:-}" == "--version" ]]; then
-  printf '%s\n' 'codex-cli fake-1.0'
+  printf '%s\n' 'codex-cli 0.162.0'
   exit 0
 fi
 if [[ "${1:-}" == "login" && "${2:-}" == "status" ]]; then

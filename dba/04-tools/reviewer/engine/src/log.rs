@@ -1210,6 +1210,7 @@ pub fn format_semantic_review_id(
 }
 
 /// Append a REVIEW entry to the log. Uses a temp-file + rename for atomicity.
+#[allow(clippy::too_many_arguments)]
 pub fn append_review(
     log_path: &Path,
     review_id: &str,
@@ -1689,6 +1690,7 @@ fn short_sha(sha: &str) -> &str {
 /// Append a HUMAN DECISION entry to the log.
 /// `provenance` is populated when an assessment file was found for this feature+stage.
 /// When None, falls back to the legacy `verify_artifacts` path for backward compatibility.
+#[allow(clippy::too_many_arguments)]
 pub fn append_decision(
     log_path: &Path,
     feature: &str,
@@ -2217,13 +2219,10 @@ mod tests {
             format_reentry_id("F-0004", "8"),
             "REV__F-0004__8__REENTRY-1"
         );
-        assert_eq!(
-            compute_review_round(&log_path, "F-0004", "8")
-                .unwrap_err()
-                .to_string()
-                .contains("exceed"),
-            true
-        );
+        assert!(compute_review_round(&log_path, "F-0004", "8")
+            .unwrap_err()
+            .to_string()
+            .contains("exceed"));
     }
 
     #[test]
@@ -2736,10 +2735,13 @@ mod tests {
                 session_id: "test-session".to_string(),
                 reconnect_count: 0,
                 effort: "high".to_string(),
+                model: "test-model".to_string(),
+                cli_version: "0.162.0".to_string(),
             },
         }
     }
 
+    #[allow(dead_code)]
     fn test_external_raw() -> ReviewerRun {
         ReviewerRun {
             text: TEST_REPLY.to_string(),

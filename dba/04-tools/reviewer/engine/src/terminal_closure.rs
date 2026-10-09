@@ -1,3 +1,5 @@
+#![allow(clippy::items_after_test_module)]
+
 use crate::packet::{sha256_file, sha256_str, ArtifactEntry, CoverageState, ReviewPacket};
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
@@ -366,6 +368,7 @@ pub fn load_and_validate_scope(
     })
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn resolve_execution(
     log_path: &Path,
     repo_root: &Path,

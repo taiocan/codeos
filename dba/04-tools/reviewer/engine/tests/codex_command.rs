@@ -13,7 +13,7 @@ fn setup_codeos_symlink(repo_path: &std::path::Path) {
     std::fs::write(repo_path.join(".git/info/exclude"), "/.codeos/toolkit\n").unwrap();
 }
 
-fn review_args<'a>(feature: &'a str) -> [&'a str; 4] {
+fn review_args(feature: &str) -> [&str; 4] {
     ["review", feature, "selfdev-step-1", "tracked.md"]
 }
 

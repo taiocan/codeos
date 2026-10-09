@@ -862,6 +862,7 @@ fn refuse_snapshot(contract: Option<&str>, predecessor: &str, message: &str) -> 
     crate::EXIT_PACKET
 }
 
+#[allow(clippy::collapsible_else_if)]
 pub fn run(mut args: ReviewArgs, cfg: &Config) -> Result<i32> {
     let selected_contract = crate::config::resolve_reviewer_tool_contract(cfg).ok();
     let candidate_lifecycle = crate::manifest::candidate_lifecycle(selected_contract.as_deref());
@@ -1217,7 +1218,9 @@ pub fn run(mut args: ReviewArgs, cfg: &Config) -> Result<i32> {
         let project = match codeos_workflow::project::Project::discover(&cfg.repo_root) {
             Ok(project) => project,
             Err(error) => {
-                eprintln!("REVIEW_NOT_READY: REQUIRED_INPUT_MISSING\n  - candidate_bundle: {error}");
+                eprintln!(
+                    "REVIEW_NOT_READY: REQUIRED_INPUT_MISSING\n  - candidate_bundle: {error}"
+                );
                 return Ok(crate::EXIT_PACKET);
             }
         };
@@ -1232,12 +1235,24 @@ pub fn run(mut args: ReviewArgs, cfg: &Config) -> Result<i32> {
                 return Ok(crate::EXIT_PACKET);
             }
         };
-        let id = format!("ASSESS__{}__{}__CANDIDATE-{}", evidence.feature, evidence.stage, &bundle[..12]);
-        let already_assessed = std::fs::read_dir(&cfg.codex_dir).ok().into_iter().flatten()
-            .filter_map(Result::ok).map(|entry| entry.path())
+        let id = format!(
+            "ASSESS__{}__{}__CANDIDATE-{}",
+            evidence.feature,
+            evidence.stage,
+            &bundle[..12]
+        );
+        let already_assessed = std::fs::read_dir(&cfg.codex_dir)
+            .ok()
+            .into_iter()
+            .flatten()
+            .filter_map(Result::ok)
+            .map(|entry| entry.path())
             .filter(|path| path.extension().and_then(|v| v.to_str()) == Some("md"))
             .filter_map(|path| std::fs::read_to_string(path).ok())
-            .any(|text| text.lines().any(|line| line.trim() == format!("review_id: {id}")));
+            .any(|text| {
+                text.lines()
+                    .any(|line| line.trim() == format!("review_id: {id}"))
+            });
         if already_assessed {
             eprintln!("error: candidate {bundle} already has a valid semantic assessment; prepare a different candidate after repair");
             return Ok(crate::EXIT_USAGE);
@@ -1994,10 +2009,11 @@ pub fn run(mut args: ReviewArgs, cfg: &Config) -> Result<i32> {
 
     let timestamp = chrono::Utc::now().format("%Y%m%dT%H%M%SZ").to_string();
     let short_sha = &review_packet.review_sha[..7.min(review_packet.review_sha.len())];
-    let closure_suffix = review_id
-        .contains("__TERMINAL-CLOSURE-")
-        .then(|| format!("-{}", &crate::packet::sha256_str(&review_id)[..8]))
-        .unwrap_or_default();
+    let closure_suffix = if review_id.contains("__TERMINAL-CLOSURE-") {
+        format!("-{}", &crate::packet::sha256_str(&review_id)[..8])
+    } else {
+        String::new()
+    };
     let packet_saved = packets_dir.join(format!(
         "{}-{}-stage-{}-{}{}.packet.txt",
         timestamp, evidence.feature, evidence.stage, short_sha, closure_suffix

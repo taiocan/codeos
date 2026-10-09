@@ -90,7 +90,11 @@ impl Subject {
 pub fn evaluate(project: &Project, subject: &Subject) -> Result<Vec<CheckpointReport>> {
     let store = ReceiptStore::at(&project.codeos_dir());
     let vstore = VerificationStore::at(&project.codeos_dir());
-    let contract = contract_for(subject.workflow, project.feature_workflow_version()?);
+    let contract = contract_for(
+        subject.workflow,
+        project.feature_workflow_version()?,
+        project.operation_workflow_version()?,
+    );
     let mut reports = Vec::new();
     let mut all_prior_pass = true;
 
@@ -1027,7 +1031,11 @@ pub fn required_verification_records(
     subject: &Subject,
 ) -> Result<Vec<(&'static str, &'static str)>> {
     let mut required = Vec::new();
-    for checkpoint in contract_for(subject.workflow, project.feature_workflow_version()?) {
+    for checkpoint in contract_for(
+        subject.workflow,
+        project.feature_workflow_version()?,
+        project.operation_workflow_version()?,
+    ) {
         if !applies(checkpoint.applies, subject) {
             continue;
         }
@@ -1530,6 +1538,24 @@ fn evaluate_checkpoint(
                 }
             }
             Requirement::ObservationStated => {
+                if project.operation_workflow_version()? >= 2 {
+                    let observation =
+                        crate::observations::ObservationStore::at(&project.codeos_dir())
+                            .observation(&subject.id)?;
+                    if let Some(observation) = observation {
+                        met.push(format!(
+                            "observation stated: {}",
+                            first_line(&observation.statement)
+                        ));
+                    } else {
+                        soft += 1;
+                        unmet.push("no Observation v2 record exists".into());
+                        next_action.get_or_insert(
+                            "record the observation with `codeos-workflow observe`".into(),
+                        );
+                    }
+                    continue;
+                }
                 let latest = store.latest("operation", &subject.id, "operation_route")?;
                 match latest
                     .and_then(|r| r.observation)
@@ -1548,7 +1574,42 @@ fn evaluate_checkpoint(
                     }
                 }
             }
+            Requirement::ObservationRouted => {
+                let route = crate::observations::ObservationStore::at(&project.codeos_dir())
+                    .route(&subject.id)?;
+                if let Some(route) = route {
+                    met.push(format!(
+                        "routed to {}{}",
+                        route.route,
+                        route
+                            .target_id
+                            .as_deref()
+                            .map(|v| format!(" ({v})"))
+                            .unwrap_or_default()
+                    ));
+                } else {
+                    soft += 1;
+                    unmet.push("observation has no route".into());
+                    next_action.get_or_insert(
+                        "record the route with `codeos-workflow route-observation`".into(),
+                    );
+                }
+            }
             Requirement::RouteResolution => {
+                if project.operation_workflow_version()? >= 2 {
+                    let closure = crate::observations::ObservationStore::at(&project.codeos_dir())
+                        .closure(&subject.id)?;
+                    if let Some(closure) = closure {
+                        met.push(format!("{} closure evidence validated", closure.route));
+                    } else {
+                        soft += 1;
+                        unmet.push("routed observation has no valid closure evidence".into());
+                        next_action.get_or_insert(
+                            "close it with `codeos-workflow close-observation` after resolution evidence exists".into(),
+                        );
+                    }
+                    continue;
+                }
                 let route_receipt = store.latest("operation", &subject.id, "operation_route")?;
                 let Some(route_receipt) = route_receipt else {
                     soft += 1;
@@ -1645,7 +1706,11 @@ fn evaluate_checkpoint(
 /// cannot advance (one blocked on an approval, a receipt, or review — not on a mechanical
 /// verification). Returns one human-readable line per verification attempted; writes nothing else.
 pub fn run_checks(project: &Project, subject: &Subject) -> Result<Vec<String>> {
-    let contract = contract_for(subject.workflow, project.feature_workflow_version()?);
+    let contract = contract_for(
+        subject.workflow,
+        project.feature_workflow_version()?,
+        project.operation_workflow_version()?,
+    );
     let vstore = VerificationStore::at(&project.codeos_dir());
     let slug = subject.workflow.slug();
     let mut log = Vec::new();
@@ -1970,7 +2035,7 @@ fn verification_bindings(
         }
         // Every feature mechanical verification: the approved Specification Package plus the current
         // implementation. Revising the spec, or changing the implementation, re-blocks it.
-        "F3" | "F5" | "F5d" | "F5g" | "F7" => {
+        "F3" | "F5" | "F5d" | "F5g" | "F7" | "F9" => {
             put(&mut b, "intent", &project.intent(&subject.id))?;
             put(&mut b, "contract", &project.contract(&subject.id))?;
             put(&mut b, "event_schema", &project.event_schema(&subject.id))?;
@@ -2003,6 +2068,15 @@ fn verification_bindings(
                 }
             }
         }
+    }
+    if mechanic == Some("project_qualification") {
+        put(&mut b, "charter", &project.charter())?;
+        put(
+            &mut b,
+            "qualification_script",
+            &project.root.join("scripts/codeos-qualify"),
+        )?;
+        put(&mut b, "codeos_yaml", &project.codeos_yaml())?;
     }
     Ok(b)
 }
@@ -2114,6 +2188,7 @@ fn run_mechanic(project: &Project, subject: &Subject, mechanic: &str) -> evidenc
         "smoke" => run_smoke(project),
         "product_journey" => run_product_journey(project, subject),
         "production_source_evidence" => run_production_source_evidence(project, subject),
+        "project_qualification" => crate::qualification::run(project, "acceptance"),
         "behavior" | "repeatability" => run_behavior_tests(project),
         "data_integrity" => run_cargo_tests(project),
         "playwright" => {

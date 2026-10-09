@@ -14,6 +14,7 @@ use std::collections::{BTreeMap, BTreeSet};
 pub const CONTRACT: &str = "dba/04-tools/reviewer/contract/v17.md";
 pub const CONTRACT_V18: &str = "dba/04-tools/reviewer/contract/v18.md";
 pub const CONTRACT_V19: &str = "dba/04-tools/reviewer/contract/v19.md";
+pub const CONTRACT_V20: &str = "dba/04-tools/reviewer/contract/v20.md";
 
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 pub struct ReviewInputManifest {
@@ -59,11 +60,17 @@ pub(crate) struct Derived {
 }
 
 pub fn selected(contract: Option<&str>) -> bool {
-    matches!(contract, Some(CONTRACT) | Some(CONTRACT_V18) | Some(CONTRACT_V19))
+    matches!(
+        contract,
+        Some(CONTRACT) | Some(CONTRACT_V18) | Some(CONTRACT_V19) | Some(CONTRACT_V20)
+    )
 }
 
 pub fn candidate_lifecycle(contract: Option<&str>) -> bool {
-    matches!(contract, Some(CONTRACT_V18) | Some(CONTRACT_V19))
+    matches!(
+        contract,
+        Some(CONTRACT_V18) | Some(CONTRACT_V19) | Some(CONTRACT_V20)
+    )
 }
 
 /// Derive the manifest from canonical artifacts. It precedes packet construction, which takes its
@@ -126,8 +133,11 @@ pub fn derive(
             return manifest;
         }
     };
-    if candidate_lifecycle(crate::config::resolve_reviewer_tool_contract(cfg).ok().as_deref())
-        && stage == "8"
+    if candidate_lifecycle(
+        crate::config::resolve_reviewer_tool_contract(cfg)
+            .ok()
+            .as_deref(),
+    ) && stage == "8"
     {
         match codeos_workflow::candidate::unique_current(&project, feature) {
             Ok(Some(id)) => {
@@ -136,9 +146,12 @@ pub fn derive(
                 manifest.derived_inputs.insert(path.clone());
                 manifest.required_inputs.insert(path);
             }
-            Ok(None) => manifest.derived.project_error = Some(
-                "no unique current Candidate Bundle; run codeos-workflow prepare-candidate".into(),
-            ),
+            Ok(None) => {
+                manifest.derived.project_error = Some(
+                    "no unique current Candidate Bundle; run codeos-workflow prepare-candidate"
+                        .into(),
+                )
+            }
             Err(error) => manifest.derived.project_error = Some(error.to_string()),
         }
     }

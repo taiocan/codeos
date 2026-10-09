@@ -46,8 +46,11 @@ pub struct Finding {
     pub summary: String,
     pub acceptance_criterion: Option<String>,
     pub required_action: String,
+    #[allow(dead_code)]
     pub evidence: String,
+    #[allow(dead_code)]
     pub why: String,
+    #[allow(dead_code)]
     pub scope_reason: Option<String>,
     pub blocker_kind: Option<String>,
     pub evidence_required: Option<String>,
@@ -376,8 +379,7 @@ pub fn parse_review_output(
 ) -> ParsedReview {
     let summary_line = output
         .lines()
-        .filter(|l| l.starts_with("LOG SUMMARY:"))
-        .last()
+        .rfind(|l| l.starts_with("LOG SUMMARY:"))
         .map(|l| l.to_string())
         .unwrap_or_default();
 
@@ -391,8 +393,7 @@ pub fn parse_review_output(
 
     let evidence_raw = output
         .lines()
-        .filter(|l| l.starts_with("EVIDENCE:"))
-        .last()
+        .rfind(|l| l.starts_with("EVIDENCE:"))
         .map(|l| l.trim_start_matches("EVIDENCE:").trim().to_string())
         .unwrap_or_default();
 
@@ -405,8 +406,7 @@ pub fn parse_review_output(
 
     let highest_impact_uncertainty = output
         .lines()
-        .filter(|l| l.starts_with("HIGHEST-IMPACT UNCERTAINTY:"))
-        .last()
+        .rfind(|l| l.starts_with("HIGHEST-IMPACT UNCERTAINTY:"))
         .map(|l| {
             l.trim_start_matches("HIGHEST-IMPACT UNCERTAINTY:")
                 .trim()
@@ -416,7 +416,7 @@ pub fn parse_review_output(
     let evidence_materiality = output
         .lines()
         .filter_map(|line| line.strip_prefix("EVIDENCE MATERIALITY: "))
-        .last()
+        .next_back()
         .filter(|value| matches!(*value, "MATERIAL" | "NOT_MATERIAL"))
         .map(str::to_string);
 
@@ -525,6 +525,7 @@ fn rank_to_concern(r: u8) -> String {
 }
 
 /// Write the assessment file and return (assessment_path, assessment_sha256).
+#[allow(clippy::too_many_arguments)]
 pub fn write_assessment(
     review_id: &str,
     findings: &[Finding],
@@ -539,10 +540,11 @@ pub fn write_assessment(
     let ts = chrono::Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string();
     let short_sha = &packet.review_sha[..7.min(packet.review_sha.len())];
     let ts_clean = ts.replace(':', "");
-    let closure_suffix = review_id
-        .contains("__TERMINAL-CLOSURE-")
-        .then(|| format!("-{}", &crate::packet::sha256_str(review_id)[..8]))
-        .unwrap_or_default();
+    let closure_suffix = if review_id.contains("__TERMINAL-CLOSURE-") {
+        format!("-{}", &crate::packet::sha256_str(review_id)[..8])
+    } else {
+        String::new()
+    };
     let filename = format!(
         "{}-{}-stage-{}-{}{}.md",
         ts_clean, packet.feature, packet.stage, short_sha, closure_suffix
@@ -621,8 +623,14 @@ pub fn write_assessment(
             let outcome = if parsed.parse_status == "OK"
                 && parsed.assessment_status == "COMPLETE"
                 && parsed.effective_concern == "NO OBJECTION"
-                && !findings.iter().any(|finding| finding.classification == "IN-SCOPE BLOCKER")
-            { "PASSED" } else { "BLOCKED" };
+                && !findings
+                    .iter()
+                    .any(|finding| finding.classification == "IN-SCOPE BLOCKER")
+            {
+                "PASSED"
+            } else {
+                "BLOCKED"
+            };
             content.push_str(&format!("  candidate_outcome: {}\n", outcome));
         }
     }
@@ -688,9 +696,21 @@ pub fn write_assessment(
         RunSource::Codex {
             reconnect_count,
             effort,
+            model,
+            cli_version,
             ..
         } => {
             content.push_str(&format!("  reasoning_effort: {}\n", effort));
+            content.push_str(&format!("  model: {}\n", model));
+            content.push_str(&format!("  codex_cli_version: {}\n", cli_version));
+            content.push_str(&format!(
+                "  reviewer_build_sha256: {}\n",
+                env!("CODEOS_REVIEWER_BUILD_SHA256")
+            ));
+            content.push_str(&format!(
+                "  codeos_release_id: {}\n",
+                env!("CODEOS_RELEASE_ID")
+            ));
             content.push_str(&format!("  reconnect_count: {}\n", reconnect_count));
             content.push_str(&format!("  elapsed_ms: {}\n", raw.elapsed_ms));
         }
@@ -842,10 +862,13 @@ mod tests {
                 session_id: "test-session".to_string(),
                 reconnect_count: 0,
                 effort: "high".to_string(),
+                model: "test-model".to_string(),
+                cli_version: "0.162.0".to_string(),
             },
         }
     }
 
+    #[allow(dead_code)]
     fn make_external_raw(text: &str, label: Option<&str>) -> ReviewerRun {
         ReviewerRun {
             text: text.to_string(),
@@ -1346,8 +1369,8 @@ mod tests {
             }
             let content = std::fs::read_to_string(&path).expect("read assessment");
             let body = content
-                .splitn(2, "---\n\n")
-                .nth(1)
+                .split_once("---\n\n")
+                .map(|(_, body)| body)
                 .or_else(|| content.splitn(3, "---\n").nth(2))
                 .unwrap_or(content.as_str());
             let real_region = body.split("\nLOG SUMMARY:").next().unwrap_or(body);

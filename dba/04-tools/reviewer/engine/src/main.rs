@@ -14,6 +14,7 @@ mod manifest;
 mod packet;
 mod precheck;
 mod readiness;
+mod release_identity;
 mod run;
 mod terminal_closure;
 
@@ -156,6 +157,7 @@ struct PlanCli {
     terminal_review_closure_after: Option<String>,
 }
 
+#[allow(clippy::large_enum_variant)]
 #[derive(Subcommand)]
 enum Commands {
     /// Build evidence, invoke Codex, save the assessment, and append the review log.
@@ -236,6 +238,10 @@ impl From<EvidenceCli> for cmd::review::EvidenceArgs {
 }
 
 fn main() {
+    if let Err(error) = release_identity::verify_release_binary("codeos-reviewer") {
+        eprintln!("error: {error:#}");
+        process::exit(EXIT_CONFIG);
+    }
     process::exit(run());
 }
 

@@ -70,6 +70,8 @@ pub enum Requirement {
     ProductionSourceEvidence,
     /// Operation O1: the latest `operation_route` receipt carries a non-empty observation statement.
     ObservationStated,
+    /// Operation v2 O2: the immutable observation has exactly one route and explicit target.
+    ObservationRouted,
     /// Operation O4: the resolution evidence appropriate to the recorded route exists.
     RouteResolution,
 }
@@ -82,11 +84,11 @@ pub struct Checkpoint {
     pub requirements: Vec<Requirement>,
 }
 
-pub fn contract_for(w: Workflow, feature_version: u8) -> Vec<Checkpoint> {
+pub fn contract_for(w: Workflow, feature_version: u8, operation_version: u8) -> Vec<Checkpoint> {
     match w {
         Workflow::Feature => feature_contract(feature_version),
         Workflow::Bootstrap => bootstrap_contract(),
-        Workflow::Operation => operation_contract(),
+        Workflow::Operation => operation_contract(operation_version),
     }
 }
 
@@ -225,15 +227,20 @@ pub fn feature_contract(version: u8) -> Vec<Checkpoint> {
                 results: &["accepted"],
             }],
         ),
-        cp(
-            "F9",
-            "Acceptance",
-            Applies::Always,
-            vec![Receipt {
+        cp("F9", "Acceptance", Applies::Always, {
+            let mut requirements = Vec::new();
+            if version >= 9 {
+                requirements.push(LiveVerification {
+                    name: "project qualification",
+                    mechanic: "project_qualification",
+                });
+            }
+            requirements.push(Receipt {
                 checkpoint: "acceptance",
                 results: &["accepted"],
-            }],
-        ),
+            });
+            requirements
+        }),
     ]
 }
 
@@ -282,7 +289,7 @@ pub const OPERATION_ROUTES: &[&str] = &[
     "no_action",
 ];
 
-pub fn operation_contract() -> Vec<Checkpoint> {
+pub fn operation_contract(version: u8) -> Vec<Checkpoint> {
     use Requirement::*;
     vec![
         cp(
@@ -295,10 +302,14 @@ pub fn operation_contract() -> Vec<Checkpoint> {
             "O2",
             "Route decision",
             Applies::Always,
-            vec![Receipt {
-                checkpoint: "operation_route",
-                results: OPERATION_ROUTES,
-            }],
+            if version >= 2 {
+                vec![ObservationRouted]
+            } else {
+                vec![Receipt {
+                    checkpoint: "operation_route",
+                    results: OPERATION_ROUTES,
+                }]
+            },
         ),
         cp("O3", "Routed action", Applies::Always, vec![]),
         cp("O4", "Verification", Applies::Always, vec![RouteResolution]),

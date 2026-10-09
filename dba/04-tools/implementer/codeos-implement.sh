@@ -328,6 +328,7 @@ mkdir -p "${STAGE_ROOT}/${FEATURE_SAFE}-stage-${STAGE}"
 # prior run's audit artifacts.
 STAGE_DIR="$(mktemp -d "${STAGE_ROOT}/${FEATURE_SAFE}-stage-${STAGE}/${TS}.XXXXXX")"
 mkdir -p "${STAGE_DIR}/candidate"
+printf 'staging directory: %s\n' "${STAGE_DIR}"
 LOG_FILE="${STAGE_ROOT}/implement-log.md"
 
 # ── Build the two message contents (system = role/contract; user = task + artifacts) ────────────

@@ -118,13 +118,18 @@ pub fn evaluate(
     let claims = declared_json_claims(cfg, packet);
     identities(manifest, &claims, &mut readiness);
     if crate::manifest::candidate_lifecycle(
-        crate::config::resolve_reviewer_tool_contract(cfg).ok().as_deref(),
-    ) && manifest.stage == "8" && manifest.candidate_bundle.is_none() {
+        crate::config::resolve_reviewer_tool_contract(cfg)
+            .ok()
+            .as_deref(),
+    ) && manifest.stage == "8"
+        && manifest.candidate_bundle.is_none()
+    {
         readiness.fail(
             Reason::RequiredInputMissing,
             "candidate_bundle",
-            manifest.derived.project_error.clone().unwrap_or_else(||
-                "no unique current Candidate Bundle; run codeos-workflow prepare-candidate".into()),
+            manifest.derived.project_error.clone().unwrap_or_else(|| {
+                "no unique current Candidate Bundle; run codeos-workflow prepare-candidate".into()
+            }),
         );
     }
     if manifest.stage == "8" {

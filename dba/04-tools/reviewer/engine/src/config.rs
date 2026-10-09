@@ -20,6 +20,8 @@ impl PacketBudgetMode {
 #[derive(Debug, Clone)]
 pub struct Config {
     pub reasoning_effort: String,
+    pub reviewer_model: String,
+    pub codex_cli_version: String,
     pub packet_budget_mode: PacketBudgetMode,
     pub repo_root: PathBuf,
     pub toolkit_root: PathBuf,
@@ -64,6 +66,7 @@ pub fn resolve_reviewer_tool_contract(config: &Config) -> Result<String> {
 #[serde(deny_unknown_fields)]
 struct ReviewerToml {
     reasoning_effort: Option<String>,
+    model: Option<String>,
     packet_budget_bytes: Option<u64>,
 }
 
@@ -88,6 +91,30 @@ pub fn resolve(repo_root: &Path) -> Result<Config> {
     let packet_budget_mode = resolve_packet_budget_mode()?;
 
     let toolkit_root = find_toolkit_root(repo_root);
+    let configured_lock = toolkit_root.join("maintenance/release-lock.json");
+    let release_lock_path = if configured_lock.is_file() {
+        configured_lock
+    } else {
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../../../maintenance/release-lock.json")
+    };
+    let release_lock: serde_json::Value = serde_json::from_slice(
+        &std::fs::read(release_lock_path).context("read CodeOS release lock")?,
+    )
+    .context("parse CodeOS release lock")?;
+    let reviewer_model = reviewer_toml.model.unwrap_or_else(|| {
+        release_lock["reviewer_model"]
+            .as_str()
+            .unwrap_or_default()
+            .to_string()
+    });
+    let codex_cli_version = release_lock["codex_cli"]
+        .as_str()
+        .context("release lock omits codex_cli")?
+        .to_string();
+    anyhow::ensure!(
+        !reviewer_model.trim().is_empty(),
+        "reviewer model is not configured"
+    );
     let state_dir = repo_root.join(".codeos-state");
     let self_development =
         repo_root.join("dba-system.md").is_file() && repo_root.join("dba/00-entry").is_dir();
@@ -99,6 +126,8 @@ pub fn resolve(repo_root: &Path) -> Result<Config> {
 
     Ok(Config {
         reasoning_effort,
+        reviewer_model,
+        codex_cli_version,
         packet_budget_mode,
         review_log: review_root.join("review-log.md"),
         codex_dir: review_root.join("codex"),

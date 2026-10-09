@@ -5,6 +5,18 @@ verified_against_commit: pending DBA-10 pilot
 
 # Module Design Note: workflow engine
 
+## DBA-25 boundaries
+
+The engine treats project qualification as a result protocol, not a test runner. The fixed
+`scripts/codeos-qualify` entrypoint receives current-state identities and writes a result; the
+project retains ownership of tools, thresholds, and execution. The engine validates bindings and
+blocking semantics only.
+
+Operation v2 separates an observation's durable identity from its route and closure. Multiple
+observations may target one feature independently. Route-specific closure evidence must exist,
+target the right subject where applicable, and postdate routing; historical receipts and
+verification records remain immutable.
+
 <!--
 Descriptive documentation of how `dba/04-tools/workflow/engine` currently works. Explanatory only:
 the Workflow Governance policy and the three workflow contract policies selected by the active DBA

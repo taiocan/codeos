@@ -15,6 +15,7 @@ const VALID_DECISIONS: &[&str] = &[
     "AUTHORIZE_ASSESSMENT_INPUT_CORRECTION",
 ];
 
+#[allow(clippy::too_many_arguments)]
 pub fn run(
     feature: &str,
     stage: &str,
@@ -36,7 +37,9 @@ pub fn run(
         return Ok(crate::EXIT_USAGE);
     }
     if crate::manifest::candidate_lifecycle(
-        crate::config::resolve_reviewer_tool_contract(cfg).ok().as_deref(),
+        crate::config::resolve_reviewer_tool_contract(cfg)
+            .ok()
+            .as_deref(),
     ) && decision.starts_with("AUTHORIZE_")
     {
         eprintln!("error: DBA-23 has no review-recovery authorization; repair the blocked candidate and prepare a new immutable Candidate Bundle");

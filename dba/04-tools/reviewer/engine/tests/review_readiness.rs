@@ -1336,7 +1336,7 @@ fn current_selection(fixture: &Fixture) -> String {
                 .as_str()
                 .map(str::to_string)
         })
-        .last()
+        .next_back()
         .unwrap()
 }
 

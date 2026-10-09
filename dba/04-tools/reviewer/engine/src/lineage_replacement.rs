@@ -538,6 +538,8 @@ mod tests {
         fs::write(&log_path, log).unwrap();
         let cfg = Config {
             reasoning_effort: "high".into(),
+            reviewer_model: "test-model".into(),
+            codex_cli_version: "0.162.0".into(),
             packet_budget_mode: crate::config::PacketBudgetMode::Fail,
             repo_root: dir.path().to_path_buf(),
             toolkit_root: toolkit,

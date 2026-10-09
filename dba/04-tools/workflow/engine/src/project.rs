@@ -77,7 +77,7 @@ impl Project {
         self.selected_policy_version(
             "workflow_feature_policy",
             "dba/02-policies/workflow-feature/v1.md",
-            &[1, 2, 3, 4, 5, 6, 7, 8],
+            &[1, 2, 3, 4, 5, 6, 7, 8, 9],
         )
     }
 
@@ -89,11 +89,19 @@ impl Project {
         )
     }
 
+    pub fn operation_workflow_version(&self) -> Result<u8> {
+        self.selected_policy_version(
+            "workflow_operation_policy",
+            "dba/02-policies/workflow-operation/v1.md",
+            &[1, 2],
+        )
+    }
+
     pub fn codeos_mechanics_version(&self) -> Result<u8> {
         self.selected_policy_version(
             "codeos_mechanics_policy",
             "dba/02-policies/codeos-mechanics/v3.md",
-            &[1, 2, 3, 4, 5, 6],
+            &[1, 2, 3, 4, 5, 6, 7],
         )
     }
 

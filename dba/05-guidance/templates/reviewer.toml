@@ -1,5 +1,7 @@
 # Optional reviewer overrides. Omit this file to use built-in defaults.
 # Canonical downstream path: .codeos/05-review/reviewer.toml
 reasoning_effort = "high"
+# Optional explicit model. Omit to use the model in the active CodeOS release identity.
+# model = "gpt-6.1-sol"
 # Packet budget in bytes (default 50000). CODEOS_PACKET_BUDGET_BYTES overrides it per run.
 # packet_budget_bytes = 50000

@@ -11,6 +11,8 @@ pub enum RunSource {
         session_id: String,
         reconnect_count: u32,
         effort: String,
+        model: String,
+        cli_version: String,
     },
     /// A human supplied an assessment produced elsewhere. `label` is descriptive metadata only:
     /// Codeos neither invoked nor verified the named model, and cannot confirm the text came from

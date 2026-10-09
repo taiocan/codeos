@@ -1,0 +1,9 @@
+{
+  "schema": 1,
+  "rust": "1.93.0",
+  "node": "20.19.2",
+  "npm": "9.2.0",
+  "codex_cli": "0.162.0",
+  "reviewer_model": "gpt-6.1-sol",
+  "reviewer_reasoning_effort": "high"
+}

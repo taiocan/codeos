@@ -263,6 +263,7 @@ impl ReviewPacket {
     /// Restore a packet from an exported sidecar plus the exported bytes. The bytes are adopted
     /// verbatim: nothing is rebuilt, so the reviewed packet and the recorded packet are the same
     /// bytes by construction rather than by a later comparison.
+    #[allow(clippy::wrong_self_convention)]
     pub fn from_sidecar(mut self, content: String) -> Self {
         self.content = content;
         self

@@ -49,6 +49,8 @@ pub fn invoke(packet: &ReviewPacket, cfg: &Config) -> Result<InvokeOutcome> {
     let output = run_codex(
         &isolation,
         &cfg.reasoning_effort,
+        &cfg.reviewer_model,
+        &cfg.codex_cli_version,
         packet.content(),
         final_message.path(),
     )?;
@@ -85,6 +87,8 @@ pub fn invoke(packet: &ReviewPacket, cfg: &Config) -> Result<InvokeOutcome> {
                 .filter(|line| line.contains("stream disconnected"))
                 .count() as u32,
             effort: cfg.reasoning_effort.clone(),
+            model: cfg.reviewer_model.clone(),
+            cli_version: cfg.codex_cli_version.clone(),
         },
     }))
 }
@@ -92,9 +96,22 @@ pub fn invoke(packet: &ReviewPacket, cfg: &Config) -> Result<InvokeOutcome> {
 fn run_codex(
     isolation: &CodexIsolation,
     effort: &str,
+    model: &str,
+    expected_cli_version: &str,
     packet: &str,
     final_message: &Path,
 ) -> Result<std::process::Output> {
+    let version_output = Command::new(&isolation.executable)
+        .arg("--version")
+        .output()
+        .context("read Codex CLI version")?;
+    anyhow::ensure!(version_output.status.success(), "codex --version failed");
+    let actual_version = String::from_utf8_lossy(&version_output.stdout)
+        .split_whitespace()
+        .last()
+        .unwrap_or_default()
+        .to_string();
+    anyhow::ensure!(actual_version == expected_cli_version, "Codex CLI version {actual_version} differs from approved release identity {expected_cli_version}");
     let mut command = Command::new(&isolation.executable);
     command.args([
         "exec",
@@ -103,6 +120,8 @@ fn run_codex(
         "--ignore-user-config",
         "--ignore-rules",
         "--strict-config",
+        "--model",
+        model,
         "--skip-git-repo-check",
         "--cd",
         path_arg(isolation.workdir.path())?,

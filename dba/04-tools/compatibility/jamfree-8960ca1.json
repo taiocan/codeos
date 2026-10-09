@@ -1,0 +1,14 @@
+{
+  "schema_version": 3,
+  "project": {
+    "name": "JamFree",
+    "configuration": "DBA-24"
+  },
+  "bootstrap_status": "COMPLETE",
+  "features": [
+    {"id":"F-0001","historically_accepted":true,"current_acceptance_valid":false,"current_validity":{"status":"STALE","reasons":["ARCHITECTURE_CHANGE_REQUIRED"]},"status":"BLOCKED","current_checkpoint":"ARCHITECTURE_REASSESSMENT"},
+    {"id":"F-0002","historically_accepted":true,"current_acceptance_valid":false,"current_validity":{"status":"STALE","reasons":["REVALIDATION_REQUIRED"]},"status":"BLOCKED","current_checkpoint":"POST_ACCEPTANCE_REVALIDATION"},
+    {"id":"F-0003","historically_accepted":true,"current_acceptance_valid":false,"current_validity":{"status":"STALE","reasons":["REVALIDATION_REQUIRED"]},"status":"BLOCKED","current_checkpoint":"POST_ACCEPTANCE_REVALIDATION"},
+    {"id":"F-0004","historically_accepted":true,"current_acceptance_valid":true,"current_validity":{"status":"VALID","reasons":[]},"status":"COMPLETE","current_checkpoint":null}
+  ]
+}

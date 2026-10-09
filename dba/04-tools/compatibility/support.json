@@ -1,0 +1,40 @@
+{
+  "schema": 1,
+  "configurations": {
+    "DBA-2": "supported",
+    "DBA-3": "supported",
+    "DBA-4": "supported",
+    "DBA-5": "supported",
+    "DBA-6": "supported",
+    "DBA-7": "supported",
+    "DBA-8": "supported",
+    "DBA-9": "supported",
+    "DBA-10": "supported",
+    "DBA-11": "supported",
+    "DBA-12": "supported",
+    "DBA-13": "supported",
+    "DBA-14": "supported",
+    "DBA-15": "supported",
+    "DBA-16": "supported",
+    "DBA-17": "supported",
+    "DBA-18": "supported",
+    "DBA-19": "supported",
+    "DBA-20": "supported",
+    "DBA-21": "supported",
+    "DBA-22": "supported",
+    "DBA-23": "supported",
+    "DBA-24": "supported",
+    "DBA-25": "supported"
+  },
+  "lifecycle": {},
+  "consumers": [
+    {
+      "name": "JamFree",
+      "repository": "https://github.com/taiocan/JamFree.git",
+      "commit": "8960ca1e08f85274a2b23fe32f60848bb52119d5",
+      "bundle": "fixtures/jamfree-8960ca1.bundle",
+      "bundle_sha256": "9201d60ed2b1e30d218c2f888111ad844ca81f86459fbe60f533372fbede72fe",
+      "golden": "jamfree-8960ca1.json"
+    }
+  ]
+}

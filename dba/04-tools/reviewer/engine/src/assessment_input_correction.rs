@@ -143,13 +143,12 @@ fn latest_f6(repo: &Path, feature: &str, before: &str) -> Result<Receipt> {
     std::fs::read_to_string(repo.join(".codeos/06-workflow/decisions.jsonl"))?
         .lines()
         .filter_map(|raw| serde_json::from_str::<Receipt>(raw).ok())
-        .filter(|r| {
+        .rfind(|r| {
             r.workflow == "feature"
                 && r.subject == feature
                 && r.checkpoint == "reconciliation"
                 && r.timestamp.as_str() <= before
         })
-        .last()
         .context("no pre-assessment F6 selection")
 }
 

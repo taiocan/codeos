@@ -4,12 +4,15 @@ use codeos_workflow::candidate;
 use codeos_workflow::checker::{self, Subject};
 use codeos_workflow::contract::Workflow;
 use codeos_workflow::event_evidence::{self, VerifyEventArgs};
+use codeos_workflow::observations::{ClosureEvidence, ObservationStore};
 use codeos_workflow::project::Project;
 use codeos_workflow::receipts::{Receipt, ReceiptStore, RECEIPT_CHECKPOINTS};
 use codeos_workflow::revalidation;
 use codeos_workflow::{monitor, report, EXIT_BLOCKED, EXIT_ERROR, EXIT_SUCCESS, EXIT_USAGE};
 use std::path::PathBuf;
 use std::process;
+
+mod release_identity;
 
 #[derive(Parser)]
 #[command(name = "codeos-workflow", version)]
@@ -24,6 +27,14 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Cmd {
+    /// Record one immutable post-acceptance observation and issue its OBS identity.
+    Observe(ObserveArgs),
+    /// Route one Observation v2 identity to an explicit target.
+    RouteObservation(RouteObservationArgs),
+    /// Close one routed Observation v2 identity with validated evidence.
+    CloseObservation(CloseObservationArgs),
+    /// Run the project-owned qualification protocol without adding a lifecycle checkpoint.
+    QualifyProject(QualifyProjectArgs),
     /// Report every checkpoint's state for a subject. Read-only; never executes a test.
     Status(StatusArgs),
     /// Report the first blocked or waiting checkpoint and its next action. Read-only.
@@ -45,6 +56,45 @@ enum Cmd {
     PrepareCandidate(PrepareCandidateArgs),
     /// Report deterministic feature impact for an architecture proposal. Read-only.
     ArchitectureImpact(ArchitectureImpactArgs),
+}
+
+#[derive(clap::Args)]
+struct ObserveArgs {
+    /// Observation text, or @path to read it from a file.
+    #[arg(long)]
+    statement: String,
+    /// Source or evidence reference. May be repeated.
+    #[arg(long = "source")]
+    sources: Vec<String>,
+}
+
+#[derive(clap::Args)]
+struct RouteObservationArgs {
+    #[arg(long)]
+    observation: String,
+    #[arg(long)]
+    route: String,
+    #[arg(long)]
+    target_type: Option<String>,
+    #[arg(long)]
+    target_id: Option<String>,
+}
+
+#[derive(clap::Args)]
+struct CloseObservationArgs {
+    #[arg(long)]
+    observation: String,
+    /// Evidence in KIND=REFERENCE form. May be repeated.
+    #[arg(long = "evidence")]
+    evidence: Vec<String>,
+    #[arg(long)]
+    rationale: Option<String>,
+}
+
+#[derive(clap::Args)]
+struct QualifyProjectArgs {
+    #[arg(long, value_parser = ["acceptance", "deployment"])]
+    mode: String,
 }
 
 #[derive(clap::Args)]
@@ -179,6 +229,10 @@ struct DecideArgs {
 }
 
 fn main() {
+    if let Err(error) = release_identity::verify_release_binary("codeos-workflow") {
+        eprintln!("error: {error:#}");
+        process::exit(EXIT_ERROR);
+    }
     let cli = Cli::parse();
     let start = cli.project.clone().unwrap_or_else(|| PathBuf::from("."));
     let code = match run(&cli, &start) {
@@ -193,6 +247,92 @@ fn main() {
 
 fn run(cli: &Cli, start: &std::path::Path) -> Result<i32> {
     match &cli.command {
+        Cmd::Observe(args) => {
+            let project = Project::discover(start)?;
+            anyhow::ensure!(
+                project.operation_workflow_version()? >= 2,
+                "Observation identities require Operation workflow v2"
+            );
+            let statement = if let Some(path) = args.statement.strip_prefix('@') {
+                std::fs::read_to_string(path)?
+            } else {
+                args.statement.clone()
+            };
+            let item = ObservationStore::at(&project.codeos_dir())
+                .observe(statement, args.sources.clone())?;
+            println!("{}", item.id);
+            Ok(EXIT_SUCCESS)
+        }
+        Cmd::RouteObservation(args) => {
+            let project = Project::discover(start)?;
+            anyhow::ensure!(
+                project.operation_workflow_version()? >= 2,
+                "Observation routing requires Operation workflow v2"
+            );
+            let item = ObservationStore::at(&project.codeos_dir()).route_observation(
+                &project,
+                &args.observation,
+                &args.route,
+                args.target_type.clone(),
+                args.target_id.clone(),
+            )?;
+            println!(
+                "routed {} -> {} {}",
+                item.observation,
+                item.route,
+                item.target_id.as_deref().unwrap_or("")
+            );
+            Ok(EXIT_SUCCESS)
+        }
+        Cmd::CloseObservation(args) => {
+            let project = Project::discover(start)?;
+            anyhow::ensure!(
+                project.operation_workflow_version()? >= 2,
+                "Observation closure requires Operation workflow v2"
+            );
+            let evidence = args
+                .evidence
+                .iter()
+                .map(|item| {
+                    let (kind, reference) = item
+                        .split_once('=')
+                        .context("--evidence expects KIND=REFERENCE")?;
+                    anyhow::ensure!(
+                        !kind.is_empty() && !reference.is_empty(),
+                        "--evidence expects non-empty KIND=REFERENCE"
+                    );
+                    Ok(ClosureEvidence {
+                        kind: kind.into(),
+                        reference: reference.into(),
+                    })
+                })
+                .collect::<Result<Vec<_>>>()?;
+            let item = ObservationStore::at(&project.codeos_dir()).close(
+                &project,
+                &args.observation,
+                evidence,
+                args.rationale.clone(),
+            )?;
+            println!("closed {} ({})", item.observation, item.route);
+            Ok(EXIT_SUCCESS)
+        }
+        Cmd::QualifyProject(args) => {
+            let project = Project::discover(start)?;
+            anyhow::ensure!(
+                project.feature_workflow_version()? >= 9,
+                "project qualification requires Feature workflow v9"
+            );
+            let outcome = codeos_workflow::qualification::run(&project, &args.mode);
+            println!("{}", outcome.summary);
+            if let Some(details) = outcome.details {
+                println!("{}", serde_json::to_string_pretty(&details)?);
+            }
+            Ok(if outcome.ok {
+                EXIT_SUCCESS
+            } else {
+                EXIT_BLOCKED
+            })
+        }
         Cmd::ArchitectureImpact(args) => {
             let project = Project::discover(start)?;
             let impact =

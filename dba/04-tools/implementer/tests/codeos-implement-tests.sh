@@ -66,8 +66,7 @@ run_tool() {
 }
 
 latest_stage_dir() {
-  find "${REPO}/.codeos-state/deepseek-candidates" -mindepth 2 -maxdepth 2 -type d 2>/dev/null \
-    | sort | tail -1
+  sed -n 's/^staging directory: //p' "${OUT}" | tail -1
 }
 reset_state() { rm -rf "${REPO}/.codeos-state"; }
 
