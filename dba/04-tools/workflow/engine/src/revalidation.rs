@@ -14,6 +14,29 @@ use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ArchitectureMetadata {
+    artifact_type: String,
+    features: Vec<String>,
+    approval: ArchitectureApproval,
+    reader_model: String,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ArchitectureApproval {
+    by: String,
+    at: String,
+}
+
+#[derive(Serialize)]
+struct FeatureArchitectureProjection<'a> {
+    scope_path: &'a str,
+    subject_membership: &'a str,
+    body: &'a str,
+}
+
 const REQUIRED_BASE: &[(&str, &str)] = &[
     ("F3", "smoke"),
     ("F3", "product_journey"),
@@ -141,6 +164,97 @@ pub(crate) struct IdentifiedChange {
     pub affected_surface: Vec<String>,
 }
 
+fn normalized_architecture(text: &str) -> String {
+    text.replace("\r\n", "\n").replace('\r', "\n")
+}
+
+fn architecture_parts(text: &str) -> Result<(ArchitectureMetadata, &str)> {
+    let rest = text
+        .strip_prefix("---\n")
+        .context("Architecture Scope has no opening frontmatter delimiter")?;
+    let (frontmatter, body) = rest
+        .split_once("\n---\n")
+        .context("Architecture Scope has no closing frontmatter delimiter")?;
+    let metadata: ArchitectureMetadata =
+        serde_yaml::from_str(frontmatter).context("parse Architecture Scope frontmatter")?;
+    if metadata.artifact_type != "architecture" {
+        anyhow::bail!("Architecture Scope artifact_type must be architecture");
+    }
+    if metadata.reader_model.trim().is_empty() {
+        anyhow::bail!("Architecture Scope reader_model must be non-empty");
+    }
+    if metadata.features.is_empty()
+        || metadata
+            .features
+            .iter()
+            .any(|feature| feature.trim().is_empty())
+    {
+        anyhow::bail!("Architecture Scope features must be non-empty");
+    }
+    let unique = metadata
+        .features
+        .iter()
+        .collect::<std::collections::BTreeSet<_>>();
+    if unique.len() != metadata.features.len() {
+        anyhow::bail!("Architecture Scope features must be duplicate-free");
+    }
+    if metadata.approval.by.trim().is_empty() || metadata.approval.at.trim().is_empty() {
+        anyhow::bail!("Architecture Scope approval must be complete");
+    }
+    Ok((metadata, body))
+}
+
+/// Resolve membership only from canonical scope frontmatter at `treeish`, then hash the complete
+/// normalized body for the one scope that owns `subject`. Parsing every scope before resolving zero
+/// matches prevents a malformed file from being mistaken for unrelated architecture.
+fn feature_architecture_identity(
+    project: &Project,
+    subject: &str,
+    treeish: &str,
+) -> Result<String> {
+    let listing = git(
+        project,
+        &[
+            "ls-tree",
+            "-r",
+            "--name-only",
+            treeish,
+            "--",
+            ".codeos/02-architecture/scopes",
+        ],
+    )?;
+    let paths = listing
+        .lines()
+        .filter(|path| path.ends_with(".md"))
+        .collect::<Vec<_>>();
+    let mut matches = Vec::new();
+    for path in paths {
+        let object = format!("{treeish}:{path}");
+        let text = String::from_utf8(git_bytes(project, &["show", &object])?)
+            .with_context(|| format!("Architecture Scope {path} is not UTF-8"))?;
+        let normalized = normalized_architecture(&text);
+        let (metadata, body) = architecture_parts(&normalized)
+            .with_context(|| format!("invalid Architecture Scope {path} at {treeish}"))?;
+        if metadata.features.iter().any(|feature| feature == subject) {
+            matches.push((path, body.to_string()));
+        }
+    }
+    match matches.as_slice() {
+        [] => Ok("NO_APPLICABLE_SCOPE".into()),
+        [(path, body)] => {
+            let projection = FeatureArchitectureProjection {
+                scope_path: path,
+                subject_membership: subject,
+                body,
+            };
+            Ok(hex::encode(Sha256::digest(serde_json::to_vec(
+                &projection,
+            )?)))
+        }
+        _ => anyhow::bail!("feature has ambiguous Architecture Scope membership at {treeish}"),
+    }
+}
+
 /// Validate `trigger_commit` and derive its identified change: the trigger is the latest commit
 /// changing the accepted surface, and the change runs from the point acceptance was last current.
 pub(crate) fn identified_change(
@@ -194,7 +308,7 @@ pub(crate) fn identified_change(
     }
     // The identified change runs from the point acceptance was last current (the latest
     // REVALIDATED record, otherwise F9) through the trigger; `trigger_parent` is its base.
-    let last_current = RevalidationStore::at(&project.codeos_dir())
+    let latest_revalidation = RevalidationStore::at(&project.codeos_dir())
         .all()?
         .into_iter()
         .filter(|r| {
@@ -202,9 +316,24 @@ pub(crate) fn identified_change(
                 && r.decision == "REVALIDATED"
                 && r.timestamp.as_str() > acceptance_timestamp
         })
-        .map(|r| r.timestamp)
-        .max()
-        .unwrap_or_else(|| acceptance_timestamp.to_string());
+        .max_by(|left, right| left.timestamp.cmp(&right.timestamp));
+    let (last_current, architecture_baseline) = if let Some(record) = latest_revalidation {
+        (record.timestamp, record.trigger_commit)
+    } else {
+        let baseline = git(
+            project,
+            &[
+                "rev-list",
+                "-1",
+                &format!("--before={acceptance_timestamp}"),
+                "HEAD",
+            ],
+        )?;
+        if baseline.is_empty() {
+            anyhow::bail!("cannot resolve architecture baseline at F9 acceptance");
+        }
+        (acceptance_timestamp.to_string(), baseline)
+    };
     let surface_commits = run(surface_args(vec![
         "log".into(),
         "--format=%H %cI".into(),
@@ -225,19 +354,33 @@ pub(crate) fn identified_change(
     let first_change = first_change
         .context("no change to the accepted surface since acceptance was last current")?;
     let trigger_parent = git(project, &["rev-parse", &format!("{first_change}^")])?;
-    let architecture_diff = git(
-        project,
-        &[
-            "diff",
-            "--name-only",
-            &trigger_parent,
-            trigger_commit,
-            "--",
-            ".codeos/02-architecture",
-        ],
-    )?;
-    if !architecture_diff.trim().is_empty() {
-        anyhow::bail!("architecture meaning changed; normal governed recovery is required");
+    // Workflow v5 introduced post-acceptance revalidation in terms of unchanged applicable
+    // architecture meaning. Resolve that meaning per feature instead of treating any edit to the
+    // shared architecture directory as a semantic change.
+    if project.feature_workflow_version()? >= 5 {
+        let accepted_architecture =
+            feature_architecture_identity(project, subject_id, &architecture_baseline)?;
+        let current_architecture = feature_architecture_identity(project, subject_id, "HEAD")?;
+        if accepted_architecture != current_architecture {
+            anyhow::bail!(
+                "feature-scoped architecture identity changed; normal governed recovery is required"
+            );
+        }
+    } else {
+        let architecture_diff = git(
+            project,
+            &[
+                "diff",
+                "--name-only",
+                &trigger_parent,
+                trigger_commit,
+                "--",
+                ".codeos/02-architecture",
+            ],
+        )?;
+        if !architecture_diff.trim().is_empty() {
+            anyhow::bail!("architecture meaning changed; normal governed recovery is required");
+        }
     }
     let changed = run(surface_args(vec![
         "diff".into(),
@@ -504,6 +647,136 @@ fn git_bytes(project: &Project, args: &[&str]) -> Result<Vec<u8>> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn approved_scope(features: &str, approval: &str, body: &str) -> String {
+        format!(
+            "---\nartifact_type: architecture\nfeatures: [{features}]\napproval:\n  by: Human\n  at: {approval}\nreader_model: whole-before-parts\n---\n{body}"
+        )
+    }
+
+    #[test]
+    fn architecture_identity_ignores_only_sibling_membership_and_approval() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path();
+        let git = |args: &[&str]| {
+            let out = Command::new("git")
+                .args(args)
+                .current_dir(root)
+                .env("GIT_AUTHOR_DATE", "2026-01-01T12:00:00+01:00")
+                .env("GIT_COMMITTER_DATE", "2026-01-01T12:00:00+01:00")
+                .output()
+                .unwrap();
+            assert!(
+                out.status.success(),
+                "git {args:?}: {}",
+                String::from_utf8_lossy(&out.stderr)
+            );
+            String::from_utf8_lossy(&out.stdout).trim().to_string()
+        };
+        git(&["init", "-q"]);
+        git(&["config", "user.email", "t@t"]);
+        git(&["config", "user.name", "t"]);
+        let scope = root.join(".codeos/02-architecture/scopes/shared.md");
+        std::fs::create_dir_all(scope.parent().unwrap()).unwrap();
+        let body = "\n# Shared scope\n\nThe adapter owns the boundary.\n";
+        std::fs::write(&scope, approved_scope("F-0001, F-0002", "2026-01-01", body)).unwrap();
+        git(&["add", "."]);
+        git(&["commit", "-qm", "base"]);
+        let base = git(&["rev-parse", "HEAD"]);
+        let project = Project::discover(root).unwrap();
+        let f1_base = feature_architecture_identity(&project, "F-0001", &base).unwrap();
+        let f2_base = feature_architecture_identity(&project, "F-0002", &base).unwrap();
+        let f3_base = feature_architecture_identity(&project, "F-0003", &base).unwrap();
+
+        std::fs::write(
+            &scope,
+            approved_scope("F-0001, F-0002, F-0004", "2026-01-02", body),
+        )
+        .unwrap();
+        git(&["add", "."]);
+        git(&["commit", "-qm", "add sibling"]);
+        let sibling = git(&["rev-parse", "HEAD"]);
+        assert_eq!(
+            feature_architecture_identity(&project, "F-0001", &sibling).unwrap(),
+            f1_base
+        );
+        assert_eq!(
+            feature_architecture_identity(&project, "F-0002", &sibling).unwrap(),
+            f2_base
+        );
+        assert_eq!(
+            feature_architecture_identity(&project, "F-0003", &sibling).unwrap(),
+            f3_base
+        );
+
+        let changed_body = "\n# Shared scope\n\nThe adapter owns the boundary and every member must persist its handoff.\n";
+        std::fs::write(
+            &scope,
+            approved_scope("F-0001, F-0002, F-0004", "2026-01-03", changed_body),
+        )
+        .unwrap();
+        git(&["add", "."]);
+        git(&["commit", "-qm", "change obligation"]);
+        let obligation = git(&["rev-parse", "HEAD"]);
+        assert_ne!(
+            feature_architecture_identity(&project, "F-0001", &obligation).unwrap(),
+            f1_base
+        );
+        assert_eq!(
+            feature_architecture_identity(&project, "F-0003", &obligation).unwrap(),
+            f3_base
+        );
+    }
+
+    #[test]
+    fn architecture_identity_fails_closed_on_unresolved_membership() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path();
+        let git = |args: &[&str]| {
+            let out = Command::new("git")
+                .args(args)
+                .current_dir(root)
+                .output()
+                .unwrap();
+            assert!(
+                out.status.success(),
+                "git {args:?}: {}",
+                String::from_utf8_lossy(&out.stderr)
+            );
+            String::from_utf8_lossy(&out.stdout).trim().to_string()
+        };
+        git(&["init", "-q"]);
+        git(&["config", "user.email", "t@t"]);
+        git(&["config", "user.name", "t"]);
+        let scopes = root.join(".codeos/02-architecture/scopes");
+        std::fs::create_dir_all(&scopes).unwrap();
+        std::fs::write(
+            scopes.join("one.md"),
+            approved_scope("F-0001", "2026-01-01", "\n# One\n"),
+        )
+        .unwrap();
+        std::fs::write(
+            scopes.join("two.md"),
+            approved_scope("F-0001", "2026-01-01", "\n# Two\n"),
+        )
+        .unwrap();
+        git(&["add", "."]);
+        git(&["commit", "-qm", "ambiguous"]);
+        let ambiguous = git(&["rev-parse", "HEAD"]);
+        let project = Project::discover(root).unwrap();
+        assert!(
+            feature_architecture_identity(&project, "F-0001", &ambiguous)
+                .unwrap_err()
+                .to_string()
+                .contains("ambiguous")
+        );
+
+        std::fs::write(scopes.join("two.md"), "---\nfeatures: [F-0002]\n").unwrap();
+        git(&["add", "."]);
+        git(&["commit", "-qm", "malformed"]);
+        let malformed = git(&["rev-parse", "HEAD"]);
+        assert!(feature_architecture_identity(&project, "F-0003", &malformed).is_err());
+    }
 
     /// A repository with commits at fixed instants: base (before F9 at 2026-01-01T00:00Z), a product
     /// change, a test-only change, and a governance-only commit.
