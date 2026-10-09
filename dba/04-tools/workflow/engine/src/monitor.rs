@@ -124,16 +124,37 @@ impl ProjectStatus {
                 && crate::revalidation::current_acceptance_valid(project, &id)?;
             let governance_v3 = project.workflow_governance_version()? >= 3;
             let mut workflow = summarize(&checker::evaluate(project, &subject)?);
+            let stale_reason = if historically_accepted && !current_acceptance_valid {
+                Some(crate::revalidation::invalidity_reason(project, &id)?)
+            } else {
+                None
+            };
             let acceptance_reason = if historically_accepted && !current_acceptance_valid {
+                let reason = stale_reason.expect("stale accepted feature has a reason");
                 workflow.status = DisplayStatus::Blocked;
-                workflow.current_checkpoint = Some("POST_ACCEPTANCE_REVALIDATION".into());
-                workflow.primary_issue = Some("historical F9 acceptance is preserved, but current acceptance is stale after a later implementation/dependency change".into());
-                workflow.additional_issue_count = 0;
-                workflow.next_action = Some(
-                    "run one bounded POST_ACCEPTANCE_REVALIDATION for the identified trigger"
-                        .into(),
+                workflow.current_checkpoint = Some(
+                    match reason {
+                        "SEMANTIC_CHANGE_REQUIRED" => "F1",
+                        "ARCHITECTURE_CHANGE_REQUIRED" => "ARCHITECTURE_REASSESSMENT",
+                        _ => "POST_ACCEPTANCE_REVALIDATION",
+                    }
+                    .into(),
                 );
-                Some("REVALIDATION_REQUIRED".into())
+                workflow.primary_issue = Some(match reason {
+                    "SEMANTIC_CHANGE_REQUIRED" => "historical F9 acceptance is preserved, but governed feature meaning changed".into(),
+                    "ARCHITECTURE_CHANGE_REQUIRED" => "historical F9 acceptance is preserved, but applicable architecture changed".into(),
+                    _ => "historical F9 acceptance is preserved, but current acceptance is stale after a later implementation/dependency change".into(),
+                });
+                workflow.additional_issue_count = 0;
+                workflow.next_action = Some(match reason {
+                    "SEMANTIC_CHANGE_REQUIRED" => "start ordinary governed work at F1".into(),
+                    "ARCHITECTURE_CHANGE_REQUIRED" => {
+                        "complete architecture impact and use an ordinary Candidate Bundle".into()
+                    }
+                    _ => "run targeted checks and prepare one post-acceptance Candidate Bundle"
+                        .into(),
+                });
+                Some(reason.into())
             } else if current_acceptance_valid {
                 workflow.status = DisplayStatus::Complete;
                 workflow.current_checkpoint = None;
@@ -159,7 +180,9 @@ impl ProjectStatus {
                 }
                 .into(),
                 reasons: if historically_accepted && !current_acceptance_valid {
-                    vec!["REVALIDATION_REQUIRED".into()]
+                    vec![stale_reason
+                        .expect("stale accepted feature has a reason")
+                        .into()]
                 } else {
                     vec![]
                 },
@@ -168,11 +191,25 @@ impl ProjectStatus {
                 snapshot_completed_checkpoints(&mut workflow);
                 if !current_acceptance_valid {
                     workflow.status = DisplayStatus::Blocked;
-                    workflow.current_checkpoint = Some("POST_ACCEPTANCE_REVALIDATION".into());
-                    workflow.primary_issue = Some("historical F9 acceptance is preserved; current acceptance validity is stale".into());
+                    let reason = stale_reason.expect("stale accepted feature has a reason");
+                    workflow.current_checkpoint = Some(
+                        match reason {
+                            "SEMANTIC_CHANGE_REQUIRED" => "F1",
+                            "ARCHITECTURE_CHANGE_REQUIRED" => "ARCHITECTURE_REASSESSMENT",
+                            _ => "POST_ACCEPTANCE_REVALIDATION",
+                        }
+                        .into(),
+                    );
+                    workflow.primary_issue = Some(format!("historical F9 acceptance is preserved; current acceptance validity is stale ({reason})"));
                     workflow.additional_issue_count = 0;
-                    workflow.next_action =
-                        Some("revalidate only the affected accepted surface".into());
+                    workflow.next_action = Some(match reason {
+                        "SEMANTIC_CHANGE_REQUIRED" => "start ordinary governed work at F1".into(),
+                        "ARCHITECTURE_CHANGE_REQUIRED" => {
+                            "complete architecture impact and use an ordinary Candidate Bundle"
+                                .into()
+                        }
+                        _ => "revalidate only the affected accepted surface".into(),
+                    });
                 }
             }
             features.push(FeatureStatus {

@@ -13,6 +13,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 pub const CONTRACT: &str = "dba/04-tools/reviewer/contract/v17.md";
 pub const CONTRACT_V18: &str = "dba/04-tools/reviewer/contract/v18.md";
+pub const CONTRACT_V19: &str = "dba/04-tools/reviewer/contract/v19.md";
 
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 pub struct ReviewInputManifest {
@@ -58,10 +59,12 @@ pub(crate) struct Derived {
 }
 
 pub fn selected(contract: Option<&str>) -> bool {
-    matches!(contract, Some(CONTRACT) | Some(CONTRACT_V18))
+    matches!(contract, Some(CONTRACT) | Some(CONTRACT_V18) | Some(CONTRACT_V19))
 }
 
-pub fn candidate_lifecycle(contract: Option<&str>) -> bool { contract == Some(CONTRACT_V18) }
+pub fn candidate_lifecycle(contract: Option<&str>) -> bool {
+    matches!(contract, Some(CONTRACT_V18) | Some(CONTRACT_V19))
+}
 
 /// Derive the manifest from canonical artifacts. It precedes packet construction, which takes its
 /// required inputs from here; `seal` later binds it to the final packet.

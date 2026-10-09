@@ -14,6 +14,7 @@ Ordinary technical vocabulary does not belong here. Git preserves the history of
 |---|---|
 | **Alias** | An alternative input form accepted for compatibility, migration, or user preference and resolved before domain logic runs. |
 | **Architecture Scope** | The single artifact for one project-level architectural scope. Its filename identifies the scope; it owns feature membership, structural decisions, and recorded human approval and cannot invent or alter behavior. |
+| **Architecture Impact Report** | A deterministic, non-authoritative comparison of accepted and proposed architecture that identifies changed feature-scoped architecture identities, affected features, and unresolved ambiguity before human approval. |
 | **Artifact Governance** | Whether an artifact type carries approval-bearing frontmatter and full process weight, as configured project-wide in `codeos.yaml`. Contrast with Decision Governance, which it never suspends. |
 | **Artifact Summary** | The Summary block required immediately after an artifact's frontmatter, previewing its key messages ahead of the full content. |
 | **Behavioral Contract** | Observable truths derived from Intent, normally expressed as Given/When/Then conditions. |

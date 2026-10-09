@@ -14,29 +14,6 @@ use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-#[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
-struct ArchitectureMetadata {
-    artifact_type: String,
-    features: Vec<String>,
-    approval: ArchitectureApproval,
-    reader_model: String,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
-struct ArchitectureApproval {
-    by: String,
-    at: String,
-}
-
-#[derive(Serialize)]
-struct FeatureArchitectureProjection<'a> {
-    scope_path: &'a str,
-    subject_membership: &'a str,
-    body: &'a str,
-}
-
 const REQUIRED_BASE: &[(&str, &str)] = &[
     ("F3", "smoke"),
     ("F3", "product_journey"),
@@ -164,97 +141,6 @@ pub(crate) struct IdentifiedChange {
     pub affected_surface: Vec<String>,
 }
 
-fn normalized_architecture(text: &str) -> String {
-    text.replace("\r\n", "\n").replace('\r', "\n")
-}
-
-fn architecture_parts(text: &str) -> Result<(ArchitectureMetadata, &str)> {
-    let rest = text
-        .strip_prefix("---\n")
-        .context("Architecture Scope has no opening frontmatter delimiter")?;
-    let (frontmatter, body) = rest
-        .split_once("\n---\n")
-        .context("Architecture Scope has no closing frontmatter delimiter")?;
-    let metadata: ArchitectureMetadata =
-        serde_yaml::from_str(frontmatter).context("parse Architecture Scope frontmatter")?;
-    if metadata.artifact_type != "architecture" {
-        anyhow::bail!("Architecture Scope artifact_type must be architecture");
-    }
-    if metadata.reader_model.trim().is_empty() {
-        anyhow::bail!("Architecture Scope reader_model must be non-empty");
-    }
-    if metadata.features.is_empty()
-        || metadata
-            .features
-            .iter()
-            .any(|feature| feature.trim().is_empty())
-    {
-        anyhow::bail!("Architecture Scope features must be non-empty");
-    }
-    let unique = metadata
-        .features
-        .iter()
-        .collect::<std::collections::BTreeSet<_>>();
-    if unique.len() != metadata.features.len() {
-        anyhow::bail!("Architecture Scope features must be duplicate-free");
-    }
-    if metadata.approval.by.trim().is_empty() || metadata.approval.at.trim().is_empty() {
-        anyhow::bail!("Architecture Scope approval must be complete");
-    }
-    Ok((metadata, body))
-}
-
-/// Resolve membership only from canonical scope frontmatter at `treeish`, then hash the complete
-/// normalized body for the one scope that owns `subject`. Parsing every scope before resolving zero
-/// matches prevents a malformed file from being mistaken for unrelated architecture.
-fn feature_architecture_identity(
-    project: &Project,
-    subject: &str,
-    treeish: &str,
-) -> Result<String> {
-    let listing = git(
-        project,
-        &[
-            "ls-tree",
-            "-r",
-            "--name-only",
-            treeish,
-            "--",
-            ".codeos/02-architecture/scopes",
-        ],
-    )?;
-    let paths = listing
-        .lines()
-        .filter(|path| path.ends_with(".md"))
-        .collect::<Vec<_>>();
-    let mut matches = Vec::new();
-    for path in paths {
-        let object = format!("{treeish}:{path}");
-        let text = String::from_utf8(git_bytes(project, &["show", &object])?)
-            .with_context(|| format!("Architecture Scope {path} is not UTF-8"))?;
-        let normalized = normalized_architecture(&text);
-        let (metadata, body) = architecture_parts(&normalized)
-            .with_context(|| format!("invalid Architecture Scope {path} at {treeish}"))?;
-        if metadata.features.iter().any(|feature| feature == subject) {
-            matches.push((path, body.to_string()));
-        }
-    }
-    match matches.as_slice() {
-        [] => Ok("NO_APPLICABLE_SCOPE".into()),
-        [(path, body)] => {
-            let projection = FeatureArchitectureProjection {
-                scope_path: path,
-                subject_membership: subject,
-                body,
-            };
-            Ok(hex::encode(Sha256::digest(serde_json::to_vec(
-                &projection,
-            )?)))
-        }
-        _ => anyhow::bail!("feature has ambiguous Architecture Scope membership at {treeish}"),
-    }
-}
-
 /// Validate `trigger_commit` and derive its identified change: the trigger is the latest commit
 /// changing the accepted surface, and the change runs from the point acceptance was last current.
 pub(crate) fn identified_change(
@@ -359,8 +245,9 @@ pub(crate) fn identified_change(
     // shared architecture directory as a semantic change.
     if project.feature_workflow_version()? >= 5 {
         let accepted_architecture =
-            feature_architecture_identity(project, subject_id, &architecture_baseline)?;
-        let current_architecture = feature_architecture_identity(project, subject_id, "HEAD")?;
+            crate::architecture::feature_identity(project, subject_id, &architecture_baseline)?;
+        let current_architecture =
+            crate::architecture::feature_identity(project, subject_id, "WORKTREE")?;
         if accepted_architecture != current_architecture {
             anyhow::bail!(
                 "feature-scoped architecture identity changed; normal governed recovery is required"
@@ -478,6 +365,27 @@ pub fn build_case(project: &Project, subject_id: &str, trigger: &str) -> Result<
     })
 }
 
+/// Validate revalidation eligibility without requiring or writing fresh evidence.
+pub fn preflight(project: &Project, subject_id: &str, trigger: &str) -> Result<()> {
+    anyhow::ensure!(
+        project.feature_workflow_version()? >= 5,
+        "POST_ACCEPTANCE_REVALIDATION requires Feature Workflow v5"
+    );
+    let acceptance = latest_acceptance(project, subject_id)?;
+    let governed_inputs = governed(project, subject_id)?;
+    for key in ["intent", "contract", "event_schema"] {
+        if acceptance.bindings.get(key) != governed_inputs.get(key) {
+            anyhow::bail!("governed meaning changed at {key}; use ordinary governed work");
+        }
+    }
+    let trigger_commit = git(
+        project,
+        &["rev-parse", "--verify", &format!("{trigger}^{{commit}}")],
+    )?;
+    identified_change(project, subject_id, &trigger_commit, &acceptance.timestamp)?;
+    Ok(())
+}
+
 pub fn packet(project: &Project, case: &RevalidationCase) -> Result<String> {
     let context = |path: PathBuf| -> Result<String> { Ok(std::fs::read_to_string(path)?) };
     Ok(format!("# POST_ACCEPTANCE_REVALIDATION\n\nDecide exactly `REVALIDATED` or `REVALIDATION FAILED`. Answer only whether the previously accepted feature still satisfies its unchanged approved meaning after the identified later change. Do not reopen historical findings or propose a new semantic revision.\n\n## Mechanical case\n```json\n{}\n```\n\n## Unchanged Intent\n{}\n\n## Unchanged Contract\n{}\n\n## Unchanged Event Schema\n{}\n\n## Trigger diff\n```diff\n{}\n```\n", serde_json::to_string_pretty(case)?, context(project.intent(&case.subject))?, context(project.contract(&case.subject))?, context(project.event_schema(&case.subject))?, String::from_utf8(surface_diff(project, &case.trigger_parent, &case.trigger_commit, false)?)?))
@@ -531,9 +439,33 @@ pub fn current_acceptance_valid(project: &Project, subject: &str) -> Result<bool
         Ok(value) => value,
         Err(_) => return Ok(false),
     };
+    let acceptance_identity = hex::encode(Sha256::digest(serde_json::to_vec(&acceptance)?));
+    let governed_now = governed(project, subject)?;
+    if ["intent", "contract", "event_schema"]
+        .iter()
+        .any(|key| acceptance.bindings.get(*key) != governed_now.get(*key))
+    {
+        return Ok(false);
+    }
+    if project.feature_workflow_version()? >= 8
+        && accepted_architecture_identity(project, subject, &acceptance.timestamp)?
+            != crate::architecture::feature_identity(project, subject, "WORKTREE")?
+    {
+        return Ok(false);
+    }
     if project.workflow_governance_version()? >= 3 {
         if let Some(bundle) = acceptance.bindings.get("candidate_bundle") {
-            return crate::candidate::acceptance_current(project, bundle);
+            let candidate_current = if project.feature_workflow_version()? >= 8 {
+                crate::candidate::acceptance_current_with_scoped_legacy_architecture(
+                    project, bundle,
+                )?
+            } else {
+                crate::candidate::acceptance_current(project, bundle)?
+            };
+            if candidate_current {
+                return Ok(true);
+            }
+            return crate::candidate::passed_revalidation(project, subject, &acceptance_identity);
         }
     }
     let original = latest_impl_before(project, subject, &acceptance.timestamp)?;
@@ -541,12 +473,8 @@ pub fn current_acceptance_valid(project: &Project, subject: &str) -> Result<bool
     if original == current {
         return Ok(true);
     }
-    let governed_now = governed(project, subject)?;
-    if ["intent", "contract", "event_schema"]
-        .iter()
-        .any(|key| acceptance.bindings.get(*key) != governed_now.get(*key))
-    {
-        return Ok(false);
+    if crate::candidate::passed_revalidation(project, subject, &acceptance_identity)? {
+        return Ok(true);
     }
     Ok(RevalidationStore::at(&project.codeos_dir())
         .all()?
@@ -558,6 +486,46 @@ pub fn current_acceptance_valid(project: &Project, subject: &str) -> Result<bool
                 && r.governed_inputs == governed_now
         })
         .is_some_and(|r| r.decision == "REVALIDATED"))
+}
+
+/// Precise current-validity cause for status projection. This never changes historical F9 state.
+pub fn invalidity_reason(project: &Project, subject: &str) -> Result<&'static str> {
+    let acceptance = latest_acceptance(project, subject)?;
+    let governed_now = governed(project, subject)?;
+    if ["intent", "contract", "event_schema"]
+        .iter()
+        .any(|key| acceptance.bindings.get(*key) != governed_now.get(*key))
+    {
+        return Ok("SEMANTIC_CHANGE_REQUIRED");
+    }
+    if project.feature_workflow_version()? >= 8
+        && accepted_architecture_identity(project, subject, &acceptance.timestamp)?
+            != crate::architecture::feature_identity(project, subject, "WORKTREE")?
+    {
+        return Ok("ARCHITECTURE_CHANGE_REQUIRED");
+    }
+    Ok("REVALIDATION_REQUIRED")
+}
+
+fn accepted_architecture_identity(
+    project: &Project,
+    subject: &str,
+    acceptance_timestamp: &str,
+) -> Result<String> {
+    let baseline = git(
+        project,
+        &[
+            "rev-list",
+            "-1",
+            &format!("--before={acceptance_timestamp}"),
+            "HEAD",
+        ],
+    )?;
+    anyhow::ensure!(
+        !baseline.is_empty(),
+        "cannot resolve architecture baseline at F9 acceptance"
+    );
+    crate::architecture::feature_identity(project, subject, &baseline)
 }
 
 pub fn historically_accepted(project: &Project, subject: &str) -> Result<bool> {
@@ -684,9 +652,9 @@ mod tests {
         git(&["commit", "-qm", "base"]);
         let base = git(&["rev-parse", "HEAD"]);
         let project = Project::discover(root).unwrap();
-        let f1_base = feature_architecture_identity(&project, "F-0001", &base).unwrap();
-        let f2_base = feature_architecture_identity(&project, "F-0002", &base).unwrap();
-        let f3_base = feature_architecture_identity(&project, "F-0003", &base).unwrap();
+        let f1_base = crate::architecture::feature_identity(&project, "F-0001", &base).unwrap();
+        let f2_base = crate::architecture::feature_identity(&project, "F-0002", &base).unwrap();
+        let f3_base = crate::architecture::feature_identity(&project, "F-0003", &base).unwrap();
 
         std::fs::write(
             &scope,
@@ -697,15 +665,15 @@ mod tests {
         git(&["commit", "-qm", "add sibling"]);
         let sibling = git(&["rev-parse", "HEAD"]);
         assert_eq!(
-            feature_architecture_identity(&project, "F-0001", &sibling).unwrap(),
+            crate::architecture::feature_identity(&project, "F-0001", &sibling).unwrap(),
             f1_base
         );
         assert_eq!(
-            feature_architecture_identity(&project, "F-0002", &sibling).unwrap(),
+            crate::architecture::feature_identity(&project, "F-0002", &sibling).unwrap(),
             f2_base
         );
         assert_eq!(
-            feature_architecture_identity(&project, "F-0003", &sibling).unwrap(),
+            crate::architecture::feature_identity(&project, "F-0003", &sibling).unwrap(),
             f3_base
         );
 
@@ -719,11 +687,11 @@ mod tests {
         git(&["commit", "-qm", "change obligation"]);
         let obligation = git(&["rev-parse", "HEAD"]);
         assert_ne!(
-            feature_architecture_identity(&project, "F-0001", &obligation).unwrap(),
+            crate::architecture::feature_identity(&project, "F-0001", &obligation).unwrap(),
             f1_base
         );
         assert_eq!(
-            feature_architecture_identity(&project, "F-0003", &obligation).unwrap(),
+            crate::architecture::feature_identity(&project, "F-0003", &obligation).unwrap(),
             f3_base
         );
     }
@@ -765,7 +733,7 @@ mod tests {
         let ambiguous = git(&["rev-parse", "HEAD"]);
         let project = Project::discover(root).unwrap();
         assert!(
-            feature_architecture_identity(&project, "F-0001", &ambiguous)
+            crate::architecture::feature_identity(&project, "F-0001", &ambiguous)
                 .unwrap_err()
                 .to_string()
                 .contains("ambiguous")
@@ -775,7 +743,7 @@ mod tests {
         git(&["add", "."]);
         git(&["commit", "-qm", "malformed"]);
         let malformed = git(&["rev-parse", "HEAD"]);
-        assert!(feature_architecture_identity(&project, "F-0003", &malformed).is_err());
+        assert!(crate::architecture::feature_identity(&project, "F-0003", &malformed).is_err());
     }
 
     /// A repository with commits at fixed instants: base (before F9 at 2026-01-01T00:00Z), a product

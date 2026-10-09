@@ -37,6 +37,10 @@ pub struct CandidateBundle {
     pub journey_previous: String,
     pub journey_target: String,
     pub predecessor_bundle: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub baseline_acceptance: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub trigger_commit: Option<String>,
 }
 
 pub struct CandidateStore {
@@ -110,25 +114,40 @@ pub fn prepare(
     subject: &Subject,
     additions: &[String],
     kind: &str,
+    trigger: Option<&str>,
 ) -> Result<(String, CandidateBundle)> {
     anyhow::ensure!(
         project.workflow_governance_version()? >= 3,
         "Candidate Bundles require Workflow Governance v3"
     );
-    let reports = checker::evaluate(project, subject)?;
-    let unresolved: Vec<_> = reports
-        .iter()
-        .take_while(|r| r.id != "F7")
-        .filter(|r| !matches!(r.state, State::Pass | State::NotApplicable))
-        .map(|r| r.id.clone())
-        .collect();
-    anyhow::ensure!(
-        unresolved.is_empty(),
-        "candidate is not ready; unresolved checkpoints: {}",
-        unresolved.join(", ")
-    );
+    let revalidation_case = if kind == "post_acceptance_revalidation" {
+        let trigger = trigger.context("revalidation candidate requires --trigger")?;
+        Some(crate::revalidation::build_case(
+            project,
+            &subject.id,
+            trigger,
+        )?)
+    } else {
+        anyhow::ensure!(
+            trigger.is_none(),
+            "--trigger applies only to revalidation candidates"
+        );
+        let reports = checker::evaluate(project, subject)?;
+        let unresolved: Vec<_> = reports
+            .iter()
+            .take_while(|r| r.id != "F7")
+            .filter(|r| !matches!(r.state, State::Pass | State::NotApplicable))
+            .map(|r| r.id.clone())
+            .collect();
+        anyhow::ensure!(
+            unresolved.is_empty(),
+            "candidate is not ready; unresolved checkpoints: {}",
+            unresolved.join(", ")
+        );
+        None
+    };
 
-    let governed_inputs = governed(project, &subject.id)?;
+    let governed_inputs = governed(project, &subject.id, 2)?;
     let configuration_sha256 =
         hashing::file_sha256(&project.codeos_yaml())?.context("missing codeos.yaml")?;
     let receipt = ReceiptStore::at(&project.codeos_dir())
@@ -205,7 +224,7 @@ pub fn prepare(
     let journey_previous = checker::current_accepted_frontier(project)?;
     let journey_target = checker::product_journey_target(project, subject)?;
     let bundle = CandidateBundle {
-        schema_version: 1,
+        schema_version: 2,
         feature: subject.id.clone(),
         semantic_revision: semantic_revision(&std::fs::read_to_string(
             project.intent(&subject.id),
@@ -222,6 +241,10 @@ pub fn prepare(
         journey_previous,
         journey_target,
         predecessor_bundle,
+        baseline_acceptance: revalidation_case
+            .as_ref()
+            .map(|case| case.original_acceptance_sha256.clone()),
+        trigger_commit: revalidation_case.map(|case| case.trigger_commit),
     };
     let id = CandidateStore::at(&project.codeos_dir()).write(&bundle)?;
     Ok((id, bundle))
@@ -230,6 +253,19 @@ pub fn prepare(
 /// Product/governed currency used after acceptance. Test and evidence changes do not change the
 /// accepted product; they matter only when preparing another candidate.
 pub fn acceptance_current(project: &Project, id: &str) -> Result<bool> {
+    acceptance_current_inner(project, id, false)
+}
+
+/// DBA-24 may project a legacy accepted bundle with feature-scoped architecture comparison.
+/// The caller must independently prove that the applicable architecture identity is unchanged.
+pub fn acceptance_current_with_scoped_legacy_architecture(
+    project: &Project,
+    id: &str,
+) -> Result<bool> {
+    acceptance_current_inner(project, id, true)
+}
+
+fn acceptance_current_inner(project: &Project, id: &str, scoped_legacy: bool) -> Result<bool> {
     let bundle = CandidateStore::at(&project.codeos_dir()).read(id)?;
     for input in bundle
         .implementation_inputs
@@ -241,7 +277,13 @@ pub fn acceptance_current(project: &Project, id: &str) -> Result<bool> {
             return Ok(false);
         }
     }
-    Ok(governed(project, &bundle.feature)? == bundle.governed_inputs)
+    let mut current = governed(project, &bundle.feature, bundle.schema_version)?;
+    let mut accepted = bundle.governed_inputs;
+    if scoped_legacy && bundle.schema_version == 1 {
+        current.retain(|key, _| !key.starts_with("architecture:"));
+        accepted.retain(|key, _| !key.starts_with("architecture:"));
+    }
+    Ok(current == accepted)
 }
 
 pub fn current_for_review(project: &Project, id: &str) -> Result<bool> {
@@ -281,7 +323,36 @@ pub fn unique_current(project: &Project, feature: &str) -> Result<Option<String>
     Ok(current.pop())
 }
 
-fn governed(project: &Project, feature: &str) -> Result<BTreeMap<String, String>> {
+/// A PASSED post-acceptance candidate restores current validity without creating another F9.
+pub fn passed_revalidation(
+    project: &Project,
+    feature: &str,
+    baseline_acceptance: &str,
+) -> Result<bool> {
+    let Some(review) = crate::evidence::latest_review_record(&project.root, feature, "8")? else {
+        return Ok(false);
+    };
+    if review.candidate_outcome.as_deref() != Some("PASSED") {
+        return Ok(false);
+    }
+    let Some(reviewed_id) = review.candidate_bundle.as_deref() else {
+        return Ok(false);
+    };
+    let bundle = match CandidateStore::at(&project.codeos_dir()).read(reviewed_id) {
+        Ok(bundle) => bundle,
+        Err(_) => return Ok(false),
+    };
+    Ok(bundle.feature == feature
+        && bundle.kind == "post_acceptance_revalidation"
+        && bundle.baseline_acceptance.as_deref() == Some(baseline_acceptance)
+        && current_for_review(project, reviewed_id)?)
+}
+
+fn governed(
+    project: &Project,
+    feature: &str,
+    schema_version: u8,
+) -> Result<BTreeMap<String, String>> {
     let mut out = BTreeMap::new();
     for (name, path) in [
         ("intent", project.intent(feature)),
@@ -292,6 +363,15 @@ fn governed(project: &Project, feature: &str) -> Result<BTreeMap<String, String>
             name.into(),
             hashing::file_sha256(&path)?.with_context(|| format!("missing {name}"))?,
         );
+    }
+    if schema_version >= 2 {
+        if let Some(path) = crate::architecture::scope_path(project, feature)? {
+            out.insert(
+                format!("architecture:{path}"),
+                crate::architecture::feature_identity(project, feature, "WORKTREE")?,
+            );
+        }
+        return Ok(out);
     }
     let scopes = project.codeos_dir().join("02-architecture/scopes");
     if scopes.is_dir() {
@@ -497,13 +577,19 @@ mod tests {
             ".codeos/01-specification/event-schemas/F-1_schema.md",
             "src/product.rs",
             "tests/product.spec.ts",
+            ".codeos/02-architecture/scopes/shared.md",
         ] {
             let full = dir.path().join(path);
             fs::create_dir_all(full.parent().unwrap()).unwrap();
             fs::write(&full, format!("{path}\n")).unwrap();
         }
+        fs::write(
+            dir.path().join(".codeos/02-architecture/scopes/shared.md"),
+            "---\nartifact_type: architecture\nfeatures: [F-1]\napproval:\n  by: Human\n  at: 2026-01-01T00:00:00Z\nreader_model: whole-before-parts\n---\n## Shared\nRule.\n",
+        )
+        .unwrap();
         let project = Project::discover(dir.path()).unwrap();
-        let governed_inputs = governed(&project, "F-1").unwrap();
+        let governed_inputs = governed(&project, "F-1", 1).unwrap();
         let input = |path: &str, role: &str| CandidateInput {
             path: path.into(),
             sha256: hashing::file_sha256(&project.root.join(path))
@@ -531,6 +617,8 @@ mod tests {
             journey_previous: "entry".into(),
             journey_target: "outcome".into(),
             predecessor_bundle: None,
+            baseline_acceptance: None,
+            trigger_commit: None,
         };
         (dir, project, bundle)
     }
@@ -555,6 +643,30 @@ mod tests {
         assert!(acceptance_current(&project, &id).unwrap());
         fs::write(project.root.join("src/product.rs"), "changed product\n").unwrap();
         assert!(!acceptance_current(&project, &id).unwrap());
+    }
+
+    #[test]
+    fn scoped_projection_does_not_rewrite_legacy_bundle_or_invalidate_sibling_membership() {
+        let (_dir, project, bundle) = fixture();
+        let id = CandidateStore::at(&project.codeos_dir())
+            .write(&bundle)
+            .unwrap();
+        let scope = project
+            .root
+            .join(".codeos/02-architecture/scopes/shared.md");
+        let original = fs::read_to_string(&scope).unwrap();
+        fs::write(
+            &scope,
+            original.replace("features: [F-1]", "features: [F-1, F-2]"),
+        )
+        .unwrap();
+
+        assert!(!acceptance_current(&project, &id).unwrap());
+        assert!(acceptance_current_with_scoped_legacy_architecture(&project, &id).unwrap());
+        assert_eq!(
+            CandidateStore::at(&project.codeos_dir()).read(&id).unwrap(),
+            bundle
+        );
     }
 
     #[test]

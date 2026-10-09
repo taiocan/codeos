@@ -1729,6 +1729,53 @@ pub fn run_checks(project: &Project, subject: &Subject) -> Result<Vec<String>> {
     Ok(log)
 }
 
+/// Execute only evidence required by post-acceptance revalidation. This deliberately does not
+/// evaluate ordinary F1-F9 gates: Feature Workflow v5 says revalidation does not reopen them.
+pub fn run_revalidation_checks(
+    project: &Project,
+    subject: &Subject,
+    trigger: &str,
+) -> Result<Vec<String>> {
+    anyhow::ensure!(
+        subject.workflow == Workflow::Feature,
+        "revalidation applies only to features"
+    );
+    crate::revalidation::preflight(project, &subject.id, trigger)?;
+    let store = VerificationStore::at(&project.codeos_dir());
+    let mut log = Vec::new();
+    for (checkpoint, mechanic) in crate::revalidation::required_verifications(subject) {
+        if mechanic == "runtime_event_schema" {
+            continue;
+        }
+        let want = verification_bindings(project, subject, checkpoint, Some(mechanic))?;
+        let have = store.latest("feature", &subject.id, checkpoint, mechanic)?;
+        if matches!(verification::evaluate(have, &want), RecordState::Current(_)) {
+            continue;
+        }
+        let outcome = run_mechanic(project, subject, mechanic);
+        log.push(format!("{checkpoint} / {mechanic}: {}", outcome.summary));
+        if !outcome.ok {
+            return Ok(log);
+        }
+        store.append(&VerificationRecord {
+            workflow: "feature".into(),
+            subject: subject.id.clone(),
+            checkpoint: checkpoint.into(),
+            verification: mechanic.into(),
+            result: "passed".into(),
+            bindings: want,
+            command: if outcome.command.is_empty() {
+                mechanic.into()
+            } else {
+                outcome.command
+            },
+            timestamp: chrono::Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string(),
+            details: outcome.details,
+        })?;
+    }
+    Ok(log)
+}
+
 /// The bindings a receipt for `checkpoint` should currently be evaluated against. Public so
 /// `decide` records exactly what `status`/`check` will later re-check.
 pub fn bindings_for_decision(

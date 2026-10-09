@@ -30,7 +30,7 @@ enum Cmd {
     Next(Target),
     /// Execute the pending mechanical verifications for a subject and persist a record per pass,
     /// then report state. The only command that runs a verification.
-    Check(Target),
+    Check(CheckArgs),
     /// Append a decision receipt for one of the seven receipt-bearing checkpoints.
     Decide(DecideArgs),
     /// Show the primary journey, accepted/candidate frontiers, and first broken transition.
@@ -43,6 +43,18 @@ enum Cmd {
     RevalidationRecord(RevalidationRecordArgs),
     /// Materialize the immutable, content-addressed candidate used by F7 through F9.
     PrepareCandidate(PrepareCandidateArgs),
+    /// Report deterministic feature impact for an architecture proposal. Read-only.
+    ArchitectureImpact(ArchitectureImpactArgs),
+}
+
+#[derive(clap::Args)]
+struct ArchitectureImpactArgs {
+    /// Accepted Git tree used as the comparison baseline.
+    #[arg(long)]
+    base: String,
+    /// Proposed Git tree, or WORKTREE for the current filesystem.
+    #[arg(long, default_value = "WORKTREE")]
+    proposed: String,
 }
 
 #[derive(clap::Args)]
@@ -55,6 +67,9 @@ struct PrepareCandidateArgs {
     /// Build a post-acceptance revalidation candidate rather than an ordinary F7 candidate.
     #[arg(long)]
     revalidation: bool,
+    /// Latest commit changing the accepted surface; required with --revalidation.
+    #[arg(long, requires = "revalidation")]
+    trigger: Option<String>,
 }
 
 #[derive(clap::Args)]
@@ -123,6 +138,20 @@ struct Target {
 }
 
 #[derive(clap::Args)]
+struct CheckArgs {
+    #[arg(long)]
+    workflow: String,
+    #[arg(long)]
+    subject: String,
+    /// Execute only stale post-acceptance verification without reopening F1-F9.
+    #[arg(long)]
+    revalidation: bool,
+    /// Latest commit changing the accepted surface; required with --revalidation.
+    #[arg(long, requires = "revalidation")]
+    trigger: Option<String>,
+}
+
+#[derive(clap::Args)]
 struct DecideArgs {
     #[arg(long)]
     workflow: String,
@@ -164,6 +193,13 @@ fn main() {
 
 fn run(cli: &Cli, start: &std::path::Path) -> Result<i32> {
     match &cli.command {
+        Cmd::ArchitectureImpact(args) => {
+            let project = Project::discover(start)?;
+            let impact =
+                codeos_workflow::architecture::impact(&project, &args.base, &args.proposed)?;
+            println!("{}", serde_json::to_string_pretty(&impact)?);
+            Ok(EXIT_SUCCESS)
+        }
         Cmd::PrepareCandidate(args) => {
             let project = Project::discover(start)?;
             let subject = Subject::resolve(&project, Workflow::Feature, &args.subject)?;
@@ -172,12 +208,22 @@ fn run(cli: &Cli, start: &std::path::Path) -> Result<i32> {
             } else {
                 "ordinary"
             };
-            let (id, _) = candidate::prepare(&project, &subject, &args.include, kind)?;
+            let (id, _) = candidate::prepare(
+                &project,
+                &subject,
+                &args.include,
+                kind,
+                args.trigger.as_deref(),
+            )?;
             println!("candidate bundle: {id}");
             Ok(EXIT_SUCCESS)
         }
         Cmd::RevalidationPlan(args) => {
             let project = Project::discover(start)?;
+            anyhow::ensure!(
+                project.feature_workflow_version()? < 8,
+                "legacy revalidation packets are read-only under DBA-24; use check --revalidation and prepare-candidate --revalidation"
+            );
             let case = revalidation::build_case(&project, &args.subject, &args.trigger)?;
             let packet = revalidation::packet(&project, &case)?;
             if let Some(parent) = args.output.parent() {
@@ -192,6 +238,10 @@ fn run(cli: &Cli, start: &std::path::Path) -> Result<i32> {
         }
         Cmd::RevalidationRecord(args) => {
             let project = Project::discover(start)?;
+            anyhow::ensure!(
+                project.feature_workflow_version()? < 8,
+                "legacy revalidation records are read-only under DBA-24; assess the immutable revalidation Candidate Bundle"
+            );
             let case = revalidation::build_case(&project, &args.subject, &args.trigger)?;
             let record = revalidation::record(&project, case, &args.assessment)?;
             println!(
@@ -287,16 +337,13 @@ fn run(cli: &Cli, start: &std::path::Path) -> Result<i32> {
                 })
             }
         }
-        Cmd::Next(t) | Cmd::Check(t) => {
+        Cmd::Next(t) => {
             let Some(workflow) = Workflow::parse(&t.workflow) else {
                 eprintln!("workflow must be bootstrap | feature | operation");
                 return Ok(EXIT_USAGE);
             };
             let project = Project::discover(start)?;
-            if matches!(cli.command, Cmd::Next(_))
-                && workflow == Workflow::Feature
-                && project.workflow_governance_version()? >= 3
-            {
+            if workflow == Workflow::Feature && project.workflow_governance_version()? >= 3 {
                 let status = monitor::ProjectStatus::derive(&project)?;
                 let feature = status
                     .features
@@ -324,24 +371,37 @@ fn run(cli: &Cli, start: &std::path::Path) -> Result<i32> {
                 );
             }
             let subject = Subject::resolve(&project, workflow, &t.subject)?;
-            if matches!(cli.command, Cmd::Check(_)) {
-                let log = checker::run_checks(&project, &subject)?;
-                for line in &log {
-                    println!("{line}");
-                }
-                if !log.is_empty() {
-                    println!();
-                }
+            let reports = checker::evaluate(&project, &subject)?;
+            println!("{}", report::render_next(&reports));
+            Ok(report::overall_exit(&reports))
+        }
+        Cmd::Check(t) => {
+            let Some(workflow) = Workflow::parse(&t.workflow) else {
+                eprintln!("workflow must be bootstrap | feature | operation");
+                return Ok(EXIT_USAGE);
+            };
+            let project = Project::discover(start)?;
+            let subject = Subject::resolve(&project, workflow, &t.subject)?;
+            let log = if t.revalidation {
+                checker::run_revalidation_checks(
+                    &project,
+                    &subject,
+                    t.trigger.as_deref().expect("clap requires trigger"),
+                )?
+            } else {
+                checker::run_checks(&project, &subject)?
+            };
+            for line in &log {
+                println!("{line}");
+            }
+            if !log.is_empty() {
+                println!();
             }
             let reports = checker::evaluate(&project, &subject)?;
-            match &cli.command {
-                Cmd::Next(_) => println!("{}", report::render_next(&reports)),
-                Cmd::Check(_) => println!(
-                    "{}",
-                    report::render_status(workflow.slug(), &t.subject, &reports)
-                ),
-                _ => unreachable!(),
-            }
+            println!(
+                "{}",
+                report::render_status(workflow.slug(), &t.subject, &reports)
+            );
             Ok(report::overall_exit(&reports))
         }
         Cmd::Decide(a) => {
