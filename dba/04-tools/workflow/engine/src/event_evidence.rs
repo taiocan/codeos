@@ -254,6 +254,11 @@ pub fn verify(project: &Project, args: VerifyEventArgs<'_>) -> Result<Verificati
         .unwrap_or(&evidence_path)
         .to_string_lossy()
         .into_owned();
+    let relative_validator = validator
+        .strip_prefix(&project.root)
+        .context("event validator must be inside the project")?
+        .to_string_lossy()
+        .into_owned();
     let record = VerificationRecord {
         workflow: "feature".into(),
         subject: args.subject.id.clone(),
@@ -266,6 +271,7 @@ pub fn verify(project: &Project, args: VerifyEventArgs<'_>) -> Result<Verificati
         details: Some(serde_json::json!({
             "schema": 1,
             "event_evidence": relative_evidence,
+            "event_evidence_validator": relative_validator,
             "event_set_sha256": event_set_sha256,
             "semantic_sha256": semantic_sha256,
             "event_count": events.len(),

@@ -188,6 +188,26 @@ pub fn prepare(
             "F7",
             "runtime_event_schema",
         )?;
+        let validator_path = runtime
+            .details
+            .as_ref()
+            .and_then(|details| details.get("event_evidence_validator"))
+            .and_then(|value| value.as_str())
+            .context("candidate runtime verification has no validator path binding")?;
+        let validator = Path::new(validator_path);
+        anyhow::ensure!(
+            !validator.is_absolute()
+                && !validator
+                    .components()
+                    .any(|component| matches!(component, std::path::Component::ParentDir)),
+            "candidate runtime validator must be a project-relative path"
+        );
+        let mut runtime_want = runtime_want;
+        runtime_want.insert(
+            "event_evidence_validator".into(),
+            hashing::file_sha256(&project.root.join(validator))?
+                .context("candidate runtime validator disappeared")?,
+        );
         anyhow::ensure!(
             matches!(
                 crate::verification::evaluate(Some(runtime.clone()), &runtime_want),
