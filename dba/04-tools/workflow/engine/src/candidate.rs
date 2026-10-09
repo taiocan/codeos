@@ -693,4 +693,43 @@ mod tests {
         fs::write(&schema, "# Event Schema\n").unwrap();
         assert!(observation_mode(&project, "F-1").is_err());
     }
+
+    #[test]
+    fn runtime_candidate_preflight_uses_the_same_governed_bindings_as_event_evidence() {
+        let (_dir, project, _) = fixture();
+        let subject = Subject {
+            workflow: crate::contract::Workflow::Feature,
+            id: "F-1".into(),
+            gui: true,
+            persistence: false,
+            arch_approval_required: false,
+            reality_claims: vec![],
+        };
+        let bindings = checker::verification_bindings_for_mechanic(
+            &project,
+            &subject,
+            "F7",
+            "runtime_event_schema",
+        )
+        .unwrap();
+        assert_eq!(
+            bindings.get("intent"),
+            hashing::file_sha256(&project.intent("F-1"))
+                .unwrap()
+                .as_ref()
+        );
+        assert_eq!(
+            bindings.get("contract"),
+            hashing::file_sha256(&project.contract("F-1"))
+                .unwrap()
+                .as_ref()
+        );
+        assert_eq!(
+            bindings.get("event_schema"),
+            hashing::file_sha256(&project.event_schema("F-1"))
+                .unwrap()
+                .as_ref()
+        );
+        assert!(bindings.contains_key("implementation_state"));
+    }
 }
