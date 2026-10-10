@@ -255,6 +255,39 @@ fn attention_follows_workflow_order_with_actor_classes() {
         .unwrap();
     assert_eq!(stale["checkpoint"], "F1");
     assert_eq!(stale["actor"], "ASSISTED");
+    assert_eq!(stale["class"], "STALE");
+    assert_eq!(stale["reason"], "SEMANTIC_CHANGE_REQUIRED");
+    assert_eq!(
+        stale["authority"],
+        "dba/02-policies/workflow-governance/v4.md"
+    );
+    let item = |subject: &str| {
+        attention
+            .iter()
+            .find(|item| item["subject"] == subject)
+            .unwrap()
+    };
+    assert_eq!(item("F-0001")["class"], "BLOCKER");
+    assert_eq!(
+        item("F-0001")["authority"],
+        "dba/02-policies/workflow-feature/v9.md"
+    );
+    assert_eq!(item("bootstrap")["class"], "BLOCKER");
+    assert_eq!(
+        item("bootstrap")["authority"],
+        "dba/02-policies/workflow-bootstrap/v1.md"
+    );
+    for item in attention {
+        let authority = item["authority"].as_str().unwrap();
+        assert!(project
+            .path()
+            .join(".codeos/toolkit")
+            .join(authority)
+            .is_file());
+        assert!(
+            item["subject"] == "bootstrap" || item["subject"].as_str().unwrap().starts_with("F-")
+        );
+    }
     assert!(attention.iter().all(|item| item["actor"].is_string()));
 
     let health = json["health"].as_array().unwrap();
@@ -277,6 +310,11 @@ fn attention_follows_workflow_order_with_actor_classes() {
     );
     assert!(rendered.contains("ATTENTION"), "{rendered}");
     assert!(rendered.contains("next [ASSISTED]: start ordinary governed work at F1"));
+    assert!(rendered.contains("[STALE] F-0002 — "), "{rendered}");
+    assert!(
+        rendered.contains("(SEMANTIC_CHANGE_REQUIRED)"),
+        "{rendered}"
+    );
     assert_eq!(before, snapshot(project.path()));
 }
 

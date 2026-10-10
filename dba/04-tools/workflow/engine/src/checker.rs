@@ -10,7 +10,7 @@
 //! verifications and persists a record per pass. `decide` records a receipt. Nothing reconstructs an
 //! earlier PASS indirectly: a later receipt never stands in for an earlier verification.
 
-use crate::contract::{contract_for, Applies, Checkpoint, Requirement, Workflow};
+use crate::contract::{contract_for, Applies, Checkpoint, ReasonCode, Requirement, Workflow};
 use crate::evidence;
 use crate::hashing;
 use crate::project::Project;
@@ -91,6 +91,8 @@ pub struct CheckpointReport {
     pub unmet: Vec<String>,
     pub next_action: Option<String>,
     pub actor: Option<Actor>,
+    /// The cause of `next_action`, from the same requirement as `actor`.
+    pub reason: Option<ReasonCode>,
 }
 
 /// A feature subject with its applicability resolved from the Contract.
@@ -183,6 +185,7 @@ pub fn evaluate(project: &Project, subject: &Subject) -> Result<Vec<CheckpointRe
                             .into(),
                     ),
                     actor: blocking.and_then(|r| r.actor),
+                    reason: Some(ReasonCode::BootstrapIncomplete),
                 });
                 all_prior_pass = false;
             } else {
@@ -194,6 +197,7 @@ pub fn evaluate(project: &Project, subject: &Subject) -> Result<Vec<CheckpointRe
                     unmet: vec![],
                     next_action: None,
                     actor: None,
+                    reason: None,
                 });
             }
         }
@@ -210,6 +214,7 @@ pub fn evaluate(project: &Project, subject: &Subject) -> Result<Vec<CheckpointRe
                 unmet: vec![],
                 next_action: None,
                 actor: None,
+                reason: None,
             });
             continue;
         }
@@ -227,6 +232,7 @@ pub fn evaluate(project: &Project, subject: &Subject) -> Result<Vec<CheckpointRe
                 unmet: vec![format!("earlier checkpoint {blocker} is not PASS")],
                 next_action: Some(format!("resolve {blocker} first")),
                 actor: blocking.and_then(|r| r.actor),
+                reason: blocking.and_then(|r| r.reason),
             });
             continue;
         }
@@ -1121,14 +1127,14 @@ fn evaluate_checkpoint(
     let mut unmet = Vec::new();
     let mut soft = 0usize; // unmet conditions that are only waiting on a human decision
     let mut next_action = None;
-    let mut actor = None;
+    let mut cause = None;
     // The requirement evaluated last, and whether its next action repairs a failure rather than
     // taking that requirement's default step.
     let mut last = None;
     let mut repair = false;
 
     for req in &c.requirements {
-        settle_actor(&mut actor, &next_action, last, repair);
+        settle_actor(&mut cause, &next_action, last, repair);
         last = Some(req);
         repair = false;
         match req {
@@ -1744,7 +1750,7 @@ fn evaluate_checkpoint(
             }
         }
     }
-    settle_actor(&mut actor, &next_action, last, repair);
+    settle_actor(&mut cause, &next_action, last, repair);
 
     // Blocked if any unmet condition is a real evidence gap; Waiting if the only thing missing is a
     // human decision the tool must not make itself.
@@ -1767,24 +1773,27 @@ fn evaluate_checkpoint(
         actor: if state == State::Waiting {
             Some(Actor::Human)
         } else {
-            actor
+            cause.map(|(actor, _)| actor)
         },
+        reason: cause.map(|(_, reason)| reason),
     })
 }
 
-/// Assign the actor of the first next action once the requirement that produced it is known.
+/// Assign the actor and reason of the first next action once the requirement that produced it is
+/// known. Both always come from that one requirement.
 fn settle_actor(
-    actor: &mut Option<Actor>,
+    cause: &mut Option<(Actor, ReasonCode)>,
     next_action: &Option<String>,
     last: Option<&Requirement>,
     repair: bool,
 ) {
-    if let (None, Some(_), Some(requirement)) = (*actor, next_action, last) {
-        *actor = Some(if repair {
+    if let (None, Some(_), Some(requirement)) = (*cause, next_action, last) {
+        let actor = if repair {
             Actor::Assisted
         } else {
             Actor::default_for(requirement)
-        });
+        };
+        *cause = Some((actor, requirement.reason()));
     }
 }
 

@@ -536,12 +536,9 @@ fn release() -> Health {
 }
 
 fn compatibility(project: &Project) -> Result<Health> {
-    let toolkit = if project.self_dev {
-        project.root.clone()
-    } else {
-        project.codeos_dir().join("toolkit")
-    };
-    let manifest = toolkit.join("dba/04-tools/compatibility/support.json");
+    let manifest = project
+        .toolkit_root()
+        .join("dba/04-tools/compatibility/support.json");
     let configuration = project.dba_configuration()?;
     let support = std::fs::read(&manifest)
         .ok()

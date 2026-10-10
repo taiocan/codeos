@@ -105,29 +105,39 @@ impl Project {
         )
     }
 
+    /// The policy path the project's configuration selects for `key`, if any.
+    pub fn selected_policy(&self, key: &str) -> Result<Option<String>> {
+        let resolved = self.resolved_project_configuration(key)?;
+        let prefix = format!("{key}=");
+        Ok(resolved
+            .lines()
+            .find_map(|line| line.strip_prefix(&prefix))
+            .map(str::to_owned))
+    }
+
+    /// The Codeos toolkit this project is governed by.
+    pub fn toolkit_root(&self) -> PathBuf {
+        if self.self_dev {
+            self.root.clone()
+        } else {
+            self.codeos_dir().join("toolkit")
+        }
+    }
+
     fn selected_policy_version(
         &self,
         key: &str,
         legacy_default: &str,
         supported: &[u8],
     ) -> Result<u8> {
-        let resolved = self.resolved_project_configuration(key)?;
-        let prefix = format!("{key}=");
-        let selected = resolved
-            .lines()
-            .find_map(|line| line.strip_prefix(&prefix))
-            .unwrap_or(legacy_default);
-        version_from_policy(selected, supported)
+        let selected = self.selected_policy(key)?;
+        version_from_policy(selected.as_deref().unwrap_or(legacy_default), supported)
     }
 
     fn resolved_project_configuration(&self, key: &str) -> Result<String> {
-        let resolver = if self.self_dev {
-            self.root
-                .join("dba/04-tools/configuration/resolve-project-configuration.sh")
-        } else {
-            self.codeos_dir()
-                .join("toolkit/dba/04-tools/configuration/resolve-project-configuration.sh")
-        };
+        let resolver = self
+            .toolkit_root()
+            .join("dba/04-tools/configuration/resolve-project-configuration.sh");
         if !resolver.is_file() {
             let explicitly_bound = std::fs::read_to_string(self.codeos_yaml())
                 .map(|text| text.lines().any(|line| line.trim() == "codeos_schema: 2"))

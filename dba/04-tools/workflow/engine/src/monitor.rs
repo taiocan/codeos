@@ -1,7 +1,7 @@
 //! Read-only project status projection and terminal rendering.
 
 use crate::checker::{self, Actor, CheckpointReport, State, Subject};
-use crate::contract::Workflow;
+use crate::contract::{ReasonCode, Workflow};
 use crate::evidence;
 use crate::project::Project;
 use crate::receipts::ReceiptStore;
@@ -51,6 +51,8 @@ pub struct WorkflowStatus {
     pub next_action: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub actor: Option<Actor>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub reason: Option<ReasonCode>,
     pub checkpoints: Vec<CheckpointStatus>,
 }
 
@@ -101,11 +103,41 @@ pub struct PlannedFeatureCandidate {
 #[derive(Debug, Serialize)]
 pub struct AttentionItem {
     pub subject: String,
+    pub class: AttentionClass,
     pub checkpoint: Option<String>,
     pub issue: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub reason: Option<ReasonCode>,
+    /// The governing policy path, or `NOT_CONFIGURED` when the configuration selects none.
+    pub authority: String,
     pub next_action: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub actor: Option<Actor>,
+}
+
+/// Attention class: a presentation classification that never replaces a workflow state.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum AttentionClass {
+    /// An unmet condition prevents progression, including an actionable prerequisite.
+    Blocker,
+    /// A previously valid accepted state is no longer current.
+    Stale,
+    /// A required human disposition does not yet exist.
+    Unresolved,
+    /// Important information that does not block. No source emits it yet.
+    Warning,
+}
+
+impl AttentionClass {
+    pub fn label(self) -> &'static str {
+        match self {
+            Self::Blocker => "BLOCKER",
+            Self::Stale => "STALE",
+            Self::Unresolved => "UNRESOLVED",
+            Self::Warning => "WARNING",
+        }
+    }
 }
 
 /// An Observation v2 identity without validated closure evidence.
@@ -179,7 +211,7 @@ impl ProjectStatus {
                     _ => "run targeted checks and prepare one post-acceptance Candidate Bundle"
                         .into(),
                 });
-                workflow.actor = Some(stale_actor(reason));
+                (workflow.actor, workflow.reason) = stale_cause(reason);
                 Some(reason.into())
             } else if current_acceptance_valid {
                 workflow.status = DisplayStatus::Complete;
@@ -188,6 +220,7 @@ impl ProjectStatus {
                 workflow.additional_issue_count = 0;
                 workflow.next_action = None;
                 workflow.actor = None;
+                workflow.reason = None;
                 None
             } else {
                 None
@@ -237,7 +270,7 @@ impl ProjectStatus {
                         }
                         _ => "revalidate only the affected accepted surface".into(),
                     });
-                    workflow.actor = Some(stale_actor(reason));
+                    (workflow.actor, workflow.reason) = stale_cause(reason);
                 }
             }
             features.push(FeatureStatus {
@@ -265,7 +298,7 @@ impl ProjectStatus {
             .map(|feature| feature.id.clone())
             .collect();
         let current_feature = (incomplete.len() == 1).then(|| incomplete[0].clone());
-        let attention = attention(&bootstrap, &features, current_feature.as_deref());
+        let attention = attention(project, &bootstrap, &features, current_feature.as_deref())?;
         let open_observations = open_observations(project)?;
         let health = crate::health::derive(project, &features, &open_observations)?;
 
@@ -300,28 +333,65 @@ impl ProjectStatus {
 }
 
 /// Post-acceptance revalidation is mechanical; semantic or architecture change needs bounded work.
-fn stale_actor(reason: &str) -> Actor {
-    match reason {
-        "SEMANTIC_CHANGE_REQUIRED" | "ARCHITECTURE_CHANGE_REQUIRED" => Actor::Assisted,
-        _ => Actor::Auto,
+fn stale_cause(reason: &str) -> (Option<Actor>, Option<ReasonCode>) {
+    let (actor, code) = match reason {
+        "SEMANTIC_CHANGE_REQUIRED" => (Actor::Assisted, ReasonCode::SemanticChangeRequired),
+        "ARCHITECTURE_CHANGE_REQUIRED" => (Actor::Assisted, ReasonCode::ArchitectureChangeRequired),
+        _ => (Actor::Auto, ReasonCode::RevalidationRequired),
+    };
+    (Some(actor), Some(code))
+}
+
+/// The policy that governs a subject: its path, `NOT_CONFIGURED` when none is selected, or an
+/// error when the selected policy is missing from the toolkit.
+fn authority(project: &Project, key: &str) -> Result<String> {
+    let Some(path) = project.selected_policy(key)? else {
+        return Ok("NOT_CONFIGURED".into());
+    };
+    anyhow::ensure!(
+        project.toolkit_root().join(&path).is_file(),
+        "configuration selects {key} {path}, which is missing from the toolkit"
+    );
+    Ok(path)
+}
+
+fn attention_class(stale: bool, status: DisplayStatus) -> AttentionClass {
+    match (stale, status) {
+        (true, _) => AttentionClass::Stale,
+        (false, DisplayStatus::WaitingHuman) => AttentionClass::Unresolved,
+        (false, DisplayStatus::Blocked) => AttentionClass::Blocker,
+        (false, DisplayStatus::Complete | DisplayStatus::NotApplicable) => {
+            unreachable!("attention holds only subjects that are not complete")
+        }
     }
 }
 
 fn attention(
+    project: &Project,
     bootstrap: &WorkflowStatus,
     features: &[FeatureStatus],
     current_feature: Option<&str>,
-) -> Vec<AttentionItem> {
-    let item = |subject: &str, workflow: &WorkflowStatus| AttentionItem {
-        subject: subject.into(),
-        checkpoint: workflow.current_checkpoint.clone(),
-        issue: workflow.primary_issue.clone(),
-        next_action: workflow.next_action.clone(),
-        actor: workflow.actor,
+) -> Result<Vec<AttentionItem>> {
+    let item = |subject: &str, workflow: &WorkflowStatus, stale: bool, key: &str| {
+        Ok::<_, anyhow::Error>(AttentionItem {
+            subject: subject.into(),
+            class: attention_class(stale, workflow.status),
+            checkpoint: workflow.current_checkpoint.clone(),
+            issue: workflow.primary_issue.clone(),
+            reason: workflow.reason,
+            authority: authority(project, key)?,
+            next_action: workflow.next_action.clone(),
+            actor: workflow.actor,
+        })
     };
     let mut items = Vec::new();
     if bootstrap.status != DisplayStatus::Complete {
-        items.push(item("bootstrap", bootstrap));
+        items.push(item(
+            "bootstrap",
+            bootstrap,
+            false,
+            "workflow_bootstrap_policy",
+        )?);
     }
     let mut incomplete: Vec<_> = features
         .iter()
@@ -337,12 +407,17 @@ fn attention(
             2
         }
     });
-    items.extend(
-        incomplete
-            .into_iter()
-            .map(|feature| item(&feature.id, &feature.workflow)),
-    );
-    items
+    for feature in incomplete {
+        let stale = feature.historically_accepted && !feature.current_acceptance_valid;
+        // Workflow governance owns an accepted snapshot's current validity.
+        let key = if stale {
+            "workflow_governance_policy"
+        } else {
+            "workflow_feature_policy"
+        };
+        items.push(item(&feature.id, &feature.workflow, stale, key)?);
+    }
+    Ok(items)
 }
 
 fn open_observations(project: &Project) -> Result<Vec<OpenObservation>> {
@@ -511,7 +586,18 @@ pub fn render(status: &ProjectStatus) -> String {
         out.push_str("\nATTENTION\n");
         for item in &status.attention {
             if let Some(issue) = item.issue.as_deref() {
-                out.push_str(&format!("  {} — {}\n", item.subject, issue));
+                let reason = item
+                    .reason
+                    .and_then(|reason| serde_json::to_value(reason).ok())
+                    .and_then(|value| value.as_str().map(str::to_string))
+                    .filter(|code| !issue.contains(code.as_str()))
+                    .map(|code| format!(" ({code})"))
+                    .unwrap_or_default();
+                out.push_str(&format!(
+                    "  [{}] {} — {issue}{reason}\n",
+                    item.class.label(),
+                    item.subject
+                ));
             }
             if let Some(action) = item.next_action.as_deref() {
                 out.push_str(&format!("    next{}: {action}\n", actor_tag(item.actor)));
@@ -632,6 +718,7 @@ fn summarize(reports: &[CheckpointReport]) -> WorkflowStatus {
         additional_issue_count,
         next_action: current.and_then(|report| report.next_action.clone()),
         actor: current.and_then(|report| report.actor),
+        reason: current.and_then(|report| report.reason),
         checkpoints: reports
             .iter()
             .map(|report| CheckpointStatus {
@@ -862,7 +949,118 @@ mod tests {
             unmet: unmet.iter().map(|value| value.to_string()).collect(),
             next_action: (state != State::Pass).then(|| "take the next action".into()),
             actor: None,
+            reason: None,
         }
+    }
+
+    #[test]
+    fn waiting_maps_to_unresolved_without_changing_workflow_status() {
+        let summary = summarize(&[report("F4", State::Waiting, &["no decision"])]);
+        assert_eq!(
+            attention_class(false, summary.status),
+            AttentionClass::Unresolved
+        );
+        assert_eq!(summary.status, DisplayStatus::WaitingHuman);
+        assert_eq!(
+            attention_class(false, DisplayStatus::Blocked),
+            AttentionClass::Blocker
+        );
+        assert_eq!(
+            attention_class(true, DisplayStatus::WaitingHuman),
+            AttentionClass::Stale
+        );
+    }
+
+    #[test]
+    fn attention_vocabularies_are_pinned() {
+        let names = |values: Vec<serde_json::Value>| {
+            values
+                .iter()
+                .map(|v| v.as_str().unwrap().to_string())
+                .collect::<Vec<_>>()
+        };
+        use AttentionClass::*;
+        assert_eq!(
+            names(
+                [Blocker, Stale, Unresolved, Warning]
+                    .iter()
+                    .map(|v| serde_json::to_value(v).unwrap())
+                    .collect()
+            ),
+            ["BLOCKER", "STALE", "UNRESOLVED", "WARNING"]
+        );
+        use ReasonCode as R;
+        assert_eq!(
+            names(
+                [
+                    R::CharterApproval,
+                    R::SpecificationApproval,
+                    R::SemanticRevision,
+                    R::Configuration,
+                    R::ContractSection,
+                    R::JourneyContribution,
+                    R::Decision,
+                    R::IndependentReview,
+                    R::Verification,
+                    R::ProductionEvidence,
+                    R::ObservationStatement,
+                    R::ObservationRoute,
+                    R::ObservationResolution,
+                    R::BootstrapIncomplete,
+                    R::SemanticChangeRequired,
+                    R::ArchitectureChangeRequired,
+                    R::RevalidationRequired,
+                ]
+                .iter()
+                .map(|v| serde_json::to_value(v).unwrap())
+                .collect()
+            ),
+            [
+                "CHARTER_APPROVAL",
+                "SPECIFICATION_APPROVAL",
+                "SEMANTIC_REVISION",
+                "CONFIGURATION",
+                "CONTRACT_SECTION",
+                "JOURNEY_CONTRIBUTION",
+                "DECISION",
+                "INDEPENDENT_REVIEW",
+                "VERIFICATION",
+                "PRODUCTION_EVIDENCE",
+                "OBSERVATION_STATEMENT",
+                "OBSERVATION_ROUTE",
+                "OBSERVATION_RESOLUTION",
+                "BOOTSTRAP_INCOMPLETE",
+                "SEMANTIC_CHANGE_REQUIRED",
+                "ARCHITECTURE_CHANGE_REQUIRED",
+                "REVALIDATION_REQUIRED",
+            ]
+        );
+    }
+
+    #[test]
+    fn a_selected_policy_missing_from_the_toolkit_is_an_error_not_an_absence() {
+        let dir = tempfile::tempdir().unwrap();
+        let resolver = dir
+            .path()
+            .join(".codeos/toolkit/dba/04-tools/configuration/resolve-project-configuration.sh");
+        fs::create_dir_all(resolver.parent().unwrap()).unwrap();
+        fs::write(
+            &resolver,
+            "printf 'dba_configuration=DBA-X\\nworkflow_feature_policy=dba/02-policies/missing.md\\n'\n",
+        )
+        .unwrap();
+        let project = Project {
+            root: dir.path().to_path_buf(),
+            self_dev: false,
+        };
+        let error = authority(&project, "workflow_feature_policy")
+            .unwrap_err()
+            .to_string();
+        assert!(error.contains("dba/02-policies/missing.md"), "{error}");
+        assert_eq!(
+            authority(&project, "workflow_bootstrap_policy").unwrap(),
+            "NOT_CONFIGURED"
+        );
     }
 
     #[test]

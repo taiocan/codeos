@@ -76,6 +76,49 @@ pub enum Requirement {
     RouteResolution,
 }
 
+/// Stable machine-readable cause of a reported next action.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum ReasonCode {
+    CharterApproval,
+    SpecificationApproval,
+    SemanticRevision,
+    Configuration,
+    ContractSection,
+    JourneyContribution,
+    Decision,
+    IndependentReview,
+    Verification,
+    ProductionEvidence,
+    ObservationStatement,
+    ObservationRoute,
+    ObservationResolution,
+    BootstrapIncomplete,
+    SemanticChangeRequired,
+    ArchitectureChangeRequired,
+    RevalidationRequired,
+}
+
+impl Requirement {
+    pub fn reason(&self) -> ReasonCode {
+        match self {
+            Self::CharterApproved => ReasonCode::CharterApproval,
+            Self::SpecPackageApproved => ReasonCode::SpecificationApproval,
+            Self::SemanticPackageRevision => ReasonCode::SemanticRevision,
+            Self::CodeosYamlValid => ReasonCode::Configuration,
+            Self::ContractSection(_) => ReasonCode::ContractSection,
+            Self::ProductJourneyContribution => ReasonCode::JourneyContribution,
+            Self::Receipt { .. } => ReasonCode::Decision,
+            Self::ReviewRecord { .. } => ReasonCode::IndependentReview,
+            Self::LiveVerification { .. } => ReasonCode::Verification,
+            Self::ProductionSourceEvidence => ReasonCode::ProductionEvidence,
+            Self::ObservationStated => ReasonCode::ObservationStatement,
+            Self::ObservationRouted => ReasonCode::ObservationRoute,
+            Self::RouteResolution => ReasonCode::ObservationResolution,
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Checkpoint {
     pub id: &'static str,

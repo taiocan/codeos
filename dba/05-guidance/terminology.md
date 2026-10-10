@@ -18,6 +18,7 @@ Ordinary technical vocabulary does not belong here. Git preserves the history of
 | **Architecture Impact Report** | A deterministic, non-authoritative comparison of accepted and proposed architecture that identifies changed feature-scoped architecture identities, affected features, and unresolved ambiguity before human approval. |
 | **Artifact Governance** | Whether an artifact type carries approval-bearing frontmatter and full process weight, as configured project-wide in `codeos.yaml`. Contrast with Decision Governance, which it never suspends. |
 | **Artifact Summary** | The Summary block required immediately after an artifact's frontmatter, previewing its key messages ahead of the full content. |
+| **Attention class** | The presentation classification of an attention item in `codeos-workflow status`: `BLOCKER` (an unmet condition prevents progression, including an actionable prerequisite), `STALE` (a previously valid accepted state is no longer current), `UNRESOLVED` (a required human disposition does not yet exist), or `WARNING` (important information that does not block). It never replaces an underlying workflow state. |
 | **Behavioral Contract** | Observable truths derived from Intent, normally expressed as Given/When/Then conditions. |
 | **Behavioral Event** | A runtime event representing a verified outcome. |
 | **Behavioral invariant** | A condition that must remain true in externally observable behavior, independent of internal implementation structure. |

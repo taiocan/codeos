@@ -6,7 +6,7 @@ context only; the Charter and Git are authoritative.
 | WO | Scope | Class | Title | Status |
 |---|---|---|---|---|
 | [WO-01](WO-01-engineering-health.md) | ECP-2 | NORMAL | Engineering Health projection | Implemented |
-| [WO-02](WO-02-attention-explanation.md) | ECP-3 | NORMAL | Attention class, reason, authority | Proposed |
+| [WO-02](WO-02-attention-explanation.md) | ECP-3 | NORMAL | Attention class, reason, authority | Implemented |
 | [WO-03](WO-03-changed-surfaces.md) | ECP-3 | NORMAL | Changed surfaces and evidence identities | Proposed |
 | [WO-04](WO-04-process-history.md) | ECP-4 | NORMAL | Process history | Proposed |
 | [WO-05](WO-05-structured-action.md) | ECP-5 | NORMAL | Structured action | Proposed |
