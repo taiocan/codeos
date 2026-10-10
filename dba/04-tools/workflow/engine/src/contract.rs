@@ -117,11 +117,15 @@ pub enum ActionType {
     ResolveReviewFinding,
     RestoreReviewHistory,
     ReassessArchitecture,
+    /// Reserved schema-v3 value from WO-05; never emitted, because it names the multi-step
+    /// revalidation outcome rather than its next operation (WO-10).
     RevalidateAcceptance,
     RecordObservation,
     RouteObservation,
     CloseObservation,
     ResolveRoutedTarget,
+    /// Commit present implementation changes so a revalidation trigger can be identified.
+    CommitChange,
 }
 
 impl Requirement {

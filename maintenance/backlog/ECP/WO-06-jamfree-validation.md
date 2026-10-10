@@ -57,7 +57,7 @@ the panel exposed it.
 | B — terminal does not show historical acceptance | WO-08 |
 | C — Product `CURRENT` while B4 preview is stale after a Charter change | NO ACTION — valid distinction: Product health covers the Charter; B4 covers dependent bootstrap evidence. Product does not aggregate downstream validity |
 | D — terminal hides the health basis | WO-08 |
-| E — `revalidate_acceptance` has no mechanism | [REVAL](../REVAL-bounded-acceptance-revalidation.md), outside ECP |
+| E — `revalidate_acceptance` has no mechanism | Re-routed: the mechanism exists under Workflow Governance v4 ([REVAL](../../archive/self-development/backlog/completed/REVAL-bounded-acceptance-revalidation.md), closed); the defect was the non-atomic action, repaired in [WO-10](WO-10-atomic-revalidation-actions.md) |
 | F — history totals are not localized | [WO-09](WO-09-history-attribution.md), high priority |
 
 ### Re-rating after WO-08 and WO-09 — 2026-10-10

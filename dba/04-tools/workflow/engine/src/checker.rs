@@ -2022,6 +2022,30 @@ pub fn run_checks(project: &Project, subject: &Subject) -> Result<Vec<String>> {
     Ok(log)
 }
 
+/// A (checkpoint, verification, wanted bindings) the revalidation check would execute.
+pub type StaleVerification = (&'static str, &'static str, BTreeMap<String, String>);
+
+/// The revalidation verifications `check --revalidation` would execute: required, runnable here,
+/// and not current. `status` derives its next revalidation step from this same predicate.
+pub fn stale_revalidation_verifications(
+    project: &Project,
+    subject: &Subject,
+) -> Result<Vec<StaleVerification>> {
+    let store = VerificationStore::at(&project.codeos_dir());
+    let mut stale = Vec::new();
+    for (checkpoint, mechanic) in crate::revalidation::required_verifications(subject) {
+        if mechanic == "runtime_event_schema" {
+            continue;
+        }
+        let want = verification_bindings(project, subject, checkpoint, Some(mechanic))?;
+        let have = store.latest("feature", &subject.id, checkpoint, mechanic)?;
+        if !matches!(verification::evaluate(have, &want), RecordState::Current(_)) {
+            stale.push((checkpoint, mechanic, want));
+        }
+    }
+    Ok(stale)
+}
+
 /// Execute only evidence required by post-acceptance revalidation. This deliberately does not
 /// evaluate ordinary F1-F9 gates: Feature Workflow v5 says revalidation does not reopen them.
 pub fn run_revalidation_checks(
@@ -2036,15 +2060,7 @@ pub fn run_revalidation_checks(
     crate::revalidation::preflight(project, &subject.id, trigger)?;
     let store = VerificationStore::at(&project.codeos_dir());
     let mut log = Vec::new();
-    for (checkpoint, mechanic) in crate::revalidation::required_verifications(subject) {
-        if mechanic == "runtime_event_schema" {
-            continue;
-        }
-        let want = verification_bindings(project, subject, checkpoint, Some(mechanic))?;
-        let have = store.latest("feature", &subject.id, checkpoint, mechanic)?;
-        if matches!(verification::evaluate(have, &want), RecordState::Current(_)) {
-            continue;
-        }
+    for (checkpoint, mechanic, want) in stale_revalidation_verifications(project, subject)? {
         let outcome = run_mechanic(project, subject, mechanic);
         log.push(format!("{checkpoint} / {mechanic}: {}", outcome.summary));
         if !outcome.ok {

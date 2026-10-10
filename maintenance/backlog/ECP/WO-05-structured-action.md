@@ -21,12 +21,15 @@ actions with a command are candidates for ECP-6 execution.
   `approve_artifact`, `record_decision`, `follow_decision_outcome`, `run_verification`,
   `collect_production_evidence`, `repair_failure`, `prepare_candidate`, `run_review`,
   `resolve_review_finding`, `restore_review_history`, `reassess_architecture`,
-  `revalidate_acceptance`, `record_observation`, `route_observation`, `close_observation`,
-  `resolve_routed_target` (the operations themselves are reported in the target's workflow).
+  `record_observation`, `route_observation`, `close_observation`, `resolve_routed_target` (the
+  operations themselves are reported in the target's workflow), `commit_change` (WO-10).
+  `revalidate_acceptance` is a reserved schema-v3 value that is never emitted: it named the
+  multi-step revalidation outcome; WO-10 reports its atomic steps instead.
 - `prepare_candidate` vs `run_review` follows whether a unique current Candidate Bundle exists.
   A checkpoint blocked by an earlier one, including `bootstrap-entry`, inherits that action.
-- `command` derives from the action context (type, workflow, subject), not the type alone. Only
-  `run_verification` has one today: `codeos-workflow check --workflow <w> --subject <s>`.
+- `command` derives from the action context (type, workflow, subject, revalidation trigger), not
+  the type alone: `run_verification` (`check`, with `--revalidation --trigger <sha>` for a
+  revalidation step) and a revalidation `prepare_candidate` (WO-10).
 
 ## Out of scope
 

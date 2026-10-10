@@ -5,6 +5,7 @@ use crate::contract::{ActionType, ReasonCode, Workflow};
 use crate::evidence;
 use crate::project::Project;
 use crate::receipts::ReceiptStore;
+use crate::revalidation;
 use anyhow::{Context, Result};
 use serde::Serialize;
 use sha2::{Digest, Sha256};
@@ -59,6 +60,9 @@ pub struct WorkflowStatus {
     /// Exposed through attention only.
     #[serde(skip)]
     pub surfaces: Option<checker::Surfaces>,
+    /// The derived revalidation trigger an action's command binds to.
+    #[serde(skip)]
+    pub trigger: Option<String>,
     pub checkpoints: Vec<CheckpointStatus>,
 }
 
@@ -301,6 +305,12 @@ impl ProjectStatus {
                         _ => "revalidate only the affected accepted surface".into(),
                     });
                     (workflow.actor, workflow.reason, workflow.action) = stale_cause(reason);
+                    if reason == "REVALIDATION_REQUIRED" {
+                        revalidation_step(
+                            &mut workflow,
+                            revalidation::next_step(project, &subject),
+                        );
+                    }
                 }
             }
             if let (Some(assessment), Some(_)) = (assessment, stale_reason) {
@@ -383,13 +393,66 @@ fn stale_cause(reason: &str) -> (Option<Actor>, Option<ReasonCode>, Option<Actio
             ReasonCode::ArchitectureChangeRequired,
             ActionType::ReassessArchitecture,
         ),
-        _ => (
-            Actor::Auto,
-            ReasonCode::RevalidationRequired,
-            ActionType::RevalidateAcceptance,
-        ),
+        // The atomic revalidation step is derived separately (`revalidation_step`).
+        _ => {
+            return (
+                Some(Actor::Auto),
+                Some(ReasonCode::RevalidationRequired),
+                None,
+            )
+        }
     };
     (Some(actor), Some(code), Some(action))
+}
+
+/// Report the next atomic Governance v4 revalidation operation.
+fn revalidation_step(workflow: &mut WorkflowStatus, step: revalidation::RevalidationStep) {
+    use revalidation::RevalidationStep as S;
+    let (actor, action, next, trigger) = match step {
+        S::CommitChange => (
+            Actor::Assisted,
+            Some(ActionType::CommitChange),
+            "commit the changed accepted surface so a revalidation trigger can be identified"
+                .to_string(),
+            None,
+        ),
+        S::RunVerification { trigger } => (
+            Actor::Auto,
+            Some(ActionType::RunVerification),
+            format!("run the stale revalidation verifications for trigger {trigger}"),
+            Some(trigger),
+        ),
+        S::PrepareCandidate { trigger } => (
+            Actor::Auto,
+            Some(ActionType::PrepareCandidate),
+            format!(
+                "prepare the post-acceptance revalidation Candidate Bundle for trigger {trigger}"
+            ),
+            Some(trigger),
+        ),
+        S::RunReview { bundle } => (
+            Actor::Auto,
+            Some(ActionType::RunReview),
+            format!("assess revalidation Candidate Bundle {bundle} at Stage 8"),
+            None,
+        ),
+        S::ResolveReviewFinding { bundle } => (
+            Actor::Assisted,
+            Some(ActionType::ResolveReviewFinding),
+            format!("resolve the assessment of revalidation Candidate Bundle {bundle}"),
+            None,
+        ),
+        S::Ineligible(why) => (
+            Actor::Assisted,
+            None,
+            format!("revalidation cannot proceed: {why}"),
+            None,
+        ),
+    };
+    workflow.actor = Some(actor);
+    workflow.action = action;
+    workflow.next_action = Some(next);
+    workflow.trigger = trigger;
 }
 
 /// The exact context an action arises in; a command depends on all of it, not the type alone.
@@ -397,15 +460,27 @@ pub struct ActionContext<'a> {
     pub action: ActionType,
     pub workflow: &'a str,
     pub subject: &'a str,
+    /// The derived Governance v4 revalidation trigger, when the action is a revalidation step.
+    pub trigger: Option<&'a str>,
 }
 
 /// A command only when executing it fully performs the action in this context. AUTO does not
 /// imply a command.
 pub fn action_command(context: &ActionContext) -> Option<String> {
-    match context.action {
-        ActionType::RunVerification => Some(format!(
+    match (context.action, context.trigger) {
+        (ActionType::RunVerification, None) => Some(format!(
             "codeos-workflow check --workflow {} --subject {}",
             context.workflow, context.subject
+        )),
+        (ActionType::RunVerification, Some(trigger)) => Some(format!(
+            "codeos-workflow check --workflow {} --subject {} --revalidation --trigger {trigger}",
+            context.workflow, context.subject
+        )),
+        // An ordinary candidate may need dynamic `--include` inputs; a revalidation candidate's
+        // command is emitted only after `candidate::assemble` succeeded without them.
+        (ActionType::PrepareCandidate, Some(trigger)) => Some(format!(
+            "codeos-workflow prepare-candidate --subject {} --revalidation --trigger {trigger}",
+            context.subject
         )),
         _ => None,
     }
@@ -467,6 +542,7 @@ fn attention(
                 } else {
                     subject
                 },
+                trigger: workflow.trigger.as_deref(),
             }),
         });
         Ok::<_, anyhow::Error>(AttentionItem {
@@ -903,6 +979,7 @@ fn summarize(reports: &[CheckpointReport]) -> WorkflowStatus {
         reason: current.and_then(|report| report.reason),
         action: current.and_then(|report| report.action),
         surfaces: current.and_then(|report| report.surfaces.clone()),
+        trigger: None,
         checkpoints: reports
             .iter()
             .map(|report| CheckpointStatus {
@@ -1246,6 +1323,7 @@ mod tests {
             A::RouteObservation,
             A::CloseObservation,
             A::ResolveRoutedTarget,
+            A::CommitChange,
         ];
         assert_eq!(
             all.iter()
@@ -1275,6 +1353,7 @@ mod tests {
                 "route_observation",
                 "close_observation",
                 "resolve_routed_target",
+                "commit_change",
             ]
         );
         for action in all {
@@ -1282,6 +1361,7 @@ mod tests {
                 action,
                 workflow: "feature",
                 subject: "F-0001",
+                trigger: None,
             });
             if action == A::RunVerification {
                 assert_eq!(
@@ -1296,17 +1376,73 @@ mod tests {
 
     #[test]
     fn auto_does_not_imply_a_command() {
-        let (actor, _, action) = stale_cause("REVALIDATION_REQUIRED");
-        assert_eq!(actor, Some(Actor::Auto));
-        assert_eq!(action, Some(ActionType::RevalidateAcceptance));
+        let mut workflow = summarize(&[]);
+        revalidation_step(
+            &mut workflow,
+            revalidation::RevalidationStep::RunReview { bundle: "b".into() },
+        );
+        assert_eq!(workflow.actor, Some(Actor::Auto));
+        assert_eq!(workflow.action, Some(ActionType::RunReview));
         assert_eq!(
             action_command(&ActionContext {
-                action: ActionType::RevalidateAcceptance,
+                action: ActionType::RunReview,
                 workflow: "feature",
                 subject: "F-0002",
+                trigger: workflow.trigger.as_deref(),
             }),
             None
         );
+    }
+
+    #[test]
+    fn revalidation_is_reported_as_atomic_steps_with_exact_commands() {
+        use revalidation::RevalidationStep as S;
+        // The non-atomic outcome type is reserved, never emitted.
+        assert_eq!(stale_cause("REVALIDATION_REQUIRED").2, None);
+        let sha = "c87c46d46b85a7b5ad3b4c5417e9c0f82adf16c7";
+        for (step, actor, action, command) in [
+            (S::CommitChange, Actor::Assisted, Some(ActionType::CommitChange), None),
+            (
+                S::RunVerification { trigger: sha.into() },
+                Actor::Auto,
+                Some(ActionType::RunVerification),
+                Some(format!("codeos-workflow check --workflow feature --subject F-0002 --revalidation --trigger {sha}")),
+            ),
+            (
+                S::PrepareCandidate { trigger: sha.into() },
+                Actor::Auto,
+                Some(ActionType::PrepareCandidate),
+                Some(format!("codeos-workflow prepare-candidate --subject F-0002 --revalidation --trigger {sha}")),
+            ),
+            (
+                S::RunReview { bundle: "b".into() },
+                Actor::Auto,
+                Some(ActionType::RunReview),
+                None,
+            ),
+            (
+                S::ResolveReviewFinding { bundle: "b".into() },
+                Actor::Assisted,
+                Some(ActionType::ResolveReviewFinding),
+                None,
+            ),
+            (S::Ineligible("refused".into()), Actor::Assisted, None, None),
+        ] {
+            let mut workflow = summarize(&[]);
+            revalidation_step(&mut workflow, step);
+            assert_eq!(workflow.actor, Some(actor));
+            assert_eq!(workflow.action, action);
+            assert_ne!(workflow.action, Some(ActionType::RevalidateAcceptance));
+            let emitted = workflow.action.and_then(|action| {
+                action_command(&ActionContext {
+                    action,
+                    workflow: "feature",
+                    subject: "F-0002",
+                    trigger: workflow.trigger.as_deref(),
+                })
+            });
+            assert_eq!(emitted, command, "{action:?}");
+        }
     }
 
     #[test]

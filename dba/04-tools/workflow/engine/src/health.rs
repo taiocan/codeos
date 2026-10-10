@@ -634,6 +634,7 @@ mod tests {
                 reason: None,
                 action: None,
                 surfaces: None,
+                trigger: None,
                 checkpoints: vec![],
             },
         }

@@ -115,6 +115,20 @@ pub fn prepare(
     kind: &str,
     trigger: Option<&str>,
 ) -> Result<(String, CandidateBundle)> {
+    let bundle = assemble(project, subject, additions, kind, trigger)?;
+    let id = CandidateStore::at(&project.codeos_dir()).write(&bundle)?;
+    Ok((id, bundle))
+}
+
+/// Every check `prepare` performs, without writing. `status` uses it so that it advertises a
+/// `prepare-candidate` command only when that command would succeed.
+pub fn assemble(
+    project: &Project,
+    subject: &Subject,
+    additions: &[String],
+    kind: &str,
+    trigger: Option<&str>,
+) -> Result<CandidateBundle> {
     anyhow::ensure!(
         project.workflow_governance_version()? >= 3,
         "Candidate Bundles require Workflow Governance v3"
@@ -282,8 +296,7 @@ pub fn prepare(
             .map(|case| case.original_acceptance_sha256.clone()),
         trigger_commit: revalidation_case.map(|case| case.trigger_commit),
     };
-    let id = CandidateStore::at(&project.codeos_dir()).write(&bundle)?;
-    Ok((id, bundle))
+    Ok(bundle)
 }
 
 fn require_pre_candidate_qualification(

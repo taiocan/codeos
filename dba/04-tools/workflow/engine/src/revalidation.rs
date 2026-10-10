@@ -134,6 +134,96 @@ impl RevalidationStore {
     }
 }
 
+/// Whether the working tree changes the accepted implementation/dependency surface.
+pub(crate) fn surface_uncommitted(project: &Project) -> Result<bool> {
+    let mut args = vec!["status", "--porcelain", "--"];
+    let paths = project.implementation_paths();
+    args.extend(paths.iter().map(String::as_str));
+    Ok(!git(project, &args)?.is_empty())
+}
+
+/// The only commit `identified_change` accepts as a trigger: the latest one changing the surface.
+fn latest_surface_commit(project: &Project) -> Result<Option<String>> {
+    let mut args = vec!["log", "-1", "--format=%H", "--"];
+    let paths = project.implementation_paths();
+    args.extend(paths.iter().map(String::as_str));
+    Ok(Some(git(project, &args)?).filter(|sha| !sha.is_empty()))
+}
+
+/// The next atomic operation of Governance v4 post-acceptance revalidation for an accepted
+/// feature stale by `REVALIDATION_REQUIRED`. Each step is derived from the same check the
+/// command performing it applies, so `status` never advertises a command that would refuse.
+#[derive(Debug, PartialEq, Eq)]
+pub enum RevalidationStep {
+    /// The surface has uncommitted changes; no trigger can be identified.
+    CommitChange,
+    /// `check --revalidation --trigger` would execute stale verifications.
+    RunVerification { trigger: String },
+    /// `prepare-candidate --revalidation --trigger` would succeed.
+    PrepareCandidate { trigger: String },
+    /// A current revalidation Candidate Bundle awaits its Stage 8 assessment.
+    RunReview { bundle: String },
+    /// The current revalidation bundle's assessment did not pass.
+    ResolveReviewFinding { bundle: String },
+    /// The revalidation commands would refuse, for this reason.
+    Ineligible(String),
+}
+
+pub fn next_step(project: &Project, subject: &Subject) -> RevalidationStep {
+    // Any refusal on the way is the refusal the revalidation commands would report.
+    derive_step(project, subject)
+        .unwrap_or_else(|error| RevalidationStep::Ineligible(format!("{error:#}")))
+}
+
+fn derive_step(project: &Project, subject: &Subject) -> Result<RevalidationStep> {
+    use RevalidationStep::*;
+    if surface_uncommitted(project)? {
+        return Ok(CommitChange);
+    }
+    let Some(trigger) = latest_surface_commit(project)? else {
+        return Ok(Ineligible("no commit changes the accepted surface".into()));
+    };
+    if let Err(error) = preflight(project, &subject.id, &trigger) {
+        return Ok(Ineligible(format!("{error:#}")));
+    }
+    let acceptance = hashing::record_identity(&latest_acceptance(project, &subject.id)?)?;
+    for (id, bundle) in crate::candidate::CandidateStore::at(&project.codeos_dir()).all()? {
+        if bundle.feature != subject.id
+            || bundle.kind != "post_acceptance_revalidation"
+            || bundle.baseline_acceptance.as_deref() != Some(acceptance.as_str())
+            || bundle.trigger_commit.as_deref() != Some(trigger.as_str())
+            || !crate::candidate::current_for_review(project, &id)?
+        {
+            continue;
+        }
+        let review = crate::evidence::latest_review_record(&project.root, &subject.id, "8")?;
+        let assessed = review.is_some_and(|review| {
+            review.candidate_bundle.as_deref() == Some(id.as_str())
+                && review.candidate_outcome.is_some()
+        });
+        return Ok(if assessed {
+            ResolveReviewFinding { bundle: id }
+        } else {
+            RunReview { bundle: id }
+        });
+    }
+    if !crate::checker::stale_revalidation_verifications(project, subject)?.is_empty() {
+        return Ok(RunVerification { trigger });
+    }
+    Ok(
+        match crate::candidate::assemble(
+            project,
+            subject,
+            &[],
+            "post_acceptance_revalidation",
+            Some(&trigger),
+        ) {
+            Ok(_) => PrepareCandidate { trigger },
+            Err(error) => Ineligible(format!("{error:#}")),
+        },
+    )
+}
+
 /// The later change a revalidation assesses.
 #[derive(Debug)]
 pub(crate) struct IdentifiedChange {
@@ -169,7 +259,7 @@ pub(crate) fn identified_change(
         format!("{trigger_commit}..HEAD"),
     ]))?
     .is_empty()
-        || !run(surface_args(vec!["status".into(), "--porcelain".into()]))?.is_empty()
+        || surface_uncommitted(project)?
     {
         anyhow::bail!("trigger must be the latest change to the accepted surface so evidence binds exactly to it");
     }
@@ -827,6 +917,67 @@ mod tests {
         }
         let project = Project::discover(root).unwrap();
         (dir, project, commits)
+    }
+
+    #[test]
+    fn next_step_uses_the_commands_own_trigger_and_refusals() {
+        let (dir, project, c) = change_history();
+        let root = dir.path();
+        // The derived trigger is the only commit `identified_change` accepts: the latest surface
+        // commit, not the later governance-only commit.
+        assert_eq!(
+            latest_surface_commit(&project).unwrap().as_deref(),
+            Some(c[2].as_str())
+        );
+        identified_change(&project, "F-0001", &c[2], "2026-01-01T00:00:00Z").unwrap();
+        let subject =
+            Subject::resolve(&project, crate::contract::Workflow::Feature, "F-0001").unwrap();
+        // Status fails closed with the refusal the commands would report, never an error.
+        let ineligible = |why: &str| match next_step(&project, &subject) {
+            RevalidationStep::Ineligible(reason) => assert!(reason.contains(why), "{reason}"),
+            other => panic!("{other:?}"),
+        };
+        ineligible("requires Feature Workflow v5");
+
+        std::os::unix::fs::symlink(
+            Path::new(env!("CARGO_MANIFEST_DIR")).join("../../../.."),
+            root.join(".codeos/toolkit"),
+        )
+        .unwrap();
+        let write = |rel: &str, text: &str| {
+            let path = root.join(rel);
+            std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+            std::fs::write(path, text).unwrap();
+        };
+        write(
+            ".codeos/00-project/codeos.yaml",
+            "codeos_schema: 2\ndba_configuration: DBA-25\n",
+        );
+        for rel in [
+            ".codeos/01-specification/intents/F-0001.md",
+            ".codeos/01-specification/contracts/F-0001_contract.md",
+            ".codeos/01-specification/event-schemas/F-0001_schema.md",
+        ] {
+            write(rel, "approved\n");
+        }
+        write(
+            ".codeos/06-workflow/decisions.jsonl",
+            r#"{"workflow":"feature","subject":"F-0001","checkpoint":"acceptance","result":"accepted","bindings":{"intent":"old"},"timestamp":"2026-01-01T00:00:00Z"}"#,
+        );
+        ineligible("governed meaning changed at intent");
+
+        // An uncommitted surface change precedes every other step; the command refuses it too.
+        write("src/lib.rs", "uncommitted");
+        assert_eq!(
+            next_step(&project, &subject),
+            RevalidationStep::CommitChange
+        );
+        assert!(
+            identified_change(&project, "F-0001", &c[2], "2026-01-01T00:00:00Z")
+                .unwrap_err()
+                .to_string()
+                .contains("latest change")
+        );
     }
 
     #[test]

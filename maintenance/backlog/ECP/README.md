@@ -14,6 +14,7 @@ context only; the Charter and Git are authoritative.
 | [WO-07](WO-07-auto-execution-decision.md) | ECP-6 | PROTECTED | Bounded AUTO execution — decision brief | Proposed |
 | [WO-08](WO-08-terminal-acceptance-clarity.md) | Presentation | NORMAL | Terminal acceptance and health clarity | Implemented |
 | [WO-09](WO-09-history-attribution.md) | ECP-4 | NORMAL | Process history attribution | Implemented |
+| [WO-10](WO-10-atomic-revalidation-actions.md) | ECP-5 repair | NORMAL | Atomic post-acceptance revalidation actions | Implemented |
 
 Each WO follows the previous one (WO-04 needs only WO-01 but stays in sequence). WO-08 and WO-09
 come from WO-06's routed gaps; WO-07 waits until they are resolved.
