@@ -300,6 +300,10 @@ fn attention_follows_workflow_order_with_actor_classes() {
         .find(|item| item["domain"] == "specification")
         .unwrap();
     assert_eq!(specification["status"], "STALE");
+    for domain in ["verification", "evidence", "independent_review"] {
+        let item = health.iter().find(|item| item["domain"] == domain).unwrap();
+        assert_eq!(item["status"], "STALE", "{domain}");
+    }
     assert_eq!(json["features"][1]["historically_accepted"], true);
 
     let rendered = String::from_utf8_lossy(&run(&project, &["status"]).stdout).to_string();

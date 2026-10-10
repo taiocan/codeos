@@ -112,9 +112,9 @@ impl Domain {
             Self::Product => &[S::Current, S::Unresolved],
             Self::Specification => &[S::Current, S::Stale, S::Unresolved, S::Unobserved],
             Self::Architecture => &[S::Current, S::Stale, S::Unresolved, S::NotApplicable],
-            Self::Verification => &[S::Pass, S::Blocked, S::Unobserved],
+            Self::Verification => &[S::Pass, S::Blocked, S::Stale, S::Unobserved],
             Self::Evidence => &[S::Current, S::Stale, S::Unresolved, S::Unobserved],
-            Self::IndependentReview => &[S::Passed, S::Blocked, S::Unobserved],
+            Self::IndependentReview => &[S::Passed, S::Blocked, S::Stale, S::Unobserved],
             Self::ProjectQuality | Self::Security | Self::SupplyChain | Self::Deployment => &[
                 S::Pass,
                 S::Blocked,
@@ -160,7 +160,7 @@ pub fn derive(
         Domain::Specification,
         features,
         &["F1", "F2"],
-        Some("SEMANTIC_CHANGE_REQUIRED"),
+        true,
         (S::Current, S::Unresolved, S::Unresolved),
     ));
     out.push(architecture(project, features)?);
@@ -168,21 +168,21 @@ pub fn derive(
         Domain::Verification,
         features,
         &["F3", "F5", "F5d", "F5g"],
-        None,
+        false,
         (S::Pass, S::Blocked, S::Blocked),
     ));
     out.push(checkpoint_domain(
         Domain::Evidence,
         features,
         &["F6"],
-        Some("REVALIDATION_REQUIRED"),
+        false,
         (S::Current, S::Unresolved, S::Unresolved),
     ));
     out.push(checkpoint_domain(
         Domain::IndependentReview,
         features,
         &["F7"],
-        None,
+        false,
         (S::Passed, S::Blocked, S::Blocked),
     ));
     out.extend(qualification(project, features)?);
@@ -224,12 +224,13 @@ fn stale_reason(feature: &FeatureStatus) -> Option<&str> {
 /// Derive a domain from the feature checkpoints it covers. An accepted feature with a current
 /// snapshot counts as positive evidence; an in-progress feature contributes its completed
 /// checkpoints and, when its first unresolved checkpoint is in the domain, an issue. An accepted
-/// feature that is no longer current contributes only through `stale_on`.
+/// feature that is no longer current makes the domain STALE, except that with `semantic_only` it is
+/// STALE only for a semantic change and otherwise proves the Specification Package current.
 fn checkpoint_domain(
     domain: Domain,
     features: &[FeatureStatus],
     checkpoints: &[&str],
-    stale_on: Option<&str>,
+    semantic_only: bool,
     (pass, blocked, waiting): (HealthStatus, HealthStatus, HealthStatus),
 ) -> Health {
     let mut stale = Vec::new();
@@ -238,7 +239,14 @@ fn checkpoint_domain(
     let mut passed = Vec::new();
     for feature in features {
         if let Some(reason) = stale_reason(feature) {
-            if stale_on == Some(reason) {
+            if semantic_only && reason != "SEMANTIC_CHANGE_REQUIRED" {
+                // Revalidation compares the Specification Package first, so any other reason
+                // proves it still equals the accepted snapshot.
+                passed.push(format!(
+                    "{}: Specification Package equals the accepted snapshot ({reason})",
+                    feature.id
+                ));
+            } else {
                 stale.push(format!(
                     "{}: accepted snapshot is no longer current ({reason})",
                     feature.id
@@ -603,6 +611,61 @@ fn operational_learning(project: &Project, open: &[OpenObservation]) -> Result<H
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::monitor::WorkflowStatus;
+
+    fn stale_feature(reason: &str) -> FeatureStatus {
+        FeatureStatus {
+            id: "F-0002".into(),
+            name: "fixture".into(),
+            historically_accepted: true,
+            current_acceptance_valid: false,
+            accepted_snapshot: None,
+            current_validity: None,
+            acceptance_reason: Some(reason.into()),
+            workflow: WorkflowStatus {
+                status: DisplayStatus::Blocked,
+                current_checkpoint: None,
+                completed: 0,
+                total: 0,
+                primary_issue: None,
+                additional_issue_count: 0,
+                next_action: None,
+                actor: None,
+                reason: None,
+                checkpoints: vec![],
+            },
+        }
+    }
+
+    #[test]
+    fn stale_accepted_features_mark_evidence_domains_stale_and_prove_unchanged_specification() {
+        let derive = |domain, reason, semantic_only| {
+            checkpoint_domain(
+                domain,
+                &[stale_feature(reason)],
+                &[],
+                semantic_only,
+                (S::Current, S::Unresolved, S::Unresolved),
+            )
+        };
+        let specification = derive(Domain::Specification, "REVALIDATION_REQUIRED", true);
+        assert_eq!(specification.status, S::Current);
+        assert_eq!(
+            specification.basis,
+            ["F-0002: Specification Package equals the accepted snapshot (REVALIDATION_REQUIRED)"]
+        );
+        assert_eq!(
+            derive(Domain::Specification, "SEMANTIC_CHANGE_REQUIRED", true).status,
+            S::Stale
+        );
+        for reason in [
+            "SEMANTIC_CHANGE_REQUIRED",
+            "ARCHITECTURE_CHANGE_REQUIRED",
+            "REVALIDATION_REQUIRED",
+        ] {
+            assert_eq!(derive(Domain::Evidence, reason, false).status, S::Stale);
+        }
+    }
 
     #[test]
     fn every_domain_has_a_closed_status_set_with_an_absence_or_issue_state() {

@@ -18,8 +18,8 @@ absence state.
   | Product | CURRENT, UNRESOLVED |
   | Specification, Evidence | CURRENT, STALE, UNRESOLVED, UNOBSERVED |
   | Architecture | CURRENT, STALE, UNRESOLVED, NOT_APPLICABLE |
-  | Verification | PASS, BLOCKED, UNOBSERVED |
-  | Independent review | PASSED, BLOCKED, UNOBSERVED |
+  | Verification | PASS, BLOCKED, STALE, UNOBSERVED |
+  | Independent review | PASSED, BLOCKED, STALE, UNOBSERVED |
   | Project quality, Security, Supply chain, Deployment | PASS, BLOCKED, STALE, NOT_APPLICABLE, UNOBSERVED, NOT_CONFIGURED |
   | Release | QUALIFIED, UNQUALIFIED |
   | Compatibility | SUPPORTED, UNSUPPORTED, NOT_CONFIGURED |
@@ -50,8 +50,9 @@ drill-down flags.
 3. No `scripts/codeos-qualify` → NOT_CONFIGURED; script without record → UNOBSERVED.
 4. MEASURED only with a basis. Gap: every constraint comes from the approved Charter, so no record
    carries an unapproved measurement; MEASURED is not emitted.
-5. An accepted feature that is no longer current shows STALE in the affected domain while
-   historical acceptance stays visible (C-3).
+5. An accepted feature that is no longer current makes Verification, Evidence, and Independent
+   review STALE, and Specification STALE only for `SEMANTIC_CHANGE_REQUIRED` (any other reason
+   proves the package current). Historical acceptance stays visible (C-3).
 6. Every non-absence status has a non-empty `basis`.
 7. Read-only; exit codes unchanged.
 
