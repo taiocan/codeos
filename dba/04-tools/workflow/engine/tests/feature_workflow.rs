@@ -13,7 +13,7 @@ use std::collections::BTreeMap;
 use std::fs;
 use std::path::Path;
 
-use codeos_workflow::checker::State;
+use codeos_workflow::checker::{Actor, State};
 
 struct Fixture {
     _dir: tempfile::TempDir,
@@ -482,7 +482,30 @@ fn draft_spec_blocks_f1_and_everything_after() {
         .unmet
         .iter()
         .any(|u| u.contains("joint package approval")));
+    assert_eq!(f1.actor, Some(Actor::Human));
     assert_eq!(Fixture::state_of(&reports, "F5").state, State::Blocked);
+}
+
+#[test]
+fn unfilled_contract_section_is_assisted_work() {
+    let fx = Fixture::new();
+    let (i, c, s) = approved_spec("F-0001", false, false);
+    let c = c
+        .split("## Feature Impact Accounting")
+        .next()
+        .unwrap()
+        .to_string();
+    write_spec(&fx, "F-0001", &(i, c, s));
+
+    let reports = evaluate(&fx.project(), &fx.subject("F-0001")).unwrap();
+    let f2 = Fixture::state_of(&reports, "F2");
+    assert_eq!(f2.state, State::Blocked, "{f2:?}");
+    assert_eq!(f2.actor, Some(Actor::Assisted));
+    // A checkpoint blocked behind an earlier one reports that checkpoint's actor.
+    assert_eq!(
+        Fixture::state_of(&reports, "F3").actor,
+        Some(Actor::Assisted)
+    );
 }
 
 #[test]
@@ -505,6 +528,7 @@ fn approved_spec_passes_f1_f2_then_blocks_on_missing_smoke_record() {
         .unmet
         .iter()
         .any(|u| u.contains("no verification record") && u.contains("codeos-workflow check")));
+    assert_eq!(f3.actor, Some(Actor::Auto));
 }
 
 #[test]
@@ -523,6 +547,7 @@ fn f5_stays_blocked_until_early_preview_is_recorded_and_current() {
     let r = evaluate(&fx.project(), &fx.subject("F-0007")).unwrap();
     assert_eq!(Fixture::state_of(&r, "F3").state, State::Pass, "{r:?}");
     assert_eq!(Fixture::state_of(&r, "F4").state, State::Waiting);
+    assert_eq!(Fixture::state_of(&r, "F4").actor, Some(Actor::Human));
     assert_eq!(Fixture::state_of(&r, "F5").state, State::Blocked);
 
     // Record direction_confirmed, bound to current hashes.

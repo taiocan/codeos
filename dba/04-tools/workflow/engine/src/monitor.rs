@@ -1,6 +1,6 @@
 //! Read-only project status projection and terminal rendering.
 
-use crate::checker::{self, CheckpointReport, State, Subject};
+use crate::checker::{self, Actor, CheckpointReport, State, Subject};
 use crate::contract::Workflow;
 use crate::evidence;
 use crate::project::Project;
@@ -49,6 +49,8 @@ pub struct WorkflowStatus {
     pub primary_issue: Option<String>,
     pub additional_issue_count: usize,
     pub next_action: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub actor: Option<Actor>,
     pub checkpoints: Vec<CheckpointStatus>,
 }
 
@@ -94,6 +96,26 @@ pub struct PlannedFeatureCandidate {
     pub source: String,
 }
 
+/// One subject that is not complete, in workflow order: bootstrap, the current feature, accepted
+/// features whose acceptance is no longer current, then other incomplete features by ID.
+#[derive(Debug, Serialize)]
+pub struct AttentionItem {
+    pub subject: String,
+    pub checkpoint: Option<String>,
+    pub issue: Option<String>,
+    pub next_action: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub actor: Option<Actor>,
+}
+
+/// An Observation v2 identity without validated closure evidence.
+#[derive(Debug, Serialize)]
+pub struct OpenObservation {
+    pub id: String,
+    pub route: Option<String>,
+    pub target: Option<String>,
+}
+
 #[derive(Debug, Serialize)]
 pub struct ProjectIdentity {
     pub name: String,
@@ -109,6 +131,8 @@ pub struct ProjectStatus {
     pub features: Vec<FeatureStatus>,
     pub planned_feature_candidates: Vec<PlannedFeatureCandidate>,
     pub feature_inventory_warnings: Vec<String>,
+    pub attention: Vec<AttentionItem>,
+    pub open_observations: Vec<OpenObservation>,
 }
 
 impl ProjectStatus {
@@ -154,6 +178,7 @@ impl ProjectStatus {
                     _ => "run targeted checks and prepare one post-acceptance Candidate Bundle"
                         .into(),
                 });
+                workflow.actor = Some(stale_actor(reason));
                 Some(reason.into())
             } else if current_acceptance_valid {
                 workflow.status = DisplayStatus::Complete;
@@ -161,6 +186,7 @@ impl ProjectStatus {
                 workflow.primary_issue = None;
                 workflow.additional_issue_count = 0;
                 workflow.next_action = None;
+                workflow.actor = None;
                 None
             } else {
                 None
@@ -210,6 +236,7 @@ impl ProjectStatus {
                         }
                         _ => "revalidate only the affected accepted surface".into(),
                     });
+                    workflow.actor = Some(stale_actor(reason));
                 }
             }
             features.push(FeatureStatus {
@@ -237,6 +264,8 @@ impl ProjectStatus {
             .map(|feature| feature.id.clone())
             .collect();
         let current_feature = (incomplete.len() == 1).then(|| incomplete[0].clone());
+        let attention = attention(&bootstrap, &features, current_feature.as_deref());
+        let open_observations = open_observations(project)?;
 
         Ok(Self {
             schema_version: if project.workflow_governance_version()? >= 3 {
@@ -253,6 +282,8 @@ impl ProjectStatus {
             features,
             planned_feature_candidates,
             feature_inventory_warnings,
+            attention,
+            open_observations,
         })
     }
 
@@ -263,6 +294,74 @@ impl ProjectStatus {
                 .iter()
                 .any(|feature| feature.workflow.status != DisplayStatus::Complete)
     }
+}
+
+/// Post-acceptance revalidation is mechanical; semantic or architecture change needs bounded work.
+fn stale_actor(reason: &str) -> Actor {
+    match reason {
+        "SEMANTIC_CHANGE_REQUIRED" | "ARCHITECTURE_CHANGE_REQUIRED" => Actor::Assisted,
+        _ => Actor::Auto,
+    }
+}
+
+fn attention(
+    bootstrap: &WorkflowStatus,
+    features: &[FeatureStatus],
+    current_feature: Option<&str>,
+) -> Vec<AttentionItem> {
+    let item = |subject: &str, workflow: &WorkflowStatus| AttentionItem {
+        subject: subject.into(),
+        checkpoint: workflow.current_checkpoint.clone(),
+        issue: workflow.primary_issue.clone(),
+        next_action: workflow.next_action.clone(),
+        actor: workflow.actor,
+    };
+    let mut items = Vec::new();
+    if bootstrap.status != DisplayStatus::Complete {
+        items.push(item("bootstrap", bootstrap));
+    }
+    let mut incomplete: Vec<_> = features
+        .iter()
+        .filter(|feature| feature.workflow.status != DisplayStatus::Complete)
+        .collect();
+    // Features are already in ID order; the stable sort keeps it within each rank.
+    incomplete.sort_by_key(|feature| {
+        if current_feature == Some(feature.id.as_str()) {
+            0
+        } else if feature.historically_accepted && !feature.current_acceptance_valid {
+            1
+        } else {
+            2
+        }
+    });
+    items.extend(
+        incomplete
+            .into_iter()
+            .map(|feature| item(&feature.id, &feature.workflow)),
+    );
+    items
+}
+
+fn open_observations(project: &Project) -> Result<Vec<OpenObservation>> {
+    let store = crate::observations::ObservationStore::at(&project.codeos_dir());
+    let mut open = Vec::new();
+    for observation in store.observations()? {
+        if store.closure(&observation.id)?.is_some() {
+            continue;
+        }
+        let route = store.route(&observation.id)?;
+        open.push(OpenObservation {
+            id: observation.id,
+            target: route.as_ref().and_then(|route| {
+                route.target_id.as_ref().map(|id| match &route.target_type {
+                    Some(kind) => format!("{kind} {id}"),
+                    None => id.clone(),
+                })
+            }),
+            route: route.map(|route| route.route),
+        });
+    }
+    Ok(open)
 }
 
 fn acceptance_snapshot(project: &Project, subject: &str) -> Result<Option<AcceptedSnapshot>> {
@@ -396,21 +495,32 @@ pub fn render(status: &ProjectStatus) -> String {
                 ));
             }
         }
-        if let Some(action) = feature.workflow.next_action.as_deref() {
-            out.push_str(&format!("\nNEXT ACTION\n  {action}\n"));
+        render_next_action(&mut out, &feature.workflow);
+    } else if status.attention.len() > 1 {
+        out.push_str("\nATTENTION\n");
+        for item in &status.attention {
+            if let Some(issue) = item.issue.as_deref() {
+                out.push_str(&format!("  {} — {}\n", item.subject, issue));
+            }
+            if let Some(action) = item.next_action.as_deref() {
+                out.push_str(&format!("    next{}: {action}\n", actor_tag(item.actor)));
+            }
         }
     } else if status.bootstrap.status != DisplayStatus::Complete {
         render_issue(&mut out, &status.bootstrap);
-    } else if incomplete > 1 {
-        out.push_str("\nCURRENT ISSUES\n");
-        for feature in status
-            .features
-            .iter()
-            .filter(|feature| feature.workflow.status != DisplayStatus::Complete)
-        {
-            if let Some(issue) = feature.workflow.primary_issue.as_deref() {
-                out.push_str(&format!("  {} — {}\n", feature.id, issue));
-            }
+    }
+    if !status.open_observations.is_empty() {
+        out.push_str("\nOPEN OBSERVATIONS\n");
+        for observation in &status.open_observations {
+            out.push_str(&format!(
+                "  {}  {}\n",
+                observation.id,
+                match (&observation.route, &observation.target) {
+                    (Some(route), Some(target)) => format!("routed: {route} → {target}"),
+                    (Some(route), None) => format!("routed: {route}"),
+                    _ => "not routed".into(),
+                }
+            ));
         }
     }
     out.trim_end().to_string()
@@ -444,7 +554,10 @@ pub fn render_targeted_feature(feature: &FeatureStatus) -> String {
         ));
     }
     match feature.workflow.next_action.as_deref() {
-        Some(action) => out.push_str(&format!("\nNEXT\n  {action}\n")),
+        Some(action) => out.push_str(&format!(
+            "\nNEXT{}\n  {action}\n",
+            actor_tag(feature.workflow.actor)
+        )),
         None => out.push_str("\nNEXT\n  nothing blocked — accepted snapshot is current\n"),
     }
     out.trim_end().to_string()
@@ -458,9 +571,22 @@ fn render_issue(out: &mut String, status: &WorkflowStatus) {
             issue
         ));
     }
+    render_next_action(out, status);
+}
+
+fn render_next_action(out: &mut String, status: &WorkflowStatus) {
     if let Some(action) = status.next_action.as_deref() {
-        out.push_str(&format!("\nNEXT ACTION\n  {action}\n"));
+        out.push_str(&format!(
+            "\nNEXT ACTION{}\n  {action}\n",
+            actor_tag(status.actor)
+        ));
     }
+}
+
+fn actor_tag(actor: Option<Actor>) -> String {
+    actor
+        .map(|actor| format!(" [{}]", actor.label()))
+        .unwrap_or_default()
 }
 
 fn summarize(reports: &[CheckpointReport]) -> WorkflowStatus {
@@ -494,6 +620,7 @@ fn summarize(reports: &[CheckpointReport]) -> WorkflowStatus {
         primary_issue,
         additional_issue_count,
         next_action: current.and_then(|report| report.next_action.clone()),
+        actor: current.and_then(|report| report.actor),
         checkpoints: reports
             .iter()
             .map(|report| CheckpointStatus {
@@ -723,6 +850,7 @@ mod tests {
             met: vec![],
             unmet: unmet.iter().map(|value| value.to_string()).collect(),
             next_action: (state != State::Pass).then(|| "take the next action".into()),
+            actor: None,
         }
     }
 

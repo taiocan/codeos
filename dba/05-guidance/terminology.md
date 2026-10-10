@@ -12,6 +12,7 @@ Ordinary technical vocabulary does not belong here. Git preserves the history of
 
 | Term | Definition |
 |---|---|
+| **Actor class** | Who may execute a reported next action: `AUTO` (a deterministic CodeOS command may run the mechanical step without human initiation), `ASSISTED` (an agent or tool may perform bounded work), or `HUMAN` (human judgment or authority is required). It grants no approval, acceptance, or decision authority; a reviewer's judgment stays advisory and F8 and F9 stay human. |
 | **Alias** | An alternative input form accepted for compatibility, migration, or user preference and resolved before domain logic runs. |
 | **Architecture Scope** | The single artifact for one project-level architectural scope. Its filename identifies the scope; it owns feature membership, structural decisions, and recorded human approval and cannot invent or alter behavior. |
 | **Architecture Impact Report** | A deterministic, non-authoritative comparison of accepted and proposed architecture that identifies changed feature-scoped architecture identities, affected features, and unresolved ambiguity before human approval. |

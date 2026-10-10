@@ -40,6 +40,48 @@ impl State {
     }
 }
 
+/// Actor class: who may execute a reported next action. It grants no approval, acceptance, or
+/// decision authority.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum Actor {
+    /// A deterministic CodeOS command may execute the step without human initiation.
+    Auto,
+    /// An agent or tool may perform bounded work.
+    Assisted,
+    /// Human judgment or authority is required.
+    Human,
+}
+
+impl Actor {
+    pub fn label(self) -> &'static str {
+        match self {
+            Self::Auto => "AUTO",
+            Self::Assisted => "ASSISTED",
+            Self::Human => "HUMAN",
+        }
+    }
+
+    /// The actor for a requirement's next action when it needs no repair work first.
+    fn default_for(requirement: &Requirement) -> Self {
+        match requirement {
+            Requirement::CharterApproved
+            | Requirement::SpecPackageApproved
+            | Requirement::Receipt { .. }
+            | Requirement::ObservationStated
+            | Requirement::ObservationRouted
+            | Requirement::RouteResolution => Self::Human,
+            Requirement::LiveVerification { .. }
+            | Requirement::ProductionSourceEvidence
+            | Requirement::ReviewRecord { .. } => Self::Auto,
+            Requirement::CodeosYamlValid
+            | Requirement::SemanticPackageRevision
+            | Requirement::ContractSection(_)
+            | Requirement::ProductJourneyContribution => Self::Assisted,
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct CheckpointReport {
     pub id: String,
@@ -48,6 +90,7 @@ pub struct CheckpointReport {
     pub met: Vec<String>,
     pub unmet: Vec<String>,
     pub next_action: Option<String>,
+    pub actor: Option<Actor>,
 }
 
 /// A feature subject with its applicability resolved from the Contract.
@@ -121,9 +164,10 @@ pub fn evaluate(project: &Project, subject: &Subject) -> Result<Vec<CheckpointRe
                 .filter(|r| matches!(r.id.as_str(), "B1" | "B2" | "B3" | "B4"))
                 .all(|r| r.state == State::Pass);
             if !boot_complete {
-                let blocker = boot_reports
+                let blocking = boot_reports
                     .iter()
-                    .find(|r| matches!(r.state, State::Blocked | State::Waiting))
+                    .find(|r| matches!(r.state, State::Blocked | State::Waiting));
+                let blocker = blocking
                     .map(|r| r.id.clone())
                     .unwrap_or_else(|| "B?".into());
                 reports.push(CheckpointReport {
@@ -138,6 +182,7 @@ pub fn evaluate(project: &Project, subject: &Subject) -> Result<Vec<CheckpointRe
                         "run `codeos-workflow check --workflow bootstrap --subject solution`"
                             .into(),
                     ),
+                    actor: blocking.and_then(|r| r.actor),
                 });
                 all_prior_pass = false;
             } else {
@@ -148,6 +193,7 @@ pub fn evaluate(project: &Project, subject: &Subject) -> Result<Vec<CheckpointRe
                     met: vec!["Bootstrap B1–B4 are PASS".into()],
                     unmet: vec![],
                     next_action: None,
+                    actor: None,
                 });
             }
         }
@@ -163,16 +209,16 @@ pub fn evaluate(project: &Project, subject: &Subject) -> Result<Vec<CheckpointRe
                 met: vec![],
                 unmet: vec![],
                 next_action: None,
+                actor: None,
             });
             continue;
         }
 
         if !all_prior_pass {
-            let blocker = reports
+            let blocking = reports
                 .iter()
-                .find(|r| r.state == State::Blocked || r.state == State::Waiting)
-                .map(|r| r.id.clone())
-                .unwrap_or_default();
+                .find(|r| r.state == State::Blocked || r.state == State::Waiting);
+            let blocker = blocking.map(|r| r.id.clone()).unwrap_or_default();
             reports.push(CheckpointReport {
                 id: c.id.into(),
                 title: c.title.into(),
@@ -180,6 +226,7 @@ pub fn evaluate(project: &Project, subject: &Subject) -> Result<Vec<CheckpointRe
                 met: vec![],
                 unmet: vec![format!("earlier checkpoint {blocker} is not PASS")],
                 next_action: Some(format!("resolve {blocker} first")),
+                actor: blocking.and_then(|r| r.actor),
             });
             continue;
         }
@@ -1074,14 +1121,23 @@ fn evaluate_checkpoint(
     let mut unmet = Vec::new();
     let mut soft = 0usize; // unmet conditions that are only waiting on a human decision
     let mut next_action = None;
+    let mut actor = None;
+    // The requirement evaluated last, and whether its next action repairs a failure rather than
+    // taking that requirement's default step.
+    let mut last = None;
+    let mut repair = false;
 
     for req in &c.requirements {
+        settle_actor(&mut actor, &next_action, last, repair);
+        last = Some(req);
+        repair = false;
         match req {
             Requirement::CharterApproved => {
                 if evidence::approval_recorded(&project.charter())? {
                     met.push("Charter records approval".into());
                 } else if !project.charter().exists() {
                     unmet.push(".codeos/00-project/charter.md does not exist".into());
+                    repair = true;
                     next_action.get_or_insert(
                         "establish the Solution Charter (support-solution-charter.md)".into(),
                     );
@@ -1256,6 +1312,7 @@ fn evaluate_checkpoint(
                                 "{checkpoint} recorded '{}', which does not permit progression here",
                                 r.result
                             ));
+                            repair = true;
                             next_action
                                 .get_or_insert(format!("route per the '{}' outcome", r.result));
                         }
@@ -1290,6 +1347,7 @@ fn evaluate_checkpoint(
                             if r.candidate_outcome.as_deref() != Some("PASSED") {
                                 unmet
                                     .push("current candidate assessment outcome is BLOCKED".into());
+                                repair = true;
                                 next_action.get_or_insert(
                                     "repair the finding and prepare a different candidate".into(),
                                 );
@@ -1350,6 +1408,7 @@ fn evaluate_checkpoint(
                             )?
                         {
                             unmet.push("evidence-closure assessment lacks the required composite review history".into());
+                            repair = true;
                             next_action.get_or_insert(
                                 "restore the exact authorized evidence-closure chain".into(),
                             );
@@ -1362,6 +1421,7 @@ fn evaluate_checkpoint(
                             )?
                         {
                             unmet.push("infrastructure revalidation lacks the required immutable composite history".into());
+                            repair = true;
                             next_action.get_or_insert(
                                 "restore the exact authorized infrastructure-revalidation chain"
                                     .into(),
@@ -1378,6 +1438,7 @@ fn evaluate_checkpoint(
                                 "evidence reassessment lacks a valid immutable composite history"
                                     .into(),
                             );
+                            repair = true;
                             next_action.get_or_insert("restore the exact evidence-repair chain or supply materially new evidence".into());
                         } else if r.review_id.ends_with("__LINEAGE-REPLACEMENT-CORRECTION-1")
                             && !evidence::lineage_replacement_correction_history_permits_progression(
@@ -1388,6 +1449,7 @@ fn evaluate_checkpoint(
                             )?
                         {
                             unmet.push("lineage replacement correction lacks the required immutable correction history".into());
+                            repair = true;
                             next_action.get_or_insert(
                                 "restore the exact authorized assessment-input correction chain".into(),
                             );
@@ -1400,6 +1462,7 @@ fn evaluate_checkpoint(
                             )?
                         {
                             unmet.push("lineage replacement lacks the required immutable invalid-applicability history".into());
+                            repair = true;
                             next_action.get_or_insert(
                                 "restore the exact authorized lineage-replacement chain".into(),
                             );
@@ -1416,6 +1479,7 @@ fn evaluate_checkpoint(
                                 "terminal review closure lacks the required immutable repair chain"
                                     .into(),
                             );
+                            repair = true;
                             next_action.get_or_insert(
                                 "restore the exact authorized terminal repair closure chain".into(),
                             );
@@ -1424,6 +1488,7 @@ fn evaluate_checkpoint(
                                 "reviewer concern '{}' does not permit progression",
                                 r.effective_concern
                             ));
+                            repair = true;
                             next_action.get_or_insert("resolve the reviewer's finding".into());
                         } else {
                             met.push(format!("reviewer record present ({})", r.effective_concern));
@@ -1531,6 +1596,7 @@ fn evaluate_checkpoint(
                             })
                             .unwrap_or("latest current verification attempt failed");
                         unmet.push(format!("{name} failed: {reason}"));
+                        repair = true;
                         next_action.get_or_insert(format!(
                             "repair the failure and re-run `codeos-workflow check` for {name}"
                         ));
@@ -1678,6 +1744,7 @@ fn evaluate_checkpoint(
             }
         }
     }
+    settle_actor(&mut actor, &next_action, last, repair);
 
     // Blocked if any unmet condition is a real evidence gap; Waiting if the only thing missing is a
     // human decision the tool must not make itself.
@@ -1697,7 +1764,28 @@ fn evaluate_checkpoint(
         met,
         unmet,
         next_action,
+        actor: if state == State::Waiting {
+            Some(Actor::Human)
+        } else {
+            actor
+        },
     })
+}
+
+/// Assign the actor of the first next action once the requirement that produced it is known.
+fn settle_actor(
+    actor: &mut Option<Actor>,
+    next_action: &Option<String>,
+    last: Option<&Requirement>,
+    repair: bool,
+) {
+    if let (None, Some(_), Some(requirement)) = (*actor, next_action, last) {
+        *actor = Some(if repair {
+            Actor::Assisted
+        } else {
+            Actor::default_for(requirement)
+        });
+    }
 }
 
 /// `check`: execute every mechanical verification this subject needs whose record is absent or
@@ -3081,5 +3169,20 @@ mod journey_tests {
         assert_ne!(parsed.source_kind, "production");
         let extra = fixture.replace("\"schema\":1", "\"schema\":1,\"made_up\":true");
         assert!(serde_json::from_str::<ProductionEvidence>(&extra).is_err());
+    }
+
+    #[test]
+    fn human_validation_and_acceptance_are_never_executed_by_codeos() {
+        for version in 1..=9 {
+            for checkpoint in contract_for(Workflow::Feature, version, 2) {
+                for requirement in &checkpoint.requirements {
+                    if let Requirement::Receipt { checkpoint, .. } = requirement {
+                        if matches!(*checkpoint, "final_ux_validation" | "acceptance") {
+                            assert_eq!(Actor::default_for(requirement), Actor::Human);
+                        }
+                    }
+                }
+            }
+        }
     }
 }

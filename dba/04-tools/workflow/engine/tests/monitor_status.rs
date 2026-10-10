@@ -170,3 +170,140 @@ fn targeted_status_remains_available_and_json_rejects_a_target() {
     assert!(!invalid.status.success());
     assert!(String::from_utf8_lossy(&invalid.stderr).contains("cannot be used with"));
 }
+
+fn dba25_project() -> tempfile::TempDir {
+    let dir = project();
+    let root = dir.path();
+    std::os::unix::fs::symlink(
+        std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../../.."),
+        root.join(".codeos/toolkit"),
+    )
+    .unwrap();
+    fs::write(
+        root.join(".codeos/00-project/codeos.yaml"),
+        "codeos_schema: 2\ndba_configuration: DBA-25\n",
+    )
+    .unwrap();
+    for (dir, suffix) in [
+        ("intents", ".md"),
+        ("contracts", "_contract.md"),
+        ("event-schemas", "_schema.md"),
+    ] {
+        let dir = root.join(".codeos/01-specification").join(dir);
+        fs::create_dir_all(&dir).unwrap();
+        for feature in ["F-0002", "F-0003"] {
+            fs::write(dir.join(format!("{feature}{suffix}")), "draft\n").unwrap();
+        }
+    }
+    // F-0002 was accepted against an Intent that has since changed.
+    fs::create_dir_all(root.join(".codeos/06-workflow")).unwrap();
+    fs::write(
+        root.join(".codeos/06-workflow/decisions.jsonl"),
+        r#"{"workflow":"feature","subject":"F-0002","checkpoint":"acceptance","result":"accepted","bindings":{"intent":"old"},"timestamp":"2026-10-01T00:00:00Z"}
+"#,
+    )
+    .unwrap();
+    dir
+}
+
+fn snapshot(root: &std::path::Path) -> Vec<(std::path::PathBuf, Vec<u8>)> {
+    let mut files = Vec::new();
+    let mut pending = vec![root.join(".codeos")];
+    while let Some(dir) = pending.pop() {
+        for entry in fs::read_dir(dir).unwrap() {
+            let path = entry.unwrap().path();
+            if path.is_symlink() {
+                continue;
+            }
+            if path.is_dir() {
+                pending.push(path);
+            } else {
+                files.push((path.clone(), fs::read(&path).unwrap()));
+            }
+        }
+    }
+    files.sort();
+    files
+}
+
+#[test]
+fn attention_follows_workflow_order_with_actor_classes() {
+    let project = dba25_project();
+    let receipts = project.path().join(".codeos/06-workflow/decisions.jsonl");
+    assert!(fs::read_to_string(&receipts).unwrap().contains("F-0002"));
+    let before = snapshot(project.path());
+
+    let output = run(&project, &["status", "--json"]);
+    assert_eq!(
+        output.status.code(),
+        Some(2),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let json: Value = serde_json::from_slice(&output.stdout).unwrap();
+    assert_eq!(json["schema_version"], 3);
+    let attention = json["attention"].as_array().unwrap();
+    let subjects: Vec<_> = attention
+        .iter()
+        .map(|item| item["subject"].as_str().unwrap())
+        .filter(|subject| subject.starts_with("F-"))
+        .collect();
+    assert_eq!(subjects, ["F-0002", "F-0001", "F-0003"]);
+    let stale = attention
+        .iter()
+        .find(|item| item["subject"] == "F-0002")
+        .unwrap();
+    assert_eq!(stale["checkpoint"], "F1");
+    assert_eq!(stale["actor"], "ASSISTED");
+    assert!(attention.iter().all(|item| item["actor"].is_string()));
+
+    let rendered = String::from_utf8_lossy(&run(&project, &["status"]).stdout).to_string();
+    assert!(rendered.contains("ATTENTION"), "{rendered}");
+    assert!(rendered.contains("next [ASSISTED]: start ordinary governed work at F1"));
+    assert_eq!(before, snapshot(project.path()));
+}
+
+#[test]
+fn open_observations_are_listed_until_closed() {
+    let project = dba25_project();
+    let observed = run(&project, &["observe", "--statement", "slow route lookup"]);
+    assert!(
+        observed.status.success(),
+        "{}",
+        String::from_utf8_lossy(&observed.stderr)
+    );
+
+    let json: Value = serde_json::from_slice(&run(&project, &["status", "--json"]).stdout).unwrap();
+    assert_eq!(
+        json["open_observations"],
+        serde_json::json!([{"id": "OBS-0001", "route": null, "target": null}])
+    );
+    assert!(String::from_utf8_lossy(&run(&project, &["status"]).stdout)
+        .contains("OPEN OBSERVATIONS\n  OBS-0001  not routed"));
+
+    for args in [
+        &[
+            "route-observation",
+            "--observation",
+            "OBS-0001",
+            "--route",
+            "no_action",
+        ][..],
+        &[
+            "close-observation",
+            "--observation",
+            "OBS-0001",
+            "--rationale",
+            "accepted as is",
+        ],
+    ] {
+        let output = run(&project, args);
+        assert!(
+            output.status.success(),
+            "{}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
+    let json: Value = serde_json::from_slice(&run(&project, &["status", "--json"]).stdout).unwrap();
+    assert_eq!(json["open_observations"], serde_json::json!([]));
+}
