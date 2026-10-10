@@ -840,6 +840,18 @@ mod tests {
                 .as_ref()
         );
         assert!(bindings.contains_key("implementation_state"));
+
+        let qualification = checker::verification_bindings_for_mechanic(
+            &project,
+            &subject,
+            "candidate",
+            "project_qualification",
+        )
+        .unwrap();
+        assert!(qualification.contains_key("intent"));
+        assert!(qualification.contains_key("contract"));
+        assert!(qualification.contains_key("event_schema"));
+        assert!(qualification.contains_key("implementation_state"));
     }
 
     #[test]

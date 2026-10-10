@@ -2263,7 +2263,7 @@ fn verification_bindings(
         }
         // Every feature mechanical verification: the approved Specification Package plus the current
         // implementation. Revising the spec, or changing the implementation, re-blocks it.
-        "F3" | "F5" | "F5d" | "F5g" | "F7" | "F9" => {
+        "F3" | "F5" | "F5d" | "F5g" | "F7" | "F9" | "candidate" => {
             put(&mut b, "intent", &project.intent(&subject.id))?;
             put(&mut b, "contract", &project.contract(&subject.id))?;
             put(&mut b, "event_schema", &project.event_schema(&subject.id))?;
