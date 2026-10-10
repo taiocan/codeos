@@ -77,6 +77,52 @@ printf '{"schema":1,"project":"fixture","implementation_sha256":"%s","charter_sh
 }
 
 #[test]
+fn acceptance_qualification_cli_persists_subject_bound_candidate_evidence() {
+    let fx = Fx::new();
+    fs::create_dir_all(fx.root.join("scripts")).unwrap();
+    fs::write(
+        fx.root.join(".codeos/01-specification/intents/F-0001.md"),
+        "---\nsemantic_revision: 1\n---\n",
+    )
+    .unwrap();
+    let script = fx.root.join("scripts/codeos-qualify");
+    fs::write(
+        &script,
+        r#"#!/usr/bin/env bash
+set -eu
+printf '{"schema":1,"project":"fixture","implementation_sha256":"%s","charter_sha256":"%s","configuration_sha256":"%s","tools":{"fixture":"1"},"constraints":[{"id":"C-1","phase":"acceptance","status":"pass","evidence":["fixture"],"measurements":{}}],"baseline":[{"id":"static_analysis","status":"pass","tool":"fixture","version":"1","summary":"ok"},{"id":"dependency_vulnerabilities","status":"pass","tool":"fixture","version":"1","summary":"ok"},{"id":"dependency_licences","status":"pass","tool":"fixture","version":"1","summary":"ok"},{"id":"committed_secrets","status":"pass","tool":"fixture","version":"1","summary":"ok"}]}' "$CODEOS_IMPLEMENTATION_SHA256" "$CODEOS_CHARTER_SHA256" "$CODEOS_CONFIGURATION_SHA256" > "$CODEOS_QUALIFICATION_OUTPUT"
+"#,
+    )
+    .unwrap();
+    let mut permissions = script.metadata().unwrap().permissions();
+    permissions.set_mode(0o755);
+    fs::set_permissions(&script, permissions).unwrap();
+
+    let status = std::process::Command::new(env!("CARGO_BIN_EXE_codeos-workflow"))
+        .args([
+            "--project",
+            fx.root.to_str().unwrap(),
+            "qualify-project",
+            "--mode",
+            "acceptance",
+            "--subject",
+            "F-0001",
+        ])
+        .status()
+        .unwrap();
+    assert!(status.success());
+
+    let record = codeos_workflow::verification::VerificationStore::at(&fx.project().codeos_dir())
+        .latest("feature", "F-0001", "candidate", "project_qualification")
+        .unwrap()
+        .unwrap();
+    assert_eq!(record.result, "passed");
+    assert!(record.bindings.contains_key("charter"));
+    assert!(record.bindings.contains_key("qualification_script"));
+    assert!(record.bindings.contains_key("codeos_yaml"));
+}
+
+#[test]
 fn observations_have_independent_identity_route_and_closure() {
     let fx = Fx::new();
     fs::write(

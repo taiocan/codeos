@@ -1,10 +1,11 @@
 //! The append-only mechanical-verification store: `.codeos/06-workflow/verifications.jsonl`.
 //!
-//! A verification record is evidence that a mechanical verification actually executed and passed
-//! against a specific state. Only `check` writes one, and only on success. It makes no adequacy
+//! A verification record is evidence that a mechanical verification actually executed against a
+//! specific state. `check` writes lifecycle verification; `qualify-project` writes the
+//! pre-candidate qualification result. It makes no adequacy
 //! judgment — it does not claim the behavior is correct, only that the named verification ran and
-//! passed against the bound inputs. It stops establishing its checkpoint the moment any bound input
-//! no longer matches its current hash.
+//! records its result against the bound inputs. A passing record stops establishing its condition
+//! the moment any bound input no longer matches its current hash.
 
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
@@ -20,7 +21,7 @@ pub struct VerificationRecord {
     pub checkpoint: String,
     /// The verification identity, e.g. `smoke`, `behavior`, `baseline`.
     pub verification: String,
-    /// `passed`, or under Workflow Governance v2, `failed` for product-journey attempts.
+    /// `passed`; `failed` is retained for product-journey attempts and project qualification.
     pub result: String,
     /// Named governed inputs / implementation state -> content hash at execution time.
     pub bindings: BTreeMap<String, String>,

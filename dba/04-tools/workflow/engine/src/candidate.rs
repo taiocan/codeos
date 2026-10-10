@@ -4,7 +4,7 @@ use crate::checker::{self, State, Subject};
 use crate::hashing;
 use crate::project::Project;
 use crate::receipts::ReceiptStore;
-use crate::verification::VerificationStore;
+use crate::verification::{self, RecordState, VerificationStore};
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
@@ -157,7 +157,24 @@ pub fn prepare(
 
     let mut verification_records = BTreeMap::new();
     let store = VerificationStore::at(&project.codeos_dir());
+    let qualification_bindings = checker::verification_bindings_for_mechanic(
+        project,
+        subject,
+        "candidate",
+        "project_qualification",
+    )?;
+    let qualification =
+        store.latest("feature", &subject.id, "candidate", "project_qualification")?;
+    let qualification =
+        require_pre_candidate_qualification(qualification, &qualification_bindings)?;
+    verification_records.insert(
+        "candidate/project_qualification".into(),
+        hashing::record_identity(&qualification)?,
+    );
     for (checkpoint, mechanic) in checker::required_verification_records(project, subject)? {
+        if mechanic == "project_qualification" {
+            continue;
+        }
         let record = store
             .latest("feature", &subject.id, checkpoint, mechanic)?
             .with_context(|| {
@@ -267,6 +284,24 @@ pub fn prepare(
     };
     let id = CandidateStore::at(&project.codeos_dir()).write(&bundle)?;
     Ok((id, bundle))
+}
+
+fn require_pre_candidate_qualification(
+    record: Option<crate::verification::VerificationRecord>,
+    bindings: &BTreeMap<String, String>,
+) -> Result<crate::verification::VerificationRecord> {
+    match verification::evaluate(record, bindings) {
+        RecordState::Current(record) => Ok(record),
+        RecordState::Absent => {
+            anyhow::bail!("candidate requires a passed pre-candidate project qualification")
+        }
+        RecordState::Failed(_) => {
+            anyhow::bail!("candidate pre-candidate project qualification failed")
+        }
+        RecordState::Stale { binding, .. } => anyhow::bail!(
+            "candidate pre-candidate project qualification is stale: {binding} changed"
+        ),
+    }
 }
 
 /// Product/governed currency used after acceptance. Test and evidence changes do not change the
@@ -805,5 +840,70 @@ mod tests {
                 .as_ref()
         );
         assert!(bindings.contains_key("implementation_state"));
+    }
+
+    #[test]
+    fn pre_candidate_qualification_fails_closed_when_missing_failed_or_stale() {
+        let bindings = BTreeMap::from([("implementation_state".into(), "current".into())]);
+        let record = crate::verification::VerificationRecord {
+            workflow: "feature".into(),
+            subject: "F-1".into(),
+            checkpoint: "candidate".into(),
+            verification: "project_qualification".into(),
+            result: "passed".into(),
+            bindings: bindings.clone(),
+            command: "scripts/codeos-qualify".into(),
+            timestamp: "2026-10-10T00:00:00Z".into(),
+            details: None,
+        };
+
+        assert!(require_pre_candidate_qualification(Some(record.clone()), &bindings).is_ok());
+        assert!(require_pre_candidate_qualification(None, &bindings).is_err());
+
+        let mut failed = record.clone();
+        failed.result = "failed".into();
+        assert!(require_pre_candidate_qualification(Some(failed), &bindings).is_err());
+
+        let stale = BTreeMap::from([("implementation_state".into(), "changed".into())]);
+        assert!(require_pre_candidate_qualification(Some(record), &stale).is_err());
+    }
+
+    #[test]
+    fn pre_candidate_qualification_does_not_replace_f7_f8_or_f9() {
+        use crate::contract::{contract_for, Applies, Requirement, Workflow};
+
+        let contract = contract_for(Workflow::Feature, 9, 2);
+        let f7 = contract
+            .iter()
+            .find(|checkpoint| checkpoint.id == "F7")
+            .unwrap();
+        let f8 = contract
+            .iter()
+            .find(|checkpoint| checkpoint.id == "F8")
+            .unwrap();
+        let f9 = contract
+            .iter()
+            .find(|checkpoint| checkpoint.id == "F9")
+            .unwrap();
+
+        assert!(f7
+            .requirements
+            .iter()
+            .any(|requirement| matches!(requirement, Requirement::ReviewRecord { stage: "8" })));
+        assert_eq!(f8.applies, Applies::WhenGui);
+        assert!(f8.requirements.iter().any(|requirement| matches!(
+            requirement,
+            Requirement::Receipt {
+                checkpoint: "final_ux_validation",
+                ..
+            }
+        )));
+        assert!(f9.requirements.iter().any(|requirement| matches!(
+            requirement,
+            Requirement::Receipt {
+                checkpoint: "acceptance",
+                ..
+            }
+        )));
     }
 }

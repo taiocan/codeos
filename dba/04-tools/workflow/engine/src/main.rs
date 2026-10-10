@@ -8,6 +8,7 @@ use codeos_workflow::observations::{ClosureEvidence, ObservationStore};
 use codeos_workflow::project::Project;
 use codeos_workflow::receipts::{Receipt, ReceiptStore, RECEIPT_CHECKPOINTS};
 use codeos_workflow::revalidation;
+use codeos_workflow::verification::{VerificationRecord, VerificationStore};
 use codeos_workflow::{monitor, report, EXIT_BLOCKED, EXIT_ERROR, EXIT_SUCCESS, EXIT_USAGE};
 use std::path::PathBuf;
 use std::process;
@@ -95,6 +96,9 @@ struct CloseObservationArgs {
 struct QualifyProjectArgs {
     #[arg(long, value_parser = ["acceptance", "deployment"])]
     mode: String,
+    /// Feature whose current evidence identity the pre-candidate qualification is bound to.
+    #[arg(long)]
+    subject: Option<String>,
 }
 
 #[derive(clap::Args)]
@@ -330,6 +334,30 @@ fn run(cli: &Cli, start: &std::path::Path) -> Result<i32> {
                 "project qualification requires Feature workflow v9"
             );
             let outcome = codeos_workflow::qualification::run(&project, &args.mode);
+            if args.mode == "acceptance" {
+                let id = args
+                    .subject
+                    .as_deref()
+                    .context("acceptance qualification requires --subject for candidate binding")?;
+                let subject = Subject::resolve(&project, Workflow::Feature, id)?;
+                let bindings = checker::verification_bindings_for_mechanic(
+                    &project,
+                    &subject,
+                    "candidate",
+                    "project_qualification",
+                )?;
+                VerificationStore::at(&project.codeos_dir()).append(&VerificationRecord {
+                    workflow: "feature".into(),
+                    subject: subject.id,
+                    checkpoint: "candidate".into(),
+                    verification: "project_qualification".into(),
+                    result: if outcome.ok { "passed" } else { "failed" }.into(),
+                    bindings,
+                    command: outcome.command.clone(),
+                    timestamp: chrono::Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string(),
+                    details: outcome.details.clone(),
+                })?;
+            }
             println!("{}", outcome.summary);
             if let Some(details) = outcome.details {
                 println!("{}", serde_json::to_string_pretty(&details)?);
