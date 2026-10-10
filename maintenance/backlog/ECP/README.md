@@ -12,7 +12,7 @@ context only; the Charter and Git are authoritative.
 | [WO-05](WO-05-structured-action.md) | ECP-5 | NORMAL | Structured action | Implemented |
 | [WO-06](WO-06-jamfree-validation.md) | Real use | NORMAL | JamFree pilot validation | Implemented |
 | [WO-07](WO-07-auto-execution-decision.md) | ECP-6 | PROTECTED | Bounded AUTO execution — decision brief | Proposed |
-| [WO-08](WO-08-terminal-acceptance-clarity.md) | Presentation | NORMAL | Terminal acceptance and health clarity | Proposed |
+| [WO-08](WO-08-terminal-acceptance-clarity.md) | Presentation | NORMAL | Terminal acceptance and health clarity | Implemented |
 | [WO-09](WO-09-history-attribution.md) | ECP-4 | NORMAL | Process history attribution | Implemented |
 
 Each WO follows the previous one (WO-04 needs only WO-01 but stays in sequence). WO-08 and WO-09

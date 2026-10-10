@@ -357,6 +357,57 @@ fn attention_follows_workflow_order_with_actor_classes() {
         rendered.contains("(SEMANTIC_CHANGE_REQUIRED)"),
         "{rendered}"
     );
+
+    // Accepted Snapshot and Current Validity are shown apart from incomplete work (WO-08).
+    assert!(
+        rendered.contains(
+            "  Active feature     none derived — 2 not yet accepted; 1 accepted, currently STALE\n"
+        ),
+        "{rendered}"
+    );
+    assert!(!rendered.contains("incomplete"), "{rendered}");
+    let line = |id: &str| {
+        rendered
+            .lines()
+            .find(|line| line.starts_with(&format!("  {id}  ")))
+            .unwrap()
+            .to_string()
+    };
+    assert!(
+        line("F-0002").ends_with(
+            "  accepted snapshot 2026-10-01 · current validity STALE (SEMANTIC_CHANGE_REQUIRED)"
+        ),
+        "{rendered}"
+    );
+    assert!(!line("F-0001").contains("accepted snapshot"));
+    // Each domain carries its basis verbatim and in order, inline or indented beneath it.
+    let section = rendered
+        .split("ENGINEERING HEALTH\n")
+        .nth(1)
+        .unwrap()
+        .split("\n\n")
+        .next()
+        .unwrap();
+    let mut shown = section.lines().peekable();
+    for item in health {
+        let head = shown.next().unwrap();
+        let bases: Vec<&str> = item["basis"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|b| b.as_str().unwrap())
+            .collect();
+        match bases.as_slice() {
+            [] => {}
+            [basis] => assert!(head.ends_with(&format!(" — {basis}")), "{head}"),
+            bases => {
+                for basis in bases {
+                    assert_eq!(shown.next().unwrap(), format!("    {basis}"));
+                }
+            }
+        }
+    }
+    assert!(shown.next().is_none(), "{section}");
     assert_eq!(before, snapshot(project.path()));
 }
 

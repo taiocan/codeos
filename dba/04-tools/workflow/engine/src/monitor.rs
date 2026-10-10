@@ -599,11 +599,17 @@ pub fn render(status: &ProjectStatus) -> String {
         status.project.configuration,
         checkpoint_line(&status.bootstrap)
     );
-    let incomplete = status
+    let (stale, not_accepted) = status
         .features
         .iter()
         .filter(|feature| feature.workflow.status != DisplayStatus::Complete)
-        .count();
+        .fold((0, 0), |(stale, not_accepted), feature| {
+            if feature.historically_accepted {
+                (stale + 1, not_accepted)
+            } else {
+                (stale, not_accepted + 1)
+            }
+        });
     match status.current_feature.as_deref() {
         Some(id) => {
             let feature = status
@@ -613,9 +619,20 @@ pub fn render(status: &ProjectStatus) -> String {
                 .unwrap();
             out.push_str(&format!("\n  Active feature     {} — {}", id, feature.name));
         }
-        None if incomplete > 1 => out.push_str(&format!(
-            "\n  Active feature     none derived — {incomplete} incomplete features"
-        )),
+        None if stale + not_accepted > 1 => {
+            let parts = [
+                (not_accepted, "not yet accepted"),
+                (stale, "accepted, currently STALE"),
+            ]
+            .into_iter()
+            .filter(|(count, _)| *count > 0)
+            .map(|(count, label)| format!("{count} {label}"))
+            .collect::<Vec<_>>();
+            out.push_str(&format!(
+                "\n  Active feature     none derived — {}",
+                parts.join("; ")
+            ));
+        }
         None => out.push_str("\n  Active feature     —"),
     }
     out.push_str("\n\nENGINEERING HEALTH\n");
@@ -624,7 +641,17 @@ pub fn render(status: &ProjectStatus) -> String {
             crate::health::HealthStatus::Open => format!("{} OPEN", item.basis.len()),
             status => status.label().into(),
         };
-        out.push_str(&format!("  {:<22}{}\n", item.domain.label(), shown));
+        // The basis is shown verbatim and in order: inline when single, indented otherwise.
+        match item.basis.as_slice() {
+            [] => out.push_str(&format!("  {:<22}{shown}\n", item.domain.label())),
+            [basis] => out.push_str(&format!("  {:<22}{shown} — {basis}\n", item.domain.label())),
+            bases => {
+                out.push_str(&format!("  {:<22}{shown}\n", item.domain.label()));
+                for basis in bases {
+                    out.push_str(&format!("    {basis}\n"));
+                }
+            }
+        }
     }
     out.push_str("\nFEATURES\n");
     if status.features.is_empty() {
@@ -636,8 +663,28 @@ pub fn render(status: &ProjectStatus) -> String {
             } else {
                 ""
             };
+            // Historical acceptance and current validity, shown separately (C-3). The date is
+            // the one recorded in `accepted_at`, without timezone conversion.
+            let acceptance = match (&feature.accepted_snapshot, &feature.current_validity) {
+                (Some(snapshot), Some(validity)) if feature.historically_accepted => {
+                    let reasons = if validity.reasons.is_empty() {
+                        String::new()
+                    } else {
+                        format!(" ({})", validity.reasons.join(", "))
+                    };
+                    format!(
+                        "  accepted snapshot {} · current validity {}{reasons}",
+                        snapshot
+                            .accepted_at
+                            .get(..10)
+                            .unwrap_or(&snapshot.accepted_at),
+                        validity.status
+                    )
+                }
+                _ => String::new(),
+            };
             out.push_str(&format!(
-                "  {}  {}  {}  {}{}\n",
+                "  {}  {}  {}  {}{}{}\n",
                 feature.id,
                 feature.name,
                 feature
@@ -646,6 +693,7 @@ pub fn render(status: &ProjectStatus) -> String {
                     .as_deref()
                     .unwrap_or("—"),
                 feature.workflow.status.label(),
+                acceptance,
                 current
             ));
         }

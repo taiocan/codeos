@@ -59,3 +59,18 @@ the panel exposed it.
 | D — terminal hides the health basis | WO-08 |
 | E — `revalidate_acceptance` has no mechanism | [REVAL](../REVAL-bounded-acceptance-revalidation.md), outside ECP |
 | F — history totals are not localized | [WO-09](WO-09-history-attribution.md), high priority |
+
+### Re-rating after WO-08 and WO-09 — 2026-10-10
+
+Same read-only commands on JamFree; `.codeos/` byte-identical; no TomTom calls.
+
+| # | Was | Now | Closed by |
+|---|---|---|---|
+| 1 | ANSWERED | ANSWERED | gap A closed (WO-08): `none derived — 4 accepted, currently STALE` |
+| 2 | PARTIAL | ANSWERED | gap B closed (WO-08): feature lines show accepted snapshot and current validity |
+| 4 | PARTIAL | ANSWERED | gap D closed (WO-08): every health status shows its basis |
+| 7 | PARTIAL | PARTIAL | gap E remains, routed to REVAL outside ECP; the panel reports it truthfully |
+| 9 | PARTIAL | ANSWERED | gap F closed (WO-09): friction signals located by subject and checkpoint |
+
+Criteria 3, 5, 6, 8, 10 unchanged (ANSWERED). Read-only ECP monitoring scope (ECP-2–ECP-5) is
+complete; the remaining PARTIAL depends on the REVAL capability, not on the projection.
