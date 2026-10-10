@@ -179,6 +179,9 @@ pub struct ProjectStatus {
     pub attention: Vec<AttentionItem>,
     pub open_observations: Vec<OpenObservation>,
     pub health: Vec<crate::health::Health>,
+    /// Present only when requested with `status --history`.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub history: Option<crate::history::History>,
 }
 
 impl ProjectStatus {
@@ -349,6 +352,7 @@ impl ProjectStatus {
             attention,
             open_observations,
             health,
+            history: None,
         })
     }
 

@@ -155,6 +155,13 @@ struct StatusArgs {
     /// Emit the project-wide status projection as JSON.
     #[arg(long)]
     json: bool,
+    /// Show process history: counts and elapsed durations derived from existing records.
+    #[arg(long, conflicts_with = "workflow")]
+    history: bool,
+    /// History window start, inclusive from 00:00:00 UTC (YYYY-MM-DD), or `all`. Default: the
+    /// last 30 days.
+    #[arg(long, requires = "history")]
+    since: Option<String>,
 }
 
 #[derive(clap::Args)]
@@ -464,9 +471,18 @@ fn run(cli: &Cli, start: &std::path::Path) -> Result<i32> {
                 );
                 Ok(report::overall_exit(&reports))
             } else {
-                let status = monitor::ProjectStatus::derive(&project)?;
+                let mut status = monitor::ProjectStatus::derive(&project)?;
+                if args.history {
+                    let start = codeos_workflow::history::window_start(
+                        args.since.as_deref(),
+                        chrono::Utc::now().date_naive(),
+                    )?;
+                    status.history = Some(codeos_workflow::history::derive(&project, start)?);
+                }
                 if args.json {
                     println!("{}", serde_json::to_string_pretty(&status)?);
+                } else if let Some(history) = &status.history {
+                    println!("{}", codeos_workflow::history::render(history));
                 } else {
                     println!("{}", monitor::render(&status));
                 }
