@@ -199,6 +199,13 @@ pub fn derive(
             codeos_workflow::checker::required_verification_records(&project, subject).ok()
         })
         .unwrap_or_default();
+    if manifest.stage == "8" && manifest.candidate_bundle.is_some() {
+        for requirement in &mut required {
+            if requirement.1 == "project_qualification" {
+                requirement.0 = "candidate";
+            }
+        }
+    }
     // Runtime-event verification is optional evidence; when recorded it is bound like the rest.
     let has_runtime_events = store.lines().any(|line| {
         serde_json::from_str::<VerificationRecord>(line).is_ok_and(|record| {
