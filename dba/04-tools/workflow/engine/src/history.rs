@@ -1,6 +1,8 @@
 //! Process history: factual counts and elapsed durations derived read-only from existing records.
 //! A metric counts or times only what a record directly establishes; a time window uses only a
 //! timestamp CodeOS records as the time of the underlying event; no metric attributes cause.
+//! A breakdown locates where recorded friction signals occurred, using only the subject and
+//! checkpoint each counted record carries; it measures neither effort nor cause.
 
 use crate::candidate::CandidateStore;
 use crate::hashing;
@@ -39,6 +41,33 @@ pub struct Metric {
     pub value: Option<u64>,
     pub source: &'static str,
     pub window: Window,
+    /// Where the counted events occurred, ordered by key. With `unattributed` it sums to `value`.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub breakdown: Option<Vec<Part>>,
+    /// Counted events whose record carries no subject.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub unattributed: Option<u64>,
+}
+
+/// The counted events of one metric that share a subject and checkpoint.
+#[derive(Debug, Serialize)]
+pub struct Part {
+    pub subject: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub checkpoint: Option<String>,
+    pub value: u64,
+}
+
+/// Admitted events keyed by the subject and checkpoint their record carries. A metric's value,
+/// breakdown, and unattributed count all derive from this one tally.
+#[derive(Default)]
+struct Tally(BTreeMap<(Option<String>, Option<String>), u64>);
+
+impl Tally {
+    fn add(&mut self, subject: Option<&str>, checkpoint: Option<&str>) {
+        let key = (subject.map(str::to_owned), checkpoint.map(str::to_owned));
+        *self.0.entry(key).or_default() += 1;
+    }
 }
 
 /// One endpoint of an elapsed duration: the record and its event time.
@@ -84,13 +113,26 @@ fn event_time(timestamp: &str) -> Result<DateTime<Utc>> {
         .with_timezone(&Utc))
 }
 
-fn observed(metric: &'static str, value: usize, source: &'static str, window: Window) -> Metric {
+fn observed(metric: &'static str, tally: Tally, source: &'static str, window: Window) -> Metric {
+    let (mut breakdown, mut unattributed) = (Vec::new(), 0);
+    for ((subject, checkpoint), value) in tally.0 {
+        match subject {
+            Some(subject) => breakdown.push(Part {
+                subject,
+                checkpoint,
+                value,
+            }),
+            None => unattributed += value,
+        }
+    }
     Metric {
         metric,
         state: State::Observed,
-        value: Some(value as u64),
+        value: Some(breakdown.iter().map(|part| part.value).sum::<u64>() + unattributed),
         source,
         window,
+        breakdown: Some(breakdown),
+        unattributed: Some(unattributed),
     }
 }
 
@@ -101,6 +143,8 @@ fn unobserved(metric: &'static str, source: &'static str) -> Metric {
         value: None,
         source,
         window: Window::InWindow,
+        breakdown: None,
+        unattributed: None,
     }
 }
 
@@ -118,58 +162,67 @@ pub fn derive(project: &Project, start: Option<NaiveDate>) -> Result<History> {
 
     let mut accepted = BTreeSet::new();
     let mut seen = BTreeSet::new();
-    let mut additional = 0;
+    let mut additional = Tally::default();
     for receipt in &receipts {
+        // Repetition is judged against all earlier receipts, before the window applies.
         let key = (&receipt.workflow, &receipt.subject, &receipt.checkpoint);
         let repeated = !seen.insert(key);
         if !in_window(&receipt.timestamp)? {
             continue;
         }
         if repeated {
-            additional += 1;
+            additional.add(Some(&receipt.subject), Some(&receipt.checkpoint));
         }
         if receipt.checkpoint == "acceptance" && receipt.result == "accepted" {
             accepted.insert(receipt.subject.clone());
         }
     }
-    let mut failed = 0;
+    let mut accepted_features = Tally::default();
+    for subject in &accepted {
+        accepted_features.add(Some(subject), None);
+    }
+    let mut failed = Tally::default();
     for record in VerificationStore::at(&codeos).all()? {
         if record.result != "passed" && in_window(&record.timestamp)? {
-            failed += 1;
+            failed.add(Some(&record.subject), Some(&record.checkpoint));
         }
     }
     let (non_progressing, execution_invalid) = review_log_counts(project, &in_window)?;
-    let mut opened = 0;
+    let mut opened = Tally::default();
     for observation in observations.observations()? {
         if in_window(&observation.timestamp)? {
-            opened += 1;
+            opened.add(None, None);
         }
     }
-    let mut closed = 0;
+    let mut closed = Tally::default();
     for closure in observations.closures()? {
         if in_window(&closure.timestamp)? {
-            closed += 1;
+            closed.add(None, None);
         }
     }
-    let mut defect_routes = 0;
+    let mut defect_routes = Tally::default();
     for route in observations.routes()? {
         if route.route == "implementation_defect" && in_window(&route.timestamp)? {
-            defect_routes += 1;
+            defect_routes.add(route.target_id.as_deref(), None);
         }
+    }
+    let mut bundles = Tally::default();
+    for (_, bundle) in CandidateStore::at(&codeos).all()? {
+        bundles.add(Some(&bundle.feature), None);
     }
 
     use Window::*;
     let metrics = vec![
         observed(
             "accepted_features",
-            accepted.len(),
-            "distinct subjects with an accepted F9 receipt (06-workflow/decisions.jsonl)",
+            accepted_features,
+            "distinct subjects with an accepted F9 receipt in the window (06-workflow/decisions.jsonl)",
             InWindow,
         ),
         observed(
             "additional_decision_receipts",
             additional,
-            "decision receipts with an earlier receipt for the same workflow, subject, and checkpoint",
+            "in-window decision receipts with an earlier receipt, at any time, for the same workflow, subject, and checkpoint",
             InWindow,
         ),
         observed(
@@ -192,20 +245,20 @@ pub fn derive(project: &Project, start: Option<NaiveDate>) -> Result<History> {
         ),
         observed(
             "candidate_bundles",
-            CandidateStore::at(&codeos).all()?.len(),
+            bundles,
             "Candidate Bundles (06-workflow/candidates); they carry no event time",
             AllTime,
         ),
         observed(
             "observations_opened",
             opened,
-            "Observation v2 records",
+            "Observation v2 records; they name no subject",
             InWindow,
         ),
         observed(
             "observations_closed",
             closed,
-            "Observation v2 closure records",
+            "Observation v2 closure records; they name no subject",
             InWindow,
         ),
         observed(
@@ -354,32 +407,41 @@ fn approval_time(value: &str) -> Option<DateTime<Utc>> {
 
 /// Count review-log entries, using each entry's heading timestamp as its event time:
 /// entries whose effective concern does not permit progression, and execution-invalid entries.
+/// Each is located by its heading's subject and stage; an entry whose heading does not parse
+/// still counts, unattributed.
 fn review_log_counts(
     project: &Project,
     in_window: &dyn Fn(&str) -> Result<bool>,
-) -> Result<(usize, usize)> {
+) -> Result<(Tally, Tally)> {
+    let (mut non_progressing, mut invalid) = (Tally::default(), Tally::default());
     let path = project.review_records_dir().join("review-log.md");
     let Ok(text) = std::fs::read_to_string(&path) else {
-        return Ok((0, 0));
+        return Ok((non_progressing, invalid));
     };
-    let (mut non_progressing, mut invalid) = (0, 0);
     for entry in text.split("\n## ").skip(1) {
-        let heading = entry.lines().next().unwrap_or_default();
-        let Some((timestamp, kind)) = heading.split_once(' ') else {
-            continue;
+        let line = entry.lines().next().unwrap_or_default();
+        let heading = crate::evidence::review_heading(line);
+        let (timestamp, kind) = match &heading {
+            Some(heading) => (heading.timestamp, heading.kind),
+            None => match line.split_once(' ') {
+                Some(parts) => parts,
+                None => continue,
+            },
         };
         if !in_window(timestamp)? {
             continue;
         }
+        let stage = heading.as_ref().map(|h| format!("Stage {}", h.stage));
+        let (subject, stage) = (heading.as_ref().map(|h| h.subject), stage.as_deref());
         // The heading the reviewer writes for REVIEW_EXECUTION_INVALID (Reviewer Tool Contract).
         if kind.starts_with("REVIEW EXECUTION INVALID") {
-            invalid += 1;
+            invalid.add(subject, stage);
         }
         let concern = entry
             .lines()
             .find_map(|line| line.strip_prefix("Effective concern: "));
         if concern.is_some_and(|c| !crate::evidence::review_permits_progression(c)) {
-            non_progressing += 1;
+            non_progressing.add(subject, stage);
         }
     }
     Ok((non_progressing, invalid))
@@ -400,7 +462,28 @@ pub fn render(history: &History) -> String {
         } else {
             ""
         };
-        out.push_str(&format!("  {:<30}{value}{scope}\n", metric.metric));
+        let parts = metric.breakdown.as_deref().unwrap_or_default();
+        let unattributed = metric.unattributed.unwrap_or_default();
+        let place = |subject: &str, checkpoint: &Option<String>| match checkpoint {
+            Some(checkpoint) => format!("{subject} {checkpoint}"),
+            None => subject.to_string(),
+        };
+        let inline = match parts {
+            [part] if unattributed == 0 => {
+                format!("  ({})", place(&part.subject, &part.checkpoint))
+            }
+            _ => String::new(),
+        };
+        out.push_str(&format!("  {:<30}{value}{scope}{inline}\n", metric.metric));
+        if inline.is_empty() && !parts.is_empty() {
+            for part in parts {
+                let place = place(&part.subject, &part.checkpoint);
+                out.push_str(&format!("    {place:<27} {}\n", part.value));
+            }
+            if unattributed > 0 {
+                out.push_str(&format!("    {:<27} {unattributed}\n", "unattributed"));
+            }
+        }
     }
     out.push_str("\nDURATIONS (elapsed time, not attributed waiting)\n");
     if history.durations.is_empty() {

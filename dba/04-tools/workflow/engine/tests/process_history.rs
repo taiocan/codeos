@@ -53,6 +53,7 @@ fn fixture() -> tempfile::TempDir {
         &[
             receipt("F-0001", &bound, "2026-09-20T00:00:00Z"),
             receipt("F-0001", &bound, "2026-10-02T00:00:00Z"),
+            receipt("F-0001", &bound, "2026-10-04T00:00:00Z"),
             receipt(
                 "F-0002",
                 &serde_json::json!({"intent": "old"}),
@@ -80,7 +81,7 @@ fn fixture() -> tempfile::TempDir {
     write(
         root,
         ".codeos/05-review/reviews/review-log.md",
-        "# Review log\n\n## 2026-09-01T00:00:00Z REVIEW — F-0001 — Stage 8\nEffective concern: DO NOT ADVANCE\n\n## 2026-10-03T00:00:00Z REVIEW — F-0001 — Stage 8\nEffective concern: DO NOT ADVANCE\n\n## 2026-10-03T06:00:00Z REVIEW — F-0001 — Stage 8\nEffective concern: ADVANCE\n\n## 2026-10-04T00:00:00Z REVIEW EXECUTION INVALID — F-0001 — Stage 8\nResult: REVIEW_EXECUTION_INVALID\n",
+        "# Review log\n\n## 2026-09-01T00:00:00Z REVIEW — F-0001 — Stage 8\nEffective concern: DO NOT ADVANCE\n\n## 2026-10-03T00:00:00Z REVIEW — F-0001 — Stage 8\nEffective concern: DO NOT ADVANCE\n\n## 2026-10-03T06:00:00Z REVIEW — F-0001 — Stage 8\nEffective concern: ADVANCE\n\n## 2026-10-04T00:00:00Z REVIEW EXECUTION INVALID — F-0001 — Stage 8\nResult: REVIEW_EXECUTION_INVALID\n\n## 2026-10-05T00:00:00Z REVIEW\nEffective concern: DO NOT ADVANCE\n",
     );
     write(
         root,
@@ -117,11 +118,14 @@ fn history_counts_only_what_records_establish_within_an_inclusive_utc_window() {
     assert_eq!(history.since, "2026-10-01");
 
     for (name, value) in [
-        // F-0001 (2026-10-02) and F-0002 exactly at the inclusive boundary; distinct subjects.
+        // F-0001 (accepted twice in the window) and F-0002 exactly at the inclusive boundary;
+        // distinct subjects.
         ("accepted_features", 2),
-        ("additional_decision_receipts", 1),
+        // Both in-window F-0001 repeats count, although the first receipt precedes the window.
+        ("additional_decision_receipts", 2),
         ("failed_verifications", 1),
-        ("non_progressing_assessments", 1),
+        // One attributed entry and one malformed heading, which still counts.
+        ("non_progressing_assessments", 2),
         ("execution_invalid", 1),
         ("candidate_bundles", 0),
         ("observations_opened", 1),
@@ -150,7 +154,90 @@ fn history_counts_only_what_records_establish_within_an_inclusive_utc_window() {
     assert_eq!(all.since, "all");
     assert_eq!(metric(&all, "failed_verifications").value, Some(2));
     assert_eq!(metric(&all, "accepted_features").value, Some(2));
-    assert_eq!(metric(&all, "additional_decision_receipts").value, Some(1));
+    assert_eq!(metric(&all, "additional_decision_receipts").value, Some(2));
+}
+
+/// (subject, checkpoint, value) parts, and the unattributed count.
+fn located(history: &history::History, name: &str) -> (Vec<(String, Option<String>, u64)>, u64) {
+    let m = metric(history, name);
+    let parts = m.breakdown.as_ref().unwrap();
+    (
+        parts
+            .iter()
+            .map(|p| (p.subject.clone(), p.checkpoint.clone(), p.value))
+            .collect(),
+        m.unattributed.unwrap(),
+    )
+}
+
+#[test]
+fn breakdowns_locate_exactly_the_counted_events() {
+    let dir = fixture();
+    let project = Project::discover(dir.path()).unwrap();
+    let history = history::derive(&project, NaiveDate::from_ymd_opt(2026, 10, 1)).unwrap();
+    let at = |subject: &str, checkpoint: Option<&str>, value| {
+        (subject.to_string(), checkpoint.map(str::to_string), value)
+    };
+    assert_eq!(
+        located(&history, "accepted_features"),
+        (vec![at("F-0001", None, 1), at("F-0002", None, 1)], 0)
+    );
+    assert_eq!(
+        located(&history, "additional_decision_receipts"),
+        (vec![at("F-0001", Some("acceptance"), 2)], 0)
+    );
+    assert_eq!(
+        located(&history, "failed_verifications"),
+        (vec![at("F-0001", Some("F3"), 1)], 0)
+    );
+    assert_eq!(
+        located(&history, "non_progressing_assessments"),
+        (vec![at("F-0001", Some("Stage 8"), 1)], 1)
+    );
+    assert_eq!(
+        located(&history, "execution_invalid"),
+        (vec![at("F-0001", Some("Stage 8"), 1)], 0)
+    );
+    assert_eq!(
+        located(&history, "implementation_defect_routes"),
+        (vec![at("F-0001", None, 1)], 0)
+    );
+    // Observations name no subject; a later route target is not applied to them.
+    assert_eq!(located(&history, "observations_opened"), (vec![], 1));
+
+    for m in history
+        .metrics
+        .iter()
+        .filter(|m| m.state == State::Observed)
+    {
+        let parts: u64 = m.breakdown.as_ref().unwrap().iter().map(|p| p.value).sum();
+        assert_eq!(
+            Some(parts + m.unattributed.unwrap()),
+            m.value,
+            "{}",
+            m.metric
+        );
+    }
+    for m in history
+        .metrics
+        .iter()
+        .filter(|m| m.state == State::Unobserved)
+    {
+        assert!(
+            m.breakdown.is_none() && m.unattributed.is_none(),
+            "{}",
+            m.metric
+        );
+    }
+
+    let rendered = history::render(&history);
+    // Child values align with the metric's value column.
+    assert!(rendered.contains(&format!(
+        "  {:<30}2\n    {:<28}1\n    {:<28}1\n",
+        "non_progressing_assessments", "F-0001 Stage 8", "unattributed"
+    )));
+    assert!(rendered.contains("  execution_invalid             1  (F-0001 Stage 8)\n"));
+    assert!(rendered.contains("  observations_opened           1\n"));
 }
 
 #[test]

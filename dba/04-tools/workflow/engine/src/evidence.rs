@@ -658,6 +658,36 @@ pub fn review_permits_progression(concern: &str) -> bool {
     !concern.trim().eq_ignore_ascii_case("DO NOT ADVANCE")
 }
 
+/// A review-log entry heading in the reviewer-owned grammar
+/// `{timestamp} {KIND} — {feature} — Stage {stage}` (without the leading `## `).
+#[derive(Debug, PartialEq, Eq)]
+pub struct ReviewHeading<'a> {
+    pub timestamp: &'a str,
+    pub kind: &'a str,
+    pub subject: &'a str,
+    pub stage: &'a str,
+}
+
+/// Parse a review-log heading; `None` when any part is missing or ambiguous.
+pub fn review_heading(heading: &str) -> Option<ReviewHeading<'_>> {
+    let (timestamp, rest) = heading.split_once(' ')?;
+    let (rest, stage) = rest.rsplit_once(" — Stage ")?;
+    let (kind, subject) = rest.split_once(" — ")?;
+    let parts = [timestamp, kind, subject, stage];
+    if parts
+        .iter()
+        .any(|part| part.trim().is_empty() || part.contains(" — "))
+    {
+        return None;
+    }
+    Some(ReviewHeading {
+        timestamp,
+        kind,
+        subject,
+        stage,
+    })
+}
+
 pub fn terminal_review_closure_history_permits_progression(
     log_path: &Path,
     feature: &str,
@@ -1098,6 +1128,33 @@ pub fn run_env(cwd: &Path, program: &str, args: &[&str], env: &[(&str, &str)]) -
 mod tests {
     use super::*;
     use std::fs;
+
+    #[test]
+    fn review_heading_parses_the_reviewer_grammar_and_rejects_ambiguity() {
+        assert_eq!(
+            review_heading("2026-10-03T00:00:00Z REVIEW — F-0001 — Stage 8"),
+            Some(ReviewHeading {
+                timestamp: "2026-10-03T00:00:00Z",
+                kind: "REVIEW",
+                subject: "F-0001",
+                stage: "8",
+            })
+        );
+        let charter = review_heading("t HUMAN DECISION — solution — Stage charter").unwrap();
+        assert_eq!((charter.subject, charter.stage), ("solution", "charter"));
+        let invalid = review_heading("t REVIEW EXECUTION INVALID — F-0003 — Stage 8").unwrap();
+        assert_eq!(invalid.kind, "REVIEW EXECUTION INVALID");
+        for malformed in [
+            "2026-10-03T00:00:00Z REVIEW",
+            "t REVIEW — F-0001",
+            "t REVIEW — — Stage 8",
+            "t REVIEW — F-0001 — Stage ",
+            "t REVIEW — A — F-0001 — Stage 8",
+            "t REVIEW — F-0001 — Stage 8 — Stage 9",
+        ] {
+            assert_eq!(review_heading(malformed), None, "{malformed}");
+        }
+    }
 
     #[test]
     fn frontmatter_split() {
