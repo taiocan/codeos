@@ -111,27 +111,84 @@ pub fn bytes_sha256(bytes: &[u8]) -> String {
     hex_digest(bytes)
 }
 
+/// One recorded bound input compared with its current value. A **surface** is a named bound input:
+/// a binding key (e.g. `intent`, `implementation_state`) or a Candidate Bundle implementation path.
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
+pub struct Comparison {
+    pub surface: String,
+    /// `None` when the input was not recorded but is present now.
+    pub was: Option<String>,
+    /// `None` when the input is no longer present.
+    pub now: Option<String>,
+}
+
+impl Comparison {
+    pub fn changed(&self) -> bool {
+        self.was != self.now
+    }
+}
+
+/// Compare every recorded binding with the current map. A current key that was never recorded is
+/// not compared.
+pub fn binding_comparisons(
+    recorded: &std::collections::BTreeMap<String, String>,
+    current: &std::collections::BTreeMap<String, String>,
+) -> Vec<Comparison> {
+    recorded
+        .iter()
+        .map(|(name, was)| Comparison {
+            surface: name.clone(),
+            was: Some(was.clone()),
+            now: current.get(name).cloned(),
+        })
+        .collect()
+}
+
 /// The first bound input whose recorded hash no longer matches the current map, as
-/// `(name, was, now)`. `None` when every recorded binding still matches. Shared by decision-receipt
-/// and verification-record staleness — a record is stale the moment one bound input drifts.
+/// `(name, was, now)`.
 pub fn binding_drift(
     recorded: &std::collections::BTreeMap<String, String>,
     current: &std::collections::BTreeMap<String, String>,
 ) -> Option<(String, String, String)> {
-    for (name, was) in recorded {
-        match current.get(name) {
-            Some(now) if now == was => {}
-            Some(now) => return Some((name.clone(), was.clone(), now.clone())),
-            None => {
-                return Some((
-                    name.clone(),
-                    was.clone(),
-                    "<input no longer present>".to_string(),
-                ))
-            }
-        }
-    }
-    None
+    first_drift(&binding_comparisons(recorded, current))
+}
+
+/// The first changed comparison, as `(name, was, now)`.
+pub fn first_drift(comparisons: &[Comparison]) -> Option<(String, String, String)> {
+    comparisons.iter().find(|c| c.changed()).map(|c| {
+        (
+            c.surface.clone(),
+            c.was
+                .clone()
+                .unwrap_or_else(|| "<input not recorded>".to_string()),
+            c.now
+                .clone()
+                .unwrap_or_else(|| "<input no longer present>".to_string()),
+        )
+    })
+}
+
+/// What kind of persisted evidence an identity names.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum EvidenceKind {
+    AcceptanceReceipt,
+    CandidateBundle,
+    DecisionReceipt,
+    VerificationRecord,
+}
+
+/// An existing evidence identity: a `record_identity` or a Candidate Bundle ID.
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
+pub struct EvidenceRef {
+    pub kind: EvidenceKind,
+    pub id: String,
+}
+
+/// CodeOS's record identity: the sha256 of a record's JSON serialization. Candidate Bundles,
+/// accepted snapshots, and revalidation persist and compare this identity.
+pub fn record_identity<T: serde::Serialize>(record: &T) -> Result<String> {
+    Ok(hex_digest(&serde_json::to_vec(record)?))
 }
 
 fn hex_digest(bytes: &[u8]) -> String {
@@ -211,5 +268,42 @@ mod tests {
         run(&["add", "-A"]);
         run(&["commit", "-q", "-m", "implementation"]);
         assert_ne!(first, working_tree_state(dir.path(), &paths).unwrap());
+    }
+}
+
+#[cfg(test)]
+mod comparison_tests {
+    use super::*;
+    use std::collections::BTreeMap;
+
+    fn map(pairs: &[(&str, &str)]) -> BTreeMap<String, String> {
+        pairs
+            .iter()
+            .map(|(k, v)| (k.to_string(), v.to_string()))
+            .collect()
+    }
+
+    #[test]
+    fn comparisons_cover_recorded_keys_only_and_drift_is_their_first_change() {
+        let recorded = map(&[("a", "1"), ("b", "2"), ("c", "3")]);
+        let current = map(&[("a", "1"), ("b", "X"), ("new", "9")]);
+        let comparisons = binding_comparisons(&recorded, &current);
+        assert_eq!(
+            comparisons
+                .iter()
+                .map(|c| c.surface.as_str())
+                .collect::<Vec<_>>(),
+            ["a", "b", "c"]
+        );
+        assert_eq!(comparisons[2].now, None);
+        assert_eq!(
+            binding_drift(&recorded, &current),
+            Some(("b".into(), "2".into(), "X".into()))
+        );
+        assert_eq!(
+            binding_drift(&map(&[("c", "3")]), &map(&[])),
+            Some(("c".into(), "3".into(), "<input no longer present>".into()))
+        );
+        assert_eq!(binding_drift(&recorded, &recorded), None);
     }
 }

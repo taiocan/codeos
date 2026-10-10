@@ -5,7 +5,7 @@ use crate::contract::{ReasonCode, Workflow};
 use crate::evidence;
 use crate::project::Project;
 use crate::receipts::ReceiptStore;
-use anyhow::Result;
+use anyhow::{Context, Result};
 use serde::Serialize;
 use sha2::{Digest, Sha256};
 use std::collections::BTreeSet;
@@ -53,6 +53,9 @@ pub struct WorkflowStatus {
     pub actor: Option<Actor>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub reason: Option<ReasonCode>,
+    /// Exposed through attention only.
+    #[serde(skip)]
+    pub surfaces: Option<checker::Surfaces>,
     pub checkpoints: Vec<CheckpointStatus>,
 }
 
@@ -110,6 +113,16 @@ pub struct AttentionItem {
     pub reason: Option<ReasonCode>,
     /// The governing policy path, or `NOT_CONFIGURED` when the configuration selects none.
     pub authority: String,
+    /// Surfaces the deciding comparison found changed; always present, possibly empty.
+    pub affected_surfaces: Vec<crate::hashing::Comparison>,
+    /// Surfaces the same comparison positively found unchanged; never inferred.
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub unchanged_surfaces: Vec<String>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub evidence: Vec<crate::hashing::EvidenceRef>,
+    /// The checkpoint whose comparison produced the surfaces, when it is not `checkpoint`.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub surfaces_origin: Option<String>,
     pub next_action: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub actor: Option<Actor>,
@@ -177,14 +190,22 @@ impl ProjectStatus {
         for id in specification_feature_ids(project)? {
             let subject = Subject::resolve(project, Workflow::Feature, &id)?;
             let historically_accepted = crate::revalidation::historically_accepted(project, &id)?;
-            let current_acceptance_valid = historically_accepted
-                && crate::revalidation::current_acceptance_valid(project, &id)?;
-            let governance_v3 = project.workflow_governance_version()? >= 3;
-            let mut workflow = summarize(&checker::evaluate(project, &subject)?);
-            let stale_reason = if historically_accepted && !current_acceptance_valid {
-                Some(crate::revalidation::invalidity_reason(project, &id)?)
+            // One assessment decides current validity and explains it.
+            let assessment = if historically_accepted {
+                Some(crate::revalidation::acceptance_assessment(project, &id)?)
             } else {
                 None
+            };
+            let current_acceptance_valid = assessment.as_ref().is_some_and(|a| a.current);
+            let governance_v3 = project.workflow_governance_version()? >= 3;
+            let mut workflow = summarize(&checker::evaluate(project, &subject)?);
+            let stale_reason = match &assessment {
+                Some(assessment) if !assessment.current => Some(
+                    assessment
+                        .reason
+                        .context("stale accepted feature has no reason")?,
+                ),
+                _ => None,
             };
             let acceptance_reason = if historically_accepted && !current_acceptance_valid {
                 let reason = stale_reason.expect("stale accepted feature has a reason");
@@ -221,6 +242,7 @@ impl ProjectStatus {
                 workflow.next_action = None;
                 workflow.actor = None;
                 workflow.reason = None;
+                workflow.surfaces = None;
                 None
             } else {
                 None
@@ -272,6 +294,13 @@ impl ProjectStatus {
                     });
                     (workflow.actor, workflow.reason) = stale_cause(reason);
                 }
+            }
+            if let (Some(assessment), Some(_)) = (assessment, stale_reason) {
+                workflow.surfaces = Some(checker::Surfaces::new(
+                    workflow.current_checkpoint.as_deref().unwrap_or_default(),
+                    assessment.comparisons,
+                    assessment.evidence,
+                ));
             }
             features.push(FeatureStatus {
                 name: feature_name(project, &id),
@@ -373,6 +402,7 @@ fn attention(
     current_feature: Option<&str>,
 ) -> Result<Vec<AttentionItem>> {
     let item = |subject: &str, workflow: &WorkflowStatus, stale: bool, key: &str| {
+        let surfaces = workflow.surfaces.clone();
         Ok::<_, anyhow::Error>(AttentionItem {
             subject: subject.into(),
             class: attention_class(stale, workflow.status),
@@ -380,6 +410,19 @@ fn attention(
             issue: workflow.primary_issue.clone(),
             reason: workflow.reason,
             authority: authority(project, key)?,
+            surfaces_origin: surfaces
+                .as_ref()
+                .map(|s| s.origin.clone())
+                .filter(|origin| Some(origin) != workflow.current_checkpoint.as_ref()),
+            affected_surfaces: surfaces
+                .as_ref()
+                .map(|s| s.changed.clone())
+                .unwrap_or_default(),
+            unchanged_surfaces: surfaces
+                .as_ref()
+                .map(|s| s.unchanged.clone())
+                .unwrap_or_default(),
+            evidence: surfaces.map(|s| s.evidence).unwrap_or_default(),
             next_action: workflow.next_action.clone(),
             actor: workflow.actor,
         })
@@ -599,6 +642,21 @@ pub fn render(status: &ProjectStatus) -> String {
                     item.subject
                 ));
             }
+            if !item.affected_surfaces.is_empty() {
+                let names: Vec<_> = item
+                    .affected_surfaces
+                    .iter()
+                    .map(|c| c.surface.as_str())
+                    .collect();
+                let mut line = format!("    changed: {}", abbreviated(&names));
+                if !item.unchanged_surfaces.is_empty() {
+                    let names: Vec<_> =
+                        item.unchanged_surfaces.iter().map(String::as_str).collect();
+                    line.push_str(&format!("; unchanged: {}", abbreviated(&names)));
+                }
+                out.push_str(&line);
+                out.push('\n');
+            }
             if let Some(action) = item.next_action.as_deref() {
                 out.push_str(&format!("    next{}: {action}\n", actor_tag(item.actor)));
             }
@@ -680,6 +738,15 @@ fn render_next_action(out: &mut String, status: &WorkflowStatus) {
     }
 }
 
+/// Up to three names, then a count of the rest; JSON keeps the full list.
+fn abbreviated(names: &[&str]) -> String {
+    let shown = names.iter().take(3).copied().collect::<Vec<_>>().join(", ");
+    match names.len() {
+        n if n > 3 => format!("{shown} (+{})", n - 3),
+        _ => shown,
+    }
+}
+
 fn actor_tag(actor: Option<Actor>) -> String {
     actor
         .map(|actor| format!(" [{}]", actor.label()))
@@ -719,6 +786,7 @@ fn summarize(reports: &[CheckpointReport]) -> WorkflowStatus {
         next_action: current.and_then(|report| report.next_action.clone()),
         actor: current.and_then(|report| report.actor),
         reason: current.and_then(|report| report.reason),
+        surfaces: current.and_then(|report| report.surfaces.clone()),
         checkpoints: reports
             .iter()
             .map(|report| CheckpointStatus {
@@ -950,6 +1018,7 @@ mod tests {
             next_action: (state != State::Pass).then(|| "take the next action".into()),
             actor: None,
             reason: None,
+            surfaces: None,
         }
     }
 

@@ -60,6 +60,8 @@ pub enum ReceiptState {
         binding: String,
         was: String,
         now: String,
+        /// Every recorded binding compared with its current value; `binding` is the first change.
+        comparisons: Vec<crate::hashing::Comparison>,
     },
 }
 
@@ -151,12 +153,14 @@ pub fn evaluate(receipt: Option<Receipt>, current: &BTreeMap<String, String>) ->
     let Some(receipt) = receipt else {
         return ReceiptState::Absent;
     };
-    match crate::hashing::binding_drift(&receipt.bindings, current) {
+    let comparisons = crate::hashing::binding_comparisons(&receipt.bindings, current);
+    match crate::hashing::first_drift(&comparisons) {
         Some((binding, was, now)) => ReceiptState::Stale {
             binding,
             was,
             now,
             receipt,
+            comparisons,
         },
         None => ReceiptState::Current(receipt),
     }

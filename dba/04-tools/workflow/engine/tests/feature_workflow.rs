@@ -581,6 +581,12 @@ fn f5_stays_blocked_until_early_preview_is_recorded_and_current() {
         "{:?}",
         f4.unmet
     );
+    let surfaces = f4.surfaces.as_ref().unwrap();
+    assert!(surfaces.changed.iter().any(|c| c.surface == "contract"));
+    assert_eq!(
+        surfaces.evidence[0].kind,
+        codeos_workflow::hashing::EvidenceKind::DecisionReceipt
+    );
     // F5, previously PASS, is blocked again behind the stale F4.
     assert_eq!(Fixture::state_of(&r, "F5").state, State::Blocked);
 }
@@ -622,6 +628,30 @@ fn a_stale_implementation_reblocks_full_verification() {
         .iter()
         .any(|u| u.contains("stale") && u.contains("implementation_state")));
     assert_eq!(Fixture::state_of(&r, "F5").state, State::Blocked);
+    let surfaces = f3.surfaces.as_ref().unwrap();
+    assert_eq!(surfaces.origin, "F3");
+    assert_eq!(
+        surfaces
+            .changed
+            .iter()
+            .map(|c| c.surface.as_str())
+            .collect::<Vec<_>>(),
+        ["implementation_state"]
+    );
+    assert!(surfaces.unchanged.contains(&"intent".to_string()));
+    assert_eq!(
+        surfaces.evidence[0].kind,
+        codeos_workflow::hashing::EvidenceKind::VerificationRecord
+    );
+    // F5 is blocked behind F3 and keeps F3 as the origin of the comparison.
+    assert_eq!(
+        Fixture::state_of(&r, "F5")
+            .surfaces
+            .as_ref()
+            .unwrap()
+            .origin,
+        "F3"
+    );
 }
 
 #[test]

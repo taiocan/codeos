@@ -7,6 +7,9 @@ ECP-3 · NORMAL · after WO-02 · Charter: O-2, C-3, C-10
 Stale or blocked items show exactly which governed inputs changed and which evidence identities
 apply.
 
+**Invariant:** every reported changed or unchanged surface is the output of the same comparison
+CodeOS used to decide the underlying state; the monitor never reconstructs why validity failed.
+
 ## In scope
 
 - Structured `{binding, was, now}` alongside `CheckpointReport` strings, from `ReceiptState::Stale`
@@ -22,8 +25,10 @@ New identity systems; recomputing bindings not already derived.
 
 ## Sources
 
-`receipts::evaluate`, `verification::evaluate`, `checker::current_bindings`,
-`monitor::acceptance_snapshot`, `revalidation::current_acceptance_valid`.
+`hashing::binding_comparisons` (with `binding_drift` as its first change), `receipts::evaluate`,
+`verification::evaluate`, `candidate::acceptance_comparisons` (behind `acceptance_current`),
+`revalidation::acceptance_assessment` (behind `current_acceptance_valid`), and
+`hashing::record_identity`, the existing identity Candidate Bundles persist.
 
 ## Acceptance criteria
 

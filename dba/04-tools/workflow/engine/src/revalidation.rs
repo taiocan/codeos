@@ -5,7 +5,7 @@ use crate::checker::Subject;
 use crate::hashing;
 use crate::project::Project;
 use crate::receipts::{Receipt, ReceiptStore};
-use crate::verification::{self, VerificationRecord, VerificationStore};
+use crate::verification::{self, VerificationStore};
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -335,7 +335,7 @@ pub fn build_case(project: &Project, subject_id: &str, trigger: &str) -> Result<
         if !current_record {
             anyhow::bail!("{name} verification is not current for the revalidation implementation");
         }
-        current_verifications.insert(name.into(), record_identity(&record)?);
+        current_verifications.insert(name.into(), hashing::record_identity(&record)?);
         if name == "production_source_evidence" {
             production_evidence = record
                 .details
@@ -431,80 +431,118 @@ pub fn record(
     Ok(record)
 }
 
+/// Whether an accepted snapshot still applies, why not, and the exact comparisons that decided it.
+/// Status explanations read this; they never reconstruct the cause independently.
+#[derive(Debug, Default)]
+pub struct AcceptanceAssessment {
+    pub current: bool,
+    pub reason: Option<&'static str>,
+    pub comparisons: Vec<hashing::Comparison>,
+    pub evidence: Vec<hashing::EvidenceRef>,
+}
+
 pub fn current_acceptance_valid(project: &Project, subject: &str) -> Result<bool> {
+    Ok(acceptance_assessment(project, subject)?.current)
+}
+
+pub fn acceptance_assessment(project: &Project, subject: &str) -> Result<AcceptanceAssessment> {
+    let mut assessment = AcceptanceAssessment::default();
     if project.feature_workflow_version()? < 5 {
-        return Ok(true);
+        assessment.current = true;
+        return Ok(assessment);
     }
     let acceptance = match latest_acceptance(project, subject) {
         Ok(value) => value,
-        Err(_) => return Ok(false),
+        Err(_) => return Ok(assessment),
     };
-    let acceptance_identity = hex::encode(Sha256::digest(serde_json::to_vec(&acceptance)?));
+    let acceptance_identity = hashing::record_identity(&acceptance)?;
+    assessment.evidence.push(hashing::EvidenceRef {
+        kind: hashing::EvidenceKind::AcceptanceReceipt,
+        id: acceptance_identity.clone(),
+    });
+    let stale = |mut assessment: AcceptanceAssessment, reason| {
+        assessment.reason = Some(reason);
+        Ok(assessment)
+    };
     let governed_now = governed(project, subject)?;
-    if ["intent", "contract", "event_schema"]
-        .iter()
-        .any(|key| acceptance.bindings.get(*key) != governed_now.get(*key))
-    {
-        return Ok(false);
+    for key in ["intent", "contract", "event_schema"] {
+        assessment.comparisons.push(hashing::Comparison {
+            surface: key.into(),
+            was: acceptance.bindings.get(key).cloned(),
+            now: governed_now.get(key).cloned(),
+        });
     }
-    if project.feature_workflow_version()? >= 8
-        && accepted_architecture_identity(project, subject, &acceptance.timestamp)?
-            != crate::architecture::feature_identity(project, subject, "WORKTREE")?
+    if assessment
+        .comparisons
+        .iter()
+        .any(hashing::Comparison::changed)
     {
-        return Ok(false);
+        return stale(assessment, "SEMANTIC_CHANGE_REQUIRED");
+    }
+    if project.feature_workflow_version()? >= 8 {
+        let comparison = hashing::Comparison {
+            surface: "architecture".into(),
+            was: Some(accepted_architecture_identity(
+                project,
+                subject,
+                &acceptance.timestamp,
+            )?),
+            now: Some(crate::architecture::feature_identity(
+                project, subject, "WORKTREE",
+            )?),
+        };
+        let changed = comparison.changed();
+        assessment.comparisons.push(comparison);
+        if changed {
+            return stale(assessment, "ARCHITECTURE_CHANGE_REQUIRED");
+        }
     }
     if project.workflow_governance_version()? >= 3 {
         if let Some(bundle) = acceptance.bindings.get("candidate_bundle") {
-            let candidate_current = if project.feature_workflow_version()? >= 8 {
-                crate::candidate::acceptance_current_with_scoped_legacy_architecture(
-                    project, bundle,
-                )?
-            } else {
-                crate::candidate::acceptance_current(project, bundle)?
-            };
-            if candidate_current {
-                return Ok(true);
+            assessment.evidence.push(hashing::EvidenceRef {
+                kind: hashing::EvidenceKind::CandidateBundle,
+                id: bundle.clone(),
+            });
+            let comparisons = crate::candidate::acceptance_comparisons(
+                project,
+                bundle,
+                project.feature_workflow_version()? >= 8,
+            )?;
+            let candidate_current = !comparisons.iter().any(hashing::Comparison::changed);
+            assessment.comparisons.extend(comparisons);
+            if candidate_current
+                || crate::candidate::passed_revalidation(project, subject, &acceptance_identity)?
+            {
+                assessment.current = true;
+                return Ok(assessment);
             }
-            return crate::candidate::passed_revalidation(project, subject, &acceptance_identity);
+            return stale(assessment, "REVALIDATION_REQUIRED");
         }
     }
     let original = latest_impl_before(project, subject, &acceptance.timestamp)?;
     let current = hashing::working_tree_state(&project.root, &project.implementation_paths())?;
-    if original == current {
-        return Ok(true);
+    assessment.comparisons.push(hashing::Comparison {
+        surface: "implementation_state".into(),
+        was: Some(original.clone()),
+        now: Some(current.clone()),
+    });
+    assessment.current = original == current
+        || crate::candidate::passed_revalidation(project, subject, &acceptance_identity)?
+        || RevalidationStore::at(&project.codeos_dir())
+            .all()?
+            .into_iter()
+            .rev()
+            .find(|r| {
+                r.subject == subject
+                    && r.current_implementation_state == current
+                    && r.governed_inputs == governed_now
+            })
+            .is_some_and(|r| r.decision == "REVALIDATED");
+    if assessment.current {
+        Ok(assessment)
+    } else {
+        stale(assessment, "REVALIDATION_REQUIRED")
     }
-    if crate::candidate::passed_revalidation(project, subject, &acceptance_identity)? {
-        return Ok(true);
-    }
-    Ok(RevalidationStore::at(&project.codeos_dir())
-        .all()?
-        .into_iter()
-        .rev()
-        .find(|r| {
-            r.subject == subject
-                && r.current_implementation_state == current
-                && r.governed_inputs == governed_now
-        })
-        .is_some_and(|r| r.decision == "REVALIDATED"))
-}
-
-/// Precise current-validity cause for status projection. This never changes historical F9 state.
-pub fn invalidity_reason(project: &Project, subject: &str) -> Result<&'static str> {
-    let acceptance = latest_acceptance(project, subject)?;
-    let governed_now = governed(project, subject)?;
-    if ["intent", "contract", "event_schema"]
-        .iter()
-        .any(|key| acceptance.bindings.get(*key) != governed_now.get(*key))
-    {
-        return Ok("SEMANTIC_CHANGE_REQUIRED");
-    }
-    if project.feature_workflow_version()? >= 8
-        && accepted_architecture_identity(project, subject, &acceptance.timestamp)?
-            != crate::architecture::feature_identity(project, subject, "WORKTREE")?
-    {
-        return Ok("ARCHITECTURE_CHANGE_REQUIRED");
-    }
-    Ok("REVALIDATION_REQUIRED")
 }
 
 fn accepted_architecture_identity(
@@ -566,9 +604,6 @@ fn latest_impl_before(project: &Project, subject: &str, before: &str) -> Result<
         .rev()
         .find_map(|r| r.bindings.get("implementation_state").cloned())
         .context("accepted feature has no implementation-bound verification")
-}
-fn record_identity(record: &VerificationRecord) -> Result<String> {
-    Ok(hex::encode(Sha256::digest(serde_json::to_vec(record)?)))
 }
 fn semantic_revision(text: &str) -> Result<u64> {
     text.lines()

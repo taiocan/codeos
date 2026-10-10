@@ -93,6 +93,36 @@ pub struct CheckpointReport {
     pub actor: Option<Actor>,
     /// The cause of `next_action`, from the same requirement as `actor`.
     pub reason: Option<ReasonCode>,
+    /// The comparison behind a stale cause, from the same requirement as `reason`.
+    pub surfaces: Option<Surfaces>,
+}
+
+/// The surfaces one comparison found changed or positively unchanged, with the evidence it
+/// compared. `origin` is the checkpoint whose comparison this is.
+#[derive(Debug, Clone, PartialEq, Serialize)]
+pub struct Surfaces {
+    pub origin: String,
+    pub changed: Vec<hashing::Comparison>,
+    pub unchanged: Vec<String>,
+    pub evidence: Vec<hashing::EvidenceRef>,
+}
+
+impl Surfaces {
+    pub fn new(
+        origin: &str,
+        comparisons: Vec<hashing::Comparison>,
+        evidence: Vec<hashing::EvidenceRef>,
+    ) -> Self {
+        let (changed, unchanged): (Vec<_>, Vec<_>) = comparisons
+            .into_iter()
+            .partition(hashing::Comparison::changed);
+        Self {
+            origin: origin.into(),
+            changed,
+            unchanged: unchanged.into_iter().map(|c| c.surface).collect(),
+            evidence,
+        }
+    }
 }
 
 /// A feature subject with its applicability resolved from the Contract.
@@ -186,6 +216,7 @@ pub fn evaluate(project: &Project, subject: &Subject) -> Result<Vec<CheckpointRe
                     ),
                     actor: blocking.and_then(|r| r.actor),
                     reason: Some(ReasonCode::BootstrapIncomplete),
+                    surfaces: None,
                 });
                 all_prior_pass = false;
             } else {
@@ -198,6 +229,7 @@ pub fn evaluate(project: &Project, subject: &Subject) -> Result<Vec<CheckpointRe
                     next_action: None,
                     actor: None,
                     reason: None,
+                    surfaces: None,
                 });
             }
         }
@@ -215,6 +247,7 @@ pub fn evaluate(project: &Project, subject: &Subject) -> Result<Vec<CheckpointRe
                 next_action: None,
                 actor: None,
                 reason: None,
+                surfaces: None,
             });
             continue;
         }
@@ -233,6 +266,7 @@ pub fn evaluate(project: &Project, subject: &Subject) -> Result<Vec<CheckpointRe
                 next_action: Some(format!("resolve {blocker} first")),
                 actor: blocking.and_then(|r| r.actor),
                 reason: blocking.and_then(|r| r.reason),
+                surfaces: blocking.and_then(|r| r.surfaces.clone()),
             });
             continue;
         }
@@ -1132,9 +1166,11 @@ fn evaluate_checkpoint(
     // taking that requirement's default step.
     let mut last = None;
     let mut repair = false;
+    // The comparison that made the last requirement stale, if any.
+    let mut surfaces = None;
 
     for req in &c.requirements {
-        settle_actor(&mut cause, &next_action, last, repair);
+        settle_actor(&mut cause, &next_action, last, repair, surfaces.take());
         last = Some(req);
         repair = false;
         match req {
@@ -1299,8 +1335,20 @@ fn evaluate_checkpoint(
                         ));
                     }
                     ReceiptState::Stale {
-                        binding, was, now, ..
+                        binding,
+                        was,
+                        now,
+                        receipt,
+                        comparisons,
                     } => {
+                        surfaces = Some(Surfaces::new(
+                            c.id,
+                            comparisons,
+                            vec![hashing::EvidenceRef {
+                                kind: hashing::EvidenceKind::DecisionReceipt,
+                                id: hashing::record_identity(&receipt)?,
+                            }],
+                        ));
                         soft += 1;
                         unmet.push(format!(
                             "{checkpoint} decision is stale — '{binding}' changed since it was recorded (was {}, now {})",
@@ -1541,7 +1589,13 @@ fn evaluate_checkpoint(
                         RecordState::Failed(_) => {
                             unmet.push("production-source verification failed".into());
                         }
-                        RecordState::Stale { binding, .. } => {
+                        RecordState::Stale {
+                            binding,
+                            record,
+                            comparisons,
+                            ..
+                        } => {
+                            surfaces = Some(verification_surfaces(c.id, &record, comparisons)?);
                             unmet.push(format!(
                                 "production-source evidence is stale — '{binding}' changed"
                             ));
@@ -1563,8 +1617,13 @@ fn evaluate_checkpoint(
                             .get_or_insert(format!("run `codeos-workflow check` to verify {name}"));
                     }
                     RecordState::Stale {
-                        binding, was, now, ..
+                        binding,
+                        was,
+                        now,
+                        record,
+                        comparisons,
                     } => {
+                        surfaces = Some(verification_surfaces(c.id, &record, comparisons)?);
                         unmet.push(format!(
                             "{name} verification is stale — '{binding}' changed since it passed (was {}, now {})",
                             short(&was), short(&now)
@@ -1750,7 +1809,7 @@ fn evaluate_checkpoint(
             }
         }
     }
-    settle_actor(&mut cause, &next_action, last, repair);
+    settle_actor(&mut cause, &next_action, last, repair, surfaces.take());
 
     // Blocked if any unmet condition is a real evidence gap; Waiting if the only thing missing is a
     // human decision the tool must not make itself.
@@ -1773,27 +1832,44 @@ fn evaluate_checkpoint(
         actor: if state == State::Waiting {
             Some(Actor::Human)
         } else {
-            cause.map(|(actor, _)| actor)
+            cause.as_ref().map(|(actor, ..)| *actor)
         },
-        reason: cause.map(|(_, reason)| reason),
+        reason: cause.as_ref().map(|(_, reason, _)| *reason),
+        surfaces: cause.and_then(|(.., surfaces)| surfaces),
     })
+}
+
+fn verification_surfaces(
+    origin: &str,
+    record: &VerificationRecord,
+    comparisons: Vec<hashing::Comparison>,
+) -> Result<Surfaces> {
+    Ok(Surfaces::new(
+        origin,
+        comparisons,
+        vec![hashing::EvidenceRef {
+            kind: hashing::EvidenceKind::VerificationRecord,
+            id: hashing::record_identity(record)?,
+        }],
+    ))
 }
 
 /// Assign the actor and reason of the first next action once the requirement that produced it is
 /// known. Both always come from that one requirement.
 fn settle_actor(
-    cause: &mut Option<(Actor, ReasonCode)>,
+    cause: &mut Option<(Actor, ReasonCode, Option<Surfaces>)>,
     next_action: &Option<String>,
     last: Option<&Requirement>,
     repair: bool,
+    surfaces: Option<Surfaces>,
 ) {
-    if let (None, Some(_), Some(requirement)) = (*cause, next_action, last) {
+    if let (true, Some(_), Some(requirement)) = (cause.is_none(), next_action, last) {
         let actor = if repair {
             Actor::Assisted
         } else {
             Actor::default_for(requirement)
         };
-        *cause = Some((actor, requirement.reason()));
+        *cause = Some((actor, requirement.reason(), surfaces));
     }
 }
 

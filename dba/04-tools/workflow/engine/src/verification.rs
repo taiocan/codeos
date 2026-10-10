@@ -43,6 +43,8 @@ pub enum RecordState {
         binding: String,
         was: String,
         now: String,
+        /// Every recorded binding compared with its current value; `binding` is the first change.
+        comparisons: Vec<crate::hashing::Comparison>,
     },
 }
 
@@ -124,12 +126,14 @@ pub fn evaluate(
     let Some(record) = record else {
         return RecordState::Absent;
     };
-    match crate::hashing::binding_drift(&record.bindings, current) {
+    let comparisons = crate::hashing::binding_comparisons(&record.bindings, current);
+    match crate::hashing::first_drift(&comparisons) {
         Some((binding, was, now)) => RecordState::Stale {
             record,
             binding,
             was,
             now,
+            comparisons,
         },
         None if record.result == "passed" => RecordState::Current(record),
         None => RecordState::Failed(record),

@@ -632,6 +632,7 @@ mod tests {
                 next_action: None,
                 actor: None,
                 reason: None,
+                surfaces: None,
                 checkpoints: vec![],
             },
         }

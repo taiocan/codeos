@@ -7,7 +7,6 @@ use crate::receipts::ReceiptStore;
 use crate::verification::VerificationStore;
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
-use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -106,7 +105,7 @@ impl CandidateStore {
 }
 
 pub fn identity(bundle: &CandidateBundle) -> Result<String> {
-    Ok(hex::encode(Sha256::digest(serde_json::to_vec(bundle)?)))
+    hashing::record_identity(bundle)
 }
 
 pub fn prepare(
@@ -153,7 +152,7 @@ pub fn prepare(
     let receipt = ReceiptStore::at(&project.codeos_dir())
         .latest("feature", &subject.id, "reconciliation")?
         .context("candidate requires the F6 reconciliation receipt")?;
-    let f6_receipt_sha256 = hashing::bytes_sha256(&serde_json::to_vec(&receipt)?);
+    let f6_receipt_sha256 = hashing::record_identity(&receipt)?;
     let production_evidence = receipt.bindings.get("production_evidence").cloned();
 
     let mut verification_records = BTreeMap::new();
@@ -175,7 +174,7 @@ pub fn prepare(
         );
         verification_records.insert(
             format!("{checkpoint}/{mechanic}"),
-            hashing::bytes_sha256(&serde_json::to_vec(&record)?),
+            hashing::record_identity(&record)?,
         );
     }
     let runtime_evidence = if observation_mode(project, &subject.id)? == "events" {
@@ -227,7 +226,7 @@ pub fn prepare(
         );
         verification_records.insert(
             "F7/runtime_event_schema".into(),
-            hashing::bytes_sha256(&serde_json::to_vec(&runtime)?),
+            hashing::record_identity(&runtime)?,
         );
         evidence
     } else {
@@ -286,16 +285,34 @@ pub fn acceptance_current_with_scoped_legacy_architecture(
 }
 
 fn acceptance_current_inner(project: &Project, id: &str, scoped_legacy: bool) -> Result<bool> {
+    Ok(!acceptance_comparisons(project, id, scoped_legacy)?
+        .iter()
+        .any(hashing::Comparison::changed))
+}
+
+/// The comparisons that decide whether an accepted bundle is still current: every non-test
+/// implementation input, then, only if all are unchanged, every governed input present on either
+/// side.
+pub fn acceptance_comparisons(
+    project: &Project,
+    id: &str,
+    scoped_legacy: bool,
+) -> Result<Vec<hashing::Comparison>> {
     let bundle = CandidateStore::at(&project.codeos_dir()).read(id)?;
+    let mut comparisons = Vec::new();
     for input in bundle
         .implementation_inputs
         .iter()
         .filter(|input| input.role != "test")
     {
-        if hashing::file_sha256(&project.root.join(&input.path))?.as_deref() != Some(&input.sha256)
-        {
-            return Ok(false);
-        }
+        comparisons.push(hashing::Comparison {
+            surface: input.path.clone(),
+            was: Some(input.sha256.clone()),
+            now: hashing::file_sha256(&project.root.join(&input.path))?,
+        });
+    }
+    if comparisons.iter().any(hashing::Comparison::changed) {
+        return Ok(comparisons);
     }
     let mut current = governed(project, &bundle.feature, bundle.schema_version)?;
     let mut accepted = bundle.governed_inputs;
@@ -303,7 +320,14 @@ fn acceptance_current_inner(project: &Project, id: &str, scoped_legacy: bool) ->
         current.retain(|key, _| !key.starts_with("architecture:"));
         accepted.retain(|key, _| !key.starts_with("architecture:"));
     }
-    Ok(current == accepted)
+    let keys: std::collections::BTreeSet<_> =
+        accepted.keys().chain(current.keys()).cloned().collect();
+    comparisons.extend(keys.into_iter().map(|key| hashing::Comparison {
+        was: accepted.get(&key).cloned(),
+        now: current.get(&key).cloned(),
+        surface: key,
+    }));
+    Ok(comparisons)
 }
 
 pub fn current_for_review(project: &Project, id: &str) -> Result<bool> {
@@ -314,7 +338,7 @@ pub fn current_for_review(project: &Project, id: &str) -> Result<bool> {
     let receipt = ReceiptStore::at(&project.codeos_dir())
         .latest("feature", &bundle.feature, "reconciliation")?
         .context("candidate reconciliation receipt disappeared")?;
-    if hashing::bytes_sha256(&serde_json::to_vec(&receipt)?) != bundle.f6_receipt_sha256 {
+    if hashing::record_identity(&receipt)? != bundle.f6_receipt_sha256 {
         return Ok(false);
     }
     let store = VerificationStore::at(&project.codeos_dir());
@@ -325,7 +349,7 @@ pub fn current_for_review(project: &Project, id: &str) -> Result<bool> {
         let Some(record) = store.latest("feature", &bundle.feature, checkpoint, mechanic)? else {
             return Ok(false);
         };
-        if hashing::bytes_sha256(&serde_json::to_vec(&record)?) != *identity {
+        if hashing::record_identity(&record)? != *identity {
             return Ok(false);
         }
     }
@@ -663,6 +687,36 @@ mod tests {
         assert!(acceptance_current(&project, &id).unwrap());
         fs::write(project.root.join("src/product.rs"), "changed product\n").unwrap();
         assert!(!acceptance_current(&project, &id).unwrap());
+    }
+
+    #[test]
+    fn acceptance_explanation_is_the_comparison_that_decides_currency() {
+        let (_dir, project, bundle) = fixture();
+        let id = CandidateStore::at(&project.codeos_dir())
+            .write(&bundle)
+            .unwrap();
+        let changed = |project: &Project| {
+            acceptance_comparisons(project, &id, false)
+                .unwrap()
+                .into_iter()
+                .filter(hashing::Comparison::changed)
+                .map(|c| (c.surface, c.now.is_some()))
+                .collect::<Vec<_>>()
+        };
+        // A relevant file added after acceptance is outside the recorded inputs: still current.
+        fs::write(project.root.join("src/added.rs"), "new\n").unwrap();
+        // Test-only drift is excluded from accepted-product currency.
+        fs::write(project.root.join("tests/product.spec.ts"), "changed test\n").unwrap();
+        assert!(acceptance_current(&project, &id).unwrap());
+        assert!(changed(&project).is_empty());
+
+        fs::write(project.root.join("src/product.rs"), "changed product\n").unwrap();
+        assert!(!acceptance_current(&project, &id).unwrap());
+        assert_eq!(changed(&project), [("src/product.rs".to_string(), true)]);
+
+        fs::remove_file(project.root.join("src/product.rs")).unwrap();
+        assert!(!acceptance_current(&project, &id).unwrap());
+        assert_eq!(changed(&project), [("src/product.rs".to_string(), false)]);
     }
 
     #[test]

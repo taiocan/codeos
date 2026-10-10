@@ -256,6 +256,30 @@ fn attention_follows_workflow_order_with_actor_classes() {
     assert_eq!(stale["checkpoint"], "F1");
     assert_eq!(stale["actor"], "ASSISTED");
     assert_eq!(stale["class"], "STALE");
+    let affected = stale["affected_surfaces"].as_array().unwrap();
+    let intent = affected.iter().find(|c| c["surface"] == "intent").unwrap();
+    assert_eq!(intent["was"], "old");
+    assert!(intent["now"].is_string());
+    // The fixture receipt never recorded the contract; validity compared it as unrecorded.
+    let contract = affected
+        .iter()
+        .find(|c| c["surface"] == "contract")
+        .unwrap();
+    assert!(contract["was"].is_null());
+    assert!(stale.get("unchanged_surfaces").is_none());
+    let accepted = json["features"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|f| f["id"] == "F-0002")
+        .unwrap();
+    assert_eq!(
+        stale["evidence"][0],
+        serde_json::json!({
+            "kind": "acceptance_receipt",
+            "id": accepted["accepted_snapshot"]["receipt_sha256"]
+        })
+    );
     assert_eq!(stale["reason"], "SEMANTIC_CHANGE_REQUIRED");
     assert_eq!(
         stale["authority"],
@@ -315,6 +339,10 @@ fn attention_follows_workflow_order_with_actor_classes() {
     assert!(rendered.contains("ATTENTION"), "{rendered}");
     assert!(rendered.contains("next [ASSISTED]: start ordinary governed work at F1"));
     assert!(rendered.contains("[STALE] F-0002 — "), "{rendered}");
+    assert!(
+        rendered.contains("    changed: intent, contract, event_schema"),
+        "{rendered}"
+    );
     assert!(
         rendered.contains("(SEMANTIC_CHANGE_REQUIRED)"),
         "{rendered}"
