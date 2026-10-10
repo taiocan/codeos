@@ -1,44 +1,32 @@
 # WO-07 — Bounded AUTO Execution: Decision Brief
 
-- **Charter refs:** ECP-6, O-5, success criteria 11–13, C-8
-- **Classification:** PROTECTED
-- **Depends on:** WO-06 and its routed gaps
+ECP-6 · PROTECTED · after WO-06 and its routed gaps · Charter: O-5, success criteria 11–13, C-8
 
 ## Goal
 
-Prepare the human decision on whether CodeOS may execute allowlisted `AUTO` actions, and on what
-terms.
-
-## Output
-
-**A decision brief only.** This WO makes no implementation change, no schema change, and no
-status change.
+Prepare the human decision on whether, and on what terms, CodeOS may execute allowlisted `AUTO`
+actions. Output is a decision brief only: no implementation, schema, or status change.
 
 ## In scope
 
 The brief states:
 
-- **The consequential semantic change.** CodeOS initiates execution of commands.
-- **What must remain true.**
-  - Every HUMAN boundary of the active DBA configuration remains human-controlled.
-  - Nothing is approved automatically: Charter, specification, architecture, F8, F9,
-    Observation decisions, and reviewer judgments are all excluded.
-- **Proposed allowlist.** Drawn only from WO-05 action types with a sufficient `command`.
-- **Loop rules.**
-  - Run one action at a time.
-  - Record provenance through existing mechanisms.
-  - Re-derive `status` after every action.
-  - Stop when the legitimate next action changes.
-  - Stop at every ASSISTED or HUMAN boundary.
-- **Verification proposal.** How criteria 11–13 would be proven.
-- **Open decisions.** For example, whether any new persisted record is needed.
+- the semantic change: CodeOS initiates command execution;
+- what must remain true: every HUMAN boundary of the active DBA configuration stays
+  human-controlled; nothing is approved automatically (Charter, specification, architecture, F8,
+  F9, Observation decisions, reviewer judgments);
+- the proposed allowlist, drawn only from WO-05 types with a sufficient `command`;
+- loop rules: one action at a time, provenance through existing mechanisms, re-derive `status`
+  after each action, stop when the legitimate next action changes, stop at every ASSISTED or HUMAN
+  boundary;
+- how criteria 11–13 would be verified, and open decisions (e.g. new persisted records).
 
 ## Out of scope
 
-- Writing implementation WOs. They follow only after human approval.
+Implementation WOs; they follow only after approval.
 
 ## Acceptance criteria
 
-1. The brief satisfies the CLAUDE.md PROTECTED pre-implementation statement.
-2. The human records approval or rejection. Approved semantics go into the authoritative
-   governing artifact before any implementation.
+1. The brief meets the CLAUDE.md PROTECTED pre-implementation statement.
+2. The human records approval or rejection; approved semantics enter the governing artifact before
+   implementation.
