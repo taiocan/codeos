@@ -21,6 +21,20 @@ The brief states:
   boundary;
 - how criteria 11–13 would be verified, and open decisions (e.g. new persisted records).
 
+## Evidence input
+
+ECP is frozen until this brief. Its input is real JamFree work, not theory. For each emitted
+`AUTO` command, record:
+
+- whether it was safe to run exactly as emitted;
+- whether it succeeded without additional human interpretation;
+- whether the human merely copied and ran it;
+- whether the next `status` correctly derived the next step;
+- whether repeated `AUTO` steps created meaningful manual friction.
+
+Repeated `status → AUTO command → status → AUTO command` cycles support an executor. Cycles that
+quickly reach `ASSISTED` or `HUMAN` argue against one.
+
 ## Out of scope
 
 Implementation WOs; they follow only after approval.

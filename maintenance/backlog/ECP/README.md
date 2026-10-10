@@ -17,7 +17,8 @@ context only; the Charter and Git are authoritative.
 | [WO-10](WO-10-atomic-revalidation-actions.md) | ECP-5 repair | NORMAL | Atomic post-acceptance revalidation actions | Implemented |
 
 Each WO follows the previous one (WO-04 needs only WO-01 but stays in sequence). WO-08 and WO-09
-come from WO-06's routed gaps; WO-07 waits until they are resolved.
+come from WO-06's routed gaps. ECP-2–ECP-5 are complete (WO-06: 10/10 answered). ECP is frozen;
+WO-07 waits for real JamFree AUTO-command evidence.
 
 ## Rules for every WO
 
