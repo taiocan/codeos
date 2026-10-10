@@ -99,7 +99,55 @@ pub enum ReasonCode {
     RevalidationRequired,
 }
 
+/// One atomic next operation. A type never names a workflow outcome or a multi-step objective.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ActionType {
+    AuthorArtifact,
+    RepairConfiguration,
+    ReviseSpecification,
+    ApproveArtifact,
+    RecordDecision,
+    FollowDecisionOutcome,
+    RunVerification,
+    CollectProductionEvidence,
+    RepairFailure,
+    PrepareCandidate,
+    RunReview,
+    ResolveReviewFinding,
+    RestoreReviewHistory,
+    ReassessArchitecture,
+    RevalidateAcceptance,
+    RecordObservation,
+    RouteObservation,
+    CloseObservation,
+    ResolveRoutedTarget,
+}
+
 impl Requirement {
+    /// The action for this requirement's next action; `repair` marks a failure to repair.
+    /// Evaluation sites that differ set an explicit override instead.
+    pub fn action(&self, repair: bool) -> ActionType {
+        use ActionType as A;
+        match self {
+            Self::CharterApproved if repair => A::AuthorArtifact,
+            Self::CharterApproved | Self::SpecPackageApproved => A::ApproveArtifact,
+            Self::CodeosYamlValid => A::RepairConfiguration,
+            Self::SemanticPackageRevision => A::ReviseSpecification,
+            Self::ContractSection(_) | Self::ProductJourneyContribution => A::AuthorArtifact,
+            Self::Receipt { .. } if repair => A::FollowDecisionOutcome,
+            Self::Receipt { .. } => A::RecordDecision,
+            Self::ReviewRecord { .. } if repair => A::ResolveReviewFinding,
+            Self::ReviewRecord { .. } => A::RunReview,
+            Self::LiveVerification { .. } if repair => A::RepairFailure,
+            Self::LiveVerification { .. } => A::RunVerification,
+            Self::ProductionSourceEvidence => A::CollectProductionEvidence,
+            Self::ObservationStated => A::RecordObservation,
+            Self::ObservationRouted => A::RouteObservation,
+            Self::RouteResolution => A::CloseObservation,
+        }
+    }
+
     pub fn reason(&self) -> ReasonCode {
         match self {
             Self::CharterApproved => ReasonCode::CharterApproval,

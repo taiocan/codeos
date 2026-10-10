@@ -256,6 +256,16 @@ fn attention_follows_workflow_order_with_actor_classes() {
     assert_eq!(stale["checkpoint"], "F1");
     assert_eq!(stale["actor"], "ASSISTED");
     assert_eq!(stale["class"], "STALE");
+    assert_eq!(
+        stale["action"],
+        serde_json::json!({"type": "revise_specification", "command": null})
+    );
+    for item in attention {
+        assert!(item["action"]["type"].is_string(), "{item}");
+        if !item["action"]["command"].is_null() {
+            assert_eq!(item["actor"], "AUTO", "{item}");
+        }
+    }
     let affected = stale["affected_surfaces"].as_array().unwrap();
     let intent = affected.iter().find(|c| c["surface"] == "intent").unwrap();
     assert_eq!(intent["was"], "old");

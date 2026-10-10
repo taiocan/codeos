@@ -1,7 +1,7 @@
 //! Read-only project status projection and terminal rendering.
 
 use crate::checker::{self, Actor, CheckpointReport, State, Subject};
-use crate::contract::{ReasonCode, Workflow};
+use crate::contract::{ActionType, ReasonCode, Workflow};
 use crate::evidence;
 use crate::project::Project;
 use crate::receipts::ReceiptStore;
@@ -53,6 +53,9 @@ pub struct WorkflowStatus {
     pub actor: Option<Actor>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub reason: Option<ReasonCode>,
+    /// Exposed through attention only.
+    #[serde(skip)]
+    pub action: Option<ActionType>,
     /// Exposed through attention only.
     #[serde(skip)]
     pub surfaces: Option<checker::Surfaces>,
@@ -124,6 +127,8 @@ pub struct AttentionItem {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub surfaces_origin: Option<String>,
     pub next_action: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub action: Option<Action>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub actor: Option<Actor>,
 }
@@ -235,7 +240,7 @@ impl ProjectStatus {
                     _ => "run targeted checks and prepare one post-acceptance Candidate Bundle"
                         .into(),
                 });
-                (workflow.actor, workflow.reason) = stale_cause(reason);
+                (workflow.actor, workflow.reason, workflow.action) = stale_cause(reason);
                 Some(reason.into())
             } else if current_acceptance_valid {
                 workflow.status = DisplayStatus::Complete;
@@ -295,7 +300,7 @@ impl ProjectStatus {
                         }
                         _ => "revalidate only the affected accepted surface".into(),
                     });
-                    (workflow.actor, workflow.reason) = stale_cause(reason);
+                    (workflow.actor, workflow.reason, workflow.action) = stale_cause(reason);
                 }
             }
             if let (Some(assessment), Some(_)) = (assessment, stale_reason) {
@@ -366,13 +371,53 @@ impl ProjectStatus {
 }
 
 /// Post-acceptance revalidation is mechanical; semantic or architecture change needs bounded work.
-fn stale_cause(reason: &str) -> (Option<Actor>, Option<ReasonCode>) {
-    let (actor, code) = match reason {
-        "SEMANTIC_CHANGE_REQUIRED" => (Actor::Assisted, ReasonCode::SemanticChangeRequired),
-        "ARCHITECTURE_CHANGE_REQUIRED" => (Actor::Assisted, ReasonCode::ArchitectureChangeRequired),
-        _ => (Actor::Auto, ReasonCode::RevalidationRequired),
+fn stale_cause(reason: &str) -> (Option<Actor>, Option<ReasonCode>, Option<ActionType>) {
+    let (actor, code, action) = match reason {
+        "SEMANTIC_CHANGE_REQUIRED" => (
+            Actor::Assisted,
+            ReasonCode::SemanticChangeRequired,
+            ActionType::ReviseSpecification,
+        ),
+        "ARCHITECTURE_CHANGE_REQUIRED" => (
+            Actor::Assisted,
+            ReasonCode::ArchitectureChangeRequired,
+            ActionType::ReassessArchitecture,
+        ),
+        _ => (
+            Actor::Auto,
+            ReasonCode::RevalidationRequired,
+            ActionType::RevalidateAcceptance,
+        ),
     };
-    (Some(actor), Some(code))
+    (Some(actor), Some(code), Some(action))
+}
+
+/// The exact context an action arises in; a command depends on all of it, not the type alone.
+pub struct ActionContext<'a> {
+    pub action: ActionType,
+    pub workflow: &'a str,
+    pub subject: &'a str,
+}
+
+/// A command only when executing it fully performs the action in this context. AUTO does not
+/// imply a command.
+pub fn action_command(context: &ActionContext) -> Option<String> {
+    match context.action {
+        ActionType::RunVerification => Some(format!(
+            "codeos-workflow check --workflow {} --subject {}",
+            context.workflow, context.subject
+        )),
+        _ => None,
+    }
+}
+
+/// The atomic next operation of an attention item; its subject, reason, actor, and authority
+/// are the item's sibling fields.
+#[derive(Debug, Serialize)]
+pub struct Action {
+    #[serde(rename = "type")]
+    pub kind: ActionType,
+    pub command: Option<String>,
 }
 
 /// The policy that governs a subject: its path, `NOT_CONFIGURED` when none is selected, or an
@@ -407,6 +452,23 @@ fn attention(
 ) -> Result<Vec<AttentionItem>> {
     let item = |subject: &str, workflow: &WorkflowStatus, stale: bool, key: &str| {
         let surfaces = workflow.surfaces.clone();
+        let flow = if subject == "bootstrap" {
+            "bootstrap"
+        } else {
+            "feature"
+        };
+        let action = workflow.action.map(|kind| Action {
+            kind,
+            command: action_command(&ActionContext {
+                action: kind,
+                workflow: flow,
+                subject: if subject == "bootstrap" {
+                    "solution"
+                } else {
+                    subject
+                },
+            }),
+        });
         Ok::<_, anyhow::Error>(AttentionItem {
             subject: subject.into(),
             class: attention_class(stale, workflow.status),
@@ -428,6 +490,7 @@ fn attention(
                 .unwrap_or_default(),
             evidence: surfaces.map(|s| s.evidence).unwrap_or_default(),
             next_action: workflow.next_action.clone(),
+            action,
             actor: workflow.actor,
         })
     };
@@ -790,6 +853,7 @@ fn summarize(reports: &[CheckpointReport]) -> WorkflowStatus {
         next_action: current.and_then(|report| report.next_action.clone()),
         actor: current.and_then(|report| report.actor),
         reason: current.and_then(|report| report.reason),
+        action: current.and_then(|report| report.action),
         surfaces: current.and_then(|report| report.surfaces.clone()),
         checkpoints: reports
             .iter()
@@ -1022,6 +1086,7 @@ mod tests {
             next_action: (state != State::Pass).then(|| "take the next action".into()),
             actor: None,
             reason: None,
+            action: None,
             surfaces: None,
         }
     }
@@ -1107,6 +1172,92 @@ mod tests {
                 "ARCHITECTURE_CHANGE_REQUIRED",
                 "REVALIDATION_REQUIRED",
             ]
+        );
+    }
+
+    #[test]
+    fn action_vocabulary_is_pinned_and_only_run_verification_has_a_command() {
+        use ActionType as A;
+        let all = [
+            A::AuthorArtifact,
+            A::RepairConfiguration,
+            A::ReviseSpecification,
+            A::ApproveArtifact,
+            A::RecordDecision,
+            A::FollowDecisionOutcome,
+            A::RunVerification,
+            A::CollectProductionEvidence,
+            A::RepairFailure,
+            A::PrepareCandidate,
+            A::RunReview,
+            A::ResolveReviewFinding,
+            A::RestoreReviewHistory,
+            A::ReassessArchitecture,
+            A::RevalidateAcceptance,
+            A::RecordObservation,
+            A::RouteObservation,
+            A::CloseObservation,
+            A::ResolveRoutedTarget,
+        ];
+        assert_eq!(
+            all.iter()
+                .map(|a| serde_json::to_value(a)
+                    .unwrap()
+                    .as_str()
+                    .unwrap()
+                    .to_string())
+                .collect::<Vec<_>>(),
+            [
+                "author_artifact",
+                "repair_configuration",
+                "revise_specification",
+                "approve_artifact",
+                "record_decision",
+                "follow_decision_outcome",
+                "run_verification",
+                "collect_production_evidence",
+                "repair_failure",
+                "prepare_candidate",
+                "run_review",
+                "resolve_review_finding",
+                "restore_review_history",
+                "reassess_architecture",
+                "revalidate_acceptance",
+                "record_observation",
+                "route_observation",
+                "close_observation",
+                "resolve_routed_target",
+            ]
+        );
+        for action in all {
+            let command = action_command(&ActionContext {
+                action,
+                workflow: "feature",
+                subject: "F-0001",
+            });
+            if action == A::RunVerification {
+                assert_eq!(
+                    command.as_deref(),
+                    Some("codeos-workflow check --workflow feature --subject F-0001")
+                );
+            } else {
+                assert_eq!(command, None, "{action:?}");
+            }
+        }
+    }
+
+    #[test]
+    fn auto_does_not_imply_a_command() {
+        let (actor, _, action) = stale_cause("REVALIDATION_REQUIRED");
+        assert_eq!(actor, Some(Actor::Auto));
+        assert_eq!(action, Some(ActionType::RevalidateAcceptance));
+        assert_eq!(
+            action_command(&ActionContext {
+                action: ActionType::RevalidateAcceptance,
+                workflow: "feature",
+                subject: "F-0002",
+            }),
+            None
         );
     }
 

@@ -10,7 +10,9 @@
 //! verifications and persists a record per pass. `decide` records a receipt. Nothing reconstructs an
 //! earlier PASS indirectly: a later receipt never stands in for an earlier verification.
 
-use crate::contract::{contract_for, Applies, Checkpoint, ReasonCode, Requirement, Workflow};
+use crate::contract::{
+    contract_for, ActionType, Applies, Checkpoint, ReasonCode, Requirement, Workflow,
+};
 use crate::evidence;
 use crate::hashing;
 use crate::project::Project;
@@ -93,6 +95,8 @@ pub struct CheckpointReport {
     pub actor: Option<Actor>,
     /// The cause of `next_action`, from the same requirement as `actor`.
     pub reason: Option<ReasonCode>,
+    /// The one atomic operation `next_action` describes, from the same requirement as `reason`.
+    pub action: Option<ActionType>,
     /// The comparison behind a stale cause, from the same requirement as `reason`.
     pub surfaces: Option<Surfaces>,
 }
@@ -216,6 +220,8 @@ pub fn evaluate(project: &Project, subject: &Subject) -> Result<Vec<CheckpointRe
                     ),
                     actor: blocking.and_then(|r| r.actor),
                     reason: Some(ReasonCode::BootstrapIncomplete),
+                    // Inherit the blocking bootstrap action rather than an outcome.
+                    action: blocking.and_then(|r| r.action),
                     surfaces: None,
                 });
                 all_prior_pass = false;
@@ -229,6 +235,7 @@ pub fn evaluate(project: &Project, subject: &Subject) -> Result<Vec<CheckpointRe
                     next_action: None,
                     actor: None,
                     reason: None,
+                    action: None,
                     surfaces: None,
                 });
             }
@@ -247,6 +254,7 @@ pub fn evaluate(project: &Project, subject: &Subject) -> Result<Vec<CheckpointRe
                 next_action: None,
                 actor: None,
                 reason: None,
+                action: None,
                 surfaces: None,
             });
             continue;
@@ -266,6 +274,7 @@ pub fn evaluate(project: &Project, subject: &Subject) -> Result<Vec<CheckpointRe
                 next_action: Some(format!("resolve {blocker} first")),
                 actor: blocking.and_then(|r| r.actor),
                 reason: blocking.and_then(|r| r.reason),
+                action: blocking.and_then(|r| r.action),
                 surfaces: blocking.and_then(|r| r.surfaces.clone()),
             });
             continue;
@@ -1168,9 +1177,18 @@ fn evaluate_checkpoint(
     let mut repair = false;
     // The comparison that made the last requirement stale, if any.
     let mut surfaces = None;
+    // The action of an evaluation site that differs from its requirement's default.
+    let mut action_override = None;
 
     for req in &c.requirements {
-        settle_actor(&mut cause, &next_action, last, repair, surfaces.take());
+        settle_actor(
+            &mut cause,
+            &next_action,
+            last,
+            repair,
+            surfaces.take(),
+            action_override.take(),
+        );
         last = Some(req);
         repair = false;
         match req {
@@ -1393,6 +1411,11 @@ fn evaluate_checkpoint(
                             let current = crate::candidate::unique_current(project, &subject.id)?;
                             if current.as_deref() != r.candidate_bundle.as_deref() {
                                 unmet.push("candidate assessment is not bound to the unique current Candidate Bundle".into());
+                                action_override = Some(if current.is_some() {
+                                    ActionType::RunReview
+                                } else {
+                                    ActionType::PrepareCandidate
+                                });
                                 next_action.get_or_insert(
                                     "prepare and assess the current candidate".into(),
                                 );
@@ -1463,6 +1486,7 @@ fn evaluate_checkpoint(
                         {
                             unmet.push("evidence-closure assessment lacks the required composite review history".into());
                             repair = true;
+                            action_override = Some(ActionType::RestoreReviewHistory);
                             next_action.get_or_insert(
                                 "restore the exact authorized evidence-closure chain".into(),
                             );
@@ -1476,6 +1500,7 @@ fn evaluate_checkpoint(
                         {
                             unmet.push("infrastructure revalidation lacks the required immutable composite history".into());
                             repair = true;
+                            action_override = Some(ActionType::RestoreReviewHistory);
                             next_action.get_or_insert(
                                 "restore the exact authorized infrastructure-revalidation chain"
                                     .into(),
@@ -1493,6 +1518,7 @@ fn evaluate_checkpoint(
                                     .into(),
                             );
                             repair = true;
+                            action_override = Some(ActionType::RestoreReviewHistory);
                             next_action.get_or_insert("restore the exact evidence-repair chain or supply materially new evidence".into());
                         } else if r.review_id.ends_with("__LINEAGE-REPLACEMENT-CORRECTION-1")
                             && !evidence::lineage_replacement_correction_history_permits_progression(
@@ -1504,6 +1530,7 @@ fn evaluate_checkpoint(
                         {
                             unmet.push("lineage replacement correction lacks the required immutable correction history".into());
                             repair = true;
+                            action_override = Some(ActionType::RestoreReviewHistory);
                             next_action.get_or_insert(
                                 "restore the exact authorized assessment-input correction chain".into(),
                             );
@@ -1517,6 +1544,7 @@ fn evaluate_checkpoint(
                         {
                             unmet.push("lineage replacement lacks the required immutable invalid-applicability history".into());
                             repair = true;
+                            action_override = Some(ActionType::RestoreReviewHistory);
                             next_action.get_or_insert(
                                 "restore the exact authorized lineage-replacement chain".into(),
                             );
@@ -1534,6 +1562,7 @@ fn evaluate_checkpoint(
                                     .into(),
                             );
                             repair = true;
+                            action_override = Some(ActionType::RestoreReviewHistory);
                             next_action.get_or_insert(
                                 "restore the exact authorized terminal repair closure chain".into(),
                             );
@@ -1745,6 +1774,7 @@ fn evaluate_checkpoint(
                 let Some(route_receipt) = route_receipt else {
                     soft += 1;
                     unmet.push("no route recorded yet".into());
+                    action_override = Some(ActionType::RouteObservation);
                     next_action.get_or_insert("record the O2 route decision".into());
                     continue;
                 };
@@ -1763,6 +1793,7 @@ fn evaluate_checkpoint(
                         } else {
                             soft += 1;
                             unmet.push("no_action route has no closure receipt".into());
+                            action_override = Some(ActionType::RecordDecision);
                             next_action.get_or_insert(format!(
                                 "codeos-workflow decide --workflow operation --subject {} --checkpoint no_action_closure --result no_action --observation <same text> --rationale <why>",
                                 subject.id
@@ -1786,6 +1817,7 @@ fn evaluate_checkpoint(
                                 "{route}: no accepted resolution for {} after the route decision",
                                 subject.id
                             ));
+                            action_override = Some(ActionType::ResolveRoutedTarget);
                             next_action.get_or_insert(format!(
                                 "carry {} through Feature Development to acceptance",
                                 subject.id
@@ -1797,19 +1829,28 @@ fn evaluate_checkpoint(
                         unmet.push(format!(
                             "{route}: closure derivation is not automatic for this route"
                         ));
+                        action_override = Some(ActionType::ResolveRoutedTarget);
                         next_action.get_or_insert(
                             "link and verify the resolving change through its owning workflow, then re-check".into(),
                         );
                     }
                     other => {
                         unmet.push(format!("recorded route '{other}' is not valid"));
+                        action_override = Some(ActionType::RouteObservation);
                         next_action.get_or_insert("re-record O2 with a valid route".into());
                     }
                 }
             }
         }
     }
-    settle_actor(&mut cause, &next_action, last, repair, surfaces.take());
+    settle_actor(
+        &mut cause,
+        &next_action,
+        last,
+        repair,
+        surfaces.take(),
+        action_override.take(),
+    );
 
     // Blocked if any unmet condition is a real evidence gap; Waiting if the only thing missing is a
     // human decision the tool must not make itself.
@@ -1832,10 +1873,11 @@ fn evaluate_checkpoint(
         actor: if state == State::Waiting {
             Some(Actor::Human)
         } else {
-            cause.as_ref().map(|(actor, ..)| *actor)
+            cause.as_ref().map(|cause| cause.actor)
         },
-        reason: cause.as_ref().map(|(_, reason, _)| *reason),
-        surfaces: cause.and_then(|(.., surfaces)| surfaces),
+        reason: cause.as_ref().map(|cause| cause.reason),
+        action: cause.as_ref().map(|cause| cause.action),
+        surfaces: cause.and_then(|cause| cause.surfaces),
     })
 }
 
@@ -1856,20 +1898,33 @@ fn verification_surfaces(
 
 /// Assign the actor and reason of the first next action once the requirement that produced it is
 /// known. Both always come from that one requirement.
+/// The cause of a checkpoint's next action, all taken from one requirement evaluation.
+struct Cause {
+    actor: Actor,
+    reason: ReasonCode,
+    action: ActionType,
+    surfaces: Option<Surfaces>,
+}
+
 fn settle_actor(
-    cause: &mut Option<(Actor, ReasonCode, Option<Surfaces>)>,
+    cause: &mut Option<Cause>,
     next_action: &Option<String>,
     last: Option<&Requirement>,
     repair: bool,
     surfaces: Option<Surfaces>,
+    action_override: Option<ActionType>,
 ) {
     if let (true, Some(_), Some(requirement)) = (cause.is_none(), next_action, last) {
-        let actor = if repair {
-            Actor::Assisted
-        } else {
-            Actor::default_for(requirement)
-        };
-        *cause = Some((actor, requirement.reason(), surfaces));
+        *cause = Some(Cause {
+            actor: if repair {
+                Actor::Assisted
+            } else {
+                Actor::default_for(requirement)
+            },
+            reason: requirement.reason(),
+            action: action_override.unwrap_or_else(|| requirement.action(repair)),
+            surfaces,
+        });
     }
 }
 

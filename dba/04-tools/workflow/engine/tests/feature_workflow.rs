@@ -14,6 +14,7 @@ use std::fs;
 use std::path::Path;
 
 use codeos_workflow::checker::{Actor, State};
+use codeos_workflow::contract::ActionType;
 
 struct Fixture {
     _dir: tempfile::TempDir,
@@ -483,6 +484,7 @@ fn draft_spec_blocks_f1_and_everything_after() {
         .iter()
         .any(|u| u.contains("joint package approval")));
     assert_eq!(f1.actor, Some(Actor::Human));
+    assert_eq!(f1.action, Some(ActionType::ApproveArtifact));
     assert_eq!(Fixture::state_of(&reports, "F5").state, State::Blocked);
 }
 
@@ -501,6 +503,7 @@ fn unfilled_contract_section_is_assisted_work() {
     let f2 = Fixture::state_of(&reports, "F2");
     assert_eq!(f2.state, State::Blocked, "{f2:?}");
     assert_eq!(f2.actor, Some(Actor::Assisted));
+    assert_eq!(f2.action, Some(ActionType::AuthorArtifact));
     // A checkpoint blocked behind an earlier one reports that checkpoint's actor.
     assert_eq!(
         Fixture::state_of(&reports, "F3").actor,
@@ -529,6 +532,7 @@ fn approved_spec_passes_f1_f2_then_blocks_on_missing_smoke_record() {
         .iter()
         .any(|u| u.contains("no verification record") && u.contains("codeos-workflow check")));
     assert_eq!(f3.actor, Some(Actor::Auto));
+    assert_eq!(f3.action, Some(ActionType::RunVerification));
 }
 
 #[test]
@@ -548,6 +552,10 @@ fn f5_stays_blocked_until_early_preview_is_recorded_and_current() {
     assert_eq!(Fixture::state_of(&r, "F3").state, State::Pass, "{r:?}");
     assert_eq!(Fixture::state_of(&r, "F4").state, State::Waiting);
     assert_eq!(Fixture::state_of(&r, "F4").actor, Some(Actor::Human));
+    assert_eq!(
+        Fixture::state_of(&r, "F4").action,
+        Some(ActionType::RecordDecision)
+    );
     assert_eq!(Fixture::state_of(&r, "F5").state, State::Blocked);
 
     // Record direction_confirmed, bound to current hashes.
@@ -642,6 +650,11 @@ fn a_stale_implementation_reblocks_full_verification() {
     assert_eq!(
         surfaces.evidence[0].kind,
         codeos_workflow::hashing::EvidenceKind::VerificationRecord
+    );
+    assert_eq!(f3.action, Some(ActionType::RunVerification));
+    assert_eq!(
+        Fixture::state_of(&r, "F5").action,
+        Some(ActionType::RunVerification)
     );
     // F5 is blocked behind F3 and keeps F3 as the origin of the comparison.
     assert_eq!(

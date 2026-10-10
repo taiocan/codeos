@@ -9,7 +9,7 @@ context only; the Charter and Git are authoritative.
 | [WO-02](WO-02-attention-explanation.md) | ECP-3 | NORMAL | Attention class, reason, authority | Implemented |
 | [WO-03](WO-03-changed-surfaces.md) | ECP-3 | NORMAL | Changed surfaces and evidence identities | Implemented |
 | [WO-04](WO-04-process-history.md) | ECP-4 | NORMAL | Process history | Implemented |
-| [WO-05](WO-05-structured-action.md) | ECP-5 | NORMAL | Structured action | Proposed |
+| [WO-05](WO-05-structured-action.md) | ECP-5 | NORMAL | Structured action | Implemented |
 | [WO-06](WO-06-jamfree-validation.md) | Real use | NORMAL | JamFree pilot validation | Proposed |
 | [WO-07](WO-07-auto-execution-decision.md) | ECP-6 | PROTECTED | Bounded AUTO execution — decision brief | Proposed |
 
