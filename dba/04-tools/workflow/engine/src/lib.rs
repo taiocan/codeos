@@ -22,6 +22,7 @@ pub mod qualification;
 pub mod receipts;
 pub mod report;
 pub mod revalidation;
+pub mod test_evidence;
 pub mod verification;
 
 pub const EXIT_SUCCESS: i32 = 0;

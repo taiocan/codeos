@@ -332,6 +332,8 @@ fn evidence(
         );
     }
 
+    test_evidence(cfg, manifest, readiness);
+
     let needs_production = manifest
         .verification
         .contains_key("F5/production_source_evidence");
@@ -456,6 +458,40 @@ fn evidence(
     }
 }
 
+/// A new candidate assessment needs what each test-based verification checked, not only that it
+/// passed: each such record must bind per-test evidence whose content matches its identity.
+fn test_evidence(cfg: &Config, manifest: &ReviewInputManifest, readiness: &mut Readiness) {
+    if manifest.candidate_bundle.is_some() {
+        for (key, identity) in manifest.test_evidence() {
+            let Some(identity) = identity else {
+                readiness.fail(
+                    Reason::RequiredInputNotInspectable,
+                    &key,
+                    "verification record binds no per-test evidence; re-run codeos-workflow check",
+                );
+                continue;
+            };
+            let path = cfg.repo_root.join(format!(
+                "{}/{identity}.json",
+                codeos_workflow::test_evidence::DIR
+            ));
+            match sha256_file(path.to_string_lossy().as_ref()) {
+                Ok(actual) if actual == identity => {}
+                Ok(_) => readiness.fail(
+                    Reason::RequiredInputNotInspectable,
+                    &key,
+                    "per-test evidence content does not match its identity",
+                ),
+                Err(_) => readiness.fail(
+                    Reason::RequiredInputNotInspectable,
+                    &key,
+                    "per-test evidence is absent",
+                ),
+            }
+        }
+    }
+}
+
 fn inspectability(
     manifest: &ReviewInputManifest,
     packet: &ReviewPacket,
@@ -544,4 +580,81 @@ fn docker_available(cfg: &Config) -> bool {
         .stderr(std::process::Stdio::null())
         .status()
         .is_ok_and(|status| status.success())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use codeos_workflow::verification::VerificationRecord;
+
+    fn record(verification: &str, evidence: Option<&str>) -> (String, VerificationRecord) {
+        let record = VerificationRecord {
+            workflow: "feature".into(),
+            subject: "F-1".into(),
+            checkpoint: "F5".into(),
+            verification: verification.into(),
+            result: "passed".into(),
+            bindings: Default::default(),
+            command: "fixture".into(),
+            timestamp: "2026-10-10T00:00:00Z".into(),
+            details: evidence
+                .map(|sha| serde_json::json!({ codeos_workflow::test_evidence::DETAILS_KEY: sha })),
+        };
+        (serde_json::to_string(&record).unwrap(), record)
+    }
+
+    #[test]
+    fn candidate_assessment_requires_bound_per_test_evidence() {
+        let dir = tempfile::tempdir().unwrap();
+        let cfg = Config {
+            reasoning_effort: String::new(),
+            reviewer_model: String::new(),
+            codex_cli_version: String::new(),
+            packet_budget_mode: crate::config::PacketBudgetMode::Fail,
+            repo_root: dir.path().into(),
+            toolkit_root: dir.path().into(),
+            review_log: dir.path().join("log"),
+            codex_dir: dir.path().into(),
+            state_dir: dir.path().into(),
+        };
+        let stored = b"{\"schema\":1}";
+        let identity = crate::packet::sha256_str(std::str::from_utf8(stored).unwrap());
+        let store = dir.path().join(codeos_workflow::test_evidence::DIR);
+        std::fs::create_dir_all(&store).unwrap();
+        std::fs::write(store.join(format!("{identity}.json")), stored).unwrap();
+        let other = "0".repeat(64);
+        std::fs::write(store.join(format!("{other}.json")), b"tampered").unwrap();
+
+        let mut manifest = ReviewInputManifest::default();
+        for (key, entry) in [
+            ("F5/behavior", record("behavior", Some(&identity))),
+            ("F5/repeatability", record("repeatability", None)),
+            ("F5g/playwright", record("playwright", Some(&other))),
+            ("F3/smoke", record("smoke", None)),
+        ] {
+            manifest.derived.records.insert(key.into(), entry);
+        }
+        let issues = |manifest: &ReviewInputManifest| {
+            let mut readiness = Readiness::default();
+            test_evidence(&cfg, manifest, &mut readiness);
+            readiness
+                .issues
+                .into_iter()
+                .map(|issue| (issue.reason, issue.subject))
+                .collect::<Vec<_>>()
+        };
+        // Legacy assessments without a Candidate Bundle are unaffected.
+        assert!(issues(&manifest).is_empty());
+        manifest.candidate_bundle = Some("bundle".into());
+        assert_eq!(
+            issues(&manifest),
+            [
+                (
+                    Reason::RequiredInputNotInspectable,
+                    "F5/repeatability".into()
+                ),
+                (Reason::RequiredInputNotInspectable, "F5g/playwright".into()),
+            ]
+        );
+    }
 }

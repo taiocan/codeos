@@ -245,6 +245,27 @@ pub fn derive(
         manifest.derived_inputs.insert(path.clone());
         manifest.required_inputs.insert(path.clone());
     }
+    // A new candidate assessment shows what each test-based verification checked: its bound
+    // per-test outcomes and the test inputs the Candidate Bundle binds.
+    if let Some(id) = &manifest.candidate_bundle {
+        for (_, identity) in manifest.test_evidence() {
+            if let Some(identity) = identity {
+                let path = format!("{}/{identity}.json", codeos_workflow::test_evidence::DIR);
+                manifest.derived_inputs.insert(path.clone());
+                manifest.required_inputs.insert(path);
+            }
+        }
+        if let Ok(bundle) =
+            codeos_workflow::candidate::CandidateStore::at(&project.codeos_dir()).read(id)
+        {
+            for input in bundle.implementation_inputs {
+                if input.role == "test" {
+                    manifest.derived_inputs.insert(input.path.clone());
+                    manifest.required_inputs.insert(input.path);
+                }
+            }
+        }
+    }
     // A production-source record references its evidence by identity; the evidence itself is the
     // inspectable required input.
     if let Some(referenced) = manifest.referenced_production_evidence() {
@@ -308,6 +329,27 @@ impl ReviewInputManifest {
             .get("evidence_sha256")?
             .as_str()
             .map(str::to_string)
+    }
+
+    /// Each required test-based verification record and the test-evidence identity it binds.
+    pub fn test_evidence(&self) -> Vec<(String, Option<String>)> {
+        self.derived
+            .records
+            .iter()
+            .filter(|(_, (_, record))| {
+                codeos_workflow::test_evidence::VERIFICATIONS
+                    .contains(&record.verification.as_str())
+            })
+            .map(|(key, (_, record))| {
+                let identity = record
+                    .details
+                    .as_ref()
+                    .and_then(|details| details.get(codeos_workflow::test_evidence::DETAILS_KEY))
+                    .and_then(|value| value.as_str())
+                    .map(str::to_string);
+                (key.clone(), identity)
+            })
+            .collect()
     }
 
     /// (CodeOS-derived required bytes, caller-declared bytes) counted toward the packet budget.

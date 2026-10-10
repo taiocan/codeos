@@ -1055,6 +1055,16 @@ pub fn run(cwd: &Path, program: &str, args: &[&str]) -> CommandOutcome {
 
 /// As `run`, with extra environment variables.
 pub fn run_env(cwd: &Path, program: &str, args: &[&str], env: &[(&str, &str)]) -> CommandOutcome {
+    run_env_output(cwd, program, args, env).0
+}
+
+/// As `run_env`, also returning stdout for callers that derive structured evidence from it.
+pub fn run_env_output(
+    cwd: &Path,
+    program: &str,
+    args: &[&str],
+    env: &[(&str, &str)],
+) -> (CommandOutcome, String) {
     let mut cmd = Command::new(program);
     cmd.args(args).current_dir(cwd);
     for (k, v) in env {
@@ -1100,7 +1110,7 @@ pub fn run_env(cwd: &Path, program: &str, args: &[&str], env: &[(&str, &str)]) -
                     .collect::<Vec<_>>()
                     .join(" | ")
             };
-            CommandOutcome {
+            let outcome = CommandOutcome {
                 ok: out.status.success(),
                 summary: format!(
                     "{command} -> {}{}",
@@ -1113,14 +1123,18 @@ pub fn run_env(cwd: &Path, program: &str, args: &[&str], env: &[(&str, &str)]) -
                 ),
                 command,
                 details: None,
-            }
+            };
+            (outcome, stdout.into_owned())
         }
-        Err(e) => CommandOutcome {
-            ok: false,
-            summary: format!("{command}: {e}"),
-            command,
-            details: None,
-        },
+        Err(e) => (
+            CommandOutcome {
+                ok: false,
+                summary: format!("{command}: {e}"),
+                command,
+                details: None,
+            },
+            String::new(),
+        ),
     }
 }
 

@@ -17,6 +17,7 @@ use crate::evidence;
 use crate::hashing;
 use crate::project::Project;
 use crate::receipts::{self, ReceiptState, ReceiptStore};
+use crate::test_evidence;
 use crate::verification::{self, RecordState, VerificationRecord, VerificationStore};
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
@@ -2433,7 +2434,7 @@ fn run_mechanic(project: &Project, subject: &Subject, mechanic: &str) -> evidenc
         "product_journey" => run_product_journey(project, subject),
         "production_source_evidence" => run_production_source_evidence(project, subject),
         "project_qualification" => crate::qualification::run(project, "acceptance"),
-        "behavior" | "repeatability" => run_behavior_tests(project),
+        "behavior" | "repeatability" => run_behavior_tests(project, mechanic),
         "data_integrity" => run_cargo_tests(project),
         "playwright" => {
             let runtime = match project.runtime_verification() {
@@ -2443,12 +2444,7 @@ fn run_mechanic(project: &Project, subject: &Subject, mechanic: &str) -> evidenc
             if !web.is_dir() {
                 return failure("no web/ to verify");
             }
-            evidence::run_env(
-                &web,
-                "npm",
-                &["run", "test:e2e"],
-                &[("PLAYWRIGHT_BASE_URL", runtime.web_url.as_str())],
-            )
+            run_playwright(project, &web, runtime.web_url.as_str())
         }
         other => evidence::CommandOutcome {
             ok: false,
@@ -2950,39 +2946,193 @@ fn run_smoke(project: &Project) -> evidence::CommandOutcome {
 }
 
 fn run_cargo_tests(project: &Project) -> evidence::CommandOutcome {
+    cargo_tests(project, &["test", "--workspace", "--quiet"]).0
+}
+
+/// `cargo test` against the resolved database, with its stdout.
+fn cargo_tests(project: &Project, args: &[&str]) -> (evidence::CommandOutcome, String) {
     let database_url = match resolved_runtime(project) {
         Ok((_, database_url)) => database_url,
-        Err(error) => return error,
+        Err(error) => return (error, String::new()),
     };
     let Some(workspace) = project.cargo_workspace_root() else {
-        return failure("cargo metadata did not resolve a Rust workspace");
+        return (
+            failure("cargo metadata did not resolve a Rust workspace"),
+            String::new(),
+        );
     };
-    evidence::run_env(
+    evidence::run_env_output(
         &workspace,
         "cargo",
-        &["test", "--workspace", "--quiet"],
+        args,
         &[("DATABASE_URL", database_url.as_str())],
     )
 }
 
-/// Approved Contract behavior spans every tier the project ships tests for: the Rust workspace and,
-/// when present, the web unit/component suite (Codeos Mechanics: `behavior`, `repeatability`).
-fn run_behavior_tests(project: &Project) -> evidence::CommandOutcome {
-    let backend = run_cargo_tests(project);
+/// A temporary path for one runner's JSON report.
+fn report_path(runner: &str) -> std::path::PathBuf {
+    std::env::temp_dir().join(format!(
+        "codeos-{runner}-report-{}-{}.json",
+        std::process::id(),
+        chrono::Utc::now().timestamp_nanos_opt().unwrap_or_default()
+    ))
+}
+
+/// Read and remove a runner's JSON report.
+fn take_report(path: &Path) -> Result<serde_json::Value> {
+    let text = std::fs::read_to_string(path)
+        .with_context(|| format!("test runner wrote no JSON report at {}", path.display()));
+    let _ = std::fs::remove_file(path);
+    Ok(serde_json::from_str(&text?)?)
+}
+
+/// One run of the deterministic suite: the Rust workspace and, when present, the web unit suite,
+/// with the per-test outcomes each reported. Any failure, or a suite reporting no cases, is `Err`.
+fn behavior_suite(
+    project: &Project,
+    attempt: u8,
+) -> std::result::Result<
+    (evidence::CommandOutcome, Vec<test_evidence::TestRun>),
+    evidence::CommandOutcome,
+> {
+    let (backend, stdout) = cargo_tests(project, &["test", "--workspace"]);
+    if !backend.ok {
+        return Err(backend);
+    }
+    let mut runs = vec![test_evidence::TestRun::new(
+        "libtest",
+        attempt,
+        test_evidence::libtest_cases(&stdout),
+    )
+    .map_err(|error| failure(error.to_string()))?];
     let web = project.root.join("web");
     if !web.is_dir() || !project.web_has_script("test:unit") {
-        return backend;
+        return Ok((backend, runs));
     }
-    let frontend = evidence::run(&web, "npm", &["run", "test:unit", "--", "--run"]);
-    evidence::CommandOutcome {
-        ok: backend.ok && frontend.ok,
-        command: format!("{} && (cd web && {})", backend.command, frontend.command),
-        summary: format!(
-            "backend: {} | web unit/component: {}",
-            backend.summary, frontend.summary
-        ),
-        details: backend.details,
+    let report = report_path("vitest");
+    let output = format!("--outputFile.json={}", report.display());
+    let frontend = evidence::run(
+        &web,
+        "npm",
+        &[
+            "run",
+            "test:unit",
+            "--",
+            "--run",
+            "--reporter=default",
+            "--reporter=json",
+            &output,
+        ],
+    );
+    if !frontend.ok {
+        let _ = std::fs::remove_file(&report);
+        return Err(frontend);
     }
+    let cases = take_report(&report)
+        .map(|value| test_evidence::vitest_cases(&value, &web))
+        .map_err(|error| failure(error.to_string()))?;
+    runs.push(
+        test_evidence::TestRun::new("vitest", attempt, cases)
+            .map_err(|error| failure(error.to_string()))?,
+    );
+    Ok((
+        evidence::CommandOutcome {
+            ok: true,
+            command: format!("{} && (cd web && {})", backend.command, frontend.command),
+            summary: format!(
+                "backend: {} | web unit/component: {}",
+                backend.summary, frontend.summary
+            ),
+            details: None,
+        },
+        runs,
+    ))
+}
+
+/// Store the per-test outcomes and bind their identity to the record this outcome writes.
+fn with_test_evidence(
+    project: &Project,
+    verification: &str,
+    runs: Vec<test_evidence::TestRun>,
+    mut outcome: evidence::CommandOutcome,
+) -> evidence::CommandOutcome {
+    let evidence = test_evidence::TestEvidence {
+        schema: 1,
+        verification: verification.into(),
+        runs,
+    };
+    match test_evidence::store(project, &evidence) {
+        Ok(identity) => {
+            outcome.details = Some(serde_json::json!({ test_evidence::DETAILS_KEY: identity }));
+            outcome
+        }
+        Err(error) => failure(format!("store test evidence: {error:#}")),
+    }
+}
+
+/// Playwright through the project's `test:e2e` script, with its per-test outcomes.
+fn run_playwright(project: &Project, web: &Path, base_url: &str) -> evidence::CommandOutcome {
+    let report = report_path("playwright");
+    let report_text = report.to_string_lossy().into_owned();
+    let outcome = evidence::run_env(
+        web,
+        "npm",
+        &["run", "test:e2e", "--", "--reporter=list,json"],
+        &[
+            ("PLAYWRIGHT_BASE_URL", base_url),
+            ("PLAYWRIGHT_JSON_OUTPUT_FILE", report_text.as_str()),
+        ],
+    );
+    if !outcome.ok {
+        let _ = std::fs::remove_file(&report);
+        return outcome;
+    }
+    let run = take_report(&report).and_then(|value| {
+        test_evidence::TestRun::new("playwright", 1, test_evidence::playwright_cases(&value))
+    });
+    match run {
+        Ok(run) => with_test_evidence(project, "playwright", vec![run], outcome),
+        Err(error) => failure(error.to_string()),
+    }
+}
+
+/// Approved Contract behavior spans every tier the project ships tests for: the Rust workspace and,
+/// when present, the web unit/component suite (Codeos Mechanics: `behavior`, `repeatability`).
+/// `repeatability` runs the suite twice and fails on any difference in per-test outcomes.
+fn run_behavior_tests(project: &Project, verification: &str) -> evidence::CommandOutcome {
+    let (mut outcome, mut runs) = match behavior_suite(project, 1) {
+        Ok(first) => first,
+        Err(failed) => return failed,
+    };
+    if verification == "repeatability" {
+        let second = match behavior_suite(project, 2) {
+            Ok((_, second)) => second,
+            Err(failed) => return failed,
+        };
+        let mut differences = Vec::new();
+        for runner in ["libtest", "vitest"] {
+            let cases = |runs: &[test_evidence::TestRun]| {
+                runs.iter()
+                    .find(|run| run.runner == runner)
+                    .map(|run| run.cases.clone())
+                    .unwrap_or_default()
+            };
+            differences.extend(
+                test_evidence::differences(&cases(&runs), &cases(&second))
+                    .into_iter()
+                    .map(|difference| format!("{runner} {difference}")),
+            );
+        }
+        if !differences.is_empty() {
+            return failure(format!(
+                "nondeterministic test outcomes across two runs: {}",
+                differences.join("; ")
+            ));
+        }
+        outcome.command = format!("{} (twice; per-test outcomes compared)", outcome.command);
+        runs.extend(second);
+    }
+    with_test_evidence(project, verification, runs, outcome)
 }
 
 /// B3: bring the declared integrated stack up, prove DB<->backend<->GUI reachability and a clean
