@@ -176,6 +176,33 @@ pub fn playwright_cases(report: &Value) -> Vec<TestCase> {
     cases
 }
 
+/// The Rust test function names libtest runs recorded: each case's last path segment. Doctests
+/// (`src/lib.rs - item (line N)`) name no function and are skipped.
+pub fn rust_test_names(evidence: &TestEvidence) -> std::collections::BTreeSet<String> {
+    evidence
+        .runs
+        .iter()
+        .filter(|run| run.runner == "libtest")
+        .flat_map(|run| &run.cases)
+        .filter(|case| !case.id.contains(' '))
+        .filter_map(|case| case.id.rsplit("::").next().map(str::to_string))
+        .collect()
+}
+
+/// Whether Rust source defines a function with one of `names`.
+pub fn defines_any(source: &str, names: &std::collections::BTreeSet<String>) -> bool {
+    let ident = |c: char| c.is_ascii_alphanumeric() || c == '_';
+    source.match_indices("fn ").any(|(at, _)| {
+        let preceded = source[..at].chars().next_back().is_none_or(|c| !ident(c));
+        let name: String = source[at + 3..]
+            .trim_start()
+            .chars()
+            .take_while(|c| ident(*c))
+            .collect();
+        preceded && names.contains(&name)
+    })
+}
+
 fn relative(path: &str, root: &std::path::Path) -> String {
     std::path::Path::new(path)
         .strip_prefix(root)
@@ -221,6 +248,35 @@ mod tests {
         let cases = playwright_cases(&playwright);
         assert_eq!(cases[0].id, "[chromium] journey › reaches decision");
         assert_eq!(cases[0].status, "passed");
+    }
+
+    #[test]
+    fn rust_test_definitions_are_found_by_recorded_name() {
+        let evidence = TestEvidence {
+            schema: 1,
+            verification: "behavior".into(),
+            runs: vec![TestRun::new(
+                "libtest",
+                1,
+                libtest_cases("test tests::supports_day_sixty ... ok\ntest src/lib.rs - item (line 3) ... ok\n"),
+            )
+            .unwrap()],
+        };
+        let names = rust_test_names(&evidence);
+        assert_eq!(
+            names.into_iter().collect::<Vec<_>>(),
+            ["supports_day_sixty"]
+        );
+        let names = rust_test_names(&evidence);
+        assert!(defines_any(
+            "#[test]\n    fn supports_day_sixty() {}",
+            &names
+        ));
+        assert!(!defines_any("fn supports_day_sixty_extra() {}", &names));
+        assert!(!defines_any(
+            "fn other() { not_fn supports_day_sixty }",
+            &names
+        ));
     }
 
     #[test]

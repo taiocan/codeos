@@ -20,8 +20,10 @@ as `FULL_COVERAGE`.
 2. **Repeatability compares.** `repeatability` runs the deterministic suite twice and records
    both runs. Any difference in case identities or outcomes fails the check as nondeterminism.
 3. **Packet carries the evidence.** For each required verification record, the Stage 8 packet
-   includes its bound test evidence and the test inputs the Candidate Bundle binds. Nothing else
-   is added, and the packet budget still applies.
+   includes its bound test evidence and the candidate-bound inputs that define the recorded tests:
+   every test input, and a bound Rust product file only when it defines a test the recorded
+   libtest evidence names (inline tests). No other product file is added, and the packet budget
+   still applies.
 4. **Readiness fails closed.** A required record of these kinds that lacks bound evidence, or whose
    evidence is absent or does not match its identity, is `REQUIRED_INPUT_NOT_INSPECTABLE`.
 

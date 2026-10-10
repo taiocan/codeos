@@ -246,7 +246,7 @@ pub fn derive(
         manifest.required_inputs.insert(path.clone());
     }
     // A new candidate assessment shows what each test-based verification checked: its bound
-    // per-test outcomes and the test inputs the Candidate Bundle binds.
+    // per-test outcomes and the bound inputs that define those tests.
     if let Some(id) = &manifest.candidate_bundle {
         for (_, identity) in manifest.test_evidence() {
             if let Some(identity) = identity {
@@ -258,11 +258,25 @@ pub fn derive(
         if let Ok(bundle) =
             codeos_workflow::candidate::CandidateStore::at(&project.codeos_dir()).read(id)
         {
-            for input in bundle.implementation_inputs {
-                if input.role == "test" {
-                    manifest.derived_inputs.insert(input.path.clone());
-                    manifest.required_inputs.insert(input.path);
+            let mut names = BTreeSet::new();
+            for (_, identity) in manifest.test_evidence() {
+                let path = root.join(format!(
+                    "{}/{}.json",
+                    codeos_workflow::test_evidence::DIR,
+                    identity.unwrap_or_default()
+                ));
+                if let Some(evidence) = std::fs::read(path).ok().and_then(|bytes| {
+                    serde_json::from_slice::<codeos_workflow::test_evidence::TestEvidence>(&bytes)
+                        .ok()
+                }) {
+                    names.extend(codeos_workflow::test_evidence::rust_test_names(&evidence));
                 }
+            }
+            for path in test_definition_inputs(&bundle.implementation_inputs, &names, |path| {
+                std::fs::read_to_string(root.join(path)).ok()
+            }) {
+                manifest.derived_inputs.insert(path.clone());
+                manifest.required_inputs.insert(path);
             }
         }
     }
@@ -274,6 +288,27 @@ pub fn derive(
         manifest.required_inputs.insert(path);
     }
     manifest
+}
+
+/// The candidate-bound inputs that define recorded tests: every test input, plus a bound Rust
+/// product file only when it defines a test the recorded libtest evidence names (inline tests).
+fn test_definition_inputs(
+    inputs: &[codeos_workflow::candidate::CandidateInput],
+    rust_tests: &BTreeSet<String>,
+    read: impl Fn(&str) -> Option<String>,
+) -> Vec<String> {
+    inputs
+        .iter()
+        .filter(|input| {
+            input.role == "test"
+                || (!rust_tests.is_empty()
+                    && input.path.ends_with(".rs")
+                    && read(&input.path).is_some_and(|source| {
+                        codeos_workflow::test_evidence::defines_any(&source, rust_tests)
+                    }))
+        })
+        .map(|input| input.path.clone())
+        .collect()
 }
 
 /// The event-set identity of the latest passing F7 runtime-event verification for `feature`.
@@ -413,5 +448,44 @@ impl ReviewInputManifest {
             identity.push_str(&format!("{}={}\n", entry.path, entry.sha256));
         }
         self.reviewed_snapshot = sha256_str(&identity);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use codeos_workflow::candidate::CandidateInput;
+
+    #[test]
+    fn only_inputs_defining_recorded_tests_are_included() {
+        let input = |path: &str, role: &str| CandidateInput {
+            path: path.into(),
+            sha256: "sha".into(),
+            role: role.into(),
+            source: "derived".into(),
+        };
+        let inputs = [
+            input("web/src/a.spec.ts", "test"),
+            input("backend/src/main.rs", "product"),
+            input("backend/src/db.rs", "product"),
+            input("web/src/routes/+page.svelte", "product"),
+        ];
+        let read = |path: &str| {
+            Some(match path {
+                "backend/src/main.rs" => "#[test]\nfn supports_day_sixty() {}".to_string(),
+                "backend/src/db.rs" => "pub fn connect() {}".to_string(),
+                _ => "fn supports_day_sixty() {}".to_string(),
+            })
+        };
+        let names = BTreeSet::from(["supports_day_sixty".to_string()]);
+        assert_eq!(
+            test_definition_inputs(&inputs, &names, read),
+            ["web/src/a.spec.ts", "backend/src/main.rs"]
+        );
+        // Without recorded Rust tests, no product file is added.
+        assert_eq!(
+            test_definition_inputs(&inputs, &BTreeSet::new(), read),
+            ["web/src/a.spec.ts"]
+        );
     }
 }
