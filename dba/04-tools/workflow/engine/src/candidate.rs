@@ -440,7 +440,7 @@ pub fn passed_revalidation(
         && current_for_review(project, reviewed_id)?)
 }
 
-fn governed(
+pub(crate) fn governed(
     project: &Project,
     feature: &str,
     schema_version: u8,

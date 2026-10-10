@@ -211,6 +211,8 @@ impl ProjectStatus {
             let current_acceptance_valid = assessment.as_ref().is_some_and(|a| a.current);
             let governance_v3 = project.workflow_governance_version()? >= 3;
             let mut workflow = summarize(&checker::evaluate(project, &subject)?);
+            // The checker's own step for an ordinary candidate already under way.
+            let ordinary_step = workflow.action;
             let stale_reason = match &assessment {
                 Some(assessment) if !assessment.current => Some(
                     assessment
@@ -310,6 +312,9 @@ impl ProjectStatus {
                             &mut workflow,
                             revalidation::next_step(project, &subject),
                         );
+                    }
+                    if reason == "ARCHITECTURE_CHANGE_REQUIRED" {
+                        ordinary_candidate_step(project, &id, &mut workflow, ordinary_step)?;
                     }
                 }
             }
@@ -453,6 +458,41 @@ fn revalidation_step(workflow: &mut WorkflowStatus, step: revalidation::Revalida
     workflow.action = action;
     workflow.next_action = Some(next);
     workflow.trigger = trigger;
+}
+
+/// After an architecture change, report the checker's F7 step once a current ordinary Candidate
+/// Bundle exists; until then, architecture reassessment stays the next step.
+fn ordinary_candidate_step(
+    project: &Project,
+    feature: &str,
+    workflow: &mut WorkflowStatus,
+    step: Option<ActionType>,
+) -> Result<()> {
+    let Some(bundle) = crate::candidate::unique_current(project, feature)? else {
+        return Ok(());
+    };
+    if crate::candidate::CandidateStore::at(&project.codeos_dir())
+        .read(&bundle)?
+        .kind
+        != "ordinary"
+    {
+        return Ok(());
+    }
+    let (actor, next) = match step {
+        Some(ActionType::RunReview) => (
+            Actor::Auto,
+            format!("assess ordinary Candidate Bundle {bundle} at Stage 8"),
+        ),
+        Some(ActionType::ResolveReviewFinding) => (
+            Actor::Assisted,
+            format!("resolve the assessment of ordinary Candidate Bundle {bundle}"),
+        ),
+        _ => return Ok(()),
+    };
+    workflow.actor = Some(actor);
+    workflow.action = step;
+    workflow.next_action = Some(next);
+    Ok(())
 }
 
 /// The exact context an action arises in; a command depends on all of it, not the type alone.
@@ -1600,5 +1640,106 @@ mod tests {
         let mut found = Vec::new();
         visit(root, root, &mut found);
         found
+    }
+
+    #[test]
+    fn architecture_change_reports_the_current_ordinary_candidate_step() {
+        use crate::candidate::{CandidateBundle, CandidateStore};
+        use crate::receipts::{Receipt, ReceiptStore};
+        let dir = tempfile::tempdir().unwrap();
+        for path in [
+            ".codeos/01-specification/intents/F-1.md",
+            ".codeos/01-specification/contracts/F-1_contract.md",
+            ".codeos/01-specification/event-schemas/F-1_schema.md",
+        ] {
+            let full = dir.path().join(path);
+            fs::create_dir_all(full.parent().unwrap()).unwrap();
+            fs::write(&full, format!("{path}\n")).unwrap();
+        }
+        fs::create_dir_all(dir.path().join(".codeos/00-project")).unwrap();
+        fs::write(
+            dir.path().join(".codeos/00-project/codeos.yaml"),
+            "codeos_schema: 2\n",
+        )
+        .unwrap();
+        let project = Project::discover(dir.path()).unwrap();
+        let reassess = || {
+            let mut workflow = summarize(&[]);
+            workflow.action = Some(ActionType::ReassessArchitecture);
+            workflow
+        };
+        // No candidate yet: architecture reassessment stays the next step.
+        let mut workflow = reassess();
+        ordinary_candidate_step(
+            &project,
+            "F-1",
+            &mut workflow,
+            Some(ActionType::ResolveReviewFinding),
+        )
+        .unwrap();
+        assert_eq!(workflow.action, Some(ActionType::ReassessArchitecture));
+
+        let receipt = Receipt {
+            workflow: "feature".into(),
+            subject: "F-1".into(),
+            checkpoint: "reconciliation".into(),
+            result: "reconciled".into(),
+            bindings: Default::default(),
+            timestamp: "2026-01-01T00:00:00Z".into(),
+            rationale: Some("reconciled".into()),
+            observation: None,
+        };
+        ReceiptStore::at(&project.codeos_dir())
+            .append(&receipt)
+            .unwrap();
+        let bundle = CandidateBundle {
+            schema_version: 2,
+            feature: "F-1".into(),
+            semantic_revision: 1,
+            kind: "ordinary".into(),
+            configuration_sha256: "config".into(),
+            governed_inputs: crate::candidate::governed(&project, "F-1", 2).unwrap(),
+            implementation_inputs: vec![],
+            dependency_additions: vec![],
+            verification_records: Default::default(),
+            f6_receipt_sha256: crate::hashing::record_identity(&receipt).unwrap(),
+            production_evidence: None,
+            runtime_evidence: None,
+            journey_previous: "entry".into(),
+            journey_target: "outcome".into(),
+            predecessor_bundle: None,
+            baseline_acceptance: None,
+            trigger_commit: None,
+        };
+        let id = CandidateStore::at(&project.codeos_dir())
+            .write(&bundle)
+            .unwrap();
+        for (step, actor, next) in [
+            (
+                ActionType::RunReview,
+                Actor::Auto,
+                format!("assess ordinary Candidate Bundle {id} at Stage 8"),
+            ),
+            (
+                ActionType::ResolveReviewFinding,
+                Actor::Assisted,
+                format!("resolve the assessment of ordinary Candidate Bundle {id}"),
+            ),
+        ] {
+            let mut workflow = reassess();
+            ordinary_candidate_step(&project, "F-1", &mut workflow, Some(step)).unwrap();
+            assert_eq!((workflow.action, workflow.actor), (Some(step), Some(actor)));
+            assert_eq!(workflow.next_action, Some(next));
+        }
+        // Any other checker step leaves reassessment in place.
+        let mut workflow = reassess();
+        ordinary_candidate_step(
+            &project,
+            "F-1",
+            &mut workflow,
+            Some(ActionType::PrepareCandidate),
+        )
+        .unwrap();
+        assert_eq!(workflow.action, Some(ActionType::ReassessArchitecture));
     }
 }

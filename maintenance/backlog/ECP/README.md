@@ -15,6 +15,7 @@ context only; the Charter and Git are authoritative.
 | [WO-08](WO-08-terminal-acceptance-clarity.md) | Presentation | NORMAL | Terminal acceptance and health clarity | Implemented |
 | [WO-09](WO-09-history-attribution.md) | ECP-4 | NORMAL | Process history attribution | Implemented |
 | [WO-10](WO-10-atomic-revalidation-actions.md) | ECP-5 repair | NORMAL | Atomic post-acceptance revalidation actions | Implemented |
+| [WO-11](WO-11-ordinary-candidate-action.md) | ECP-5 repair | NORMAL | Ordinary candidate action after architecture change | Implemented |
 
 Each WO follows the previous one (WO-04 needs only WO-01 but stays in sequence). WO-08 and WO-09
 come from WO-06's routed gaps. ECP-2–ECP-5 are complete (WO-06: 10/10 answered). ECP is frozen;

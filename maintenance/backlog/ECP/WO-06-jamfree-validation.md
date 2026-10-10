@@ -87,3 +87,8 @@ byte-identical; no TomTom calls; no JamFree state or production evidence created
 All ten criteria ANSWERED: read-only ECP-2–ECP-5 is complete. An exact refusal answers question 7;
 the terminal names the action and trigger, and the exact command is in `status --json` (ECP-5).
 ECP-6 (WO-07) remains unapproved pending real JamFree AUTO-command evidence.
+
+**Correction (WO-11):** the F-0001 action above was a fixed string. F-0001 already had an ordinary
+candidate assessed BLOCKED, so the legitimate next action was `resolve_review_finding`. WO-11
+repairs this, and question 7 is ANSWERED again: F-0001 shows `[ASSISTED] resolve the assessment of
+ordinary Candidate Bundle 6449208f…`.
