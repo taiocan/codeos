@@ -10,10 +10,13 @@ context only; the Charter and Git are authoritative.
 | [WO-03](WO-03-changed-surfaces.md) | ECP-3 | NORMAL | Changed surfaces and evidence identities | Implemented |
 | [WO-04](WO-04-process-history.md) | ECP-4 | NORMAL | Process history | Implemented |
 | [WO-05](WO-05-structured-action.md) | ECP-5 | NORMAL | Structured action | Implemented |
-| [WO-06](WO-06-jamfree-validation.md) | Real use | NORMAL | JamFree pilot validation | Proposed |
+| [WO-06](WO-06-jamfree-validation.md) | Real use | NORMAL | JamFree pilot validation | Implemented |
 | [WO-07](WO-07-auto-execution-decision.md) | ECP-6 | PROTECTED | Bounded AUTO execution — decision brief | Proposed |
+| [WO-08](WO-08-terminal-acceptance-clarity.md) | Presentation | NORMAL | Terminal acceptance and health clarity | Proposed |
+| [WO-09](WO-09-history-attribution.md) | ECP-4 | NORMAL | Process history attribution | Proposed |
 
-Each WO follows the previous one (WO-04 needs only WO-01 but stays in sequence).
+Each WO follows the previous one (WO-04 needs only WO-01 but stays in sequence). WO-08 and WO-09
+come from WO-06's routed gaps; WO-07 waits until they are resolved.
 
 ## Rules for every WO
 
@@ -40,7 +43,7 @@ Each WO follows the previous one (WO-04 needs only WO-01 but stays in sequence).
 | ECP-3, O-2, §6 | WO-02, WO-03 |
 | ECP-4, O-3 | WO-04 |
 | ECP-5, O-4 | WO-05 |
-| Success criteria 1–10 | WO-06 |
+| Success criteria 1–10 | WO-06, WO-08, WO-09 |
 | ECP-6, O-5, success criteria 11–13 | WO-07 (decision only) |
 | C-1, C-2, C-11, C-12 | Rules 1–3 |
 | C-3 | WO-01, WO-03 |
