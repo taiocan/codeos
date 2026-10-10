@@ -72,5 +72,18 @@ Same read-only commands on JamFree; `.codeos/` byte-identical; no TomTom calls.
 | 7 | PARTIAL | PARTIAL | gap E remains, routed to REVAL outside ECP; the panel reports it truthfully |
 | 9 | PARTIAL | ANSWERED | gap F closed (WO-09): friction signals located by subject and checkpoint |
 
-Criteria 3, 5, 6, 8, 10 unchanged (ANSWERED). Read-only ECP monitoring scope (ECP-2–ECP-5) is
-complete; the remaining PARTIAL depends on the REVAL capability, not on the projection.
+Criteria 3, 5, 6, 8, 10 unchanged (ANSWERED).
+
+### Re-rating after WO-10 — 2026-10-10
+
+Same four read-only commands with a build at HEAD; exit 2 (blocked). JamFree `.codeos/`
+byte-identical; no TomTom calls; no JamFree state or production evidence created.
+
+| # | Was | Now | Evidence |
+|---|---|---|---|
+| 7 | PARTIAL | ANSWERED | gap E closed (WO-10): F-0003/F-0004 `[AUTO] run_verification` with JSON command `check --workflow feature --subject F-000x --revalidation --trigger c87c46d…`; F-0002 `[ASSISTED]` with the exact frontier refusal; F-0001 `[ASSISTED] reassess_architecture` |
+| 9 | ANSWERED | ANSWERED | reconfirmed: friction signals still located by subject and checkpoint |
+
+All ten criteria ANSWERED: read-only ECP-2–ECP-5 is complete. An exact refusal answers question 7;
+the terminal names the action and trigger, and the exact command is in `status --json` (ECP-5).
+ECP-6 (WO-07) remains unapproved pending real JamFree AUTO-command evidence.
