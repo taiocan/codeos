@@ -264,6 +264,18 @@ fn git_bytes(project: &Project, args: &[&str]) -> Result<Vec<u8>> {
     Ok(output.stdout)
 }
 
+/// Every current Architecture Scope with whether it records human approval.
+pub fn scope_approvals(project: &Project) -> Result<Vec<(String, bool)>> {
+    tree_files(project, "WORKTREE")?
+        .into_iter()
+        .map(|(path, text)| {
+            let normalized = normalized(&text);
+            let (metadata, _) = parts(&normalized)?;
+            Ok((path, matches!(metadata.approval, Approval::Approved { .. })))
+        })
+        .collect()
+}
+
 pub fn scope_path(project: &Project, subject: &str) -> Result<Option<String>> {
     let files = tree_files(project, "WORKTREE")?;
     let mut matches = Vec::new();

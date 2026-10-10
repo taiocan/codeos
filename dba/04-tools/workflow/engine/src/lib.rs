@@ -13,6 +13,7 @@ pub mod contract;
 pub mod event_evidence;
 pub mod evidence;
 pub mod hashing;
+pub mod health;
 pub mod monitor;
 pub mod observations;
 pub mod project;

@@ -257,7 +257,24 @@ fn attention_follows_workflow_order_with_actor_classes() {
     assert_eq!(stale["actor"], "ASSISTED");
     assert!(attention.iter().all(|item| item["actor"].is_string()));
 
+    let health = json["health"].as_array().unwrap();
+    assert_eq!(health.len(), 13);
+    for item in health {
+        assert!(!item["basis"].as_array().unwrap().is_empty(), "{item}");
+    }
+    let specification = health
+        .iter()
+        .find(|item| item["domain"] == "specification")
+        .unwrap();
+    assert_eq!(specification["status"], "STALE");
+    assert_eq!(json["features"][1]["historically_accepted"], true);
+
     let rendered = String::from_utf8_lossy(&run(&project, &["status"]).stdout).to_string();
+    assert!(rendered.contains("ENGINEERING HEALTH"), "{rendered}");
+    assert!(
+        rendered.contains("  Specification         STALE"),
+        "{rendered}"
+    );
     assert!(rendered.contains("ATTENTION"), "{rendered}");
     assert!(rendered.contains("next [ASSISTED]: start ordinary governed work at F1"));
     assert_eq!(before, snapshot(project.path()));

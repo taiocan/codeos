@@ -133,6 +133,7 @@ pub struct ProjectStatus {
     pub feature_inventory_warnings: Vec<String>,
     pub attention: Vec<AttentionItem>,
     pub open_observations: Vec<OpenObservation>,
+    pub health: Vec<crate::health::Health>,
 }
 
 impl ProjectStatus {
@@ -266,6 +267,7 @@ impl ProjectStatus {
         let current_feature = (incomplete.len() == 1).then(|| incomplete[0].clone());
         let attention = attention(&bootstrap, &features, current_feature.as_deref());
         let open_observations = open_observations(project)?;
+        let health = crate::health::derive(project, &features, &open_observations)?;
 
         Ok(Self {
             schema_version: if project.workflow_governance_version()? >= 3 {
@@ -284,6 +286,7 @@ impl ProjectStatus {
             feature_inventory_warnings,
             attention,
             open_observations,
+            health,
         })
     }
 
@@ -430,7 +433,15 @@ pub fn render(status: &ProjectStatus) -> String {
         )),
         None => out.push_str("\n  Active feature     —"),
     }
-    out.push_str("\n\nFEATURES\n");
+    out.push_str("\n\nENGINEERING HEALTH\n");
+    for item in &status.health {
+        let shown = match item.status {
+            crate::health::HealthStatus::Open => format!("{} OPEN", item.basis.len()),
+            status => status.label().into(),
+        };
+        out.push_str(&format!("  {:<22}{}\n", item.domain.label(), shown));
+    }
+    out.push_str("\nFEATURES\n");
     if status.features.is_empty() {
         out.push_str("  No Specification Packages found.\n");
     } else {
