@@ -73,6 +73,12 @@ case "${mode}" in
     exit 0
     ;;
   failure) printf '%s\n' 'simulated Codex failure' >&2; exit 9 ;;
+  usage_limit)
+    printf '%s\n' '{"type":"turn.started"}' \
+      '{"type":"error","message":"simulated usage limit"}' \
+      '{"type":"turn.failed","error":{"message":"simulated usage limit"}}'
+    exit 1
+    ;;
   malformed) printf '%s\n' 'not-json'; exit 0 ;;
   mutate) printf '%s\n' 'fake reviewer mutation' >> "${CODEOS_FAKE_REPO:?}/tracked.md" ;;
   blocking)

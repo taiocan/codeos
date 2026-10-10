@@ -508,6 +508,12 @@ fn codex_failure_and_malformed_jsonl_fail_before_records() {
     for (feature, mode, expected) in [
         ("UPG-FAIL", "failure", "codex exec failed"),
         ("UPG-MALFORMED", "malformed", "malformed Codex JSONL"),
+        // Codex reports some failures only in its JSONL stream, with empty stderr.
+        (
+            "UPG-LIMIT",
+            "usage_limit",
+            "codex exec failed with status exit status: 1: simulated usage limit",
+        ),
     ] {
         let (repo, _) = setup_temp_git_repo();
         setup_codeos_symlink(repo.path());
