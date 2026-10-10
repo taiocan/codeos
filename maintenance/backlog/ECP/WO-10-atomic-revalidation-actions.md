@@ -2,38 +2,32 @@
 
 ECP-5 conformance repair · NORMAL · from WO-06 gap E · Authority: Workflow Governance v4, WO-05
 
+## Goal
+
+For an accepted feature stale by `REVALIDATION_REQUIRED`, report the one next revalidation
+operation, with an exact command when one fully performs it.
+
 ## Finding
 
-Bounded revalidation already exists: Governance v4 lets a `post_acceptance_revalidation`
-Candidate Bundle restore current validity, without an F9 receipt, only when Specification Package
-meaning and applicable architecture are unchanged. The defect was ECP's `revalidate_acceptance`
-action, which named the multi-step outcome (violating WO-05) and pointed at no mechanism. No
-workflow semantics, acceptance rule, or revalidation authority is added.
+Governance v4 already provides bounded revalidation: a `post_acceptance_revalidation` Candidate
+Bundle restores current validity, without an F9 receipt, when meaning and architecture are
+unchanged. The defect was ECP's non-atomic `revalidate_acceptance` action.
 
 ## Invariant
 
-Status derives the next revalidation action from the same Governance v4 eligibility checks the
-revalidation commands apply; it never approximates whether revalidation is allowed. A refusal on
-the way is reported, not advertised as a command.
+Status derives each step from the revalidation commands' own checks and reports their refusals; it
+never advertises a command those checks would refuse.
 
 ## Steps (`revalidation::next_step`, first match)
 
-| Condition (shared predicate) | Action | Actor | Command |
+| Condition | Action | Actor | Command |
 |---|---|---|---|
-| accepted surface has uncommitted changes (`surface_uncommitted`, used by `identified_change`) | `commit_change` | ASSISTED | — |
-| trigger = latest surface commit; `preflight` refuses | none — next action states the refusal | ASSISTED | — |
-| current revalidation bundle for this acceptance and trigger, assessed and not passed | `resolve_review_finding` | ASSISTED | — |
+| uncommitted surface change | `commit_change` | ASSISTED | — |
+| `preflight` on the latest surface commit refuses | refusal | ASSISTED | — |
+| current revalidation bundle, assessed, not passed | `resolve_review_finding` | ASSISTED | — |
 | current revalidation bundle, not assessed | `run_review` | AUTO | — |
-| `stale_revalidation_verifications` (used by `check --revalidation`) non-empty | `run_verification` | AUTO | `check --workflow feature --subject <F> --revalidation --trigger <sha>` |
-| `candidate::assemble` (every `prepare-candidate` check, without writing) succeeds | `prepare_candidate` | AUTO | `prepare-candidate --subject <F> --revalidation --trigger <sha>` |
-| `candidate::assemble` refuses | none — next action states the refusal | ASSISTED | — |
+| stale revalidation verifications | `run_verification` | AUTO | `check … --revalidation --trigger <sha>` |
+| `candidate::assemble` succeeds / refuses | `prepare_candidate` / refusal | AUTO / ASSISTED | `prepare-candidate … --revalidation --trigger <sha>` / — |
 
-Commands carry the exact derived trigger SHA. `revalidate_acceptance` stays a reserved schema-v3
-value and is never emitted; `commit_change` is added. Legacy configurations without Workflow
-Governance v3 keep their previous untyped next action.
-
-## Acceptance criteria
-
-1. On JamFree, each `REVALIDATION_REQUIRED` feature shows its atomic step or the exact refusal.
-2. Every emitted command is one the corresponding command's own checks accept.
-3. Running revalidation on JamFree is a separate, deliberate project action.
+`revalidate_acceptance` stays a reserved schema-v3 value, never emitted. Running revalidation on
+JamFree is a separate project action.
