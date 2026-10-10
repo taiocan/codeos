@@ -8,3 +8,4 @@ implemented changes; this file is planning context, not workflow state or implem
 |---|---|---|---|---|
 | JAMFREE-F0001 | `JAMFREE-F0001-bound-event-evidence.md` | Canonically Bound Runtime-Event Verification | High | Implemented — downstream revalidation remained blocked |
 | DBA22-PILOT | `DBA22-PILOT-workflow-friction.md` | DBA-22 pilot workflow friction and hardening candidates | Medium | Proposed |
+| ECP | `ECP/README.md` | Engineering Control Panel ECP-2–ECP-6 work orders | High | Proposed |
