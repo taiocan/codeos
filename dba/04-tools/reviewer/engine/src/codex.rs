@@ -58,9 +58,15 @@ pub fn invoke(packet: &ReviewPacket, cfg: &Config) -> Result<InvokeOutcome> {
 
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr).trim().to_string();
+        let reported = failure_messages(&String::from_utf8_lossy(&output.stdout));
         bail!(
-            "codex exec failed with status {}{}",
+            "codex exec failed with status {}{}{}",
             output.status,
+            if reported.is_empty() {
+                String::new()
+            } else {
+                format!(": {reported}")
+            },
             if stderr.is_empty() {
                 String::new()
             } else {
@@ -337,8 +343,37 @@ fn path_arg(path: &Path) -> Result<&str> {
         .with_context(|| format!("path is not valid UTF-8: {}", path.display()))
 }
 
+/// The error messages Codex reported in its JSONL event stream (e.g. a usage limit), deduplicated,
+/// so a failed invocation states its cause instead of only an exit status.
+fn failure_messages(stdout: &str) -> String {
+    let mut messages: Vec<String> = Vec::new();
+    for line in stdout.lines() {
+        let Ok(event) = serde_json::from_str::<serde_json::Value>(line) else {
+            continue;
+        };
+        for message in [event.pointer("/message"), event.pointer("/error/message")]
+            .into_iter()
+            .flatten()
+            .filter_map(|value| value.as_str())
+        {
+            let failure = matches!(event["type"].as_str(), Some("error") | Some("turn.failed"));
+            if failure && !messages.iter().any(|known| known == message) {
+                messages.push(message.to_string());
+            }
+        }
+    }
+    messages.join("; ")
+}
+
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn failure_messages_report_the_codex_error_once() {
+        let stdout = "{\"type\":\"turn.started\"}\n{\"type\":\"error\",\"message\":\"usage limit\"}\n{\"type\":\"turn.failed\",\"error\":{\"message\":\"usage limit\"}}\nnot json\n";
+        assert_eq!(super::failure_messages(stdout), "usage limit");
+        assert_eq!(super::failure_messages("{\"type\":\"turn.started\"}"), "");
+    }
+
     use super::*;
 
     #[test]

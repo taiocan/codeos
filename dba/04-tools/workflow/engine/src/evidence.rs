@@ -307,6 +307,15 @@ pub fn latest_review_record(
         if f != Some(feature) || !stage_matches {
             continue;
         }
+        // Only a Codex-backed review is an independent assessment (Review Policy v16: external
+        // assessments remain advisory); any other source stays readable history but never decides.
+        if reviewed
+            .and_then(|r| r.get("source"))
+            .and_then(|v| v.as_str())
+            != Some("codex")
+        {
+            continue;
+        }
         let name = path
             .file_name()
             .and_then(|v| v.to_str())
@@ -1335,14 +1344,52 @@ mod tests {
 
     fn review_record(feature: &str, stage: &str, id: &str) -> String {
         format!(
-            "---\nreview_id: {id}\nreviewed:\n  feature: {feature}\n  stage: \"{stage}\"\n  review_commit: abc\n  reviewed_packet_sha256: packet\neffective_concern: NO OBJECTION\n---\n"
+            "---\nreview_id: {id}\nreviewed:\n  source: codex\n  feature: {feature}\n  stage: \"{stage}\"\n  review_commit: abc\n  reviewed_packet_sha256: packet\neffective_concern: NO OBJECTION\n---\n"
         )
     }
 
     fn canonical_review_record(feature: &str, stage: u64, id: &str) -> String {
         format!(
-            "---\nreview_id: {id}\nreviewed:\n  feature: {feature}\n  stage: {stage}\n  review_commit: abc\n  reviewed_packet_sha256: packet\n  effective_concern: NO OBJECTION\n---\n"
+            "---\nreview_id: {id}\nreviewed:\n  source: codex\n  feature: {feature}\n  stage: {stage}\n  review_commit: abc\n  reviewed_packet_sha256: packet\n  effective_concern: NO OBJECTION\n---\n"
         )
+    }
+
+    #[test]
+    fn only_a_codex_review_decides_a_candidate() {
+        let record = |source: &str, id: &str, outcome: &str| {
+            format!(
+                "---\nreview_id: {id}\nreviewed:\n  source: {source}\n  feature: F-1\n  stage: 8\n  review_commit: abc\n  reviewed_packet_sha256: packet\n  effective_concern: NO OBJECTION\n  candidate_bundle: bundle\n  candidate_outcome: {outcome}\n---\n"
+            )
+        };
+        let dir = tempfile::tempdir().unwrap();
+        let codex = dir.path().join("codex");
+        fs::create_dir(&codex).unwrap();
+        // External PASSED: F7 stays unsatisfied.
+        fs::write(
+            codex.join("20260101T000001Z-F-1-stage-8-abc.md"),
+            record("external", "EXT__F-1__8__A1", "PASSED"),
+        )
+        .unwrap();
+        assert!(latest_review_record(dir.path(), "F-1", "8")
+            .unwrap()
+            .is_none());
+        // Codex PASSED decides.
+        fs::write(
+            codex.join("20260101T000002Z-F-1-stage-8-abc.md"),
+            record("codex", "ASSESS__F-1__8__CANDIDATE-bundle", "PASSED"),
+        )
+        .unwrap();
+        // A later external BLOCKED neither blocks nor replaces it.
+        fs::write(
+            codex.join("20260101T000003Z-F-1-stage-8-abc.md"),
+            record("external", "EXT__F-1__8__A2", "BLOCKED"),
+        )
+        .unwrap();
+        let latest = latest_review_record(dir.path(), "F-1", "8")
+            .unwrap()
+            .unwrap();
+        assert_eq!(latest.review_id, "ASSESS__F-1__8__CANDIDATE-bundle");
+        assert_eq!(latest.candidate_outcome.as_deref(), Some("PASSED"));
     }
 
     #[test]
@@ -1499,7 +1546,7 @@ mod tests {
         .unwrap();
         fs::write(
             codex.join("2026-01-01T000001Z-F-1-stage-8-abc.md"),
-            "---\nreview_id: REV__F-1__8__SR2__TERMINAL-CLOSURE-FAILURE-1\ncounts_as_semantic_closure: false\nreviewed:\n  feature: F-1\n  stage: 8\n  review_commit: abc\n  reviewed_packet_sha256: failed-packet\n  effective_concern: DO NOT ADVANCE\n---\n",
+            "---\nreview_id: REV__F-1__8__SR2__TERMINAL-CLOSURE-FAILURE-1\ncounts_as_semantic_closure: false\nreviewed:\n  source: codex\n  feature: F-1\n  stage: 8\n  review_commit: abc\n  reviewed_packet_sha256: failed-packet\n  effective_concern: DO NOT ADVANCE\n---\n",
         )
         .unwrap();
         let latest = latest_review_record(dir.path(), "F-1", "8")

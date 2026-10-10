@@ -186,7 +186,7 @@ fn bootstrap_then_feature_then_operation_all_reach_all_pass() {
     );
     p.w(
         ".codeos/05-review/reviews/2026-09-06T100000Z-F-0001-stage-8-0000000.md",
-        "---\nartifact_type: review_record\nreviewed:\n  feature: F-0001\n  stage: \"8\"\n  review_commit: \"\"\n  reviewed_packet_sha256: \"\"\n  diff_hash: \"\"\neffective_concern: NO OBJECTION\n---\n\n# Independent Review — F-0001, Stage 8\n\nNO OBJECTION.\n",
+        "---\nartifact_type: review_record\nreviewed:\n  source: codex\n  feature: F-0001\n  stage: \"8\"\n  review_commit: \"\"\n  reviewed_packet_sha256: \"\"\n  diff_hash: \"\"\neffective_concern: NO OBJECTION\n---\n\n# Independent Review — F-0001, Stage 8\n\nNO OBJECTION.\n",
     );
     p.decide(
         Workflow::Feature,

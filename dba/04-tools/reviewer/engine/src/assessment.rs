@@ -620,6 +620,9 @@ pub fn write_assessment(
         ));
         if let Some(bundle) = &manifest.candidate_bundle {
             content.push_str(&format!("  candidate_bundle: {}\n", bundle));
+        }
+        // An external assessment is advisory (Review Policy v16); it never carries an outcome.
+        if manifest.candidate_bundle.is_some() && !raw.is_external() {
             let outcome = if parsed.parse_status == "OK"
                 && parsed.assessment_status == "COMPLETE"
                 && parsed.effective_concern == "NO OBJECTION"
