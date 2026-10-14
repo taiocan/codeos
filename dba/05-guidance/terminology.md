@@ -62,6 +62,7 @@ Ordinary technical vocabulary does not belong here. Git preserves the history of
 | **Normalize-on-read** | A vocabulary strategy that stores the original representation and resolves it at every comparison site. |
 | **Normalize-on-write** | A vocabulary strategy that resolves input at ingestion and stores Concept identity. |
 | **Observational Event** | A runtime event representing a raw observed fact. |
+| **Observed Surface** | The identity of what a feature's browser verification observes of the running product, in deterministic provider mode. |
 | **Operational Observation** | A fact arising after acceptance, from real system use, that may affect governed engineering truth. It is evidence and cannot change approved behavior by itself. |
 | **Post-Acceptance Dependency Revalidation** | The single bounded operation that determines whether a historically accepted feature still satisfies unchanged approved meaning after a mechanically later dependency or integration change invalidates its implementation-bound evidence. It is not another acceptance or Stage-8 review cycle. |
 | **Outcome** | A measurable result the solution must create, identified as `O-#` in the Solution Charter. An outcome is not a feature. |

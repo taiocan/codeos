@@ -2105,32 +2105,75 @@ pub fn bindings_for_decision(
     subject: &Subject,
     checkpoint: &str,
 ) -> Result<BTreeMap<String, String>> {
-    Ok(decision_scope(current_bindings(
-        project, subject, checkpoint,
-    )?))
+    let bindings = decision_scope(current_bindings(project, subject, checkpoint)?);
+    anyhow::ensure!(
+        bindings.get("observed_surface").map(String::as_str) != Some(UNOBSERVED),
+        "no passing F3 product_journey record carries an Observed Surface; run check first"
+    );
+    Ok(bindings)
 }
 
-/// A new human UX judgment binds the product it judged, not the test files that verify it.
+/// A new human UX judgment binds the narrowest product binding available: the Observed Surface
+/// (Feature Workflow v10), else the product files, never the test files that verify it.
 fn decision_scope(mut bindings: BTreeMap<String, String>) -> BTreeMap<String, String> {
-    if bindings.contains_key("product_state") {
+    if bindings.contains_key("observed_surface") {
+        bindings.remove("product_state");
+        bindings.remove("implementation_state");
+    } else if bindings.contains_key("product_state") {
         bindings.remove("implementation_state");
     }
     bindings
 }
 
+/// The product bindings, narrowest first. Each later one covers what the earlier ones judged.
+const PRODUCT_BINDINGS: [&str; 3] = ["observed_surface", "product_state", "implementation_state"];
+
 /// The inputs a recorded decision must bind to be current: what `decide` records now. A receipt
-/// recorded before product scoping binds `implementation_state`, which covers the product files
-/// `product_state` hashes, so it needs no `product_state`.
+/// recorded under an earlier version keeps the broader product binding it recorded, which is
+/// compared as recorded, so it needs no narrower one.
 fn required_decision_bindings(
     current: &BTreeMap<String, String>,
     receipt: Option<&Receipt>,
 ) -> BTreeSet<String> {
     let mut required: BTreeSet<String> = decision_scope(current.clone()).into_keys().collect();
-    if receipt.is_some_and(|r| r.bindings.contains_key("implementation_state")) {
-        required.remove("product_state");
+    if let Some(receipt) = receipt {
+        for (index, narrower) in PRODUCT_BINDINGS.iter().enumerate() {
+            if !receipt.bindings.contains_key(*narrower)
+                && PRODUCT_BINDINGS[index + 1..]
+                    .iter()
+                    .any(|broader| receipt.bindings.contains_key(*broader))
+            {
+                required.remove(*narrower);
+            }
+        }
     }
     required
 }
+
+/// Feature Workflow v10: a GUI feature's journey records its Observed Surface, which F4 and F8 bind.
+fn observes_surface(project: &Project, subject: &Subject) -> Result<bool> {
+    Ok(subject.workflow == Workflow::Feature
+        && subject.gui
+        && project.feature_workflow_version()? >= 10)
+}
+
+/// The Observed Surface of the latest F3 journey record. A record without one yields a value no
+/// receipt binds, so a receipt cannot be current against it and `decide` refuses it.
+fn journey_observed_surface(project: &Project, subject: &Subject) -> Result<String> {
+    let record = VerificationStore::at(&project.codeos_dir()).latest(
+        "feature",
+        &subject.id,
+        "F3",
+        "product_journey",
+    )?;
+    Ok(record
+        .filter(|record| record.result == "passed")
+        .and_then(|record| record.details)
+        .and_then(|details| details["observed_surface"].as_str().map(str::to_string))
+        .unwrap_or_else(|| UNOBSERVED.into()))
+}
+
+const UNOBSERVED: &str = "unobserved";
 
 /// The bindings `status`/`check` evaluate a recorded receipt against. They include every binding
 /// any recorded receipt for `checkpoint` may carry, so receipts recorded before product scoping keep
@@ -2190,6 +2233,12 @@ fn current_bindings(
                     hashing::product_state(&project.root, &project.implementation_paths())?,
                 );
             }
+            if observes_surface(project, subject)? {
+                b.insert(
+                    "observed_surface".into(),
+                    journey_observed_surface(project, subject)?,
+                );
+            }
         }
         "reconciliation" | "final_ux_validation" | "acceptance" => {
             put(&mut b, "intent", &project.intent(&subject.id))?;
@@ -2205,6 +2254,12 @@ fn current_bindings(
                     b.insert(
                         "product_state".into(),
                         hashing::product_state(&project.root, &project.implementation_paths())?,
+                    );
+                }
+                if checkpoint == "final_ux_validation" && observes_surface(project, subject)? {
+                    b.insert(
+                        "observed_surface".into(),
+                        journey_observed_surface(project, subject)?,
                     );
                 }
             }
@@ -2328,10 +2383,13 @@ fn verification_bindings(
             "accepted_frontier".into(),
             hashing::text_sha256(&accepted_frontier_excluding(project, Some(&subject.id))?),
         );
-        b.insert(
-            "journey_target".into(),
-            hashing::text_sha256(&product_journey_target(project, subject)?),
-        );
+        // Under v10 the GUI journey also records its Observed Surface; binding that into the target
+        // makes a journey record made before v10 stale, so it is re-run.
+        let mut target = product_journey_target(project, subject)?;
+        if observes_surface(project, subject)? {
+            target.push_str(" observed-surface/1");
+        }
+        b.insert("journey_target".into(), hashing::text_sha256(&target));
         if project.codeos_mechanics_version()? == 5 {
             let definition = journey_definition(project, subject)?;
             for transition in definition.transitions {
@@ -2887,6 +2945,9 @@ fn run_legacy_product_journey(project: &Project, subject: &Subject) -> evidence:
             Ok(runtime) => runtime,
             Err(error) => return failure(error.to_string()),
         };
+        if observes_surface(project, subject).unwrap_or(false) {
+            return run_observed_journey(project, runtime.web_url.as_str(), &target);
+        }
         let tag = format!("@frontier:{target}");
         return evidence::run_env(
             &project.root.join("web"),
@@ -2907,6 +2968,153 @@ fn run_legacy_product_journey(project: &Project, subject: &Subject) -> evidence:
         "bash",
         &["scripts/test-product-journey.sh", &target],
     )
+}
+
+/// Feature Workflow v10: run the GUI journey twice, each recording its Observed Surface. Both runs
+/// must pass and observe the same identity. Only this governed journey, which the project runs in
+/// its deterministic provider mode, is repeated; production-source evidence never is.
+fn run_observed_journey(
+    project: &Project,
+    base_url: &str,
+    target: &str,
+) -> evidence::CommandOutcome {
+    let tag = format!("@frontier:{target}");
+    let mut identities = Vec::new();
+    let mut last = None;
+    for _ in 0..2 {
+        let path = report_path("observed-surface");
+        let path_text = path.to_string_lossy().into_owned();
+        let _ = std::fs::remove_file(&path);
+        let outcome = evidence::run_env(
+            &project.root.join("web"),
+            "npm",
+            &["run", "test:journey", "--", "--grep", &tag],
+            &[
+                ("PLAYWRIGHT_BASE_URL", base_url),
+                ("CODEOS_EXPECTED_FRONTIER", target),
+                ("CODEOS_OBSERVED_SURFACE_PATH", path_text.as_str()),
+            ],
+        );
+        let observed = read_observations(&path).and_then(|lines| observed_surface_identity(&lines));
+        let _ = std::fs::remove_file(&path);
+        if !outcome.ok {
+            return outcome;
+        }
+        match observed {
+            Ok(identity) => identities.push(identity),
+            Err(error) => {
+                return failure(format!(
+                    "{} -> no valid Observed Surface: {error:#}",
+                    outcome.command
+                ))
+            }
+        }
+        last = Some(outcome);
+    }
+    let mut outcome = last.expect("two journey runs");
+    if identities[0] != identities[1] {
+        outcome.ok = false;
+        outcome.summary = format!(
+            "{} -> the Observed Surface differs between two runs; the journey is not deterministic",
+            outcome.command
+        );
+        return outcome;
+    }
+    outcome.details = Some(serde_json::json!({ "observed_surface": identities[0] }));
+    outcome
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct SurfaceObservation {
+    schema: u8,
+    state: String,
+    viewport: SurfaceViewport,
+    elements: Vec<SurfaceElement>,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct SurfaceViewport {
+    width: u32,
+    height: u32,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct SurfaceElement {
+    name: String,
+    aria: String,
+    #[serde(rename = "box")]
+    bounds: SurfaceBox,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct SurfaceBox {
+    x: f64,
+    y: f64,
+    width: f64,
+    height: f64,
+}
+
+/// The journey's observation lines, only from the regular file Codeos named.
+fn read_observations(path: &Path) -> Result<String> {
+    let metadata = std::fs::symlink_metadata(path)
+        .context("the journey wrote no observation file at the named path")?;
+    anyhow::ensure!(
+        metadata.file_type().is_file(),
+        "the observation path is not a regular file"
+    );
+    Ok(std::fs::read_to_string(path)?)
+}
+
+/// The Observed Surface identity of a journey's observation lines: accessibility text trimmed,
+/// geometry rounded to whole CSS pixels (a fixed tolerance), observations ordered by state and
+/// viewport so parallel runs agree. A state observed twice at one viewport must observe the same
+/// thing; a contradiction fails rather than being normalized away.
+fn observed_surface_identity(lines: &str) -> Result<String> {
+    let mut normalized: BTreeMap<(String, u32, u32), String> = BTreeMap::new();
+    for line in lines.lines().filter(|line| !line.trim().is_empty()) {
+        let observation: SurfaceObservation =
+            serde_json::from_str(line).context("invalid Observed Surface line")?;
+        anyhow::ensure!(
+            observation.schema == 1,
+            "unsupported Observed Surface schema"
+        );
+        let elements: Vec<serde_json::Value> = observation
+            .elements
+            .iter()
+            .map(|element| {
+                let b = &element.bounds;
+                serde_json::json!({
+                    "name": element.name.trim(),
+                    "aria": element.aria.trim(),
+                    "box": [b.x.round() as i64, b.y.round() as i64, b.width.round() as i64, b.height.round() as i64],
+                })
+            })
+            .collect();
+        let state = observation.state.trim().to_string();
+        anyhow::ensure!(!state.is_empty(), "an observation has no state label");
+        let (width, height) = (observation.viewport.width, observation.viewport.height);
+        let line = serde_json::to_string(&serde_json::json!({
+            "state": state,
+            "viewport": [width, height],
+            "elements": elements,
+        }))?;
+        if let Some(earlier) = normalized.insert((state.clone(), width, height), line.clone()) {
+            anyhow::ensure!(
+                earlier == line,
+                "state '{state}' at {width}x{height} was observed twice with different content"
+            );
+        }
+    }
+    anyhow::ensure!(
+        !normalized.is_empty(),
+        "the journey recorded no observation"
+    );
+    let lines: Vec<String> = normalized.into_values().collect();
+    Ok(hashing::bytes_sha256(lines.join("\n").as_bytes()))
 }
 
 fn failure(summary: impl Into<String>) -> evidence::CommandOutcome {
@@ -3338,7 +3546,107 @@ mod journey_tests {
                 "intent"
             ]
         );
+        // Feature Workflow v10 F8: the Observed Surface replaces both broader product bindings;
+        // the Candidate Bundle stays required.
+        let v10 = map(&[
+            "intent",
+            "codeos_yaml",
+            "implementation_state",
+            "product_state",
+            "observed_surface",
+            "candidate_bundle",
+        ]);
+        assert_eq!(
+            names(required_decision_bindings(&v10, None)),
+            [
+                "candidate_bundle",
+                "codeos_yaml",
+                "intent",
+                "observed_surface"
+            ]
+        );
+        // Receipts recorded before v10 keep the broader binding they recorded.
+        for broader in ["product_state", "implementation_state"] {
+            assert_eq!(
+                names(required_decision_bindings(
+                    &v10,
+                    Some(&receipt(&["intent", broader]))
+                )),
+                ["candidate_bundle", "codeos_yaml", "intent"]
+            );
+        }
     }
+
+    #[test]
+    fn observed_surface_identity_normalizes_order_and_subpixel_geometry() {
+        let line = |state: &str, aria: &str, x: f64| {
+            format!(
+                r#"{{"schema":1,"state":"{state}","viewport":{{"width":390,"height":844}},"elements":[{{"name":"best","aria":"{aria}","box":{{"x":{x},"y":10,"width":100,"height":20}}}}]}}"#
+            )
+        };
+        let base = observed_surface_identity(&format!(
+            "{}\n{}\n",
+            line("result", "heading 08:00", 4.0),
+            line("form", "button Compare", 0.0)
+        ))
+        .unwrap();
+        // Parallel workers may append in any order; sub-pixel geometry and padding do not count.
+        let reordered = observed_surface_identity(&format!(
+            "{}\n\n{}",
+            line("form", " button Compare ", 0.2),
+            line("result", "heading 08:00", 3.6)
+        ))
+        .unwrap();
+        assert_eq!(base, reordered);
+        // Visible text or a whole-pixel layout change is a different surface.
+        for changed in [
+            line("result", "heading 08:15", 4.0),
+            line("result", "heading 08:00", 6.0),
+        ] {
+            let other = observed_surface_identity(&format!(
+                "{changed}\n{}",
+                line("form", "button Compare", 0.0)
+            ))
+            .unwrap();
+            assert_ne!(base, other);
+        }
+        assert!(observed_surface_identity("").is_err());
+        assert!(observed_surface_identity("not json").is_err());
+        // The same state twice: identical is one observation, contradictory fails closed.
+        let form = line("form", "button Compare", 0.0);
+        let once = observed_surface_identity(&form).unwrap();
+        assert_eq!(
+            observed_surface_identity(&format!("{form}\n{form}")).unwrap(),
+            once
+        );
+        assert!(observed_surface_identity(&format!(
+            "{form}\n{}",
+            line("form", "button Search", 0.0)
+        ))
+        .is_err());
+        assert!(observed_surface_identity(
+            r#"{"schema":2,"state":"s","viewport":{"width":1,"height":1},"elements":[]}"#
+        )
+        .is_err());
+        assert!(observed_surface_identity(
+            r#"{"schema":1,"state":"s","viewport":{"width":1,"height":1},"elements":[],"extra":1}"#
+        )
+        .is_err());
+    }
+    #[test]
+    fn observations_are_read_only_from_the_named_regular_file() {
+        let dir = tempfile::tempdir().unwrap();
+        let named = dir.path().join("observations.jsonl");
+        assert!(read_observations(&named).is_err());
+        let elsewhere = dir.path().join("elsewhere.jsonl");
+        fs::write(&elsewhere, "{}").unwrap();
+        std::os::unix::fs::symlink(&elsewhere, &named).unwrap();
+        assert!(read_observations(&named).is_err());
+        fs::remove_file(&named).unwrap();
+        fs::write(&named, "line").unwrap();
+        assert_eq!(read_observations(&named).unwrap(), "line");
+    }
+
     use std::fs;
 
     fn fixture(gui: bool) -> (tempfile::TempDir, Project, Subject) {

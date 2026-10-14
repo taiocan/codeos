@@ -712,3 +712,177 @@ fn non_gui_feature_marks_f4_not_applicable() {
     assert_eq!(Fixture::state_of(&r, "F4").state, State::NotApplicable);
     assert_eq!(Fixture::state_of(&r, "F5g").state, State::NotApplicable);
 }
+
+/// Seed a passing F3 journey record carrying `surface` as its Observed Surface, bound to the
+/// current inputs, as `check` persists it under Feature Workflow v10.
+fn observe(fx: &Fixture, feature: &str, surface: Option<&str>) {
+    let bindings = verification_bindings_for_mechanic(
+        &fx.project(),
+        &fx.subject(feature),
+        "F3",
+        "product_journey",
+    )
+    .unwrap();
+    VerificationStore::at(&fx.root.join(".codeos"))
+        .append(&VerificationRecord {
+            workflow: "feature".into(),
+            subject: feature.into(),
+            checkpoint: "F3".into(),
+            verification: "product_journey".into(),
+            result: "passed".into(),
+            bindings,
+            command: "seeded".into(),
+            timestamp: "2026-10-14T00:00:00Z".into(),
+            details: surface.map(|s| serde_json::json!({ "observed_surface": s })),
+        })
+        .unwrap();
+}
+
+/// A specification that passes F1 under DBA-26: a shared semantic revision and a Reality Basis.
+fn dba26_spec(feature: &str) -> (String, String, String) {
+    let revised = |text: String| {
+        text.replacen("status: APPROVED", "status: APPROVED\nsemantic_revision: 1\nsemantic_change: initial feature specification", 1)
+    };
+    let (intent, contract, schema) = dba9_spec(
+        feature,
+        "mode: advance\nprevious_frontier: entry\nproposed_frontier: decided\ntransition: the driver compares departure times",
+    );
+    (
+        revised(intent),
+        revised(format!("{contract}\n## Reality Basis\n\n| Claim ID | Claim | Classification | Source | Conditions | Currency | Unavailable | Fixture |\n|---|---|---|---|---|---|---|---|\n| label | Heading | not-reality-dependent | n/a | n/a | n/a | n/a | n/a |\n")),
+        revised(schema),
+    )
+}
+
+fn dba26_feature(fx: &Fixture, feature: &str) {
+    fx.enable_dba("DBA-26");
+    // The fixture's already-accepted F-0000 needs a Specification Package under v10 validity.
+    write_spec(fx, "F-0000", &approved_spec("F-0000", false, false));
+    write_spec(fx, feature, &dba26_spec(feature));
+    fx.write("backend/src/lib.rs", "pub fn forecast() {}\n");
+    fx.write("web/src/routes/+page.svelte", "<h1>Compare</h1>\n");
+    fx.git_init_commit();
+}
+
+#[test]
+fn dba26_early_preview_follows_the_observed_surface_not_internal_changes() {
+    let fx = Fixture::new();
+    dba26_feature(&fx, "F-0260");
+    fx.verify("F-0260", "F3", "smoke");
+    observe(&fx, "F-0260", Some("surface-1"));
+    let r = evaluate(&fx.project(), &fx.subject("F-0260")).unwrap();
+    assert_eq!(Fixture::state_of(&r, "F3").state, State::Pass, "{r:?}");
+    assert_eq!(Fixture::state_of(&r, "F4").state, State::Waiting);
+
+    let bound = hashes(&fx, "F-0260", "early_preview");
+    assert_eq!(bound["observed_surface"], "surface-1");
+    assert!(!bound.contains_key("product_state") && !bound.contains_key("implementation_state"));
+    put_receipt(
+        &fx.root,
+        "F-0260",
+        "early_preview",
+        "direction_confirmed",
+        bound,
+    );
+    let r = evaluate(&fx.project(), &fx.subject("F-0260")).unwrap();
+    assert_eq!(Fixture::state_of(&r, "F4").state, State::Pass, "{r:?}");
+
+    // An internal change re-runs the journey; the same observation keeps F4 current.
+    fx.write(
+        "backend/src/lib.rs",
+        "pub fn forecast() { /* sent request bound */ }\n",
+    );
+    let r = evaluate(&fx.project(), &fx.subject("F-0260")).unwrap();
+    assert_ne!(Fixture::state_of(&r, "F3").state, State::Pass);
+    fx.verify("F-0260", "F3", "smoke");
+    observe(&fx, "F-0260", Some("surface-1"));
+    let r = evaluate(&fx.project(), &fx.subject("F-0260")).unwrap();
+    assert_eq!(Fixture::state_of(&r, "F4").state, State::Pass, "{r:?}");
+
+    // A user-visible change produces a different observation and makes F4 stale.
+    fx.write(
+        "web/src/routes/+page.svelte",
+        "<h1>Compare departures</h1>\n",
+    );
+    fx.verify("F-0260", "F3", "smoke");
+    observe(&fx, "F-0260", Some("surface-2"));
+    let r = evaluate(&fx.project(), &fx.subject("F-0260")).unwrap();
+    let f4 = Fixture::state_of(&r, "F4");
+    assert_eq!(f4.state, State::Waiting);
+    assert!(
+        f4.unmet
+            .iter()
+            .any(|u| u.contains("stale") && u.contains("observed_surface")),
+        "{:?}",
+        f4.unmet
+    );
+}
+
+#[test]
+fn dba26_requires_a_journey_record_with_an_observed_surface() {
+    let fx = Fixture::new();
+    dba26_feature(&fx, "F-0261");
+    fx.verify("F-0261", "F3", "smoke");
+    observe(&fx, "F-0261", None);
+    let refused = codeos_workflow::checker::bindings_for_decision(
+        &fx.project(),
+        &fx.subject("F-0261"),
+        "early_preview",
+    );
+    assert!(refused
+        .unwrap_err()
+        .to_string()
+        .contains("Observed Surface"));
+
+    // A journey record made before v10 is stale under v10 and is re-run.
+    let before = Fixture::new();
+    before.enable_dba("DBA-25");
+    write_spec(&before, "F-0000", &approved_spec("F-0000", false, false));
+    write_spec(&before, "F-0261", &dba26_spec("F-0261"));
+    let target = |fx: &Fixture| {
+        verification_bindings_for_mechanic(
+            &fx.project(),
+            &fx.subject("F-0261"),
+            "F3",
+            "product_journey",
+        )
+        .unwrap()["journey_target"]
+            .clone()
+    };
+    assert_ne!(target(&before), target(&fx));
+}
+
+#[test]
+fn dba26_receipt_recorded_under_dba25_keeps_its_product_binding() {
+    let fx = Fixture::new();
+    dba26_feature(&fx, "F-0262");
+    fx.verify("F-0262", "F3", "smoke");
+    observe(&fx, "F-0262", Some("surface-1"));
+    let mut legacy = codeos_workflow::checker::bindings_for_evaluation(
+        &fx.project(),
+        &fx.subject("F-0262"),
+        "early_preview",
+    )
+    .unwrap();
+    legacy.remove("observed_surface");
+    legacy.remove("implementation_state");
+    put_receipt(
+        &fx.root,
+        "F-0262",
+        "early_preview",
+        "direction_confirmed",
+        legacy,
+    );
+    let r = evaluate(&fx.project(), &fx.subject("F-0262")).unwrap();
+    assert_eq!(Fixture::state_of(&r, "F4").state, State::Pass, "{r:?}");
+
+    // Its product files change: stale, even though the observation is unchanged.
+    fx.write(
+        "web/src/routes/+page.svelte",
+        "<h1>Compare</h1><!-- internal -->\n",
+    );
+    fx.verify("F-0262", "F3", "smoke");
+    observe(&fx, "F-0262", Some("surface-1"));
+    let r = evaluate(&fx.project(), &fx.subject("F-0262")).unwrap();
+    assert_eq!(Fixture::state_of(&r, "F4").state, State::Waiting, "{r:?}");
+}
