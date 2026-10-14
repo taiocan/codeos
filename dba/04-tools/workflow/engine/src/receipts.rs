@@ -166,6 +166,40 @@ pub fn evaluate(receipt: Option<Receipt>, current: &BTreeMap<String, String>) ->
     }
 }
 
+/// [`evaluate`], but a receipt is current only if it also binds every `required` input: a decision
+/// that never recorded an input it must bind cannot have judged that input's current value. Each
+/// missing input is a comparison with `was: None`; extra recorded bindings are still compared.
+pub fn evaluate_required(
+    receipt: Option<Receipt>,
+    current: &BTreeMap<String, String>,
+    required: &std::collections::BTreeSet<String>,
+) -> ReceiptState {
+    let Some(receipt) = receipt else {
+        return ReceiptState::Absent;
+    };
+    let mut comparisons = crate::hashing::binding_comparisons(&receipt.bindings, current);
+    comparisons.extend(
+        required
+            .iter()
+            .filter(|name| !receipt.bindings.contains_key(*name))
+            .map(|name| crate::hashing::Comparison {
+                surface: name.clone(),
+                was: None,
+                now: current.get(name).cloned(),
+            }),
+    );
+    match crate::hashing::first_drift(&comparisons) {
+        Some((binding, was, now)) => ReceiptState::Stale {
+            binding,
+            was,
+            now,
+            receipt,
+            comparisons,
+        },
+        None => ReceiptState::Current(receipt),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -255,5 +289,90 @@ mod tests {
             }
             other => panic!("expected Stale, got {other:?}"),
         }
+    }
+
+    #[test]
+    fn a_decision_is_current_only_if_it_binds_every_required_input() {
+        let required = |names: &[&str]| -> std::collections::BTreeSet<String> {
+            names.iter().map(|n| n.to_string()).collect()
+        };
+        let now = bindings(&[
+            ("intent", "i"),
+            ("implementation_state", "s"),
+            ("candidate_bundle", "c2"),
+            ("charter", "ch"),
+            ("codeos_yaml", "y"),
+        ]);
+        let state = |r: Receipt, req: &[&str]| evaluate_required(Some(r), &now, &required(req));
+
+        // An F8 receipt recorded before Candidate Bundles never judged the current candidate.
+        match state(
+            receipt("final_ux_validation", &[("intent", "i")]),
+            &["intent", "candidate_bundle"],
+        ) {
+            ReceiptState::Stale {
+                binding, was, now, ..
+            } => {
+                assert_eq!(binding, "candidate_bundle");
+                assert_eq!(was, "<input not recorded>");
+                assert_eq!(now, "c2");
+            }
+            other => panic!("expected Stale, got {other:?}"),
+        }
+        // An F9 receipt missing implementation_state.
+        assert!(matches!(
+            state(
+                receipt("acceptance", &[("intent", "i"), ("candidate_bundle", "c2")]),
+                &["intent", "candidate_bundle", "implementation_state"],
+            ),
+            ReceiptState::Stale { binding, .. } if binding == "implementation_state"
+        ));
+        // Every required binding present and matching: current.
+        assert!(matches!(
+            state(
+                receipt("acceptance", &[("intent", "i"), ("candidate_bundle", "c2")]),
+                &["intent", "candidate_bundle"],
+            ),
+            ReceiptState::Current(_)
+        ));
+        // A present but mismatched binding is ordinary drift.
+        assert!(matches!(
+            state(
+                receipt("acceptance", &[("intent", "i"), ("candidate_bundle", "c1")]),
+                &["intent", "candidate_bundle"],
+            ),
+            ReceiptState::Stale { binding, was, .. } if binding == "candidate_bundle" && was == "c1"
+        ));
+        // An extra obsolete binding that no longer exists does not matter once nothing requires it
+        // and it is not compared against a current value of its own.
+        assert!(matches!(
+            state(
+                receipt(
+                    "acceptance",
+                    &[
+                        ("intent", "i"),
+                        ("candidate_bundle", "c2"),
+                        ("implementation_state", "s")
+                    ]
+                ),
+                &["intent", "candidate_bundle"],
+            ),
+            ReceiptState::Current(_)
+        ));
+        // Bootstrap's required surface is its own: charter and codeos_yaml.
+        assert!(matches!(
+            state(receipt("initial_product_preview", &[("charter", "ch")]), &["charter", "codeos_yaml"]),
+            ReceiptState::Stale { binding, .. } if binding == "codeos_yaml"
+        ));
+        assert!(matches!(
+            state(
+                receipt(
+                    "initial_product_preview",
+                    &[("charter", "ch"), ("codeos_yaml", "y")]
+                ),
+                &["charter", "codeos_yaml"],
+            ),
+            ReceiptState::Current(_)
+        ));
     }
 }

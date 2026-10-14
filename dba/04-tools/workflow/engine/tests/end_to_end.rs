@@ -217,3 +217,51 @@ fn bootstrap_then_feature_then_operation_all_reach_all_pass() {
     );
     p.all_pass(Workflow::Operation, "obs-footer-year");
 }
+
+#[test]
+fn a_decision_missing_a_required_binding_does_not_satisfy_its_checkpoint() {
+    let p = Pilot::new();
+    p.w(
+        ".codeos/00-project/charter.md",
+        "---\nartifact_type: charter\napproval:\n  by: Primoz Gorjup\n  at: 2026-09-06\n---\n\n# Solution Charter\n",
+    );
+    p.w(".codeos/00-project/codeos.yaml", CODEOS_YAML);
+    p.w("backend/src/lib.rs", "// skeleton\n");
+    p.w("docker-compose.yml", "services: {}\n");
+    p.verify(Workflow::Bootstrap, "solution", "B3", "baseline");
+
+    // A receipt recorded without one of the inputs `decide` binds today.
+    let sub = p.subject(Workflow::Bootstrap, "solution");
+    let mut bindings =
+        bindings_for_decision(&p.project(), &sub, "initial_product_preview").unwrap();
+    assert!(bindings.remove("codeos_yaml").is_some());
+    ReceiptStore::at(&p.root.join(".codeos"))
+        .append(&Receipt {
+            workflow: "bootstrap".into(),
+            subject: "solution".into(),
+            checkpoint: "initial_product_preview".into(),
+            result: "direction_confirmed".into(),
+            bindings,
+            timestamp: "2026-09-06T10:00:00Z".into(),
+            rationale: None,
+            observation: None,
+        })
+        .unwrap();
+    let reports = evaluate(&p.project(), &sub).unwrap();
+    assert!(
+        reports.iter().any(|r| r
+            .unmet
+            .iter()
+            .any(|m| m.contains("does not bind required 'codeos_yaml'"))),
+        "{reports:?}"
+    );
+
+    // Recording it again through decide binds every required input and satisfies bootstrap.
+    p.decide(
+        Workflow::Bootstrap,
+        "solution",
+        "initial_product_preview",
+        "direction_confirmed",
+    );
+    p.all_pass(Workflow::Bootstrap, "solution");
+}

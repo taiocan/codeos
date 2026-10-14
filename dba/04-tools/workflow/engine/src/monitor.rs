@@ -212,7 +212,7 @@ impl ProjectStatus {
             let governance_v3 = project.workflow_governance_version()? >= 3;
             let mut workflow = summarize(&checker::evaluate(project, &subject)?);
             // The checker's own step for an ordinary candidate already under way.
-            let ordinary_step = workflow.action;
+            let ordinary_step = (workflow.action, workflow.next_action.clone());
             let stale_reason = match &assessment {
                 Some(assessment) if !assessment.current => Some(
                     assessment
@@ -466,7 +466,7 @@ fn ordinary_candidate_step(
     project: &Project,
     feature: &str,
     workflow: &mut WorkflowStatus,
-    step: Option<ActionType>,
+    (step, checker_next): (Option<ActionType>, Option<String>),
 ) -> Result<()> {
     let Some(bundle) = crate::candidate::unique_current(project, feature)? else {
         return Ok(());
@@ -487,6 +487,14 @@ fn ordinary_candidate_step(
             Actor::Assisted,
             format!("resolve the assessment of ordinary Candidate Bundle {bundle}"),
         ),
+        // F8 and F9 after a PASSED assessment: the checker names the decision.
+        Some(ActionType::RecordDecision) => match checker_next {
+            Some(next) => (
+                Actor::Human,
+                format!("{next} for ordinary Candidate Bundle {bundle}"),
+            ),
+            None => return Ok(()),
+        },
         _ => return Ok(()),
     };
     workflow.actor = Some(actor);
@@ -1674,7 +1682,7 @@ mod tests {
             &project,
             "F-1",
             &mut workflow,
-            Some(ActionType::ResolveReviewFinding),
+            (Some(ActionType::ResolveReviewFinding), None),
         )
         .unwrap();
         assert_eq!(workflow.action, Some(ActionType::ReassessArchitecture));
@@ -1725,9 +1733,21 @@ mod tests {
                 Actor::Assisted,
                 format!("resolve the assessment of ordinary Candidate Bundle {id}"),
             ),
+            (
+                ActionType::RecordDecision,
+                Actor::Human,
+                format!("re-run the final_ux_validation decision against current evidence for ordinary Candidate Bundle {id}"),
+            ),
         ] {
             let mut workflow = reassess();
-            ordinary_candidate_step(&project, "F-1", &mut workflow, Some(step)).unwrap();
+            let checker_next = "re-run the final_ux_validation decision against current evidence";
+            ordinary_candidate_step(
+                &project,
+                "F-1",
+                &mut workflow,
+                (Some(step), Some(checker_next.into())),
+            )
+            .unwrap();
             assert_eq!((workflow.action, workflow.actor), (Some(step), Some(actor)));
             assert_eq!(workflow.next_action, Some(next));
         }
@@ -1737,7 +1757,7 @@ mod tests {
             &project,
             "F-1",
             &mut workflow,
-            Some(ActionType::PrepareCandidate),
+            (Some(ActionType::PrepareCandidate), None),
         )
         .unwrap();
         assert_eq!(workflow.action, Some(ActionType::ReassessArchitecture));

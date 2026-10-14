@@ -17,5 +17,7 @@ WO-06 answer to question 7 was wrong for F-0001.
 ## Rule
 
 When a unique current ordinary Candidate Bundle exists, status reports the checker's F7 step:
-`run_review` (AUTO) or `resolve_review_finding` (ASSISTED), naming the bundle. Otherwise
-`reassess_architecture` (ASSISTED) remains.
+`run_review` (AUTO) or `resolve_review_finding` (ASSISTED), naming the bundle. After a PASSED
+assessment it reports the checker's F8/F9 `record_decision` (HUMAN) the same way; this was added
+2026-10-14 during STAB WO-01, when F-0001's PASSED candidate fell back to the fixed string.
+Otherwise `reassess_architecture` (ASSISTED) remains.

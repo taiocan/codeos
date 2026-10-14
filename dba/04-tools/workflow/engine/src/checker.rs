@@ -16,7 +16,7 @@ use crate::contract::{
 use crate::evidence;
 use crate::hashing;
 use crate::project::Project;
-use crate::receipts::{self, ReceiptState, ReceiptStore};
+use crate::receipts::{self, Receipt, ReceiptState, ReceiptStore};
 use crate::test_evidence;
 use crate::verification::{self, RecordState, VerificationRecord, VerificationStore};
 use anyhow::{Context, Result};
@@ -1329,6 +1329,7 @@ fn evaluate_checkpoint(
             } => {
                 let mut bindings = current_bindings(project, subject, checkpoint)?;
                 let latest = store.latest(subject.workflow.slug(), &subject.id, checkpoint)?;
+                let mut required = required_decision_bindings(&bindings, latest.as_ref());
                 // The observation binding cannot be recomputed from the tree — the observation
                 // statement is a historical, immutable fact. Carry the recorded hash forward so it
                 // reads as current; it exists to link a closure to the same observation, not to
@@ -1342,9 +1343,13 @@ fn evaluate_checkpoint(
                         "reconciliation" | "final_ux_validation" | "acceptance"
                     ) {
                         bindings.insert("production_evidence".into(), h);
+                        // `decide` requires F6 to select it; F8 and F9 do not record it.
+                        if *checkpoint == "reconciliation" {
+                            required.insert("production_evidence".into());
+                        }
                     }
                 }
-                match receipts::evaluate(latest, &bindings) {
+                match receipts::evaluate_required(latest, &bindings, &required) {
                     ReceiptState::Absent => {
                         soft += 1;
                         unmet.push(format!("no {checkpoint} decision recorded"));
@@ -1369,10 +1374,17 @@ fn evaluate_checkpoint(
                             }],
                         ));
                         soft += 1;
-                        unmet.push(format!(
-                            "{checkpoint} decision is stale — '{binding}' changed since it was recorded (was {}, now {})",
-                            short(&was), short(&now)
-                        ));
+                        unmet.push(if receipt.bindings.contains_key(&binding) {
+                            format!(
+                                "{checkpoint} decision is stale — '{binding}' changed since it was recorded (was {}, now {})",
+                                short(&was), short(&now)
+                            )
+                        } else {
+                            format!(
+                                "{checkpoint} decision is stale — it does not bind required '{binding}', so it cannot have judged the current one (now {})",
+                                short(&now)
+                            )
+                        });
                         next_action.get_or_insert(format!(
                             "re-run the {checkpoint} decision against current evidence"
                         ));
@@ -2093,12 +2105,31 @@ pub fn bindings_for_decision(
     subject: &Subject,
     checkpoint: &str,
 ) -> Result<BTreeMap<String, String>> {
-    let mut bindings = current_bindings(project, subject, checkpoint)?;
-    // A new human UX judgment binds the product it judged, not the test files that verify it.
+    Ok(decision_scope(current_bindings(
+        project, subject, checkpoint,
+    )?))
+}
+
+/// A new human UX judgment binds the product it judged, not the test files that verify it.
+fn decision_scope(mut bindings: BTreeMap<String, String>) -> BTreeMap<String, String> {
     if bindings.contains_key("product_state") {
         bindings.remove("implementation_state");
     }
-    Ok(bindings)
+    bindings
+}
+
+/// The inputs a recorded decision must bind to be current: what `decide` records now. A receipt
+/// recorded before product scoping binds `implementation_state`, which covers the product files
+/// `product_state` hashes, so it needs no `product_state`.
+fn required_decision_bindings(
+    current: &BTreeMap<String, String>,
+    receipt: Option<&Receipt>,
+) -> BTreeSet<String> {
+    let mut required: BTreeSet<String> = decision_scope(current.clone()).into_keys().collect();
+    if receipt.is_some_and(|r| r.bindings.contains_key("implementation_state")) {
+        required.remove("product_state");
+    }
+    required
 }
 
 /// The bindings `status`/`check` evaluate a recorded receipt against. They include every binding
@@ -3251,6 +3282,63 @@ fn short(s: &str) -> String {
 #[cfg(test)]
 mod journey_tests {
     use super::*;
+
+    #[test]
+    fn required_decision_bindings_follow_decide_and_accept_pre_product_scope_receipts() {
+        let map = |names: &[&str]| -> BTreeMap<String, String> {
+            names
+                .iter()
+                .map(|n| (n.to_string(), "h".to_string()))
+                .collect()
+        };
+        let receipt = |names: &[&str]| Receipt {
+            workflow: "feature".into(),
+            subject: "F-0001".into(),
+            checkpoint: "final_ux_validation".into(),
+            result: "accepted".into(),
+            bindings: map(names),
+            timestamp: "2026-09-30T00:00:00Z".into(),
+            rationale: None,
+            observation: None,
+        };
+        let names = |set: BTreeSet<String>| set.into_iter().collect::<Vec<_>>();
+        // DBA-25 F8: decide records product_state instead of implementation_state.
+        let f8 = map(&[
+            "intent",
+            "codeos_yaml",
+            "implementation_state",
+            "product_state",
+            "candidate_bundle",
+        ]);
+        assert_eq!(
+            names(required_decision_bindings(&f8, Some(&receipt(&["intent"])))),
+            ["candidate_bundle", "codeos_yaml", "intent", "product_state"]
+        );
+        // A receipt bound to the whole implementation covers the product files.
+        assert_eq!(
+            names(required_decision_bindings(
+                &f8,
+                Some(&receipt(&["intent", "implementation_state"]))
+            )),
+            ["candidate_bundle", "codeos_yaml", "intent"]
+        );
+        // F9 has no product scope: implementation_state stays required.
+        let f9 = map(&[
+            "intent",
+            "codeos_yaml",
+            "implementation_state",
+            "candidate_bundle",
+        ]);
+        assert_eq!(
+            names(required_decision_bindings(&f9, None)),
+            [
+                "candidate_bundle",
+                "codeos_yaml",
+                "implementation_state",
+                "intent"
+            ]
+        );
+    }
     use std::fs;
 
     fn fixture(gui: bool) -> (tempfile::TempDir, Project, Subject) {

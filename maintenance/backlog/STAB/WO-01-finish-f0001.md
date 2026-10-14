@@ -25,3 +25,9 @@ invalidated it, and whether what the receipt judged actually changed. This table
 2. The table is complete.
 
 ## Results
+
+- **CodeOS conformance repair (2026-10-14):** historical F8/F9 receipts could satisfy current
+  checkpoints without binding the candidate/product state they were required to judge.
+  Required-binding evaluation now fails closed on absent bindings; status exposes the resulting
+  human decision step (ECP WO-11). No new authority, DBA configuration, or recovery mechanism
+  introduced. Measured impact: only F-0001's F8 and F9 receipts changed result.
