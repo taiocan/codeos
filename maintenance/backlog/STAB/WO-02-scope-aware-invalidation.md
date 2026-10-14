@@ -163,3 +163,21 @@ adopts DBA-26, its governed F-0001 journey observes both 1280×720 and 390×844,
 Charter constraint C-2 makes the mobile width matter. The Observed Surface protects only the
 behavior and viewports the governed journey exercises; CodeOS claims no coverage outside it. The
 two rows that could not be replayed stay recorded as unobserved historical cases.
+
+### Replay with project-side viewport coverage (2026-10-14): PASS — WO-02 accepted by the human
+
+The same instrumentation and states were used again. This time the governed journey observed
+1280×720 and 390×844 in one run, writing one observation file as v10 runs it. Every state gave
+identical identities in two runs.
+
+| F4 receipt | Before → after | Governed Observed Surface | Expected |
+|---|---|---|---|
+| 10-07 19:05Z | `de6872f`* → `d3f06b1` | `c12c27af` → `7eaa4cbe`: changed | changed (F-0003 summary) |
+| 10-09 09:44Z | `d3f06b1` → `5c1fa66` | `7eaa4cbe` → `992e9f97`: changed | changed (`fdbe263` phone layout) |
+| 10-10 05:28Z | `5c1fa66` → `bca7f13` | `992e9f97` → `992e9f97`: same | same |
+| 10-10 16:17Z | `bca7f13` → `0fd5954` | `992e9f97` → `992e9f97`: same | same |
+
+Only receipts whose observed surface changed become stale, which meets acceptance criterion 3.
+JamFree's own journey is not yet changed: editing its test files now would make the accepted
+F-0001 stale under DBA-25. The 390×844 observation belongs in the JamFree change that adopts
+DBA-26.
