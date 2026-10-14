@@ -27,7 +27,7 @@ This part follows the CLAUDE.md PROTECTED statement and covers:
 
 The human approves or rejects Part A.
 
-### Part A brief (2026-10-14, awaiting decision)
+### Part A brief (2026-10-14)
 
 **Existing authority.** Feature Workflow v8 already says that "product UX decisions are reused
 when their feature-scoped product binding remains current". The binding used today,
@@ -73,8 +73,8 @@ and no one vouches.
    avoids a one-time mass invalidation.
 4. **Candidate changes.** A Candidate Bundle change still invalidates F7 to F9.
 5. **One evaluation for check and status**, using the required-binding rule from WO-01.
-6. **Versioning.** The semantics are versioned in Feature Workflow (v10), not in a new DBA
-   configuration.
+6. **Versioning.** The semantics are prospective: Feature Workflow v10, selected by DBA-26.
+   Earlier configurations keep their meaning (decision 3).
 
 **Verification.**
 - The three Part B tests.
@@ -83,21 +83,22 @@ and no one vouches.
   trigger commit; there are no TomTom calls. The only F4 and F8 receipts that become stale should
   be those whose observation changed.
 
-**Open decisions for you.**
+**Decisions (human, 2026-10-14).** Part A approved as a whole with these decisions; DBA-26
+is DBA-25 with only `workflow_feature_policy` changed to v10.
 
-1. **What counts as the observation.** Accessibility snapshot text is stable, but it misses
-   pure-layout changes such as `fdbe263`. Screenshots at the C-2 viewports catch layout, but pixel
-   determinism is a risk, and that risk fails toward stale. Recommendation: the accessibility
-   snapshot plus the computed layout boxes of the journey's assertions.
-2. **Coverage.** The binding is only as wide as the journey. The human may have judged something
-   the journey does not visit. Recommendation: accept this, because F5g already makes the journey
-   the feature's browser proof.
-3. **How a project selects Feature Workflow v10** without a new DBA configuration, as the
-   Charter's constraint requires. This needs checking against how configurations pin policy
-   versions today.
-4. **Terminology.** "Observed surface" is a new governed term. Proposed definition: *the identity
-   of what a feature's browser verification observes of the running product, in deterministic
-   provider mode*.
+1. **Observation.** Normalized accessibility state plus normalized layout geometry of the
+   elements the feature's governed browser journey actually observes or asserts, at the
+   viewports that journey runs at. Viewports stay project-owned. Nothing beyond what the journey
+   observes is inferred, and the observation must be deterministic in fixture mode.
+2. **Coverage.** The binding is as wide as the feature's browser journey. A feature without a
+   browser journey keeps binding `product_state`, so it fails closed as it does today.
+3. **Versioning.** P2 is the Charter's planned semantic change, not a repair. It is introduced as
+   Feature Workflow v10 and one new configuration, DBA-26; DBA-25's meaning is unchanged. Projects
+   adopt DBA-26 explicitly. The immutable configurations pin `workflow-feature/v9.md`, so v10
+   cannot reach a project any other way.
+4. **Terminology.** *Observed surface*: the identity of what a feature's browser verification
+   observes of the running product, in deterministic provider mode. It is added to
+   `dba/05-guidance/terminology.md` in Part B.
 
 ## Part B — Implementation (after approval)
 
