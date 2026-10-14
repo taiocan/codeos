@@ -116,3 +116,50 @@ The approved semantics enter the owning policy first. Tests show that:
    changed.
 
 ## Results
+
+### WO-01 replay (2026-10-14)
+
+**Method.**
+- Each historical JamFree product state was built in fixture mode, with no TomTom key in the stack
+  environment.
+- The state was matched to its F4 receipt by recomputing `product_state`.
+- One fixed observation journey ran against every state. It performs F-0001's outbound
+  submission and records the elements the current journey asserts. The same Playwright runner and
+  browser were used throughout.
+- Identities come from a verbatim copy of the engine's normalization. Every state gave identical
+  identities in two runs at each viewport.
+- The journey viewport is 1280×720, the only one JamFree's journey runs at. 390×844 is a
+  diagnostic run.
+
+| F4 receipt | Before → after | 1280×720 | 390×844 | What changed | WO-01 assessment |
+|---|---|---|---|---|---|
+| 10-07 19:05Z | `de6872f`* → `d3f06b1` | changed | changed | F-0003 outbound summary appears; result panels shift down | UNCERTAIN |
+| 10-09 09:44Z | `d3f06b1` → `5c1fa66` | same | changed | Phone: result and chart panels narrowed to the viewport (`fdbe263`) | UNCERTAIN |
+| 10-10 05:28Z | `5c1fa66` → `bca7f13` | same | same | — | NO EVIDENCE OF CHANGE |
+| 10-10 16:17Z | `bca7f13` → `0fd5954` | same | same | — (`0fd5954` internal) | NO EVIDENCE OF CHANGE |
+
+\* `de6872f` is inferred: the 10-05 receipt bound only `implementation_state`. The other four
+states match their receipts' `product_state` exactly.
+
+**Not replayable.** The F4 receipt of 10-05 and the F8 receipt of 10-14 compare against the 09-28
+and 09-30 states. Those were never committed: no product commit exists between `ee3ce0d` (09-19)
+and `de6872f`.
+
+**Findings.**
+1. No over-invalidation. Both NO EVIDENCE OF CHANGE pairs, including the motivating internal
+   change `0fd5954`, keep the same surface at both viewports.
+2. A known visible change escapes the journey as configured. The `fdbe263` phone-layout repair
+   changes the 390×844 surface, but not the 1280×720 surface JamFree's journey observes. This is
+   the agreed falsifier: the surface is too narrow at the journey's current viewports. The
+   mechanism detects the change when the journey runs at the viewport where it is visible.
+
+**Limitations.** One current runner and browser were used for every state. The observation
+journey is the current one, applied unchanged to older products. The fixture forecasts depend on
+the replay date, which was the same for all states.
+
+**Decision (human, 2026-10-14): project-side viewport coverage.** Feature Workflow v10 is not
+broadened into a rule tied to the Charter's viewports; viewports stay project-owned. When JamFree
+adopts DBA-26, its governed F-0001 journey observes both 1280×720 and 390×844, because its own
+Charter constraint C-2 makes the mobile width matter. The Observed Surface protects only the
+behavior and viewports the governed journey exercises; CodeOS claims no coverage outside it. The
+two rows that could not be replayed stay recorded as unobserved historical cases.
