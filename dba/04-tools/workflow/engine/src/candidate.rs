@@ -167,7 +167,12 @@ pub fn assemble(
         .latest("feature", &subject.id, "reconciliation")?
         .context("candidate requires the F6 reconciliation receipt")?;
     let f6_receipt_sha256 = hashing::record_identity(&receipt)?;
-    let production_evidence = receipt.bindings.get("production_evidence").cloned();
+    // Revalidation creates no F6 receipt (Feature Workflow v8), so it selects the production
+    // evidence verified for the revalidation implementation instead of the historical F6 selection.
+    let production_evidence = match &revalidation_case {
+        Some(case) => case.production_evidence.clone(),
+        None => receipt.bindings.get("production_evidence").cloned(),
+    };
 
     let mut verification_records = BTreeMap::new();
     let store = VerificationStore::at(&project.codeos_dir());

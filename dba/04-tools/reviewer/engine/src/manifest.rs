@@ -34,7 +34,8 @@ pub struct ReviewInputManifest {
     pub governed_context: BTreeMap<String, Option<String>>,
     /// `<checkpoint>/<verification>` -> SHA-256 of the latest record line, or `None` when absent.
     pub verification: BTreeMap<String, Option<String>>,
-    /// The production evidence F6 selected, as recorded by its reconciliation receipt.
+    /// The production evidence F6 selected, as recorded by its reconciliation receipt, or, for a
+    /// post-acceptance revalidation candidate, the evidence that candidate selected.
     pub production_evidence: Option<String>,
     /// The runtime event evidence bound by the F7 runtime-event verification.
     pub runtime_evidence: Option<String>,
@@ -57,6 +58,8 @@ pub(crate) struct Derived {
     pub project_error: Option<String>,
     /// Architecture Scopes could not be read, so the applicable scope is unknown.
     pub scope_error: Option<String>,
+    /// The current candidate is a post-acceptance revalidation, which renews no F6 receipt.
+    pub revalidation: bool,
 }
 
 pub fn selected(contract: Option<&str>) -> bool {
@@ -178,11 +181,26 @@ pub fn derive(
                 && receipt.subject == feature
                 && receipt.checkpoint == "reconciliation"
         });
-    manifest.production_evidence = manifest
-        .derived
-        .f6_receipt
+    // A post-acceptance revalidation creates no F6 receipt (Feature Workflow v8); its candidate
+    // selects the production evidence verified for the revalidation implementation.
+    let revalidation = manifest
+        .candidate_bundle
         .as_ref()
-        .and_then(|receipt| receipt.bindings.get("production_evidence").cloned());
+        .and_then(|id| {
+            codeos_workflow::candidate::CandidateStore::at(&project.codeos_dir())
+                .read(id)
+                .ok()
+        })
+        .filter(|bundle| bundle.kind == "post_acceptance_revalidation");
+    manifest.derived.revalidation = revalidation.is_some();
+    manifest.production_evidence = match revalidation {
+        Some(bundle) => bundle.production_evidence,
+        None => manifest
+            .derived
+            .f6_receipt
+            .as_ref()
+            .and_then(|receipt| receipt.bindings.get("production_evidence").cloned()),
+    };
     if let Some(selected) = &manifest.production_evidence {
         let path = format!(".codeos/06-workflow/reality-evidence/{selected}.json");
         manifest.derived_inputs.insert(path.clone());

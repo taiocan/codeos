@@ -347,11 +347,13 @@ fn evidence(
         }
         return;
     };
-    if receipt
-        .bindings
-        .get("implementation_state")
-        .map(String::as_str)
-        != current
+    // A revalidation keeps the historical F6 receipt; only its selected evidence must be current.
+    if !manifest.derived.revalidation
+        && receipt
+            .bindings
+            .get("implementation_state")
+            .map(String::as_str)
+            != current
     {
         readiness.fail(
             Reason::EvidenceStale,
@@ -359,7 +361,11 @@ fn evidence(
             "reconciliation is bound to a different implementation",
         );
     }
-    if let Some(bound) = receipt.bindings.get("codeos_yaml") {
+    if let Some(bound) = receipt
+        .bindings
+        .get("codeos_yaml")
+        .filter(|_| !manifest.derived.revalidation)
+    {
         if Some(bound) != manifest.configuration.as_ref() {
             readiness.fail(
                 Reason::EvidenceStale,
@@ -601,6 +607,54 @@ mod tests {
                 .map(|sha| serde_json::json!({ codeos_workflow::test_evidence::DETAILS_KEY: sha })),
         };
         (serde_json::to_string(&record).unwrap(), record)
+    }
+
+    #[test]
+    fn only_a_revalidation_candidate_keeps_its_historical_f6_receipt() {
+        let dir = tempfile::tempdir().unwrap();
+        let cfg = Config {
+            reasoning_effort: String::new(),
+            reviewer_model: String::new(),
+            codex_cli_version: String::new(),
+            packet_budget_mode: crate::config::PacketBudgetMode::Fail,
+            repo_root: dir.path().into(),
+            toolkit_root: dir.path().into(),
+            review_log: dir.path().join("log"),
+            codex_dir: dir.path().into(),
+            state_dir: dir.path().into(),
+        };
+        let mut manifest = ReviewInputManifest {
+            implementation: Some("now".into()),
+            configuration: Some("config-now".into()),
+            ..Default::default()
+        };
+        manifest.derived.f6_receipt = Some(codeos_workflow::receipts::Receipt {
+            workflow: "feature".into(),
+            subject: "F-1".into(),
+            checkpoint: "reconciliation".into(),
+            result: "completed".into(),
+            bindings: [
+                ("implementation_state".to_string(), "before".to_string()),
+                ("codeos_yaml".to_string(), "config-before".to_string()),
+            ]
+            .into(),
+            timestamp: "2026-10-01T00:00:00Z".into(),
+            rationale: None,
+            observation: None,
+        });
+        let f6_issues = |manifest: &ReviewInputManifest| {
+            let mut readiness = Readiness::default();
+            evidence(&cfg, manifest, &[], &mut readiness);
+            readiness
+                .issues
+                .into_iter()
+                .filter(|issue| issue.subject == "F6")
+                .count()
+        };
+        // An ordinary candidate still needs F6 reconciled against the current state.
+        assert_eq!(f6_issues(&manifest), 2);
+        manifest.derived.revalidation = true;
+        assert_eq!(f6_issues(&manifest), 0);
     }
 
     #[test]
