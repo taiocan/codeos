@@ -620,7 +620,7 @@ fn semantic_revision(text: &str) -> Result<u64> {
         .context("invalid semantic_revision")
 }
 
-fn observation_mode(project: &Project, feature: &str) -> Result<&'static str> {
+pub(crate) fn observation_mode(project: &Project, feature: &str) -> Result<&'static str> {
     let schema = std::fs::read_to_string(project.event_schema(feature))?;
     if schema
         .lines()
@@ -814,6 +814,33 @@ mod tests {
         assert_eq!(observation_mode(&project, "F-1").unwrap(), "events");
         fs::write(&schema, "# Event Schema\n").unwrap();
         assert!(observation_mode(&project, "F-1").is_err());
+    }
+
+    #[test]
+    fn revalidation_requires_runtime_evidence_only_in_events_mode() {
+        let (_dir, project, _) = fixture();
+        let subject = crate::checker::Subject {
+            workflow: crate::contract::Workflow::Feature,
+            id: "F-1".into(),
+            gui: false,
+            persistence: false,
+            arch_approval_required: false,
+            reality_claims: Vec::new(),
+        };
+        let event_evidence = || {
+            crate::revalidation::required_verifications(&project, &subject)
+                .unwrap()
+                .contains(&("F7", "runtime_event_schema"))
+        };
+        let schema = project.event_schema("F-1");
+        fs::write(
+            &schema,
+            "# Event Schema\n\n**Mode:** `external-observation`\n",
+        )
+        .unwrap();
+        assert!(!event_evidence());
+        fs::write(&schema, "# Event Schema\n\n**Mode:** `events`\n").unwrap();
+        assert!(event_evidence());
     }
 
     #[test]

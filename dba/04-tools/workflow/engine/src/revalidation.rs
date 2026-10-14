@@ -19,19 +19,25 @@ const REQUIRED_BASE: &[(&str, &str)] = &[
     ("F3", "product_journey"),
     ("F5", "behavior"),
     ("F5", "repeatability"),
-    ("F7", "runtime_event_schema"),
 ];
 
-/// The (checkpoint, verification) records a feature's acceptance evidence requires.
-pub fn required_verifications(subject: &Subject) -> Vec<(&'static str, &'static str)> {
+/// The (checkpoint, verification) records a feature's acceptance evidence requires. Runtime event
+/// evidence applies only in the `events` Observation Mode, as for Candidate Bundles.
+pub fn required_verifications(
+    project: &Project,
+    subject: &Subject,
+) -> Result<Vec<(&'static str, &'static str)>> {
     let mut required = REQUIRED_BASE.to_vec();
+    if crate::candidate::observation_mode(project, &subject.id)? == "events" {
+        required.push(("F7", "runtime_event_schema"));
+    }
     if subject.gui {
         required.push(("F5g", "playwright"));
     }
     if !subject.reality_claims.is_empty() {
         required.push(("F5", "production_source_evidence"));
     }
-    required
+    Ok(required)
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -400,7 +406,7 @@ pub fn build_case(project: &Project, subject_id: &str, trigger: &str) -> Result<
         anyhow::bail!("acceptance implementation evidence is not stale");
     }
     let vstore = VerificationStore::at(&project.codeos_dir());
-    let required = required_verifications(&subject);
+    let required = required_verifications(project, &subject)?;
     let mut current_verifications = BTreeMap::new();
     let mut production_evidence = None;
     for (checkpoint, name) in required {

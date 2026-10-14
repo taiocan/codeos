@@ -2046,7 +2046,7 @@ pub fn stale_revalidation_verifications(
 ) -> Result<Vec<StaleVerification>> {
     let store = VerificationStore::at(&project.codeos_dir());
     let mut stale = Vec::new();
-    for (checkpoint, mechanic) in crate::revalidation::required_verifications(subject) {
+    for (checkpoint, mechanic) in crate::revalidation::required_verifications(project, subject)? {
         if mechanic == "runtime_event_schema" {
             continue;
         }
