@@ -32,3 +32,9 @@ This section is the authoritative qualifying-feature count.
 | JamFree F-0003 | before STAB | — | — | Yes (historical) |
 
 ### Inconvenience log
+
+- 2026-10-14 (during WO-01): the standalone Codex CLI updated itself from 0.162.0 to 0.162.1. The
+  reviewer correctly refused it ("differs from approved release identity 0.162.0", from
+  `maintenance/release-lock.json`). The run went ahead only by putting the installed 0.162.0
+  binary first in `PATH` for that one command. This is not a defect, since the lock behaved
+  correctly, unless the pinned binary stops being reliably available.
