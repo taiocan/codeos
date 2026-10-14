@@ -60,6 +60,24 @@ and its independent implementations disagreed.
 **Question D for P4.** Which lifecycle rules does more than one component encode, and which of
 those have no cross-boundary test?
 
+## Finding: escaped verification defect, and a test-only change that costs provider evidence (2026-10-14)
+
+**Escaped defect.** F-0002 was accepted on 2026-10-08 with incomplete browser evidence. Its
+Contract C-5 requires browser checks for every distinct return-failure outcome, but four of the five
+were checked only through the API. That acceptance's review did not catch the gap. The
+revalidation Stage 8 assessment did, and the gap was repaired with a test-only change (JamFree
+`b713734`). Use this case when judging whether Stage 8 is becoming more effective.
+
+**Cost.** The repair changed no product code. It still moved `implementation_state`, because test
+files under `web/` are implementation paths. So F-0002 needed a fresh 27-call production-source
+run. This is another instance of question B: production evidence binds an identity broader than
+what it observed.
+
+**Recovery-cycle snapshot (ended 2026-10-14).** 4 of 4 JamFree features VALID. 216 TomTom calls
+that day. Two CodeOS conformance repairs (`885172b`, `8ed6d67`). One escaped product verification
+defect. One test-only change that forced provider-evidence regeneration. P3 is judged against a
+fresh baseline, not this history.
+
 ## Acceptance criteria
 
 The human accepts or rejects one recommendation. An accepted recommendation becomes its own
