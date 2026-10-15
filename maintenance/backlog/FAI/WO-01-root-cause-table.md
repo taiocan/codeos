@@ -13,6 +13,9 @@ the data justifies. No TomTom calls and no CodeOS changes.
 2. **rustls patch** (`874728d`): four accepted features stale.
 3. **F-0002 test-only repair** (`b713734`): F-0002 production evidence regenerated.
 4. **Inherited production evidence:** F-0003 and F-0004 rerun the F-0001 and F-0002 journeys.
+5. **Evidence that cannot be refreshed:** F-0003's production evidence was current but insufficient,
+   and it does not bind its verifier, so the improved verifier (`3818ff6`) could not replace it
+   (STAB WO-04).
 
 ## Method
 

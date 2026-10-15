@@ -105,6 +105,18 @@ completed round trip, and no such evidence ever existed. The revalidation assess
 `abd82325` was BLOCKED for this reason. The guarantee itself holds: the database has no domain
 tables.
 
+**Current but insufficient evidence cannot be refreshed (2026-10-15).** The F-0003 revalidation
+assessment (candidate `cb714119`) was BLOCKED. Its production evidence restated the comparison
+without observing the rendered summary that the claim `outbound-summary` concerns. That boundary had
+been closed at the original F6 by a separate, unbound observation, and revalidation does not
+repeat F6. JamFree then extended its verifier to observe the rendered summary (`3818ff6`), but
+`check` did not rerun it. Production evidence binds the Specification Package and
+`implementation_state`, not the verifier that produced it, and `check` reruns only stale
+verifications. So there is no governed way to replace evidence that is current but insufficient,
+short of a manufactured implementation change. F-0003 stays STALE. It adds no journey step, so it
+blocks nothing, and its next legitimate staling picks up the new verifier. Nothing passes falsely,
+so this is not a correctness defect under the P3 rule. P4: FAI WO-01.
+
 **Cost.** The repair changed no product code. It still moved `implementation_state`, because test
 files under `web/` are implementation paths. So F-0002 needed a fresh 27-call production-source
 run. This is another instance of question B: production evidence binds an identity broader than
