@@ -93,6 +93,33 @@ candidate-stage qualifications passed against the current configuration. This is
 never a false PASS, but it hides current qualification. The first normal P3 acceptance should clear
 it. Not repaired during the P3 freeze.
 
+## Finding: a production-mode check ran the browser suite against the live provider (2026-10-15)
+
+Root-cause item. It must be analysed before the next production-mode `check` in which a pending F5g
+could run.
+
+**Facts.**
+1. F-0005's production-source evidence passed, using 27 accounted TomTom calls.
+2. F5g was still pending, so the same `check --workflow feature --subject F-0005`, run with
+   `PROVIDER_MODE=production`, then started the full Playwright suite against the production
+   backend.
+3. The extra provider use is unknown. It was not measured.
+4. The run was stopped by hand after about 8½ minutes, and the stack was restored to fixture mode.
+   Nothing was retried.
+
+In earlier production runs F5g was already current, so the suite never ran there.
+
+**Open root cause.** Unknown whether the cause is command semantics (`check` runs every pending
+verification), missing isolation between environments, verification ordering, or an intentional
+rule with unsafe consequences.
+
+**Interim safeguard.** Run a fixture `check` through F5g before any production run. This is a
+workaround, not a fix.
+
+**P4.** Verification ordering (question A) can cross the boundary between environments and consume
+a scarce external resource. It ranks above performance work. If a measured usage figure is
+obtained, it is added below as measured evidence, without changing these facts.
+
 ## Finding: escaped verification defect, and a test-only change that costs provider evidence (2026-10-14)
 
 **Escaped defect.** F-0002 was accepted on 2026-10-08 with incomplete browser evidence. Its
