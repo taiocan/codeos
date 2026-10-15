@@ -60,6 +60,15 @@ and its independent implementations disagreed.
 **Question D for P4.** Which lifecycle rules does more than one component encode, and which of
 those have no cross-boundary test?
 
+**A related projection limitation (2026-10-15).** After revalidation, a current passing project
+qualification can exist at the candidate stage. Even so, the ECP engineering-health rows (Project
+quality, Security, Supply chain, Deployment) stay STALE, because they show only the latest
+qualification recorded at an ordinary acceptance (ECP WO-01). Revalidation records none (Feature
+Workflow v8). On JamFree, DBA-26 adoption staled F-0001's acceptance-time record, while nine
+candidate-stage qualifications passed against the current configuration. This is conservative and
+never a false PASS, but it hides current qualification. The first normal P3 acceptance should clear
+it. Not repaired during the P3 freeze.
+
 ## Finding: escaped verification defect, and a test-only change that costs provider evidence (2026-10-14)
 
 **Escaped defect.** F-0002 was accepted on 2026-10-08 with incomplete browser evidence. Its

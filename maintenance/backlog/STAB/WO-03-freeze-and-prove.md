@@ -23,6 +23,17 @@ it.
 
 Three qualifying features in total, or an explicit human decision to stop.
 
+## Baseline (2026-10-15)
+
+JamFree bootstrap is current (B1–B5; B4 reconfirmed against the amended Charter). F-0001 to
+F-0004 are VALID. One known limitation is recorded for P4: the status view's project-qualification
+rows read only acceptance-time records (WO-04, question D). No CodeOS correctness blocker is open.
+CodeOS is frozen from this baseline onward; STAB backlog records are not CodeOS changes.
+
+During P3, classify every delivery blocker before acting: product defect, project configuration,
+expected governed behavior, or CodeOS correctness defect. Only a CodeOS correctness defect breaks
+the freeze.
+
 ## Results
 
 This section is the authoritative qualifying-feature count.
