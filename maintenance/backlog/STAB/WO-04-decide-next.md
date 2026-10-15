@@ -13,7 +13,8 @@ Recommend one next structural improvement from the evidence. Nothing is implemen
 - The Charter's deferred items, each checked against its entry condition: batched human attention,
   reviewer throughput, and WO-07 automatic execution.
 - The revalidation fan-out finding below.
-- A candidate the human has already proposed: the [FAI charter](../FAI/charter.md) (2026-10-15).
+- Candidates the human has already proposed: the [FAI charter](../FAI/charter.md) and the
+  [SPERF charter](../SPERF/charter.md) (2026-10-15).
 
 ## Finding: revalidation fan-out (2026-10-14)
 

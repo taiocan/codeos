@@ -12,3 +12,4 @@ implemented changes; this file is planning context, not workflow state or implem
 | STAB | `STAB/charter.md` | Delivery stabilization | High | Approved |
 | ECP | `ECP/README.md` | Engineering Control Panel ECP-2–ECP-6 work orders | High | Proposed |
 | FAI | `FAI/charter.md` | Feature-atomic invalidation | High | Proposed — after STAB P3 |
+| SPERF | `SPERF/charter.md` | Status evaluation performance | Medium | Proposed — after STAB P3 |

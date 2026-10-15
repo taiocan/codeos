@@ -58,7 +58,8 @@ This section is the authoritative qualifying-feature count.
   `f5a8f9a`. Plausible, not proven: each frontier derivation now evaluates current acceptance
   validity for all four accepted features, where the old journey error stopped after two. Trigger
   for a performance root-cause trace: latency gets materially worse, blocks normal delivery, or
-  grows nonlinearly as features are added.
+  grows nonlinearly as features are added. Root cause established 2026-10-15: repeated
+  recomputation and subprocess fan-out in the evaluator; see [SPERF](../SPERF/charter.md).
 - 2026-10-15 (F-0005, expected): the window must change `web/src/routes/+page.svelte`, an
   implementation input of all four accepted features' bundles. F-0001 to F-0004 will need
   revalidation, about 108 TomTom calls and four Codex assessments (WO-04, question B).
