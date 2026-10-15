@@ -41,6 +41,7 @@ This section is the authoritative qualifying-feature count.
 | Feature | First F1 → F9 | CodeOS commits (class) | Diagnostics | Qualifies |
 |---|---|---|---|---|
 | JamFree F-0003 | before STAB | — | — | Yes (historical) |
+| JamFree F-0005 | F1 2026-10-15 → in progress | `f5a8f9a` (conformance) | — | No: needed a CodeOS conformance repair at F2 |
 
 ### Inconvenience log
 
@@ -49,3 +50,13 @@ This section is the authoritative qualifying-feature count.
   `maintenance/release-lock.json`). The run went ahead only by putting the installed 0.162.0
   binary first in `PATH` for that one command. This is not a defect, since the lock behaved
   correctly, unless the pinned binary stops being reliably available.
+- 2026-10-15 (F-0005, F2): F-0005 exposed one CodeOS correctness defect. CodeOS rebuilt the
+  accepted journey from the order of acceptance receipts, so F-0001's legitimate re-acceptance
+  made a valid chain unreadable. The repair is conformance commit `f5a8f9a`. F-0005 continues
+  through F1–F9 but does not count toward the zero-CodeOS-change proof.
+- 2026-10-15 (F-0005): `status` and `next` take about 100 s on JamFree, because each frontier
+  derivation evaluates current acceptance validity for every accepted feature. Before
+  `f5a8f9a`, the journey error stopped that work early, at about 47 s.
+- 2026-10-15 (F-0005, expected): the window must change `web/src/routes/+page.svelte`, an
+  implementation input of all four accepted features' bundles. F-0001 to F-0004 will need
+  revalidation, about 108 TomTom calls and four Codex assessments (WO-04, question B).

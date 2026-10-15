@@ -60,6 +60,13 @@ and its independent implementations disagreed.
 **Question D for P4.** Which lifecycle rules does more than one component encode, and which of
 those have no cross-boundary test?
 
+**Journey order from history (2026-10-15).** Two implementations rebuilt the accepted product
+journey from the order of acceptance receipts. A legitimate re-acceptance of F-0001 put its
+receipt after F-0002's, the valid chain became unreadable, and every new feature failed at F2.
+`f5a8f9a` repaired this. The duplication let the defect spread. The deeper cause was using
+append-order history to reconstruct semantic journey topology. When P4 chooses a structural
+improvement, ask which other semantic structures are rebuilt from log order.
+
 **A related projection limitation (2026-10-15).** After revalidation, a current passing project
 qualification can exist at the candidate stage. Even so, the ECP engineering-health rows (Project
 quality, Security, Supply chain, Deployment) stay STALE, because they show only the latest
