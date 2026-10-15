@@ -886,3 +886,70 @@ fn dba26_receipt_recorded_under_dba25_keeps_its_product_binding() {
     let r = evaluate(&fx.project(), &fx.subject("F-0262")).unwrap();
     assert_eq!(Fixture::state_of(&r, "F4").state, State::Waiting, "{r:?}");
 }
+
+fn accept_advance(fx: &Fixture, feature: &str, previous: &str, proposed: &str) {
+    let spec = dba9_spec(
+        feature,
+        &format!("mode: advance\nprevious_frontier: {previous}\nproposed_frontier: {proposed}\ntransition: {previous} becomes {proposed}"),
+    );
+    write_spec(fx, feature, &spec);
+    put_receipt(
+        &fx.root,
+        feature,
+        "acceptance",
+        "accepted",
+        hashes(fx, feature, "acceptance"),
+    );
+}
+
+#[test]
+fn accepted_journey_order_does_not_depend_on_receipt_order() {
+    let fx = Fixture::new();
+    fx.enable_dba10();
+    fx.write(
+        ".codeos/02-architecture/scopes/trip.md",
+        "---\nartifact_type: architecture\nfeatures: [F-0301, F-0302]\napproval:\n  by: Human\n  at: 2026-09-11\n---\n\n## Primary Journey Transitions\n\n```yaml\ntransitions:\n  - transition_id: T-0001\n    from_frontier: outbound\n    to_frontier: return\n    producer_feature: F-0301\n    producer_role: outbound-decision\n    handoff_type: AcceptedOutbound\n    consumer_feature: F-0302\n    consumer_role: return-decision\n```\n",
+    );
+    accept_advance(&fx, "F-0301", "entry", "outbound");
+    accept_advance(&fx, "F-0302", "outbound", "return");
+    // A legitimate later re-acceptance of the upstream feature appends its receipt last.
+    put_receipt(
+        &fx.root,
+        "F-0301",
+        "acceptance",
+        "accepted",
+        hashes(&fx, "F-0301", "acceptance"),
+    );
+    assert_eq!(current_accepted_frontier(&fx.project()).unwrap(), "return");
+    codeos_workflow::checker::render_journey(&fx.project(), None).unwrap();
+
+    write_spec(
+        &fx,
+        "F-0303",
+        &dba9_spec("F-0303", "mode: preserve\nreason: refines the return decision"),
+    );
+    assert_eq!(
+        product_journey_target(&fx.project(), &fx.subject("F-0303")).unwrap(),
+        "return"
+    );
+}
+
+#[test]
+fn malformed_accepted_journey_topology_fails_closed() {
+    for (second, expected) in [
+        (("entry", "elsewhere"), "both advance from 'entry'"),
+        (("detached", "further"), "does not reach"),
+        (("outbound", "entry"), "cycle"),
+    ] {
+        let fx = Fixture::new();
+        fx.enable_dba10();
+        accept_advance(&fx, "F-0401", "entry", "outbound");
+        accept_advance(&fx, "F-0402", second.0, second.1);
+        let error = current_accepted_frontier(&fx.project()).unwrap_err().to_string();
+        assert!(error.contains(expected), "{error}");
+        let error = codeos_workflow::checker::render_journey(&fx.project(), None)
+            .unwrap_err()
+            .to_string();
+        assert!(error.contains(expected), "{error}");
+    }
+}

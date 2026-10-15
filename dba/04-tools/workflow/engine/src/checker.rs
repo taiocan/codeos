@@ -738,14 +738,11 @@ fn accepted_journey_definition(
     excluded_subject: Option<&str>,
 ) -> Result<(JourneyDefinition, Option<String>)> {
     let (journey_id, _, initial, _) = charter_journey(project)?;
-    let advances = accepted_advances_excluding(project, excluded_subject)?;
+    let advances = accepted_chain(&initial, accepted_advances_excluding(project, excluded_subject)?)?;
     let mut frontier = initial;
     let mut prior_owner: Option<String> = None;
     let mut transitions = Vec::new();
     for (owner, previous, proposed) in advances {
-        if previous != frontier {
-            anyhow::bail!("accepted journey chain expected previous frontier '{frontier}', found '{previous}'");
-        }
         let transition = match prior_owner.as_deref() {
             Some(producer) if producer != owner => {
                 architecture_transition(project, producer, &owner, &previous, &proposed)?
@@ -813,7 +810,7 @@ fn journey_definition(project: &Project, subject: &Subject) -> Result<JourneyDef
 }
 
 /// Derive the sole accepted frontier from the Charter and the latest current acceptance receipt
-/// for each journey-advancing feature, in append order. No parallel frontier state is stored.
+/// for each journey-advancing feature. No parallel frontier state is stored.
 pub fn current_accepted_frontier(project: &Project) -> Result<String> {
     accepted_frontier_excluding(project, None)
 }
@@ -822,7 +819,7 @@ fn accepted_frontier_excluding(
     project: &Project,
     excluded_subject: Option<&str>,
 ) -> Result<String> {
-    let mut frontier = charter_initial_frontier(project)?;
+    let initial = charter_initial_frontier(project)?;
     let receipts = ReceiptStore::at(&project.codeos_dir()).all()?;
     let mut latest = BTreeMap::new();
     for (index, receipt) in receipts.iter().enumerate() {
@@ -834,6 +831,9 @@ fn accepted_frontier_excluding(
         }
     }
     let latest_indices: BTreeSet<_> = latest.into_values().collect();
+    let mut advances = Vec::new();
+    // Frontiers at which a bundle-bound non-advancing acceptance was prepared.
+    let mut preserved = Vec::new();
     for (index, receipt) in receipts.into_iter().enumerate() {
         if !latest_indices.contains(&index) {
             continue;
@@ -848,15 +848,11 @@ fn accepted_frontier_excluding(
             if let Some(bundle_id) = receipt.bindings.get("candidate_bundle") {
                 let bundle =
                     crate::candidate::CandidateStore::at(&project.codeos_dir()).read(bundle_id)?;
-                if bundle.journey_previous != frontier {
-                    anyhow::bail!(
-                        "accepted candidate journey conflict: {} expected previous '{}' but accepted frontier is '{}'",
-                        receipt.subject,
-                        bundle.journey_previous,
-                        frontier
-                    );
+                if bundle.journey_previous == bundle.journey_target {
+                    preserved.push((receipt.subject, bundle.journey_previous));
+                } else {
+                    advances.push((receipt.subject, bundle.journey_previous, bundle.journey_target));
                 }
-                frontier = bundle.journey_target;
                 continue;
             }
         }
@@ -871,18 +867,61 @@ fn accepted_frontier_excluding(
             previous, proposed, ..
         } = journey_contribution(&contract)?
         {
-            if previous != frontier {
-                anyhow::bail!(
-                    "accepted product-journey frontier conflict: {} expected previous '{}' but accepted frontier is '{}'",
-                    receipt.subject,
-                    previous,
-                    frontier
-                );
-            }
-            frontier = proposed;
+            advances.push((receipt.subject, previous, proposed));
         }
     }
-    Ok(frontier)
+    let chain = accepted_chain(&initial, advances)?;
+    for (subject, frontier) in preserved {
+        if frontier != initial && !chain.iter().any(|(_, _, proposed)| *proposed == frontier) {
+            anyhow::bail!(
+                "accepted candidate journey conflict: {subject} was prepared at frontier '{frontier}', which the accepted journey does not reach"
+            );
+        }
+    }
+    Ok(chain.last().map_or(initial, |(_, _, proposed)| proposed.clone()))
+}
+
+/// Order accepted advances `(owner, previous, proposed)` into the one chain that starts at the
+/// Charter's initial frontier. Journey order is a property of the transitions, never of the order
+/// in which acceptance receipts were appended: re-accepting an upstream feature must not reorder
+/// the journey. Two advances from one frontier, a cycle, or an advance the chain never reaches
+/// fail closed.
+fn accepted_chain(
+    initial: &str,
+    advances: Vec<(String, String, String)>,
+) -> Result<Vec<(String, String, String)>> {
+    let mut by_previous: BTreeMap<String, (String, String, String)> = BTreeMap::new();
+    for advance in advances {
+        if let Some((other, ..)) = by_previous.get(&advance.1) {
+            anyhow::bail!(
+                "accepted product-journey frontier conflict: {} and {} both advance from '{}'",
+                other,
+                advance.0,
+                advance.1
+            );
+        }
+        by_previous.insert(advance.1.clone(), advance);
+    }
+    let mut reached = BTreeSet::from([initial.to_string()]);
+    let mut frontier = initial.to_string();
+    let mut chain = Vec::new();
+    while let Some(advance) = by_previous.remove(&frontier) {
+        if !reached.insert(advance.2.clone()) {
+            anyhow::bail!(
+                "accepted product-journey cycle: {} returns to '{}'",
+                advance.0,
+                advance.2
+            );
+        }
+        frontier = advance.2.clone();
+        chain.push(advance);
+    }
+    if let Some((owner, previous, proposed)) = by_previous.into_values().next() {
+        anyhow::bail!(
+            "accepted product-journey frontier conflict: {owner} advances '{previous}' -> '{proposed}', which the accepted journey from '{initial}' does not reach"
+        );
+    }
+    Ok(chain)
 }
 
 pub fn product_journey_target(project: &Project, subject: &Subject) -> Result<String> {
