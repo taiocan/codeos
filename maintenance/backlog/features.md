@@ -11,3 +11,4 @@ implemented changes; this file is planning context, not workflow state or implem
 | STAGE8-EVIDENCE | `STAGE8-inspectable-verification.md` | Stage 8 inspectable verification evidence | High | Implemented — JamFree F-0001 proof pending |
 | STAB | `STAB/charter.md` | Delivery stabilization | High | Approved |
 | ECP | `ECP/README.md` | Engineering Control Panel ECP-2–ECP-6 work orders | High | Proposed |
+| FAI | `FAI/charter.md` | Feature-atomic invalidation | High | Proposed — after STAB P3 |

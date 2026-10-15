@@ -54,9 +54,11 @@ This section is the authoritative qualifying-feature count.
   accepted journey from the order of acceptance receipts, so F-0001's legitimate re-acceptance
   made a valid chain unreadable. The repair is conformance commit `f5a8f9a`. F-0005 continues
   through F1–F9 but does not count toward the zero-CodeOS-change proof.
-- 2026-10-15 (F-0005): `status` and `next` take about 100 s on JamFree, because each frontier
-  derivation evaluates current acceptance validity for every accepted feature. Before
-  `f5a8f9a`, the journey error stopped that work early, at about 47 s.
+- 2026-10-15 (F-0005): `status` and `next` take about 100 s on JamFree, against about 47 s before
+  `f5a8f9a`. Plausible, not proven: each frontier derivation now evaluates current acceptance
+  validity for all four accepted features, where the old journey error stopped after two. Trigger
+  for a performance root-cause trace: latency gets materially worse, blocks normal delivery, or
+  grows nonlinearly as features are added.
 - 2026-10-15 (F-0005, expected): the window must change `web/src/routes/+page.svelte`, an
   implementation input of all four accepted features' bundles. F-0001 to F-0004 will need
   revalidation, about 108 TomTom calls and four Codex assessments (WO-04, question B).
