@@ -2519,7 +2519,7 @@ fn validate_codeos_yaml(project: &Project, yaml: &Path) -> Option<bool> {
         .codeos_dir()
         .join("toolkit/dba/04-tools/configuration/project-config-contract.sh");
     if let Some(script) = [self_dev, downstream].into_iter().find(|p| p.exists()) {
-        if let Ok(o) = std::process::Command::new("bash")
+        if let Ok(o) = crate::instrument::command("bash")
             .arg(&script)
             .arg(yaml)
             .output()
@@ -3503,7 +3503,7 @@ fn run_integrated_baseline(project: &Project) -> evidence::CommandOutcome {
 }
 
 fn current_head(root: &Path) -> String {
-    std::process::Command::new("git")
+    crate::instrument::command("git")
         .arg("-C")
         .arg(root)
         .args(["rev-parse", "HEAD"])

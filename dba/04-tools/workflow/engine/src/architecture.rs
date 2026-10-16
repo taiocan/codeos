@@ -5,7 +5,6 @@ use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, BTreeSet};
-use std::process::Command;
 
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -251,7 +250,7 @@ fn git(project: &Project, args: &[&str]) -> Result<String> {
 }
 
 fn git_bytes(project: &Project, args: &[&str]) -> Result<Vec<u8>> {
-    let output = Command::new("git")
+    let output = crate::instrument::command("git")
         .args(args)
         .current_dir(&project.root)
         .output()?;
@@ -296,6 +295,7 @@ pub fn scope_path(project: &Project, subject: &str) -> Result<Option<String>> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::process::Command;
 
     fn scope(features: &str, approval: &str, body: &str) -> String {
         format!(

@@ -12,7 +12,6 @@ use sha2::{Digest, Sha256};
 use std::collections::BTreeMap;
 use std::io::Write;
 use std::path::{Path, PathBuf};
-use std::process::Command;
 
 const REQUIRED_BASE: &[(&str, &str)] = &[
     ("F3", "smoke"),
@@ -728,7 +727,7 @@ fn git(project: &Project, args: &[&str]) -> Result<String> {
         .to_string())
 }
 fn git_bytes(project: &Project, args: &[&str]) -> Result<Vec<u8>> {
-    let out = Command::new("git")
+    let out = crate::instrument::command("git")
         .arg("-C")
         .arg(&project.root)
         .args(args)
@@ -746,6 +745,7 @@ fn git_bytes(project: &Project, args: &[&str]) -> Result<Vec<u8>> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::process::Command;
 
     fn approved_scope(features: &str, approval: &str, body: &str) -> String {
         format!(

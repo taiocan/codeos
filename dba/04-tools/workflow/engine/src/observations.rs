@@ -302,7 +302,7 @@ fn validate_closure(
 fn validate_evidence(project: &Project, route: &Route, evidence: &ClosureEvidence) -> Result<()> {
     match evidence.kind.as_str() {
         "commit" => {
-            let status = std::process::Command::new("git")
+            let status = crate::instrument::command("git")
                 .args([
                     "cat-file",
                     "-e",

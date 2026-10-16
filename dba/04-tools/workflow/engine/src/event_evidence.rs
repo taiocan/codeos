@@ -14,7 +14,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::fs::OpenOptions;
 use std::io::Write;
 use std::path::{Path, PathBuf};
-use std::process::{Command, Stdio};
+use std::process::Stdio;
 
 pub struct VerifyEventArgs<'a> {
     pub subject: &'a Subject,
@@ -142,7 +142,7 @@ fn semantic_hash(events: &[Value]) -> Result<String> {
 }
 
 fn validate_with_jq(validator: &Path, bytes: &[u8], event_count: usize) -> Result<Value> {
-    let mut child = Command::new("jq")
+    let mut child = crate::instrument::command("jq")
         .args(["-s", "-f"])
         .arg(validator)
         .stdin(Stdio::piped())
@@ -205,7 +205,7 @@ pub fn verify(project: &Project, args: VerifyEventArgs<'_>) -> Result<Verificati
         before.is_empty() || before.ends_with(b"\n"),
         "event log has an incomplete pre-existing JSONL record"
     );
-    let output = Command::new(&args.command[0])
+    let output = crate::instrument::command(&args.command[0])
         .args(&args.command[1..])
         .current_dir(&project.root)
         .output()

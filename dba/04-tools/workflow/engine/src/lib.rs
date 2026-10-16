@@ -15,6 +15,7 @@ pub mod evidence;
 pub mod hashing;
 pub mod health;
 pub mod history;
+pub mod instrument;
 pub mod monitor;
 pub mod observations;
 pub mod project;

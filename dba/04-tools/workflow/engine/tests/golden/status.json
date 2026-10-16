@@ -1,0 +1,467 @@
+{
+  "attention": [
+    {
+      "action": {
+        "command": null,
+        "type": "revise_specification"
+      },
+      "actor": "ASSISTED",
+      "affected_surfaces": [
+        {
+          "now": "5732c8c8e65326e9d5b22933ddf2da74cdc6169cda284c122e0336edb7d6cba3",
+          "surface": "contract",
+          "was": "79d01a9f2dd7eb4da40ec57c7a1ba5c01f6400c8668321ee8ef36ba9a34be10d"
+        }
+      ],
+      "authority": "dba/02-policies/workflow-governance/v4.md",
+      "checkpoint": "F1",
+      "class": "STALE",
+      "evidence": [
+        {
+          "id": "701eeec86ba5e64c56b93904d325a4c19b4d93cda90051d66d22ec6380e4b7da",
+          "kind": "acceptance_receipt"
+        }
+      ],
+      "issue": "historical F9 acceptance is preserved; current acceptance validity is stale (SEMANTIC_CHANGE_REQUIRED)",
+      "next_action": "start ordinary governed work at F1",
+      "reason": "SEMANTIC_CHANGE_REQUIRED",
+      "subject": "F-0002",
+      "unchanged_surfaces": [
+        "intent",
+        "event_schema"
+      ]
+    },
+    {
+      "action": {
+        "command": "codeos-workflow check --workflow feature --subject F-0003",
+        "type": "run_verification"
+      },
+      "actor": "AUTO",
+      "affected_surfaces": [],
+      "authority": "dba/02-policies/workflow-feature/v10.md",
+      "checkpoint": "F3",
+      "class": "BLOCKER",
+      "issue": "continuous product journey has no verification record — run `codeos-workflow check`",
+      "next_action": "run `codeos-workflow check` to verify continuous product journey",
+      "reason": "VERIFICATION",
+      "subject": "F-0003"
+    }
+  ],
+  "bootstrap": {
+    "additional_issue_count": 0,
+    "checkpoints": [
+      {
+        "id": "B1",
+        "status": "COMPLETE",
+        "title": "Purpose"
+      },
+      {
+        "id": "B2",
+        "status": "COMPLETE",
+        "title": "Architecture and configuration"
+      },
+      {
+        "id": "B3",
+        "status": "COMPLETE",
+        "title": "Integrated baseline"
+      },
+      {
+        "id": "B4",
+        "status": "COMPLETE",
+        "title": "Initial Product Preview"
+      },
+      {
+        "id": "B5",
+        "status": "COMPLETE",
+        "title": "Ready for first feature"
+      }
+    ],
+    "completed": 5,
+    "current_checkpoint": null,
+    "next_action": null,
+    "primary_issue": null,
+    "status": "COMPLETE",
+    "total": 5
+  },
+  "current_feature": null,
+  "feature_inventory_warnings": [],
+  "features": [
+    {
+      "accepted_snapshot": {
+        "accepted_at": "2026-10-16T00:00:00Z",
+        "bindings": {
+          "candidate_bundle": "15b84a0b5291feedab26a522b643d601c11e3a19b3fd096730c9e80cdea2b4b0",
+          "codeos_yaml": "e27f74000ab2568987e8b442f97d0b8222a4461a6c56c6f6837d1b80ffeca355",
+          "contract": "c1db30ae6c68c62c15131245b6d6e1ecfde03423c783dd6368a2cb00639aab34",
+          "event_schema": "921d79bcd8addb2c99263ab893b37b64e8ffb182df7d6df9dc213521e85b9482",
+          "implementation_state": "ebbd0fa95d85487e382dec121dc17fb82684e6bbbe792ca39cf888a26c28fa44",
+          "intent": "403593a5199f55be58d99d6257adc76a22268383a31924c82ab88d3a6ee0f30f"
+        },
+        "candidate_bundle_id": "15b84a0b5291feedab26a522b643d601c11e3a19b3fd096730c9e80cdea2b4b0",
+        "receipt_sha256": "018a6017dce9a6144b2183d7c54402c24f6ddaba5011788815d7983d199f4db4",
+        "semantic_revision": 1
+      },
+      "additional_issue_count": 0,
+      "checkpoints": [
+        {
+          "basis": "ACCEPTED_SNAPSHOT",
+          "id": "F1",
+          "status": "COMPLETE",
+          "title": "Specification"
+        },
+        {
+          "basis": "ACCEPTED_SNAPSHOT",
+          "id": "F2",
+          "status": "COMPLETE",
+          "title": "Preparation"
+        },
+        {
+          "basis": "ACCEPTED_SNAPSHOT",
+          "id": "F3",
+          "status": "COMPLETE",
+          "title": "Vertical implementation"
+        },
+        {
+          "basis": "ACCEPTED_SNAPSHOT",
+          "id": "F4",
+          "status": "COMPLETE",
+          "title": "Early Development Preview"
+        },
+        {
+          "basis": "ACCEPTED_SNAPSHOT",
+          "id": "F5",
+          "status": "COMPLETE",
+          "title": "Full Verification"
+        },
+        {
+          "id": "F5d",
+          "status": "NOT_APPLICABLE",
+          "title": "Data-integrity verification"
+        },
+        {
+          "basis": "ACCEPTED_SNAPSHOT",
+          "id": "F5g",
+          "status": "COMPLETE",
+          "title": "Integrated browser verification"
+        },
+        {
+          "basis": "ACCEPTED_SNAPSHOT",
+          "id": "F6",
+          "status": "COMPLETE",
+          "title": "Reconciliation"
+        },
+        {
+          "basis": "ACCEPTED_SNAPSHOT",
+          "id": "F7",
+          "status": "COMPLETE",
+          "title": "Independent Review"
+        },
+        {
+          "basis": "ACCEPTED_SNAPSHOT",
+          "id": "F8",
+          "status": "COMPLETE",
+          "title": "Final Human UX Validation"
+        },
+        {
+          "basis": "ACCEPTED_SNAPSHOT",
+          "id": "F9",
+          "status": "COMPLETE",
+          "title": "Acceptance"
+        }
+      ],
+      "completed": 10,
+      "current_acceptance_valid": true,
+      "current_checkpoint": null,
+      "current_validity": {
+        "reasons": [],
+        "status": "VALID"
+      },
+      "historically_accepted": true,
+      "id": "F-0001",
+      "name": "Golden F-0001",
+      "next_action": null,
+      "primary_issue": null,
+      "status": "COMPLETE",
+      "total": 10
+    },
+    {
+      "acceptance_reason": "SEMANTIC_CHANGE_REQUIRED",
+      "accepted_snapshot": {
+        "accepted_at": "2026-10-16T00:00:00Z",
+        "bindings": {
+          "candidate_bundle": "93d68c39c0f8730328715ec6d7568524a4aef74a2e1f7c62914656ded836bb7a",
+          "codeos_yaml": "e27f74000ab2568987e8b442f97d0b8222a4461a6c56c6f6837d1b80ffeca355",
+          "contract": "79d01a9f2dd7eb4da40ec57c7a1ba5c01f6400c8668321ee8ef36ba9a34be10d",
+          "event_schema": "508294df85854abc824a94117d50224524ec0da3eac7d08fcf64b7abeec7b074",
+          "implementation_state": "ebbd0fa95d85487e382dec121dc17fb82684e6bbbe792ca39cf888a26c28fa44",
+          "intent": "6692c813073367651c4780a2c2795b30990305ff8353f6640f4cc5287cd4acea"
+        },
+        "candidate_bundle_id": "93d68c39c0f8730328715ec6d7568524a4aef74a2e1f7c62914656ded836bb7a",
+        "receipt_sha256": "701eeec86ba5e64c56b93904d325a4c19b4d93cda90051d66d22ec6380e4b7da",
+        "semantic_revision": 1
+      },
+      "actor": "ASSISTED",
+      "additional_issue_count": 0,
+      "checkpoints": [
+        {
+          "basis": "ACCEPTED_SNAPSHOT",
+          "id": "F1",
+          "status": "COMPLETE",
+          "title": "Specification"
+        },
+        {
+          "basis": "ACCEPTED_SNAPSHOT",
+          "id": "F2",
+          "status": "COMPLETE",
+          "title": "Preparation"
+        },
+        {
+          "basis": "ACCEPTED_SNAPSHOT",
+          "id": "F3",
+          "status": "COMPLETE",
+          "title": "Vertical implementation"
+        },
+        {
+          "basis": "ACCEPTED_SNAPSHOT",
+          "id": "F4",
+          "status": "COMPLETE",
+          "title": "Early Development Preview"
+        },
+        {
+          "basis": "ACCEPTED_SNAPSHOT",
+          "id": "F5",
+          "status": "COMPLETE",
+          "title": "Full Verification"
+        },
+        {
+          "id": "F5d",
+          "status": "NOT_APPLICABLE",
+          "title": "Data-integrity verification"
+        },
+        {
+          "basis": "ACCEPTED_SNAPSHOT",
+          "id": "F5g",
+          "status": "COMPLETE",
+          "title": "Integrated browser verification"
+        },
+        {
+          "basis": "ACCEPTED_SNAPSHOT",
+          "id": "F6",
+          "status": "COMPLETE",
+          "title": "Reconciliation"
+        },
+        {
+          "basis": "ACCEPTED_SNAPSHOT",
+          "id": "F7",
+          "status": "COMPLETE",
+          "title": "Independent Review"
+        },
+        {
+          "basis": "ACCEPTED_SNAPSHOT",
+          "id": "F8",
+          "status": "COMPLETE",
+          "title": "Final Human UX Validation"
+        },
+        {
+          "basis": "ACCEPTED_SNAPSHOT",
+          "id": "F9",
+          "status": "COMPLETE",
+          "title": "Acceptance"
+        }
+      ],
+      "completed": 10,
+      "current_acceptance_valid": false,
+      "current_checkpoint": "F1",
+      "current_validity": {
+        "reasons": [
+          "SEMANTIC_CHANGE_REQUIRED"
+        ],
+        "status": "STALE"
+      },
+      "historically_accepted": true,
+      "id": "F-0002",
+      "name": "Golden F-0002",
+      "next_action": "start ordinary governed work at F1",
+      "primary_issue": "historical F9 acceptance is preserved; current acceptance validity is stale (SEMANTIC_CHANGE_REQUIRED)",
+      "reason": "SEMANTIC_CHANGE_REQUIRED",
+      "status": "BLOCKED",
+      "total": 10
+    },
+    {
+      "actor": "AUTO",
+      "additional_issue_count": 0,
+      "checkpoints": [
+        {
+          "id": "F1",
+          "status": "COMPLETE",
+          "title": "Specification"
+        },
+        {
+          "id": "F2",
+          "status": "COMPLETE",
+          "title": "Preparation"
+        },
+        {
+          "id": "F3",
+          "status": "BLOCKED",
+          "title": "Vertical implementation"
+        },
+        {
+          "id": "F4",
+          "status": "BLOCKED",
+          "title": "Early Development Preview"
+        },
+        {
+          "id": "F5",
+          "status": "BLOCKED",
+          "title": "Full Verification"
+        },
+        {
+          "id": "F5d",
+          "status": "NOT_APPLICABLE",
+          "title": "Data-integrity verification"
+        },
+        {
+          "id": "F5g",
+          "status": "BLOCKED",
+          "title": "Integrated browser verification"
+        },
+        {
+          "id": "F6",
+          "status": "BLOCKED",
+          "title": "Reconciliation"
+        },
+        {
+          "id": "F7",
+          "status": "BLOCKED",
+          "title": "Independent Review"
+        },
+        {
+          "id": "F8",
+          "status": "BLOCKED",
+          "title": "Final Human UX Validation"
+        },
+        {
+          "id": "F9",
+          "status": "BLOCKED",
+          "title": "Acceptance"
+        }
+      ],
+      "completed": 2,
+      "current_acceptance_valid": false,
+      "current_checkpoint": "F3",
+      "current_validity": {
+        "reasons": [],
+        "status": "NOT_ACCEPTED"
+      },
+      "historically_accepted": false,
+      "id": "F-0003",
+      "name": "Golden F-0003",
+      "next_action": "run `codeos-workflow check` to verify continuous product journey",
+      "primary_issue": "continuous product journey has no verification record — run `codeos-workflow check`",
+      "reason": "VERIFICATION",
+      "status": "BLOCKED",
+      "total": 10
+    }
+  ],
+  "health": [
+    {
+      "basis": [
+        ".codeos/00-project/charter.md records approval"
+      ],
+      "domain": "product",
+      "status": "CURRENT"
+    },
+    {
+      "basis": [
+        "F-0002: accepted snapshot is no longer current (SEMANTIC_CHANGE_REQUIRED)"
+      ],
+      "domain": "specification",
+      "status": "STALE"
+    },
+    {
+      "basis": [
+        "no Architecture Scope exists"
+      ],
+      "domain": "architecture",
+      "status": "NOT_APPLICABLE"
+    },
+    {
+      "basis": [
+        "F-0002: accepted snapshot is no longer current (SEMANTIC_CHANGE_REQUIRED)"
+      ],
+      "domain": "verification",
+      "status": "STALE"
+    },
+    {
+      "basis": [
+        "F-0002: accepted snapshot is no longer current (SEMANTIC_CHANGE_REQUIRED)"
+      ],
+      "domain": "evidence",
+      "status": "STALE"
+    },
+    {
+      "basis": [
+        "F-0002: accepted snapshot is no longer current (SEMANTIC_CHANGE_REQUIRED)"
+      ],
+      "domain": "independent_review",
+      "status": "STALE"
+    },
+    {
+      "basis": [
+        "scripts/codeos-qualify does not exist"
+      ],
+      "domain": "project_quality",
+      "status": "NOT_CONFIGURED"
+    },
+    {
+      "basis": [
+        "scripts/codeos-qualify does not exist"
+      ],
+      "domain": "security",
+      "status": "NOT_CONFIGURED"
+    },
+    {
+      "basis": [
+        "scripts/codeos-qualify does not exist"
+      ],
+      "domain": "supply_chain",
+      "status": "NOT_CONFIGURED"
+    },
+    {
+      "basis": [
+        "scripts/codeos-qualify does not exist"
+      ],
+      "domain": "deployment",
+      "status": "NOT_CONFIGURED"
+    },
+    {
+      "basis": [
+        "development build without a qualified release identity"
+      ],
+      "domain": "release",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "basis": [
+        "compatibility/support.json: DBA-26 supported"
+      ],
+      "domain": "compatibility",
+      "status": "SUPPORTED"
+    },
+    {
+      "basis": [
+        "no Observation v2 identity lacks closure evidence"
+      ],
+      "domain": "operational_learning",
+      "status": "NONE"
+    }
+  ],
+  "open_observations": [],
+  "planned_feature_candidates": [],
+  "project": {
+    "configuration": "DBA-26",
+    "name": "golden"
+  },
+  "schema_version": 3
+}

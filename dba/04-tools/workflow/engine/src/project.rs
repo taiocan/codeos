@@ -4,7 +4,6 @@ use anyhow::{Context, Result};
 use serde::Deserialize;
 use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
-use std::process::Command;
 
 const DEFAULT_DATABASE_SERVICE: &str = "db";
 const DEFAULT_DATABASE_TEST_URL: &str = "postgres://codeos:codeos@localhost:5432/codeos";
@@ -135,6 +134,7 @@ impl Project {
     }
 
     fn resolved_project_configuration(&self, key: &str) -> Result<String> {
+        crate::instrument::count("configuration_resolution");
         let resolver = self
             .toolkit_root()
             .join("dba/04-tools/configuration/resolve-project-configuration.sh");
@@ -149,7 +149,7 @@ impl Project {
             }
             return Ok("codeos_schema=legacy\nresolution_mode=legacy-dba-7-cutover\ndba_configuration=DBA-7\n".into());
         }
-        let output = Command::new("bash")
+        let output = crate::instrument::command("bash")
             .arg(&resolver)
             .arg(&self.root)
             .arg(self.codeos_yaml())
@@ -301,7 +301,7 @@ impl Project {
     }
 
     pub fn compose_has_service(&self, service: &str) -> Result<bool> {
-        let out = Command::new("docker")
+        let out = crate::instrument::command("docker")
             .args(["compose", "config", "--services"])
             .current_dir(&self.root)
             .output()
@@ -468,13 +468,18 @@ fn validate_project_executable(root: &Path, supplied: &str) -> Result<()> {
 }
 
 fn cargo_metadata(root: &Path) -> Option<serde_json::Value> {
-    let out = Command::new("cargo")
+    crate::instrument::count("cargo_metadata_attempt");
+    let out = crate::instrument::command("cargo")
         .args(["metadata", "--no-deps", "--format-version", "1"])
         .current_dir(root)
         .output()
         .ok()?
         .stdout;
-    serde_json::from_slice(&out).ok()
+    let metadata = serde_json::from_slice(&out).ok();
+    if metadata.is_some() {
+        crate::instrument::count("cargo_metadata_resolved");
+    }
+    metadata
 }
 
 fn add_relative(root: &Path, path: impl AsRef<Path>, paths: &mut BTreeSet<String>) {

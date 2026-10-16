@@ -9,7 +9,6 @@ use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
-use std::process::Command;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct CandidateInput {
@@ -651,7 +650,7 @@ fn yaml_string(text: &str, key: &str) -> Option<String> {
     })
 }
 fn git(project: &Project, args: &[String]) -> Result<String> {
-    let out = Command::new("git")
+    let out = crate::instrument::command("git")
         .arg("-C")
         .arg(&project.root)
         .args(args)

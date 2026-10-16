@@ -6,7 +6,6 @@ use crate::hashing;
 use crate::project::Project;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
-use std::process::Command;
 
 const BASELINE_IDS: &[&str] = &[
     "static_analysis",
@@ -97,7 +96,7 @@ fn run_inner(project: &Project, mode: &str) -> anyhow::Result<(bool, String, ser
     let implementation_sha256 =
         hashing::working_tree_state(&project.root, &project.implementation_paths())?;
     let output = tempfile::NamedTempFile::new()?;
-    let status = Command::new(&command)
+    let status = crate::instrument::command(&command)
         .current_dir(&project.root)
         .env("CODEOS_QUALIFICATION_MODE", mode)
         .env("CODEOS_QUALIFICATION_OUTPUT", output.path())

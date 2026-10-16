@@ -253,6 +253,7 @@ fn main() {
             EXIT_ERROR
         }
     };
+    codeos_workflow::instrument::write_if_requested();
     process::exit(code);
 }
 

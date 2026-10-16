@@ -5,7 +5,6 @@
 use anyhow::{Context, Result};
 use serde::Deserialize;
 use std::path::Path;
-use std::process::Command;
 
 /// Split a Markdown file into (yaml frontmatter, body). Frontmatter is the block between the first
 /// two `---` lines when the file starts with `---`.
@@ -1074,7 +1073,7 @@ pub fn run_env_output(
     args: &[&str],
     env: &[(&str, &str)],
 ) -> (CommandOutcome, String) {
-    let mut cmd = Command::new(program);
+    let mut cmd = crate::instrument::command(program);
     cmd.args(args).current_dir(cwd);
     for (k, v) in env {
         cmd.env(k, v);
