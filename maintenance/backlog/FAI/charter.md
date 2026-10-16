@@ -1,9 +1,9 @@
 # FAI — Feature-Atomic Invalidation Charter
 
-- **Status:** PROPOSED — Primoz Gorjup, 2026-10-15
+- **Status:** APPROVED — Primoz Gorjup, 2026-10-16 (proposed 2026-10-15)
 - **Scope:** CodeOS-wide; pilot project JamFree
-- **Entry:** after STAB P3 ends. STAB WO-04 decides it formally. It is implemented earlier only if
-  the fan-out blocks correct progression.
+- **Entry:** STAB WO-04 moved it ahead of the next P3 feature on 2026-10-16. P3 is paused and
+  resumes from a fresh baseline after FAI.
 
 Planning context only. Git and the governing policies stay authoritative.
 
@@ -65,5 +65,18 @@ Today:
 ## Measure
 
 On the WO-01 cases, incidental invalidations fall to zero and every necessary invalidation remains.
+
+At minimum, four cases become acceptance tests (WO-03 criterion 2):
+1. **Shared page change (F-0005).** An unaffected feature stays current unless its Observed Surface
+   or a declared dependency changed.
+2. **Test-only change (F-0002 `b713734`).** Production evidence does not go stale because
+   unrelated test code changed.
+3. **Inherited reality evidence (F-0003, F-0004).** A downstream feature binds the authoritative
+   upstream evidence where the claim is genuinely inherited.
+4. **Shared runtime dependency (rustls `874728d`).** A genuine dependency still stales every
+   feature that relies on it. FAI must not under-invalidate.
+
+FAI is not assumed to remove every case. WO-01 classifies each one, and WO-02 drops any goal the
+table does not need.
 
 Work orders: [README](README.md).

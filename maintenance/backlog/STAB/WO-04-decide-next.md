@@ -187,3 +187,15 @@ charter or WO.
 The reason is that the next P3 feature, "Arrive by", would very likely change `+page.svelte` and
 repeat the known fan-out (F-0001 to F-0005 revalidated), so it would re-measure the FAI problem
 rather than prove the freeze.
+
+**Revised order (2026-10-16, after SPERF).** FAI comes before the next P3 feature. The new order
+is:
+1. SPERF (done);
+2. [FAI](../FAI/charter.md);
+3. a fresh P3 baseline;
+4. "Arrive by";
+5. one more qualifying feature.
+
+"Arrive by" then tests whether a normal feature invalidates only the features it actually affects,
+instead of showing again that CodeOS can recover from a fan-out already understood. P3 stays at
+1 of 3.
