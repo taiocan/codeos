@@ -7,7 +7,7 @@ authoritative.
 |---|---|---|---|
 | [WO-01](WO-01-root-cause-table.md) | NORMAL | Root-cause table of P3 invalidations | Accepted 2026-10-16 |
 | [WO-02](WO-02-decision-brief.md) | PROTECTED | Decision brief: the narrowest mechanism | Approved 2026-10-16 |
-| [WO-03](WO-03-implementation.md) | PROTECTED | Implementation | Implemented 2026-10-16 — awaiting human acceptance |
-| [WO-04](WO-04-jamfree-replay.md) | NORMAL | JamFree replay | Proposed |
+| [WO-03](WO-03-implementation.md) | PROTECTED | Implementation | Accepted 2026-10-16 |
+| [WO-04](WO-04-jamfree-replay.md) | NORMAL | JamFree replay | Replayed 2026-10-16 — awaiting human acceptance |
 
 Each WO follows the previous one. This table is the only place WO status is kept.

@@ -20,7 +20,12 @@ WO-04, question D).
 
 ## Results
 
-**Implemented (2026-10-16). Awaiting human acceptance.**
+**Accepted (2026-10-16).** The human accepts WO-03 as the protected implementation, with one guard
+for WO-04: if JamFree's verifier delegates claim logic to mutable project-local modules, its
+identity is incomplete and WO-04 stops. The two known limits below stay recorded; neither needs a
+broader hash or a second validator now.
+
+**Implemented (2026-10-16).**
 - **Semantics.** The semantics are in Feature Workflow v11
   (`dba/02-policies/workflow-feature/v11.md`), which DBA-27 selects. The glossary gains Evidence
   Scope and Inherited claim, and Production-source evidence is amended.
