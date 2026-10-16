@@ -122,3 +122,23 @@ on JamFree with no TomTom calls.
     governed inputs, the Evidence Scopes it observed, and the verifier that produced it".
 
 I recommend all four as written.
+
+**Approved (2026-10-16)** — Primoz Gorjup: "DBA-27 / Feature Workflow v11 may introduce scoped
+production-evidence bindings, verifier-dependent evidence regeneration, and explicit inherited
+reality claims, while preserving genuine runtime dependency invalidation and leaving F4/Observed
+Surface semantics unchanged." Decisions (a)–(d) are approved with these constraints:
+- **(a)** The verifier selects from the declared scopes and never defines their contents. An
+  unknown or missing scope, a malformed declaration, or an unresolved path fails closed.
+- **(b)** The downstream binding covers the upstream feature, the upstream claim and evidence
+  identity, and upstream Current Validity, so it never points at an older proof.
+- **(c)** v11 states in one normative sentence that the verifier hash is an
+  evidence-regeneration dependency, not by itself a post-acceptance validity dependency.
+- **F6** binds the non-test product state; WO-02 does not try to make F6 fully feature-atomic.
+
+Added test: a verifier that claims an undeclared Evidence Scope fails closed.
+
+**Implementation note.** An inherited claim's currency follows the upstream feature's Current
+Validity live, and always uses the upstream's current selected evidence. The Candidate Bundle
+records the identity at candidate time for traceability. A frozen identity would leave the
+downstream feature with no governed path back to VALID after an upstream revalidation, which is the
+F-0003 dead end.

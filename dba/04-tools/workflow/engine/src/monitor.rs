@@ -235,6 +235,7 @@ impl ProjectStatus {
                 workflow.primary_issue = Some(match reason {
                     "SEMANTIC_CHANGE_REQUIRED" => "historical F9 acceptance is preserved, but governed feature meaning changed".into(),
                     "ARCHITECTURE_CHANGE_REQUIRED" => "historical F9 acceptance is preserved, but applicable architecture changed".into(),
+                    "UPSTREAM_REVALIDATION_REQUIRED" => "historical F9 acceptance is preserved, but an inherited claim's upstream feature is not valid".into(),
                     _ => "historical F9 acceptance is preserved, but current acceptance is stale after a later implementation/dependency change".into(),
                 });
                 workflow.additional_issue_count = 0;
@@ -242,6 +243,10 @@ impl ProjectStatus {
                     "SEMANTIC_CHANGE_REQUIRED" => "start ordinary governed work at F1".into(),
                     "ARCHITECTURE_CHANGE_REQUIRED" => {
                         "complete architecture impact and use an ordinary Candidate Bundle".into()
+                    }
+                    "UPSTREAM_REVALIDATION_REQUIRED" => {
+                        "restore the upstream feature's validity; this feature then follows it"
+                            .into()
                     }
                     _ => "run targeted checks and prepare one post-acceptance Candidate Bundle"
                         .into(),
@@ -302,6 +307,10 @@ impl ProjectStatus {
                         "SEMANTIC_CHANGE_REQUIRED" => "start ordinary governed work at F1".into(),
                         "ARCHITECTURE_CHANGE_REQUIRED" => {
                             "complete architecture impact and use an ordinary Candidate Bundle"
+                                .into()
+                        }
+                        "UPSTREAM_REVALIDATION_REQUIRED" => {
+                            "restore the upstream feature's validity; this feature then follows it"
                                 .into()
                         }
                         _ => "revalidate only the affected accepted surface".into(),
@@ -1715,6 +1724,7 @@ mod tests {
             predecessor_bundle: None,
             baseline_acceptance: None,
             trigger_commit: None,
+            inherited_evidence: Default::default(),
         };
         let id = CandidateStore::at(&project.codeos_dir())
             .write(&bundle)

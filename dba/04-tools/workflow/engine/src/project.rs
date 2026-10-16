@@ -25,6 +25,8 @@ pub struct RuntimeVerification {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RealityVerification {
     pub command: String,
+    /// Feature Workflow v11 Evidence Scopes: name -> project-relative paths.
+    pub scopes: BTreeMap<String, Vec<String>>,
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -39,6 +41,8 @@ struct ProjectConfiguration {
 #[serde(deny_unknown_fields)]
 struct RealityVerificationInput {
     command: String,
+    #[serde(default)]
+    scopes: Option<BTreeMap<String, Vec<String>>>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -70,6 +74,7 @@ struct Snapshot {
     implementation_state: Option<String>,
     product_state: Option<String>,
     git_queries: BTreeMap<Vec<String>, Vec<u8>>,
+    scope_states: BTreeMap<Vec<String>, String>,
 }
 
 impl Project {
@@ -207,7 +212,7 @@ impl Project {
         self.selected_policy_version(
             "workflow_feature_policy",
             "dba/02-policies/workflow-feature/v1.md",
-            &[1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+            &[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
         )
     }
 
@@ -403,9 +408,92 @@ impl Project {
             .reality_verification
             .context("reality-dependent claims require reality_verification.command")?;
         validate_project_executable(&self.root, &input.command)?;
+        let scopes = input.scopes.unwrap_or_default();
+        if !scopes.is_empty() {
+            anyhow::ensure!(
+                self.feature_workflow_version()? >= 11,
+                "reality_verification.scopes requires Feature Workflow v11"
+            );
+        }
+        for (name, paths) in &scopes {
+            anyhow::ensure!(
+                !name.is_empty()
+                    && name
+                        .chars()
+                        .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_'),
+                "Evidence Scope name '{name}' is malformed"
+            );
+            anyhow::ensure!(!paths.is_empty(), "Evidence Scope '{name}' names no path");
+            for path in paths {
+                let relative = Path::new(path);
+                anyhow::ensure!(
+                    !path.trim().is_empty()
+                        && !relative.is_absolute()
+                        && !relative
+                            .components()
+                            .any(|c| matches!(c, std::path::Component::ParentDir))
+                        && self.root.join(relative).exists(),
+                    "Evidence Scope '{name}' path '{path}' is not an existing project-relative path"
+                );
+            }
+        }
         Ok(RealityVerification {
             command: input.command,
+            scopes,
         })
+    }
+
+    /// The paths an Evidence Scope state covers (Feature Workflow v11): the scope paths, the
+    /// manifests and lockfiles of the Cargo or npm packages that contain them, the Cargo workspace
+    /// manifest and lockfile, and the runtime composition.
+    pub fn evidence_scope_paths(&self, scope_paths: &[String]) -> Vec<String> {
+        const MANIFESTS: [&str; 6] = [
+            "Cargo.toml",
+            "Cargo.lock",
+            "package.json",
+            "package-lock.json",
+            "yarn.lock",
+            "pnpm-lock.yaml",
+        ];
+        let mut out: BTreeSet<String> = scope_paths.iter().cloned().collect();
+        let mut cargo = false;
+        for path in scope_paths {
+            for dir in Path::new(path).ancestors() {
+                for name in MANIFESTS {
+                    let candidate = dir.join(name);
+                    if self.root.join(&candidate).is_file() {
+                        cargo |= name.starts_with("Cargo");
+                        out.insert(candidate.to_string_lossy().into_owned());
+                    }
+                }
+            }
+        }
+        if cargo {
+            if let Some(root) = self.cargo_workspace_root() {
+                for name in ["Cargo.toml", "Cargo.lock"] {
+                    add_relative(&self.root, root.join(name), &mut out);
+                }
+            }
+        }
+        if self.root.join("docker-compose.yml").is_file() {
+            out.insert("docker-compose.yml".into());
+        }
+        out.into_iter().collect()
+    }
+
+    /// The non-test content identity of `paths`, computed once per snapshot.
+    pub fn scoped_product_state(&self, paths: &[String]) -> Result<String> {
+        if let Some(state) = self.snapshot.lock().unwrap().scope_states.get(paths) {
+            return Ok(state.clone());
+        }
+        crate::instrument::binding("evidence_scope_state", paths);
+        let state = crate::hashing::product_state(&self.root, paths)?;
+        self.snapshot
+            .lock()
+            .unwrap()
+            .scope_states
+            .insert(paths.to_vec(), state.clone());
+        Ok(state)
     }
 
     /// Resolve the host-side database URL without persisting its value in configuration or

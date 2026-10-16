@@ -299,12 +299,26 @@ fn evidence(
             );
             continue;
         }
-        if record
-            .bindings
-            .get("implementation_state")
-            .map(String::as_str)
-            != current
-        {
+        // Feature Workflow v11 production evidence binds its Evidence Scopes and verifier; the
+        // workflow derives their current values. Everything else binds the implementation state.
+        let implementation_current = if record.bindings.contains_key("evidence_scope_state") {
+            manifest
+                .derived
+                .scoped_bindings
+                .get(key)
+                .is_some_and(|now| {
+                    ["evidence_scope_state", "reality_verifier"]
+                        .iter()
+                        .all(|binding| record.bindings.get(*binding) == now.get(*binding))
+                })
+        } else {
+            record
+                .bindings
+                .get("implementation_state")
+                .map(String::as_str)
+                == current
+        };
+        if !implementation_current {
             environment_needed = true;
             readiness.fail(
                 Reason::EvidenceStale,
@@ -348,13 +362,20 @@ fn evidence(
         return;
     };
     // A revalidation keeps the historical F6 receipt; only its selected evidence must be current.
-    if !manifest.derived.revalidation
-        && receipt
-            .bindings
-            .get("implementation_state")
-            .map(String::as_str)
-            != current
-    {
+    // A v11 F6 receipt binds the non-test product state in place of the implementation state.
+    let f6_bound = match receipt.bindings.get("product_state") {
+        Some(bound) if !receipt.bindings.contains_key("implementation_state") => {
+            Some(bound.as_str()) == manifest.derived.product_state.as_deref()
+        }
+        _ => {
+            receipt
+                .bindings
+                .get("implementation_state")
+                .map(String::as_str)
+                == current
+        }
+    };
+    if !manifest.derived.revalidation && !f6_bound {
         readiness.fail(
             Reason::EvidenceStale,
             "F6",
@@ -655,6 +676,84 @@ mod tests {
         assert_eq!(f6_issues(&manifest), 2);
         manifest.derived.revalidation = true;
         assert_eq!(f6_issues(&manifest), 0);
+    }
+
+    #[test]
+    fn v11_evidence_and_f6_are_judged_by_their_scoped_bindings() {
+        let dir = tempfile::tempdir().unwrap();
+        let cfg = Config {
+            reasoning_effort: String::new(),
+            reviewer_model: String::new(),
+            codex_cli_version: String::new(),
+            packet_budget_mode: crate::config::PacketBudgetMode::Fail,
+            repo_root: dir.path().into(),
+            toolkit_root: dir.path().into(),
+            review_log: dir.path().join("log"),
+            codex_dir: dir.path().into(),
+            state_dir: dir.path().into(),
+        };
+        let key = "F5/production_source_evidence".to_string();
+        let scoped: std::collections::BTreeMap<String, String> = [
+            ("evidence_scope_state".to_string(), "scope-1".to_string()),
+            ("reality_verifier".to_string(), "verifier-1".to_string()),
+        ]
+        .into();
+        let record = VerificationRecord {
+            workflow: "feature".into(),
+            subject: "F-1".into(),
+            checkpoint: "F5".into(),
+            verification: "production_source_evidence".into(),
+            result: "passed".into(),
+            bindings: scoped.clone(),
+            command: "fixture".into(),
+            timestamp: "2026-10-16T00:00:00Z".into(),
+            details: None,
+        };
+        let mut manifest = ReviewInputManifest {
+            // The implementation moved; scoped evidence does not depend on it.
+            implementation: Some("implementation-2".into()),
+            ..Default::default()
+        };
+        manifest
+            .verification
+            .insert(key.clone(), Some("line".into()));
+        manifest
+            .derived
+            .records
+            .insert(key.clone(), (String::new(), record));
+        manifest.derived.scoped_bindings.insert(key.clone(), scoped);
+        manifest.derived.product_state = Some("product-1".into());
+        manifest.derived.f6_receipt = Some(codeos_workflow::receipts::Receipt {
+            workflow: "feature".into(),
+            subject: "F-1".into(),
+            checkpoint: "reconciliation".into(),
+            result: "completed".into(),
+            bindings: [("product_state".to_string(), "product-1".to_string())].into(),
+            timestamp: "2026-10-16T00:00:00Z".into(),
+            rationale: None,
+            observation: None,
+        });
+        let stale = |manifest: &ReviewInputManifest| {
+            let mut readiness = Readiness::default();
+            evidence(&cfg, manifest, &[], &mut readiness);
+            readiness
+                .issues
+                .into_iter()
+                .filter(|issue| issue.reason == Reason::EvidenceStale)
+                .map(|issue| issue.subject)
+                .collect::<Vec<_>>()
+        };
+        assert!(stale(&manifest).is_empty(), "{:?}", stale(&manifest));
+
+        // The verifier changed, and so did the product F6 judged.
+        manifest
+            .derived
+            .scoped_bindings
+            .get_mut(&key)
+            .unwrap()
+            .insert("reality_verifier".into(), "verifier-2".into());
+        manifest.derived.product_state = Some("product-2".into());
+        assert_eq!(stale(&manifest), vec![key, "F6".to_string()]);
     }
 
     #[test]

@@ -169,6 +169,15 @@ grep -Fxq 'workflow_feature_policy=dba/02-policies/workflow-feature/v10.md' <<<"
 grep -Fxq 'codeos_mechanics_policy=dba/02-policies/codeos-mechanics/v7.md' <<<"${explicit}" || fail 'DBA-26 did not preserve DBA-25 Codeos Mechanics'
 grep -Fxq 'reviewer_tool_contract=dba/04-tools/reviewer/contract/v20.md' <<<"${explicit}" || fail 'DBA-26 did not preserve DBA-25 Reviewer Contract'
 
+cat > "${WORK}/.codeos/00-project/codeos.yaml" <<'YAML'
+codeos_schema: 2
+dba_configuration: DBA-27
+YAML
+explicit="$(bash "${RESOLVER}" "${WORK}")"
+grep -Fxq 'workflow_feature_policy=dba/02-policies/workflow-feature/v11.md' <<<"${explicit}" || fail 'DBA-27 did not select Feature Workflow v11'
+grep -Fxq 'codeos_mechanics_policy=dba/02-policies/codeos-mechanics/v7.md' <<<"${explicit}" || fail 'DBA-27 did not preserve DBA-26 Codeos Mechanics'
+grep -Fxq 'reviewer_tool_contract=dba/04-tools/reviewer/contract/v20.md' <<<"${explicit}" || fail 'DBA-27 did not preserve DBA-26 Reviewer Contract'
+
 printf 'codeos_schema: 2\n' > "${WORK}/.codeos/00-project/codeos.yaml"
 if bash "${RESOLVER}" "${WORK}" >/dev/null 2>&1; then fail 'missing schema-2 binding was accepted'; fi
 

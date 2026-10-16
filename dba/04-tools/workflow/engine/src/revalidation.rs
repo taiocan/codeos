@@ -583,6 +583,19 @@ pub fn acceptance_assessment(project: &Project, subject: &str) -> Result<Accepta
             return stale(assessment, "ARCHITECTURE_CHANGE_REQUIRED");
         }
     }
+    if project.feature_workflow_version()? >= 11 {
+        let feature = Subject::resolve(project, crate::contract::Workflow::Feature, subject)?;
+        for (claim, state) in inherited_evidence(project, &feature)? {
+            if let Err(why) = state {
+                assessment.comparisons.push(hashing::Comparison {
+                    surface: format!("inherited:{claim}"),
+                    was: Some("current upstream evidence".into()),
+                    now: Some(why),
+                });
+                return stale(assessment, "UPSTREAM_REVALIDATION_REQUIRED");
+            }
+        }
+    }
     if project.workflow_governance_version()? >= 3 {
         if let Some(bundle) = acceptance.bindings.get("candidate_bundle") {
             assessment.evidence.push(hashing::EvidenceRef {
@@ -646,6 +659,99 @@ fn accepted_architecture_identity(
 
 pub fn historically_accepted(project: &Project, subject: &str) -> Result<bool> {
     Ok(latest_acceptance(project, subject).is_ok())
+}
+
+thread_local! {
+    /// Features whose inherited claims are being resolved, so a cycle fails closed.
+    static INHERITING: std::cell::RefCell<Vec<String>> = const { std::cell::RefCell::new(Vec::new()) };
+}
+
+/// Feature Workflow v11: each inherited claim with the upstream feature's current selected
+/// evidence, or why it has none. The claim follows the upstream's Current Validity and never an
+/// older proof.
+pub fn inherited_evidence(
+    project: &Project,
+    subject: &Subject,
+) -> Result<
+    Vec<(
+        String,
+        std::result::Result<crate::candidate::InheritedEvidence, String>,
+    )>,
+> {
+    let mut out = Vec::new();
+    for inherited in &subject.inherited_claims {
+        let upstream = &inherited.upstream_feature;
+        let cyclic =
+            INHERITING.with(|stack| stack.borrow().contains(upstream) || upstream == &subject.id);
+        let state = if cyclic {
+            Err(format!("inheritance from {upstream} is cyclic"))
+        } else {
+            INHERITING.with(|stack| stack.borrow_mut().push(subject.id.clone()));
+            let state = upstream_evidence(project, inherited);
+            INHERITING.with(|stack| stack.borrow_mut().pop());
+            state?
+        };
+        out.push((inherited.claim.clone(), state));
+    }
+    Ok(out)
+}
+
+fn upstream_evidence(
+    project: &Project,
+    inherited: &crate::checker::InheritedClaim,
+) -> Result<std::result::Result<crate::candidate::InheritedEvidence, String>> {
+    let upstream = &inherited.upstream_feature;
+    let claim = &inherited.upstream_claim;
+    let subject = Subject::resolve(project, crate::contract::Workflow::Feature, upstream)?;
+    if !subject.reality_claims.contains(claim) {
+        return Ok(Err(format!(
+            "{upstream}/{claim} is not a reality-dependent claim"
+        )));
+    }
+    if !acceptance_assessment(project, upstream)?.current {
+        return Ok(Err(format!("{upstream} is not VALID")));
+    }
+    let acceptance = latest_acceptance(project, upstream)?;
+    let Some(accepted) = acceptance.bindings.get("candidate_bundle") else {
+        return Ok(Err(format!("{upstream} has no accepted Candidate Bundle")));
+    };
+    let bundle = if crate::candidate::acceptance_current(project, accepted)? {
+        accepted.clone()
+    } else {
+        match crate::candidate::passed_revalidation_bundle(
+            project,
+            upstream,
+            &hashing::record_identity(&acceptance)?,
+        )? {
+            Some(bundle) => bundle,
+            None => return Ok(Err(format!("{upstream} has no current Candidate Bundle"))),
+        }
+    };
+    let Some(evidence) = crate::candidate::CandidateStore::at(&project.codeos_dir())
+        .read(&bundle)?
+        .production_evidence
+    else {
+        return Ok(Err(format!("{upstream} selected no production evidence")));
+    };
+    let path = project
+        .codeos_dir()
+        .join(format!("06-workflow/reality-evidence/{evidence}.json"));
+    let covers = std::fs::read_to_string(path)
+        .ok()
+        .and_then(|text| serde_json::from_str::<serde_json::Value>(&text).ok())
+        .and_then(|value| value["claims"].as_array().cloned())
+        .is_some_and(|claims| claims.iter().any(|c| c.as_str() == Some(claim.as_str())));
+    if !covers {
+        return Ok(Err(format!(
+            "{upstream}'s selected evidence does not cover {claim}"
+        )));
+    }
+    Ok(Ok(crate::candidate::InheritedEvidence {
+        feature: upstream.clone(),
+        claim: claim.clone(),
+        bundle,
+        evidence,
+    }))
 }
 
 fn latest_acceptance(project: &Project, subject: &str) -> Result<Receipt> {

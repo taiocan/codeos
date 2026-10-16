@@ -25,7 +25,8 @@
     "DBA-23": "supported",
     "DBA-24": "supported",
     "DBA-25": "supported",
-    "DBA-26": "supported"
+    "DBA-26": "supported",
+    "DBA-27": "supported"
   },
   "lifecycle": {},
   "consumers": [

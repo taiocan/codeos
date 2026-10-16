@@ -138,12 +138,23 @@ pub struct Subject {
     pub persistence: bool,
     pub arch_approval_required: bool,
     pub reality_claims: Vec<String>,
+    /// Feature Workflow v11 inherited claims, which need no production run of their own.
+    pub inherited_claims: Vec<InheritedClaim>,
+}
+
+/// A claim whose production truth is one upstream reality-dependent claim (Feature Workflow v11).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct InheritedClaim {
+    pub claim: String,
+    pub upstream_feature: String,
+    pub upstream_claim: String,
 }
 
 impl Subject {
     pub fn resolve(project: &Project, workflow: Workflow, id: &str) -> Result<Self> {
         let (mut gui, mut persistence) = (false, false);
         let mut reality_claims = Vec::new();
+        let mut inherited_claims = Vec::new();
         if workflow == Workflow::Feature {
             let contract_path = project.contract(id);
             if let Ok(text) = std::fs::read_to_string(&contract_path) {
@@ -151,7 +162,8 @@ impl Subject {
                 let lower = text.to_lowercase();
                 gui = lower.contains("gui-visible outcome") || impact_row_changed(&lower, "gui");
                 persistence = impact_row_changed(&lower, "persistence");
-                reality_claims = reality_dependent_claims(&text)?;
+                let inherits = project.feature_workflow_version()? >= 11;
+                (reality_claims, inherited_claims) = reality_basis(&text, inherits)?;
             }
         }
         Ok(Self {
@@ -161,6 +173,7 @@ impl Subject {
             persistence,
             arch_approval_required: false,
             reality_claims,
+            inherited_claims,
         })
     }
 }
@@ -194,6 +207,7 @@ pub fn evaluate(project: &Project, subject: &Subject) -> Result<Vec<CheckpointRe
                 persistence: false,
                 arch_approval_required: false,
                 reality_claims: vec![],
+                inherited_claims: vec![],
             };
             let boot_reports = evaluate(project, &boot)?;
             let boot_complete = boot_reports
@@ -300,9 +314,10 @@ fn impact_row_changed(lower_text: &str, tier_keyword: &str) -> bool {
     })
 }
 
-fn reality_dependent_claims(contract: &str) -> Result<Vec<String>> {
+/// The Reality Basis: reality-dependent claim IDs, and (v11) inherited claims.
+fn reality_basis(contract: &str, inherits: bool) -> Result<(Vec<String>, Vec<InheritedClaim>)> {
     let Some(section) = contract.split("## Reality Basis").nth(1) else {
-        return Ok(vec![]);
+        return Ok((vec![], vec![]));
     };
     let section = section.split("\n## ").next().unwrap_or(section);
     let rows: Vec<Vec<&str>> = section
@@ -321,12 +336,40 @@ fn reality_dependent_claims(contract: &str) -> Result<Vec<String>> {
         })
         .collect();
     let mut reality = Vec::new();
+    let mut inherited = Vec::new();
     for cells in rows {
-        if !matches!(
-            cells[2],
-            "reality-dependent" | "simulated" | "not-reality-dependent"
-        ) {
+        let inherited_row = inherits && cells[2] == "inherited";
+        if !inherited_row
+            && !matches!(
+                cells[2],
+                "reality-dependent" | "simulated" | "not-reality-dependent"
+            )
+        {
             anyhow::bail!("claim '{}' has an invalid reality classification", cells[0]);
+        }
+        if inherited_row {
+            if cells.len() < 8 || cells[3..8].iter().any(|value| value.trim().is_empty()) {
+                anyhow::bail!(
+                    "inherited claim '{}' has incomplete source requirements",
+                    cells[0]
+                );
+            }
+            let source = cells[3].trim_matches('`');
+            let Some((feature, claim)) = source
+                .split_once('/')
+                .filter(|(f, c)| f.starts_with("F-") && !c.is_empty() && !c.contains(char::is_whitespace))
+            else {
+                anyhow::bail!(
+                    "inherited claim '{}' must name exactly one upstream F-NNNN/claim-id",
+                    cells[0]
+                );
+            };
+            inherited.push(InheritedClaim {
+                claim: cells[0].to_string(),
+                upstream_feature: feature.to_string(),
+                upstream_claim: claim.to_string(),
+            });
+            continue;
         }
         if cells[2] == "reality-dependent" {
             if cells.len() < 8 || cells[3..8].iter().any(|value| value.trim().is_empty()) {
@@ -338,7 +381,7 @@ fn reality_dependent_claims(contract: &str) -> Result<Vec<String>> {
             reality.push(cells[0].to_string());
         }
     }
-    Ok(reality)
+    Ok((reality, inherited))
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -1628,8 +1671,21 @@ fn evaluate_checkpoint(
                 }
             }
             Requirement::ProductionSourceEvidence => {
+                for (claim, state) in crate::revalidation::inherited_evidence(project, subject)? {
+                    match state {
+                        Ok(upstream) => met.push(format!(
+                            "inherited claim '{claim}' follows {}/{} ({})",
+                            upstream.feature,
+                            upstream.claim,
+                            short(&upstream.evidence)
+                        )),
+                        Err(why) => unmet.push(format!("inherited claim '{claim}': {why}")),
+                    }
+                }
                 if subject.reality_claims.is_empty() {
-                    met.push("no reality-dependent Contract claim".into());
+                    if subject.inherited_claims.is_empty() {
+                        met.push("no reality-dependent Contract claim".into());
+                    }
                 } else {
                     let want = verification_bindings(
                         project,
@@ -2051,16 +2107,17 @@ pub fn run_checks(project: &Project, subject: &Subject) -> Result<Vec<String>> {
             } else {
                 outcome.command.clone()
             };
+            let (bindings, details) = recorded_bindings(want, outcome.details);
             vstore.append(&VerificationRecord {
                 workflow: slug.to_string(),
                 subject: subject.id.clone(),
                 checkpoint: stuck.id.clone(),
                 verification: mechanic.to_string(),
                 result: "passed".to_string(),
-                bindings: want.clone(),
+                bindings,
                 command,
                 timestamp: chrono::Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string(),
-                details: outcome.details.clone(),
+                details,
             })?;
             progressed = true;
         }
@@ -2069,6 +2126,22 @@ pub fn run_checks(project: &Project, subject: &Subject) -> Result<Vec<String>> {
         }
     }
     Ok(log)
+}
+
+/// The bindings a passed verification records: those it reports itself (v11 production-source
+/// evidence binds the Evidence Scopes it observed), else the inputs wanted before it ran.
+fn recorded_bindings(
+    want: BTreeMap<String, String>,
+    details: Option<serde_json::Value>,
+) -> (BTreeMap<String, String>, Option<serde_json::Value>) {
+    let Some(mut details) = details else {
+        return (want, None);
+    };
+    let reported = details
+        .as_object_mut()
+        .and_then(|object| object.remove("bindings"))
+        .and_then(|value| serde_json::from_value(value).ok());
+    (reported.unwrap_or(want), Some(details))
 }
 
 /// A (checkpoint, verification, wanted bindings) the revalidation check would execute.
@@ -2116,20 +2189,21 @@ pub fn run_revalidation_checks(
         if !outcome.ok {
             return Ok(log);
         }
+        let (bindings, details) = recorded_bindings(want, outcome.details);
         store.append(&VerificationRecord {
             workflow: "feature".into(),
             subject: subject.id.clone(),
             checkpoint: checkpoint.into(),
             verification: mechanic.into(),
             result: "passed".into(),
-            bindings: want,
+            bindings,
             command: if outcome.command.is_empty() {
                 mechanic.into()
             } else {
                 outcome.command
             },
             timestamp: chrono::Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string(),
-            details: outcome.details,
+            details,
         })?;
     }
     Ok(log)
@@ -2287,6 +2361,10 @@ fn current_bindings(
                 if checkpoint == "final_ux_validation" && product_scoped_ux_receipts(project) {
                     b.insert("product_state".into(), project.product_state()?);
                 }
+                // Feature Workflow v11: F6 binds the product, never the tests that verify it.
+                if checkpoint == "reconciliation" && project.feature_workflow_version()? >= 11 {
+                    b.insert("product_state".into(), project.product_state()?);
+                }
                 if checkpoint == "final_ux_validation" && observes_surface(project, subject)? {
                     b.insert(
                         "observed_surface".into(),
@@ -2345,6 +2423,10 @@ pub fn validate_production_evidence_selection(
                 .and_then(|value| value.as_str())
                 == Some(identity)
     });
+    let mut want = want;
+    if project.feature_workflow_version()? >= 11 {
+        scope_production_bindings(project, &mut want, Some(identity))?;
+    }
     match verification::evaluate(matching, &want) {
         RecordState::Current(_) => Ok(()),
         RecordState::Absent => anyhow::bail!("selected production evidence does not exist"),
@@ -2443,7 +2525,80 @@ fn verification_bindings(
         )?;
         put(&mut b, "codeos_yaml", &project.codeos_yaml())?;
     }
+    if mechanic == Some("production_source_evidence") && project.feature_workflow_version()? >= 11 {
+        let latest = VerificationStore::at(&project.codeos_dir())
+            .latest(subject.workflow.slug(), &subject.id, checkpoint, "production_source_evidence")?
+            .and_then(|record| evidence_identity(&record));
+        scope_production_bindings(project, &mut b, latest.as_deref())?;
+    }
     Ok(b)
+}
+
+/// Feature Workflow v11: production-source evidence binds the Evidence Scopes it observed and the
+/// verifier that produced it, in place of the whole implementation state.
+fn scope_production_bindings(
+    project: &Project,
+    b: &mut BTreeMap<String, String>,
+    evidence: Option<&str>,
+) -> Result<()> {
+    b.remove("implementation_state");
+    b.insert("reality_verifier".into(), reality_verifier_identity(project)?);
+    let paths = project.evidence_scope_paths(&observed_scope_paths(project, evidence)?);
+    b.insert(
+        "evidence_scope_state".into(),
+        project.scoped_product_state(&paths)?,
+    );
+    Ok(())
+}
+
+/// The content identity of the configured verifier; an unresolvable one binds nothing a record can
+/// match, so its evidence is stale.
+fn reality_verifier_identity(project: &Project) -> Result<String> {
+    Ok(project
+        .reality_verification()
+        .ok()
+        .and_then(|config| hashing::file_sha256(&project.root.join(config.command)).ok().flatten())
+        .unwrap_or_else(|| "unresolved".into()))
+}
+
+fn evidence_identity(record: &VerificationRecord) -> Option<String> {
+    record.details.as_ref()?["evidence_sha256"]
+        .as_str()
+        .map(str::to_string)
+}
+
+/// The scope paths a piece of production evidence observed: the union of its claims' declared
+/// scopes, or every implementation path when any claim names none or anything is unknown.
+fn observed_scope_paths(project: &Project, evidence: Option<&str>) -> Result<Vec<String>> {
+    let broad = project.implementation_paths();
+    let Some(id) = evidence else {
+        return Ok(broad);
+    };
+    let path = project
+        .codeos_dir()
+        .join(format!("06-workflow/reality-evidence/{id}.json"));
+    let Some(record) = std::fs::read_to_string(path)
+        .ok()
+        .and_then(|text| serde_json::from_str::<ProductionEvidence>(&text).ok())
+    else {
+        return Ok(broad);
+    };
+    let Ok(config) = project.reality_verification() else {
+        return Ok(broad);
+    };
+    let mut paths = BTreeSet::new();
+    for claim in &record.claims {
+        let Some(names) = record.claim_scopes.get(claim).filter(|names| !names.is_empty()) else {
+            return Ok(broad);
+        };
+        for name in names {
+            let Some(scope) = config.scopes.get(name) else {
+                return Ok(broad);
+            };
+            paths.extend(scope.iter().cloned());
+        }
+    }
+    Ok(paths.into_iter().collect())
 }
 
 pub fn semantic_package_revision(project: &Project, feature: &str) -> Result<u64> {
@@ -2584,8 +2739,13 @@ struct ProductionEvidence {
     source_kind: String,
     provider: String,
     observed_at: String,
-    implementation_sha256: String,
+    /// Schema 1 only: the implementation state the evidence was bound to.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    implementation_sha256: Option<String>,
     governed_inputs: BTreeMap<String, String>,
+    /// Schema 2 (Feature Workflow v11): claim -> the declared Evidence Scopes it observed.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    claim_scopes: BTreeMap<String, Vec<String>>,
     observations: Vec<ProductionObservation>,
 }
 
@@ -2627,6 +2787,14 @@ fn run_production_source_evidence(
             Ok(bindings) => bindings,
             Err(error) => return failure(error.to_string()),
         };
+    let v11 = match project.feature_workflow_version() {
+        Ok(version) => version >= 11,
+        Err(error) => return failure(error.to_string()),
+    };
+    // The verifier receives the inputs known before it runs; the Evidence Scope state follows
+    // from the scopes the new evidence states it observed.
+    let mut governed = bindings.clone();
+    governed.remove("evidence_scope_state");
     let nonce = format!(
         "{}-{}-{}",
         std::process::id(),
@@ -2635,12 +2803,22 @@ fn run_production_source_evidence(
     );
     let definition_path = std::env::temp_dir().join(format!("codeos-reality-{nonce}.json"));
     let output_path = std::env::temp_dir().join(format!("codeos-reality-evidence-{nonce}.json"));
-    let definition = serde_json::json!({
-        "schema": 1,
-        "subject": subject.id,
-        "claims": subject.reality_claims,
-        "governed_inputs": bindings,
-    });
+    let definition = if v11 {
+        serde_json::json!({
+            "schema": 2,
+            "subject": subject.id,
+            "claims": subject.reality_claims,
+            "governed_inputs": governed,
+            "scopes": config.scopes,
+        })
+    } else {
+        serde_json::json!({
+            "schema": 1,
+            "subject": subject.id,
+            "claims": subject.reality_claims,
+            "governed_inputs": governed,
+        })
+    };
     if let Err(error) = std::fs::write(
         &definition_path,
         serde_json::to_vec_pretty(&definition).unwrap_or_default(),
@@ -2675,10 +2853,21 @@ fn run_production_source_evidence(
         if !outcome.ok {
             anyhow::bail!("production verifier exited unsuccessfully");
         }
-        if record.schema != 1 || record.subject != subject.id {
+        if record.schema != if v11 { 2 } else { 1 } || record.subject != subject.id {
             anyhow::bail!("evidence schema or subject does not match");
         }
         let expected: BTreeSet<_> = subject.reality_claims.iter().cloned().collect();
+        for (claim, names) in &record.claim_scopes {
+            if !v11 || !expected.contains(claim) {
+                anyhow::bail!("Evidence Scopes are stated for an uncovered claim '{claim}'");
+            }
+            let unique: BTreeSet<_> = names.iter().collect();
+            if unique.len() != names.len()
+                || names.iter().any(|name| !config.scopes.contains_key(name))
+            {
+                anyhow::bail!("claim '{claim}' states an undeclared or duplicated Evidence Scope");
+            }
+        }
         let actual: BTreeSet<_> = record.claims.iter().cloned().collect();
         if actual != expected || record.claims.len() != actual.len() {
             anyhow::bail!("evidence does not cover the exact reality-dependent claim set");
@@ -2727,9 +2916,12 @@ fn run_production_source_evidence(
                 }
             }
         }
-        if record.implementation_sha256 != expected_implementation
-            || record.governed_inputs != bindings
-        {
+        let implementation_bound = if v11 {
+            record.implementation_sha256.is_none()
+        } else {
+            record.implementation_sha256.as_deref() == Some(expected_implementation.as_str())
+        };
+        if !implementation_bound || record.governed_inputs != governed {
             anyhow::bail!(
                 "evidence bindings do not match the current implementation and governed inputs"
             );
@@ -2747,6 +2939,19 @@ fn run_production_source_evidence(
             }
             // The evidence file is the canonical copy; the record references it by identity.
             outcome.details = Some(serde_json::json!({ "evidence_sha256": identity }));
+            if v11 {
+                // The record binds the Evidence Scopes this evidence observed.
+                let mut recorded = governed;
+                if let Err(error) =
+                    scope_production_bindings(project, &mut recorded, Some(&identity))
+                {
+                    return failure(format!("bind Evidence Scopes: {error}"));
+                }
+                outcome.details = Some(serde_json::json!({
+                    "evidence_sha256": identity,
+                    "bindings": recorded,
+                }));
+            }
             outcome
         }
         Err(error) => {
@@ -3708,6 +3913,7 @@ mod journey_tests {
             persistence: false,
             arch_approval_required: false,
             reality_claims: vec![],
+            inherited_claims: vec![],
         };
         (dir, project, subject)
     }
@@ -3889,7 +4095,7 @@ mod journey_tests {
     #[test]
     fn reality_classification_is_claim_scoped_and_closed() {
         let contract = "## Reality Basis\n\n| Claim ID | Claim | Classification | Source | Conditions | Currency | Unavailable | Fixture |\n|---|---|---|---|---|---|---|---|\n| route | Road route | reality-dependent | provider | roads | now | unavailable | test-only |\n| label | Heading | not-reality-dependent | n/a | n/a | n/a | n/a | n/a |\n| demo | Example | simulated | n/a | n/a | n/a | n/a | fixture |\n\n## Scenarios\n";
-        assert_eq!(reality_dependent_claims(contract).unwrap(), vec!["route"]);
+        assert_eq!(reality_basis(contract, false).unwrap().0, vec!["route"]);
     }
 
     #[test]

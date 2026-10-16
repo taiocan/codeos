@@ -60,6 +60,11 @@ pub(crate) struct Derived {
     pub scope_error: Option<String>,
     /// The current candidate is a post-acceptance revalidation, which renews no F6 receipt.
     pub revalidation: bool,
+    /// Feature Workflow v11: the current scoped bindings of each production-evidence record, as
+    /// the workflow derives them.
+    pub scoped_bindings: BTreeMap<String, BTreeMap<String, String>>,
+    /// The current non-test product state, which a v11 F6 receipt binds.
+    pub product_state: Option<String>,
 }
 
 pub fn selected(contract: Option<&str>) -> bool {
@@ -158,6 +163,7 @@ pub fn derive(
             Err(error) => manifest.derived.project_error = Some(error.to_string()),
         }
     }
+    manifest.derived.product_state = project.product_state().ok();
     let implementation_paths = project.implementation_paths();
     manifest.implementation =
         codeos_workflow::hashing::working_tree_state(&project.root, &implementation_paths).ok();
@@ -248,6 +254,22 @@ pub fn derive(
             latest.as_ref().map(|(line, _)| sha256_str(line)),
         );
         if let Some(entry) = latest {
+            if entry.1.bindings.contains_key("evidence_scope_state") {
+                if let Some(current) = subject.as_ref().ok().and_then(|subject| {
+                    codeos_workflow::checker::verification_bindings_for_mechanic(
+                        &project,
+                        subject,
+                        checkpoint,
+                        verification,
+                    )
+                    .ok()
+                }) {
+                    manifest
+                        .derived
+                        .scoped_bindings
+                        .insert(key.clone(), current);
+                }
+            }
             manifest.derived.records.insert(key, entry);
         }
     }

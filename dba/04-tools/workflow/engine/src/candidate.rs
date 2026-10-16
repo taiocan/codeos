@@ -39,6 +39,18 @@ pub struct CandidateBundle {
     pub baseline_acceptance: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub trigger_commit: Option<String>,
+    /// Feature Workflow v11: inherited claim -> the upstream evidence at candidate time.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub inherited_evidence: BTreeMap<String, InheritedEvidence>,
+}
+
+/// The upstream production truth an inherited claim restated when the candidate was prepared.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct InheritedEvidence {
+    pub feature: String,
+    pub claim: String,
+    pub bundle: String,
+    pub evidence: String,
 }
 
 pub struct CandidateStore {
@@ -274,6 +286,12 @@ pub fn assemble(
         !implementation_inputs.is_empty(),
         "candidate implementation/dependency surface is empty"
     );
+    let mut inherited_evidence = BTreeMap::new();
+    for (claim, state) in crate::revalidation::inherited_evidence(project, subject)? {
+        let evidence = state
+            .map_err(|why| anyhow::anyhow!("inherited claim '{claim}' is not current: {why}"))?;
+        inherited_evidence.insert(claim, evidence);
+    }
     let predecessor_bundle = latest_accepted_bundle(project, &subject.id)?;
     let journey_previous = checker::current_accepted_frontier(project)?;
     let journey_target = checker::product_journey_target(project, subject)?;
@@ -299,6 +317,7 @@ pub fn assemble(
             .as_ref()
             .map(|case| case.original_acceptance_sha256.clone()),
         trigger_commit: revalidation_case.map(|case| case.trigger_commit),
+        inherited_evidence,
     };
     Ok(bundle)
 }
@@ -425,23 +444,33 @@ pub fn passed_revalidation(
     feature: &str,
     baseline_acceptance: &str,
 ) -> Result<bool> {
+    Ok(passed_revalidation_bundle(project, feature, baseline_acceptance)?.is_some())
+}
+
+/// The current revalidation candidate that a PASSED assessment restored to validity, if any.
+pub fn passed_revalidation_bundle(
+    project: &Project,
+    feature: &str,
+    baseline_acceptance: &str,
+) -> Result<Option<String>> {
     let Some(review) = crate::evidence::latest_review_record(&project.root, feature, "8")? else {
-        return Ok(false);
+        return Ok(None);
     };
     if review.candidate_outcome.as_deref() != Some("PASSED") {
-        return Ok(false);
+        return Ok(None);
     }
     let Some(reviewed_id) = review.candidate_bundle.as_deref() else {
-        return Ok(false);
+        return Ok(None);
     };
     let bundle = match CandidateStore::at(&project.codeos_dir()).read(reviewed_id) {
         Ok(bundle) => bundle,
-        Err(_) => return Ok(false),
+        Err(_) => return Ok(None),
     };
-    Ok(bundle.feature == feature
+    Ok((bundle.feature == feature
         && bundle.kind == "post_acceptance_revalidation"
         && bundle.baseline_acceptance.as_deref() == Some(baseline_acceptance)
         && current_for_review(project, reviewed_id)?)
+    .then(|| reviewed_id.to_string()))
 }
 
 pub(crate) fn governed(
@@ -715,6 +744,7 @@ mod tests {
             predecessor_bundle: None,
             baseline_acceptance: None,
             trigger_commit: None,
+            inherited_evidence: Default::default(),
         };
         (dir, project, bundle)
     }
@@ -830,6 +860,7 @@ mod tests {
             persistence: false,
             arch_approval_required: false,
             reality_claims: Vec::new(),
+            inherited_claims: Vec::new(),
         };
         let event_evidence = || {
             crate::revalidation::required_verifications(&project, &subject)
@@ -857,6 +888,7 @@ mod tests {
             persistence: false,
             arch_approval_required: false,
             reality_claims: vec![],
+            inherited_claims: vec![],
         };
         let bindings = checker::verification_bindings_for_mechanic(
             &project,
