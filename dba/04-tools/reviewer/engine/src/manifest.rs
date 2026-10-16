@@ -63,8 +63,8 @@ pub(crate) struct Derived {
     /// Feature Workflow v11: the current scoped bindings of each production-evidence record, as
     /// the workflow derives them.
     pub scoped_bindings: BTreeMap<String, BTreeMap<String, String>>,
-    /// The current non-test product state, which a v11 F6 receipt binds.
-    pub product_state: Option<String>,
+    /// The current delivered state, which a v11 F6 receipt binds.
+    pub delivered_state: Option<String>,
 }
 
 pub fn selected(contract: Option<&str>) -> bool {
@@ -163,7 +163,9 @@ pub fn derive(
             Err(error) => manifest.derived.project_error = Some(error.to_string()),
         }
     }
-    manifest.derived.product_state = project.product_state().ok();
+    manifest.derived.delivered_state = project
+        .delivered_state(&project.implementation_paths())
+        .ok();
     let implementation_paths = project.implementation_paths();
     manifest.implementation =
         codeos_workflow::hashing::working_tree_state(&project.root, &implementation_paths).ok();

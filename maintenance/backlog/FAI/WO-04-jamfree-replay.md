@@ -18,7 +18,35 @@ replay.
 
 ## Results
 
-**Replayed (2026-10-16). Awaiting human acceptance.** JamFree adopts DBA-27 in `f94f3b6`. No TomTom
+**Human decision (2026-10-16): not accepted as first replayed.** The two residuals below fail
+the acceptance criterion and are repaired, not waived:
+- **F-0002 inheritance** is a conformance defect against v11's "the upstream's current selected
+  evidence". Inheritance now resolves the bundle behind the upstream's current validity: the
+  accepted bundle while it is current, otherwise the passed revalidation bundle. That covers an
+  acceptance made before bundles. v11 item 2 now says so.
+- **`71adabb`** is a protected amendment to v11. Evidence Scope state and v11 F6 bind the new
+  `delivered_state`, which also excludes test-runner configuration. The shared test-file rule, the
+  F4/F8 `product_state` and Candidate Bundle roles are unchanged. The impact trace showed that
+  `hashing::product_state` also feeds F4/F8 receipts from DBA-22 on, so changing it would have
+  staled every existing JamFree F4/F8 receipt. The glossary gains **Delivered state**.
+
+B4 was re-recorded `direction_confirmed` (JamFree `043536d`); Bootstrap is 5/5.
+
+**Rerun after the repairs.** Every case was replayed again on JamFree:
+- `71adabb` now changes no binding;
+- F-0002 resolves to its revalidation bundle `df002430` and evidence `2a14128f`;
+- all other rows are unchanged.
+
+New tests:
+- `a_test_runner_configuration_change_leaves_evidence_and_f6_current`. It also asserts that F4/F8
+  `product_state` still changes and that `vite.config.ts` still stales.
+- `an_inherited_claim_follows_the_upstream_revalidation_evidence`, for both a bundled and a
+  pre-bundle acceptance. The pre-bundle case fails without the repair.
+
+The workflow (166) and reviewer (279) suites and `dba/04-tools/tests/run.sh` pass. Awaiting human
+acceptance.
+
+**First replay (2026-10-16).** JamFree adopts DBA-27 in `f94f3b6`. No TomTom
 calls were made.
 
 **Adoption checks.**

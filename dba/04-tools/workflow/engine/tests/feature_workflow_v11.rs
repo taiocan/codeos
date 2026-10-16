@@ -158,7 +158,7 @@ impl Fixture {
                 result: "passed".into(),
                 bindings,
                 command: "seeded".into(),
-                timestamp: "2026-10-16T00:00:00Z".into(),
+                timestamp: chrono::Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string(),
                 details: None,
             })
             .unwrap();
@@ -294,13 +294,38 @@ fn a_test_only_change_leaves_production_evidence_and_f6_current() {
         .unwrap()
         .unwrap()
         .bindings;
-    assert!(bound.contains_key("product_state") && !bound.contains_key("implementation_state"));
+    assert!(bound.contains_key("delivered_state") && !bound.contains_key("implementation_state"));
 
     fx.write("backend/tests/route.rs", "#[test]\nfn route_again() {}\n");
     assert_eq!(fx.evidence_current("F-0001"), Ok(()));
     assert!(fx.f6_current("F-0001"));
     // The fixture-mode behavior record still binds the tests, so F5 re-runs it; no provider run.
     assert_ne!(fx.state("F-0001", "F5").0, State::Pass);
+}
+
+#[test]
+fn a_test_runner_configuration_change_leaves_evidence_and_f6_current() {
+    let fx = routed(
+        "    provider: [backend]\n    web: [web]\n",
+        r#"{"F-0001": {"route": ["provider", "web"]}}"#,
+    );
+    let evidence = fx.evidence("F-0001");
+    fx.receipt("F-0001", "reconciliation", "completed", Some(&evidence));
+    let product = fx.project().product_state().unwrap();
+
+    fx.write("web/playwright.config.ts", "export default { workers: 1 };\n");
+    assert_eq!(fx.evidence_current("F-0001"), Ok(()));
+    assert!(fx.f6_current("F-0001"));
+    // F4 and F8 keep their product state, which still counts the configuration.
+    assert_ne!(fx.project().product_state().unwrap(), product);
+
+    // Build configuration is delivered.
+    fx.write("web/vite.config.ts", "export default {};\n");
+    assert_eq!(
+        fx.evidence_current("F-0001"),
+        Err("evidence_scope_state".into())
+    );
+    assert!(!fx.f6_current("F-0001"));
 }
 
 #[test]
@@ -497,4 +522,79 @@ fn a_changed_observed_surface_still_stales_f4() {
         unmet.iter().any(|u| u.contains("observed_surface")),
         "{unmet:?}"
     );
+}
+
+/// F-0001 accepted, then revalidated after a change with new production evidence. `legacy` drops
+/// the Candidate Bundle from the acceptance receipt, as for an acceptance made before bundles.
+fn revalidated_upstream(legacy: bool) -> (Fixture, String, String) {
+    let fx = routed(
+        "    provider: [backend]\n",
+        r#"{"F-0001": {"route": ["provider"]}}"#,
+    );
+    let accepted = fx.evidence("F-0001");
+    fx.accept("F-0001", Some(&accepted));
+    if legacy {
+        let path = fx.root.join(".codeos/06-workflow/decisions.jsonl");
+        let text = fs::read_to_string(&path).unwrap();
+        let mut lines: Vec<String> = text.lines().map(str::to_owned).collect();
+        let mut last: serde_json::Value = serde_json::from_str(lines.last().unwrap()).unwrap();
+        last["bindings"].as_object_mut().unwrap().remove("candidate_bundle");
+        *lines.last_mut().unwrap() = serde_json::to_string(&last).unwrap();
+        fs::write(&path, lines.join("\n") + "\n").unwrap();
+    }
+
+    // The lockfile is always a bundle input, so the change stales the acceptance. The trigger must
+    // be committed after the acceptance second.
+    std::thread::sleep(std::time::Duration::from_millis(1100));
+    fx.write("backend/Cargo.lock", "# rustls 0.23.46\n");
+    fx.write("scripts/verify.sh", &format!("{VERIFIER}# v2\n"));
+    fx.git(&["add", "-A"]);
+    fx.git(&["commit", "-qm", "trigger"]);
+    let project = fx.project();
+    assert!(!codeos_workflow::revalidation::current_acceptance_valid(&project, "F-0001").unwrap());
+    let log = run_checks_revalidation(&fx);
+    let revalidated = fx.evidence("F-0001");
+    assert_ne!(revalidated, accepted, "{log:?}");
+    fx.seed("F-0001", "candidate", "project_qualification");
+    let (bundle, _) = codeos_workflow::candidate::prepare(
+        &fx.project(),
+        &fx.subject("F-0001"),
+        &[],
+        "post_acceptance_revalidation",
+        Some("HEAD"),
+    )
+    .unwrap();
+    fx.write(
+        "review/F-0001-stage8.md",
+        &format!("---\nreview_id: r1\nreviewed:\n  feature: F-0001\n  stage: 8\n  source: codex\n  candidate_bundle: {bundle}\n  candidate_outcome: PASSED\n---\n"),
+    );
+    let project = fx.project();
+    assert!(codeos_workflow::revalidation::current_acceptance_valid(&project, "F-0001").unwrap());
+    (fx, accepted, revalidated)
+}
+
+fn run_checks_revalidation(fx: &Fixture) -> Vec<String> {
+    fx.seed("F-0001", "F3", "smoke");
+    fx.seed("F-0001", "F3", "product_journey");
+    codeos_workflow::checker::run_revalidation_checks(&fx.project(), &fx.subject("F-0001"), "HEAD")
+        .unwrap()
+}
+
+#[test]
+fn an_inherited_claim_follows_the_upstream_revalidation_evidence() {
+    for legacy in [false, true] {
+        let (fx, accepted, revalidated) = revalidated_upstream(legacy);
+        fx.spec(
+            "F-0002",
+            "mode: preserve\nreason: summarizes the route",
+            "| summary | Route summary | inherited | F-0001/route | as F-0001 | as F-0001 | none | simulated |\n",
+        );
+        let project = fx.project();
+        let resolved =
+            codeos_workflow::revalidation::inherited_evidence(&project, &fx.subject("F-0002"))
+                .unwrap();
+        let evidence = resolved[0].1.as_ref().unwrap().evidence.clone();
+        assert_eq!(evidence, revalidated, "legacy={legacy}");
+        assert_ne!(evidence, accepted);
+    }
 }

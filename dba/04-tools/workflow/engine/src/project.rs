@@ -481,13 +481,13 @@ impl Project {
         out.into_iter().collect()
     }
 
-    /// The non-test content identity of `paths`, computed once per snapshot.
-    pub fn scoped_product_state(&self, paths: &[String]) -> Result<String> {
+    /// The delivered state of `paths` (Feature Workflow v11), computed once per snapshot.
+    pub fn delivered_state(&self, paths: &[String]) -> Result<String> {
         if let Some(state) = self.snapshot.lock().unwrap().scope_states.get(paths) {
             return Ok(state.clone());
         }
-        crate::instrument::binding("evidence_scope_state", paths);
-        let state = crate::hashing::product_state(&self.root, paths)?;
+        crate::instrument::binding("delivered_state", paths);
+        let state = crate::hashing::delivered_state(&self.root, paths)?;
         self.snapshot
             .lock()
             .unwrap()

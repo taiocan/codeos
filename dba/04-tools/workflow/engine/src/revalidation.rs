@@ -711,11 +711,15 @@ fn upstream_evidence(
     if !acceptance_assessment(project, upstream)?.current {
         return Ok(Err(format!("{upstream} is not VALID")));
     }
+    // The evidence behind the current validity: the accepted bundle while it is current, otherwise
+    // the passed revalidation bundle, which is also how an acceptance from before Candidate Bundles
+    // stays VALID.
     let acceptance = latest_acceptance(project, upstream)?;
-    let Some(accepted) = acceptance.bindings.get("candidate_bundle") else {
-        return Ok(Err(format!("{upstream} has no accepted Candidate Bundle")));
+    let accepted = match acceptance.bindings.get("candidate_bundle") {
+        Some(bundle) if crate::candidate::acceptance_current(project, bundle)? => Some(bundle),
+        _ => None,
     };
-    let bundle = if crate::candidate::acceptance_current(project, accepted)? {
+    let bundle = if let Some(accepted) = accepted {
         accepted.clone()
     } else {
         match crate::candidate::passed_revalidation_bundle(

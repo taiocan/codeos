@@ -2227,17 +2227,24 @@ pub fn bindings_for_decision(
 /// A new human UX judgment binds the narrowest product binding available: the Observed Surface
 /// (Feature Workflow v10), else the product files, never the test files that verify it.
 fn decision_scope(mut bindings: BTreeMap<String, String>) -> BTreeMap<String, String> {
-    if bindings.contains_key("observed_surface") {
-        bindings.remove("product_state");
-        bindings.remove("implementation_state");
-    } else if bindings.contains_key("product_state") {
-        bindings.remove("implementation_state");
+    if let Some(narrowest) = PRODUCT_BINDINGS
+        .iter()
+        .position(|key| bindings.contains_key(*key))
+    {
+        for broader in &PRODUCT_BINDINGS[narrowest + 1..] {
+            bindings.remove(*broader);
+        }
     }
     bindings
 }
 
 /// The product bindings, narrowest first. Each later one covers what the earlier ones judged.
-const PRODUCT_BINDINGS: [&str; 3] = ["observed_surface", "product_state", "implementation_state"];
+const PRODUCT_BINDINGS: [&str; 4] = [
+    "observed_surface",
+    "delivered_state",
+    "product_state",
+    "implementation_state",
+];
 
 /// The inputs a recorded decision must bind to be current: what `decide` records now. A receipt
 /// recorded under an earlier version keeps the broader product binding it recorded, which is
@@ -2361,9 +2368,12 @@ fn current_bindings(
                 if checkpoint == "final_ux_validation" && product_scoped_ux_receipts(project) {
                     b.insert("product_state".into(), project.product_state()?);
                 }
-                // Feature Workflow v11: F6 binds the product, never the tests that verify it.
+                // Feature Workflow v11: F6 binds what users receive, never the tests that verify it.
                 if checkpoint == "reconciliation" && project.feature_workflow_version()? >= 11 {
-                    b.insert("product_state".into(), project.product_state()?);
+                    b.insert(
+                        "delivered_state".into(),
+                        project.delivered_state(&project.implementation_paths())?,
+                    );
                 }
                 if checkpoint == "final_ux_validation" && observes_surface(project, subject)? {
                     b.insert(
@@ -2546,7 +2556,7 @@ fn scope_production_bindings(
     let paths = project.evidence_scope_paths(&observed_scope_paths(project, evidence)?);
     b.insert(
         "evidence_scope_state".into(),
-        project.scoped_product_state(&paths)?,
+        project.delivered_state(&paths)?,
     );
     Ok(())
 }

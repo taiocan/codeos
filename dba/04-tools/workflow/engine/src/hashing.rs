@@ -75,6 +75,26 @@ pub fn is_test_path(rel: &str) -> bool {
 /// judges at Early Development Preview and Final UX Validation. Tracked, modified, and untracked
 /// files count alike; a deleted tracked file is recorded as absent.
 pub fn product_state(repo_root: &Path, paths: &[String]) -> Result<String> {
+    content_state(repo_root, paths, is_test_path)
+}
+
+/// Whether a file only configures a test runner: it shapes how tests run, never what users receive.
+pub fn is_test_runner_config(rel: &str) -> bool {
+    let name = rel.rsplit('/').next().unwrap_or(rel);
+    ["playwright.config.", "vitest.config.", "jest.config.", "cypress.config."]
+        .iter()
+        .any(|prefix| name.starts_with(prefix))
+}
+
+/// Feature Workflow v11: a hash over the content of every delivered file under `paths`, that is,
+/// every file except test files and test-runner configuration.
+pub fn delivered_state(repo_root: &Path, paths: &[String]) -> Result<String> {
+    content_state(repo_root, paths, |rel| {
+        is_test_path(rel) || is_test_runner_config(rel)
+    })
+}
+
+fn content_state(repo_root: &Path, paths: &[String], excluded: fn(&str) -> bool) -> Result<String> {
     let mut args = vec![
         "ls-files",
         "--cached",
@@ -86,7 +106,7 @@ pub fn product_state(repo_root: &Path, paths: &[String]) -> Result<String> {
     let listed = git(repo_root, &args)?;
     let files: std::collections::BTreeSet<&str> = listed
         .lines()
-        .filter(|line| !line.is_empty() && !is_test_path(line))
+        .filter(|line| !line.is_empty() && !excluded(line))
         .collect();
     let mut hasher = Sha256::new();
     for rel in files {

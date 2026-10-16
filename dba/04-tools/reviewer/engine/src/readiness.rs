@@ -362,10 +362,10 @@ fn evidence(
         return;
     };
     // A revalidation keeps the historical F6 receipt; only its selected evidence must be current.
-    // A v11 F6 receipt binds the non-test product state in place of the implementation state.
-    let f6_bound = match receipt.bindings.get("product_state") {
+    // A v11 F6 receipt binds the delivered state in place of the implementation state.
+    let f6_bound = match receipt.bindings.get("delivered_state") {
         Some(bound) if !receipt.bindings.contains_key("implementation_state") => {
-            Some(bound.as_str()) == manifest.derived.product_state.as_deref()
+            Some(bound.as_str()) == manifest.derived.delivered_state.as_deref()
         }
         _ => {
             receipt
@@ -722,13 +722,13 @@ mod tests {
             .records
             .insert(key.clone(), (String::new(), record));
         manifest.derived.scoped_bindings.insert(key.clone(), scoped);
-        manifest.derived.product_state = Some("product-1".into());
+        manifest.derived.delivered_state = Some("product-1".into());
         manifest.derived.f6_receipt = Some(codeos_workflow::receipts::Receipt {
             workflow: "feature".into(),
             subject: "F-1".into(),
             checkpoint: "reconciliation".into(),
             result: "completed".into(),
-            bindings: [("product_state".to_string(), "product-1".to_string())].into(),
+            bindings: [("delivered_state".to_string(), "product-1".to_string())].into(),
             timestamp: "2026-10-16T00:00:00Z".into(),
             rationale: None,
             observation: None,
@@ -752,7 +752,7 @@ mod tests {
             .get_mut(&key)
             .unwrap()
             .insert("reality_verifier".into(), "verifier-2".into());
-        manifest.derived.product_state = Some("product-2".into());
+        manifest.derived.delivered_state = Some("product-2".into());
         assert_eq!(stale(&manifest), vec![key, "F6".to_string()]);
     }
 
