@@ -36,6 +36,10 @@ The human accepts the table. Each incidental row names the goal (1 to 4) that wo
 
 ## Results
 
+**Accepted (2026-10-16).** The human accepts the classification and root-cause table. The cost
+column is indicative only: because of the accounting discrepancy (finding 7), it is not
+authoritative quantitative evidence.
+
 **Table (2026-10-16).** The sources are JamFree's `verifications.jsonl`, `decisions.jsonl`, the
 candidate bundles, and Git up to `d30545c`.
 

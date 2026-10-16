@@ -28,6 +28,16 @@ assessment, and sometimes a human F4 decision. The P3 cases are in STAB WO-04:
 
 The approach is dependency-scoped invalidation, not one file per feature.
 
+**Scope after WO-01 (2026-10-16).**
+- Goals 2 and 4 are the core.
+- Production evidence also binds the verifier that produced it.
+- Goal 3 covers only what keeps real runtime dependencies propagating, with rustls as the
+  falsifier.
+- Goal 1 is recorded as a latent coupling and deferred.
+- When a governed Observed Surface changes, the F4 invalidation that follows is intentional and out
+  of scope.
+- A generic mechanism for refreshing evidence on request is out of scope.
+
 1. **Explicit feature input scope.** A candidate binds only the implementation and dependency
    surfaces the feature depends on.
 2. **Feature-scoped evidence bindings.** Production, browser and verification evidence bind their
@@ -38,12 +48,12 @@ The approach is dependency-scoped invalidation, not one file per feature.
 4. **Shared evidence reuse.** A feature that inherits a reality claim binds the authoritative
    upstream evidence instead of reproducing the provider run.
 
-Target:
+Target (UX receipts as today; WO-01 row 1b showed that their invalidation was necessary):
 
 ```text
 F-0005 UI changes → F-0005 stale
-  → F-0001 UX stale only if its Observed Surface changed
-  → F-0002–F-0004 stale only if a declared dependency or their Observed Surface changed
+  → accepted features re-verify in fixture mode; F4 stale where the Observed Surface changed
+  → production evidence stale only where it observed the changed surface or a declared dependency
 ```
 
 Today:
