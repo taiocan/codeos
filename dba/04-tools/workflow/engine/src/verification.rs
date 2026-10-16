@@ -65,26 +65,31 @@ impl VerificationStore {
     }
 
     pub fn all(&self) -> Result<Vec<VerificationRecord>> {
+        Ok(self.records()?.to_vec())
+    }
+
+    fn records(&self) -> Result<std::sync::Arc<Vec<VerificationRecord>>> {
         if !self.path.exists() {
-            return Ok(vec![]);
+            return Ok(Default::default());
         }
-        let text = std::fs::read_to_string(&self.path)
-            .with_context(|| format!("read {}", self.path.display()))?;
-        let mut out = Vec::new();
-        for (i, line) in text.lines().enumerate() {
-            let line = line.trim();
-            if line.is_empty() {
-                continue;
+        crate::store_cache::load(&self.path, |text| {
+            crate::instrument::count("store_parse:verifications");
+            let mut out = Vec::new();
+            for (i, line) in text.lines().enumerate() {
+                let line = line.trim();
+                if line.is_empty() {
+                    continue;
+                }
+                out.push(serde_json::from_str(line).with_context(|| {
+                    format!(
+                        "{}:{}: malformed verification record",
+                        self.path.display(),
+                        i + 1
+                    )
+                })?);
             }
-            out.push(serde_json::from_str(line).with_context(|| {
-                format!(
-                    "{}:{}: malformed verification record",
-                    self.path.display(),
-                    i + 1
-                )
-            })?);
-        }
-        Ok(out)
+            Ok(out)
+        })
     }
 
     /// The most recent record for this workflow/subject/checkpoint/verification, by file order.
@@ -95,12 +100,16 @@ impl VerificationStore {
         checkpoint: &str,
         verification: &str,
     ) -> Result<Option<VerificationRecord>> {
-        Ok(self.all()?.into_iter().rfind(|r| {
-            r.workflow == workflow
-                && r.subject == subject
-                && r.checkpoint == checkpoint
-                && r.verification == verification
-        }))
+        Ok(self
+            .records()?
+            .iter()
+            .rfind(|r| {
+                r.workflow == workflow
+                    && r.subject == subject
+                    && r.checkpoint == checkpoint
+                    && r.verification == verification
+            })
+            .cloned())
     }
 
     pub fn append(&self, record: &VerificationRecord) -> Result<()> {

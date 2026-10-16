@@ -301,15 +301,7 @@ pub(crate) fn identified_change(
     let (last_current, architecture_baseline) = if let Some(record) = latest_revalidation {
         (record.timestamp, record.trigger_commit)
     } else {
-        let baseline = git(
-            project,
-            &[
-                "rev-list",
-                "-1",
-                &format!("--before={acceptance_timestamp}"),
-                "HEAD",
-            ],
-        )?;
+        let baseline = baseline_before(project, acceptance_timestamp)?;
         if baseline.is_empty() {
             anyhow::bail!("cannot resolve architecture baseline at F9 acceptance");
         }
@@ -398,9 +390,8 @@ pub fn build_case(project: &Project, subject_id: &str, trigger: &str) -> Result<
         base: trigger_parent,
         affected_surface,
     } = identified_change(project, subject_id, &trigger_commit, &acceptance.timestamp)?;
-    let implementation_paths = project.implementation_paths();
     let original = latest_impl_before(project, subject_id, &acceptance.timestamp)?;
-    let current = hashing::working_tree_state(&project.root, &implementation_paths)?;
+    let current = project.implementation_state()?;
     if original == current {
         anyhow::bail!("acceptance implementation evidence is not stale");
     }
@@ -615,7 +606,7 @@ pub fn acceptance_assessment(project: &Project, subject: &str) -> Result<Accepta
         }
     }
     let original = latest_impl_before(project, subject, &acceptance.timestamp)?;
-    let current = hashing::working_tree_state(&project.root, &project.implementation_paths())?;
+    let current = project.implementation_state()?;
     assessment.comparisons.push(hashing::Comparison {
         surface: "implementation_state".into(),
         was: Some(original.clone()),
@@ -645,15 +636,7 @@ fn accepted_architecture_identity(
     subject: &str,
     acceptance_timestamp: &str,
 ) -> Result<String> {
-    let baseline = git(
-        project,
-        &[
-            "rev-list",
-            "-1",
-            &format!("--before={acceptance_timestamp}"),
-            "HEAD",
-        ],
-    )?;
+    let baseline = baseline_before(project, acceptance_timestamp)?;
     anyhow::ensure!(
         !baseline.is_empty(),
         "cannot resolve architecture baseline at F9 acceptance"
@@ -719,6 +702,17 @@ fn surface_diff(project: &Project, base: &str, trigger: &str, binary: bool) -> R
     let paths = project.implementation_paths();
     args.extend(paths.iter().map(String::as_str));
     git_bytes(project, &args)
+}
+
+/// The last commit before `timestamp`.
+fn baseline_before(project: &Project, timestamp: &str) -> Result<String> {
+    let before = format!("--before={timestamp}");
+    let args = ["rev-list", "-1", before.as_str(), "HEAD"];
+    Ok(
+        String::from_utf8(project.git_query(&args, || git_bytes(project, &args))?)?
+            .trim()
+            .to_string(),
+    )
 }
 
 fn git(project: &Project, args: &[&str]) -> Result<String> {
@@ -970,10 +964,12 @@ mod tests {
             ".codeos/06-workflow/decisions.jsonl",
             r#"{"workflow":"feature","subject":"F-0001","checkpoint":"acceptance","result":"accepted","bindings":{"intent":"old"},"timestamp":"2026-01-01T00:00:00Z"}"#,
         );
+        project.refresh_snapshot(); // the next command sees the adopted configuration
         ineligible("governed meaning changed at intent");
 
         // An uncommitted surface change precedes every other step; the command refuses it too.
         write("src/lib.rs", "uncommitted");
+        project.refresh_snapshot();
         assert_eq!(
             next_step(&project, &subject),
             RevalidationStep::CommitChange

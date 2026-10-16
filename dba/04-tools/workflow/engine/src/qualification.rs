@@ -55,7 +55,9 @@ struct BaselineResult {
 }
 
 pub fn run(project: &Project, mode: &str) -> CommandOutcome {
-    match run_inner(project, mode) {
+    let result = run_inner(project, mode);
+    project.refresh_snapshot(); // the protocol ran project code
+    match result {
         Ok((ok, summary, details)) => CommandOutcome {
             ok,
             command: format!("CODEOS_QUALIFICATION_MODE={mode} scripts/codeos-qualify"),
@@ -93,8 +95,7 @@ fn run_inner(project: &Project, mode: &str) -> anyhow::Result<(bool, String, ser
         .ok_or_else(|| anyhow::anyhow!("Charter is missing"))?;
     let configuration_sha256 = hashing::file_sha256(&project.codeos_yaml())?
         .ok_or_else(|| anyhow::anyhow!("codeos.yaml is missing"))?;
-    let implementation_sha256 =
-        hashing::working_tree_state(&project.root, &project.implementation_paths())?;
+    let implementation_sha256 = project.implementation_state()?;
     let output = tempfile::NamedTempFile::new()?;
     let status = crate::instrument::command(&command)
         .current_dir(&project.root)

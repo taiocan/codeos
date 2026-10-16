@@ -270,6 +270,7 @@ fn reality_dependent_revalidation_candidate_is_ready_without_a_new_f6_receipt() 
         "pub fn forecast() { /* patched transport */ }\n",
     );
     let trigger = commit(root, "patch transport", "2026-10-03T10:00:00Z");
+    project.refresh_snapshot(); // the next command sees the patched implementation
     let fresh_evidence = verify_all(&project, "2026-10-03T12:00:00Z");
     assert_ne!(fresh_evidence, accepted_evidence);
 

@@ -203,10 +203,10 @@ fn manifest_sidecar(
 /// For a review carrying a v17 manifest, every identity it recorded that differs from the identity
 /// derived from current state. `None` when the review has no manifest, so its HEAD binding applies.
 pub fn review_identity_drift(
-    root: &Path,
-    implementation_paths: &[String],
+    project: &crate::project::Project,
     record: &ReviewRecord,
 ) -> Result<Option<Vec<String>>> {
+    let root = &project.root;
     let Some(sidecar) = &record.manifest_sidecar else {
         return Ok(None);
     };
@@ -214,9 +214,7 @@ pub fn review_identity_drift(
     let mut drift = Vec::new();
     let file_sha = |rel: &str| crate::hashing::file_sha256(&root.join(rel)).ok().flatten();
 
-    if manifest["implementation"].as_str()
-        != Some(crate::hashing::working_tree_state(root, implementation_paths)?.as_str())
-    {
+    if manifest["implementation"].as_str() != Some(project.implementation_state()?.as_str()) {
         drift.push("implementation".to_string());
     }
     if manifest["configuration"].as_str() != file_sha(".codeos/00-project/codeos.yaml").as_deref() {

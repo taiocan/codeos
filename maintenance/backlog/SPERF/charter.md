@@ -40,8 +40,9 @@ A release build or a shorter report would not remove the process launches.
 One command-scoped evaluation snapshot. It holds:
 - the configuration and policy versions, resolved once;
 - cargo metadata and implementation paths, computed once;
-- one repository-wide Git inventory;
-- each distinct binding hash, computed once;
+- each read-only Git query and each distinct binding hash, computed once, with the hash
+  construction unchanged;
+- each governed record store, parsed once while its file is unchanged;
 - the Bootstrap result and per-feature assessments, reused when health and attention are built.
 
 ## Invariant

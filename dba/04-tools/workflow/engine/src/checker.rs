@@ -1500,11 +1500,7 @@ fn evaluate_checkpoint(
                         }
                         // A v17 review binds to the identities it recorded; older records bind to
                         // the reviewed commit.
-                        let drift = evidence::review_identity_drift(
-                            &project.root,
-                            &project.implementation_paths(),
-                            &r,
-                        )?;
+                        let drift = evidence::review_identity_drift(project, &r)?;
                         let head = current_head(&project.root);
                         let bound = match &drift {
                             Some(drift) => drift.is_empty(),
@@ -2032,6 +2028,7 @@ pub fn run_checks(project: &Project, subject: &Subject) -> Result<Vec<String>> {
                 continue; // already verified against the current inputs
             }
             let outcome = run_mechanic(project, subject, mechanic);
+            project.refresh_snapshot(); // the mechanic ran project code
             log.push(format!("{} / {mechanic}: {}", stuck.id, outcome.summary));
             if !outcome.ok {
                 if mechanic == "product_journey" && project.workflow_governance_version()? >= 2 {
@@ -2114,6 +2111,7 @@ pub fn run_revalidation_checks(
     let mut log = Vec::new();
     for (checkpoint, mechanic, want) in stale_revalidation_verifications(project, subject)? {
         let outcome = run_mechanic(project, subject, mechanic);
+        project.refresh_snapshot(); // the mechanic ran project code
         log.push(format!("{checkpoint} / {mechanic}: {}", outcome.summary));
         if !outcome.ok {
             return Ok(log);
@@ -2264,13 +2262,10 @@ fn current_bindings(
             put(&mut b, "event_schema", &project.event_schema(&subject.id))?;
             b.insert(
                 "implementation_state".into(),
-                hashing::working_tree_state(&project.root, &project.implementation_paths())?,
+                project.implementation_state()?,
             );
             if product_scoped_ux_receipts(project) {
-                b.insert(
-                    "product_state".into(),
-                    hashing::product_state(&project.root, &project.implementation_paths())?,
-                );
+                b.insert("product_state".into(), project.product_state()?);
             }
             if observes_surface(project, subject)? {
                 b.insert(
@@ -2287,13 +2282,10 @@ fn current_bindings(
                 put(&mut b, "codeos_yaml", &project.codeos_yaml())?;
                 b.insert(
                     "implementation_state".into(),
-                    hashing::working_tree_state(&project.root, &project.implementation_paths())?,
+                    project.implementation_state()?,
                 );
                 if checkpoint == "final_ux_validation" && product_scoped_ux_receipts(project) {
-                    b.insert(
-                        "product_state".into(),
-                        hashing::product_state(&project.root, &project.implementation_paths())?,
-                    );
+                    b.insert("product_state".into(), project.product_state()?);
                 }
                 if checkpoint == "final_ux_validation" && observes_surface(project, subject)? {
                     b.insert(
@@ -2411,7 +2403,7 @@ fn verification_bindings(
             put(&mut b, "event_schema", &project.event_schema(&subject.id))?;
             b.insert(
                 "implementation_state".into(),
-                hashing::working_tree_state(&project.root, &project.implementation_paths())?,
+                project.implementation_state()?,
             );
         }
         _ => {}
@@ -3708,10 +3700,7 @@ mod journey_tests {
             "## Product Journey Contribution\nmode: advance\nprevious_frontier: entry\nproposed_frontier: usable\ntransition: entry reaches useful output\n",
         )
         .unwrap();
-        let project = Project {
-            root,
-            self_dev: false,
-        };
+        let project = Project::new(root, false);
         let subject = Subject {
             workflow: Workflow::Feature,
             id: "F-1".into(),

@@ -461,10 +461,9 @@ fn run(cli: &Cli, start: &std::path::Path) -> Result<i32> {
         }
         Cmd::Journey(args) => {
             let project = Project::discover(start)?;
-            println!(
-                "{}",
-                checker::render_journey(&project, args.subject.as_deref())?
-            );
+            let text = project
+                .consistent(|| checker::render_journey(&project, args.subject.as_deref()))?;
+            println!("{text}");
             Ok(EXIT_SUCCESS)
         }
         Cmd::Status(args) => {
@@ -476,50 +475,61 @@ fn run(cli: &Cli, start: &std::path::Path) -> Result<i32> {
                     eprintln!("workflow must be bootstrap | feature | operation");
                     return Ok(EXIT_USAGE);
                 };
-                if workflow == Workflow::Feature && project.workflow_governance_version()? >= 3 {
-                    let status = monitor::ProjectStatus::derive(&project)?;
-                    let feature = status
-                        .features
-                        .iter()
-                        .find(|feature| feature.id == subject_id)
-                        .with_context(|| format!("unknown feature {subject_id}"))?;
-                    println!("{}", monitor::render_targeted_feature(feature));
-                    return Ok(
-                        if feature.workflow.status == monitor::DisplayStatus::Complete {
-                            EXIT_SUCCESS
-                        } else {
-                            EXIT_BLOCKED
-                        },
-                    );
-                }
-                let subject = Subject::resolve(&project, workflow, subject_id)?;
-                let reports = checker::evaluate(&project, &subject)?;
-                println!(
-                    "{}",
-                    report::render_status(workflow.slug(), subject_id, &reports)
-                );
-                Ok(report::overall_exit(&reports))
+                let (text, code) = project.consistent(|| {
+                    if workflow == Workflow::Feature && project.workflow_governance_version()? >= 3
+                    {
+                        let status = monitor::ProjectStatus::derive(&project)?;
+                        let feature = status
+                            .features
+                            .iter()
+                            .find(|feature| feature.id == subject_id)
+                            .with_context(|| format!("unknown feature {subject_id}"))?;
+                        return Ok((
+                            monitor::render_targeted_feature(feature),
+                            if feature.workflow.status == monitor::DisplayStatus::Complete {
+                                EXIT_SUCCESS
+                            } else {
+                                EXIT_BLOCKED
+                            },
+                        ));
+                    }
+                    let subject = Subject::resolve(&project, workflow, subject_id)?;
+                    let reports = checker::evaluate(&project, &subject)?;
+                    Ok((
+                        report::render_status(workflow.slug(), subject_id, &reports),
+                        report::overall_exit(&reports),
+                    ))
+                })?;
+                println!("{text}");
+                Ok(code)
             } else {
-                let mut status = monitor::ProjectStatus::derive(&project)?;
-                if args.history {
-                    let start = codeos_workflow::history::window_start(
-                        args.since.as_deref(),
-                        chrono::Utc::now().date_naive(),
-                    )?;
-                    status.history = Some(codeos_workflow::history::derive(&project, start)?);
-                }
-                if args.json {
-                    println!("{}", serde_json::to_string_pretty(&status)?);
-                } else if let Some(history) = &status.history {
-                    println!("{}", codeos_workflow::history::render(history));
-                } else {
-                    println!("{}", monitor::render(&status));
-                }
-                Ok(if status.is_blocked() {
-                    EXIT_BLOCKED
-                } else {
-                    EXIT_SUCCESS
-                })
+                let (text, code) = project.consistent(|| {
+                    let mut status = monitor::ProjectStatus::derive(&project)?;
+                    if args.history {
+                        let start = codeos_workflow::history::window_start(
+                            args.since.as_deref(),
+                            chrono::Utc::now().date_naive(),
+                        )?;
+                        status.history = Some(codeos_workflow::history::derive(&project, start)?);
+                    }
+                    let text = if args.json {
+                        serde_json::to_string_pretty(&status)?
+                    } else if let Some(history) = &status.history {
+                        codeos_workflow::history::render(history)
+                    } else {
+                        monitor::render(&status)
+                    };
+                    Ok((
+                        text,
+                        if status.is_blocked() {
+                            EXIT_BLOCKED
+                        } else {
+                            EXIT_SUCCESS
+                        },
+                    ))
+                })?;
+                println!("{text}");
+                Ok(code)
             }
         }
         Cmd::Next(t) => {
@@ -528,37 +538,44 @@ fn run(cli: &Cli, start: &std::path::Path) -> Result<i32> {
                 return Ok(EXIT_USAGE);
             };
             let project = Project::discover(start)?;
-            if workflow == Workflow::Feature && project.workflow_governance_version()? >= 3 {
-                let status = monitor::ProjectStatus::derive(&project)?;
-                let feature = status
-                    .features
-                    .iter()
-                    .find(|feature| feature.id == t.subject)
-                    .with_context(|| format!("unknown feature {}", t.subject))?;
-                match feature.workflow.next_action.as_deref() {
-                    Some(action) => println!(
-                        "{}\n{}",
-                        feature
-                            .workflow
-                            .current_checkpoint
-                            .as_deref()
-                            .unwrap_or("CURRENT VALIDITY"),
-                        action
-                    ),
-                    None => println!("nothing blocked — accepted snapshot is current"),
+            let (text, code) = project.consistent(|| {
+                if workflow == Workflow::Feature && project.workflow_governance_version()? >= 3 {
+                    let status = monitor::ProjectStatus::derive(&project)?;
+                    let feature = status
+                        .features
+                        .iter()
+                        .find(|feature| feature.id == t.subject)
+                        .with_context(|| format!("unknown feature {}", t.subject))?;
+                    let text = match feature.workflow.next_action.as_deref() {
+                        Some(action) => format!(
+                            "{}\n{}",
+                            feature
+                                .workflow
+                                .current_checkpoint
+                                .as_deref()
+                                .unwrap_or("CURRENT VALIDITY"),
+                            action
+                        ),
+                        None => "nothing blocked — accepted snapshot is current".to_string(),
+                    };
+                    return Ok((
+                        text,
+                        if feature.workflow.status == monitor::DisplayStatus::Complete {
+                            EXIT_SUCCESS
+                        } else {
+                            EXIT_BLOCKED
+                        },
+                    ));
                 }
-                return Ok(
-                    if feature.workflow.status == monitor::DisplayStatus::Complete {
-                        EXIT_SUCCESS
-                    } else {
-                        EXIT_BLOCKED
-                    },
-                );
-            }
-            let subject = Subject::resolve(&project, workflow, &t.subject)?;
-            let reports = checker::evaluate(&project, &subject)?;
-            println!("{}", report::render_next(&reports));
-            Ok(report::overall_exit(&reports))
+                let subject = Subject::resolve(&project, workflow, &t.subject)?;
+                let reports = checker::evaluate(&project, &subject)?;
+                Ok((
+                    report::render_next(&reports),
+                    report::overall_exit(&reports),
+                ))
+            })?;
+            println!("{text}");
+            Ok(code)
         }
         Cmd::Check(t) => {
             let Some(workflow) = Workflow::parse(&t.workflow) else {

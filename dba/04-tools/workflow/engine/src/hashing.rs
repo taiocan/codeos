@@ -21,7 +21,6 @@ pub fn file_sha256(path: &Path) -> Result<Option<String>> {
 /// the committed tree entries for those paths, the tracked diff for those paths, and the bytes of
 /// any untracked file under them. An unrelated commit does not invalidate scoped evidence.
 pub fn working_tree_state(repo_root: &Path, paths: &[String]) -> Result<String> {
-    crate::instrument::binding("working_tree_state", paths);
     let mut hasher = Sha256::new();
 
     for p in paths {
@@ -76,7 +75,6 @@ pub fn is_test_path(rel: &str) -> bool {
 /// judges at Early Development Preview and Final UX Validation. Tracked, modified, and untracked
 /// files count alike; a deleted tracked file is recorded as absent.
 pub fn product_state(repo_root: &Path, paths: &[String]) -> Result<String> {
-    crate::instrument::binding("product_state", paths);
     let mut args = vec![
         "ls-files",
         "--cached",

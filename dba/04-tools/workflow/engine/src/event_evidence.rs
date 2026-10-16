@@ -210,6 +210,7 @@ pub fn verify(project: &Project, args: VerifyEventArgs<'_>) -> Result<Verificati
         .current_dir(&project.root)
         .output()
         .with_context(|| format!("execute verification command {}", args.command.join(" ")))?;
+    project.refresh_snapshot(); // the verification command ran project code
     anyhow::ensure!(
         output.status.success(),
         "verification command failed: {}",

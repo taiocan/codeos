@@ -81,22 +81,28 @@ impl ReceiptStore {
     }
 
     pub fn all(&self) -> Result<Vec<Receipt>> {
+        Ok(self.records()?.to_vec())
+    }
+
+    fn records(&self) -> Result<std::sync::Arc<Vec<Receipt>>> {
         if !self.path.exists() {
-            return Ok(vec![]);
+            return Ok(Default::default());
         }
-        let text = std::fs::read_to_string(&self.path)
-            .with_context(|| format!("read {}", self.path.display()))?;
-        let mut out = Vec::new();
-        for (i, line) in text.lines().enumerate() {
-            let line = line.trim();
-            if line.is_empty() {
-                continue;
+        crate::store_cache::load(&self.path, |text| {
+            crate::instrument::count("store_parse:decisions");
+            let mut out = Vec::new();
+            for (i, line) in text.lines().enumerate() {
+                let line = line.trim();
+                if line.is_empty() {
+                    continue;
+                }
+                let r: Receipt = serde_json::from_str(line).with_context(|| {
+                    format!("{}:{}: malformed receipt", self.path.display(), i + 1)
+                })?;
+                out.push(r);
             }
-            let r: Receipt = serde_json::from_str(line)
-                .with_context(|| format!("{}:{}: malformed receipt", self.path.display(), i + 1))?;
-            out.push(r);
-        }
-        Ok(out)
+            Ok(out)
+        })
     }
 
     /// The most recent receipt for this workflow/subject/checkpoint, by file order (append-only).
@@ -106,9 +112,11 @@ impl ReceiptStore {
         subject: &str,
         checkpoint: &str,
     ) -> Result<Option<Receipt>> {
-        Ok(self.all()?.into_iter().rfind(|r| {
-            r.workflow == workflow && r.subject == subject && r.checkpoint == checkpoint
-        }))
+        Ok(self
+            .records()?
+            .iter()
+            .rfind(|r| r.workflow == workflow && r.subject == subject && r.checkpoint == checkpoint)
+            .cloned())
     }
 
     /// Append a receipt. Fails closed on an out-of-set checkpoint or a missing required rationale.

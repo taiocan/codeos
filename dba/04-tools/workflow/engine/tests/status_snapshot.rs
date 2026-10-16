@@ -254,11 +254,16 @@ fn status_report_matches_the_golden_reference_and_counts_its_work() {
 
     let counts: Value = serde_json::from_str(&fs::read_to_string(&counts_path).unwrap()).unwrap();
     eprintln!("{counts:#}");
-    assert!(
-        counts["counts"]["configuration_resolution"]
-            .as_u64()
-            .unwrap()
-            > 0
-    );
-    assert!(counts["counts"]["process:git"].as_u64().unwrap() > 0);
+    let count = |key: &str| counts["counts"][key].as_u64().unwrap_or(0);
+    assert_eq!(count("configuration_resolution"), 1);
+    assert!(count("cargo_metadata_resolved") <= 1);
+    assert_eq!(count("store_parse:verifications"), 1);
+    assert_eq!(count("store_parse:decisions"), 1);
+    for kind in ["working_tree_state", "product_state"] {
+        assert_eq!(
+            count(&format!("binding:{kind}")),
+            counts["distinct_bindings"][kind].as_u64().unwrap_or(0),
+            "{kind} is computed more than once per distinct input"
+        );
+    }
 }

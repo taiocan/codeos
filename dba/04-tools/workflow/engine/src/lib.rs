@@ -23,6 +23,7 @@ pub mod qualification;
 pub mod receipts;
 pub mod report;
 pub mod revalidation;
+pub mod store_cache;
 pub mod test_evidence;
 pub mod verification;
 

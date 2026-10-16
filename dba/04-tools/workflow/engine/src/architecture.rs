@@ -182,23 +182,23 @@ fn tree_files(project: &Project, treeish: &str) -> Result<Vec<(String, String)>>
             })
             .collect();
     }
-    let listing = git(
-        project,
-        &[
-            "ls-tree",
-            "-r",
-            "--name-only",
-            treeish,
-            "--",
-            ".codeos/02-architecture/scopes",
-        ],
-    )?;
+    let args = [
+        "ls-tree",
+        "-r",
+        "--name-only",
+        treeish,
+        "--",
+        ".codeos/02-architecture/scopes",
+    ];
+    let listing = String::from_utf8(project.git_query(&args, || git_bytes(project, &args))?)?;
+    let listing = listing.trim();
     listing
         .lines()
         .filter(|path| path.ends_with(".md"))
         .map(|path| {
             let object = format!("{treeish}:{path}");
-            let bytes = git_bytes(project, &["show", &object])?;
+            let args = ["show", object.as_str()];
+            let bytes = project.git_query(&args, || git_bytes(project, &args))?;
             Ok((
                 path.to_string(),
                 String::from_utf8(bytes)
@@ -243,6 +243,7 @@ pub fn impact(project: &Project, base: &str, proposed: &str) -> Result<Architect
     })
 }
 
+#[cfg(test)]
 fn git(project: &Project, args: &[&str]) -> Result<String> {
     Ok(String::from_utf8(git_bytes(project, args)?)?
         .trim()

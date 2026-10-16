@@ -1505,10 +1505,7 @@ mod tests {
             "printf 'dba_configuration=DBA-X\\nworkflow_feature_policy=dba/02-policies/missing.md\\n'\n",
         )
         .unwrap();
-        let project = Project {
-            root: dir.path().to_path_buf(),
-            self_dev: false,
-        };
+        let project = Project::new(dir.path().to_path_buf(), false);
         let error = authority(&project, "workflow_feature_policy")
             .unwrap_err()
             .to_string();

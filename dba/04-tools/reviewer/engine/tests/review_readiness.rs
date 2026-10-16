@@ -1545,12 +1545,7 @@ fn reviewed_identity_drift(fixture: &Fixture) -> Option<Vec<String>> {
     )
     .unwrap()
     .expect("semantic review record");
-    codeos_workflow::evidence::review_identity_drift(
-        &project.root,
-        &project.implementation_paths(),
-        &record,
-    )
-    .unwrap()
+    codeos_workflow::evidence::review_identity_drift(&project, &record).unwrap()
 }
 
 /// F7 binds a v17 review to its recorded identities, not to repository HEAD.
