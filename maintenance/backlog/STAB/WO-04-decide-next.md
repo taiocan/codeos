@@ -178,3 +178,12 @@ The human accepts or rejects one recommendation. An accepted recommendation beco
 charter or WO.
 
 ## Results
+
+**Decision (2026-10-16).** P4 starts early, with P3 at 0 of 3 qualifying features. The order is:
+1. [SPERF](../SPERF/charter.md), limited to its Charter;
+2. a fresh P3 baseline;
+3. [FAI](../FAI/charter.md).
+
+The reason is that the next P3 feature, "Arrive by", would very likely change `+page.svelte` and
+repeat the known fan-out (F-0001 to F-0005 revalidated), so it would re-measure the FAI problem
+rather than prove the freeze.

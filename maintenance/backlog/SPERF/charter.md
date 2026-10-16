@@ -1,9 +1,9 @@
 # SPERF — Status Evaluation Performance Charter
 
-- **Status:** PROPOSED — Primoz Gorjup, 2026-10-15
+- **Status:** APPROVED — Primoz Gorjup, 2026-10-16 (proposed 2026-10-15)
 - **Class:** NORMAL. Implementation only: the full report stays semantically identical.
-- **Entry:** after STAB P3. STAB WO-04 decides it, and it ranks below [FAI](../FAI/charter.md). The
-  STAB WO-03 latency trigger can bring it forward if latency blocks delivery.
+- **Entry:** STAB WO-04 started it early on 2026-10-16, before [FAI](../FAI/charter.md), with P3
+  paused.
 
 Planning context only. Git and the governing policies stay authoritative.
 
