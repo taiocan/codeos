@@ -7,6 +7,6 @@ authoritative.
 |---|---|---|---|
 | [WO-01](WO-01-instrumentation.md) | NORMAL | Instrumentation and golden report | Implemented 2026-10-16 |
 | [WO-02](WO-02-evaluation-snapshot.md) | NORMAL | Command-scoped evaluation snapshot | Implemented 2026-10-16 |
-| [WO-03](WO-03-verify.md) | NORMAL | Verify counts, identity and wall time | Proposed |
+| [WO-03](WO-03-verify.md) | NORMAL | Verify counts, identity and wall time | Verified 2026-10-16 |
 
 Each WO follows the previous one. This table is the only place WO status is kept.

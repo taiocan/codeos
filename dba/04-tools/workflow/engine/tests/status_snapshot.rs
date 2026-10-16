@@ -267,3 +267,70 @@ fn status_report_matches_the_golden_reference_and_counts_its_work() {
         );
     }
 }
+
+/// `status --json` counts, written outside the project, and the Git status it leaves behind.
+fn status_counts(fx: &Fixture) -> (Value, String) {
+    let counts = tempfile::NamedTempFile::new().unwrap();
+    let output = Command::new(env!("CARGO_BIN_EXE_codeos-workflow"))
+        .arg("--project")
+        .arg(&fx.root)
+        .args(["status", "--json"])
+        .env(codeos_workflow::instrument::COUNTS_ENV, counts.path())
+        .output()
+        .unwrap();
+    assert!(!output.stdout.is_empty());
+    let tree = Command::new("git")
+        .args([
+            "status",
+            "--porcelain",
+            "--untracked-files=all",
+            "--ignored",
+        ])
+        .current_dir(&fx.root)
+        .output()
+        .unwrap()
+        .stdout;
+    (
+        serde_json::from_str(&fs::read_to_string(counts.path()).unwrap()).unwrap(),
+        String::from_utf8(tree).unwrap(),
+    )
+}
+
+#[test]
+fn status_work_does_not_grow_with_checkpoints_and_persists_nothing() {
+    let fx = fixture();
+    let tree = |fx: &Fixture| {
+        String::from_utf8(
+            Command::new("git")
+                .args([
+                    "status",
+                    "--porcelain",
+                    "--untracked-files=all",
+                    "--ignored",
+                ])
+                .current_dir(&fx.root)
+                .output()
+                .unwrap()
+                .stdout,
+        )
+        .unwrap()
+    };
+    let before = tree(&fx);
+    let (small, after) = status_counts(&fx);
+    assert_eq!(before, after, "status wrote into the project");
+
+    // Two more in-progress features add checkpoints to evaluate, but no new Git work.
+    for feature in ["F-0004", "F-0005"] {
+        spec(&fx, feature, "mode: preserve\nreason: another refinement");
+        fx.verify(feature, "F3", "smoke");
+    }
+    fx.git(&["add", "-A"]);
+    fx.git(&["commit", "-q", "-m", "more features"]);
+    let (large, _) = status_counts(&fx);
+    for key in ["process:git", "configuration_resolution", "process:cargo"] {
+        assert_eq!(
+            large["counts"][key], small["counts"][key],
+            "{key} grows with checkpoint count"
+        );
+    }
+}
