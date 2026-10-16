@@ -41,7 +41,7 @@ This section is the authoritative qualifying-feature count.
 | Feature | First F1 → F9 | CodeOS commits (class) | Diagnostics | Qualifies |
 |---|---|---|---|---|
 | JamFree F-0003 | before STAB | — | — | Yes (historical) |
-| JamFree F-0005 | F1 2026-10-15 → in progress | `f5a8f9a` (conformance) | — | No: needed a CodeOS conformance repair at F2 |
+| JamFree F-0005 | F1 2026-10-15 → F9 2026-10-16 | `f5a8f9a` (conformance) | — | No: needed a CodeOS conformance repair at F2 |
 
 ### Inconvenience log
 

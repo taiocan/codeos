@@ -91,7 +91,9 @@ qualification recorded at an ordinary acceptance (ECP WO-01). Revalidation recor
 Workflow v8). On JamFree, DBA-26 adoption staled F-0001's acceptance-time record, while nine
 candidate-stage qualifications passed against the current configuration. This is conservative and
 never a false PASS, but it hides current qualification. The first normal P3 acceptance should clear
-it. Not repaired during the P3 freeze.
+it. Not repaired during the P3 freeze. F-0005's acceptance (2026-10-16) cleared it: the rows now show
+its F9 record. Deployment shows BLOCKED because Charter constraint C-1 (privacy review before
+deployment) is unresolved, which is expected governed behavior.
 
 ## Finding: a production-mode check ran the browser suite against the live provider (2026-10-15)
 
@@ -115,6 +117,22 @@ rule with unsafe consequences.
 
 **Interim safeguard.** Run a fixture `check` through F5g before any production run. This is a
 workaround, not a fix.
+
+**Analysis (2026-10-15).** `checker::run_checks` loops over checkpoints. At the first blocked one, it
+runs every stale verification, then moves on. CodeOS has no notion of provider mode, and one
+long-lived stack serves the whole command.
+- Production-source evidence needs the stack in production mode.
+- Browser verifications need the deterministic mode, which the project owns (Feature Workflow v10).
+
+So a single `check` can need both modes, and nothing checks the mode before a browser verification
+runs. The cause is missing environment isolation within one command. No rule makes this
+intentional. A stale F3 journey has the same exposure.
+
+The fixture-first workaround fails whenever F5 and F5g are both stale. A fixture check stops at F5,
+so F5g cannot pass first. JamFree therefore added a project-side guard: `web/playwright.config.ts`
+refuses to load when `PROVIDER_MODE=production` (`71adabb`). The next production check of F-0005
+passed F5 with exactly 27 calls, failed F5g immediately with no provider calls, and a fixture check
+then completed F5g. The CodeOS fix remains open for P4.
 
 **P4.** Verification ordering (question A) can cross the boundary between environments and consume
 a scarce external resource. It ranks above performance work. If a measured usage figure is
