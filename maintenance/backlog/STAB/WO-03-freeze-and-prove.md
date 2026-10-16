@@ -23,16 +23,39 @@ it.
 
 Three qualifying features in total, or an explicit human decision to stop.
 
-## Baseline (2026-10-15)
+## Baseline (2026-10-16, after SPERF)
+
+P3 restarts here, after the early P4 start (WO-04 decision) and the accepted
+[SPERF](../SPERF/charter.md) work. CodeOS is frozen from commit `2909c10` onward. JamFree is at
+`d30545c`.
+- **Bootstrap:** current, B1–B5.
+- **Features:** F-0001, F-0002, F-0004 and F-0005 are VALID.
+- **F-0003:** STALE (REVALIDATION_REQUIRED). Its production evidence is current but insufficient,
+  and no governed path can refresh it (WO-04). It adds no journey step, blocks nothing, and is
+  revalidated at its next legitimate staling.
+- **Deployment health:** BLOCKED by Charter constraint C-1 (privacy review before deployment). This
+  is expected governed behavior.
+- **`status`:** takes about 6 s.
+
+No CodeOS correctness blocker is open. One known gap remains for P4. A production-mode `check` can
+start browser verification, because CodeOS has no environment isolation within one command
+(WO-04). JamFree's Playwright guard (`71adabb`) refuses that run before any provider call. Every
+production-mode run still follows the qualification protocol first, and spends calls only once,
+with no retries.
+
+The P3 count continues. F-0003 qualifies historically; F-0005 does not. Two more qualifying
+features are needed.
+
+During P3, classify every delivery blocker before acting: product defect, project configuration,
+expected governed behavior, or CodeOS correctness defect. Only a CodeOS correctness defect breaks
+the freeze.
+
+## First baseline (2026-10-15, superseded)
 
 JamFree bootstrap is current (B1–B5; B4 reconfirmed against the amended Charter). F-0001 to
 F-0004 are VALID. One known limitation is recorded for P4: the status view's project-qualification
 rows read only acceptance-time records (WO-04, question D). No CodeOS correctness blocker is open.
 CodeOS is frozen from this baseline onward; STAB backlog records are not CodeOS changes.
-
-During P3, classify every delivery blocker before acting: product defect, project configuration,
-expected governed behavior, or CodeOS correctness defect. Only a CodeOS correctness defect breaks
-the freeze.
 
 ## Results
 
@@ -60,6 +83,8 @@ This section is the authoritative qualifying-feature count.
   for a performance root-cause trace: latency gets materially worse, blocks normal delivery, or
   grows nonlinearly as features are added. Root cause established 2026-10-15: repeated
   recomputation and subprocess fan-out in the evaluator; see [SPERF](../SPERF/charter.md).
+  Resolved 2026-10-16 by SPERF: about 6 s. The dominant cost turned out to be re-parsing the
+  verification store.
 - 2026-10-15 (F-0005, expected): the window must change `web/src/routes/+page.svelte`, an
   implementation input of all four accepted features' bundles. F-0001 to F-0004 will need
   revalidation, about 108 TomTom calls and four Codex assessments (WO-04, question B).
