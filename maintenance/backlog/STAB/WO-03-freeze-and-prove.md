@@ -83,6 +83,7 @@ This section is the authoritative qualifying-feature count.
 |---|---|---|---|---|
 | JamFree F-0003 | before STAB | — | — | Yes (historical) |
 | JamFree F-0005 | F1 2026-10-15 → F9 2026-10-16 | `f5a8f9a` (conformance) | — | No: needed a CodeOS conformance repair at F2 |
+| JamFree F-0006 | F1 2026-10-17 → F9 2026-10-17 | `0514192` (conformance) | 4 candidates, 3 F7 rounds (2 valid product-test findings); F4 confirmed 3 times, each on a changed Observed Surface; F-0001 revalidated with 27 TomTom calls, F-0006 none (inherited claim); `status` about 16 s | No: needed a CodeOS conformance repair during F-0001's revalidation |
 
 ### Inconvenience log
 
@@ -131,3 +132,7 @@ This section is the authoritative qualifying-feature count.
   one F-0001's F4 was just reconfirmed on. The cost is one more human F4 decision. Ordering
   question for P4 (WO-04, question A): should a feature's F3 run while its upstream frontier is
   STALE?
+- 2026-10-17 (F-0006, diagnostic): after F-0006's acceptance, `status` takes about 16 s on
+  JamFree (two runs), against about 6 s at the baseline. Six features are accepted, four of them
+  STALE. Not investigated during the freeze. Trigger: it keeps growing as features are added (DQA
+  WO-04, criterion 5).
