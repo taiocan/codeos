@@ -74,7 +74,7 @@ struct Snapshot {
     implementation_state: Option<String>,
     product_state: Option<String>,
     git_queries: BTreeMap<Vec<String>, Vec<u8>>,
-    scope_states: BTreeMap<Vec<String>, String>,
+    scope_states: BTreeMap<(bool, Vec<String>), String>,
 }
 
 impl Project {
@@ -212,7 +212,7 @@ impl Project {
         self.selected_policy_version(
             "workflow_feature_policy",
             "dba/02-policies/workflow-feature/v1.md",
-            &[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+            &[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
         )
     }
 
@@ -481,18 +481,34 @@ impl Project {
         out.into_iter().collect()
     }
 
-    /// The delivered state of `paths` (Feature Workflow v11), computed once per snapshot.
+    /// The delivered state of `paths` (Feature Workflow v12), computed once per snapshot.
     pub fn delivered_state(&self, paths: &[String]) -> Result<String> {
-        if let Some(state) = self.snapshot.lock().unwrap().scope_states.get(paths) {
+        self.content_state(paths, true)
+    }
+
+    /// The non-test content identity of `paths` (Feature Workflow v11 Evidence Scope state),
+    /// computed once per snapshot.
+    pub fn scoped_product_state(&self, paths: &[String]) -> Result<String> {
+        self.content_state(paths, false)
+    }
+
+    fn content_state(&self, paths: &[String], delivered: bool) -> Result<String> {
+        let key = (delivered, paths.to_vec());
+        if let Some(state) = self.snapshot.lock().unwrap().scope_states.get(&key) {
             return Ok(state.clone());
         }
-        crate::instrument::binding("delivered_state", paths);
-        let state = crate::hashing::delivered_state(&self.root, paths)?;
+        let state = if delivered {
+            crate::instrument::binding("delivered_state", paths);
+            crate::hashing::delivered_state(&self.root, paths)?
+        } else {
+            crate::instrument::binding("evidence_scope_state", paths);
+            crate::hashing::product_state(&self.root, paths)?
+        };
         self.snapshot
             .lock()
             .unwrap()
             .scope_states
-            .insert(paths.to_vec(), state.clone());
+            .insert(key, state.clone());
         Ok(state)
     }
 

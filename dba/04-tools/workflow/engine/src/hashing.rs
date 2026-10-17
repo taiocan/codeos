@@ -86,7 +86,7 @@ pub fn is_test_runner_config(rel: &str) -> bool {
         .any(|prefix| name.starts_with(prefix))
 }
 
-/// Feature Workflow v11: a hash over the content of every delivered file under `paths`, that is,
+/// Feature Workflow v12: a hash over the content of every delivered file under `paths`, that is,
 /// every file except test files and test-runner configuration.
 pub fn delivered_state(repo_root: &Path, paths: &[String]) -> Result<String> {
     content_state(repo_root, paths, |rel| {

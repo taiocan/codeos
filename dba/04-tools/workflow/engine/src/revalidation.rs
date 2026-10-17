@@ -712,12 +712,14 @@ fn upstream_evidence(
         return Ok(Err(format!("{upstream} is not VALID")));
     }
     // The evidence behind the current validity: the accepted bundle while it is current, otherwise
-    // the passed revalidation bundle, which is also how an acceptance from before Candidate Bundles
-    // stays VALID.
+    // the passed revalidation bundle. From Feature Workflow v12 that also covers an acceptance from
+    // before Candidate Bundles that stays VALID through revalidation.
     let acceptance = latest_acceptance(project, upstream)?;
     let accepted = match acceptance.bindings.get("candidate_bundle") {
         Some(bundle) if crate::candidate::acceptance_current(project, bundle)? => Some(bundle),
-        _ => None,
+        Some(_) => None,
+        None if project.feature_workflow_version()? >= 12 => None,
+        None => return Ok(Err(format!("{upstream} has no accepted Candidate Bundle"))),
     };
     let bundle = if let Some(accepted) = accepted {
         accepted.clone()

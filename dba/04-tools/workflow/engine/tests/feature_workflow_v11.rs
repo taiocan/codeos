@@ -1,4 +1,4 @@
-//! FAI acceptance cases for Feature Workflow v11 (DBA-27): production-source evidence binds the
+//! FAI acceptance cases for Feature Workflow v11 (DBA-27) and v12 (DBA-28): production-source evidence binds the
 //! Evidence Scopes it observed and its verifier, and a claim may inherit upstream production truth.
 //! A fake verifier produces real evidence through `check`; the other mechanics are seeded or stubbed.
 
@@ -37,6 +37,10 @@ struct Fixture {
 
 impl Fixture {
     fn new(scopes: &str) -> Self {
+        Self::under("DBA-27", scopes)
+    }
+
+    fn under(configuration: &str, scopes: &str) -> Self {
         let dir = tempfile::tempdir().unwrap();
         let fx = Fixture {
             root: dir.path().canonicalize().unwrap(),
@@ -51,7 +55,7 @@ impl Fixture {
         fx.write(".gitignore", ".codeos/toolkit\nbackend/target\n");
         fx.write(
             ".codeos/00-project/codeos.yaml",
-            &format!("codeos_schema: 2\ndba_configuration: DBA-27\nreality_verification:\n  command: scripts/verify.sh\n  scopes:\n{scopes}"),
+            &format!("codeos_schema: 2\ndba_configuration: {configuration}\nreality_verification:\n  command: scripts/verify.sh\n  scopes:\n{scopes}"),
         );
         fx.write(
             ".codeos/00-project/charter.md",
@@ -271,7 +275,11 @@ const ROUTE: &str = "| route | Road route | reality-dependent | provider | roads
 const ADVANCE: &str = "mode: advance\nprevious_frontier: entry\nproposed_frontier: decided\ntransition: the driver compares routes";
 
 fn routed(scopes: &str, claim_scopes: &str) -> Fixture {
-    let fx = Fixture::new(scopes);
+    routed_under("DBA-27", scopes, claim_scopes)
+}
+
+fn routed_under(configuration: &str, scopes: &str, claim_scopes: &str) -> Fixture {
+    let fx = Fixture::under(configuration, scopes);
     fx.write("claim-scopes.json", claim_scopes);
     fx.spec("F-0001", ADVANCE, ROUTE);
     fx.git(&["add", "-A"]);
@@ -294,7 +302,7 @@ fn a_test_only_change_leaves_production_evidence_and_f6_current() {
         .unwrap()
         .unwrap()
         .bindings;
-    assert!(bound.contains_key("delivered_state") && !bound.contains_key("implementation_state"));
+    assert!(bound.contains_key("product_state") && !bound.contains_key("implementation_state"));
 
     fx.write("backend/tests/route.rs", "#[test]\nfn route_again() {}\n");
     assert_eq!(fx.evidence_current("F-0001"), Ok(()));
@@ -303,14 +311,35 @@ fn a_test_only_change_leaves_production_evidence_and_f6_current() {
     assert_ne!(fx.state("F-0001", "F5").0, State::Pass);
 }
 
+/// Feature Workflow v12 (DBA-28): delivered state excludes test-runner configuration. v11 (DBA-27)
+/// keeps binding it as issued.
 #[test]
 fn a_test_runner_configuration_change_leaves_evidence_and_f6_current() {
-    let fx = routed(
-        "    provider: [backend]\n    web: [web]\n",
-        r#"{"F-0001": {"route": ["provider", "web"]}}"#,
+    let routed_web = |configuration| {
+        let fx = routed_under(
+            configuration,
+            "    provider: [backend]\n    web: [web]\n",
+            r#"{"F-0001": {"route": ["provider", "web"]}}"#,
+        );
+        let evidence = fx.evidence("F-0001");
+        fx.receipt("F-0001", "reconciliation", "completed", Some(&evidence));
+        fx
+    };
+    let as_issued = routed_web("DBA-27");
+    as_issued.write("web/playwright.config.ts", "export default { workers: 1 };\n");
+    assert_eq!(
+        as_issued.evidence_current("F-0001"),
+        Err("evidence_scope_state".into())
     );
-    let evidence = fx.evidence("F-0001");
-    fx.receipt("F-0001", "reconciliation", "completed", Some(&evidence));
+    assert!(!as_issued.f6_current("F-0001"));
+
+    let fx = routed_web("DBA-28");
+    let bound = &ReceiptStore::at(&fx.root.join(".codeos"))
+        .latest("feature", "F-0001", "reconciliation")
+        .unwrap()
+        .unwrap()
+        .bindings;
+    assert!(bound.contains_key("delivered_state") && !bound.contains_key("product_state"));
     let product = fx.project().product_state().unwrap();
 
     fx.write("web/playwright.config.ts", "export default { workers: 1 };\n");
@@ -526,8 +555,9 @@ fn a_changed_observed_surface_still_stales_f4() {
 
 /// F-0001 accepted, then revalidated after a change with new production evidence. `legacy` drops
 /// the Candidate Bundle from the acceptance receipt, as for an acceptance made before bundles.
-fn revalidated_upstream(legacy: bool) -> (Fixture, String, String) {
-    let fx = routed(
+fn revalidated_upstream(configuration: &str, legacy: bool) -> (Fixture, String, String) {
+    let fx = routed_under(
+        configuration,
         "    provider: [backend]\n",
         r#"{"F-0001": {"route": ["provider"]}}"#,
     );
@@ -580,10 +610,26 @@ fn run_checks_revalidation(fx: &Fixture) -> Vec<String> {
         .unwrap()
 }
 
+/// Feature Workflow v12 (DBA-28). Under v11 (DBA-27) as issued, an acceptance from before Candidate
+/// Bundles has no evidence to inherit.
 #[test]
 fn an_inherited_claim_follows_the_upstream_revalidation_evidence() {
+    let (fx, _, _) = revalidated_upstream("DBA-27", true);
+    fx.spec(
+        "F-0002",
+        "mode: preserve\nreason: summarizes the route",
+        "| summary | Route summary | inherited | F-0001/route | as F-0001 | as F-0001 | none | simulated |\n",
+    );
+    let resolved =
+        codeos_workflow::revalidation::inherited_evidence(&fx.project(), &fx.subject("F-0002"))
+            .unwrap();
+    assert_eq!(
+        resolved[0].1.as_ref().err().map(String::as_str),
+        Some("F-0001 has no accepted Candidate Bundle")
+    );
+
     for legacy in [false, true] {
-        let (fx, accepted, revalidated) = revalidated_upstream(legacy);
+        let (fx, accepted, revalidated) = revalidated_upstream("DBA-28", legacy);
         fx.spec(
             "F-0002",
             "mode: preserve\nreason: summarizes the route",

@@ -18,13 +18,24 @@ replay.
 
 ## Results
 
+**Human decision (2026-10-17): acceptance tests PASS; functional implementation accepted; final
+configuration closure pending policy-version immutability.** The F-0002 repair, `delivered_state`
+and the glossary term **Delivered state** are accepted. CodeOS has no rule that keeps an issued
+policy mutable until its first governed artifact, so editing v11 behind DBA-27 was withdrawn:
+- v11 and DBA-27 are restored as issued, and both corrections are issued as Feature Workflow v12 in
+  DBA-28. Under DBA-27 the code behaves as issued; the corrections apply from v12. Tests assert both.
+- JamFree adopts DBA-28. Bootstrap B3 is re-verified in fixture mode; B4 awaits re-recording.
+- The per-commit replay computes the delivered state v12 selects, so its rows hold for DBA-28. The
+  inheritance check rerun on DBA-28 gives the same results: F-0002 resolves to `df002430` /
+  `2a14128f`.
+
 **Human decision (2026-10-16): not accepted as first replayed.** The two residuals below fail
 the acceptance criterion and are repaired, not waived:
 - **F-0002 inheritance** is a conformance defect against v11's "the upstream's current selected
   evidence". Inheritance now resolves the bundle behind the upstream's current validity: the
   accepted bundle while it is current, otherwise the passed revalidation bundle. That covers an
-  acceptance made before bundles. v11 item 2 now says so.
-- **`71adabb`** is a protected amendment to v11. Evidence Scope state and v11 F6 bind the new
+  acceptance made before bundles.
+- **`71adabb`** is a protected amendment. Evidence Scope state and F6 bind the new
   `delivered_state`, which also excludes test-runner configuration. The shared test-file rule, the
   F4/F8 `product_state` and Candidate Bundle roles are unchanged. The impact trace showed that
   `hashing::product_state` also feeds F4/F8 receipts from DBA-22 on, so changing it would have

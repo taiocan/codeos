@@ -2368,8 +2368,12 @@ fn current_bindings(
                 if checkpoint == "final_ux_validation" && product_scoped_ux_receipts(project) {
                     b.insert("product_state".into(), project.product_state()?);
                 }
-                // Feature Workflow v11: F6 binds what users receive, never the tests that verify it.
+                // Feature Workflow v11: F6 binds the product, never the tests that verify it; v12
+                // binds what users receive, and still evaluates a v11 receipt as recorded.
                 if checkpoint == "reconciliation" && project.feature_workflow_version()? >= 11 {
+                    b.insert("product_state".into(), project.product_state()?);
+                }
+                if checkpoint == "reconciliation" && project.feature_workflow_version()? >= 12 {
                     b.insert(
                         "delivered_state".into(),
                         project.delivered_state(&project.implementation_paths())?,
@@ -2554,10 +2558,12 @@ fn scope_production_bindings(
     b.remove("implementation_state");
     b.insert("reality_verifier".into(), reality_verifier_identity(project)?);
     let paths = project.evidence_scope_paths(&observed_scope_paths(project, evidence)?);
-    b.insert(
-        "evidence_scope_state".into(),
-        project.delivered_state(&paths)?,
-    );
+    let state = if project.feature_workflow_version()? >= 12 {
+        project.delivered_state(&paths)?
+    } else {
+        project.scoped_product_state(&paths)?
+    };
+    b.insert("evidence_scope_state".into(), state);
     Ok(())
 }
 
