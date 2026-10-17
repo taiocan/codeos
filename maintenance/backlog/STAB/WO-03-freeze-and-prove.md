@@ -23,7 +23,25 @@ it.
 
 Three qualifying features in total, or an explicit human decision to stop.
 
-## Baseline (2026-10-16, after SPERF)
+## Baseline (2026-10-17, after FAI)
+
+P3 restarts here, after the accepted [FAI](../FAI/charter.md) work. CodeOS is frozen from commit
+`a48d27e` onward. JamFree is at `b9c8ef5` on DBA-28 (Feature Workflow v12, Evidence Scopes
+`backend` and `web`).
+- **Bootstrap:** current, B1–B5.
+- **Features:** F-0001, F-0002, F-0004 and F-0005 are VALID.
+- **F-0003:** STALE (REVALIDATION_REQUIRED), unchanged from the previous baseline and non-blocking.
+- **Project-qualification health rows** (project quality, security, supply chain, deployment):
+  STALE, because the F-0001 and F-0005 F9 records bind `codeos.yaml`, which the DBA-27 and DBA-28
+  adoptions changed. Expected governed behavior; they refresh at the next F9. Deployment remains
+  subject to Charter constraint C-1.
+- **`status`:** takes about 6 s.
+
+No CodeOS correctness blocker is open. The production-mode browser-isolation gap and JamFree's
+Playwright guard (`71adabb`) stand as in the previous baseline. The P3 count continues: 1 of 3
+qualifying, two more needed. Next: "Arrive by", then one more qualifying feature.
+
+## Second baseline (2026-10-16, after SPERF, superseded)
 
 P3 restarts here, after the early P4 start (WO-04 decision) and the accepted
 [SPERF](../SPERF/charter.md) work. CodeOS is frozen from commit `2909c10` onward. JamFree is at
@@ -88,3 +106,7 @@ This section is the authoritative qualifying-feature count.
 - 2026-10-15 (F-0005, expected): the window must change `web/src/routes/+page.svelte`, an
   implementation input of all four accepted features' bundles. F-0001 to F-0004 will need
   revalidation, about 108 TomTom calls and four Codex assessments (WO-04, question B).
+- 2026-10-17 (FAI WO-04, flaky test): one full `dba/04-tools/tests/run.sh` run failed the
+  implementer check "OUTPUT terminology authority boundary" (communication/evidence label missing).
+  The implementer suite then passed on its own, with and without the change under test, and a
+  full rerun passed. Not reproduced; not a blocker. Trigger for investigation: it fails again.

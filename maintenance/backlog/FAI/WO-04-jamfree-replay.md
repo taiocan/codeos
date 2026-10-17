@@ -24,7 +24,10 @@ and the glossary term **Delivered state** are accepted. CodeOS has no rule that 
 policy mutable until its first governed artifact, so editing v11 behind DBA-27 was withdrawn:
 - v11 and DBA-27 are restored as issued, and both corrections are issued as Feature Workflow v12 in
   DBA-28. Under DBA-27 the code behaves as issued; the corrections apply from v12. Tests assert both.
-- JamFree adopts DBA-28. Bootstrap B3 is re-verified in fixture mode; B4 awaits re-recording.
+- JamFree adopts DBA-28 (`426b228`). Bootstrap B3 is re-verified in fixture mode, and B4 is
+  re-recorded `direction_confirmed` (`b9c8ef5`); Bootstrap is 5/5.
+
+**FAI WO-04 — ACCEPTED 2026-10-17.** FAI is complete.
 - The per-commit replay computes the delivered state v12 selects, so its rows hold for DBA-28. The
   inheritance check rerun on DBA-28 gives the same results: F-0002 resolves to `df002430` /
   `2a14128f`.
