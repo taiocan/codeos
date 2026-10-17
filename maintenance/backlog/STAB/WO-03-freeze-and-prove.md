@@ -136,3 +136,17 @@ This section is the authoritative qualifying-feature count.
   JamFree (two runs), against about 6 s at the baseline. Six features are accepted, four of them
   STALE. Not investigated during the freeze. Trigger: it keeps growing as features are added (DQA
   WO-04, criterion 5).
+- 2026-10-17 (UX defect repairs, JamFree `bdf2bb0`, ordinary delivery, no new feature): three
+  outbound-screen defects found at F-0006's F8 were fixed. The form is no longer cleared after a
+  comparison, the map caption no longer overlaps content, and the phone chart shows all 24 hours.
+  F-0001 and F-0006 were revalidated to VALID with zero CodeOS changes and zero TomTom calls:
+  backend-scoped production evidence stayed current. Each needed one human F4 decision and one
+  Codex assessment (NO OBJECTION). Whether such work counts toward P3 is undecided.
+  - Expected governed behavior: F-0006 first showed `UPSTREAM_REVALIDATION_REQUIRED`, the first
+    real exercise of DBA-28's inherited-claim propagation, then its own `REVALIDATION_REQUIRED`
+    once F-0001 was VALID.
+  - Display: while both reasons applied, status showed only the upstream one ("this feature then
+    follows it"), hiding the second.
+  - Repeated decision: the two features share the outbound journey, so one look at the
+    screen became two F4 decisions bound to the identical Observed Surface (DQA WO-04,
+    criterion 3).
