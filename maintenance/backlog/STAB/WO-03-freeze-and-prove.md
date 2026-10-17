@@ -110,3 +110,11 @@ This section is the authoritative qualifying-feature count.
   implementer check "OUTPUT terminology authority boundary" (communication/evidence label missing).
   The implementer suite then passed on its own, with and without the change under test, and a
   full rerun passed. Not reproduced; not a blocker. Trigger for investigation: it fails again.
+- 2026-10-17 (F-0006, display): with F-0006 in progress beside STALE F-0003, `status` shows
+  "Active feature: none derived". `next --subject` works. Display only.
+- 2026-10-17 (F-0006, expected governed behavior): F-0006 changes `web/src/routes/+page.svelte`,
+  a Candidate Bundle input of F-0001 to F-0005, so all five became STALE (FAI WO-01 row 1a,
+  unchanged). None of their production evidence is current under DBA-28: all of it was recorded
+  under DBA-26, and v11 makes such records stale. Every revalidation therefore needs a fresh
+  production run, a one-time migration cost the counterfactual WO-04 replay did not show.
+  F-0006's inherited claim also needs F-0001 VALID before its F5.
