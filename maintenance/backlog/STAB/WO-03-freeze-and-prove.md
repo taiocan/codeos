@@ -124,3 +124,10 @@ This section is the authoritative qualifying-feature count.
   evidence could not be reviewed. The repair is conformance commit `0514192`. F-0006 continues
   through F1–F9 but does not count toward the zero-CodeOS-change proof. No provider call was
   repeated.
+- 2026-10-17 (F-0006, expected governed behavior): F-0006's governed journey follows the current
+  accepted frontier. Its F3 and F4 ran while F-0001 was STALE, so they bound the `entry` journey's
+  Observed Surface. Once F-0001 was VALID again, the frontier became
+  `outbound_departure_decision`, and F-0006's F4 went stale on that journey's surface, which is the
+  one F-0001's F4 was just reconfirmed on. The cost is one more human F4 decision. Ordering
+  question for P4 (WO-04, question A): should a feature's F3 run while its upstream frontier is
+  STALE?
