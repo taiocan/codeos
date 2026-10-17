@@ -10,9 +10,15 @@ measurable.
 ## Work
 
 - Separate deterministic, production-source, and post-production verification execution.
+- Order cheap invalidating checks before expensive evidence (STAB WO-04 question A): pre-candidate
+  qualification before production runs, and no F3 on a frontier whose upstream feature is STALE
+  (F-0006's F4 was re-confirmed for that reason).
 - Stop at an environment boundary and report the exact next command.
 - Extend project production evidence with successful, failed, and total provider-call counts.
 - Reconcile recorded totals with the project adapter's counter.
+
+Today only JamFree's Playwright guard (`71adabb`) prevents the F-0005 incident, and call counts
+are read from the receipts of successful calls only.
 
 ## Protected invariant
 

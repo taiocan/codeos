@@ -9,7 +9,7 @@ independently.
 
 ## Work
 
-- Inventory lifecycle derivations used by more than one component.
+- Inventory lifecycle derivations used by more than one component (STAB WO-04 question D).
 - Centralize selected evidence, current revalidation bundle, journey frontier, required decision
   bindings, and configuration-dependent evidence requirements.
 - Make workflow checks, Candidate Bundles, reviewer readiness, and status consume those results.
@@ -20,5 +20,6 @@ independently.
 1. Each shared derivation has one implementation authority and named consumers.
 2. Consumer-agreement tests fail when one consumer substitutes a different rule.
 3. Reacceptance cannot reorder journey topology.
-4. New-format production evidence is reviewable without a compatibility repair.
+4. New-format production evidence stays reviewable; the regression test added by `0514192` keeps
+   passing.
 5. Workflow, reviewer, and compatibility suites pass.

@@ -12,6 +12,8 @@ Prove that ordinary feature delivery no longer requires CodeOS changes.
 - Deliver normal JamFree features under the existing STAB definition.
 - Record CodeOS changes, Candidate Bundles, assessments, repeated human decisions, invalidations,
   provider calls, and status time from existing evidence.
+- Record the first real case of an upstream feature going STALE under an inherited claim; F-0006
+  did not exercise it.
 - Classify any interruption before acting: product defect, project gap, expected governance, or
   CodeOS correctness defect.
 
