@@ -1,6 +1,6 @@
 # TSTAT — Compact Terminal Status Charter
 
-- **Status:** IMPLEMENTED 2026-10-17 (requested by the human); awaiting acceptance
+- **Status:** ACCEPTED 2026-10-17
 - **Class:** NORMAL; presentation only
 - **Input:** `codeos-workflow status` on JamFree DBA-28
 
