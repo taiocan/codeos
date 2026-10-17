@@ -204,7 +204,7 @@ if [[ "${guide_count}" == "1" && "${codeos_terms_count}" == "1" ]]; then
 else
   bad "OUTPUT required communication context" "guide=${guide_count} codeos_terms=${codeos_terms_count}"
 fi
-if ! printf '%s\n' "${effective}" | grep -qF 'PROJECT-TERMINOLOGY-CANARY'; then
+if ! grep -qF 'PROJECT-TERMINOLOGY-CANARY' <<<"${effective}"; then
   ok "OUTPUT absent optional project terminology is valid"
 else
   bad "OUTPUT absent optional project terminology" "unexpected project glossary content"
@@ -221,14 +221,14 @@ effective="$(jq -r '.messages[].content' "${OUTPUT_SD}/request.json")"
 project_count="$(printf '%s\n' "${effective}" | grep -cF 'PROJECT-TERMINOLOGY-CANARY' || true)"
 packet_project_count="$(grep -cF 'PROJECT-TERMINOLOGY-CANARY' "${OUTPUT_SD}/packet.txt" || true)"
 if [[ "${rc}" == "0" && "${project_count}" == "1" && "${packet_project_count}" == "1" ]] \
-   && ! printf '%s\n' "${effective}" | grep -qF 'NONCANONICAL-TERMINOLOGY-CANARY'; then
+   && ! grep -qF 'NONCANONICAL-TERMINOLOGY-CANARY' <<<"${effective}"; then
   ok "OUTPUT canonical project terminology delivered once; unrelated glossary ignored"
 else
   bad "OUTPUT project terminology routing" \
     "rc=${rc} request_count=${project_count} packet_count=${packet_project_count}"
 fi
-if printf '%s\n' "${effective}" | grep -qF 'not implementation evidence' \
-   && printf '%s\n' "${effective}" | grep -qF 'acceptance evidence, a requirement, or approval authority'; then
+if grep -qF 'not implementation evidence' <<<"${effective}" \
+   && grep -qF 'acceptance evidence, a requirement, or approval authority' <<<"${effective}"; then
   ok "OUTPUT terminology is labelled as communication context, not evidence"
 else
   bad "OUTPUT terminology authority boundary" "communication/evidence label missing"
@@ -335,7 +335,7 @@ body="$(sed 's/#.*//' "${TOOL}" | sed "/^[[:space:]]*awk /,/^' /d")"
 unexpected=""
 for c in ${CANDIDATES}; do
   case "${ALLOWED}" in *" ${c} "*) continue;; esac
-  if printf '%s\n' "${body}" | grep -qE "(^|[;|&(\$]|\\\$\()[[:space:]]*${c}[[:space:]]"; then
+  if grep -qE "(^|[;|&(\$]|\\\$\()[[:space:]]*${c}[[:space:]]" <<<"${body}"; then
     unexpected="${unexpected} ${c}"
   fi
 done

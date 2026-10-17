@@ -111,6 +111,10 @@ This section is the authoritative qualifying-feature count.
   implementer check "OUTPUT terminology authority boundary" (communication/evidence label missing).
   The implementer suite then passed on its own, with and without the change under test, and a
   full rerun passed. Not reproduced; not a blocker. Trigger for investigation: it fails again.
+  It failed again on 2026-10-17 (TSTAT run). Root cause: under `set -o pipefail`,
+  `printf … | grep -q` fails whenever `grep -q` exits on an early match while `printf` is still
+  writing a large request (SIGPIPE, exit 141); reproduced 500/500 with a large input. Two negated
+  checks could pass wrongly the same way. Fixed with here-strings in all five places.
 - 2026-10-17 (F-0006, display): with F-0006 in progress beside STALE F-0003, `status` shows
   "Active feature: none derived". `next --subject` works. Display only.
 - 2026-10-17 (F-0006, expected governed behavior): F-0006 changes `web/src/routes/+page.svelte`,
