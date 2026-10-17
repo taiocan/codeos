@@ -725,117 +725,211 @@ fn snapshot_completed_checkpoints(workflow: &mut WorkflowStatus) {
         .count();
 }
 
+/// The terminal width for `status`: `COLUMNS` when it holds a usable width, otherwise 100.
+fn terminal_width() -> usize {
+    std::env::var("COLUMNS")
+        .ok()
+        .and_then(|value| value.trim().parse::<usize>().ok())
+        .filter(|width| *width >= 40)
+        .unwrap_or(100)
+}
+
 pub fn render(status: &ProjectStatus) -> String {
-    let mut out = format!(
-        "CODEOS — {}    {}\n\nPROJECT\n  Bootstrap          {}",
-        status.project.name,
-        status.project.configuration,
-        checkpoint_line(&status.bootstrap)
+    render_width(status, terminal_width())
+}
+
+/// The compact project report: condition first, then exceptions, then supporting detail. It
+/// presents the same derivation as `status --json`; only layout and grouping differ.
+pub fn render_width(status: &ProjectStatus, width: usize) -> String {
+    let health = |domain| status.health.iter().find(|item| item.domain == domain);
+    let mut header = format!(
+        "CODEOS — {} | {}",
+        status.project.name, status.project.configuration
     );
-    let (stale, not_accepted) = status
-        .features
-        .iter()
-        .filter(|feature| feature.workflow.status != DisplayStatus::Complete)
-        .fold((0, 0), |(stale, not_accepted), feature| {
-            if feature.historically_accepted {
-                (stale + 1, not_accepted)
-            } else {
-                (stale, not_accepted + 1)
-            }
-        });
-    match status.current_feature.as_deref() {
+    if let Some(release) = health(crate::health::Domain::Release) {
+        header.push_str(&format!(" | {}", release.status.label()));
+    }
+    let mut out = format!("{header}\n\nSUMMARY\n");
+
+    let (valid, stale, unaccepted) =
+        status
+            .features
+            .iter()
+            .fold((0, 0, 0), |(valid, stale, unaccepted), feature| {
+                match (
+                    feature.historically_accepted,
+                    feature.current_acceptance_valid,
+                ) {
+                    (true, true) => (valid + 1, stale, unaccepted),
+                    (true, false) => (valid, stale + 1, unaccepted),
+                    (false, _) => (valid, stale, unaccepted + 1),
+                }
+            });
+    let features = [
+        (valid, "VALID"),
+        (stale, "STALE"),
+        (unaccepted, "not yet accepted"),
+        (status.planned_feature_candidates.len(), "CANDIDATE"),
+    ]
+    .into_iter()
+    .filter(|(count, _)| *count > 0)
+    .map(|(count, label)| format!("{count} {label}"))
+    .collect::<Vec<_>>();
+    let mut classes: Vec<(&str, usize)> = Vec::new();
+    for item in &status.attention {
+        match classes
+            .iter_mut()
+            .find(|(label, _)| *label == item.class.label())
+        {
+            Some((_, count)) => *count += 1,
+            None => classes.push((item.class.label(), 1)),
+        }
+    }
+    let attention = match status.attention.len() {
+        0 => "none".to_string(),
+        n => format!(
+            "{n} ({})",
+            classes
+                .iter()
+                .map(|(label, count)| format!("{count} {label}"))
+                .collect::<Vec<_>>()
+                .join(" · ")
+        ),
+    };
+    let active = match status.current_feature.as_deref() {
         Some(id) => {
             let feature = status
                 .features
                 .iter()
                 .find(|feature| feature.id == id)
                 .unwrap();
-            out.push_str(&format!("\n  Active feature     {} — {}", id, feature.name));
+            format!("{id} — {}", feature.name)
         }
-        None if stale + not_accepted > 1 => {
+        None if stale + incomplete_unaccepted(status) > 1 => {
             let parts = [
-                (not_accepted, "not yet accepted"),
+                (incomplete_unaccepted(status), "not yet accepted"),
                 (stale, "accepted, currently STALE"),
             ]
             .into_iter()
             .filter(|(count, _)| *count > 0)
             .map(|(count, label)| format!("{count} {label}"))
             .collect::<Vec<_>>();
-            out.push_str(&format!(
-                "\n  Active feature     none derived — {}",
-                parts.join("; ")
-            ));
+            format!("none derived — {}", parts.join("; "))
         }
-        None => out.push_str("\n  Active feature     —"),
-    }
-    out.push_str("\n\nENGINEERING HEALTH\n");
-    for item in &status.health {
-        let shown = match item.status {
-            crate::health::HealthStatus::Open => format!("{} OPEN", item.basis.len()),
-            status => status.label().into(),
-        };
-        // The basis is shown verbatim and in order: inline when single, indented otherwise.
-        match item.basis.as_slice() {
-            [] => out.push_str(&format!("  {:<22}{shown}\n", item.domain.label())),
-            [basis] => out.push_str(&format!("  {:<22}{shown} — {basis}\n", item.domain.label())),
-            bases => {
-                out.push_str(&format!("  {:<22}{shown}\n", item.domain.label()));
-                for basis in bases {
-                    out.push_str(&format!("    {basis}\n"));
-                }
-            }
-        }
-    }
+        None => "—".into(),
+    };
+    table(
+        &mut out,
+        &[("", false), ("", true)],
+        &[
+            vec!["Bootstrap".into(), bootstrap_summary(&status.bootstrap)],
+            vec![
+                "Features".into(),
+                if features.is_empty() {
+                    "none".into()
+                } else {
+                    features.join(" · ")
+                },
+            ],
+            vec!["Attention".into(), attention],
+            vec!["Active feature".into(), active],
+        ],
+        width,
+        false,
+    );
+
+    out.push_str("\nHEALTH\n");
+    let mut shown: Vec<(&str, &Vec<String>)> = Vec::new();
+    let rows = status
+        .health
+        .iter()
+        .map(|item| {
+            let state = match item.status {
+                crate::health::HealthStatus::Open => format!("{} OPEN", item.basis.len()),
+                status => status.label().into(),
+            };
+            // A basis identical to an earlier domain's is referenced, not repeated.
+            let basis = match shown
+                .iter()
+                .find(|(_, bases)| !item.basis.is_empty() && **bases == item.basis)
+            {
+                Some((domain, _)) => format!("same as {domain}"),
+                None => grouped(&item.basis).join("\n"),
+            };
+            shown.push((item.domain.label(), &item.basis));
+            vec![item.domain.label().to_string(), state, basis]
+        })
+        .collect::<Vec<_>>();
+    table(
+        &mut out,
+        &[("DOMAIN", false), ("STATE", false), ("BASIS", true)],
+        &rows,
+        width,
+        true,
+    );
+
     out.push_str("\nFEATURES\n");
-    if status.features.is_empty() {
+    if status.features.is_empty() && status.planned_feature_candidates.is_empty() {
         out.push_str("  No Specification Packages found.\n");
     } else {
-        for feature in &status.features {
-            let current = if status.current_feature.as_deref() == Some(&feature.id) {
-                "  ◀ CURRENT"
-            } else {
-                ""
-            };
-            // Historical acceptance and current validity, shown separately (C-3). The date is
-            // the one recorded in `accepted_at`, without timezone conversion.
-            let acceptance = match (&feature.accepted_snapshot, &feature.current_validity) {
-                (Some(snapshot), Some(validity)) if feature.historically_accepted => {
-                    let reasons = if validity.reasons.is_empty() {
-                        String::new()
-                    } else {
-                        format!(" ({})", validity.reasons.join(", "))
-                    };
-                    format!(
-                        "  accepted snapshot {} · current validity {}{reasons}",
-                        snapshot
-                            .accepted_at
-                            .get(..10)
-                            .unwrap_or(&snapshot.accepted_at),
-                        validity.status
-                    )
+        let mut rows = status
+            .features
+            .iter()
+            .map(|feature| {
+                let mut name = feature.name.clone();
+                if status.current_feature.as_deref() == Some(&feature.id) {
+                    name.push_str(" (current)");
                 }
-                _ => String::new(),
-            };
-            out.push_str(&format!(
-                "  {}  {}  {}  {}{}{}\n",
-                feature.id,
-                feature.name,
-                feature
-                    .workflow
-                    .current_checkpoint
-                    .as_deref()
-                    .unwrap_or("—"),
-                feature.workflow.status.label(),
-                acceptance,
-                current
-            ));
-        }
-    }
-    for candidate in &status.planned_feature_candidates {
-        out.push_str(&format!(
-            "  —  {}  CANDIDATE (NOT STARTED)\n",
-            candidate.name
-        ));
+                // Historical acceptance and current validity, shown separately (C-3). The date
+                // is the one recorded in `accepted_at`, without timezone conversion.
+                let (accepted, validity) =
+                    match (&feature.accepted_snapshot, &feature.current_validity) {
+                        (Some(snapshot), Some(validity)) if feature.historically_accepted => (
+                            snapshot
+                                .accepted_at
+                                .get(..10)
+                                .unwrap_or(&snapshot.accepted_at)
+                                .to_string(),
+                            if validity.reasons.is_empty() {
+                                validity.status.clone()
+                            } else {
+                                format!("{} ({})", validity.status, validity.reasons.join(", "))
+                            },
+                        ),
+                        _ => ("—".into(), "—".into()),
+                    };
+                // An incomplete feature's checkpoint is shown once, in ATTENTION.
+                vec![
+                    feature.id.clone(),
+                    name,
+                    feature.workflow.status.label().into(),
+                    accepted,
+                    validity,
+                ]
+            })
+            .collect::<Vec<_>>();
+        rows.extend(status.planned_feature_candidates.iter().map(|candidate| {
+            vec![
+                "—".into(),
+                candidate.name.clone(),
+                "CANDIDATE (NOT STARTED)".into(),
+                "—".into(),
+                "—".into(),
+            ]
+        }));
+        table(
+            &mut out,
+            &[
+                ("ID", false),
+                ("NAME", true),
+                ("STATE", true),
+                ("ACCEPTED", false),
+                ("VALIDITY", true),
+            ],
+            &rows,
+            width,
+            true,
+        );
     }
     if !status.feature_inventory_warnings.is_empty() {
         out.push_str("\nFEATURE INVENTORY WARNINGS\n");
@@ -844,38 +938,54 @@ pub fn render(status: &ProjectStatus) -> String {
         }
     }
 
-    if let Some(id) = status.current_feature.as_deref() {
-        let feature = status
-            .features
-            .iter()
-            .find(|feature| feature.id == id)
-            .unwrap();
-        out.push_str(&format!("\n{}\n", feature.id));
-        for checkpoint in &feature.workflow.checkpoints {
-            out.push_str(&format!(
-                "  {:<4}{:<32} {}\n",
-                checkpoint.id,
-                checkpoint.title,
-                checkpoint.status.label()
-            ));
-        }
-        if let Some(issue) = feature.workflow.primary_issue.as_deref() {
-            out.push_str(&format!(
-                "\nCURRENT ISSUE\n  {}\n  {}\n",
-                feature.workflow.status.label(),
-                issue
-            ));
-            if feature.workflow.additional_issue_count > 0 {
-                out.push_str(&format!(
-                    "  Also: {} additional issue(s) at this checkpoint\n",
-                    feature.workflow.additional_issue_count
-                ));
-            }
-        }
-        render_next_action(&mut out, &feature.workflow);
-    } else if status.attention.len() > 1 {
+    if !status.attention.is_empty() {
         out.push_str("\nATTENTION\n");
+        let rows = status
+            .attention
+            .iter()
+            .map(|item| {
+                let changed: Vec<_> = item
+                    .affected_surfaces
+                    .iter()
+                    .map(|c| c.surface.as_str())
+                    .collect();
+                vec![
+                    item.subject.clone(),
+                    item.class.label().into(),
+                    item.checkpoint.clone().unwrap_or_else(|| "—".into()),
+                    item.actor.map_or("—", |actor| actor.label()).into(),
+                    if changed.is_empty() {
+                        "—".into()
+                    } else {
+                        abbreviated(&changed)
+                    },
+                ]
+            })
+            .collect::<Vec<_>>();
+        table(
+            &mut out,
+            &[
+                ("SUBJECT", false),
+                ("CLASS", false),
+                ("POINT", false),
+                ("ACTOR", false),
+                ("CHANGED", true),
+            ],
+            &rows,
+            width,
+            true,
+        );
+
+        // Each fact once, with every subject it applies to.
+        let mut facts: Vec<(&str, String, Vec<&str>)> = Vec::new();
         for item in &status.attention {
+            let mut push = |field: &'static str, value: String| match facts
+                .iter_mut()
+                .find(|(f, v, _)| *f == field && *v == value)
+            {
+                Some((_, _, subjects)) => subjects.push(item.subject.as_str()),
+                None => facts.push((field, value, vec![item.subject.as_str()])),
+            };
             if let Some(issue) = item.issue.as_deref() {
                 let reason = item
                     .reason
@@ -884,34 +994,88 @@ pub fn render(status: &ProjectStatus) -> String {
                     .filter(|code| !issue.contains(code.as_str()))
                     .map(|code| format!(" ({code})"))
                     .unwrap_or_default();
-                out.push_str(&format!(
-                    "  [{}] {} — {issue}{reason}\n",
-                    item.class.label(),
-                    item.subject
-                ));
+                push("issue", format!("{issue}{reason}"));
             }
-            if !item.affected_surfaces.is_empty() {
-                let names: Vec<_> = item
-                    .affected_surfaces
-                    .iter()
-                    .map(|c| c.surface.as_str())
-                    .collect();
-                let mut line = format!("    changed: {}", abbreviated(&names));
-                if !item.unchanged_surfaces.is_empty() {
-                    let names: Vec<_> =
-                        item.unchanged_surfaces.iter().map(String::as_str).collect();
-                    line.push_str(&format!("; unchanged: {}", abbreviated(&names)));
-                }
-                out.push_str(&line);
-                out.push('\n');
+            if !item.unchanged_surfaces.is_empty() {
+                let names: Vec<_> = item.unchanged_surfaces.iter().map(String::as_str).collect();
+                push("unchanged", abbreviated(&names));
             }
             if let Some(action) = item.next_action.as_deref() {
-                out.push_str(&format!("    next{}: {action}\n", actor_tag(item.actor)));
+                push("next", action.to_string());
             }
         }
-    } else if status.bootstrap.status != DisplayStatus::Complete {
-        render_issue(&mut out, &status.bootstrap);
+        if let Some(feature) = status
+            .current_feature
+            .as_deref()
+            .and_then(|id| status.features.iter().find(|feature| feature.id == id))
+        {
+            if feature.workflow.additional_issue_count > 0 {
+                facts.push((
+                    "also",
+                    format!(
+                        "{} additional issue(s) at this checkpoint",
+                        feature.workflow.additional_issue_count
+                    ),
+                    vec![feature.id.as_str()],
+                ));
+            }
+        }
+        const FIELDS: [&str; 4] = ["issue", "also", "unchanged", "next"];
+        facts.sort_by_key(|(field, _, _)| FIELDS.iter().position(|f| f == field));
+        out.push_str("\nDETAILS\n");
+        let rows = facts
+            .into_iter()
+            .map(|(field, value, subjects)| vec![subjects.join(", "), field.into(), value])
+            .collect::<Vec<_>>();
+        table(
+            &mut out,
+            &[("SUBJECT", true), ("FIELD", false), ("VALUE", true)],
+            &rows,
+            width,
+            true,
+        );
+        // Commands are printed whole so they can be copied; the terminal may soft-wrap them.
+        let commands = status
+            .attention
+            .iter()
+            .filter_map(|item| {
+                let command = item.action.as_ref()?.command.as_deref()?;
+                Some(format!("  {}  {command}\n", item.subject))
+            })
+            .collect::<String>();
+        if !commands.is_empty() {
+            out.push_str("\nCOMMANDS\n");
+            out.push_str(&commands);
+        }
     }
+
+    if let Some(feature) = status
+        .current_feature
+        .as_deref()
+        .and_then(|id| status.features.iter().find(|feature| feature.id == id))
+    {
+        out.push_str(&format!("\n{} CHECKPOINTS\n", feature.id));
+        let rows = feature
+            .workflow
+            .checkpoints
+            .iter()
+            .map(|checkpoint| {
+                vec![
+                    checkpoint.id.clone(),
+                    checkpoint.title.clone(),
+                    checkpoint.status.label().into(),
+                ]
+            })
+            .collect::<Vec<_>>();
+        table(
+            &mut out,
+            &[("ID", false), ("TITLE", true), ("STATE", false)],
+            &rows,
+            width,
+            true,
+        );
+    }
+
     if !status.open_observations.is_empty() {
         out.push_str("\nOPEN OBSERVATIONS\n");
         for observation in &status.open_observations {
@@ -927,6 +1091,169 @@ pub fn render(status: &ProjectStatus) -> String {
         }
     }
     out.trim_end().to_string()
+}
+
+fn incomplete_unaccepted(status: &ProjectStatus) -> usize {
+    status
+        .features
+        .iter()
+        .filter(|feature| {
+            !feature.historically_accepted && feature.workflow.status != DisplayStatus::Complete
+        })
+        .count()
+}
+
+/// Completed of total, then every checkpoint that is not complete.
+fn bootstrap_summary(status: &WorkflowStatus) -> String {
+    let open = status
+        .checkpoints
+        .iter()
+        .filter(|checkpoint| checkpoint.status != DisplayStatus::Complete)
+        .map(|checkpoint| format!("{} {}", checkpoint.id, checkpoint.status.label()))
+        .collect::<Vec<_>>();
+    match open.is_empty() {
+        true => format!("{}/{}", status.completed, status.total),
+        false => format!(
+            "{}/{} · {}",
+            status.completed,
+            status.total,
+            open.join(" · ")
+        ),
+    }
+}
+
+/// Bases that differ only by a leading feature ID are listed once, after their IDs, in order of
+/// first occurrence. Every other basis is kept verbatim.
+fn grouped(bases: &[String]) -> Vec<String> {
+    let mut groups: Vec<(Vec<&str>, &str)> = Vec::new();
+    for basis in bases {
+        let split = basis
+            .find([':', ' '])
+            .map(|at| basis.split_at(at))
+            .filter(|(id, _)| {
+                id.strip_prefix("F-")
+                    .is_some_and(|n| !n.is_empty() && n.bytes().all(|b| b.is_ascii_digit()))
+            });
+        match split {
+            Some((id, rest)) => match groups
+                .iter_mut()
+                .find(|(ids, other)| !ids.is_empty() && *other == rest)
+            {
+                Some((ids, _)) => ids.push(id),
+                None => groups.push((vec![id], rest)),
+            },
+            None => groups.push((vec![], basis.as_str())),
+        }
+    }
+    groups
+        .into_iter()
+        .map(|(ids, rest)| format!("{}{rest}", ids.join(", ")))
+        .collect()
+}
+
+/// An aligned table indented by two spaces. Only `wrap` columns shrink to fit `width`: first by
+/// word-wrapping down to their longest word, then, only if still needed, by splitting words.
+/// Other columns keep their full width, so a table that cannot shrink further exceeds `width`
+/// rather than truncate. A cell may hold several lines, separated by `\n`.
+fn table(
+    out: &mut String,
+    columns: &[(&str, bool)],
+    rows: &[Vec<String>],
+    width: usize,
+    headed: bool,
+) {
+    const MIN_SPLIT: usize = 12;
+    let chars = |text: &str| text.chars().count();
+    let mut widths: Vec<usize> = columns
+        .iter()
+        .enumerate()
+        .map(|(i, (heading, _))| {
+            rows.iter()
+                .flat_map(|row| row[i].split('\n'))
+                .map(chars)
+                .chain([if headed { chars(heading) } else { 0 }])
+                .max()
+                .unwrap_or(0)
+        })
+        .collect();
+    let total = |widths: &[usize]| 2 + widths.iter().sum::<usize>() + 2 * (widths.len() - 1);
+    let longest_word: Vec<usize> = (0..columns.len())
+        .map(|i| {
+            rows.iter()
+                .flat_map(|row| row[i].split(['\n', ' ']))
+                .map(chars)
+                .max()
+                .unwrap_or(0)
+        })
+        .collect();
+    for floor in [&longest_word, &vec![MIN_SPLIT; columns.len()]] {
+        while total(&widths) > width {
+            let Some(widest) = (0..widths.len())
+                .filter(|&i| columns[i].1 && widths[i] > floor[i].max(MIN_SPLIT))
+                .max_by_key(|&i| (widths[i], std::cmp::Reverse(i)))
+            else {
+                break;
+            };
+            widths[widest] -= 1;
+        }
+    }
+    let heading: Vec<String> = columns.iter().map(|(h, _)| h.to_string()).collect();
+    for row in headed.then_some(&heading).into_iter().chain(rows) {
+        let cells: Vec<Vec<String>> = row
+            .iter()
+            .zip(&widths)
+            .map(|(cell, width)| {
+                cell.split('\n')
+                    .flat_map(|part| wrap(part, *width))
+                    .collect()
+            })
+            .collect();
+        let height = cells.iter().map(Vec::len).max().unwrap_or(1);
+        for line in 0..height {
+            let mut text = String::from("  ");
+            for (i, cell) in cells.iter().enumerate() {
+                let part = cell.get(line).map(String::as_str).unwrap_or("");
+                text.push_str(part);
+                if i + 1 < cells.len() {
+                    text.push_str(&" ".repeat(widths[i] - chars(part) + 2));
+                }
+            }
+            out.push_str(text.trim_end());
+            out.push('\n');
+        }
+    }
+}
+
+/// Word-wraps `text` to `width` characters. A word longer than `width` is split, preferably after
+/// `/`, `-`, or `_`, and never dropped.
+fn wrap(text: &str, width: usize) -> Vec<String> {
+    let mut lines = Vec::new();
+    let mut line = String::new();
+    for word in text.split(' ') {
+        let mut word: Vec<char> = word.chars().collect();
+        while word.len() > width {
+            if !line.is_empty() {
+                lines.push(std::mem::take(&mut line));
+            }
+            let at = (1..width)
+                .rev()
+                .find(|&at| matches!(word[at - 1], '/' | '-' | '_'))
+                .unwrap_or(width);
+            lines.push(word.drain(..at).collect());
+        }
+        let word: String = word.into_iter().collect();
+        if !line.is_empty() && line.chars().count() + 1 + word.chars().count() > width {
+            lines.push(std::mem::take(&mut line));
+        }
+        if !line.is_empty() {
+            line.push(' ');
+        }
+        line.push_str(&word);
+    }
+    if !line.is_empty() || lines.is_empty() {
+        lines.push(line);
+    }
+    lines
 }
 
 pub fn render_targeted_feature(feature: &FeatureStatus) -> String {
@@ -964,26 +1291,6 @@ pub fn render_targeted_feature(feature: &FeatureStatus) -> String {
         None => out.push_str("\nNEXT\n  nothing blocked — accepted snapshot is current\n"),
     }
     out.trim_end().to_string()
-}
-
-fn render_issue(out: &mut String, status: &WorkflowStatus) {
-    if let Some(issue) = status.primary_issue.as_deref() {
-        out.push_str(&format!(
-            "\nCURRENT ISSUE\n  {}\n  {}\n",
-            status.status.label(),
-            issue
-        ));
-    }
-    render_next_action(out, status);
-}
-
-fn render_next_action(out: &mut String, status: &WorkflowStatus) {
-    if let Some(action) = status.next_action.as_deref() {
-        out.push_str(&format!(
-            "\nNEXT ACTION{}\n  {action}\n",
-            actor_tag(status.actor)
-        ));
-    }
 }
 
 /// Up to three names, then a count of the rest; JSON keeps the full list.
@@ -1232,24 +1539,6 @@ fn heading_value(path: &Path, prefix: &str) -> Option<String> {
         .find_map(|line| line.trim().strip_prefix(prefix).map(str::trim))
         .filter(|value| !value.is_empty() && !value.contains('['))
         .map(str::to_owned)
-}
-
-fn checkpoint_line(status: &WorkflowStatus) -> String {
-    let checkpoints = status
-        .checkpoints
-        .iter()
-        .map(|checkpoint| {
-            let marker = match checkpoint.status {
-                DisplayStatus::Complete => "✓",
-                DisplayStatus::NotApplicable => "–",
-                DisplayStatus::WaitingHuman => "?",
-                DisplayStatus::Blocked => "×",
-            };
-            format!("{} {marker}", checkpoint.id)
-        })
-        .collect::<Vec<_>>()
-        .join("  ");
-    format!("{checkpoints}  ({}/{})", status.completed, status.total)
 }
 
 #[cfg(test)]
@@ -1615,6 +1904,84 @@ mod tests {
     }
 
     #[test]
+    fn identical_feature_bases_are_listed_once_with_their_ids() {
+        let bases = [
+            "F-0002: accepted snapshot is no longer current (REVALIDATION_REQUIRED)",
+            "F-0003: accepted snapshot is no longer current (REVALIDATION_REQUIRED)",
+            "F-0006 F9 project_qualification record is stale: 'implementation_state' changed",
+            "compatibility/support.json: DBA-28 supported",
+            "F-0001 F9 project_qualification record is stale: 'implementation_state' changed",
+        ]
+        .map(String::from);
+        assert_eq!(
+            grouped(&bases),
+            [
+                "F-0002, F-0003: accepted snapshot is no longer current (REVALIDATION_REQUIRED)",
+                "F-0006, F-0001 F9 project_qualification record is stale: 'implementation_state' changed",
+                "compatibility/support.json: DBA-28 supported",
+            ]
+        );
+    }
+
+    #[test]
+    fn wrapping_never_drops_text_and_splits_words_only_when_needed() {
+        let text = "changed backend/Cargo.lock and scripts/verify-production-claims.mjs (+3)";
+        for width in [12, 20, 40] {
+            let lines = wrap(text, width);
+            assert!(
+                lines.iter().all(|line| line.chars().count() <= width),
+                "{lines:?}"
+            );
+            assert_eq!(lines.concat().replace(' ', ""), text.replace(' ', ""));
+        }
+        assert_eq!(
+            wrap("scripts/verify-production-claims.mjs", 20),
+            ["scripts/verify-", "production-", "claims.mjs"]
+        );
+        assert_eq!(wrap("REVALIDATION_REQUIRED", 30), ["REVALIDATION_REQUIRED"]);
+    }
+
+    #[test]
+    fn tables_shrink_only_text_columns_and_keep_identifiers_whole() {
+        let rows = vec![vec![
+            "POST_ACCEPTANCE_REVALIDATION".to_string(),
+            "historical F9 acceptance is preserved; current acceptance validity is stale".into(),
+        ]];
+        let mut out = String::new();
+        table(
+            &mut out,
+            &[("POINT", false), ("ISSUE", true)],
+            &rows,
+            60,
+            true,
+        );
+        assert!(out.lines().all(|line| line.chars().count() <= 60), "{out}");
+        assert!(
+            out.contains("  POST_ACCEPTANCE_REVALIDATION  historical"),
+            "{out}"
+        );
+        // An identifier column wider than the terminal is kept whole, not truncated.
+        let mut narrow = String::new();
+        table(
+            &mut narrow,
+            &[("POINT", false), ("ISSUE", true)],
+            &rows,
+            30,
+            true,
+        );
+        assert!(narrow.contains("POST_ACCEPTANCE_REVALIDATION"), "{narrow}");
+        let mut again = String::new();
+        table(
+            &mut again,
+            &[("POINT", false), ("ISSUE", true)],
+            &rows,
+            30,
+            true,
+        );
+        assert_eq!(narrow, again);
+    }
+
+    #[test]
     fn exactly_one_incomplete_feature_becomes_current() {
         let dir = tempfile::tempdir().unwrap();
         let codeos = dir.path().join(".codeos");
@@ -1628,8 +1995,26 @@ mod tests {
         let status = ProjectStatus::derive(&Project::discover(dir.path()).unwrap()).unwrap();
 
         assert_eq!(status.current_feature.as_deref(), Some("F-0001"));
-        assert!(render(&status).contains("F-0001 — Only feature"));
-        assert!(render(&status).contains("CURRENT ISSUE"));
+        let rendered = render_width(&status, 100);
+        assert!(
+            rendered.contains("  Active feature  F-0001 — Only feature\n"),
+            "{rendered}"
+        );
+        assert!(rendered.contains("Only feature (current)"), "{rendered}");
+        // The current feature's issue and checkpoints remain in the report.
+        let issue = status
+            .attention
+            .iter()
+            .find(|item| item.subject == "F-0001")
+            .and_then(|item| item.issue.clone())
+            .unwrap();
+        assert!(
+            rendered.lines().any(|line| line.starts_with("  F-0001 ")
+                && line.contains(" issue ")
+                && line.contains(&issue)),
+            "{rendered}"
+        );
+        assert!(rendered.contains("\nF-0001 CHECKPOINTS\n"), "{rendered}");
     }
 
     fn tree_contents(root: &Path) -> Vec<(String, Vec<u8>)> {

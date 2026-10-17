@@ -20,6 +20,8 @@ fn run(project: &tempfile::TempDir, args: &[&str]) -> std::process::Output {
         .arg("--project")
         .arg(project.path())
         .args(args)
+        // The terminal report wraps to COLUMNS; pin it so assertions do not depend on the caller.
+        .env("COLUMNS", "120")
         .output()
         .unwrap()
 }
@@ -118,9 +120,19 @@ artifact_type: feature_decomposition
 
     let rendered = run(&project, &["status"]);
     let stdout = String::from_utf8_lossy(&rendered.stdout);
-    assert!(stdout.contains("Later feature  CANDIDATE (NOT STARTED)"));
-    assert!(stdout.contains("Conditional feature — boundary unresolved  CANDIDATE (NOT STARTED)"));
-    assert!(!stdout.contains("Monitor feature  CANDIDATE"));
+    let row = |name: &str| {
+        stdout
+            .lines()
+            .find(|line| line.starts_with("  —") && line.contains(name))
+            .map(str::to_string)
+    };
+    for name in ["Later feature", "Conditional feature — boundary unresolved"] {
+        assert!(
+            row(name).is_some_and(|row| row.contains("CANDIDATE (NOT STARTED)")),
+            "{stdout}"
+        );
+    }
+    assert!(row("Monitor feature").is_none(), "{stdout}");
 }
 
 #[test]
@@ -141,7 +153,7 @@ fn malformed_decomposition_warns_without_changing_workflow_exit() {
     assert!(stdout.contains(
         ".codeos/00-discovery/malformed.md: missing 'Candidate Feature Boundaries' section"
     ));
-    assert!(stdout.contains("Active feature     F-0001 — Monitor feature"));
+    assert!(stdout.contains("  Active feature  F-0001 — Monitor feature\n"));
 }
 
 #[test]
@@ -341,16 +353,41 @@ fn attention_follows_workflow_order_with_actor_classes() {
     assert_eq!(json["features"][1]["historically_accepted"], true);
 
     let rendered = String::from_utf8_lossy(&run(&project, &["status"]).stdout).to_string();
-    assert!(rendered.contains("ENGINEERING HEALTH"), "{rendered}");
+    let section = |name: &str| {
+        rendered
+            .split(&format!("\n{name}\n"))
+            .nth(1)
+            .unwrap_or_else(|| panic!("no {name} section: {rendered}"))
+            .split("\n\n")
+            .next()
+            .unwrap()
+            .to_string()
+    };
+    let row = |name: &str, first: &str| {
+        section(name)
+            .lines()
+            .find(|line| line.starts_with(&format!("  {first} ")))
+            .unwrap_or_else(|| panic!("no {first} row in {name}: {rendered}"))
+            .to_string()
+    };
     assert!(
-        rendered.contains("  Specification         STALE"),
+        row("HEALTH", "Specification").contains(" STALE "),
         "{rendered}"
     );
-    assert!(rendered.contains("ATTENTION"), "{rendered}");
-    assert!(rendered.contains("next [ASSISTED]: start ordinary governed work at F1"));
-    assert!(rendered.contains("[STALE] F-0002 — "), "{rendered}");
+    // The stale accepted feature is an attention item with its class, actor, and changed surfaces.
+    let stale_row = row("ATTENTION", "F-0002");
+    assert!(stale_row.contains(" STALE "), "{rendered}");
+    assert!(stale_row.contains(" ASSISTED "), "{rendered}");
     assert!(
-        rendered.contains("    changed: intent, contract, event_schema"),
+        stale_row.contains("intent, contract, event_schema"),
+        "{rendered}"
+    );
+    assert!(
+        section("DETAILS")
+            .lines()
+            .any(|line| line.contains("F-0002")
+                && line.contains(" next ")
+                && line.contains("start ordinary governed work at F1")),
         "{rendered}"
     );
     assert!(
@@ -358,56 +395,71 @@ fn attention_follows_workflow_order_with_actor_classes() {
         "{rendered}"
     );
 
+    // At 80 columns every line fits except the whole commands, and output is deterministic.
+    let narrow = |_: ()| {
+        let output = Command::new(env!("CARGO_BIN_EXE_codeos-workflow"))
+            .arg("--project")
+            .arg(project.path())
+            .arg("status")
+            .env("COLUMNS", "80")
+            .output()
+            .unwrap();
+        String::from_utf8_lossy(&output.stdout).to_string()
+    };
+    let at80 = narrow(());
+    assert_eq!(at80, narrow(()));
+    let body = at80.split("\nCOMMANDS\n").next().unwrap();
+    assert!(
+        body.lines().all(|line| line.chars().count() <= 80),
+        "{at80}"
+    );
+
     // Accepted Snapshot and Current Validity are shown apart from incomplete work (WO-08).
     assert!(
         rendered.contains(
-            "  Active feature     none derived — 2 not yet accepted; 1 accepted, currently STALE\n"
+            "  Active feature  none derived — 2 not yet accepted; 1 accepted, currently STALE\n"
         ),
         "{rendered}"
     );
     assert!(!rendered.contains("incomplete"), "{rendered}");
-    let line = |id: &str| {
-        rendered
-            .lines()
-            .find(|line| line.starts_with(&format!("  {id}  ")))
-            .unwrap()
-            .to_string()
-    };
+    let accepted = row("FEATURES", "F-0002");
+    assert!(accepted.contains(" 2026-10-01 "), "{rendered}");
     assert!(
-        line("F-0002").ends_with(
-            "  accepted snapshot 2026-10-01 · current validity STALE (SEMANTIC_CHANGE_REQUIRED)"
-        ),
+        accepted.ends_with(" STALE (SEMANTIC_CHANGE_REQUIRED)"),
         "{rendered}"
     );
-    assert!(!line("F-0001").contains("accepted snapshot"));
-    // Each domain carries its basis verbatim and in order, inline or indented beneath it.
-    let section = rendered
-        .split("ENGINEERING HEALTH\n")
-        .nth(1)
-        .unwrap()
-        .split("\n\n")
-        .next()
-        .unwrap();
-    let mut shown = section.lines().peekable();
+    assert!(!row("FEATURES", "F-0001").contains("2026-"), "{rendered}");
+    // Every domain is shown with its state, and every basis remains: verbatim, grouped after its
+    // feature IDs, or referenced as the same basis as an earlier domain.
+    let health_text = section("HEALTH")
+        .split_whitespace()
+        .collect::<Vec<_>>()
+        .join(" ");
+    let mut earlier: Vec<Vec<&str>> = Vec::new();
     for item in health {
-        let head = shown.next().unwrap();
+        let domain = item["domain"].as_str().unwrap().replace('_', " ");
+        let label = format!("{}{}", domain[..1].to_uppercase(), &domain[1..]);
+        let head = row("HEALTH", &label);
         let bases: Vec<&str> = item["basis"]
             .as_array()
             .unwrap()
             .iter()
             .map(|b| b.as_str().unwrap())
             .collect();
-        match bases.as_slice() {
-            [] => {}
-            [basis] => assert!(head.ends_with(&format!(" — {basis}")), "{head}"),
-            bases => {
-                for basis in bases {
-                    assert_eq!(shown.next().unwrap(), format!("    {basis}"));
-                }
+        if !bases.is_empty() && earlier.contains(&bases) {
+            assert!(head.contains("same as "), "{head}");
+        } else {
+            for basis in &bases {
+                let rest = match basis.split_once([':', ' ']) {
+                    Some((id, _)) if id.starts_with("F-") => &basis[id.len()..],
+                    _ => basis,
+                };
+                let rest = rest.split_whitespace().collect::<Vec<_>>().join(" ");
+                assert!(health_text.contains(&rest), "{basis} missing: {rendered}");
             }
         }
+        earlier.push(bases);
     }
-    assert!(shown.next().is_none(), "{section}");
     assert_eq!(before, snapshot(project.path()));
 }
 

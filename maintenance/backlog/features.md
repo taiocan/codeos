@@ -14,3 +14,4 @@ implemented changes; this file is planning context, not workflow state or implem
 | FAI | `FAI/charter.md` | Feature-atomic invalidation | High | Approved 2026-10-16 — active |
 | SPERF | `SPERF/charter.md` | Status evaluation performance | Medium | Accepted 2026-10-16 |
 | DQA | `DQA/charter.md` | Delivery qualification and assurance | High | Proposed |
+| TSTAT | `TSTAT/charter.md` | Compact terminal status | Medium | Implemented 2026-10-17 — awaiting acceptance |
