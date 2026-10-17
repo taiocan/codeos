@@ -118,3 +118,9 @@ This section is the authoritative qualifying-feature count.
   under DBA-26, and v11 makes such records stale. Every revalidation therefore needs a fresh
   production run, a one-time migration cost the counterfactual WO-04 replay did not show.
   F-0006's inherited claim also needs F-0001 VALID before its F5.
+- 2026-10-17 (F-0006, during F-0001's revalidation): F-0006 exposed one CodeOS correctness
+  defect. Reviewer readiness judged F6-selected production evidence only by
+  `implementation_sha256`, which v11/v12 evidence deliberately omits, so the first new-format
+  evidence could not be reviewed. The repair is conformance commit `0514192`. F-0006 continues
+  through F1–F9 but does not count toward the zero-CodeOS-change proof. No provider call was
+  repeated.
