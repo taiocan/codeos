@@ -13,3 +13,4 @@ implemented changes; this file is planning context, not workflow state or implem
 | ECP | `ECP/README.md` | Engineering Control Panel ECP-2–ECP-6 work orders | High | Proposed |
 | FAI | `FAI/charter.md` | Feature-atomic invalidation | High | Approved 2026-10-16 — active |
 | SPERF | `SPERF/charter.md` | Status evaluation performance | Medium | Accepted 2026-10-16 |
+| DQA | `DQA/charter.md` | Delivery qualification and assurance | High | Proposed |

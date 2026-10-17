@@ -1,0 +1,28 @@
+# WO-03 — Isolate Verification and Account for Provider Calls
+
+PROTECTED · after WO-02 · Charter criteria 3
+
+## Goal
+
+Prevent a production-source run from executing deterministic browser work and make provider cost
+measurable.
+
+## Work
+
+- Separate deterministic, production-source, and post-production verification execution.
+- Stop at an environment boundary and report the exact next command.
+- Extend project production evidence with successful, failed, and total provider-call counts.
+- Reconcile recorded totals with the project adapter's counter.
+
+## Protected invariant
+
+CodeOS never changes provider mode on the project's behalf, and production execution never crosses
+into a verification that requires deterministic mode.
+
+## Acceptance criteria
+
+1. A production-mode check cannot launch Playwright or a governed fixture journey.
+2. Stale F5 and F5g require separate correctly classified executions.
+3. The F-0005 incident scenario stops before browser startup with zero extra calls.
+4. Every new production-evidence record has reconciled call totals.
+5. No provider budget or threshold is invented by CodeOS.
