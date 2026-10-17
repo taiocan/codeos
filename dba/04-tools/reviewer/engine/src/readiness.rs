@@ -4,6 +4,7 @@
 use crate::config::Config;
 use crate::manifest::ReviewInputManifest;
 use crate::packet::{sha256_file, ReviewPacket};
+use codeos_workflow::verification::VerificationRecord;
 use serde_json::Value;
 use std::path::Path;
 
@@ -299,26 +300,7 @@ fn evidence(
             );
             continue;
         }
-        // Feature Workflow v11 production evidence binds its Evidence Scopes and verifier; the
-        // workflow derives their current values. Everything else binds the implementation state.
-        let implementation_current = if record.bindings.contains_key("evidence_scope_state") {
-            manifest
-                .derived
-                .scoped_bindings
-                .get(key)
-                .is_some_and(|now| {
-                    ["evidence_scope_state", "reality_verifier"]
-                        .iter()
-                        .all(|binding| record.bindings.get(*binding) == now.get(*binding))
-                })
-        } else {
-            record
-                .bindings
-                .get("implementation_state")
-                .map(String::as_str)
-                == current
-        };
-        if !implementation_current {
+        if !record_current(manifest, key, record) {
             environment_needed = true;
             readiness.fail(
                 Reason::EvidenceStale,
@@ -423,16 +405,35 @@ fn evidence(
                 "selected production evidence content does not match its identity",
             );
         }
-        let bound = std::fs::read(&path)
+        let evidence = std::fs::read(&path)
             .ok()
-            .and_then(|bytes| serde_json::from_slice::<Value>(&bytes).ok())
-            .and_then(|value| {
-                value
-                    .get("implementation_sha256")
-                    .and_then(Value::as_str)
-                    .map(str::to_string)
-            });
-        if bound.as_deref() != current {
+            .and_then(|bytes| serde_json::from_slice::<Value>(&bytes).ok());
+        // Legacy evidence binds the implementation state. Feature Workflow v11 evidence omits it:
+        // it is current while it is what the current production-source verification verified.
+        let bound_current = match evidence
+            .as_ref()
+            .and_then(|value| value.get("implementation_sha256"))
+        {
+            Some(bound) => bound.as_str() == current,
+            None => {
+                evidence.is_some()
+                    && manifest
+                        .derived
+                        .records
+                        .get("F5/production_source_evidence")
+                        .is_some_and(|(_, record)| {
+                            record.bindings.contains_key("evidence_scope_state")
+                                && record
+                                    .details
+                                    .as_ref()
+                                    .and_then(|details| details.get("evidence_sha256"))
+                                    .and_then(Value::as_str)
+                                    == Some(selected)
+                                && record_current(manifest, "F5/production_source_evidence", record)
+                        })
+            }
+        };
+        if !bound_current {
             readiness.fail(
                 Reason::EvidenceStale,
                 "F6",
@@ -489,6 +490,29 @@ fn evidence(
                 );
             }
         }
+    }
+}
+
+/// Whether a verification record still binds the current implementation. Feature Workflow v11
+/// production evidence binds its Evidence Scopes and verifier, whose current values the workflow
+/// derives. Everything else binds the implementation state.
+fn record_current(manifest: &ReviewInputManifest, key: &str, record: &VerificationRecord) -> bool {
+    if record.bindings.contains_key("evidence_scope_state") {
+        manifest
+            .derived
+            .scoped_bindings
+            .get(key)
+            .is_some_and(|now| {
+                ["evidence_scope_state", "reality_verifier"]
+                    .iter()
+                    .all(|binding| record.bindings.get(*binding) == now.get(*binding))
+            })
+    } else {
+        record
+            .bindings
+            .get("implementation_state")
+            .map(String::as_str)
+            == manifest.implementation.as_deref()
     }
 }
 
@@ -772,6 +796,124 @@ mod tests {
             .insert("reality_verifier".into(), "verifier-2".into());
         manifest.derived.product_state = Some("product-2".into());
         assert_eq!(stale(&manifest), vec![key, "F6".to_string()]);
+    }
+
+    #[test]
+    fn f6_selected_evidence_is_current_by_its_own_format() {
+        let dir = tempfile::tempdir().unwrap();
+        let cfg = Config {
+            reasoning_effort: String::new(),
+            reviewer_model: String::new(),
+            codex_cli_version: String::new(),
+            packet_budget_mode: crate::config::PacketBudgetMode::Fail,
+            repo_root: dir.path().into(),
+            toolkit_root: dir.path().into(),
+            review_log: dir.path().join("log"),
+            codex_dir: dir.path().into(),
+            state_dir: dir.path().into(),
+        };
+        let store = dir.path().join(".codeos/06-workflow/reality-evidence");
+        std::fs::create_dir_all(&store).unwrap();
+        let write = |content: &str| {
+            let staged = store.join("staged");
+            std::fs::write(&staged, content).unwrap();
+            let sha = sha256_file(staged.to_string_lossy().as_ref()).unwrap();
+            std::fs::rename(staged, store.join(format!("{sha}.json"))).unwrap();
+            sha
+        };
+        let key = "F5/production_source_evidence".to_string();
+        let record = |bindings: &[(&str, &str)], verified: &str| VerificationRecord {
+            workflow: "feature".into(),
+            subject: "F-1".into(),
+            checkpoint: "F5".into(),
+            verification: "production_source_evidence".into(),
+            result: "passed".into(),
+            bindings: bindings
+                .iter()
+                .map(|(key, value)| (key.to_string(), value.to_string()))
+                .collect(),
+            command: "fixture".into(),
+            timestamp: "2026-10-17T00:00:00Z".into(),
+            details: Some(serde_json::json!({ "evidence_sha256": verified })),
+        };
+        let stale_f6 = |manifest: &ReviewInputManifest| {
+            let mut readiness = Readiness::default();
+            evidence(&cfg, manifest, &[], &mut readiness);
+            readiness
+                .issues
+                .iter()
+                .any(|issue| issue.subject == "F6" && issue.reason == Reason::EvidenceStale)
+        };
+        // A revalidation keeps its historical F6 receipt; only the selected evidence is judged.
+        let receipt = codeos_workflow::receipts::Receipt {
+            workflow: "feature".into(),
+            subject: "F-1".into(),
+            checkpoint: "reconciliation".into(),
+            result: "completed".into(),
+            bindings: Default::default(),
+            timestamp: "2026-10-17T00:00:00Z".into(),
+            rationale: None,
+            observation: None,
+        };
+
+        // Feature Workflow v11 evidence carries no implementation identity.
+        let scoped = write("{\"governed_inputs\":{},\"observations\":[]}");
+        let mut manifest = ReviewInputManifest {
+            implementation: Some("implementation-2".into()),
+            production_evidence: Some(scoped.clone()),
+            ..Default::default()
+        };
+        manifest.derived.revalidation = true;
+        manifest.derived.f6_receipt = Some(receipt.clone());
+        let bindings = [
+            ("evidence_scope_state", "scope-1"),
+            ("reality_verifier", "verifier-1"),
+        ];
+        manifest
+            .verification
+            .insert(key.clone(), Some("line".into()));
+        manifest
+            .derived
+            .records
+            .insert(key.clone(), (String::new(), record(&bindings, &scoped)));
+        manifest.derived.scoped_bindings.insert(
+            key.clone(),
+            bindings
+                .iter()
+                .map(|(k, v)| (k.to_string(), v.to_string()))
+                .collect(),
+        );
+        assert!(!stale_f6(&manifest));
+        manifest
+            .derived
+            .scoped_bindings
+            .get_mut(&key)
+            .unwrap()
+            .insert("evidence_scope_state".into(), "scope-2".into());
+        assert!(stale_f6(&manifest));
+
+        // Legacy evidence is judged by the implementation state it binds.
+        let legacy = write("{\"implementation_sha256\":\"implementation-1\",\"observations\":[]}");
+        let mut manifest = ReviewInputManifest {
+            implementation: Some("implementation-1".into()),
+            production_evidence: Some(legacy.clone()),
+            ..Default::default()
+        };
+        manifest.derived.revalidation = true;
+        manifest.derived.f6_receipt = Some(receipt);
+        manifest
+            .verification
+            .insert(key.clone(), Some("line".into()));
+        manifest.derived.records.insert(
+            key.clone(),
+            (
+                String::new(),
+                record(&[("implementation_state", "implementation-1")], &legacy),
+            ),
+        );
+        assert!(!stale_f6(&manifest));
+        manifest.implementation = Some("implementation-2".into());
+        assert!(stale_f6(&manifest));
     }
 
     #[test]
