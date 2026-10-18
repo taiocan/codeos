@@ -5,7 +5,7 @@
 | WO | Class | Title | Status |
 |---|---|---|---|
 | [WO-01](WO-01-qualify-before-issuance.md) | PROTECTED | Qualify configurations before issuance | Accepted 2026-10-18 (invariant, JamFree replay golden, `dba/` source digest) |
-| [WO-02](WO-02-single-lifecycle-authority.md) | NORMAL | One executable lifecycle authority | In progress |
+| [WO-02](WO-02-single-lifecycle-authority.md) | NORMAL | One executable lifecycle authority | In progress; revalidation evidence set awaits a decision |
 | [WO-03](WO-03-isolate-verification.md) | PROTECTED | Isolate verification and account for provider calls | Proposed |
 | [WO-04](WO-04-shared-validation-baseline.md) | NORMAL | Shared-validation root-cause baseline | Proposed |
 | [WO-05](WO-05-validation-semantics.md) | PROTECTED | Validation evidence and attribution decision | Proposed |
