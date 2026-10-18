@@ -210,6 +210,9 @@ struct CheckArgs {
     /// Latest commit changing the accepted surface; required with --revalidation.
     #[arg(long, requires = "revalidation")]
     trigger: Option<String>,
+    /// Print the plan `check --revalidation` would execute, as JSON, and execute nothing.
+    #[arg(long, requires = "revalidation")]
+    plan: bool,
 }
 
 #[derive(clap::Args)]
@@ -584,6 +587,15 @@ fn run(cli: &Cli, start: &std::path::Path) -> Result<i32> {
             };
             let project = Project::discover(start)?;
             let subject = Subject::resolve(&project, workflow, &t.subject)?;
+            if t.plan {
+                let plan = checker::revalidation_check_plan(
+                    &project,
+                    &subject,
+                    t.trigger.as_deref().expect("clap requires trigger"),
+                )?;
+                println!("{}", serde_json::to_string_pretty(&plan)?);
+                return Ok(EXIT_SUCCESS);
+            }
             let log = if t.revalidation {
                 checker::run_revalidation_checks(
                     &project,

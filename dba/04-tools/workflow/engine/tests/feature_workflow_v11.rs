@@ -644,3 +644,106 @@ fn an_inherited_claim_follows_the_upstream_revalidation_evidence() {
         assert_ne!(evidence, accepted);
     }
 }
+
+/// Every file under `.codeos` (except the toolkit link) with its content, to prove a read-only run.
+fn codeos_files(root: &Path) -> Vec<(PathBuf, Vec<u8>)> {
+    fn walk(dir: &Path, out: &mut Vec<(PathBuf, Vec<u8>)>) {
+        for entry in fs::read_dir(dir).unwrap().flatten() {
+            let path = entry.path();
+            if path.ends_with("toolkit") {
+                continue;
+            } else if path.is_dir() {
+                walk(&path, out);
+            } else {
+                out.push((path.clone(), fs::read(&path).unwrap()));
+            }
+        }
+    }
+    let mut out = Vec::new();
+    walk(&root.join(".codeos"), &mut out);
+    out.sort();
+    out
+}
+
+/// DQA WO-01C: `check --revalidation --plan` serializes the plan `check --revalidation` executes.
+/// It runs no verifier, writes nothing, and names exactly the verifications the executor then runs.
+#[test]
+fn the_revalidation_plan_is_read_only_and_is_what_check_executes() {
+    let fx = routed_under(
+        "DBA-28",
+        "    provider: [backend]\n",
+        r#"{"F-0001": {"route": ["provider"]}}"#,
+    );
+    let accepted = fx.evidence("F-0001");
+    fx.accept("F-0001", Some(&accepted));
+    std::thread::sleep(std::time::Duration::from_millis(1100));
+    fx.write("backend/Cargo.lock", "# rustls 0.23.46\n");
+    fx.write(
+        "scripts/verify.sh",
+        &VERIFIER.replace(
+            "set -euo pipefail\n",
+            "set -euo pipefail\ntouch verifier-ran\n",
+        ),
+    );
+    fx.git(&["add", "-A"]);
+    fx.git(&["commit", "-qm", "trigger"]);
+    fx.seed("F-0001", "F3", "smoke");
+    fx.seed("F-0001", "F3", "product_journey");
+
+    let before = codeos_files(&fx.root);
+    let output = Command::new(env!("CARGO_BIN_EXE_codeos-workflow"))
+        .args(["--project", fx.root.to_str().unwrap()])
+        .args(["check", "--workflow", "feature", "--subject", "F-0001"])
+        .args(["--revalidation", "--trigger", "HEAD", "--plan"])
+        .output()
+        .unwrap();
+    assert!(output.status.success(), "{output:?}");
+    assert!(
+        !fx.root.join("verifier-ran").exists(),
+        "the plan ran the verifier"
+    );
+    assert_eq!(
+        codeos_files(&fx.root),
+        before,
+        "the plan wrote a governed record"
+    );
+
+    let plan: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
+    let item = |name: &str| {
+        plan["items"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|i| i["item"] == name)
+            .unwrap()
+            .clone()
+    };
+    assert_eq!(item("smoke")["action"], "reuse");
+    assert_eq!(item("smoke")["record"].as_str().map(str::len), Some(64));
+    let evidence = item("production_source_evidence");
+    assert_eq!(evidence["action"], "rerun");
+    assert!(
+        evidence["reason"].as_str().unwrap().starts_with("changed:"),
+        "{evidence}"
+    );
+    let planned: Vec<String> = plan["items"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter(|i| i["action"] == "rerun")
+        .map(|i| {
+            format!(
+                "{} / {}",
+                i["checkpoint"].as_str().unwrap(),
+                i["item"].as_str().unwrap()
+            )
+        })
+        .collect();
+
+    let executed: Vec<String> = run_checks_revalidation(&fx)
+        .iter()
+        .map(|line| line.split(':').next().unwrap().to_string())
+        .collect();
+    assert_eq!(executed, planned);
+    assert!(fx.root.join("verifier-ran").exists());
+}

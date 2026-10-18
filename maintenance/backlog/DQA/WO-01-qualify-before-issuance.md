@@ -36,16 +36,45 @@ Keep a configuration non-governing until its full release evidence is accepted.
   or tool code branches on consumer identity. A consumer-name grep over doctrine, policies and
   prompts is a hygiene guard, not proof of genericity.
 
-## Open decision (before any closure hash is frozen)
+## Decisions (2026-10-18)
 
-Selected policies reference mutable shared files: `dba/05-guidance/terminology.md`,
-`reader-oriented-output.md`, review prompts, patterns and templates. The existing model therefore
-does not give closure. The first step inventories the exact closure and recommends, for each file,
-one of two treatments:
-- normative, so it needs versioned successors;
-- guidance, excluded by rule.
+- **Closure is semantic only.** The closure holds the selected files, plus path-referenced
+  normative files outside advisory patterns, templates, prompts and tool scripts, plus the glossary
+  rows for terms the selected files use, each frozen per definition. Tool and runtime changes stay
+  under the existing source and build identity. There is no execution-closure mechanism.
+- **Replay observes the revalidation plan.** `status` cannot show the residuals: a DBA-27 overlay
+  on JamFree `172282b` gives the same validity, reasons and surfaces as DBA-28. `check --revalidation
+  --plan --json` serializes the plan that `check` itself executes. It is extracted once and executed
+  by normal `check`, and it performs no writes, no verification processes and no provider calls.
+  Its output is minimal: per checkpoint, the action (`reuse | rerun | blocked | decision_required`),
+  the reused record identity, a stable reason code and the upstream subject. WO-03's
+  environment-boundary command is not part of WO-01.
+- The B3 `codeos_yaml` staleness that a configuration overlay causes is real adoption behavior. It
+  stays in the goldens.
 
-The human decides.
+## Implementation steps
+
+WO-01's single objective: no DBA configuration can be issued with unqualified or mutable
+semantics. Each step has one invariant and a falsifier. There is no general fixture framework and
+no WO-03 environment or provider behavior.
+
+- **01A — Candidate issuance.** An unissued candidate has no authority. Issuance publishes only the
+  exact human-approved `qualified_candidate_sha256`.
+- **01B — Semantic immutability.** Only the normative semantic closure is frozen. Tools keep the
+  existing source and build identity.
+- **01C — Read-only revalidation plan.** `check --revalidation --plan --json` serializes the plan
+  that `check --revalidation` executes, and does no work.
+- **01D — Qualification replay.** Real JamFree snapshots detect broad drift. Exactly two generic
+  lifecycle fixtures reproduce the residuals that history cannot: inheritance from a pre-bundle
+  upstream, and a test-runner change under web-scoped evidence. Both are observed through `status`
+  and `check --plan`.
+
+| Step | Status |
+|---|---|
+| 01A | Pending |
+| 01B | Pending |
+| 01C | Implemented |
+| 01D | Pending |
 
 ## Protected invariant
 
@@ -55,14 +84,15 @@ to a test or replay project.
 
 ## Acceptance criteria
 
-1. Either residual found in the first DBA-27 replay prevents issuance. Two replay cases cover them:
-   - JamFree `f94f3b6`, the F-0002 inheritance;
-   - JamFree `71adabb`, the test-runner configuration.
-
-   A DBA-27-equivalent candidate fails qualification and a DBA-28-equivalent candidate passes.
+1. Either residual found in the first DBA-27 replay prevents issuance. Revalidation-plan replay
+   cases cover the F-0002 inheritance and the `71adabb` test-runner configuration: a
+   DBA-27-equivalent candidate fails qualification and a DBA-28-equivalent candidate passes.
 2. No project adopts a numbered configuration merely to qualify it.
 3. JamFree-specific behavior cannot enter universal policy through replay.
 4. Existing supported configurations resolve unchanged.
 5. Editing a draft closure file after qualification makes issuance refuse.
 6. Mutating an indirectly referenced dependency of an issued configuration fails the integrity
    check.
+7. `--plan` makes zero writes, launches no verification process, and makes zero provider calls.
+   Normal `check` consumes the same plan value, and a test proves the plan and the execution cannot
+   diverge.

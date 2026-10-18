@@ -2147,25 +2147,158 @@ fn recorded_bindings(
 /// A (checkpoint, verification, wanted bindings) the revalidation check would execute.
 pub type StaleVerification = (&'static str, &'static str, BTreeMap<String, String>);
 
-/// The revalidation verifications `check --revalidation` would execute: required, runnable here,
-/// and not current. `status` derives its next revalidation step from this same predicate.
+/// What `check --revalidation` does with one item.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum PlanAction {
+    Reuse,
+    Rerun,
+    Blocked,
+    DecisionRequired,
+}
+
+/// One item of the revalidation plan. `reason` is a stable code: `current`, `absent`, `failed`,
+/// `changed:<bound inputs>`, or the reason a claim or decision is not satisfied.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct PlanItem {
+    pub checkpoint: String,
+    pub item: String,
+    pub action: PlanAction,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub record: Option<String>,
+    pub reason: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub upstream: Option<String>,
+}
+
+/// The plan `check --revalidation` executes: every required verification it reuses or reruns, in
+/// execution order, then each inherited claim and each human decision the feature still needs.
+/// `--plan` serializes it; `check` runs exactly its `rerun` verifications.
+#[derive(Debug, Clone, Serialize)]
+pub struct RevalidationCheckPlan {
+    pub subject: String,
+    pub items: Vec<PlanItem>,
+    #[serde(skip)]
+    pub reruns: Vec<StaleVerification>,
+}
+
+/// `check --revalidation --plan`: the same preflight as `check --revalidation`, then its plan.
+/// Executes no verification and writes nothing.
+pub fn revalidation_check_plan(
+    project: &Project,
+    subject: &Subject,
+    trigger: &str,
+) -> Result<RevalidationCheckPlan> {
+    anyhow::ensure!(
+        subject.workflow == Workflow::Feature,
+        "revalidation applies only to features"
+    );
+    crate::revalidation::preflight(project, &subject.id, trigger)?;
+    let mut plan = planned_verifications(project, subject)?;
+    let items = &mut plan.items;
+    for (claim, state) in crate::revalidation::inherited_evidence(project, subject)? {
+        items.push(match state {
+            Ok(evidence) => PlanItem {
+                checkpoint: "F5".into(),
+                item: format!("inherited:{claim}"),
+                action: PlanAction::Reuse,
+                record: Some(evidence.evidence),
+                reason: "current".into(),
+                upstream: Some(evidence.feature),
+            },
+            Err(reason) => PlanItem {
+                checkpoint: "F5".into(),
+                item: format!("inherited:{claim}"),
+                action: PlanAction::Blocked,
+                record: None,
+                reason,
+                upstream: subject
+                    .inherited_claims
+                    .iter()
+                    .find(|c| c.claim == claim)
+                    .map(|c| c.upstream_feature.clone()),
+            },
+        });
+    }
+    for report in evaluate(project, subject)? {
+        if report.state == State::Waiting && report.actor == Some(Actor::Human) {
+            items.push(PlanItem {
+                checkpoint: report.id.clone(),
+                item: "decision".into(),
+                action: PlanAction::DecisionRequired,
+                record: None,
+                reason: match report.reason {
+                    Some(code) => serde_json::to_value(code)?
+                        .as_str()
+                        .unwrap_or_default()
+                        .to_owned(),
+                    None => String::new(),
+                },
+                upstream: None,
+            });
+        }
+    }
+    Ok(plan)
+}
+
+/// The required verifications alone, which `check --revalidation` executes and `status` reads.
+fn planned_verifications(project: &Project, subject: &Subject) -> Result<RevalidationCheckPlan> {
+    let store = VerificationStore::at(&project.codeos_dir());
+    let mut items = Vec::new();
+    let mut reruns = Vec::new();
+    for (checkpoint, mechanic) in crate::revalidation::required_verifications(project, subject)? {
+        if mechanic == "runtime_event_schema" {
+            continue; // verified by `verify-events`, never by `check`
+        }
+        let want = verification_bindings(project, subject, checkpoint, Some(mechanic))?;
+        let have = store.latest("feature", &subject.id, checkpoint, mechanic)?;
+        let (action, record, reason) = match verification::evaluate(have, &want) {
+            RecordState::Current(record) => (
+                PlanAction::Reuse,
+                Some(hashing::record_identity(&record)?),
+                "current".to_string(),
+            ),
+            RecordState::Absent => (PlanAction::Rerun, None, "absent".to_string()),
+            RecordState::Failed(_) => (PlanAction::Rerun, None, "failed".to_string()),
+            RecordState::Stale { comparisons, .. } => {
+                let changed: Vec<_> = comparisons
+                    .iter()
+                    .filter(|c| c.changed())
+                    .map(|c| c.surface.as_str())
+                    .collect();
+                (
+                    PlanAction::Rerun,
+                    None,
+                    format!("changed:{}", changed.join(",")),
+                )
+            }
+        };
+        if action == PlanAction::Rerun {
+            reruns.push((checkpoint, mechanic, want));
+        }
+        items.push(PlanItem {
+            checkpoint: checkpoint.into(),
+            item: mechanic.into(),
+            action,
+            record,
+            reason,
+            upstream: None,
+        });
+    }
+    Ok(RevalidationCheckPlan {
+        subject: subject.id.clone(),
+        items,
+        reruns,
+    })
+}
+
+/// The revalidation verifications `check --revalidation` would execute: the plan's reruns.
+/// `status` derives its next revalidation step from this same plan.
 pub fn stale_revalidation_verifications(
     project: &Project,
     subject: &Subject,
 ) -> Result<Vec<StaleVerification>> {
-    let store = VerificationStore::at(&project.codeos_dir());
-    let mut stale = Vec::new();
-    for (checkpoint, mechanic) in crate::revalidation::required_verifications(project, subject)? {
-        if mechanic == "runtime_event_schema" {
-            continue;
-        }
-        let want = verification_bindings(project, subject, checkpoint, Some(mechanic))?;
-        let have = store.latest("feature", &subject.id, checkpoint, mechanic)?;
-        if !matches!(verification::evaluate(have, &want), RecordState::Current(_)) {
-            stale.push((checkpoint, mechanic, want));
-        }
-    }
-    Ok(stale)
+    Ok(planned_verifications(project, subject)?.reruns)
 }
 
 /// Execute only evidence required by post-acceptance revalidation. This deliberately does not
@@ -2182,7 +2315,7 @@ pub fn run_revalidation_checks(
     crate::revalidation::preflight(project, &subject.id, trigger)?;
     let store = VerificationStore::at(&project.codeos_dir());
     let mut log = Vec::new();
-    for (checkpoint, mechanic, want) in stale_revalidation_verifications(project, subject)? {
+    for (checkpoint, mechanic, want) in planned_verifications(project, subject)?.reruns {
         let outcome = run_mechanic(project, subject, mechanic);
         project.refresh_snapshot(); // the mechanic ran project code
         log.push(format!("{checkpoint} / {mechanic}: {}", outcome.summary));

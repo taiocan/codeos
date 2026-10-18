@@ -19,7 +19,8 @@ feature acceptance.
 
 ## Decision brief
 
-The brief must define and receive human approval for:
+The brief presents each item below as an independently approvable invariant within one model, not
+as one all-or-nothing design. It must define, and receive human approval for:
 
 - an immutable content-addressed Validation Evidence Set bound to the exact implementation/product
   state, environment, runner, input scopes, observations, and execution provenance;
