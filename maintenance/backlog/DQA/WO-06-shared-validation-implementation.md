@@ -38,3 +38,29 @@ acceptance remains feature-specific and human authority is never inferred.
 5. Legacy projects and DBA-28 behavior remain unchanged.
 6. Workflow, reviewer, configuration, boundary, and compatibility suites pass.
 7. The protected invariants receive human acceptance before WO-07.
+
+## Implementation (2026-10-18)
+
+Semantics: Feature Workflow v13 (`dba/02-policies/workflow-feature/v13.md`), DBA-29 candidate only.
+
+| Approved item | Derivation |
+|---|---|
+| Validation Evidence Set, execution identity (with Compose build contexts) | `evidence_set.rs`; `checker::run_shared`, `shared_execution` |
+| Prospective claims, meaning digest, successor rule | `claims.rs`; `checker::subject_claims`; bundle `claim_digests` |
+| Shared production run and per-feature evidence slices | `checker::run_shared_production_check` (`check --subject A --subject B --environment production`) |
+| Human Validation Session | `session.rs`; `codeos-workflow session`; `decision_state` attests the session |
+| Stable accepted topology; dependent journeys blocked | `checker::accepted_journey_chain`, `stale_journey_producers` |
+| Status: one acceptance projection per feature per command | `Project::memo_acceptance`, `memo_review_record` (all configurations; output unchanged) |
+
+Evidence (`tests/shared_validation.rs`, `tests/execution_environments.rs`): one execution for two
+features; a fixture-emulator change stales its consumers with the implementation state unchanged;
+one production run for two named features, distinct slices, an unnamed feature not covered, one
+ledger; nothing starts unless every named feature is ready; a stale producer stays in the topology
+and blocks its dependent; unattributable, duplicated, foreign-owned and changed-meaning claims fail
+closed and a successor ID does not; a session with mixed outcomes, no propagation to an unnamed
+feature on the same surface, no later attestation, a not-met human claim; DBA-28 unaffected.
+
+JamFree `172282b` under DBA-28: `status --json` identical (`cf5bfc6f…`), 12.4–13.0 s → 2.2 s,
+acceptance derivations 136 → 6, file hashes 4,545 → 458. Replay PASS for a DBA-28-equivalent
+candidate and for `dba-29`. Records and receipts written before v13 keep their recorded rule, so a
+legacy record without `execution_identity` stays current until it is next rerun.

@@ -57,6 +57,24 @@ enum Cmd {
     PrepareCandidate(PrepareCandidateArgs),
     /// Report deterministic feature impact for an architecture proposal. Read-only.
     ArchitectureImpact(ArchitectureImpactArgs),
+    /// Feature Workflow v13: list the human questions the named features wait on, or seal one
+    /// Human Validation Session over exactly the outcomes stated.
+    Session(SessionArgs),
+}
+
+#[derive(clap::Args)]
+struct SessionArgs {
+    /// A feature whose waiting F4/F8 question to list. May be repeated.
+    #[arg(long = "subject")]
+    subjects: Vec<String>,
+    /// FEATURE:CHECKPOINT:RESULT, e.g. F-0001:early_preview:direction_confirmed. May be repeated.
+    #[arg(long = "outcome")]
+    outcomes: Vec<String>,
+    /// CLAIM=met|not-met for an observation:human claim of an outcome's feature. May be repeated.
+    #[arg(long = "claim")]
+    claims: Vec<String>,
+    #[arg(long)]
+    rationale: Option<String>,
 }
 
 #[derive(clap::Args)]
@@ -202,8 +220,10 @@ struct Target {
 struct CheckArgs {
     #[arg(long)]
     workflow: String,
-    #[arg(long)]
-    subject: String,
+    /// Feature Workflow v13: repeat to check several features; a production check then observes
+    /// their claims in one shared run.
+    #[arg(long, required = true)]
+    subject: Vec<String>,
     /// Execute only stale post-acceptance verification without reopening F1-F9.
     #[arg(long)]
     revalidation: bool,
@@ -341,7 +361,22 @@ fn run(cli: &Cli, start: &std::path::Path) -> Result<i32> {
                 project.feature_workflow_version()? >= 9,
                 "project qualification requires Feature workflow v9"
             );
-            let outcome = codeos_workflow::qualification::run(&project, &args.mode);
+            // Feature Workflow v13: an acceptance qualification is a shared verification.
+            let shared = match (args.mode.as_str(), args.subject.as_deref()) {
+                ("acceptance", Some(id)) if project.feature_workflow_version()? >= 13 => {
+                    Some(Subject::resolve(&project, Workflow::Feature, id)?)
+                }
+                _ => None,
+            };
+            let outcome = match &shared {
+                Some(subject) => checker::run_shared(
+                    &project,
+                    subject,
+                    "project_qualification",
+                    Some(codeos_workflow::execution::Environment::Deterministic),
+                )?,
+                None => codeos_workflow::qualification::run(&project, &args.mode),
+            };
             if args.mode == "acceptance" {
                 let id = args
                     .subject
@@ -375,6 +410,60 @@ fn run(cli: &Cli, start: &std::path::Path) -> Result<i32> {
             } else {
                 EXIT_BLOCKED
             })
+        }
+        Cmd::Session(args) => {
+            let project = Project::discover(start)?;
+            if args.outcomes.is_empty() {
+                anyhow::ensure!(
+                    args.claims.is_empty() && args.rationale.is_none(),
+                    "--claim and --rationale need --outcome"
+                );
+                let mut questions = Vec::new();
+                for id in &args.subjects {
+                    let subject = Subject::resolve(&project, Workflow::Feature, id)?;
+                    questions.extend(codeos_workflow::session::question(&project, &subject)?);
+                }
+                println!("{}", serde_json::to_string_pretty(&questions)?);
+                return Ok(EXIT_SUCCESS);
+            }
+            anyhow::ensure!(
+                args.subjects.is_empty(),
+                "--outcome names its feature; --subject only lists questions"
+            );
+            let mut outcomes = Vec::new();
+            for text in &args.outcomes {
+                let parts: Vec<&str> = text.splitn(3, ':').collect();
+                let [feature, checkpoint, result] = parts[..] else {
+                    anyhow::bail!("--outcome expects FEATURE:CHECKPOINT:RESULT, got '{text}'");
+                };
+                outcomes.push(codeos_workflow::session::Outcome {
+                    feature: feature.into(),
+                    checkpoint: checkpoint.into(),
+                    result: result.into(),
+                    claims: Default::default(),
+                });
+            }
+            for text in &args.claims {
+                let Some((claim, value)) = text.split_once('=') else {
+                    anyhow::bail!("--claim expects CLAIM=met|not-met, got '{text}'");
+                };
+                let owner = claim.split('/').next().unwrap_or_default();
+                let outcome = outcomes
+                    .iter_mut()
+                    .find(|o| o.feature == owner)
+                    .with_context(|| format!("claim {claim} belongs to no stated outcome"))?;
+                anyhow::ensure!(
+                    outcome.claims.insert(claim.into(), value.into()).is_none(),
+                    "claim {claim} is stated twice"
+                );
+            }
+            let id = codeos_workflow::session::record(
+                &project,
+                outcomes,
+                args.rationale.as_deref().unwrap_or_default(),
+            )?;
+            println!("Human Validation Session {id} sealed");
+            Ok(EXIT_SUCCESS)
         }
         Cmd::ArchitectureImpact(args) => {
             let project = Project::discover(start)?;
@@ -590,7 +679,47 @@ fn run(cli: &Cli, start: &std::path::Path) -> Result<i32> {
                 return Ok(EXIT_USAGE);
             };
             let project = Project::discover(start)?;
-            let subject = Subject::resolve(&project, workflow, &t.subject)?;
+            let environment = t
+                .environment
+                .as_deref()
+                .and_then(codeos_workflow::execution::Environment::parse);
+            if t.subject.len() > 1 {
+                anyhow::ensure!(
+                    !t.revalidation && t.environment.is_some(),
+                    "several --subject values need --environment and no --revalidation"
+                );
+                let subjects = t
+                    .subject
+                    .iter()
+                    .map(|id| Subject::resolve(&project, workflow, id))
+                    .collect::<Result<Vec<_>>>()?;
+                let log =
+                    if environment == Some(codeos_workflow::execution::Environment::Production) {
+                        checker::run_shared_production_check(&project, &subjects)?
+                    } else {
+                        let mut log = Vec::new();
+                        for subject in &subjects {
+                            log.extend(checker::run_checks(&project, subject, environment)?);
+                        }
+                        log
+                    };
+                for line in &log {
+                    println!("{line}");
+                }
+                let mut exit = EXIT_SUCCESS;
+                for subject in &subjects {
+                    let reports = checker::evaluate(&project, subject)?;
+                    println!();
+                    println!(
+                        "{}",
+                        report::render_status(workflow.slug(), &subject.id, &reports)
+                    );
+                    exit = exit.max(report::overall_exit(&reports));
+                }
+                return Ok(exit);
+            }
+            let subject_id = t.subject[0].clone();
+            let subject = Subject::resolve(&project, workflow, &subject_id)?;
             if t.plan {
                 let plan = checker::revalidation_check_plan(
                     &project,
@@ -600,10 +729,6 @@ fn run(cli: &Cli, start: &std::path::Path) -> Result<i32> {
                 println!("{}", serde_json::to_string_pretty(&plan)?);
                 return Ok(EXIT_SUCCESS);
             }
-            let environment = t
-                .environment
-                .as_deref()
-                .and_then(codeos_workflow::execution::Environment::parse);
             let log = if t.revalidation {
                 checker::run_revalidation_checks(
                     &project,
@@ -623,7 +748,7 @@ fn run(cli: &Cli, start: &std::path::Path) -> Result<i32> {
             let reports = checker::evaluate(&project, &subject)?;
             println!(
                 "{}",
-                report::render_status(workflow.slug(), &t.subject, &reports)
+                report::render_status(workflow.slug(), &subject_id, &reports)
             );
             Ok(report::overall_exit(&reports))
         }

@@ -2110,6 +2110,7 @@ mod tests {
             baseline_acceptance: None,
             trigger_commit: None,
             inherited_evidence: Default::default(),
+            claim_digests: Default::default(),
         };
         let id = CandidateStore::at(&project.codeos_dir())
             .write(&bundle)

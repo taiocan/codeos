@@ -42,6 +42,9 @@ pub struct CandidateBundle {
     /// Feature Workflow v11: inherited claim -> the upstream evidence at candidate time.
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub inherited_evidence: BTreeMap<String, InheritedEvidence>,
+    /// Feature Workflow v13: validation claim ID -> its meaning digest at candidate time.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub claim_digests: BTreeMap<String, String>,
 }
 
 /// The upstream production truth an inherited claim restated when the candidate was prepared.
@@ -293,8 +296,20 @@ pub fn assemble(
         inherited_evidence.insert(claim, evidence);
     }
     let predecessor_bundle = latest_accepted_bundle(project, &subject.id)?;
-    let journey_previous = checker::current_accepted_frontier(project)?;
+    // Feature Workflow v13 keeps a stale acceptance in the topology, so a candidate's previous
+    // frontier is the accepted journey without the candidate's own earlier acceptance.
+    let v13 = project.feature_workflow_version()? >= 13;
+    let journey_previous = if v13 {
+        checker::accepted_frontier_before(project, subject)?
+    } else {
+        checker::current_accepted_frontier(project)?
+    };
     let journey_target = checker::product_journey_target(project, subject)?;
+    let claim_digests = checker::subject_claims(project, subject)?
+        .unwrap_or_default()
+        .into_iter()
+        .map(|claim| (claim.id, claim.digest))
+        .collect();
     let bundle = CandidateBundle {
         schema_version: 2,
         feature: subject.id.clone(),
@@ -318,6 +333,7 @@ pub fn assemble(
             .map(|case| case.original_acceptance_sha256.clone()),
         trigger_commit: revalidation_case.map(|case| case.trigger_commit),
         inherited_evidence,
+        claim_digests,
     };
     Ok(bundle)
 }
@@ -453,7 +469,10 @@ pub fn passed_revalidation_bundle(
     feature: &str,
     baseline_acceptance: &str,
 ) -> Result<Option<String>> {
-    let Some(review) = crate::evidence::latest_review_record(&project.root, feature, "8")? else {
+    let Some(review) = project.memo_review_record(feature, "8", || {
+        crate::evidence::latest_review_record(&project.root, feature, "8")
+    })?
+    else {
         return Ok(None);
     };
     if review.candidate_outcome.as_deref() != Some("PASSED") {
@@ -745,6 +764,7 @@ mod tests {
             baseline_acceptance: None,
             trigger_commit: None,
             inherited_evidence: Default::default(),
+            claim_digests: Default::default(),
         };
         (dir, project, bundle)
     }

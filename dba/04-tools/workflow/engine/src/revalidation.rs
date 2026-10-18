@@ -504,7 +504,7 @@ pub fn record(
 
 /// Whether an accepted snapshot still applies, why not, and the exact comparisons that decided it.
 /// Status explanations read this; they never reconstruct the cause independently.
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct AcceptanceAssessment {
     pub current: bool,
     pub reason: Option<&'static str>,
@@ -517,6 +517,10 @@ pub fn current_acceptance_valid(project: &Project, subject: &str) -> Result<bool
 }
 
 pub fn acceptance_assessment(project: &Project, subject: &str) -> Result<AcceptanceAssessment> {
+    project.memo_acceptance(subject, || derive_acceptance_assessment(project, subject))
+}
+
+fn derive_acceptance_assessment(project: &Project, subject: &str) -> Result<AcceptanceAssessment> {
     let mut assessment = AcceptanceAssessment::default();
     if project.feature_workflow_version()? < 5 {
         assessment.current = true;

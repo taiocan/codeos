@@ -75,6 +75,12 @@ struct Snapshot {
     product_state: Option<String>,
     git_queries: BTreeMap<Vec<String>, Vec<u8>>,
     scope_states: BTreeMap<(bool, Vec<String>), String>,
+    /// Set only while `consistent` renders, which re-renders from fresh state if any governed
+    /// record or the implementation changed: each acceptance projection and review-record lookup
+    /// is then derived once per evaluation instead of once per consumer.
+    memoizing: bool,
+    acceptance: BTreeMap<String, crate::revalidation::AcceptanceAssessment>,
+    review_records: BTreeMap<(String, String), Option<crate::evidence::ReviewRecord>>,
 }
 
 impl Project {
@@ -84,6 +90,50 @@ impl Project {
             self_dev,
             snapshot: Mutex::default(),
         }
+    }
+
+    /// A feature's acceptance assessment, derived once per consistent evaluation.
+    pub(crate) fn memo_acceptance(
+        &self,
+        subject: &str,
+        derive: impl FnOnce() -> Result<crate::revalidation::AcceptanceAssessment>,
+    ) -> Result<crate::revalidation::AcceptanceAssessment> {
+        if !self.snapshot.lock().unwrap().memoizing {
+            return derive();
+        }
+        if let Some(cached) = self.snapshot.lock().unwrap().acceptance.get(subject) {
+            return Ok(cached.clone());
+        }
+        let assessment = derive()?;
+        let mut snapshot = self.snapshot.lock().unwrap();
+        if snapshot.memoizing {
+            snapshot
+                .acceptance
+                .insert(subject.into(), assessment.clone());
+        }
+        Ok(assessment)
+    }
+
+    /// The latest review record for a feature and stage, read once per consistent evaluation.
+    pub(crate) fn memo_review_record(
+        &self,
+        feature: &str,
+        stage: &str,
+        derive: impl FnOnce() -> Result<Option<crate::evidence::ReviewRecord>>,
+    ) -> Result<Option<crate::evidence::ReviewRecord>> {
+        let key = (feature.to_string(), stage.to_string());
+        if !self.snapshot.lock().unwrap().memoizing {
+            return derive();
+        }
+        if let Some(cached) = self.snapshot.lock().unwrap().review_records.get(&key) {
+            return Ok(cached.clone());
+        }
+        let record = derive()?;
+        let mut snapshot = self.snapshot.lock().unwrap();
+        if snapshot.memoizing {
+            snapshot.review_records.insert(key, record.clone());
+        }
+        Ok(record)
     }
 
     /// Forget every derived fact. Called after a command step that runs project code.
@@ -140,7 +190,10 @@ impl Project {
     pub fn consistent<T>(&self, render: impl Fn() -> Result<T>) -> Result<T> {
         for _ in 0..2 {
             let records = self.record_fingerprint();
-            let output = render()?;
+            self.snapshot.lock().unwrap().memoizing = true;
+            let output = render();
+            self.snapshot.lock().unwrap().memoizing = false;
+            let output = output?;
             if records == self.record_fingerprint() && self.implementation_unchanged()? {
                 return Ok(output);
             }

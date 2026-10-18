@@ -258,6 +258,26 @@ pub fn evaluate(project: &Project, subject: &Subject) -> Result<Vec<CheckpointRe
         }
     }
 
+    // Feature Workflow v13: a Validation Claims table Codeos cannot attribute blocks the feature.
+    if let Err(error) = subject_claims(project, subject) {
+        reports.push(CheckpointReport {
+            id: "validation-claims".into(),
+            title: "Validation Claims are attributable".into(),
+            state: State::Blocked,
+            met: vec![],
+            unmet: vec![error.to_string()],
+            next_action: Some(format!(
+                "repair the ## Validation Claims table of {}",
+                subject.id
+            )),
+            actor: None,
+            reason: None,
+            action: None,
+            surfaces: None,
+        });
+        all_prior_pass = false;
+    }
+
     for c in &contract {
         let applicable = applies(c.applies, subject);
         if !applicable {
@@ -855,6 +875,11 @@ fn journey_definition(project: &Project, subject: &Subject) -> Result<JourneyDef
 
 /// Derive the sole accepted frontier from the Charter and the latest current acceptance receipt
 /// for each journey-advancing feature. No parallel frontier state is stored.
+/// The accepted frontier without the subject's own acceptance.
+pub fn accepted_frontier_before(project: &Project, subject: &Subject) -> Result<String> {
+    accepted_frontier_excluding(project, Some(&subject.id))
+}
+
 pub fn current_accepted_frontier(project: &Project) -> Result<String> {
     accepted_frontier_excluding(project, None)
 }
@@ -863,7 +888,39 @@ fn accepted_frontier_excluding(
     project: &Project,
     excluded_subject: Option<&str>,
 ) -> Result<String> {
+    let (initial, chain) = accepted_journey_chain(project, excluded_subject)?;
+    Ok(chain
+        .last()
+        .map_or(initial, |(_, _, proposed)| proposed.clone()))
+}
+
+/// Feature Workflow v13: the accepted journey producers a feature's journey traverses that are not
+/// currently valid. Topology keeps them; a journey depending on them stays blocked.
+pub fn stale_journey_producers(project: &Project, subject: &Subject) -> Result<Vec<String>> {
+    if subject.workflow != Workflow::Feature || project.feature_workflow_version()? < 13 {
+        return Ok(Vec::new());
+    }
+    let (_, chain) = accepted_journey_chain(project, Some(&subject.id))?;
+    let mut stale = Vec::new();
+    for (owner, ..) in chain {
+        if !crate::revalidation::current_acceptance_valid(project, &owner)? {
+            stale.push(owner);
+        }
+    }
+    Ok(stale)
+}
+
+/// Accepted journey advances as (owner, previous, proposed).
+type Advances = Vec<(String, String, String)>;
+
+/// The Charter's initial frontier and the accepted advances ordered from it. Before Feature
+/// Workflow v13 only currently valid acceptances count; from v13 every latest acceptance does.
+fn accepted_journey_chain(
+    project: &Project,
+    excluded_subject: Option<&str>,
+) -> Result<(String, Advances)> {
     let initial = charter_initial_frontier(project)?;
+    let stable_topology = project.feature_workflow_version()? >= 13;
     let receipts = ReceiptStore::at(&project.codeos_dir()).all()?;
     let mut latest = BTreeMap::new();
     for (index, receipt) in receipts.iter().enumerate() {
@@ -885,7 +942,9 @@ fn accepted_frontier_excluding(
         if excluded_subject == Some(receipt.subject.as_str()) {
             continue;
         }
-        if !crate::revalidation::current_acceptance_valid(project, &receipt.subject)? {
+        if !stable_topology
+            && !crate::revalidation::current_acceptance_valid(project, &receipt.subject)?
+        {
             continue;
         }
         if project.workflow_governance_version()? >= 3 {
@@ -922,7 +981,7 @@ fn accepted_frontier_excluding(
             );
         }
     }
-    Ok(chain.last().map_or(initial, |(_, _, proposed)| proposed.clone()))
+    Ok((initial, chain))
 }
 
 /// Order accepted advances `(owner, previous, proposed)` into the one chain that starts at the
@@ -1467,7 +1526,18 @@ fn evaluate_checkpoint(
                         ));
                     }
                     ReceiptState::Current(r) => {
-                        if results.contains(&r.result.as_str()) {
+                        let unstated = human_claims_not_met(project, subject, c.id, &r)?;
+                        if !unstated.is_empty() {
+                            soft += 1;
+                            unmet.push(format!(
+                                "{checkpoint} has no explicit `met` session outcome for {}",
+                                unstated.join(", ")
+                            ));
+                            next_action.get_or_insert(format!(
+                                "record a Human Validation Session for {}: codeos-workflow session",
+                                subject.id
+                            ));
+                        } else if results.contains(&r.result.as_str()) {
                             met.push(format!("{checkpoint}: {}", r.result));
                         } else {
                             unmet.push(format!(
@@ -1734,6 +1804,20 @@ fn evaluate_checkpoint(
                 }
             }
             Requirement::LiveVerification { name, mechanic } => {
+                if *mechanic == "product_journey" {
+                    let stale = stale_journey_producers(project, subject)?;
+                    if !stale.is_empty() {
+                        unmet.push(format!(
+                            "{name} traverses accepted journey steps whose producers are not currently valid: {}",
+                            stale.join(", ")
+                        ));
+                        next_action.get_or_insert(format!(
+                            "revalidate {} before verifying {name}",
+                            stale.join(", ")
+                        ));
+                        continue;
+                    }
+                }
                 let want = verification_bindings(project, subject, c.id, Some(mechanic))?;
                 let have = vstore.latest(subject.workflow.slug(), &subject.id, c.id, mechanic)?;
                 match verification::evaluate(have, &want) {
@@ -2045,7 +2129,7 @@ pub fn run_checks(
     );
     let mut log = Vec::new();
     if environment == Some(Environment::Production) {
-        return run_production_check(project, subject, &contract, log);
+        return run_production_check(project, std::slice::from_ref(subject), &contract, log);
     }
 
     loop {
@@ -2110,6 +2194,27 @@ pub fn run_checks(
     Ok(log)
 }
 
+/// Feature Workflow v13: one production `check` for several named features, whose claims one
+/// verifier run observes together.
+pub fn run_shared_production_check(project: &Project, subjects: &[Subject]) -> Result<Vec<String>> {
+    anyhow::ensure!(
+        !subjects.is_empty(),
+        "a production check names at least one feature"
+    );
+    let mut contract = None;
+    for subject in subjects {
+        stated_environment(project, subject, Some(Environment::Production))?;
+        contract = Some(contract_for(
+            subject.workflow,
+            project.feature_workflow_version()?,
+            project.operation_workflow_version()?,
+        ));
+    }
+    let ids: BTreeSet<_> = subjects.iter().map(|s| s.id.as_str()).collect();
+    anyhow::ensure!(ids.len() == subjects.len(), "a feature is named twice");
+    run_production_check(project, subjects, &contract.unwrap_or_default(), Vec::new())
+}
+
 /// The environment a feature `check` runs in: stated only under Feature Workflow v13, where it
 /// defaults to deterministic; earlier versions keep their single undivided run.
 fn stated_environment(
@@ -2137,6 +2242,74 @@ fn checkpoint_mechanics(c: &Checkpoint, subject: &Subject) -> Vec<&'static str> 
             _ => None,
         })
         .collect()
+}
+
+/// Feature Workflow v13: run a verification in its stated environment. A shared verification
+/// first reuses a passed Validation Evidence Set with its current execution identity and executes
+/// nothing; otherwise it runs and stores a new set. Either way the outcome cites the set.
+pub fn run_shared(
+    project: &Project,
+    subject: &Subject,
+    mechanic: &str,
+    environment: Option<Environment>,
+) -> Result<evidence::CommandOutcome> {
+    let Some(env) = environment else {
+        return Ok(run_mechanic(project, subject, mechanic));
+    };
+    let Some((identity, inputs)) = shared_execution(project, subject, mechanic)? else {
+        return Ok(crate::execution::within(env, || {
+            run_mechanic(project, subject, mechanic)
+        }));
+    };
+    if let Some((id, set)) = crate::evidence_set::find_passed(project, &identity)? {
+        return Ok(evidence::CommandOutcome {
+            ok: true,
+            command: set.command,
+            summary: format!(
+                "reused Validation Evidence Set {} ({})",
+                short(&id),
+                set.summary
+            ),
+            details: Some(crate::evidence_set::cite(set.observations, &id)),
+        });
+    }
+    let mut outcome = crate::execution::within(env, || run_mechanic(project, subject, mechanic));
+    let id = crate::evidence_set::store(project, mechanic, env, inputs, &outcome)?;
+    outcome.details = Some(crate::evidence_set::cite(outcome.details, &id));
+    Ok(outcome)
+}
+
+/// The execution identity and inputs of a shared verification under Feature Workflow v13, or
+/// `None` for one that is not shared.
+fn shared_execution(
+    project: &Project,
+    subject: &Subject,
+    mechanic: &str,
+) -> Result<Option<(String, BTreeMap<String, String>)>> {
+    if subject.workflow != Workflow::Feature
+        || project.feature_workflow_version()? < 13
+        || !crate::evidence_set::SHARED.contains(&mechanic)
+    {
+        return Ok(None);
+    }
+    let mut inputs = crate::evidence_set::common_inputs(project)?;
+    if mechanic == "product_journey" {
+        // The journey definition `check` passes to the journey, or why it cannot be derived.
+        let definition = match journey_definition(project, subject) {
+            Ok(definition) => serde_json::to_string(&definition)?,
+            Err(error) => format!("underivable: {error}"),
+        };
+        inputs.insert(
+            "journey_definition".into(),
+            hashing::text_sha256(&definition),
+        );
+        inputs.insert(
+            "journey_runner".into(),
+            if subject.gui { "browser" } else { "api" }.into(),
+        );
+    }
+    let identity = crate::evidence_set::identity(mechanic, Environment::Deterministic, &inputs);
+    Ok(Some((identity, inputs)))
 }
 
 /// Feature Workflow v13: the deterministic verifications a production-source run waits on — its
@@ -2209,6 +2382,16 @@ fn execute(
     environment: Option<Environment>,
     log: &mut Vec<String>,
 ) -> Result<Step> {
+    if mechanic == "product_journey" {
+        let stale = stale_journey_producers(project, subject)?;
+        if !stale.is_empty() {
+            log.push(format!(
+                "{checkpoint} / {mechanic}: not run; the journey depends on {}, which is not currently valid",
+                stale.join(", ")
+            ));
+            return Ok(Step::Failed);
+        }
+    }
     let want = verification_bindings(project, subject, checkpoint, Some(mechanic))?;
     let slug = subject.workflow.slug();
     let vstore = VerificationStore::at(&project.codeos_dir());
@@ -2216,11 +2399,35 @@ fn execute(
     if matches!(verification::evaluate(have, &want), RecordState::Current(_)) {
         return Ok(Step::Current); // already verified against the current inputs
     }
-    let outcome = match environment {
-        Some(env) => crate::execution::within(env, || run_mechanic(project, subject, mechanic)),
-        None => run_mechanic(project, subject, mechanic),
-    };
+    let outcome = run_shared(project, subject, mechanic, environment)?;
     project.refresh_snapshot(); // the mechanic ran project code
+    record_outcome(
+        project,
+        subject,
+        checkpoint,
+        mechanic,
+        want,
+        outcome,
+        environment,
+        log,
+    )
+}
+
+/// Record one verification outcome: a failed product journey as a failed record, a pass as a
+/// passed record. Under Feature Workflow v13 the record states its environment.
+#[allow(clippy::too_many_arguments)]
+fn record_outcome(
+    project: &Project,
+    subject: &Subject,
+    checkpoint: &str,
+    mechanic: &str,
+    want: BTreeMap<String, String>,
+    outcome: evidence::CommandOutcome,
+    environment: Option<Environment>,
+    log: &mut Vec<String>,
+) -> Result<Step> {
+    let slug = subject.workflow.slug();
+    let vstore = VerificationStore::at(&project.codeos_dir());
     log.push(format!("{checkpoint} / {mechanic}: {}", outcome.summary));
     let stamped = |details: Option<serde_json::Value>| match environment {
         Some(env) => Some(crate::execution::stamp(details, env)),
@@ -2311,11 +2518,65 @@ fn account_aborted_runs(project: &Project, log: &mut Vec<String>) -> Result<()> 
 /// F5 is the first unresolved checkpoint and everything deterministic it waits on is current.
 fn run_production_check(
     project: &Project,
-    subject: &Subject,
+    subjects: &[Subject],
     contract: &[Checkpoint],
     mut log: Vec<String>,
 ) -> Result<Vec<String>> {
     account_aborted_runs(project, &mut log)?;
+    let mut ready = Vec::new();
+    for subject in subjects {
+        match production_readiness(project, subject, contract)? {
+            Ok(checkpoint) => ready.push(checkpoint),
+            Err(reason) => log.push(format!(
+                "production: started nothing; {}: {reason}",
+                subject.id
+            )),
+        }
+    }
+    if ready.len() != subjects.len() {
+        return Ok(log);
+    }
+    if let [subject] = subjects {
+        execute(
+            project,
+            subject,
+            ready[0],
+            "production_source_evidence",
+            Some(Environment::Production),
+            &mut log,
+        )?;
+        return Ok(log);
+    }
+    let wants = subjects
+        .iter()
+        .map(|subject| {
+            verification_bindings(project, subject, "F5", Some("production_source_evidence"))
+        })
+        .collect::<Result<Vec<_>>>()?;
+    let outcomes = run_shared_production(project, subjects, &wants);
+    project.refresh_snapshot(); // the verifier ran project code
+    for ((subject, want), outcome) in subjects.iter().zip(wants).zip(outcomes) {
+        record_outcome(
+            project,
+            subject,
+            "F5",
+            "production_source_evidence",
+            want,
+            outcome,
+            Some(Environment::Production),
+            &mut log,
+        )?;
+    }
+    Ok(log)
+}
+
+/// Feature Workflow v13: the checkpoint at which a feature's production-source evidence may start
+/// now, or why it may not and the next command.
+fn production_readiness(
+    project: &Project,
+    subject: &Subject,
+    contract: &[Checkpoint],
+) -> Result<std::result::Result<&'static str, String>> {
     let deterministic = format!(
         "run `codeos-workflow check --workflow feature --subject {}`",
         subject.id
@@ -2325,19 +2586,17 @@ fn run_production_check(
         .iter()
         .find(|r| matches!(r.state, State::Blocked | State::Waiting));
     let Some(c) = stuck.and_then(|stuck| contract.iter().find(|c| c.id == stuck.id)) else {
-        log.push(
-            "production: nothing to run; no checkpoint waits on production-source evidence".into(),
-        );
-        return Ok(log);
+        return Ok(Err(
+            "no checkpoint waits on production-source evidence".into()
+        ));
     };
     if !checkpoint_mechanics(c, subject).contains(&"production_source_evidence")
         || stuck.is_some_and(|s| s.unmet.iter().any(|u| u.contains("earlier checkpoint")))
     {
-        log.push(format!(
-            "production: started nothing; {} does not wait on production-source evidence. next: {deterministic}",
+        return Ok(Err(format!(
+            "{} does not wait on production-source evidence. next: {deterministic}",
             c.id
-        ));
-        return Ok(log);
+        )));
     }
     let stale: Vec<String> = production_window(contract, subject, c.id)
         .into_iter()
@@ -2350,28 +2609,15 @@ fn run_production_check(
         })
         .collect::<Result<_>>()?;
     if !stale.is_empty() {
-        log.push(format!(
-            "production: started nothing; deterministic verification is not current: {}. next: {deterministic}",
+        return Ok(Err(format!(
+            "deterministic verification is not current: {}. next: {deterministic}",
             stale.join(", ")
-        ));
-        return Ok(log);
+        )));
     }
     if !pre_candidate_qualification_current(project, subject)? {
-        log.push(format!(
-            "production: started nothing; {}",
-            production_next(project, subject, None)?
-        ));
-        return Ok(log);
+        return Ok(Err(production_next(project, subject, None)?));
     }
-    execute(
-        project,
-        subject,
-        c.id,
-        "production_source_evidence",
-        Some(Environment::Production),
-        &mut log,
-    )?;
-    Ok(log)
+    Ok(Ok(c.id))
 }
 
 /// The bindings a passed verification records: those it reports itself (v11 production-source
@@ -2589,10 +2835,17 @@ pub fn run_revalidation_checks(
     }
     let store = VerificationStore::at(&project.codeos_dir());
     for (checkpoint, mechanic, want) in runnable {
-        let outcome = match environment {
-            Some(env) => crate::execution::within(env, || run_mechanic(project, subject, mechanic)),
-            None => run_mechanic(project, subject, mechanic),
-        };
+        if mechanic == "product_journey" {
+            let stale = stale_journey_producers(project, subject)?;
+            if !stale.is_empty() {
+                log.push(format!(
+                    "{checkpoint} / {mechanic}: not run; the journey depends on {}, which is not currently valid",
+                    stale.join(", ")
+                ));
+                return Ok(log);
+            }
+        }
+        let outcome = run_shared(project, subject, mechanic, environment)?;
         project.refresh_snapshot(); // the mechanic ran project code
         log.push(format!("{checkpoint} / {mechanic}: {}", outcome.summary));
         if !outcome.ok {
@@ -2821,6 +3074,80 @@ fn current_bindings(
 
 /// The state of a subject's latest decision at `checkpoint` against the current inputs it must
 /// bind: the one rule `check` applies and the reviewer's readiness gate reports.
+/// Feature Workflow v13: a feature's prospective validation claims, checked against the claim
+/// meanings its latest acceptance's Candidate Bundle recorded; `None` for legacy coarse claims.
+pub fn subject_claims(
+    project: &Project,
+    subject: &Subject,
+) -> Result<Option<Vec<crate::claims::ValidationClaim>>> {
+    if subject.workflow != Workflow::Feature {
+        return Ok(None);
+    }
+    let contract = contract_for(
+        subject.workflow,
+        project.feature_workflow_version()?,
+        project.operation_workflow_version()?,
+    );
+    let verifications = contract
+        .iter()
+        .filter(|c| applies(c.applies, subject))
+        .map(|c| {
+            let required = c
+                .requirements
+                .iter()
+                .filter_map(|r| match r {
+                    Requirement::LiveVerification { mechanic, .. } => Some(mechanic.to_string()),
+                    _ => None,
+                })
+                .collect();
+            (c.id.to_string(), required)
+        })
+        .collect();
+    let Some(claims) = crate::claims::validation_claims(
+        project,
+        &subject.id,
+        &verifications,
+        &subject.reality_claims,
+    )?
+    else {
+        return Ok(None);
+    };
+    let accepted = ReceiptStore::at(&project.codeos_dir())
+        .latest("feature", &subject.id, "acceptance")?
+        .and_then(|receipt| receipt.bindings.get("candidate_bundle").cloned())
+        .map(|bundle| crate::candidate::CandidateStore::at(&project.codeos_dir()).read(&bundle))
+        .transpose()?
+        .map(|bundle| bundle.claim_digests)
+        .unwrap_or_default();
+    let changed = crate::claims::changed_meanings(&claims, &accepted);
+    anyhow::ensure!(
+        changed.is_empty(),
+        "validation claim {} changed meaning since its acceptance; declare a successor ID",
+        changed.join(", ")
+    );
+    Ok(Some(claims))
+}
+
+/// The `observation:human` claims at a checkpoint that the receipt's session does not state as
+/// `met`.
+fn human_claims_not_met(
+    project: &Project,
+    subject: &Subject,
+    checkpoint: &str,
+    receipt: &Receipt,
+) -> Result<Vec<String>> {
+    let mut missing = Vec::new();
+    for claim in subject_claims(project, subject)?.unwrap_or_default() {
+        if claim.checkpoint == checkpoint && claim.evidence == crate::claims::Evidence::Human {
+            let outcome = crate::session::claim_outcome(project, receipt, &claim.id)?;
+            if outcome.as_deref() != Some("met") {
+                missing.push(claim.id);
+            }
+        }
+    }
+    Ok(missing)
+}
+
 pub fn decision_state(
     project: &Project,
     subject: &Subject,
@@ -2838,6 +3165,15 @@ pub fn decision_state(
     // to link a closure to the same observation, not to detect drift.
     if let Some(h) = latest.as_ref().and_then(|r| r.bindings.get("observation")) {
         bindings.insert("observation".into(), h.clone());
+    }
+    // Feature Workflow v13: a session is a sealed fact like an observation. It reads as current
+    // only while it is intact and states exactly this receipt's outcome on its surface.
+    if let Some(receipt) = latest.as_ref() {
+        if let Some(id) = receipt.bindings.get("session") {
+            if crate::session::attesting(project, receipt)?.is_some() {
+                bindings.insert("session".into(), id.clone());
+            }
+        }
     }
     if let Some(h) = selected_production_evidence(project, subject)? {
         if matches!(
@@ -2999,6 +3335,12 @@ fn verification_bindings(
             )?
             .and_then(|record| evidence_identity(&record));
         scope_production_bindings(project, &mut b, latest.as_deref())?;
+    }
+    // Feature Workflow v13: a shared verification's record binds its execution identity.
+    if let Some(mechanic) = mechanic {
+        if let Some((identity, _)) = shared_execution(project, subject, mechanic)? {
+            b.insert("execution_identity".into(), identity);
+        }
     }
     Ok(b)
 }
@@ -3231,7 +3573,7 @@ struct ProductionEvidence {
     observations: Vec<ProductionObservation>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 struct ProductionObservation {
     claim_ids: Vec<String>,
@@ -3242,7 +3584,7 @@ struct ProductionObservation {
     details: serde_json::Value,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 struct ProviderReceipt {
     provider_host: String,
@@ -3254,6 +3596,309 @@ struct ProviderReceipt {
     requested_at: String,
     received_at: String,
     http_status: u16,
+}
+
+/// The evidence a shared production run returns (verifier definition schema 3): every named
+/// feature's claims, observed together. Observation claim IDs are owner-qualified.
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct SharedProductionEvidence {
+    schema: u8,
+    subjects: Vec<SharedSubjectEvidence>,
+    source_kind: String,
+    provider: String,
+    observed_at: String,
+    observations: Vec<ProductionObservation>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct SharedSubjectEvidence {
+    subject: String,
+    claims: Vec<String>,
+    governed_inputs: BTreeMap<String, String>,
+    #[serde(default)]
+    claim_scopes: BTreeMap<String, Vec<String>>,
+}
+
+/// Feature Workflow v13 shared production run: one verifier run over the union of the named
+/// features' owner-qualified claims, stored as one Validation Evidence Set. Each feature's outcome
+/// is its own evidence slice: its claims, its governed inputs, and the observations of its claims.
+fn run_shared_production(
+    project: &Project,
+    subjects: &[Subject],
+    wants: &[BTreeMap<String, String>],
+) -> Vec<evidence::CommandOutcome> {
+    let fail_all = |summary: String| {
+        subjects
+            .iter()
+            .map(|_| failure(summary.clone()))
+            .collect::<Vec<_>>()
+    };
+    let config = match project.reality_verification() {
+        Ok(config) => config,
+        Err(error) => return fail_all(error.to_string()),
+    };
+    let governed: Vec<BTreeMap<String, String>> = wants
+        .iter()
+        .map(|want| {
+            let mut governed = want.clone();
+            governed.remove("evidence_scope_state");
+            governed
+        })
+        .collect();
+    let definition = serde_json::json!({
+        "schema": 3,
+        "subjects": subjects.iter().zip(&governed).map(|(subject, governed)| serde_json::json!({
+            "subject": subject.id,
+            "claims": subject.reality_claims,
+            "governed_inputs": governed,
+        })).collect::<Vec<_>>(),
+        "scopes": config.scopes,
+    });
+    let nonce = format!(
+        "{}-shared-{}",
+        std::process::id(),
+        chrono::Utc::now().timestamp_nanos_opt().unwrap_or_default()
+    );
+    let definition_path = std::env::temp_dir().join(format!("codeos-reality-{nonce}.json"));
+    let output_path = std::env::temp_dir().join(format!("codeos-reality-evidence-{nonce}.json"));
+    let definition_text = serde_json::to_string_pretty(&definition).unwrap_or_default();
+    if let Err(error) = std::fs::write(&definition_path, &definition_text) {
+        return fail_all(format!("write reality definition: {error}"));
+    }
+    let (run, ledger) = match crate::execution::start_run(project, "shared") {
+        Ok(started) => started,
+        Err(error) => return fail_all(error.to_string()),
+    };
+    let definition_env = definition_path.to_string_lossy().into_owned();
+    let output_env = output_path.to_string_lossy().into_owned();
+    let ledger_env = ledger.to_string_lossy().into_owned();
+    let outcome = crate::execution::within(Environment::Production, || {
+        evidence::run_env(
+            &project.root,
+            &config.command,
+            &[],
+            &[
+                ("CODEOS_REALITY_DEFINITION_PATH", definition_env.as_str()),
+                ("CODEOS_REALITY_EVIDENCE_PATH", output_env.as_str()),
+                ("CODEOS_REALITY_MODE", "production-source"),
+                ("CODEOS_PROVIDER_RUN_ID", run.as_str()),
+                ("CODEOS_PROVIDER_LEDGER", ledger_env.as_str()),
+            ],
+        )
+    });
+    let calls = crate::execution::count(&ledger).and_then(|calls| {
+        crate::execution::finish_run(&ledger, &calls)?;
+        Ok(calls)
+    });
+    let raw = std::fs::read_to_string(&output_path);
+    let _ = std::fs::remove_file(&definition_path);
+    let _ = std::fs::remove_file(&output_path);
+    let accounted = |summary: String| match &calls {
+        Ok(calls) => format!("{summary} [provider calls: {calls}]"),
+        Err(_) => summary,
+    };
+    let checked = raw
+        .map_err(|error| anyhow::anyhow!("verifier produced no readable evidence: {error}"))
+        .and_then(|text| {
+            let evidence: SharedProductionEvidence = serde_json::from_str(&text)
+                .map_err(|error| anyhow::anyhow!("invalid production evidence: {error}"))?;
+            anyhow::ensure!(outcome.ok, "production verifier exited unsuccessfully");
+            check_shared_production(&evidence, subjects, &governed, &config.scopes)?;
+            let calls = calls
+                .as_ref()
+                .map_err(|error| anyhow::anyhow!("provider calls cannot be accounted: {error}"))?;
+            let receipts: BTreeSet<_> = evidence
+                .observations
+                .iter()
+                .flat_map(|observation| &observation.provider_request_response_receipts)
+                .map(|receipt| serde_json::to_string(receipt).unwrap_or_default())
+                .collect();
+            anyhow::ensure!(
+                calls.successful == receipts.len() as u64,
+                "{} successful provider calls do not reconcile with {} provider receipts",
+                calls.successful,
+                receipts.len()
+            );
+            Ok((evidence, text, *calls))
+        });
+    let (evidence, text, calls) = match checked {
+        Ok(checked) => checked,
+        Err(error) => {
+            return fail_all(accounted(format!(
+                "{} -> FAILED ({error})",
+                outcome.command
+            )))
+        }
+    };
+    let set_outcome = evidence::CommandOutcome {
+        ok: true,
+        command: outcome.command.clone(),
+        summary: accounted(outcome.summary.clone()),
+        details: Some(serde_json::json!({
+            "evidence": serde_json::from_str::<serde_json::Value>(&text).unwrap_or_default(),
+            "provider_calls": calls,
+        })),
+    };
+    let inputs = BTreeMap::from([(
+        "verifier_definition".to_string(),
+        hashing::text_sha256(&definition_text),
+    )]);
+    let set = match crate::evidence_set::store(
+        project,
+        "production_source_evidence",
+        Environment::Production,
+        inputs,
+        &set_outcome,
+    ) {
+        Ok(set) => set,
+        Err(error) => return fail_all(format!("store Validation Evidence Set: {error}")),
+    };
+    subjects
+        .iter()
+        .zip(governed)
+        .map(|(subject, governed)| {
+            slice_production_evidence(project, subject, governed, &evidence, &set, &set_outcome)
+                .unwrap_or_else(|error| failure(format!("persist production evidence: {error}")))
+        })
+        .collect()
+}
+
+/// A shared production run's evidence must cover exactly the named features and their claims.
+fn check_shared_production(
+    evidence: &SharedProductionEvidence,
+    subjects: &[Subject],
+    governed: &[BTreeMap<String, String>],
+    scopes: &BTreeMap<String, Vec<String>>,
+) -> Result<()> {
+    anyhow::ensure!(evidence.schema == 3, "evidence schema does not match");
+    anyhow::ensure!(
+        evidence.source_kind == "production" && !evidence.provider.trim().is_empty(),
+        "evidence source must be an identified production source"
+    );
+    anyhow::ensure!(
+        !evidence.observed_at.trim().is_empty() && !evidence.observations.is_empty(),
+        "evidence requires observation time and user-visible observations"
+    );
+    let named: BTreeSet<_> = subjects.iter().map(|s| s.id.as_str()).collect();
+    let stated: BTreeSet<_> = evidence
+        .subjects
+        .iter()
+        .map(|s| s.subject.as_str())
+        .collect();
+    anyhow::ensure!(
+        named == stated && evidence.subjects.len() == subjects.len(),
+        "evidence does not cover exactly the named features"
+    );
+    let mut expected = BTreeSet::new();
+    for (subject, governed) in subjects.iter().zip(governed) {
+        let entry = evidence
+            .subjects
+            .iter()
+            .find(|entry| entry.subject == subject.id)
+            .expect("checked above");
+        let claims: BTreeSet<_> = subject.reality_claims.iter().cloned().collect();
+        let actual: BTreeSet<_> = entry.claims.iter().cloned().collect();
+        anyhow::ensure!(
+            actual == claims && entry.claims.len() == actual.len(),
+            "evidence does not cover {}'s exact reality-dependent claim set",
+            subject.id
+        );
+        anyhow::ensure!(
+            entry.governed_inputs == *governed,
+            "evidence bindings for {} do not match its governed inputs",
+            subject.id
+        );
+        for (claim, names) in &entry.claim_scopes {
+            let unique: BTreeSet<_> = names.iter().collect();
+            anyhow::ensure!(
+                claims.contains(claim)
+                    && unique.len() == names.len()
+                    && names.iter().all(|name| scopes.contains_key(name)),
+                "{}'s claim '{claim}' states an undeclared or duplicated Evidence Scope",
+                subject.id
+            );
+        }
+        expected.extend(claims.iter().map(|claim| format!("{}/{claim}", subject.id)));
+    }
+    let covered: BTreeSet<_> = evidence
+        .observations
+        .iter()
+        .flat_map(|observation| observation.claim_ids.iter().cloned())
+        .collect();
+    anyhow::ensure!(
+        covered == expected,
+        "production observations do not cover exactly the named features' claims"
+    );
+    check_observations(&evidence.observations)
+}
+
+/// One feature's slice of a shared production run, persisted as its own production-source
+/// evidence: its claims, governed inputs and Evidence Scopes, and the observations of its claims
+/// with their claim IDs in the feature's own form.
+fn slice_production_evidence(
+    project: &Project,
+    subject: &Subject,
+    governed: BTreeMap<String, String>,
+    evidence: &SharedProductionEvidence,
+    set: &str,
+    set_outcome: &evidence::CommandOutcome,
+) -> Result<evidence::CommandOutcome> {
+    let entry = evidence
+        .subjects
+        .iter()
+        .find(|entry| entry.subject == subject.id)
+        .context("a named feature is missing from the shared evidence")?;
+    let prefix = format!("{}/", subject.id);
+    let observations = evidence
+        .observations
+        .iter()
+        .filter_map(|observation| {
+            let own: Vec<String> = observation
+                .claim_ids
+                .iter()
+                .filter_map(|id| id.strip_prefix(&prefix).map(str::to_string))
+                .collect();
+            (!own.is_empty()).then(|| ProductionObservation {
+                claim_ids: own,
+                ..observation.clone()
+            })
+        })
+        .collect();
+    let slice = ProductionEvidence {
+        schema: 2,
+        subject: subject.id.clone(),
+        claims: entry.claims.clone(),
+        source_kind: evidence.source_kind.clone(),
+        provider: evidence.provider.clone(),
+        observed_at: evidence.observed_at.clone(),
+        implementation_sha256: None,
+        governed_inputs: governed.clone(),
+        claim_scopes: entry.claim_scopes.clone(),
+        observations,
+    };
+    let canonical = serde_json::to_string(&slice)?;
+    let identity = hashing::text_sha256(&canonical);
+    let dir = project.codeos_dir().join("06-workflow/reality-evidence");
+    std::fs::create_dir_all(&dir)?;
+    std::fs::write(dir.join(format!("{identity}.json")), &canonical)?;
+    let mut recorded = governed;
+    scope_production_bindings(project, &mut recorded, Some(&identity))?;
+    Ok(evidence::CommandOutcome {
+        ok: true,
+        command: set_outcome.command.clone(),
+        summary: format!(
+            "{} (shared run, Validation Evidence Set {})",
+            set_outcome.summary,
+            short(set)
+        ),
+        details: Some(serde_json::json!({
+            "evidence_sha256": identity,
+            "bindings": recorded,
+            "evidence_set": set,
+        })),
+    })
 }
 
 fn run_production_source_evidence(
@@ -3385,36 +4030,7 @@ fn run_production_source_evidence(
         if covered != expected {
             anyhow::bail!("production observations do not cover the exact claim set");
         }
-        for observation in &record.observations {
-            if !is_sha256(&observation.visible_result_sha256)
-                || !is_sha256(&observation.provider_receipts_sha256)
-                || observation.provider_request_response_receipts.is_empty()
-            {
-                anyhow::bail!(
-                    "production observation lacks content-bound visible/provider evidence"
-                );
-            }
-            if hashing::text_sha256(&serde_json::to_string(&observation.visible_result)?)
-                != observation.visible_result_sha256
-                || hashing::text_sha256(&serde_json::to_string(
-                    &observation.provider_request_response_receipts,
-                )?) != observation.provider_receipts_sha256
-            {
-                anyhow::bail!("production observation content hashes do not match their evidence");
-            }
-            for receipt in &observation.provider_request_response_receipts {
-                if receipt.provider_host.trim().is_empty()
-                    || !receipt.provider_path.starts_with('/')
-                    || !is_sha256(&receipt.request_sha256)
-                    || !is_sha256(&receipt.response_sha256)
-                    || receipt.requested_at.trim().is_empty()
-                    || receipt.received_at.trim().is_empty()
-                    || !(200..300).contains(&receipt.http_status)
-                {
-                    anyhow::bail!("provider request/response provenance is incomplete or invalid");
-                }
-            }
-        }
+        check_observations(&record.observations)?;
         let implementation_bound = if v11 {
             record.implementation_sha256.is_none()
         } else {
@@ -3485,6 +4101,39 @@ fn run_production_source_evidence(
         }
     }
     outcome
+}
+
+/// The content binding and provider provenance every production observation must carry.
+fn check_observations(observations: &[ProductionObservation]) -> Result<()> {
+    for observation in observations {
+        if !is_sha256(&observation.visible_result_sha256)
+            || !is_sha256(&observation.provider_receipts_sha256)
+            || observation.provider_request_response_receipts.is_empty()
+        {
+            anyhow::bail!("production observation lacks content-bound visible/provider evidence");
+        }
+        if hashing::text_sha256(&serde_json::to_string(&observation.visible_result)?)
+            != observation.visible_result_sha256
+            || hashing::text_sha256(&serde_json::to_string(
+                &observation.provider_request_response_receipts,
+            )?) != observation.provider_receipts_sha256
+        {
+            anyhow::bail!("production observation content hashes do not match their evidence");
+        }
+        for receipt in &observation.provider_request_response_receipts {
+            if receipt.provider_host.trim().is_empty()
+                || !receipt.provider_path.starts_with('/')
+                || !is_sha256(&receipt.request_sha256)
+                || !is_sha256(&receipt.response_sha256)
+                || receipt.requested_at.trim().is_empty()
+                || receipt.received_at.trim().is_empty()
+                || !(200..300).contains(&receipt.http_status)
+            {
+                anyhow::bail!("provider request/response provenance is incomplete or invalid");
+            }
+        }
+    }
+    Ok(())
 }
 
 fn is_sha256(value: &str) -> bool {
