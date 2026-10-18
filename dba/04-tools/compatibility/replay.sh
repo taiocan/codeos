@@ -3,7 +3,9 @@
 # 1. the generic lifecycle fixtures no consumer history reproduces;
 # 2. every pinned consumer snapshot in support.json `replay_cases`, each in a disposable clone with
 #    the configuration overlaid: normalized `status --json` plus the `check --revalidation --plan`
-#    of every feature with a revalidation trigger, compared with the human-accepted golden.
+#    of every feature with a revalidation trigger, compared with the human-accepted golden. A case
+#    with a `script` instead runs `<script> <clone> <workflow-binary>` there and compares its JSON
+#    output (DQA WO-07: the WO-04 shared-validation cases).
 # Never touches a consumer's working tree. CODEOS_REPLAY_ACTUAL_DIR, when set, receives each
 # case's actual output for review.
 set -euo pipefail
@@ -27,7 +29,7 @@ cargo build -q --locked --manifest-path "${manifest}"
 workflow="${TOOLKIT}/dba/04-tools/workflow/engine/target/debug/codeos-workflow"
 run() { env -u TOMTOM_API_KEY -u PROVIDER_MODE "${workflow}" --project "$@"; }
 
-while IFS=$'\t' read -r name consumer commit golden; do
+while IFS=$'\t' read -r name consumer commit golden script; do
   live="${LOCAL_ROOT}/${consumer}"
   project="${WORK}/${name}"
   [[ -d "${live}/.git" ]] && git -C "${live}" cat-file -e "${commit}^{commit}" 2>/dev/null \
@@ -40,6 +42,10 @@ while IFS=$'\t' read -r name consumer commit golden; do
   ln -s "${TOOLKIT}" "${project}/.codeos/toolkit"
   sed -i -E "s/^dba_configuration:.*/dba_configuration: ${ID}/" "${project}/.codeos/00-project/codeos.yaml"
 
+  if [[ -n "${script}" ]]; then
+    env -u TOMTOM_API_KEY -u PROVIDER_MODE bash "${HERE}/${script}" "${project}" "${workflow}" \
+      | jq -S . > "${WORK}/${name}-actual.json" || fail "${name}: ${script} failed"
+  else
   set +e
   run "${project}" status --json > "${WORK}/${name}-status.json"
   rc=$?
@@ -56,11 +62,12 @@ while IFS=$'\t' read -r name consumer commit golden; do
       bootstrap_status: .bootstrap.status,
       features: [.features[] | {id, current_validity, status, current_checkpoint}],
       plans: $plans}' "${WORK}/${name}-status.json" > "${WORK}/${name}-actual.json"
+  fi
   if [[ -n "${CODEOS_REPLAY_ACTUAL_DIR:-}" ]]; then
     mkdir -p "${CODEOS_REPLAY_ACTUAL_DIR}"
     cp "${WORK}/${name}-actual.json" "${CODEOS_REPLAY_ACTUAL_DIR}/${name}.json"
   fi
   diff -u <(jq -S . "${HERE}/${golden}") "${WORK}/${name}-actual.json" \
     || fail "${name}: ${ID} differs from the accepted replay"
-done < <(jq -r '.replay_cases // [] | .[] | [.name, .consumer, .commit, .golden] | @tsv' "${HERE}/support.json")
+done < <(jq -r '.replay_cases // [] | .[] | [.name, .consumer, .commit, .golden, (.script // "")] | @tsv' "${HERE}/support.json")
 printf 'qualification replay: PASS (%s)\n' "${ID}"

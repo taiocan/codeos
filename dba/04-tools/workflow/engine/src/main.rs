@@ -685,24 +685,34 @@ fn run(cli: &Cli, start: &std::path::Path) -> Result<i32> {
                 .and_then(codeos_workflow::execution::Environment::parse);
             if t.subject.len() > 1 {
                 anyhow::ensure!(
-                    !t.revalidation && t.environment.is_some(),
-                    "several --subject values need --environment and no --revalidation"
+                    t.environment.is_some() && !t.plan,
+                    "several --subject values need --environment and no --plan"
+                );
+                anyhow::ensure!(
+                    !t.revalidation
+                        || environment == Some(codeos_workflow::execution::Environment::Production),
+                    "a revalidation names several features only for one shared production run"
                 );
                 let subjects = t
                     .subject
                     .iter()
                     .map(|id| Subject::resolve(&project, workflow, id))
                     .collect::<Result<Vec<_>>>()?;
-                let log =
-                    if environment == Some(codeos_workflow::execution::Environment::Production) {
-                        checker::run_shared_production_check(&project, &subjects)?
-                    } else {
-                        let mut log = Vec::new();
-                        for subject in &subjects {
-                            log.extend(checker::run_checks(&project, subject, environment)?);
-                        }
-                        log
-                    };
+                let log = if t.revalidation {
+                    checker::run_shared_revalidation_production(
+                        &project,
+                        &subjects,
+                        t.trigger.as_deref().expect("clap requires trigger"),
+                    )?
+                } else if environment == Some(codeos_workflow::execution::Environment::Production) {
+                    checker::run_shared_production_check(&project, &subjects)?
+                } else {
+                    let mut log = Vec::new();
+                    for subject in &subjects {
+                        log.extend(checker::run_checks(&project, subject, environment)?);
+                    }
+                    log
+                };
                 for line in &log {
                     println!("{line}");
                 }

@@ -730,3 +730,40 @@ fn a_successor_run_claim_needs_a_record_bound_to_the_current_contract() {
         "{unmet:?}"
     );
 }
+
+/// Found by the WO-07 JamFree replay: with stable topology, the journey a mid-chain feature builds
+/// on is the accepted chain cut before its own step, so a later accepted advance never makes the
+/// chain unreachable.
+#[test]
+fn a_mid_chain_feature_builds_on_the_chain_before_its_own_step() {
+    let fx = candidate("    provider: [backend]\n");
+    fx.write(
+        "claim-scopes.json",
+        r#"{"F-0001": {"route": ["provider"]}}"#,
+    );
+    fx.spec("F-0001", ADVANCE, ROUTE);
+    commit(&fx, "F-0001");
+    fx.check("F-0001");
+    let evidence = fx.evidence("F-0001");
+    fx.accept("F-0001", Some(&evidence));
+    fx.spec(
+        "F-0002",
+        "mode: advance\nprevious_frontier: decided\nproposed_frontier: returned\ntransition: the driver returns",
+        "",
+    );
+    commit(&fx, "F-0002");
+    fx.check("F-0002");
+    fx.accept("F-0002", None);
+    let project = fx.project();
+    assert_eq!(
+        codeos_workflow::checker::current_accepted_frontier(&project).unwrap(),
+        "returned"
+    );
+    for (feature, before) in [("F-0001", "entry"), ("F-0002", "decided")] {
+        assert_eq!(
+            codeos_workflow::checker::accepted_frontier_before(&project, &fx.subject(feature))
+                .unwrap(),
+            before
+        );
+    }
+}

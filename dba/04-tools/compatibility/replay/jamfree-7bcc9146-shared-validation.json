@@ -1,0 +1,219 @@
+{
+  "accepted_frontier": "return_departure_decision",
+  "deterministic_evidence_sets": 7,
+  "executed": 7,
+  "executions": [
+    {
+      "feature": "F-0001",
+      "outcome": "executed",
+      "verification": "F3/smoke"
+    },
+    {
+      "feature": "F-0001",
+      "outcome": "executed",
+      "verification": "F3/product_journey"
+    },
+    {
+      "feature": "F-0001",
+      "outcome": "executed",
+      "verification": "F5/behavior"
+    },
+    {
+      "feature": "F-0001",
+      "outcome": "executed",
+      "verification": "F5/repeatability"
+    },
+    {
+      "feature": "F-0001",
+      "outcome": "executed",
+      "verification": "F5g/playwright"
+    },
+    {
+      "feature": "F-0002",
+      "outcome": "reused",
+      "verification": "F3/smoke"
+    },
+    {
+      "feature": "F-0002",
+      "outcome": "executed",
+      "verification": "F3/product_journey"
+    },
+    {
+      "feature": "F-0002",
+      "outcome": "reused",
+      "verification": "F5/behavior"
+    },
+    {
+      "feature": "F-0002",
+      "outcome": "reused",
+      "verification": "F5/repeatability"
+    },
+    {
+      "feature": "F-0002",
+      "outcome": "reused",
+      "verification": "F5g/playwright"
+    },
+    {
+      "feature": "F-0003",
+      "outcome": "reused",
+      "verification": "F3/smoke"
+    },
+    {
+      "feature": "F-0003",
+      "outcome": "reused",
+      "verification": "F3/product_journey"
+    },
+    {
+      "feature": "F-0003",
+      "outcome": "reused",
+      "verification": "F5/behavior"
+    },
+    {
+      "feature": "F-0003",
+      "outcome": "reused",
+      "verification": "F5/repeatability"
+    },
+    {
+      "feature": "F-0003",
+      "outcome": "reused",
+      "verification": "F5g/playwright"
+    },
+    {
+      "feature": "F-0004",
+      "outcome": "reused",
+      "verification": "F3/smoke"
+    },
+    {
+      "feature": "F-0004",
+      "outcome": "reused",
+      "verification": "F3/product_journey"
+    },
+    {
+      "feature": "F-0004",
+      "outcome": "reused",
+      "verification": "F5/behavior"
+    },
+    {
+      "feature": "F-0004",
+      "outcome": "reused",
+      "verification": "F5/repeatability"
+    },
+    {
+      "feature": "F-0004",
+      "outcome": "reused",
+      "verification": "F5g/playwright"
+    },
+    {
+      "feature": "F-0005",
+      "outcome": "reused",
+      "verification": "F3/smoke"
+    },
+    {
+      "feature": "F-0005",
+      "outcome": "reused",
+      "verification": "F3/product_journey"
+    },
+    {
+      "feature": "F-0005",
+      "outcome": "reused",
+      "verification": "F5/behavior"
+    },
+    {
+      "feature": "F-0005",
+      "outcome": "reused",
+      "verification": "F5/repeatability"
+    },
+    {
+      "feature": "F-0005",
+      "outcome": "reused",
+      "verification": "F5g/playwright"
+    },
+    {
+      "feature": "F-0002",
+      "outcome": "executed",
+      "verification": "candidate/project_qualification"
+    },
+    {
+      "feature": "F-0003",
+      "outcome": "reused",
+      "verification": "candidate/project_qualification"
+    },
+    {
+      "feature": "F-0004",
+      "outcome": "reused",
+      "verification": "candidate/project_qualification"
+    },
+    {
+      "feature": "F-0005",
+      "outcome": "reused",
+      "verification": "candidate/project_qualification"
+    }
+  ],
+  "f0006_inherited_claims": [
+    {
+      "action": "blocked",
+      "item": "inherited:arrive-by-departures",
+      "upstream": "F-0001"
+    }
+  ],
+  "history_lines_removed": 0,
+  "production": {
+    "one_shared_set": true,
+    "provider_calls": [
+      {
+        "attempted": 2,
+        "failed": 0,
+        "successful": 2,
+        "total": 2,
+        "unresolved": 0
+      }
+    ],
+    "provider_runs": 1,
+    "records": 4
+  },
+  "reused": 22,
+  "validity": [
+    {
+      "id": "F-0001",
+      "reasons": [
+        "REVALIDATION_REQUIRED"
+      ],
+      "status": "STALE"
+    },
+    {
+      "id": "F-0002",
+      "reasons": [
+        "REVALIDATION_REQUIRED"
+      ],
+      "status": "STALE"
+    },
+    {
+      "id": "F-0003",
+      "reasons": [
+        "REVALIDATION_REQUIRED"
+      ],
+      "status": "STALE"
+    },
+    {
+      "id": "F-0004",
+      "reasons": [
+        "REVALIDATION_REQUIRED"
+      ],
+      "status": "STALE"
+    },
+    {
+      "id": "F-0005",
+      "reasons": [
+        "REVALIDATION_REQUIRED"
+      ],
+      "status": "STALE"
+    },
+    {
+      "id": "F-0006",
+      "reasons": [
+        "UPSTREAM_REVALIDATION_REQUIRED"
+      ],
+      "status": "STALE"
+    }
+  ]
+}

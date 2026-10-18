@@ -1,0 +1,29 @@
+{
+  "changed_question_refused": true,
+  "later_feature_unchanged": true,
+  "missing_viewport_reopens": [
+    {
+      "checkpoint": "early_preview",
+      "feature": "F-0001"
+    }
+  ],
+  "one_shared_surface": true,
+  "open_after_matching_session": [],
+  "open_after_mixed_session": [
+    {
+      "checkpoint": "early_preview",
+      "feature": "F-0006"
+    }
+  ],
+  "questions": [
+    {
+      "checkpoint": "early_preview",
+      "feature": "F-0001"
+    },
+    {
+      "checkpoint": "early_preview",
+      "feature": "F-0006"
+    }
+  ],
+  "sessions": 1
+}

@@ -802,7 +802,18 @@ fn accepted_journey_definition(
     excluded_subject: Option<&str>,
 ) -> Result<(JourneyDefinition, Option<String>)> {
     let (journey_id, _, initial, _) = charter_journey(project)?;
-    let advances = accepted_chain(&initial, accepted_advances_excluding(project, excluded_subject)?)?;
+    let advances = if project.feature_workflow_version()? >= 13 {
+        let chain = accepted_chain(&initial, accepted_advances_excluding(project, None)?)?;
+        match excluded_subject {
+            Some(subject) => before(chain, subject),
+            None => chain,
+        }
+    } else {
+        accepted_chain(
+            &initial,
+            accepted_advances_excluding(project, excluded_subject)?,
+        )?
+    };
     let mut frontier = initial;
     let mut prior_owner: Option<String> = None;
     let mut transitions = Vec::new();
@@ -923,7 +934,9 @@ fn accepted_journey_chain(
         if !latest_indices.contains(&index) {
             continue;
         }
-        if excluded_subject == Some(receipt.subject.as_str()) {
+        // From v13 the subject's own step is cut from the full chain below, not removed from it,
+        // so the steps after it stay reachable.
+        if excluded_subject == Some(receipt.subject.as_str()) && !stable_topology {
             continue;
         }
         if !stable_topology
@@ -965,7 +978,20 @@ fn accepted_journey_chain(
             );
         }
     }
+    let chain = match excluded_subject {
+        Some(subject) if stable_topology => before(chain, subject),
+        _ => chain,
+    };
     Ok((initial, chain))
+}
+
+/// Feature Workflow v13: the accepted journey a feature builds on — the full accepted chain, cut
+/// just before that feature's own step when it has one.
+fn before(chain: Advances, subject: &str) -> Advances {
+    chain
+        .into_iter()
+        .take_while(|(owner, ..)| owner != subject)
+        .collect()
 }
 
 /// Order accepted advances `(owner, previous, proposed)` into the one chain that starts at the
@@ -2755,6 +2781,74 @@ pub fn stale_revalidation_verifications(
 
 /// Execute only evidence required by post-acceptance revalidation. This deliberately does not
 /// evaluate ordinary F1-F9 gates: Feature Workflow v5 says revalidation does not reopen them.
+/// Feature Workflow v13: one production revalidation run for several named features, each of which
+/// must wait only on its production-source evidence with qualification current.
+pub fn run_shared_revalidation_production(
+    project: &Project,
+    subjects: &[Subject],
+    trigger: &str,
+) -> Result<Vec<String>> {
+    let ids: BTreeSet<_> = subjects.iter().map(|s| s.id.as_str()).collect();
+    anyhow::ensure!(
+        subjects.len() > 1 && ids.len() == subjects.len(),
+        "a shared revalidation run names at least two distinct features"
+    );
+    let mut log = Vec::new();
+    account_aborted_runs(project, &mut log)?;
+    let mut wants = Vec::new();
+    for subject in subjects {
+        anyhow::ensure!(
+            subject.workflow == Workflow::Feature,
+            "revalidation applies only to features"
+        );
+        stated_environment(project, subject, Some(Environment::Production))?;
+        crate::revalidation::preflight(project, &subject.id, trigger)?;
+        let reruns = planned_verifications(project, subject)?.reruns;
+        let (production, pending): (Vec<_>, Vec<_>) = reruns
+            .into_iter()
+            .partition(|(_, mechanic, _)| Environment::of(mechanic) == Environment::Production);
+        let reason = if !pending.is_empty() {
+            let stale: Vec<_> = pending.iter().map(|(c, m, _)| format!("{c}/{m}")).collect();
+            Some(format!(
+                "deterministic verification is not current: {}. next: run `codeos-workflow check --workflow feature --subject {} --revalidation --trigger {trigger}`",
+                stale.join(", "),
+                subject.id
+            ))
+        } else if production.is_empty() {
+            Some("no production-source evidence is pending".into())
+        } else if !pre_candidate_qualification_current(project, subject)? {
+            Some(production_next(project, subject, Some(trigger))?)
+        } else {
+            None
+        };
+        match reason {
+            Some(reason) => log.push(format!(
+                "production: started nothing; {}: {reason}",
+                subject.id
+            )),
+            None => wants.extend(production.into_iter().map(|(_, _, want)| want)),
+        }
+    }
+    if wants.len() != subjects.len() {
+        return Ok(log);
+    }
+    let outcomes = run_shared_production(project, subjects, &wants);
+    project.refresh_snapshot(); // the verifier ran project code
+    for ((subject, want), outcome) in subjects.iter().zip(wants).zip(outcomes) {
+        record_outcome(
+            project,
+            subject,
+            "F5",
+            "production_source_evidence",
+            want,
+            outcome,
+            Some(Environment::Production),
+            &mut log,
+        )?;
+    }
+    Ok(log)
+}
+
 pub fn run_revalidation_checks(
     project: &Project,
     subject: &Subject,
@@ -3456,8 +3550,9 @@ fn validate_codeos_yaml(project: &Project, yaml: &Path) -> Option<bool> {
 
 fn run_mechanic(project: &Project, subject: &Subject, mechanic: &str) -> evidence::CommandOutcome {
     // Test seam: a `.codeos/06-workflow/.verify-stub` file of `mechanic=pass|fail` lines forces
-    // outcomes without executing anything. A real project never has this file; it is per-project,
-    // so parallel tests do not interfere.
+    // outcomes without executing anything; `pass;key=value;...` also reports those details (a
+    // replay supplies the Observed Surface a real run recorded). A real project never has this
+    // file; it is per-project, so parallel tests do not interfere.
     let stub = project
         .codeos_dir()
         .join("06-workflow")
@@ -3466,11 +3561,18 @@ fn run_mechanic(project: &Project, subject: &Subject, mechanic: &str) -> evidenc
         for entry in spec.split([',', '\n']) {
             if let Some((m, v)) = entry.split_once('=') {
                 if m.trim() == mechanic {
+                    let mut parts = v.trim().split(';');
+                    let result = parts.next().unwrap_or_default();
+                    let details: serde_json::Map<_, _> = parts
+                        .filter_map(|pair| pair.split_once('='))
+                        .map(|(k, v)| (k.to_string(), serde_json::Value::from(v)))
+                        .collect();
                     return evidence::CommandOutcome {
-                        ok: v.trim() == "pass",
+                        ok: result == "pass",
                         command: format!("<stub {mechanic}>"),
-                        summary: format!("{mechanic} (stubbed {})", v.trim()),
-                        details: None,
+                        summary: format!("{mechanic} (stubbed {result})"),
+                        details: (!details.is_empty())
+                            .then_some(serde_json::Value::Object(details)),
                     };
                 }
             }

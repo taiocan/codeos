@@ -46,6 +46,34 @@
       "consumer": "JamFree",
       "commit": "172282b0564daeb7dced63fa578ea8b2272f1b6c",
       "golden": "replay/jamfree-172282b.json"
+    },
+    {
+      "name": "jamfree-7bcc9146-shared-validation",
+      "consumer": "JamFree",
+      "commit": "56d28a2577862f88423d85ae8359d5bf5befc2dc",
+      "golden": "replay/jamfree-7bcc9146-shared-validation.json",
+      "script": "replay/shared-execution.sh"
+    },
+    {
+      "name": "jamfree-f4-pair-a9a2852f",
+      "consumer": "JamFree",
+      "commit": "4b0eaed724566e933dcdcea2910334c4256d9347",
+      "golden": "replay/jamfree-f4-pair.json",
+      "script": "replay/human-session.sh"
+    },
+    {
+      "name": "jamfree-f4-pair-91451275",
+      "consumer": "JamFree",
+      "commit": "dba7beec3143f0b2b475722717e93867e687aeea",
+      "golden": "replay/jamfree-f4-pair.json",
+      "script": "replay/human-session.sh"
+    },
+    {
+      "name": "jamfree-f4-pair-89c5edb7",
+      "consumer": "JamFree",
+      "commit": "e5f44472c00534251f899e95b63fdb78dae66214",
+      "golden": "replay/jamfree-f4-pair.json",
+      "script": "replay/human-session.sh"
     }
   ]
 }
