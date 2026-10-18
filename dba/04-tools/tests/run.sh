@@ -15,6 +15,7 @@ bash "${CODEOS_ROOT}/dba/04-tools/compatibility/validate-support-manifest.sh" \
   "${CODEOS_ROOT}/dba/04-tools/compatibility/support.json" "${CODEOS_ROOT}"
 bash "${CODEOS_ROOT}/dba/04-tools/compatibility/tests/support-lifecycle-tests.sh"
 bash "${CODEOS_ROOT}/dba/04-tools/release/tests/release-identity-tests.sh"
+bash "${CODEOS_ROOT}/dba/04-tools/release/tests/candidate-tests.sh"
 bash "${CODEOS_ROOT}/dba/04-tools/initializer/tests/dba-init-tests.sh"
 bash "${CODEOS_ROOT}/dba/04-tools/reviewer/tests/codeos-review-wrapper.sh"
 bash "${CODEOS_ROOT}/dba/04-tools/reviewer/tests/codeos-review-deepseek-tests.sh"

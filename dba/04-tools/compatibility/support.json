@@ -39,5 +39,13 @@
       "bundle_sha256": "9201d60ed2b1e30d218c2f888111ad844ca81f86459fbe60f533372fbede72fe",
       "golden": "jamfree-8960ca1.json"
     }
+  ],
+  "replay_cases": [
+    {
+      "name": "jamfree-172282b",
+      "consumer": "JamFree",
+      "commit": "172282b0564daeb7dced63fa578ea8b2272f1b6c",
+      "golden": "replay/jamfree-172282b.json"
+    }
   ]
 }

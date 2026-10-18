@@ -1,0 +1,214 @@
+{
+  "bootstrap_status": "BLOCKED",
+  "features": [
+    {
+      "current_checkpoint": null,
+      "current_validity": {
+        "reasons": [],
+        "status": "VALID"
+      },
+      "id": "F-0001",
+      "status": "COMPLETE"
+    },
+    {
+      "current_checkpoint": null,
+      "current_validity": {
+        "reasons": [],
+        "status": "VALID"
+      },
+      "id": "F-0002",
+      "status": "COMPLETE"
+    },
+    {
+      "current_checkpoint": "POST_ACCEPTANCE_REVALIDATION",
+      "current_validity": {
+        "reasons": [
+          "REVALIDATION_REQUIRED"
+        ],
+        "status": "STALE"
+      },
+      "id": "F-0003",
+      "status": "BLOCKED"
+    },
+    {
+      "current_checkpoint": "POST_ACCEPTANCE_REVALIDATION",
+      "current_validity": {
+        "reasons": [
+          "REVALIDATION_REQUIRED"
+        ],
+        "status": "STALE"
+      },
+      "id": "F-0004",
+      "status": "BLOCKED"
+    },
+    {
+      "current_checkpoint": "POST_ACCEPTANCE_REVALIDATION",
+      "current_validity": {
+        "reasons": [
+          "REVALIDATION_REQUIRED"
+        ],
+        "status": "STALE"
+      },
+      "id": "F-0005",
+      "status": "BLOCKED"
+    },
+    {
+      "current_checkpoint": null,
+      "current_validity": {
+        "reasons": [],
+        "status": "VALID"
+      },
+      "id": "F-0006",
+      "status": "COMPLETE"
+    }
+  ],
+  "plans": {
+    "F-0003": [
+      {
+        "action": "reuse",
+        "checkpoint": "F3",
+        "item": "smoke",
+        "reason": "current",
+        "record": "702208f91907bdbef504edf421af0a7689c957ce7aaeb5af5620643364b058d6"
+      },
+      {
+        "action": "reuse",
+        "checkpoint": "F3",
+        "item": "product_journey",
+        "reason": "current",
+        "record": "eb2a204e30c2ef5c43c5d932465cc8af98400b17f3c15c3db23ae60c29d9b2de"
+      },
+      {
+        "action": "reuse",
+        "checkpoint": "F5",
+        "item": "behavior",
+        "reason": "current",
+        "record": "9c74289ae54c456380960010f5bc2dfda1f74213e1f6bf4fc0b4af25a1c89979"
+      },
+      {
+        "action": "reuse",
+        "checkpoint": "F5",
+        "item": "repeatability",
+        "reason": "current",
+        "record": "641cccec78b5e03846e51de40b534ad5502f11533239b3ece136dc6f1335ad40"
+      },
+      {
+        "action": "reuse",
+        "checkpoint": "F5g",
+        "item": "playwright",
+        "reason": "current",
+        "record": "c3f25d50e6eb50e6e4bbfa3a996685f05bdfd231954dd6f1a4b9af08d21aaab7"
+      },
+      {
+        "action": "rerun",
+        "checkpoint": "F5",
+        "item": "production_source_evidence",
+        "reason": "changed:implementation_state"
+      },
+      {
+        "action": "decision_required",
+        "checkpoint": "F4",
+        "item": "decision",
+        "reason": "DECISION"
+      }
+    ],
+    "F-0004": [
+      {
+        "action": "reuse",
+        "checkpoint": "F3",
+        "item": "smoke",
+        "reason": "current",
+        "record": "2bc61ad57b21e3ddee3308401d352b2ebd67dd7829353afb4ffdfafd908fae59"
+      },
+      {
+        "action": "reuse",
+        "checkpoint": "F3",
+        "item": "product_journey",
+        "reason": "current",
+        "record": "9f8eade9d661e6e52ecbf36a7bca17fc0a5622ea78d54d85b369167f0d7c7e49"
+      },
+      {
+        "action": "reuse",
+        "checkpoint": "F5",
+        "item": "behavior",
+        "reason": "current",
+        "record": "17b94d405288f5c90997200fe6df1db1a6d14c980d7984c3c354bd3f8e93a331"
+      },
+      {
+        "action": "reuse",
+        "checkpoint": "F5",
+        "item": "repeatability",
+        "reason": "current",
+        "record": "6dbc66521dca35e9f8a37679979463c174956cb7b3676cc37009627d7f57116d"
+      },
+      {
+        "action": "reuse",
+        "checkpoint": "F5g",
+        "item": "playwright",
+        "reason": "current",
+        "record": "99cfc2cbc2c01dabc539398156e52639b28b199b3261bbb5891debc5254df35b"
+      },
+      {
+        "action": "rerun",
+        "checkpoint": "F5",
+        "item": "production_source_evidence",
+        "reason": "changed:implementation_state"
+      },
+      {
+        "action": "decision_required",
+        "checkpoint": "F4",
+        "item": "decision",
+        "reason": "DECISION"
+      }
+    ],
+    "F-0005": [
+      {
+        "action": "reuse",
+        "checkpoint": "F3",
+        "item": "smoke",
+        "reason": "current",
+        "record": "8bd469b551499e11cc3e4d3c723dd1cf8acfd0e2377c75e4aba1e84674252e24"
+      },
+      {
+        "action": "reuse",
+        "checkpoint": "F3",
+        "item": "product_journey",
+        "reason": "current",
+        "record": "80bbacb3be8f7ab71b743b03a7da748bbe14b8569f6e63ded3d1aba64bf16665"
+      },
+      {
+        "action": "reuse",
+        "checkpoint": "F5",
+        "item": "behavior",
+        "reason": "current",
+        "record": "dfb42044718cb7e14b7f91af5ddac35b101abff5038cc46020d623c5e8a5b027"
+      },
+      {
+        "action": "reuse",
+        "checkpoint": "F5",
+        "item": "repeatability",
+        "reason": "current",
+        "record": "e1d082b816ca1b3810e79c74fcd931b225f862d1b85efa4ca450388951bab970"
+      },
+      {
+        "action": "reuse",
+        "checkpoint": "F5g",
+        "item": "playwright",
+        "reason": "current",
+        "record": "a4c7bee8d997e1e3cb307178451a74db3db4e7e3364bc44237d7b81ecc64b2af"
+      },
+      {
+        "action": "rerun",
+        "checkpoint": "F5",
+        "item": "production_source_evidence",
+        "reason": "changed:implementation_state"
+      },
+      {
+        "action": "decision_required",
+        "checkpoint": "F4",
+        "item": "decision",
+        "reason": "DECISION"
+      }
+    ]
+  }
+}

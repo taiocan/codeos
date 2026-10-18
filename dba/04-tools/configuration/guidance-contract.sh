@@ -205,4 +205,12 @@ rg -q 'It has no approval, lifecycle' "${WORKFLOW_MAP}" || \
 rg -q 'review, or traceability role' "${WORKFLOW_MAP}" || \
   fail 'user workflow map creates governance obligations'
 
+# Hygiene only (DQA WO-01): normative text never names a pinned consumer. Genericity itself rests on
+# consumer facts living only in compatibility and replay fixtures.
+while IFS= read -r consumer; do
+  ! rg -q -i -F -- "${consumer}" "${CODEOS_ROOT}/dba/01-doctrine" "${CODEOS_ROOT}/dba/02-policies" \
+    "${CODEOS_ROOT}/dba/03-prompts" || fail "normative text names consumer ${consumer}"
+done < <(jq -r '[.consumers[].name, (.replay_cases // [])[].consumer] | unique[]' \
+  "${CODEOS_ROOT}/dba/04-tools/compatibility/support.json")
+
 printf 'guidance contract: PASS\n'

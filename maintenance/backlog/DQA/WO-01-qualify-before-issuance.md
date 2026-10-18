@@ -14,7 +14,8 @@ Keep a configuration non-governing until its full release evidence is accepted.
 - **Qualified semantic identity.** `qualified_candidate_sha256` is the sha256 of four things:
   - the candidate's selections;
   - the bytes of every file in its normative closure;
-  - the CodeOS source digest (as computed by `build-qualified-release.sh`);
+  - the CodeOS source digest: the committed Git tree of `dba/` and `dba-system.md`, which holds
+    every tool, policy, test and replay fixture, so a later backlog note does not void an approval;
   - the replay-case definitions and goldens.
 
   Human approval binds this digest. Issuance recomputes it and refuses on any mismatch, which
@@ -71,10 +72,10 @@ no WO-03 environment or provider behavior.
 
 | Step | Status |
 |---|---|
-| 01A | Pending |
+| 01A | Implemented |
 | 01B | Implemented |
 | 01C | Implemented |
-| 01D | Pending |
+| 01D | Implemented |
 
 ## Protected invariant
 

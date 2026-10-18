@@ -21,7 +21,7 @@ normative() {
   esac
 }
 
-# The path a reference names inside the toolkit, if it is one tracked file.
+# The path a reference names inside the toolkit, if it is one file there.
 resolve() {
   local from="$1" ref="$2" candidate
   ref="${ref#.codeos/toolkit/}"
@@ -30,13 +30,13 @@ resolve() {
   elif [[ "${ref}" == */* || "${ref}" == ../* ]]; then
     candidate="$(realpath -m --relative-to="${ROOT}" "${ROOT}/$(dirname "${from}")/${ref}")"
   else
-    candidate="$(awk -F/ -v n="${ref}" '$NF == n' <<<"${TRACKED}")"
+    candidate="$(awk -F/ -v n="${ref}" '$NF == n' <<<"${FILES}")"
     [[ "$(printf '%s\n' "${candidate}" | grep -c .)" -eq 1 ]] || return 1
   fi
   [[ -f "${ROOT}/${candidate}" ]] && printf '%s\n' "${candidate}"
 }
 
-TRACKED="$(git -C "${ROOT}" ls-files -- 'dba/*')"
+FILES="$(cd "${ROOT}" && find dba \( -name target -o -name node_modules \) -prune -o -type f -print)"
 declare -A seen=()
 queue=()
 while IFS= read -r selected; do

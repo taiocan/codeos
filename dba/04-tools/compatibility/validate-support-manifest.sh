@@ -7,6 +7,11 @@ jq -e '.schema == 1 and (.configurations|type == "object") and (.lifecycle|type 
   || fail 'invalid top-level schema'
 jq -e '.consumers | all(.name and .repository and .commit and .bundle and .bundle_sha256 and .golden)' "${MANIFEST}" >/dev/null \
   || fail 'consumer pin is incomplete'
+jq -e '(.replay_cases // []) | all(.name and .consumer and (.commit | test("^[0-9a-f]{40}$")) and .golden)' "${MANIFEST}" >/dev/null \
+  || fail 'replay case is incomplete'
+while IFS= read -r golden; do
+  [[ -f "$(dirname "${MANIFEST}")/${golden}" ]] || fail "replay golden ${golden} is missing"
+done < <(jq -r '(.replay_cases // [])[].golden' "${MANIFEST}")
 while IFS=$'\t' read -r id state; do
   [[ "${state}" =~ ^(supported|deprecated|historical-only)$ ]] || fail "${id} has invalid state ${state}"
   [[ -f "${ROOT}/dba/00-entry/configurations/${id}.yaml" ]] || fail "${id} has no retained configuration"
