@@ -1,6 +1,6 @@
 //! Feature Workflow v13 shared validation (DQA WO-06): one execution or observation may serve
 //! several features' explicit claims; every judgment and acceptance stays feature-specific.
-//! Runs under the DBA-29 candidate in a toolkit copy; never against a provider.
+//! Runs under DBA-29; never against a provider.
 
 mod fai_fixture;
 
@@ -15,8 +15,7 @@ use std::fs;
 const DETERMINISTIC: Option<Environment> = Some(Environment::Deterministic);
 
 fn candidate(scopes: &str) -> Fixture {
-    let (toolkit, id) = candidate_toolkit();
-    Fixture::under_toolkit(toolkit, id, scopes)
+    Fixture::under("DBA-29", scopes)
 }
 
 fn record(fx: &Fixture, feature: &str, checkpoint: &str, mechanic: &str) -> VerificationRecord {

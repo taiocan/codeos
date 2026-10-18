@@ -52,3 +52,10 @@ No live provider run: the stub verifier establishes the accounting criterion det
 
 Found and repaired by the replay (`7c133d9`): a mid-chain feature's journey under stable topology,
 and the missing shared form of production revalidation.
+
+Accepted 2026-10-18: the replay results, and `99a0392b2095ccb2de7f66be565adf24068a87ee6b3f729a2841927bb250dcc6`
+approved for issuance. Issued as DBA-29 on `dqa`; `issue-configuration.sh` recomputed the approved
+identity. The replay proves DBA-29's orchestration and governance semantics, not JamFree's business
+tests or real provider results. Candidate qualification keeps the WO-01 cases (the `jamfree-172282b`
+golden and the DBA-27 residual guards) beside the WO-04 replays. Merging to `main` and JamFree
+adoption remain separate decisions.

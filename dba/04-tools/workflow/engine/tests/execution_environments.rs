@@ -1,6 +1,6 @@
 //! Feature Workflow v13 (DQA WO-03): a feature `check` starts only the verifications its stated
 //! environment authorizes, and a production-source run is accounted from the adapter's ledger.
-//! Runs under the DBA-29 candidate in a toolkit copy; never against a provider.
+//! Runs under DBA-29; never against a provider.
 
 mod fai_fixture;
 
@@ -28,11 +28,10 @@ fn verifier(ledger: &str, exit: u8) -> String {
 
 const ONE_CALL: &str = "printf '{\"schema\":1,\"attempt\":1,\"event\":\"attempt\",\"at\":\"%s\"}\\n{\"schema\":1,\"attempt\":1,\"event\":\"success\",\"at\":\"%s\"}\\n' $at $at >> \"$CODEOS_PROVIDER_LEDGER\"\n";
 
-/// A GUI F-0001 with a reality-dependent claim under the DBA-29 candidate, through F4, with F5 and
+/// A GUI F-0001 with a reality-dependent claim under DBA-29, through F4, with F5 and
 /// F5g stale and the deterministic mechanics stubbed to pass.
 fn gui_feature() -> Fixture {
-    let (toolkit, id) = candidate_toolkit();
-    let fx = Fixture::under_toolkit(toolkit, id, "    provider: [backend]\n");
+    let fx = Fixture::under("DBA-29", "    provider: [backend]\n");
     fx.write(
         "claim-scopes.json",
         r#"{"F-0001": {"route": ["provider"]}}"#,

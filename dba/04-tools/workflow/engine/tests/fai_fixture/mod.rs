@@ -42,46 +42,6 @@ fn toolkit_root() -> &'static Path {
         .unwrap()
 }
 
-/// A copy of this toolkit's working tree with the DBA-29 candidate materialized as its next
-/// configuration, shared by one test binary and replaced by its next run. The real toolkit never holds an unissued numbered
-/// configuration (DQA WO-01), so behavior only a candidate selects is tested here.
-pub fn candidate_toolkit() -> &'static (PathBuf, String) {
-    static TOOLKIT: std::sync::OnceLock<(PathBuf, String)> = std::sync::OnceLock::new();
-    TOOLKIT.get_or_init(|| {
-        // Outside the toolkit, whose own contracts scan its tree; one copy per toolkit and binary.
-        let copy = std::env::temp_dir().join(format!(
-            "codeos-candidate-toolkit-{}-{}",
-            &codeos_workflow::hashing::text_sha256(&toolkit_root().to_string_lossy())[..12],
-            env!("CARGO_CRATE_NAME")
-        ));
-        let _ = fs::remove_dir_all(&copy);
-        fs::create_dir_all(&copy).unwrap();
-        let output = Command::new("bash")
-            .args([
-                "-c",
-                r#"set -euo pipefail
-cd "$1"
-git ls-files -z --cached --others --exclude-standard | xargs -0 cp --parents -t "$2"
-last="$(ls "$2"/dba/00-entry/configurations/DBA-*.yaml | sed 's/.*DBA-\([0-9]*\)\.yaml$/\1/' | sort -n | tail -n1)"
-id="DBA-$((last + 1))"
-source "$2/dba/04-tools/release/candidate-lib.sh"
-materialize_candidate "$2" dba-29 "${id}" 2026-10-18
-printf '%s' "${id}""#,
-                "materialize",
-            ])
-            .arg(toolkit_root())
-            .arg(&copy)
-            .output()
-            .unwrap();
-        assert!(
-            output.status.success(),
-            "{}",
-            String::from_utf8_lossy(&output.stderr)
-        );
-        (copy, String::from_utf8(output.stdout).unwrap())
-    })
-}
-
 pub struct Fixture {
     _dir: tempfile::TempDir,
     pub root: PathBuf,
@@ -93,10 +53,7 @@ impl Fixture {
     }
 
     pub fn under(configuration: &str, scopes: &str) -> Self {
-        Self::under_toolkit(toolkit_root(), configuration, scopes)
-    }
-
-    pub fn under_toolkit(toolkit: &Path, configuration: &str, scopes: &str) -> Self {
+        let toolkit = toolkit_root();
         let dir = tempfile::tempdir().unwrap();
         let fx = Fixture {
             root: dir.path().canonicalize().unwrap(),
