@@ -24,6 +24,15 @@ if bash "${WORK}/dba/04-tools/configuration/verify-configuration-manifest.sh" "$
 fi
 restore dba/05-guidance/terminology.md
 
+# A definition an issued configuration froze cannot be broadened in place for a later one (WO-06:
+# v13 records may cite shared evidence, so v13 adds a new term instead).
+sed -i 's/^\(| \*\*Verification record\*\* |\)/\1 Broadened./' "${WORK}/dba/05-guidance/terminology.md"
+[[ "$(closure DBA-22)" != "$(frozen DBA-22)" ]] || fail 'a broadened Verification record left DBA-22 unchanged'
+if bash "${WORK}/dba/04-tools/configuration/verify-configuration-manifest.sh" "${WORK}" >/dev/null 2>&1; then
+  fail 'the integrity check accepted a broadened frozen term'
+fi
+restore dba/05-guidance/terminology.md
+
 # A normative file DBA-7 reaches only by reference from its selected Reader Output policy.
 printf '\nChanged.\n' >> "${WORK}/dba/05-guidance/reader-oriented-output.md"
 [[ "$(closure DBA-7)" != "$(frozen DBA-7)" ]] || fail 'an indirect normative dependency of DBA-7 changed unnoticed'

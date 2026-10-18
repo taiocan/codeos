@@ -894,22 +894,6 @@ fn accepted_frontier_excluding(
         .map_or(initial, |(_, _, proposed)| proposed.clone()))
 }
 
-/// Feature Workflow v13: the accepted journey producers a feature's journey traverses that are not
-/// currently valid. Topology keeps them; a journey depending on them stays blocked.
-pub fn stale_journey_producers(project: &Project, subject: &Subject) -> Result<Vec<String>> {
-    if subject.workflow != Workflow::Feature || project.feature_workflow_version()? < 13 {
-        return Ok(Vec::new());
-    }
-    let (_, chain) = accepted_journey_chain(project, Some(&subject.id))?;
-    let mut stale = Vec::new();
-    for (owner, ..) in chain {
-        if !crate::revalidation::current_acceptance_valid(project, &owner)? {
-            stale.push(owner);
-        }
-    }
-    Ok(stale)
-}
-
 /// Accepted journey advances as (owner, previous, proposed).
 type Advances = Vec<(String, String, String)>;
 
@@ -1804,20 +1788,6 @@ fn evaluate_checkpoint(
                 }
             }
             Requirement::LiveVerification { name, mechanic } => {
-                if *mechanic == "product_journey" {
-                    let stale = stale_journey_producers(project, subject)?;
-                    if !stale.is_empty() {
-                        unmet.push(format!(
-                            "{name} traverses accepted journey steps whose producers are not currently valid: {}",
-                            stale.join(", ")
-                        ));
-                        next_action.get_or_insert(format!(
-                            "revalidate {} before verifying {name}",
-                            stale.join(", ")
-                        ));
-                        continue;
-                    }
-                }
                 let want = verification_bindings(project, subject, c.id, Some(mechanic))?;
                 let have = vstore.latest(subject.workflow.slug(), &subject.id, c.id, mechanic)?;
                 match verification::evaluate(have, &want) {
@@ -2382,16 +2352,6 @@ fn execute(
     environment: Option<Environment>,
     log: &mut Vec<String>,
 ) -> Result<Step> {
-    if mechanic == "product_journey" {
-        let stale = stale_journey_producers(project, subject)?;
-        if !stale.is_empty() {
-            log.push(format!(
-                "{checkpoint} / {mechanic}: not run; the journey depends on {}, which is not currently valid",
-                stale.join(", ")
-            ));
-            return Ok(Step::Failed);
-        }
-    }
     let want = verification_bindings(project, subject, checkpoint, Some(mechanic))?;
     let slug = subject.workflow.slug();
     let vstore = VerificationStore::at(&project.codeos_dir());
@@ -2835,16 +2795,6 @@ pub fn run_revalidation_checks(
     }
     let store = VerificationStore::at(&project.codeos_dir());
     for (checkpoint, mechanic, want) in runnable {
-        if mechanic == "product_journey" {
-            let stale = stale_journey_producers(project, subject)?;
-            if !stale.is_empty() {
-                log.push(format!(
-                    "{checkpoint} / {mechanic}: not run; the journey depends on {}, which is not currently valid",
-                    stale.join(", ")
-                ));
-                return Ok(log);
-            }
-        }
         let outcome = run_shared(project, subject, mechanic, environment)?;
         project.refresh_snapshot(); // the mechanic ran project code
         log.push(format!("{checkpoint} / {mechanic}: {}", outcome.summary));
@@ -3705,7 +3655,7 @@ fn run_shared_production(
             let evidence: SharedProductionEvidence = serde_json::from_str(&text)
                 .map_err(|error| anyhow::anyhow!("invalid production evidence: {error}"))?;
             anyhow::ensure!(outcome.ok, "production verifier exited unsuccessfully");
-            check_shared_production(&evidence, subjects, &governed, &config.scopes)?;
+            let gaps = check_shared_production(&evidence, subjects, &governed, &config.scopes)?;
             let calls = calls
                 .as_ref()
                 .map_err(|error| anyhow::anyhow!("provider calls cannot be accounted: {error}"))?;
@@ -3721,9 +3671,9 @@ fn run_shared_production(
                 calls.successful,
                 receipts.len()
             );
-            Ok((evidence, text, *calls))
+            Ok((evidence, text, *calls, gaps))
         });
-    let (evidence, text, calls) = match checked {
+    let (evidence, text, calls, gaps) = match checked {
         Ok(checked) => checked,
         Err(error) => {
             return fail_all(accounted(format!(
@@ -3758,20 +3708,34 @@ fn run_shared_production(
     subjects
         .iter()
         .zip(governed)
-        .map(|(subject, governed)| {
-            slice_production_evidence(project, subject, governed, &evidence, &set, &set_outcome)
-                .unwrap_or_else(|error| failure(format!("persist production evidence: {error}")))
+        .zip(gaps)
+        .map(|((subject, governed), gap)| match gap {
+            // The run is shared; each feature's validity is not.
+            Some(gap) => failure(format!(
+                "{} -> FAILED for {} ({gap}; Validation Evidence Set {})",
+                set_outcome.summary,
+                subject.id,
+                short(&set)
+            )),
+            None => {
+                slice_production_evidence(project, subject, governed, &evidence, &set, &set_outcome)
+                    .unwrap_or_else(|error| {
+                        failure(format!("persist production evidence: {error}"))
+                    })
+            }
         })
         .collect()
 }
 
-/// A shared production run's evidence must cover exactly the named features and their claims.
+/// A shared production run's evidence: run-level defects (form, source, provenance, a claim no
+/// named feature owns, an unnamed feature) fail the whole run; each named feature whose own entry
+/// or claim coverage is wrong fails alone, with the reason returned in its position.
 fn check_shared_production(
     evidence: &SharedProductionEvidence,
     subjects: &[Subject],
     governed: &[BTreeMap<String, String>],
     scopes: &BTreeMap<String, Vec<String>>,
-) -> Result<()> {
+) -> Result<Vec<Option<String>>> {
     anyhow::ensure!(evidence.schema == 3, "evidence schema does not match");
     anyhow::ensure!(
         evidence.source_kind == "production" && !evidence.provider.trim().is_empty(),
@@ -3782,56 +3746,81 @@ fn check_shared_production(
         "evidence requires observation time and user-visible observations"
     );
     let named: BTreeSet<_> = subjects.iter().map(|s| s.id.as_str()).collect();
-    let stated: BTreeSet<_> = evidence
-        .subjects
-        .iter()
-        .map(|s| s.subject.as_str())
-        .collect();
-    anyhow::ensure!(
-        named == stated && evidence.subjects.len() == subjects.len(),
-        "evidence does not cover exactly the named features"
-    );
-    let mut expected = BTreeSet::new();
-    for (subject, governed) in subjects.iter().zip(governed) {
-        let entry = evidence
-            .subjects
-            .iter()
-            .find(|entry| entry.subject == subject.id)
-            .expect("checked above");
-        let claims: BTreeSet<_> = subject.reality_claims.iter().cloned().collect();
-        let actual: BTreeSet<_> = entry.claims.iter().cloned().collect();
+    let mut stated = BTreeSet::new();
+    for entry in &evidence.subjects {
         anyhow::ensure!(
-            actual == claims && entry.claims.len() == actual.len(),
-            "evidence does not cover {}'s exact reality-dependent claim set",
-            subject.id
+            named.contains(entry.subject.as_str()) && stated.insert(entry.subject.as_str()),
+            "evidence states feature {} that the run did not name, or states it twice",
+            entry.subject
         );
-        anyhow::ensure!(
-            entry.governed_inputs == *governed,
-            "evidence bindings for {} do not match its governed inputs",
-            subject.id
-        );
-        for (claim, names) in &entry.claim_scopes {
-            let unique: BTreeSet<_> = names.iter().collect();
-            anyhow::ensure!(
-                claims.contains(claim)
-                    && unique.len() == names.len()
-                    && names.iter().all(|name| scopes.contains_key(name)),
-                "{}'s claim '{claim}' states an undeclared or duplicated Evidence Scope",
-                subject.id
-            );
-        }
-        expected.extend(claims.iter().map(|claim| format!("{}/{claim}", subject.id)));
     }
-    let covered: BTreeSet<_> = evidence
+    let owned: BTreeSet<String> = subjects
+        .iter()
+        .flat_map(|s| {
+            s.reality_claims
+                .iter()
+                .map(move |c| format!("{}/{c}", s.id))
+        })
+        .collect();
+    let covered: BTreeSet<String> = evidence
         .observations
         .iter()
         .flat_map(|observation| observation.claim_ids.iter().cloned())
         .collect();
-    anyhow::ensure!(
-        covered == expected,
-        "production observations do not cover exactly the named features' claims"
-    );
-    check_observations(&evidence.observations)
+    if let Some(foreign) = covered.difference(&owned).next() {
+        anyhow::bail!("production observation names '{foreign}', which no named feature claims");
+    }
+    check_observations(&evidence.observations)?;
+    Ok(subjects
+        .iter()
+        .zip(governed)
+        .map(|(subject, governed)| {
+            subject_evidence_gap(evidence, subject, governed, scopes, &covered)
+        })
+        .collect())
+}
+
+/// Why a shared run's evidence does not establish one named feature, if it does not.
+fn subject_evidence_gap(
+    evidence: &SharedProductionEvidence,
+    subject: &Subject,
+    governed: &BTreeMap<String, String>,
+    scopes: &BTreeMap<String, Vec<String>>,
+    covered: &BTreeSet<String>,
+) -> Option<String> {
+    let Some(entry) = evidence.subjects.iter().find(|e| e.subject == subject.id) else {
+        return Some("evidence does not state this feature".into());
+    };
+    let claims: BTreeSet<_> = subject.reality_claims.iter().cloned().collect();
+    let actual: BTreeSet<_> = entry.claims.iter().cloned().collect();
+    if actual != claims || entry.claims.len() != actual.len() {
+        return Some("evidence does not cover the exact reality-dependent claim set".into());
+    }
+    if entry.governed_inputs != *governed {
+        return Some("evidence bindings do not match the governed inputs".into());
+    }
+    for (claim, names) in &entry.claim_scopes {
+        let unique: BTreeSet<_> = names.iter().collect();
+        if !claims.contains(claim)
+            || unique.len() != names.len()
+            || !names.iter().all(|name| scopes.contains_key(name))
+        {
+            return Some(format!(
+                "claim '{claim}' states an undeclared or duplicated Evidence Scope"
+            ));
+        }
+    }
+    let missing: Vec<_> = claims
+        .iter()
+        .filter(|claim| !covered.contains(&format!("{}/{claim}", subject.id)))
+        .cloned()
+        .collect();
+    (!missing.is_empty()).then(|| {
+        format!(
+            "production observations do not cover claim {}",
+            missing.join(", ")
+        )
+    })
 }
 
 /// One feature's slice of a shared production run, persisted as its own production-source

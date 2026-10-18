@@ -213,10 +213,10 @@ fn a_shared_production_run_starts_nothing_unless_every_named_feature_is_ready() 
     assert!(!fx.root.join(".codeos/06-workflow/provider-ledger").exists());
 }
 
-/// Criterion 4 of WO-06: a stale accepted feature stays in the journey topology but cannot
-/// satisfy a dependent journey.
+/// Criterion 4 of WO-06: a stale accepted feature stays in the journey topology; position alone
+/// blocks no later feature, while a claim inherited from it stays blocked until it is current.
 #[test]
-fn a_stale_producer_stays_in_the_topology_and_blocks_its_dependents() {
+fn a_stale_producer_stays_in_the_topology_and_blocks_only_what_consumes_it() {
     let fx = candidate("    provider: [backend]\n");
     fx.write(
         "claim-scopes.json",
@@ -227,10 +227,6 @@ fn a_stale_producer_stays_in_the_topology_and_blocks_its_dependents() {
     fx.check("F-0001");
     let evidence = fx.evidence("F-0001");
     fx.accept("F-0001", Some(&evidence));
-    assert_eq!(
-        codeos_workflow::checker::current_accepted_frontier(&fx.project()).unwrap(),
-        "decided"
-    );
     std::thread::sleep(std::time::Duration::from_millis(1100));
     fx.write("backend/Cargo.lock", "# rustls 0.23.46\n");
     commit(&fx, "stale F-0001");
@@ -242,25 +238,61 @@ fn a_stale_producer_stays_in_the_topology_and_blocks_its_dependents() {
         "decided",
         "staleness does not remove the accepted step"
     );
+
+    // A later feature in the same journey with no currentness dependency on F-0001.
     fx.spec(
         "F-0002",
         "mode: advance\nprevious_frontier: decided\nproposed_frontier: returned\ntransition: the driver returns",
         "",
     );
-    commit(&fx, "dependent");
-    let (state, unmet) = fx.state("F-0002", "F3");
-    assert_eq!(state, State::Blocked);
-    assert!(
-        unmet
-            .iter()
-            .any(|u| u.contains("not currently valid: F-0001")),
-        "{unmet:?}"
+    // A feature inheriting F-0001's claim.
+    fx.spec(
+        "F-0003",
+        "mode: preserve\nreason: summarizes the route",
+        "| summary | Route summary | inherited | F-0001/route | as F-0001 | as F-0001 | none | simulated |\n",
     );
-    fx.seed("F-0002", "F3", "smoke");
-    let log = run_checks(&fx.project(), &fx.subject("F-0002"), DETERMINISTIC).unwrap();
+    commit(&fx, "later features");
+    for feature in ["F-0002", "F-0003"] {
+        fx.seed(feature, "F3", "smoke");
+        fx.seed(feature, "F3", "product_journey");
+    }
+    assert_eq!(
+        fx.state("F-0002", "F3").0,
+        State::Pass,
+        "position alone blocks nothing"
+    );
+    run_checks(&fx.project(), &fx.subject("F-0002"), DETERMINISTIC).unwrap();
+    assert_eq!(fx.state("F-0002", "F5").0, State::Pass);
+    run_checks(&fx.project(), &fx.subject("F-0003"), DETERMINISTIC).unwrap();
+    let (state, unmet) = fx.state("F-0003", "F5");
+    assert_ne!(
+        state,
+        State::Pass,
+        "an inherited claim from a stale feature stays blocked"
+    );
+    assert!(unmet.iter().any(|u| u.contains("summary")), "{unmet:?}");
+}
+
+/// The physical run is shared; each feature's validity is not. B's missing claim fails B alone.
+#[test]
+fn a_feature_the_shared_run_does_not_establish_fails_alone() {
+    let fx = waiting_on_production(&["F-0001", "F-0002"]);
+    // The verifier observes only F-0001's claim.
+    fx.write(
+        "scripts/verify.sh",
+        &SHARED_VERIFIER.replace(
+            r#"[$d.subjects[] | .subject as $f | .claims[] | "\($f)/\(.)"]"#,
+            r#"["F-0001/route"]"#,
+        ),
+    );
+    commit(&fx, "partial verifier");
+    let subjects = [fx.subject("F-0001"), fx.subject("F-0002")];
+    let log = run_shared_production_check(&fx.project(), &subjects).unwrap();
+    assert_eq!(fx.state("F-0001", "F5").0, State::Pass, "{log:?}");
+    assert_ne!(fx.state("F-0002", "F5").0, State::Pass);
     assert!(
         log.iter()
-            .any(|l| l.contains("not run; the journey depends on F-0001")),
+            .any(|l| l.contains("FAILED for F-0002") && l.contains("do not cover claim route")),
         "{log:?}"
     );
 }
@@ -574,7 +606,127 @@ fn the_session_command_lists_questions_and_seals_stated_outcomes() {
         "--rationale",
         "one look",
     ]);
-    assert!(sealed.status.success(), "{}", String::from_utf8_lossy(&sealed.stderr));
+    assert!(
+        sealed.status.success(),
+        "{}",
+        String::from_utf8_lossy(&sealed.stderr)
+    );
     assert_eq!(fx.state("F-0001", "F4").0, State::Pass);
     assert_eq!(fx.state("F-0002", "F4").0, State::Pass);
+}
+
+/// A successor ID removes the illegal identity reuse but inherits no evidence: a human claim's
+/// successor needs its own session outcome.
+#[test]
+fn a_successor_human_claim_is_unproven_until_its_own_outcome() {
+    let fx = candidate("    provider: [backend]\n");
+    gui_spec(&fx, "F-0001");
+    claims_table(
+        &fx,
+        "F-0001",
+        "| F-0001/readable | The page is readable. | F4 | observation:human |\n",
+    );
+    commit(&fx, "spec");
+    observe(&fx, "F-0001", "surface-1");
+    session::record(
+        &fx.project(),
+        vec![outcome(
+            "F-0001",
+            "direction_confirmed",
+            &[("F-0001/readable", "met")],
+        )],
+        "seen",
+    )
+    .unwrap();
+    assert_eq!(fx.state("F-0001", "F4").0, State::Pass);
+
+    let contract = fx
+        .root
+        .join(".codeos/01-specification/contracts/F-0001_contract.md");
+    let text = fs::read_to_string(&contract).unwrap();
+    fs::write(
+        &contract,
+        text.replace(
+            "| F-0001/readable | The page is readable. |",
+            "| F-0001/readable-at-night | The page is readable in dark mode. |",
+        ),
+    )
+    .unwrap();
+    observe(&fx, "F-0001", "surface-1");
+    let reports = codeos_workflow::checker::evaluate(&fx.project(), &fx.subject("F-0001")).unwrap();
+    assert!(
+        !reports.iter().any(|r| r.id == "validation-claims"),
+        "the identity block is clear"
+    );
+    assert_ne!(
+        fx.state("F-0001", "F4").0,
+        State::Pass,
+        "the predecessor's outcome does not prove the successor"
+    );
+    // A new session must state the successor; the predecessor's ID no longer counts.
+    let error = session::record(
+        &fx.project(),
+        vec![outcome(
+            "F-0001",
+            "direction_confirmed",
+            &[("F-0001/readable", "met")],
+        )],
+        "seen again",
+    )
+    .unwrap_err();
+    assert!(
+        error.to_string().contains("F-0001/readable-at-night"),
+        "{error}"
+    );
+    session::record(
+        &fx.project(),
+        vec![outcome(
+            "F-0001",
+            "direction_confirmed",
+            &[("F-0001/readable-at-night", "met")],
+        )],
+        "seen again",
+    )
+    .unwrap();
+    assert_eq!(fx.state("F-0001", "F4").0, State::Pass);
+}
+
+/// A `run:` successor is satisfied only by a record bound to the current Contract: the record that
+/// proved the predecessor is stale once the Contract changes.
+#[test]
+fn a_successor_run_claim_needs_a_record_bound_to_the_current_contract() {
+    let fx = candidate("    provider: [backend]\n");
+    fx.spec("F-0001", "mode: preserve\nreason: one", "");
+    claims_table(
+        &fx,
+        "F-0001",
+        "| F-0001/route | The route is shown. | F5 | run:behavior |\n",
+    );
+    commit(&fx, "spec");
+    fx.check("F-0001");
+    fx.accept("F-0001", None);
+    let contract = fx
+        .root
+        .join(".codeos/01-specification/contracts/F-0001_contract.md");
+    let text = fs::read_to_string(&contract).unwrap();
+    fs::write(
+        &contract,
+        text.replace(
+            "| F-0001/route | The route is shown. |",
+            "| F-0001/route-with-toll | The route and its toll are shown. |",
+        ),
+    )
+    .unwrap();
+    fx.seed("F-0001", "F3", "smoke");
+    fx.seed("F-0001", "F3", "product_journey");
+    let (state, unmet) = fx.state("F-0001", "F5");
+    assert_ne!(
+        state,
+        State::Pass,
+        "the predecessor's record does not prove the successor"
+    );
+    assert!(
+        unmet.iter().any(|u| u.contains("'contract' changed")),
+        "{unmet:?}"
+    );
 }
