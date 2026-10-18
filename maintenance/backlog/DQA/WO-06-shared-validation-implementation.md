@@ -72,3 +72,7 @@ is regenerated. This is the compatibility boundary, not an open defect.
 Glossary: **Verification record** is frozen by DBA-6..DBA-22 (`term:` closure rows), so it is not
 edited; v13 uses the forward-only term **Attributed verification record**. The semantic-closure
 tests prove that broadening the frozen definition fails the integrity check.
+
+Accepted 2026-10-18, with existing-evidence reuse for successor `run:` claims subject to the
+coverage invariant now stated in v13 (semantic change invalidates attribution, not execution
+evidence; coverage is judged by Contract approval and Stage 8, not by Codeos).
