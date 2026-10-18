@@ -41,3 +41,25 @@ into a verification that requires deterministic mode.
 5. No provider budget or threshold is invented by CodeOS.
 6. A later shared-validation consumer can distinguish deterministic and production executions
    without inspecting an ambient environment variable.
+
+## Approved semantics (2026-10-18)
+
+Owned by Feature Workflow v13 (`dba/02-policies/workflow-feature/v13.md`), selected only by the
+DBA-29 candidate (`maintenance/candidates/dba-29.yaml`); issued DBA-2..28 are unchanged and
+JamFree's Playwright guard keeps protecting DBA-28.
+
+- `check --environment deterministic|production` (default deterministic). F5 production-source
+  evidence runs only in production, every other verification only in deterministic. Codeos never
+  sets or reads the provider mode; processes receive `CODEOS_EXECUTION_ENVIRONMENT` and records
+  state `execution_environment`.
+- A deterministic `check` completes the deterministic verifications through the checkpoints after
+  F5 that require only verifications, then names the next command. A production `check` starts
+  only when those and the pre-candidate project qualification are current.
+- Accounting from the adapter's per-attempt ledger: attempted, successful, failed, unresolved,
+  total; successful must equal the distinct provider receipts; an aborted run is counted by the
+  next production `check`. No budget or threshold.
+- Decisions: (a) v13 only; (b) the JamFree adapter writes the ledger at DBA-29 adoption.
+
+Implementation choice: Codeos creates each run's ledger under `.codeos/06-workflow/provider-ledger/`
+instead of the project declaring a path, so the ledger can never change the implementation state
+the evidence binds.

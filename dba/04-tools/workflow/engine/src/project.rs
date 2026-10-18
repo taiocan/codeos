@@ -212,7 +212,7 @@ impl Project {
         self.selected_policy_version(
             "workflow_feature_policy",
             "dba/02-policies/workflow-feature/v1.md",
-            &[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+            &[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13],
         )
     }
 

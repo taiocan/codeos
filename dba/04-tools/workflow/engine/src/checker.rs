@@ -14,6 +14,7 @@ use crate::contract::{
     contract_for, ActionType, Applies, Checkpoint, ReasonCode, Requirement, Workflow,
 };
 use crate::evidence;
+use crate::execution::Environment;
 use crate::hashing;
 use crate::project::Project;
 use crate::receipts::{self, Receipt, ReceiptState, ReceiptStore};
@@ -2031,15 +2032,21 @@ fn settle_actor(
 /// governed inputs. Stops at the first failing verification, or at the first checkpoint `check`
 /// cannot advance (one blocked on an approval, a receipt, or review — not on a mechanical
 /// verification). Returns one human-readable line per verification attempted; writes nothing else.
-pub fn run_checks(project: &Project, subject: &Subject) -> Result<Vec<String>> {
+pub fn run_checks(
+    project: &Project,
+    subject: &Subject,
+    environment: Option<Environment>,
+) -> Result<Vec<String>> {
+    let environment = stated_environment(project, subject, environment)?;
     let contract = contract_for(
         subject.workflow,
         project.feature_workflow_version()?,
         project.operation_workflow_version()?,
     );
-    let vstore = VerificationStore::at(&project.codeos_dir());
-    let slug = subject.workflow.slug();
     let mut log = Vec::new();
+    if environment == Some(Environment::Production) {
+        return run_production_check(project, subject, &contract, log);
+    }
 
     loop {
         let reports = evaluate(project, subject)?;
@@ -2055,70 +2062,315 @@ pub fn run_checks(project: &Project, subject: &Subject) -> Result<Vec<String>> {
         let Some(c) = contract.iter().find(|c| c.id == stuck.id) else {
             break;
         };
-        let mechanics: Vec<&'static str> = c
-            .requirements
-            .iter()
-            .filter_map(|r| match r {
-                Requirement::LiveVerification { mechanic, .. } => Some(*mechanic),
-                Requirement::ProductionSourceEvidence if !subject.reality_claims.is_empty() => {
-                    Some("production_source_evidence")
-                }
-                _ => None,
-            })
-            .collect();
+        let mechanics = checkpoint_mechanics(c, subject);
         if mechanics.is_empty() {
             break; // this checkpoint waits on a human decision or a non-mechanical condition
         }
 
         let mut progressed = false;
+        let mut production_pending = false;
         for mechanic in mechanics {
-            let want = verification_bindings(project, subject, &stuck.id, Some(mechanic))?;
-            let have = vstore.latest(slug, &subject.id, &stuck.id, mechanic)?;
-            if matches!(verification::evaluate(have, &want), RecordState::Current(_)) {
-                continue; // already verified against the current inputs
+            if environment.is_some_and(|env| Environment::of(mechanic) != env) {
+                // Feature Workflow v13: never started outside its environment.
+                production_pending |= !is_current(project, subject, c.id, mechanic)?;
+                continue;
             }
-            let outcome = run_mechanic(project, subject, mechanic);
-            project.refresh_snapshot(); // the mechanic ran project code
-            log.push(format!("{} / {mechanic}: {}", stuck.id, outcome.summary));
-            if !outcome.ok {
-                if mechanic == "product_journey" && project.workflow_governance_version()? >= 2 {
-                    vstore.append(&VerificationRecord {
-                        workflow: slug.to_string(),
-                        subject: subject.id.clone(),
-                        checkpoint: stuck.id.clone(),
-                        verification: mechanic.to_string(),
-                        result: "failed".to_string(),
-                        bindings: want.clone(),
-                        command: outcome.command.clone(),
-                        timestamp: chrono::Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string(),
-                        details: outcome.details.clone(),
-                    })?;
+            match execute(project, subject, c.id, mechanic, environment, &mut log)? {
+                Step::Current => {}
+                Step::Passed => progressed = true,
+                Step::Failed => return Ok(log), // fail closed at the first failing verification
+            }
+        }
+        if production_pending {
+            // The checkpoint now waits only on production-source evidence: complete the
+            // deterministic verifications that follow it, then name the production run.
+            for (checkpoint, mechanic) in production_window(&contract, subject, c.id) {
+                if checkpoint == c.id {
+                    continue;
                 }
-                return Ok(log); // fail closed at the first failing verification
+                if execute(
+                    project,
+                    subject,
+                    checkpoint,
+                    mechanic,
+                    environment,
+                    &mut log,
+                )? == Step::Failed
+                {
+                    return Ok(log);
+                }
             }
-            let command = if outcome.command.is_empty() {
-                mechanic.to_string()
-            } else {
-                outcome.command.clone()
-            };
-            let (bindings, details) = recorded_bindings(want, outcome.details);
-            vstore.append(&VerificationRecord {
-                workflow: slug.to_string(),
-                subject: subject.id.clone(),
-                checkpoint: stuck.id.clone(),
-                verification: mechanic.to_string(),
-                result: "passed".to_string(),
-                bindings,
-                command,
-                timestamp: chrono::Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string(),
-                details,
-            })?;
-            progressed = true;
+            log.push(production_next(project, subject, None)?);
+            return Ok(log);
         }
         if !progressed {
             break; // nothing left check can do for this checkpoint
         }
     }
+    Ok(log)
+}
+
+/// The environment a feature `check` runs in: stated only under Feature Workflow v13, where it
+/// defaults to deterministic; earlier versions keep their single undivided run.
+fn stated_environment(
+    project: &Project,
+    subject: &Subject,
+    environment: Option<Environment>,
+) -> Result<Option<Environment>> {
+    let v13 = subject.workflow == Workflow::Feature && project.feature_workflow_version()? >= 13;
+    anyhow::ensure!(
+        v13 || environment.is_none(),
+        "--environment requires a feature under Feature Workflow v13"
+    );
+    Ok(v13.then(|| environment.unwrap_or(Environment::Deterministic)))
+}
+
+/// The mechanics a checkpoint's verification requirements name, in contract order.
+fn checkpoint_mechanics(c: &Checkpoint, subject: &Subject) -> Vec<&'static str> {
+    c.requirements
+        .iter()
+        .filter_map(|r| match r {
+            Requirement::LiveVerification { mechanic, .. } => Some(*mechanic),
+            Requirement::ProductionSourceEvidence if !subject.reality_claims.is_empty() => {
+                Some("production_source_evidence")
+            }
+            _ => None,
+        })
+        .collect()
+}
+
+/// Feature Workflow v13: the deterministic verifications a production-source run waits on — its
+/// checkpoint's own, then those of each following checkpoint that requires only verifications, up
+/// to the first that requires anything else.
+fn production_window(
+    contract: &[Checkpoint],
+    subject: &Subject,
+    from: &str,
+) -> Vec<(&'static str, &'static str)> {
+    let mut window = Vec::new();
+    let mut started = false;
+    for c in contract {
+        if !started {
+            if c.id != from {
+                continue;
+            }
+            started = true;
+        } else if !applies(c.applies, subject) {
+            continue;
+        } else if !c
+            .requirements
+            .iter()
+            .all(|r| matches!(r, Requirement::LiveVerification { .. }))
+        {
+            break;
+        }
+        for r in &c.requirements {
+            if let Requirement::LiveVerification { mechanic, .. } = r {
+                window.push((c.id, *mechanic));
+            }
+        }
+    }
+    window
+}
+
+fn is_current(
+    project: &Project,
+    subject: &Subject,
+    checkpoint: &str,
+    mechanic: &str,
+) -> Result<bool> {
+    let want = verification_bindings(project, subject, checkpoint, Some(mechanic))?;
+    let have = VerificationStore::at(&project.codeos_dir()).latest(
+        subject.workflow.slug(),
+        &subject.id,
+        checkpoint,
+        mechanic,
+    )?;
+    Ok(matches!(
+        verification::evaluate(have, &want),
+        RecordState::Current(_)
+    ))
+}
+
+#[derive(Debug, PartialEq, Eq)]
+enum Step {
+    Current,
+    Passed,
+    Failed,
+}
+
+/// Run one verification unless it is current, and record it. Under Feature Workflow v13 its
+/// processes are told the stated environment and its record states it.
+fn execute(
+    project: &Project,
+    subject: &Subject,
+    checkpoint: &str,
+    mechanic: &'static str,
+    environment: Option<Environment>,
+    log: &mut Vec<String>,
+) -> Result<Step> {
+    let want = verification_bindings(project, subject, checkpoint, Some(mechanic))?;
+    let slug = subject.workflow.slug();
+    let vstore = VerificationStore::at(&project.codeos_dir());
+    let have = vstore.latest(slug, &subject.id, checkpoint, mechanic)?;
+    if matches!(verification::evaluate(have, &want), RecordState::Current(_)) {
+        return Ok(Step::Current); // already verified against the current inputs
+    }
+    let outcome = match environment {
+        Some(env) => crate::execution::within(env, || run_mechanic(project, subject, mechanic)),
+        None => run_mechanic(project, subject, mechanic),
+    };
+    project.refresh_snapshot(); // the mechanic ran project code
+    log.push(format!("{checkpoint} / {mechanic}: {}", outcome.summary));
+    let stamped = |details: Option<serde_json::Value>| match environment {
+        Some(env) => Some(crate::execution::stamp(details, env)),
+        None => details,
+    };
+    if !outcome.ok {
+        if mechanic == "product_journey" && project.workflow_governance_version()? >= 2 {
+            vstore.append(&VerificationRecord {
+                workflow: slug.to_string(),
+                subject: subject.id.clone(),
+                checkpoint: checkpoint.to_string(),
+                verification: mechanic.to_string(),
+                result: "failed".to_string(),
+                bindings: want,
+                command: outcome.command.clone(),
+                timestamp: chrono::Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string(),
+                details: stamped(outcome.details),
+            })?;
+        }
+        return Ok(Step::Failed);
+    }
+    let command = if outcome.command.is_empty() {
+        mechanic.to_string()
+    } else {
+        outcome.command.clone()
+    };
+    let (bindings, details) = recorded_bindings(want, outcome.details);
+    vstore.append(&VerificationRecord {
+        workflow: slug.to_string(),
+        subject: subject.id.clone(),
+        checkpoint: checkpoint.to_string(),
+        verification: mechanic.to_string(),
+        result: "passed".to_string(),
+        bindings,
+        command,
+        timestamp: chrono::Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string(),
+        details: stamped(details),
+    })?;
+    Ok(Step::Passed)
+}
+
+/// The next command once only production-source evidence is pending: the pre-candidate project
+/// qualification it waits on, else the production run itself.
+fn production_next(project: &Project, subject: &Subject, trigger: Option<&str>) -> Result<String> {
+    let revalidation = trigger
+        .map(|trigger| format!(" --revalidation --trigger {trigger}"))
+        .unwrap_or_default();
+    Ok(if pre_candidate_qualification_current(project, subject)? {
+        format!(
+            "next: production-source evidence is pending; run `codeos-workflow check --workflow feature --subject {}{revalidation} --environment production`",
+            subject.id
+        )
+    } else {
+        format!(
+            "next: production-source evidence waits on the pre-candidate project qualification; run `codeos-workflow qualify-project --mode acceptance --subject {}`",
+            subject.id
+        )
+    })
+}
+
+fn pre_candidate_qualification_current(project: &Project, subject: &Subject) -> Result<bool> {
+    let want =
+        verification_bindings_for_mechanic(project, subject, "candidate", "project_qualification")?;
+    let have = VerificationStore::at(&project.codeos_dir()).latest(
+        "feature",
+        &subject.id,
+        "candidate",
+        "project_qualification",
+    )?;
+    Ok(matches!(
+        verification::evaluate(have, &want),
+        RecordState::Current(_)
+    ))
+}
+
+/// Report every production run that started but never recorded its totals.
+fn account_aborted_runs(project: &Project, log: &mut Vec<String>) -> Result<()> {
+    for (run, calls) in crate::execution::account_unfinished(project)? {
+        log.push(match calls {
+            Ok(calls) => format!("provider run {run} ended without accounting: {calls}"),
+            Err(error) => format!("provider run {run} ended without accounting and its ledger cannot be counted: {error}"),
+        });
+    }
+    Ok(())
+}
+
+/// Feature Workflow v13 production `check`: production-source evidence alone, started only when
+/// F5 is the first unresolved checkpoint and everything deterministic it waits on is current.
+fn run_production_check(
+    project: &Project,
+    subject: &Subject,
+    contract: &[Checkpoint],
+    mut log: Vec<String>,
+) -> Result<Vec<String>> {
+    account_aborted_runs(project, &mut log)?;
+    let deterministic = format!(
+        "run `codeos-workflow check --workflow feature --subject {}`",
+        subject.id
+    );
+    let reports = evaluate(project, subject)?;
+    let stuck = reports
+        .iter()
+        .find(|r| matches!(r.state, State::Blocked | State::Waiting));
+    let Some(c) = stuck.and_then(|stuck| contract.iter().find(|c| c.id == stuck.id)) else {
+        log.push(
+            "production: nothing to run; no checkpoint waits on production-source evidence".into(),
+        );
+        return Ok(log);
+    };
+    if !checkpoint_mechanics(c, subject).contains(&"production_source_evidence")
+        || stuck.is_some_and(|s| s.unmet.iter().any(|u| u.contains("earlier checkpoint")))
+    {
+        log.push(format!(
+            "production: started nothing; {} does not wait on production-source evidence. next: {deterministic}",
+            c.id
+        ));
+        return Ok(log);
+    }
+    let stale: Vec<String> = production_window(contract, subject, c.id)
+        .into_iter()
+        .filter_map(|(checkpoint, mechanic)| {
+            match is_current(project, subject, checkpoint, mechanic) {
+                Ok(true) => None,
+                Ok(false) => Some(Ok(format!("{checkpoint}/{mechanic}"))),
+                Err(error) => Some(Err(error)),
+            }
+        })
+        .collect::<Result<_>>()?;
+    if !stale.is_empty() {
+        log.push(format!(
+            "production: started nothing; deterministic verification is not current: {}. next: {deterministic}",
+            stale.join(", ")
+        ));
+        return Ok(log);
+    }
+    if !pre_candidate_qualification_current(project, subject)? {
+        log.push(format!(
+            "production: started nothing; {}",
+            production_next(project, subject, None)?
+        ));
+        return Ok(log);
+    }
+    execute(
+        project,
+        subject,
+        c.id,
+        "production_source_evidence",
+        Some(Environment::Production),
+        &mut log,
+    )?;
     Ok(log)
 }
 
@@ -2301,16 +2553,46 @@ pub fn run_revalidation_checks(
     project: &Project,
     subject: &Subject,
     trigger: &str,
+    environment: Option<Environment>,
 ) -> Result<Vec<String>> {
     anyhow::ensure!(
         subject.workflow == Workflow::Feature,
         "revalidation applies only to features"
     );
+    let environment = stated_environment(project, subject, environment)?;
     crate::revalidation::preflight(project, &subject.id, trigger)?;
-    let store = VerificationStore::at(&project.codeos_dir());
     let mut log = Vec::new();
-    for (checkpoint, mechanic, want) in planned_verifications(project, subject)?.reruns {
-        let outcome = run_mechanic(project, subject, mechanic);
+    let reruns = planned_verifications(project, subject)?.reruns;
+    // Feature Workflow v13: each environment runs only its own reruns; production waits until
+    // every deterministic rerun and the pre-candidate project qualification are current.
+    let (runnable, pending): (Vec<_>, Vec<_>) = reruns.into_iter().partition(|(_, mechanic, _)| {
+        environment.is_none_or(|env| Environment::of(mechanic) == env)
+    });
+    if environment == Some(Environment::Production) {
+        account_aborted_runs(project, &mut log)?;
+        if !pending.is_empty() {
+            let stale: Vec<_> = pending.iter().map(|(c, m, _)| format!("{c}/{m}")).collect();
+            log.push(format!(
+                "production: started nothing; deterministic verification is not current: {}. next: run `codeos-workflow check --workflow feature --subject {} --revalidation --trigger {trigger}`",
+                stale.join(", "),
+                subject.id
+            ));
+            return Ok(log);
+        }
+        if !runnable.is_empty() && !pre_candidate_qualification_current(project, subject)? {
+            log.push(format!(
+                "production: started nothing; {}",
+                production_next(project, subject, Some(trigger))?
+            ));
+            return Ok(log);
+        }
+    }
+    let store = VerificationStore::at(&project.codeos_dir());
+    for (checkpoint, mechanic, want) in runnable {
+        let outcome = match environment {
+            Some(env) => crate::execution::within(env, || run_mechanic(project, subject, mechanic)),
+            None => run_mechanic(project, subject, mechanic),
+        };
         project.refresh_snapshot(); // the mechanic ran project code
         log.push(format!("{checkpoint} / {mechanic}: {}", outcome.summary));
         if !outcome.ok {
@@ -2330,8 +2612,14 @@ pub fn run_revalidation_checks(
                 outcome.command
             },
             timestamp: chrono::Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string(),
-            details,
+            details: match environment {
+                Some(env) => Some(crate::execution::stamp(details, env)),
+                None => details,
+            },
         })?;
+    }
+    if environment == Some(Environment::Deterministic) && !pending.is_empty() {
+        log.push(production_next(project, subject, Some(trigger))?);
     }
     Ok(log)
 }
@@ -2703,7 +2991,12 @@ fn verification_bindings(
     }
     if mechanic == Some("production_source_evidence") && project.feature_workflow_version()? >= 11 {
         let latest = VerificationStore::at(&project.codeos_dir())
-            .latest(subject.workflow.slug(), &subject.id, checkpoint, "production_source_evidence")?
+            .latest(
+                subject.workflow.slug(),
+                &subject.id,
+                checkpoint,
+                "production_source_evidence",
+            )?
             .and_then(|record| evidence_identity(&record));
         scope_production_bindings(project, &mut b, latest.as_deref())?;
     }
@@ -2718,7 +3011,10 @@ fn scope_production_bindings(
     evidence: Option<&str>,
 ) -> Result<()> {
     b.remove("implementation_state");
-    b.insert("reality_verifier".into(), reality_verifier_identity(project)?);
+    b.insert(
+        "reality_verifier".into(),
+        reality_verifier_identity(project)?,
+    );
     let paths = project.evidence_scope_paths(&observed_scope_paths(project, evidence)?);
     let state = if project.feature_workflow_version()? >= 12 {
         project.delivered_state(&paths)?
@@ -2735,7 +3031,11 @@ fn reality_verifier_identity(project: &Project) -> Result<String> {
     Ok(project
         .reality_verification()
         .ok()
-        .and_then(|config| hashing::file_sha256(&project.root.join(config.command)).ok().flatten())
+        .and_then(|config| {
+            hashing::file_sha256(&project.root.join(config.command))
+                .ok()
+                .flatten()
+        })
         .unwrap_or_else(|| "unresolved".into()))
 }
 
@@ -2766,7 +3066,11 @@ fn observed_scope_paths(project: &Project, evidence: Option<&str>) -> Result<Vec
     };
     let mut paths = BTreeSet::new();
     for claim in &record.claims {
-        let Some(names) = record.claim_scopes.get(claim).filter(|names| !names.is_empty()) else {
+        let Some(names) = record
+            .claim_scopes
+            .get(claim)
+            .filter(|names| !names.is_empty())
+        else {
             return Ok(broad);
         };
         for name in names {
@@ -2965,10 +3269,11 @@ fn run_production_source_evidence(
             Ok(bindings) => bindings,
             Err(error) => return failure(error.to_string()),
         };
-    let v11 = match project.feature_workflow_version() {
-        Ok(version) => version >= 11,
+    let version = match project.feature_workflow_version() {
+        Ok(version) => version,
         Err(error) => return failure(error.to_string()),
     };
+    let v11 = version >= 11;
     // The verifier receives the inputs known before it runs; the Evidence Scope state follows
     // from the scopes the new evidence states it observed.
     let mut governed = bindings.clone();
@@ -3005,16 +3310,32 @@ fn run_production_source_evidence(
     }
     let definition_text = definition_path.to_string_lossy().into_owned();
     let output_text = output_path.to_string_lossy().into_owned();
-    let mut outcome = evidence::run_env(
-        &project.root,
-        &config.command,
-        &[],
-        &[
-            ("CODEOS_REALITY_DEFINITION_PATH", definition_text.as_str()),
-            ("CODEOS_REALITY_EVIDENCE_PATH", output_text.as_str()),
-            ("CODEOS_REALITY_MODE", "production-source"),
-        ],
-    );
+    // Feature Workflow v13: the run is accounted from the adapter's per-attempt ledger, which
+    // exists before the verifier starts so an abort leaves it discoverable.
+    let ledger = if version >= 13 {
+        match crate::execution::start_run(project, &subject.id) {
+            Ok((run, path)) => Some((run, path.to_string_lossy().into_owned(), path)),
+            Err(error) => return failure(error.to_string()),
+        }
+    } else {
+        None
+    };
+    let mut env = vec![
+        ("CODEOS_REALITY_DEFINITION_PATH", definition_text.as_str()),
+        ("CODEOS_REALITY_EVIDENCE_PATH", output_text.as_str()),
+        ("CODEOS_REALITY_MODE", "production-source"),
+    ];
+    if let Some((run, path, _)) = &ledger {
+        env.push(("CODEOS_PROVIDER_RUN_ID", run.as_str()));
+        env.push(("CODEOS_PROVIDER_LEDGER", path.as_str()));
+    }
+    let mut outcome = evidence::run_env(&project.root, &config.command, &[], &env);
+    let calls = ledger.as_ref().map(|(_, _, path)| {
+        crate::execution::count(path).and_then(|calls| {
+            crate::execution::finish_run(path, &calls)?;
+            Ok(calls)
+        })
+    });
     let parsed = std::fs::read_to_string(&output_path)
         .map_err(|error| anyhow::anyhow!("verifier produced no readable evidence: {error}"))
         .and_then(|text| {
@@ -3027,7 +3348,7 @@ fn run_production_source_evidence(
         .get("implementation_state")
         .cloned()
         .unwrap_or_default();
-    match parsed.and_then(|record| {
+    let mut outcome = match parsed.and_then(|record| {
         if !outcome.ok {
             anyhow::bail!("production verifier exited unsuccessfully");
         }
@@ -3104,6 +3425,24 @@ fn run_production_source_evidence(
                 "evidence bindings do not match the current implementation and governed inputs"
             );
         }
+        if let Some(calls) = &calls {
+            let calls = calls
+                .as_ref()
+                .map_err(|error| anyhow::anyhow!("provider calls cannot be accounted: {error}"))?;
+            let receipts: BTreeSet<_> = record
+                .observations
+                .iter()
+                .flat_map(|observation| &observation.provider_request_response_receipts)
+                .map(|receipt| serde_json::to_string(receipt).unwrap_or_default())
+                .collect();
+            if calls.successful != receipts.len() as u64 {
+                anyhow::bail!(
+                    "{} successful provider calls do not reconcile with {} provider receipts",
+                    calls.successful,
+                    receipts.len()
+                );
+            }
+        }
         Ok(record)
     }) {
         Ok(record) => {
@@ -3138,7 +3477,14 @@ fn run_production_source_evidence(
             outcome.details = Some(serde_json::json!({ "validation_error": error.to_string() }));
             outcome
         }
+    };
+    if let Some(Ok(calls)) = &calls {
+        outcome.summary = format!("{} [provider calls: {calls}]", outcome.summary);
+        if let Some(serde_json::Value::Object(details)) = outcome.details.as_mut() {
+            details.insert("provider_calls".into(), serde_json::json!(calls));
+        }
     }
+    outcome
 }
 
 fn is_sha256(value: &str) -> bool {

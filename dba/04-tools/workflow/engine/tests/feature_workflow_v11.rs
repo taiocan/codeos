@@ -162,7 +162,7 @@ fn a_verifier_change_stales_evidence_and_check_regenerates_it() {
         Err("reality_verifier".into())
     );
 
-    run_checks(&fx.project(), &fx.subject("F-0001")).unwrap();
+    run_checks(&fx.project(), &fx.subject("F-0001"), None).unwrap();
     assert_eq!(fx.state("F-0001", "F5").0, State::Pass);
     assert_ne!(fx.evidence("F-0001"), first);
 }

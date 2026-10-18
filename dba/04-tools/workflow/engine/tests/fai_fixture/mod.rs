@@ -8,6 +8,7 @@ use codeos_workflow::checker::{
     verification_bindings_for_mechanic, State, Subject,
 };
 use codeos_workflow::contract::Workflow;
+use codeos_workflow::execution::Environment;
 use codeos_workflow::project::Project;
 use codeos_workflow::receipts::{Receipt, ReceiptState, ReceiptStore};
 use codeos_workflow::verification::{VerificationRecord, VerificationStore};
@@ -17,6 +18,8 @@ use std::process::Command;
 
 pub const VERIFIER: &str = r#"#!/usr/bin/env bash
 set -euo pipefail
+# Feature Workflow v13: the fake adapter's ledger records its one provider call.
+[[ -z "${CODEOS_PROVIDER_LEDGER:-}" ]] || printf '{"schema":1,"attempt":1,"event":"attempt","at":"2026-10-16T00:00:00Z"}\n{"schema":1,"attempt":1,"event":"success","at":"2026-10-16T00:00:01Z"}\n' >> "$CODEOS_PROVIDER_LEDGER"
 h=$(printf 'x' | sha256sum | cut -c1-64)
 receipts='[{"provider_host":"provider.test","provider_path":"/route","request_sha256":"'$h'","response_sha256":"'$h'","provider_request_id":null,"requested_at":"2026-10-16T00:00:00Z","received_at":"2026-10-16T00:00:01Z","http_status":200}]'
 visible='"ok"'
@@ -32,6 +35,53 @@ jq -n --slurpfile d "$CODEOS_REALITY_DEFINITION_PATH" --slurpfile s claim-scopes
   > "$CODEOS_REALITY_EVIDENCE_PATH"
 "#;
 
+fn toolkit_root() -> &'static Path {
+    Path::new(env!("CARGO_MANIFEST_DIR"))
+        .ancestors()
+        .nth(4)
+        .unwrap()
+}
+
+/// A copy of this toolkit's working tree with the DBA-29 candidate materialized as its next
+/// configuration, shared by one test binary and replaced by its next run. The real toolkit never holds an unissued numbered
+/// configuration (DQA WO-01), so behavior only a candidate selects is tested here.
+pub fn candidate_toolkit() -> &'static (PathBuf, String) {
+    static TOOLKIT: std::sync::OnceLock<(PathBuf, String)> = std::sync::OnceLock::new();
+    TOOLKIT.get_or_init(|| {
+        // Outside the toolkit, whose own contracts scan its tree; one copy per toolkit and binary.
+        let copy = std::env::temp_dir().join(format!(
+            "codeos-candidate-toolkit-{}-{}",
+            &codeos_workflow::hashing::text_sha256(&toolkit_root().to_string_lossy())[..12],
+            env!("CARGO_CRATE_NAME")
+        ));
+        let _ = fs::remove_dir_all(&copy);
+        fs::create_dir_all(&copy).unwrap();
+        let output = Command::new("bash")
+            .args([
+                "-c",
+                r#"set -euo pipefail
+cd "$1"
+git ls-files -z --cached --others --exclude-standard | xargs -0 cp --parents -t "$2"
+last="$(ls "$2"/dba/00-entry/configurations/DBA-*.yaml | sed 's/.*DBA-\([0-9]*\)\.yaml$/\1/' | sort -n | tail -n1)"
+id="DBA-$((last + 1))"
+source "$2/dba/04-tools/release/candidate-lib.sh"
+materialize_candidate "$2" dba-29 "${id}" 2026-10-18
+printf '%s' "${id}""#,
+                "materialize",
+            ])
+            .arg(toolkit_root())
+            .arg(&copy)
+            .output()
+            .unwrap();
+        assert!(
+            output.status.success(),
+            "{}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        (copy, String::from_utf8(output.stdout).unwrap())
+    })
+}
+
 pub struct Fixture {
     _dir: tempfile::TempDir,
     pub root: PathBuf,
@@ -43,15 +93,15 @@ impl Fixture {
     }
 
     pub fn under(configuration: &str, scopes: &str) -> Self {
+        Self::under_toolkit(toolkit_root(), configuration, scopes)
+    }
+
+    pub fn under_toolkit(toolkit: &Path, configuration: &str, scopes: &str) -> Self {
         let dir = tempfile::tempdir().unwrap();
         let fx = Fixture {
             root: dir.path().canonicalize().unwrap(),
             _dir: dir,
         };
-        let toolkit = Path::new(env!("CARGO_MANIFEST_DIR"))
-            .ancestors()
-            .nth(4)
-            .unwrap();
         fs::create_dir_all(fx.root.join(".codeos/06-workflow")).unwrap();
         std::os::unix::fs::symlink(toolkit, fx.root.join(".codeos/toolkit")).unwrap();
         fx.write(".gitignore", ".codeos/toolkit\nbackend/target\n");
@@ -190,11 +240,23 @@ impl Fixture {
             .unwrap();
     }
 
-    /// Seed F3, then let `check` run F5 with the fake verifier.
+    /// Seed F3, then let `check` run F5 with the fake verifier: under Feature Workflow v13, the
+    /// deterministic run, the pre-candidate qualification, then the production run.
     pub fn check(&self, feature: &str) -> Vec<String> {
         self.seed(feature, "F3", "smoke");
         self.seed(feature, "F3", "product_journey");
-        run_checks(&self.project(), &self.subject(feature)).unwrap()
+        let run = |environment| run_checks(&self.project(), &self.subject(feature), environment);
+        if !self.v13() {
+            return run(None).unwrap();
+        }
+        let mut log = run(Some(Environment::Deterministic)).unwrap();
+        self.seed(feature, "candidate", "project_qualification");
+        log.extend(run(Some(Environment::Production)).unwrap());
+        log
+    }
+
+    pub fn v13(&self) -> bool {
+        self.project().feature_workflow_version().unwrap() >= 13
     }
 
     pub fn state(&self, feature: &str, checkpoint: &str) -> (State, Vec<String>) {
@@ -336,8 +398,22 @@ pub fn revalidated_upstream(configuration: &str, legacy: bool) -> (Fixture, Stri
 pub fn run_checks_revalidation(fx: &Fixture) -> Vec<String> {
     fx.seed("F-0001", "F3", "smoke");
     fx.seed("F-0001", "F3", "product_journey");
-    codeos_workflow::checker::run_revalidation_checks(&fx.project(), &fx.subject("F-0001"), "HEAD")
+    let run = |environment| {
+        codeos_workflow::checker::run_revalidation_checks(
+            &fx.project(),
+            &fx.subject("F-0001"),
+            "HEAD",
+            environment,
+        )
         .unwrap()
+    };
+    if !fx.v13() {
+        return run(None);
+    }
+    let mut log = run(Some(Environment::Deterministic));
+    fx.seed("F-0001", "candidate", "project_qualification");
+    log.extend(run(Some(Environment::Production)));
+    log
 }
 
 /// Every file under `.codeos` (except the toolkit link) with its content, to prove a read-only run.

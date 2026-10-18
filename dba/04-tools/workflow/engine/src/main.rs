@@ -213,6 +213,10 @@ struct CheckArgs {
     /// Print the plan `check --revalidation` would execute, as JSON, and execute nothing.
     #[arg(long, requires = "revalidation")]
     plan: bool,
+    /// Feature Workflow v13: the execution environment this run serves (default deterministic).
+    /// Only verifications it authorizes are started; Codeos never changes the provider mode.
+    #[arg(long, value_parser = ["deterministic", "production"])]
+    environment: Option<String>,
 }
 
 #[derive(clap::Args)]
@@ -596,14 +600,19 @@ fn run(cli: &Cli, start: &std::path::Path) -> Result<i32> {
                 println!("{}", serde_json::to_string_pretty(&plan)?);
                 return Ok(EXIT_SUCCESS);
             }
+            let environment = t
+                .environment
+                .as_deref()
+                .and_then(codeos_workflow::execution::Environment::parse);
             let log = if t.revalidation {
                 checker::run_revalidation_checks(
                     &project,
                     &subject,
                     t.trigger.as_deref().expect("clap requires trigger"),
+                    environment,
                 )?
             } else {
-                checker::run_checks(&project, &subject)?
+                checker::run_checks(&project, &subject, environment)?
             };
             for line in &log {
                 println!("{line}");

@@ -24,7 +24,11 @@ pub fn command(program: impl AsRef<std::ffi::OsStr>) -> Command {
         .unwrap_or(program)
         .to_string_lossy();
     count(&format!("process:{name}"));
-    Command::new(program)
+    let mut command = Command::new(program);
+    if let Some(environment) = crate::execution::current() {
+        command.env(crate::execution::ENVIRONMENT_ENV, environment.as_str());
+    }
+    command
 }
 
 /// One computation of a binding of `kind` over `paths`. Repeats of the same input count as
