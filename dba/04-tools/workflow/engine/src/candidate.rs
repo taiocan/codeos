@@ -201,8 +201,8 @@ pub fn assemble(
         "candidate/project_qualification".into(),
         hashing::record_identity(&qualification)?,
     );
-    for (checkpoint, mechanic) in checker::required_verification_records(project, subject)? {
-        if mechanic == "project_qualification" {
+    for (checkpoint, mechanic) in checker::candidate_verification_records(project, subject)? {
+        if checkpoint == "candidate" {
             continue;
         }
         let record = store

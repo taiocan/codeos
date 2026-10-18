@@ -6,7 +6,7 @@ use crate::packet::{sha256_file, sha256_str, ReviewBasis, ReviewPacket};
 use codeos_workflow::checker::Subject;
 use codeos_workflow::contract::Workflow;
 use codeos_workflow::project::Project;
-use codeos_workflow::receipts::Receipt;
+use codeos_workflow::receipts::{Receipt, ReceiptState, ReceiptStore};
 use codeos_workflow::verification::VerificationRecord;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
@@ -60,13 +60,14 @@ pub(crate) struct Derived {
     pub scope_error: Option<String>,
     /// The current candidate is a post-acceptance revalidation, which renews no F6 receipt.
     pub revalidation: bool,
-    /// Feature Workflow v11: the current scoped bindings of each production-evidence record, as
-    /// the workflow derives them.
-    pub scoped_bindings: BTreeMap<String, BTreeMap<String, String>>,
-    /// The current non-test product state, which a v11 F6 receipt binds.
-    pub product_state: Option<String>,
-    /// The current delivered state, which a v12 F6 receipt binds.
-    pub delivered_state: Option<String>,
+    /// `<checkpoint>/<verification>` -> the current values of the inputs that record must bind, as
+    /// the workflow derives them, or why they could not be derived.
+    pub current_bindings: BTreeMap<String, Result<BTreeMap<String, String>, String>>,
+    /// The bindings the F6 reconciliation receipt judged that have since changed, by the workflow's
+    /// decision rule, or why that could not be derived.
+    pub f6_drift: Option<Result<Vec<String>, String>>,
+    /// Whether the selected production evidence is current by the workflow's selection rule.
+    pub selected_evidence: Option<Result<(), String>>,
 }
 
 pub fn selected(contract: Option<&str>) -> bool {
@@ -165,10 +166,6 @@ pub fn derive(
             Err(error) => manifest.derived.project_error = Some(error.to_string()),
         }
     }
-    manifest.derived.product_state = project.product_state().ok();
-    manifest.derived.delivered_state = project
-        .delivered_state(&project.implementation_paths())
-        .ok();
     let implementation_paths = project.implementation_paths();
     manifest.implementation =
         codeos_workflow::hashing::working_tree_state(&project.root, &implementation_paths).ok();
@@ -182,16 +179,10 @@ pub fn derive(
         }
     }
 
-    let decisions = std::fs::read_to_string(root.join(".codeos/06-workflow/decisions.jsonl"))
-        .unwrap_or_default();
-    manifest.derived.f6_receipt = decisions
-        .lines()
-        .filter_map(|line| serde_json::from_str::<Receipt>(line).ok())
-        .rfind(|receipt| {
-            receipt.workflow == "feature"
-                && receipt.subject == feature
-                && receipt.checkpoint == "reconciliation"
-        });
+    match ReceiptStore::at(&project.codeos_dir()).latest("feature", feature, "reconciliation") {
+        Ok(receipt) => manifest.derived.f6_receipt = receipt,
+        Err(error) => manifest.derived.project_error = Some(error.to_string()),
+    }
     // A post-acceptance revalidation creates no F6 receipt (Feature Workflow v8); its candidate
     // selects the production evidence verified for the revalidation implementation.
     let revalidation = manifest
@@ -221,20 +212,45 @@ pub fn derive(
     let store = std::fs::read_to_string(root.join(".codeos/06-workflow/verifications.jsonl"))
         .unwrap_or_default();
     let subject = Subject::resolve(&project, Workflow::Feature, feature);
+    if let Ok(subject) = &subject {
+        if manifest.derived.f6_receipt.is_some() {
+            manifest.derived.f6_drift = Some(
+                match codeos_workflow::checker::decision_state(&project, subject, "reconciliation")
+                {
+                    Ok(ReceiptState::Current(_)) => Ok(Vec::new()),
+                    Ok(ReceiptState::Stale { comparisons, .. }) => Ok(comparisons
+                        .into_iter()
+                        .filter(|comparison| comparison.changed())
+                        .map(|comparison| comparison.surface)
+                        .collect()),
+                    Ok(ReceiptState::Absent) => {
+                        Err("no reconciliation decision is recorded".into())
+                    }
+                    Err(error) => Err(format!("{error:#}")),
+                },
+            );
+        }
+        if let Some(selected) = &manifest.production_evidence {
+            manifest.derived.selected_evidence = Some(
+                codeos_workflow::checker::validate_production_evidence_selection(
+                    &project, subject, selected,
+                )
+                .map_err(|error| format!("{error:#}")),
+            );
+        }
+    }
     let mut required = subject
         .as_ref()
         .ok()
         .and_then(|subject| {
-            codeos_workflow::checker::required_verification_records(&project, subject).ok()
+            if manifest.candidate_bundle.is_some() {
+                codeos_workflow::checker::candidate_verification_records(&project, subject)
+            } else {
+                codeos_workflow::checker::required_verification_records(&project, subject)
+            }
+            .ok()
         })
         .unwrap_or_default();
-    if manifest.stage == "8" && manifest.candidate_bundle.is_some() {
-        for requirement in &mut required {
-            if requirement.1 == "project_qualification" {
-                requirement.0 = "candidate";
-            }
-        }
-    }
     // Runtime-event verification is optional evidence; when recorded it is bound like the rest.
     let has_runtime_events = store.lines().any(|line| {
         serde_json::from_str::<VerificationRecord>(line).is_ok_and(|record| {
@@ -259,22 +275,20 @@ pub fn derive(
             latest.as_ref().map(|(line, _)| sha256_str(line)),
         );
         if let Some(entry) = latest {
-            if entry.1.bindings.contains_key("evidence_scope_state") {
-                if let Some(current) = subject.as_ref().ok().and_then(|subject| {
-                    codeos_workflow::checker::verification_bindings_for_mechanic(
-                        &project,
-                        subject,
-                        checkpoint,
-                        verification,
-                    )
-                    .ok()
-                }) {
-                    manifest
-                        .derived
-                        .scoped_bindings
-                        .insert(key.clone(), current);
-                }
-            }
+            let current = match &subject {
+                Ok(subject) => codeos_workflow::checker::verification_bindings_for_mechanic(
+                    &project,
+                    subject,
+                    checkpoint,
+                    verification,
+                )
+                .map_err(|error| format!("{error:#}")),
+                Err(error) => Err(format!("{error:#}")),
+            };
+            manifest
+                .derived
+                .current_bindings
+                .insert(key.clone(), current);
             manifest.derived.records.insert(key, entry);
         }
     }

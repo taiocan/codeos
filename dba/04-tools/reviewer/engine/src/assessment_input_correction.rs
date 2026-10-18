@@ -1,6 +1,7 @@
 use crate::config::Config;
 use crate::packet::{sha256_file, sha256_str, ReviewPacket};
 use anyhow::{Context, Result};
+use codeos_workflow::receipts::{Receipt, ReceiptStore};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::{BTreeMap, BTreeSet};
@@ -44,15 +45,6 @@ pub struct CorrectionRecord {
     pub runtime_evidence_sha256: String,
     pub omitted_verification_records: Vec<VerificationIdentity>,
     pub reason_codes: Vec<String>,
-}
-
-#[derive(Debug, Deserialize)]
-struct Receipt {
-    workflow: String,
-    subject: String,
-    checkpoint: String,
-    bindings: BTreeMap<String, String>,
-    timestamp: String,
 }
 
 fn block<'a>(log: &'a str, review_id: &str) -> Result<&'a str> {
@@ -140,15 +132,8 @@ fn immutable_packet_artifact(packet: &str, path: &str, expected_sha: &str) -> Re
 }
 
 fn latest_f6(repo: &Path, feature: &str, before: &str) -> Result<Receipt> {
-    std::fs::read_to_string(repo.join(".codeos/06-workflow/decisions.jsonl"))?
-        .lines()
-        .filter_map(|raw| serde_json::from_str::<Receipt>(raw).ok())
-        .rfind(|r| {
-            r.workflow == "feature"
-                && r.subject == feature
-                && r.checkpoint == "reconciliation"
-                && r.timestamp.as_str() <= before
-        })
+    ReceiptStore::at(&repo.join(".codeos"))
+        .latest_as_of("feature", feature, "reconciliation", before)?
         .context("no pre-assessment F6 selection")
 }
 

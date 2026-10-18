@@ -403,21 +403,15 @@ pub fn build_case(project: &Project, subject_id: &str, trigger: &str) -> Result<
         let record = vstore
             .latest("feature", subject_id, checkpoint, name)?
             .with_context(|| format!("missing fresh {name} verification"))?;
-        let current_record = if name == "runtime_event_schema" {
-            record.bindings.get("implementation_state") == Some(&current)
-                && ["intent", "contract", "event_schema"]
-                    .iter()
-                    .all(|key| record.bindings.get(*key) == governed_inputs.get(*key))
-                && record.timestamp.as_str() > acceptance.timestamp.as_str()
-        } else {
-            let want = crate::checker::verification_bindings_for_mechanic(
-                project, &subject, checkpoint, name,
-            )?;
-            matches!(
-                verification::evaluate(Some(record.clone()), &want),
-                verification::RecordState::Current(_)
-            )
-        };
+        let want = crate::checker::verification_bindings_for_mechanic(
+            project, &subject, checkpoint, name,
+        )?;
+        // Runtime events must also be observed after the acceptance they revalidate.
+        let current_record = matches!(
+            verification::evaluate(Some(record.clone()), &want),
+            verification::RecordState::Current(_)
+        ) && (name != "runtime_event_schema"
+            || record.timestamp.as_str() > acceptance.timestamp.as_str());
         if !current_record {
             anyhow::bail!("{name} verification is not current for the revalidation implementation");
         }

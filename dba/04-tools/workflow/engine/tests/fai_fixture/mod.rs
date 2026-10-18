@@ -4,11 +4,12 @@
 #![allow(dead_code)]
 
 use codeos_workflow::checker::{
-    bindings_for_decision, evaluate, run_checks, verification_bindings_for_mechanic, State, Subject,
+    bindings_for_decision, decision_state, evaluate, run_checks,
+    verification_bindings_for_mechanic, State, Subject,
 };
 use codeos_workflow::contract::Workflow;
 use codeos_workflow::project::Project;
-use codeos_workflow::receipts::{Receipt, ReceiptStore};
+use codeos_workflow::receipts::{Receipt, ReceiptState, ReceiptStore};
 use codeos_workflow::verification::{VerificationRecord, VerificationStore};
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -224,23 +225,12 @@ impl Fixture {
         }
     }
 
-    /// Whether the latest F6 receipt still matches the inputs it recorded.
+    /// Whether the latest F6 receipt is current by the workflow's decision rule.
     pub fn f6_current(&self, feature: &str) -> bool {
-        let receipt = ReceiptStore::at(&self.root.join(".codeos"))
-            .latest("feature", feature, "reconciliation")
-            .unwrap()
-            .unwrap();
-        let now = codeos_workflow::checker::bindings_for_evaluation(
-            &self.project(),
-            &self.subject(feature),
-            "reconciliation",
+        matches!(
+            decision_state(&self.project(), &self.subject(feature), "reconciliation").unwrap(),
+            ReceiptState::Current(_)
         )
-        .unwrap();
-        receipt
-            .bindings
-            .iter()
-            .filter(|(key, _)| key.as_str() != "production_evidence")
-            .all(|(key, value)| now.get(key) == Some(value))
     }
 
     pub fn evidence(&self, feature: &str) -> String {

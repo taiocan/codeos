@@ -119,6 +119,27 @@ impl ReceiptStore {
             .cloned())
     }
 
+    /// [`Self::latest`] among the receipts recorded at or before `as_of`: the decision in force at
+    /// that moment.
+    pub fn latest_as_of(
+        &self,
+        workflow: &str,
+        subject: &str,
+        checkpoint: &str,
+        as_of: &str,
+    ) -> Result<Option<Receipt>> {
+        Ok(self
+            .records()?
+            .iter()
+            .rfind(|r| {
+                r.workflow == workflow
+                    && r.subject == subject
+                    && r.checkpoint == checkpoint
+                    && r.timestamp.as_str() <= as_of
+            })
+            .cloned())
+    }
+
     /// Append a receipt. Fails closed on an out-of-set checkpoint or a missing required rationale.
     pub fn append(&self, receipt: &Receipt) -> Result<()> {
         if !RECEIPT_CHECKPOINTS.contains(&receipt.checkpoint.as_str()) {

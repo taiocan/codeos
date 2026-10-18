@@ -1,6 +1,7 @@
 use crate::config::Config;
 use crate::packet::{sha256_file, sha256_str, ReviewPacket};
 use anyhow::{Context, Result};
+use codeos_workflow::receipts::ReceiptStore;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::BTreeSet;
@@ -27,15 +28,6 @@ impl ApplicabilityRecord {
     pub fn sha256(&self) -> Result<String> {
         Ok(sha256_str(&serde_json::to_string(self)?))
     }
-}
-
-#[derive(Debug, Deserialize)]
-struct Receipt {
-    workflow: String,
-    subject: String,
-    checkpoint: String,
-    bindings: std::collections::BTreeMap<String, String>,
-    timestamp: String,
 }
 
 fn block<'a>(log: &'a str, review_id: &str) -> Result<&'a str> {
@@ -89,19 +81,10 @@ fn review_timestamp(log: &str, review_id: &str) -> Result<String> {
 }
 
 fn selected_f6(repo_root: &Path, feature: &str, before: &str) -> Result<String> {
-    let path = repo_root.join(".codeos/06-workflow/decisions.jsonl");
-    let mut selected = None;
-    for raw in std::fs::read_to_string(path)?.lines() {
-        let receipt: Receipt = serde_json::from_str(raw)?;
-        if receipt.workflow == "feature"
-            && receipt.subject == feature
-            && receipt.checkpoint == "reconciliation"
-            && receipt.timestamp.as_str() <= before
-        {
-            selected = receipt.bindings.get("production_evidence").cloned();
-        }
-    }
-    selected.context("no authoritative pre-execution F6 production-evidence selection")
+    ReceiptStore::at(&repo_root.join(".codeos"))
+        .latest_as_of("feature", feature, "reconciliation", before)?
+        .and_then(|receipt| receipt.bindings.get("production_evidence").cloned())
+        .context("no authoritative pre-execution F6 production-evidence selection")
 }
 
 fn artifact_values(reviewed: &Value) -> Vec<(String, String)> {
@@ -347,18 +330,9 @@ pub fn validate_current_lineage(
     feature: &str,
     packet: &ReviewPacket,
 ) -> Result<Option<String>> {
-    let decisions =
-        std::fs::read_to_string(cfg.repo_root.join(".codeos/06-workflow/decisions.jsonl"))?;
-    let mut selected = None;
-    for raw in decisions.lines() {
-        let receipt: Receipt = serde_json::from_str(raw)?;
-        if receipt.workflow == "feature"
-            && receipt.subject == feature
-            && receipt.checkpoint == "reconciliation"
-        {
-            selected = receipt.bindings.get("production_evidence").cloned();
-        }
-    }
+    let selected = ReceiptStore::at(&cfg.repo_root.join(".codeos"))
+        .latest("feature", feature, "reconciliation")?
+        .and_then(|receipt| receipt.bindings.get("production_evidence").cloned());
     let has_production_artifact = packet.artifacts.iter().any(|artifact| {
         artifact
             .path
@@ -527,7 +501,7 @@ mod tests {
         .unwrap();
         fs::write(
             dir.path().join(".codeos/06-workflow/decisions.jsonl"),
-            format!("{{\"workflow\":\"feature\",\"subject\":\"F-1\",\"checkpoint\":\"reconciliation\",\"bindings\":{{\"production_evidence\":\"{selected}\"}},\"timestamp\":\"2026-01-01T00:00:00Z\"}}\n"),
+            format!("{{\"workflow\":\"feature\",\"subject\":\"F-1\",\"checkpoint\":\"reconciliation\",\"result\":\"completed\",\"bindings\":{{\"production_evidence\":\"{selected}\"}},\"timestamp\":\"2026-01-01T00:00:00Z\"}}\n"),
         )
         .unwrap();
         let assessment_sha = sha256_file(assessment_path.to_string_lossy().as_ref()).unwrap();

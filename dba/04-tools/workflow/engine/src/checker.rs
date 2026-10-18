@@ -1233,6 +1233,21 @@ pub fn required_verification_records(
     Ok(required)
 }
 
+/// The records a Candidate Bundle binds: those review requires, with project qualification taken
+/// for the candidate itself.
+pub fn candidate_verification_records(
+    project: &Project,
+    subject: &Subject,
+) -> Result<Vec<(&'static str, &'static str)>> {
+    Ok(required_verification_records(project, subject)?
+        .into_iter()
+        .map(|(checkpoint, verification)| match verification {
+            "project_qualification" => ("candidate", verification),
+            _ => (checkpoint, verification),
+        })
+        .collect())
+}
+
 fn applies(a: Applies, s: &Subject) -> bool {
     match a {
         Applies::Always => true,
@@ -1409,29 +1424,8 @@ fn evaluate_checkpoint(
                 checkpoint,
                 results,
             } => {
-                let mut bindings = current_bindings(project, subject, checkpoint)?;
-                let latest = store.latest(subject.workflow.slug(), &subject.id, checkpoint)?;
-                let mut required = required_decision_bindings(&bindings, latest.as_ref());
-                // The observation binding cannot be recomputed from the tree — the observation
-                // statement is a historical, immutable fact. Carry the recorded hash forward so it
-                // reads as current; it exists to link a closure to the same observation, not to
-                // detect drift.
-                if let Some(h) = latest.as_ref().and_then(|r| r.bindings.get("observation")) {
-                    bindings.insert("observation".into(), h.clone());
-                }
-                if let Some(h) = selected_production_evidence(project, subject)? {
-                    if matches!(
-                        *checkpoint,
-                        "reconciliation" | "final_ux_validation" | "acceptance"
-                    ) {
-                        bindings.insert("production_evidence".into(), h);
-                        // `decide` requires F6 to select it; F8 and F9 do not record it.
-                        if *checkpoint == "reconciliation" {
-                            required.insert("production_evidence".into());
-                        }
-                    }
-                }
-                match receipts::evaluate_required(latest, &bindings, &required) {
+                let state = decision_state(project, subject, checkpoint)?;
+                match state {
                     ReceiptState::Absent => {
                         soft += 1;
                         unmet.push(format!("no {checkpoint} decision recorded"));
@@ -2535,6 +2529,41 @@ fn current_bindings(
         _ => {}
     }
     Ok(b)
+}
+
+/// The state of a subject's latest decision at `checkpoint` against the current inputs it must
+/// bind: the one rule `check` applies and the reviewer's readiness gate reports.
+pub fn decision_state(
+    project: &Project,
+    subject: &Subject,
+    checkpoint: &str,
+) -> Result<ReceiptState> {
+    let mut bindings = current_bindings(project, subject, checkpoint)?;
+    let latest = ReceiptStore::at(&project.codeos_dir()).latest(
+        subject.workflow.slug(),
+        &subject.id,
+        checkpoint,
+    )?;
+    let mut required = required_decision_bindings(&bindings, latest.as_ref());
+    // The observation binding cannot be recomputed from the tree — the observation statement is a
+    // historical, immutable fact. Carry the recorded hash forward so it reads as current; it exists
+    // to link a closure to the same observation, not to detect drift.
+    if let Some(h) = latest.as_ref().and_then(|r| r.bindings.get("observation")) {
+        bindings.insert("observation".into(), h.clone());
+    }
+    if let Some(h) = selected_production_evidence(project, subject)? {
+        if matches!(
+            checkpoint,
+            "reconciliation" | "final_ux_validation" | "acceptance"
+        ) {
+            bindings.insert("production_evidence".into(), h);
+            // `decide` requires F6 to select it; F8 and F9 do not record it.
+            if checkpoint == "reconciliation" {
+                required.insert("production_evidence".into());
+            }
+        }
+    }
+    Ok(receipts::evaluate_required(latest, &bindings, &required))
 }
 
 fn selected_production_evidence(project: &Project, subject: &Subject) -> Result<Option<String>> {

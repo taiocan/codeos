@@ -80,6 +80,47 @@ fn a_test_runner_configuration_change_leaves_evidence_and_f6_current() {
     assert!(!fx.f6_current("F-0001"));
 }
 
+/// The one F6 selection rule every consumer applies (0514192): v11 and v12 production evidence
+/// carries no implementation identity and stays selectable while the current production-source
+/// verification verified it; a change to a scope it observed makes it stale.
+#[test]
+fn f6_selected_evidence_is_current_by_its_own_format() {
+    for configuration in ["DBA-27", "DBA-28"] {
+        let fx = routed_under(
+            configuration,
+            "    provider: [backend]\n    web: [web]\n",
+            r#"{"F-0001": {"route": ["provider"]}}"#,
+        );
+        let evidence = fx.evidence("F-0001");
+        let stored: serde_json::Value = serde_json::from_str(
+            &fs::read_to_string(fx.root.join(format!(
+                ".codeos/06-workflow/reality-evidence/{evidence}.json"
+            )))
+            .unwrap(),
+        )
+        .unwrap();
+        assert!(stored.get("implementation_sha256").is_none());
+        let selectable = |fx: &Fixture| {
+            codeos_workflow::checker::validate_production_evidence_selection(
+                &fx.project(),
+                &fx.subject("F-0001"),
+                &evidence,
+            )
+            .map_err(|error| error.to_string())
+        };
+        assert_eq!(selectable(&fx), Ok(()), "{configuration}");
+        fx.write("web/src/page.svelte", "<h1>Compare departures</h1>\n");
+        assert_eq!(selectable(&fx), Ok(()), "{configuration}");
+        fx.write("backend/src/lib.rs", "pub fn route() { /* changed */ }\n");
+        assert!(
+            selectable(&fx)
+                .unwrap_err()
+                .contains("'evidence_scope_state' changed"),
+            "{configuration}"
+        );
+    }
+}
+
 #[test]
 fn a_shared_ui_change_stales_only_evidence_that_observed_it() {
     let provider_only = routed(

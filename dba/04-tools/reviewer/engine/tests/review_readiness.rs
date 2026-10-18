@@ -118,7 +118,7 @@ fn ready_project(reality: bool) -> Fixture {
     );
     write(
         &root.join(".codeos/00-project/charter.md"),
-        "---\nartifact_type: charter\napproval:\n  by: Human\n  at: 2026-10-06\n---\n# Charter\n",
+        "---\nartifact_type: charter\napproval:\n  by: Human\n  at: 2026-10-06\n---\n# Charter\n\n## Primary Product Journey\njourney_id: primary\nlegitimate_entry: product home\ninitial_frontier: entry\ntarget_outcome: useful result\nverification_route: product_journey\n",
     );
     let header = |kind: &str| {
         format!(
@@ -126,6 +126,9 @@ fn ready_project(reality: bool) -> Fixture {
         )
     };
     let mut contract = header("contract");
+    contract.push_str(
+        "\n## Product Journey Contribution\nmode: advance\nprevious_frontier: entry\nproposed_frontier: decided\ntransition: the reader decides\n",
+    );
     if reality {
         contract.push_str(
             "\n## Reality Basis\n\n| Claim ID | Claim | Classification | Source | Freshness | Coverage | Failure | Disclosure |\n|---|---|---|---|---|---|---|---|\n| C1 | live departures | reality-dependent | provider | 5m | route | unavailable | shown |\n",
@@ -202,6 +205,9 @@ fn record_evidence_with_events(fixture: &Fixture, reality: bool, events: &str) {
         ),
     ];
     let mut f6 = json!({
+        "intent": file_sha(&root.join(intent())),
+        "contract": file_sha(&root.join(contract_path())),
+        "event_schema": file_sha(&root.join(schema())),
         "codeos_yaml": file_sha(&root.join(".codeos/00-project/codeos.yaml")),
         "implementation_state": implementation,
     });

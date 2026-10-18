@@ -28,3 +28,30 @@ independently.
 4. New-format production evidence stays reviewable; the regression test added by `0514192` keeps
    passing.
 5. Workflow, reviewer, and compatibility suites pass.
+
+## Inventory (2026-10-18)
+
+| Lifecycle fact | Authority (`codeos_workflow`) | Consumers | Change |
+|---|---|---|---|
+| Verification-record currency | `checker::verification_bindings_for_mechanic` + `verification::evaluate` | `check`, Candidate Bundles, revalidation, health, review readiness | Readiness had its own rule, which ignored every input except the implementation and the Specification Package; revalidation had its own rule for runtime events, which ignored the result |
+| F6 decision currency | `checker::decision_state` (extracted from `check`) | `check`, review readiness, FAI fixtures | Readiness had its own v11/v12 dispatch, which ignored the Specification Package and the selection |
+| F6 production-evidence selection | `ReceiptStore::latest`/`latest_as_of`; the revalidation Candidate Bundle's selection | `check`, Candidate Bundles, review readiness, lineage replacement, assessment input correction | Four reviewer parsers of `decisions.jsonl` removed |
+| Selected-evidence currency | `checker::validate_production_evidence_selection` | `decide`, review readiness | Readiness had its own per-format rule (`0514192`); that test moved to the owner with the same name |
+| Candidate verification set | `checker::candidate_verification_records` | Candidate Bundles, review readiness | The `candidate` checkpoint mapping had been repeated in both |
+| Accepted journey topology | `checker::accepted_chain` | `status`, `journey`, record and decision bindings | Already one authority |
+
+The readiness changes restore the Reviewer Tool Contract (v17: `EVIDENCE_STALE`, evidence not bound
+to the current implementation **and inputs**). Contract tests: `reviewer/engine/tests/lifecycle_contract.rs`.
+Reviewer fixtures that recorded states the workflow never writes now record what `decide` and
+`check` write.
+
+## Open: revalidation evidence set (PROTECTED)
+
+`revalidation::required_verifications` (F3 smoke and product journey, F5 behavior and
+repeatability, F5g, runtime events in the `events` mode, production evidence) is a second list of
+the evidence an accepted feature needs. Unlike `required_verification_records`, it omits F5d
+`data_integrity` and F9 `project_qualification`. So for a persistence feature, a revalidation
+candidate can be prepared with stale data-integrity evidence, which Stage 8 readiness then
+refuses (from reading the code; no test covers it).
+Feature Workflow v8 says the checker "derives stale mechanics from current bindings" but does not
+name the set. Unchanged pending a human decision.
