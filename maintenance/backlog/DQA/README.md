@@ -9,8 +9,8 @@
 | [WO-03](WO-03-isolate-verification.md) | PROTECTED | Isolate verification and account for provider calls | Accepted 2026-10-18 (Codeos-owned ledger location) |
 | [WO-04](WO-04-shared-validation-baseline.md) | NORMAL | Shared-validation root-cause baseline | Accepted 2026-10-18 |
 | [WO-05](WO-05-validation-semantics.md) | PROTECTED | Validation evidence and attribution decision | Approved 2026-10-18 ((a)–(c), five terms) |
-| [WO-06](WO-06-shared-validation-implementation.md) | PROTECTED | Shared-validation implementation | Implemented on dqa (ea98a24); awaits acceptance |
-| [WO-07](WO-07-qualification-replay.md) | NORMAL | Qualification and JamFree replay | Proposed |
+| [WO-06](WO-06-shared-validation-implementation.md) | PROTECTED | Shared-validation implementation | Accepted 2026-10-18 |
+| [WO-07](WO-07-qualification-replay.md) | NORMAL | Qualification and JamFree replay | In progress |
 | [WO-08](WO-08-stability-proof.md) | NORMAL | Complete the delivery-stability proof | Proposed |
 
 STAB P4 questions ([STAB WO-04](../STAB/WO-04-decide-next.md)): A (verification ordering) goes to
