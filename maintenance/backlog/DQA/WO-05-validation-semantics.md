@@ -59,7 +59,7 @@ judgment, review, acceptance, or currency. Unknown attribution fails closed.
 5. Legacy and prospective claim models coexist without rewriting history.
 6. The brief names one normative owner and one executable derivation for each new fact.
 
-## Brief (proposed 2026-10-18)
+## Brief (approved 2026-10-18 with decisions (a)–(c) and the five glossary terms)
 
 Grounded in the accepted WO-04 matrix. One normative owner for everything below: Feature Workflow
 v13 (the unissued DBA-29 draft, extended; see decision (a)). Each new fact has one executable
