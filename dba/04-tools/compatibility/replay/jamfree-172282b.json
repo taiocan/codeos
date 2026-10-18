@@ -93,17 +93,17 @@
         "record": "641cccec78b5e03846e51de40b534ad5502f11533239b3ece136dc6f1335ad40"
       },
       {
+        "action": "rerun",
+        "checkpoint": "F5",
+        "item": "production_source_evidence",
+        "reason": "changed:implementation_state"
+      },
+      {
         "action": "reuse",
         "checkpoint": "F5g",
         "item": "playwright",
         "reason": "current",
         "record": "c3f25d50e6eb50e6e4bbfa3a996685f05bdfd231954dd6f1a4b9af08d21aaab7"
-      },
-      {
-        "action": "rerun",
-        "checkpoint": "F5",
-        "item": "production_source_evidence",
-        "reason": "changed:implementation_state"
       },
       {
         "action": "decision_required",
@@ -142,17 +142,17 @@
         "record": "6dbc66521dca35e9f8a37679979463c174956cb7b3676cc37009627d7f57116d"
       },
       {
+        "action": "rerun",
+        "checkpoint": "F5",
+        "item": "production_source_evidence",
+        "reason": "changed:implementation_state"
+      },
+      {
         "action": "reuse",
         "checkpoint": "F5g",
         "item": "playwright",
         "reason": "current",
         "record": "99cfc2cbc2c01dabc539398156e52639b28b199b3261bbb5891debc5254df35b"
-      },
-      {
-        "action": "rerun",
-        "checkpoint": "F5",
-        "item": "production_source_evidence",
-        "reason": "changed:implementation_state"
       },
       {
         "action": "decision_required",
@@ -191,17 +191,17 @@
         "record": "e1d082b816ca1b3810e79c74fcd931b225f862d1b85efa4ca450388951bab970"
       },
       {
+        "action": "rerun",
+        "checkpoint": "F5",
+        "item": "production_source_evidence",
+        "reason": "changed:implementation_state"
+      },
+      {
         "action": "reuse",
         "checkpoint": "F5g",
         "item": "playwright",
         "reason": "current",
         "record": "a4c7bee8d997e1e3cb307178451a74db3db4e7e3364bc44237d7b81ecc64b2af"
-      },
-      {
-        "action": "rerun",
-        "checkpoint": "F5",
-        "item": "production_source_evidence",
-        "reason": "changed:implementation_state"
       },
       {
         "action": "decision_required",

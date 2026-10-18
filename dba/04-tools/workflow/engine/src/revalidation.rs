@@ -13,28 +13,19 @@ use std::collections::BTreeMap;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 
-const REQUIRED_BASE: &[(&str, &str)] = &[
-    ("F3", "smoke"),
-    ("F3", "product_journey"),
-    ("F5", "behavior"),
-    ("F5", "repeatability"),
-];
-
-/// The (checkpoint, verification) records a feature's acceptance evidence requires. Runtime event
-/// evidence applies only in the `events` Observation Mode, as for Candidate Bundles.
+/// The (checkpoint, verification) records a feature's acceptance evidence requires: those a
+/// Candidate Bundle binds, except the project qualification taken for the candidate itself, plus
+/// runtime event evidence in the `events` Observation Mode, as for Candidate Bundles.
 pub fn required_verifications(
     project: &Project,
     subject: &Subject,
 ) -> Result<Vec<(&'static str, &'static str)>> {
-    let mut required = REQUIRED_BASE.to_vec();
+    let mut required: Vec<_> = crate::checker::candidate_verification_records(project, subject)?
+        .into_iter()
+        .filter(|(checkpoint, _)| *checkpoint != "candidate")
+        .collect();
     if crate::candidate::observation_mode(project, &subject.id)? == "events" {
         required.push(("F7", "runtime_event_schema"));
-    }
-    if subject.gui {
-        required.push(("F5g", "playwright"));
-    }
-    if !subject.reality_claims.is_empty() {
-        required.push(("F5", "production_source_evidence"));
     }
     Ok(required)
 }

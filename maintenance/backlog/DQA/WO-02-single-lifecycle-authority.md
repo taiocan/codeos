@@ -45,13 +45,15 @@ to the current implementation **and inputs**). Contract tests: `reviewer/engine/
 Reviewer fixtures that recorded states the workflow never writes now record what `decide` and
 `check` write.
 
-## Open: revalidation evidence set (PROTECTED)
+## Decided: revalidation evidence set (PROTECTED, approved 2026-10-18)
 
-`revalidation::required_verifications` (F3 smoke and product journey, F5 behavior and
-repeatability, F5g, runtime events in the `events` mode, production evidence) is a second list of
-the evidence an accepted feature needs. Unlike `required_verification_records`, it omits F5d
-`data_integrity` and F9 `project_qualification`. So for a persistence feature, a revalidation
-candidate can be prepared with stale data-integrity evidence, which Stage 8 readiness then
-refuses (from reading the code; no test covers it).
-Feature Workflow v8 says the checker "derives stale mechanics from current bindings" but does not
-name the set. Unchanged pending a human decision.
+`revalidation::required_verifications` was a second list of the evidence an accepted feature needs
+and omitted F5d `data_integrity`, so a persistence feature's revalidation candidate could be
+prepared with stale data-integrity evidence that Stage 8 readiness then refuses. Feature Workflow
+v8 does not name the set.
+
+Decision: revalidation refreshes exactly the records a Candidate Bundle binds, except the project
+qualification taken for the candidate itself (candidate preparation requires it), plus runtime
+event evidence in the `events` Observation Mode. Owner test:
+`revalidation_refreshes_the_evidence_a_candidate_binds`. The plan now lists items in contract
+order, so the JamFree replay golden changed order only (same items, no persistence feature).

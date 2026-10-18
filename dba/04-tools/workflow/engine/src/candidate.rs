@@ -851,6 +851,33 @@ mod tests {
     }
 
     #[test]
+    fn revalidation_refreshes_the_evidence_a_candidate_binds() {
+        let (_dir, project, _) = fixture();
+        let subject = crate::checker::Subject {
+            workflow: crate::contract::Workflow::Feature,
+            id: "F-1".into(),
+            gui: false,
+            persistence: true,
+            arch_approval_required: false,
+            reality_claims: Vec::new(),
+            inherited_claims: Vec::new(),
+        };
+        fs::write(
+            project.event_schema("F-1"),
+            "# Event Schema\n\n**Mode:** `external-observation`\n",
+        )
+        .unwrap();
+        let revalidation = crate::revalidation::required_verifications(&project, &subject).unwrap();
+        let candidate: Vec<_> = checker::candidate_verification_records(&project, &subject)
+            .unwrap()
+            .into_iter()
+            .filter(|(checkpoint, _)| *checkpoint != "candidate")
+            .collect();
+        assert!(revalidation.contains(&("F5d", "data_integrity")));
+        assert_eq!(revalidation, candidate);
+    }
+
+    #[test]
     fn revalidation_requires_runtime_evidence_only_in_events_mode() {
         let (_dir, project, _) = fixture();
         let subject = crate::checker::Subject {
