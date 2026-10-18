@@ -72,7 +72,7 @@ no WO-03 environment or provider behavior.
 | Step | Status |
 |---|---|
 | 01A | Pending |
-| 01B | Pending |
+| 01B | Implemented |
 | 01C | Implemented |
 | 01D | Pending |
 

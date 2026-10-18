@@ -10,6 +10,7 @@ bash "${CODEOS_ROOT}/dba/04-tools/configuration/project-config-contract.sh"
 bash "${CODEOS_ROOT}/dba/04-tools/configuration/tests/project-config-contract-tests.sh"
 bash "${CODEOS_ROOT}/dba/04-tools/configuration/tests/project-configuration-resolution-tests.sh"
 bash "${CODEOS_ROOT}/dba/04-tools/configuration/verify-configuration-manifest.sh"
+bash "${CODEOS_ROOT}/dba/04-tools/configuration/tests/semantic-closure-tests.sh"
 bash "${CODEOS_ROOT}/dba/04-tools/compatibility/validate-support-manifest.sh" \
   "${CODEOS_ROOT}/dba/04-tools/compatibility/support.json" "${CODEOS_ROOT}"
 bash "${CODEOS_ROOT}/dba/04-tools/compatibility/tests/support-lifecycle-tests.sh"
