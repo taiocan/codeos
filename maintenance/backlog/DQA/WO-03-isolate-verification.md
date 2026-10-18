@@ -11,9 +11,12 @@ measurable.
 
 - Separate deterministic, production-source, and post-production verification execution.
 - Order cheap invalidating checks before expensive evidence (STAB WO-04 question A): pre-candidate
-  qualification before production runs, and no F3 on a frontier whose upstream feature is STALE
-  (F-0006's F4 was re-confirmed for that reason).
+  qualification before production runs. Until WO-06 implements the approved stable topology, do
+  not run F3 against a frontier truncated by a STALE upstream feature (F-0006's F4 was re-confirmed
+  for that reason).
 - Stop at an environment boundary and report the exact next command.
+- Give each execution mode a deterministic identity that later shared-validation evidence can bind
+  without inferring or changing provider mode.
 - Extend project production evidence with successful, failed, and total provider-call counts.
 - Reconcile recorded totals with the project adapter's counter.
 
@@ -32,3 +35,5 @@ into a verification that requires deterministic mode.
 3. The F-0005 incident scenario stops before browser startup with zero extra calls.
 4. Every new production-evidence record has reconciled call totals.
 5. No provider budget or threshold is invented by CodeOS.
+6. A later shared-validation consumer can distinguish deterministic and production executions
+   without inspecting an ambient environment variable.

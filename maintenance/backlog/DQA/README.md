@@ -7,11 +7,17 @@
 | [WO-01](WO-01-qualify-before-issuance.md) | PROTECTED | Qualify configurations before issuance | Proposed |
 | [WO-02](WO-02-single-lifecycle-authority.md) | NORMAL | One executable lifecycle authority | Proposed |
 | [WO-03](WO-03-isolate-verification.md) | PROTECTED | Isolate verification and account for provider calls | Proposed |
-| [WO-04](WO-04-stability-proof.md) | NORMAL | Complete the delivery-stability proof | Proposed |
+| [WO-04](WO-04-shared-validation-baseline.md) | NORMAL | Shared-validation root-cause baseline | Proposed |
+| [WO-05](WO-05-validation-semantics.md) | PROTECTED | Validation evidence and attribution decision | Proposed |
+| [WO-06](WO-06-shared-validation-implementation.md) | PROTECTED | Shared-validation implementation | Proposed |
+| [WO-07](WO-07-qualification-replay.md) | NORMAL | Qualification and JamFree replay | Proposed |
+| [WO-08](WO-08-stability-proof.md) | NORMAL | Complete the delivery-stability proof | Proposed |
 
 STAB P4 questions ([STAB WO-04](../STAB/WO-04-decide-next.md)): A (verification ordering) goes to
-WO-03 and D (lifecycle rules encoded twice) to WO-02. B (dependency scope) and C (inherited evidence)
-were answered by FAI and confirmed on F-0006: a test-only change left F-0001's evidence and
-acceptance current, and F-0006's F5 inherited F-0001's evidence without a production run.
+WO-03 and D (lifecycle rules encoded twice) to WO-02. FAI answered part of B (dependency scope) and
+C (inherited evidence), but JamFree then demonstrated that execution, observation, attribution,
+and accepted-journey topology remain feature-scoped. WO-04–WO-07 address that residual without
+reopening FAI's accepted production-evidence rules.
 
-Each WO follows the previous one. This table is the only place WO status is kept.
+Each WO follows the previous one. WO-05 and WO-06 require the protected human decisions stated in
+their files. This table is the only place WO status is kept.

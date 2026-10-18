@@ -152,5 +152,5 @@ This section is the authoritative qualifying-feature count.
   - Display: while both reasons applied, status showed only the upstream one ("this feature then
     follows it"), hiding the second.
   - Repeated decision: the two features share the outbound journey, so one look at the
-    screen became two F4 decisions bound to the identical Observed Surface (DQA WO-04,
-    criterion 3).
+    screen became two F4 decisions bound to the identical Observed Surface (DQA WO-04 baseline;
+    DQA Charter criterion 6).
