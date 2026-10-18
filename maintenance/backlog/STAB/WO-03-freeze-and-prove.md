@@ -154,3 +154,20 @@ This section is the authoritative qualifying-feature count.
   - Repeated decision: the two features share the outbound journey, so one look at the
     screen became two F4 decisions bound to the identical Observed Surface (DQA WO-04 baseline;
     DQA Charter criterion 6).
+- 2026-10-18 (revalidation after the UX repairs, JamFree `52caf08`): F-0002 revalidated to VALID
+  (candidate `a661806d`, NO OBJECTION) with one production run of 27 TomTom calls, all HTTP 200,
+  no retries, no production browser run. Zero CodeOS changes.
+  - Product/project defect: the fixture emulator reported each date's midday UTC offset for every
+    hour, so on the 2026-10-25 clock change F-0002's event check got `forecast_invalid`. Fixed in
+    JamFree `30a6b63`, outside every feature bundle; nothing went stale.
+  - Environment: the JamFree stack was down at the first qualification; restarted in fixture mode.
+  - Contained operator error: a stale reviewer build after TSTAT was refused by the
+    REVIEWER_BUILD_MISMATCH guard before any Codex call.
+  - Repeated decision: F-0002..F-0005 all bind the return-journey Observed Surface `bbb0e3e8`, so
+    one look at the screen becomes four F4 decisions (DQA WO-04 baseline).
+  - F-0003, F-0004 and F-0005 pass F3 and wait at F4. Human decision: they stay parked (STALE, no
+    TomTom calls) and are revalidated only if a new qualifying feature, release qualification, or
+    an explicit DQA acceptance case needs them. The ~81 remaining approved calls are released.
+- 2026-10-18: P3 paused at 1/3 for DQA, the corrective branch of this WO
+  ([DQA](../DQA/README.md)). This WO stays open; P3 resumes from 1/3 after DQA, and STAB closes
+  only after two more qualifying features.

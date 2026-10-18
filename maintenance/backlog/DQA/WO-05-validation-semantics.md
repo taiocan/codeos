@@ -7,6 +7,16 @@ PROTECTED Part A · after WO-04 · Charter criteria 4–7
 Approve the smallest semantics that let one validation action support several governed claims
 without weakening feature-level traceability, Current Validity, or human control.
 
+## Directions already set
+
+The brief starts from these and reopens one only if evidence falsifies it: one unified validation
+and evidence model with staged adapters; validation owned by product state plus claim, not by the
+triggering feature; Contract-owned prospective claim IDs with a successor ID on semantic change;
+legacy coarse claims until legitimately revised; several feature claims may consume one evidence
+item without merging ownership; accepted journey topology stays stable when evidence goes stale;
+one human session with explicit per-feature/claim outcomes and no implicit propagation; atomic
+feature acceptance.
+
 ## Decision brief
 
 The brief must define and receive human approval for:

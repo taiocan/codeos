@@ -12,8 +12,9 @@ motivated them before issuing a supported DBA configuration.
 - Apply WO-01's candidate-configuration qualification without giving the candidate downstream
   authority.
 - Run generic workflow, reviewer, configuration, boundary, compatibility, and adversarial suites.
-- Replay every WO-04 fixture in JamFree, using no live provider calls except the explicitly isolated
-  production-source case.
+- Replay every WO-04 fixture in disposable JamFree clones. At most one live provider run, only if
+  deterministic stubs cannot establish the real-adapter accounting criterion, and only with its
+  own call approval.
 - Compare actual DBA-28 executions and human actions with unique executions, shared observation
   sessions, explicit feature outcomes, provider calls, and stale claims under the candidate.
 

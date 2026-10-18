@@ -10,7 +10,10 @@ requires CodeOS changes or duplicate proof of one product state.
 ## Work
 
 - Freeze CodeOS capability work.
-- Deliver normal JamFree features under the existing STAB definition.
+- Resume STAB WO-03 P3 from 1/3 and deliver normal JamFree features, only as the product needs
+  them, under the existing STAB definition.
+- F-0003..F-0005 stay parked unless a new qualifying feature, release qualification, or an
+  explicit DQA acceptance case needs them.
 - Record unique validation executions separately from feature claim attributions, and human
   observation sessions separately from governed outcomes.
 - Continue recording CodeOS changes, Candidate Bundles, assessments, invalidations, provider calls,

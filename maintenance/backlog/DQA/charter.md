@@ -1,11 +1,13 @@
 # DQA — Delivery Qualification and Assurance Charter
 
-- **Status:** PROPOSED
+- **Status:** APPROVED 2026-10-18
 - **Evidence:** DBA-24–28 and JamFree delivery, 2026-10-09 through 2026-10-18
 - **Scope:** CodeOS release qualification, shared lifecycle mechanics, safe verification,
   system-scoped validation, and the existing STAB proof
 
-Planning context only. This Charter grants no implementation or semantic approval.
+Planning context only. Approval of this Charter grants no implementation or semantic approval
+beyond what each WO records. DQA is the corrective branch of [STAB WO-03](../STAB/WO-03-freeze-and-prove.md),
+which stays open; P3 resumes from 1/3 after DQA.
 
 ## Problem
 
