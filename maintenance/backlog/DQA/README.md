@@ -7,7 +7,7 @@
 | [WO-01](WO-01-qualify-before-issuance.md) | PROTECTED | Qualify configurations before issuance | Accepted 2026-10-18 (invariant, JamFree replay golden, `dba/` source digest) |
 | [WO-02](WO-02-single-lifecycle-authority.md) | NORMAL | One executable lifecycle authority | Accepted 2026-10-18 (revalidation evidence set, replay golden order) |
 | [WO-03](WO-03-isolate-verification.md) | PROTECTED | Isolate verification and account for provider calls | Accepted 2026-10-18 (Codeos-owned ledger location) |
-| [WO-04](WO-04-shared-validation-baseline.md) | NORMAL | Shared-validation root-cause baseline | Baseline on dqa (b4538c9); awaits acceptance |
+| [WO-04](WO-04-shared-validation-baseline.md) | NORMAL | Shared-validation root-cause baseline | Accepted 2026-10-18 |
 | [WO-05](WO-05-validation-semantics.md) | PROTECTED | Validation evidence and attribution decision | Proposed |
 | [WO-06](WO-06-shared-validation-implementation.md) | PROTECTED | Shared-validation implementation | Proposed |
 | [WO-07](WO-07-qualification-replay.md) | NORMAL | Qualification and JamFree replay | Proposed |
