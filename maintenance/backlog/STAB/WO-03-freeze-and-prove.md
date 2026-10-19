@@ -176,3 +176,6 @@ This section is the authoritative qualifying-feature count.
   calls; earlier accounting stays as recorded and those calls stay unknown. The adoption earns
   no P3 credit: P3 stays 1/3. B3 re-verified (`af0d44e`); B4 awaits the human. F-0001..F-0006
   stay STALE until product work needs them.
+- 2026-10-19: F-0007 (return departure window) accepted under DBA-29 (JamFree `1b6d12a`),
+  non-qualifying: a CodeOS correctness repair was needed (runtime-event bindings, `6dfe450`,
+  `d4c5b34`). P3 stays 1/3. Details in DQA WO-08.

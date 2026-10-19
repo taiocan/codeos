@@ -61,3 +61,26 @@ test before the proof resumes.
 - 2026-10-19, same step: the qualified release refused to build while unrelated untracked files
   existed anywhere in the repository. Conformance repair (`8307735`): untracked files are refused
   only inside the CodeOS source boundary (`dba/`, `dba-system.md`).
+
+## F-0007 — Return departure window (accepted 2026-10-19, non-qualifying)
+
+JamFree `3d36e5c` (spec) → `1b6d12a` (accepted, Candidate Bundle `875779ed`). Non-qualifying:
+the CodeOS correctness repair above was needed. P3 stays 1/3.
+
+- **Executions vs attributions:** 18 Validation Evidence Sets (executions) behind 40 verification
+  records written since the baseline, for F-0007 and F-0002's two revalidations. After the first
+  run, F-0002 reused F-0007's smoke, journey, behavior and repeatability runs; Playwright and
+  qualification ran once for both; SR2 reattributed every record without re-execution.
+- **Human sessions:** 3, each with one explicitly stated outcome (F4, F4 again after the SR2
+  Contract amendment, F8); no outcome propagated.
+- **Provider calls:** 29 (one F-0002 return leg, ledger reconciled with receipts: 27 forecast +
+  2 place search). F-0007 made none (inherited claim). F-0002's second revalidation reused its
+  production evidence.
+- **Invalidations:** F-0002 was staled twice by F-0007's product changes inside its return
+  surface (legitimate), and once by a verifier edit made for F-0005 (reverted, `3f42864`).
+- **Stage 8:** three rounds. Round 1: two valid blockers (sub-minute difference shown as zero,
+  incomplete browser assertions), repaired. Round 2: exactness read as second precision; the
+  human amended the Contract (SR2, nearest minute) instead.
+- **Status:** 3.8–4.0 s on a clone with seven features (3.4–3.5 s with six at the baseline).
+- **Follow-up for F-0005:** its production verifier's window text must adopt "under 1 min
+  longer" when F-0005 is next revalidated (`3f42864`).
