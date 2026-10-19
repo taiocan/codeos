@@ -32,3 +32,14 @@ requires CodeOS changes or duplicate proof of one product state.
 
 A CodeOS correctness repair is allowed, but disqualifies that feature and must gain a regression
 test before the proof resumes.
+
+## Baseline (2026-10-19)
+
+- CodeOS frozen from `main` `106386a` (DBA-29 issued and merged, not pushed). Any later CodeOS
+  change is classified before acting; a correctness repair disqualifies its feature.
+- JamFree `446dc43` on DBA-29: Bootstrap B1–B5 PASS (B3 `af0d44e`, B4 re-confirmed by the human).
+- F-0001..F-0006 STALE after the compatibility repair (`9ad902e`). They are revalidated only when
+  product work needs them, then in one shared v13 run; F-0003..F-0005 stay parked.
+- P3: 1/3 qualifying (F-0003, historical); 2 more needed, both after this baseline.
+- `status --json` on a JamFree clone: 3.4–3.5 s (three runs, debug build).
+- Provider accounting from here is the adapter ledger; earlier totals stay as recorded.
