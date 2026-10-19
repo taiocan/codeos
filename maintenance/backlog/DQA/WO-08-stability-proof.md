@@ -43,3 +43,16 @@ test before the proof resumes.
 - P3: 1/3 qualifying (F-0003, historical); 2 more needed, both after this baseline.
 - `status --json` on a JamFree clone: 3.4–3.5 s (three runs, debug build).
 - Provider accounting from here is the adapter ledger; earlier totals stay as recorded.
+
+## Interruptions
+
+- 2026-10-19, F-0007 (via F-0002's revalidation): **CodeOS correctness defect**, two regressions
+  from DQA. An `events`-mode feature could not prepare a candidate.
+  - WO-02 gave revalidation the generic currency rule, which lacks the validator binding a
+    runtime-event record carries, so every events-mode revalidation read as stale.
+  - WO-06 made `verify-events` record F5g Playwright bindings, which under v13 include
+    Playwright's execution identity, so under DBA-29 even an ordinary candidate refused them.
+
+  Repaired with one owner, `event_evidence::runtime_event_bindings`, used by the writer and both
+  readers, plus a regression test `tests/runtime_events.rs` (DBA-28 and DBA-29) that fails on the
+  previous code. Per this WO, F-0007 does not qualify; P3 stays 1/3.

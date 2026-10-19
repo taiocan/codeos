@@ -31,6 +31,43 @@ impl Drop for LockGuard {
     }
 }
 
+/// The bindings a runtime-event record is current against: the F7 runtime-event verification
+/// bindings and the content of the validator it was checked with. The one derivation `verify-events`
+/// records and candidate preparation and revalidation compare.
+pub fn runtime_event_bindings(
+    project: &Project,
+    subject: &Subject,
+    validator: &str,
+) -> Result<BTreeMap<String, String>> {
+    let relative = Path::new(validator);
+    anyhow::ensure!(
+        !validator.trim().is_empty()
+            && !relative.is_absolute()
+            && !relative
+                .components()
+                .any(|part| matches!(part, std::path::Component::ParentDir)),
+        "runtime-event validator must be a non-traversing project-relative path"
+    );
+    let mut bindings =
+        verification_bindings_for_mechanic(project, subject, "F7", "runtime_event_schema")?;
+    bindings.insert(
+        "event_evidence_validator".into(),
+        hashing::file_sha256(&project.root.join(relative))?
+            .context("runtime-event validator does not exist")?,
+    );
+    Ok(bindings)
+}
+
+/// The project-relative validator a runtime-event record names.
+pub fn recorded_validator(record: &VerificationRecord) -> Result<&str> {
+    record
+        .details
+        .as_ref()
+        .and_then(|details| details.get("event_evidence_validator"))
+        .and_then(|value| value.as_str())
+        .context("runtime-event verification names no validator")
+}
+
 fn project_file(project: &Project, supplied: &str, purpose: &str) -> Result<PathBuf> {
     let relative = Path::new(supplied);
     anyhow::ensure!(
@@ -244,12 +281,7 @@ pub fn verify(project: &Project, args: VerifyEventArgs<'_>) -> Result<Verificati
         Err(error) => return Err(error.into()),
     }
 
-    let mut bindings =
-        verification_bindings_for_mechanic(project, args.subject, "F5g", "playwright")?;
-    bindings.insert(
-        "event_evidence_validator".into(),
-        hashing::file_sha256(&validator)?.context("hash event-schema validator")?,
-    );
+    let bindings = runtime_event_bindings(project, args.subject, args.validator)?;
     let relative_evidence = evidence_path
         .strip_prefix(&project.root)
         .unwrap_or(&evidence_path)

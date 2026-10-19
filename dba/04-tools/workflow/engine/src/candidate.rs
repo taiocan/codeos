@@ -231,32 +231,10 @@ pub fn assemble(
         let runtime = store
             .latest("feature", &subject.id, "F7", "runtime_event_schema")?
             .context("candidate requires current F7/runtime_event_schema verification")?;
-        let runtime_want = checker::verification_bindings_for_mechanic(
-            project,
-            subject,
-            "F7",
-            "runtime_event_schema",
-        )?;
-        let validator_path = runtime
-            .details
-            .as_ref()
-            .and_then(|details| details.get("event_evidence_validator"))
-            .and_then(|value| value.as_str())
+        let validator = crate::event_evidence::recorded_validator(&runtime)
             .context("candidate runtime verification has no validator path binding")?;
-        let validator = Path::new(validator_path);
-        anyhow::ensure!(
-            !validator.is_absolute()
-                && !validator
-                    .components()
-                    .any(|component| matches!(component, std::path::Component::ParentDir)),
-            "candidate runtime validator must be a project-relative path"
-        );
-        let mut runtime_want = runtime_want;
-        runtime_want.insert(
-            "event_evidence_validator".into(),
-            hashing::file_sha256(&project.root.join(validator))?
-                .context("candidate runtime validator disappeared")?,
-        );
+        let runtime_want =
+            crate::event_evidence::runtime_event_bindings(project, subject, validator)?;
         anyhow::ensure!(
             matches!(
                 crate::verification::evaluate(Some(runtime.clone()), &runtime_want),
