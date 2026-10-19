@@ -394,12 +394,7 @@ pub fn build_case(project: &Project, subject_id: &str, trigger: &str) -> Result<
         let record = vstore
             .latest("feature", subject_id, checkpoint, name)?
             .with_context(|| format!("missing fresh {name} verification"))?;
-        let want = if name == "runtime_event_schema" {
-            let validator = crate::event_evidence::recorded_validator(&record)?;
-            crate::event_evidence::runtime_event_bindings(project, &subject, validator)?
-        } else {
-            crate::checker::verification_bindings_for_mechanic(project, &subject, checkpoint, name)?
-        };
+        let want = crate::checker::current_record_bindings(project, &subject, &record)?;
         // Runtime events must also be observed after the acceptance they revalidate.
         let current_record = matches!(
             verification::evaluate(Some(record.clone()), &want),

@@ -187,6 +187,9 @@ fn record_evidence_with_events(fixture: &Fixture, reality: bool, events: &str) {
     let events_sha = sha256(events.as_bytes());
     let events_path = format!(".codeos/06-workflow/event-evidence/{events_sha}.jsonl");
     write(&root.join(&events_path), events);
+    // As verify-events records: the validator's path in the details, its content in the bindings.
+    let validator = ".codeos/06-workflow/event-validator.jq";
+    write(&root.join(validator), ".\n");
 
     let mut required = vec![
         ("F3", "smoke", Value::Null),
@@ -198,6 +201,7 @@ fn record_evidence_with_events(fixture: &Fixture, reality: bool, events: &str) {
             "runtime_event_schema",
             json!({
                 "event_evidence": events_path,
+                "event_evidence_validator": validator,
                 "event_set_sha256": events_sha,
                 "semantic_sha256": events_sha,
                 "event_schema_conformance": "passed",
@@ -234,6 +238,9 @@ fn record_evidence_with_events(fixture: &Fixture, reality: bool, events: &str) {
             "verification": verification, "result": "passed", "bindings": bindings,
             "command": "fixture", "timestamp": "2026-10-06T10:00:00Z",
         });
+        if verification == "runtime_event_schema" {
+            record["bindings"]["event_evidence_validator"] = json!(file_sha(&root.join(validator)));
+        }
         if !details.is_null() {
             record["details"] = details;
         }

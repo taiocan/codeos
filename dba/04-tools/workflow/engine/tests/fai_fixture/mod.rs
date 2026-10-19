@@ -392,3 +392,47 @@ pub fn codeos_files(root: &Path) -> Vec<(PathBuf, Vec<u8>)> {
     out.sort();
     out
 }
+
+pub const EVENT_VALIDATOR: &str = r#"{
+  total: length,
+  invalid_events: [.[] | select(.event_type != "RouteShown")],
+  privacy_check: {prohibited_payload_keys_found: [.[] | .payload | keys[] | select(. == "secret")]}
+}"#;
+
+impl Fixture {
+    /// Put a feature in the `events` Observation Mode, with a validator and an empty event log.
+    pub fn events_mode(&self, feature: &str) {
+        let path = self.root.join(format!(
+            ".codeos/01-specification/event-schemas/{feature}_schema.md"
+        ));
+        let text = fs::read_to_string(&path).unwrap();
+        fs::write(
+            &path,
+            text.replace("**Mode:** `external-observation`", "**Mode:** `events`"),
+        )
+        .unwrap();
+        self.write("events/validate.jq", EVENT_VALIDATOR);
+        self.write("events/runtime_events.jsonl", "");
+    }
+
+    /// Record runtime-event evidence through `verify-events`, with one appended event.
+    pub fn record_events(&self, feature: &str) {
+        let command: Vec<String> = [
+            "bash",
+            "-c",
+            r#"printf '{"event_id":"%s","event_type":"RouteShown","timestamp":1,"correlation_id":"run-%s","source_module":"route","payload":{}}\n' "$RANDOM" "$RANDOM" >> events/runtime_events.jsonl"#,
+        ]
+        .map(String::from)
+        .to_vec();
+        codeos_workflow::event_evidence::verify(
+            &self.project(),
+            codeos_workflow::event_evidence::VerifyEventArgs {
+                subject: &self.subject(feature),
+                event_log: "events/runtime_events.jsonl",
+                validator: "events/validate.jq",
+                command: &command,
+            },
+        )
+        .unwrap();
+    }
+}

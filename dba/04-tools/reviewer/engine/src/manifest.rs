@@ -276,13 +276,10 @@ pub fn derive(
         );
         if let Some(entry) = latest {
             let current = match &subject {
-                Ok(subject) => codeos_workflow::checker::verification_bindings_for_mechanic(
-                    &project,
-                    subject,
-                    checkpoint,
-                    verification,
-                )
-                .map_err(|error| format!("{error:#}")),
+                Ok(subject) => {
+                    codeos_workflow::checker::current_record_bindings(&project, subject, &entry.1)
+                        .map_err(|error| format!("{error:#}"))
+                }
                 Err(error) => Err(format!("{error:#}")),
             };
             manifest

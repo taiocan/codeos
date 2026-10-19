@@ -156,3 +156,40 @@ fn every_input_a_record_binds_is_judged_by_both_consumers() {
         "{issues:#?}"
     );
 }
+
+/// Found by WO-08 (JamFree F-0002): runtime-event evidence binds the validator it was checked with,
+/// which the generic mechanic bindings lack. Both consumers must judge it by its own derivation.
+#[test]
+fn runtime_event_evidence_is_current_for_the_workflow_and_the_reviewer() {
+    for configuration in ["DBA-28", "DBA-29"] {
+        let fx = Fixture::under(configuration, "    provider: [backend]\n");
+        fx.write(
+            "claim-scopes.json",
+            r#"{"F-0001": {"route": ["provider"]}}"#,
+        );
+        fx.spec("F-0001", ADVANCE, ROUTE);
+        fx.events_mode("F-0001");
+        fx.git(&["add", "-A"]);
+        fx.git(&["commit", "-qm", "spec"]);
+        fx.check("F-0001");
+        fx.record_events("F-0001");
+        let evidence = fx.evidence("F-0001");
+        fx.receipt("F-0001", "reconciliation", "completed", Some(&evidence));
+        fx.seed("F-0001", "candidate", "project_qualification");
+        codeos_workflow::candidate::prepare(
+            &fx.project(),
+            &fx.subject("F-0001"),
+            &[],
+            "ordinary",
+            None,
+        )
+        .unwrap();
+        let issues = readiness_issues(&fx);
+        assert!(
+            !issues
+                .iter()
+                .any(|issue| issue.contains("runtime_event_schema")),
+            "{configuration}: {issues:#?}"
+        );
+    }
+}

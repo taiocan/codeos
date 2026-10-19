@@ -55,4 +55,9 @@ test before the proof resumes.
 
   Repaired with one owner, `event_evidence::runtime_event_bindings`, used by the writer and both
   readers, plus a regression test `tests/runtime_events.rs` (DBA-28 and DBA-29) that fails on the
-  previous code. Per this WO, F-0007 does not qualify; P3 stays 1/3.
+  previous code. The reviewer's readiness had the same gap (WO-02): every reader now asks
+  `checker::current_record_bindings`, and `lifecycle_contract.rs` covers it. Per this WO, F-0007
+  does not qualify; P3 stays 1/3.
+- 2026-10-19, same step: the qualified release refused to build while unrelated untracked files
+  existed anywhere in the repository. Conformance repair (`8307735`): untracked files are refused
+  only inside the CodeOS source boundary (`dba/`, `dba-system.md`).

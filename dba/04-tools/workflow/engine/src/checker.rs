@@ -3291,6 +3291,20 @@ pub fn verification_bindings_for(
     verification_bindings(project, subject, checkpoint, None)
 }
 
+/// The bindings a recorded verification must currently match: a runtime-event record's own
+/// derivation (its F7 inputs and the validator it names), every other record's mechanic bindings.
+pub fn current_record_bindings(
+    project: &Project,
+    subject: &Subject,
+    record: &VerificationRecord,
+) -> Result<BTreeMap<String, String>> {
+    if record.verification == "runtime_event_schema" {
+        let validator = crate::event_evidence::recorded_validator(record)?;
+        return crate::event_evidence::runtime_event_bindings(project, subject, validator);
+    }
+    verification_bindings_for_mechanic(project, subject, &record.checkpoint, &record.verification)
+}
+
 pub fn verification_bindings_for_mechanic(
     project: &Project,
     subject: &Subject,
