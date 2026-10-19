@@ -84,3 +84,23 @@ the CodeOS correctness repair above was needed. P3 stays 1/3.
 - **Status:** 3.8–4.0 s on a clone with seven features (3.4–3.5 s with six at the baseline).
 - **Follow-up for F-0005:** its production verifier's window text must adopt "under 1 min
   longer" when F-0005 is next revalidated (`3f42864`).
+
+## F-0008 — Return arrive by (accepted 2026-10-19, qualifying: P3 2/3)
+
+JamFree `b7e999a` (spec) → `c091494` (accepted, Candidate Bundle `c58e730d`). No CodeOS change
+between the F-0007 record and acceptance; the interruptions were product defects or expected
+governance, so F-0008 qualifies.
+
+- **Executions vs attributions:** 12 Validation Evidence Sets behind 27 verification records for
+  F-0008 and F-0002's two revalidations; F-0002 reused F-0008's smoke, journey, behavior and
+  repeatability runs each time; Playwright and qualification ran once per state.
+- **Human sessions:** 2 (F4, F8), each with explicitly stated outcomes.
+- **Provider calls:** 0. F-0008 inherits F-0002's return comparison; F-0002's production
+  evidence stayed current through both revalidations.
+- **Interruptions, classified:** a product defect in the shared arrive-by logic (a target the
+  clock skips admitted later arrivals; also F-0006's), found at Stage 8 round 1 and fixed with a
+  regression test; incomplete browser assertions (fixed); F-0002 staled twice by changes to its
+  return surface (expected governance); F-0002's first revalidation packet exceeded the 450 KB
+  review budget by 4% and ran once with the operator override, by human decision.
+- **Stage 8:** two rounds (DO NOT ADVANCE, then NO OBJECTION).
+- **Status:** 4.3 s on a clone with eight features.

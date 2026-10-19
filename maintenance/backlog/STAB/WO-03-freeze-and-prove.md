@@ -179,3 +179,6 @@ This section is the authoritative qualifying-feature count.
 - 2026-10-19: F-0007 (return departure window) accepted under DBA-29 (JamFree `1b6d12a`),
   non-qualifying: a CodeOS correctness repair was needed (runtime-event bindings, `6dfe450`,
   `d4c5b34`). P3 stays 1/3. Details in DQA WO-08.
+- 2026-10-19: F-0008 (return arrive by) accepted under DBA-29 (JamFree `c091494`) with no CodeOS
+  change: qualifying. **P3 2/3.** One more ordinary qualifying feature is needed, chosen from the
+  next real product priority, not another mirror. Details in DQA WO-08.
