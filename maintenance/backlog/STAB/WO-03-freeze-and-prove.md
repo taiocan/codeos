@@ -171,3 +171,8 @@ This section is the authoritative qualifying-feature count.
 - 2026-10-18: P3 paused at 1/3 for DQA, the corrective branch of this WO
   ([DQA](../DQA/README.md)). This WO stays open; P3 resumes from 1/3 after DQA, and STAB closes
   only after two more qualifying features.
+- 2026-10-19: DQA complete. JamFree adopted DBA-29 (`e119fd3`) after a compatibility repair
+  (`9ad902e`) that accounts every provider attempt. Place search had made unreceipted TomTom
+  calls; earlier accounting stays as recorded and those calls stay unknown. The adoption earns
+  no P3 credit: P3 stays 1/3. B3 re-verified (`af0d44e`); B4 awaits the human. F-0001..F-0006
+  stay STALE until product work needs them.

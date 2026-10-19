@@ -10,8 +10,8 @@
 | [WO-04](WO-04-shared-validation-baseline.md) | NORMAL | Shared-validation root-cause baseline | Accepted 2026-10-18 |
 | [WO-05](WO-05-validation-semantics.md) | PROTECTED | Validation evidence and attribution decision | Approved 2026-10-18 ((a)–(c), five terms) |
 | [WO-06](WO-06-shared-validation-implementation.md) | PROTECTED | Shared-validation implementation | Accepted 2026-10-18 |
-| [WO-07](WO-07-qualification-replay.md) | NORMAL | Qualification and JamFree replay | Accepted 2026-10-18; DBA-29 issued on dqa, not merged |
-| [WO-08](WO-08-stability-proof.md) | NORMAL | Complete the delivery-stability proof | Proposed |
+| [WO-07](WO-07-qualification-replay.md) | NORMAL | Qualification and JamFree replay | Accepted 2026-10-18; DBA-29 issued and merged to main (2026-10-19); JamFree adopted it (`e119fd3`) |
+| [WO-08](WO-08-stability-proof.md) | NORMAL | Complete the delivery-stability proof | Next; JamFree B4 re-confirmation (human) first |
 
 STAB P4 questions ([STAB WO-04](../STAB/WO-04-decide-next.md)): A (verification ordering) goes to
 WO-03 and D (lifecycle rules encoded twice) to WO-02. FAI answered part of B (dependency scope) and
