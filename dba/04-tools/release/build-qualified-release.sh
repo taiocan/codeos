@@ -9,14 +9,7 @@ LOCK="${ROOT}/maintenance/release-lock.json"
 
 fail() { printf 'qualified release failed: %s\n' "$1" >&2; exit 1; }
 command -v jq >/dev/null || fail 'jq is required'
-git -C "${ROOT}" diff --quiet -- . ':!maintenance/release-manifest.json' \
-  || fail 'tracked source changes must be committed before a qualified release build'
-git -C "${ROOT}" diff --cached --quiet -- . ':!maintenance/release-manifest.json' \
-  || fail 'staged source changes must be committed before a qualified release build'
-while IFS= read -r -d '' path; do
-  [[ "${path}" == 'maintenance/release-manifest.json' ]] && continue
-  fail "untracked release input must be committed or ignored: ${path}"
-done < <(git -C "${ROOT}" ls-files --others --exclude-standard -z)
+bash "${HERE}/release-inputs-clean.sh" "${ROOT}"
 
 locked_rust="$(jq -r '.rust' "${LOCK}")"
 locked_node="$(jq -r '.node' "${LOCK}")"
