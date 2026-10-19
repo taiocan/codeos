@@ -104,3 +104,30 @@ governance, so F-0008 qualifies.
   review budget by 4% and ran once with the operator override, by human decision.
 - **Stage 8:** two rounds (DO NOT ADVANCE, then NO OBJECTION).
 - **Status:** 4.3 s on a clone with eight features.
+
+## F-0009 — Destination affiliate slot (accepted 2026-10-19, qualifying: P3 3/3)
+
+JamFree `ced70c3` (spec, after the O-4 Charter amendment `f951eb0`) → `c13679c` (accepted,
+Candidate Bundle `cf47c8d8`). No CodeOS change; qualifying.
+
+- **Executions vs attributions:** 12 Validation Evidence Sets behind 13 records (a single feature,
+  so no cross-feature sharing).
+- **Human sessions:** 2 (F4 on the rendered fixture offers, F8), explicit outcomes.
+- **Provider calls:** 0 (no backend change; production offers configured empty).
+- **Interruptions, classified:** Stage 8 round 1 found one valid evidence gap (fixture-versus-
+  production selection untested), fixed; expected governance only otherwise.
+- **Status:** 4.7 s on a clone with nine features.
+
+## Result against the acceptance criteria (for human acceptance)
+
+1. Three qualifying features: F-0003 (historical), F-0008 and F-0009, the last two after the
+   accepted shared-validation baseline.
+2. Neither F-0008 nor F-0009 needed a CodeOS capability or conformance change (F-0007, which did,
+   is recorded as non-qualifying).
+3. Compatible validation identities executed once; additional consumers were attribution only
+   (WO-08 records above).
+4. Every human session was single and its outcomes explicitly stated; none propagated.
+5. The one production run (F-0002, 29 calls) reconciled with its receipts. Invalidations followed
+   real product-surface changes; the one incidental invalidation (a verifier edit, `3f42864`) was
+   operator-caused and reverted before any provider call.
+6. Status grew from 3.4–3.5 s (six features) to 4.7 s (nine features).
