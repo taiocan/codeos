@@ -334,3 +334,36 @@ fn status_work_does_not_grow_with_checkpoints_and_persists_nothing() {
         );
     }
 }
+
+#[test]
+fn standard_status_summarizes_platform_and_drill_down_keeps_project_exit_status() {
+    let fx = fixture();
+    let run = |args: &[&str]| {
+        Command::new(env!("CARGO_BIN_EXE_codeos-workflow"))
+            .arg("--project")
+            .arg(&fx.root)
+            .arg("status")
+            .args(args)
+            .output()
+            .unwrap()
+    };
+    let ordinary = run(&[]);
+    let platform = run(&["--platform"]);
+    assert_eq!(platform.status.code(), ordinary.status.code());
+    let ordinary_text = String::from_utf8(ordinary.stdout).unwrap();
+    assert!(ordinary_text.contains("PLATFORM ASSURANCE — DEVELOPMENT EVIDENCE\n"));
+    for area in [
+        "Persistence (PostgreSQL)",
+        "Backend (Rust)",
+        "GUI (Svelte)",
+        "Integrated product",
+    ] {
+        assert!(ordinary_text.contains(area), "{area} missing: {ordinary_text}");
+    }
+    let text = String::from_utf8(platform.stdout).unwrap();
+    assert!(text.starts_with("PLATFORM ASSURANCE — DEVELOPMENT EVIDENCE\n"));
+    for area in ["Persistence", "Backend", "GUI", "Integrated product"] {
+        assert!(text.contains(area), "{area} missing: {text}");
+    }
+    assert!(!run(&["--platform", "--json"]).status.success());
+}

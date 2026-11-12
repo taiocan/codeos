@@ -177,6 +177,12 @@ struct StatusArgs {
     /// Emit the project-wide status projection as JSON.
     #[arg(long)]
     json: bool,
+    /// Show read-only Platform Assurance detail for the project.
+    #[arg(
+        long,
+        conflicts_with_all = ["workflow", "subject", "history", "json", "since"]
+    )]
+    platform: bool,
     /// Show process history: counts and elapsed durations derived from existing records.
     #[arg(long, conflicts_with = "workflow")]
     history: bool,
@@ -610,6 +616,8 @@ fn run(cli: &Cli, start: &std::path::Path) -> Result<i32> {
                     }
                     let text = if args.json {
                         serde_json::to_string_pretty(&status)?
+                    } else if args.platform {
+                        codeos_workflow::platform_assurance::render(&status.platform_assurance)
                     } else if let Some(history) = &status.history {
                         codeos_workflow::history::render(history)
                     } else {

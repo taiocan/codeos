@@ -459,6 +459,65 @@
   ],
   "open_observations": [],
   "planned_feature_candidates": [],
+  "platform_assurance": [
+    {
+      "area": "persistence",
+      "basis": [],
+      "status": "NOT_APPLICABLE",
+      "subjects": []
+    },
+    {
+      "area": "backend",
+      "basis": [
+        "F-0001 F3/smoke 9d143f8fcb2b5ef2128b4b067797865c422ad64c71d7ef78e2d7b1e547af34c5 via Candidate Bundle 15b84a0b5291feedab26a522b643d601c11e3a19b3fd096730c9e80cdea2b4b0",
+        "F-0001 F5/behavior 6745652a2122f47dab50ffe86b48e0000465e89276a1d8280967f907488089ec via Candidate Bundle 15b84a0b5291feedab26a522b643d601c11e3a19b3fd096730c9e80cdea2b4b0",
+        "F-0002 F3/smoke e5c51927d7f66e44a54026aa2e876c02084b250585c557aae4debcf5866fe2c0: stale (contract changed) via Candidate Bundle 93d68c39c0f8730328715ec6d7568524a4aef74a2e1f7c62914656ded836bb7a",
+        "F-0002 F5/behavior 14f2a5dd92294801c026301be42159f3af4293dab4479293ebfe356745b4b50a: stale (contract changed) via Candidate Bundle 93d68c39c0f8730328715ec6d7568524a4aef74a2e1f7c62914656ded836bb7a",
+        "F-0003 F3/smoke 7c8a8cc49bf060852c7faa4ed31cd8ed4f82bb1ff38b6a71b41dc28706fc483e",
+        "F-0003 F5/behavior: no exact evidence"
+      ],
+      "status": "STALE",
+      "subjects": [
+        "F-0001",
+        "F-0002",
+        "F-0003"
+      ]
+    },
+    {
+      "area": "gui",
+      "basis": [
+        "F-0001 F5g/playwright 7713f1a08b7407b68ce4770c4576c82c011ec37b0dd78820b71095276bcbcabe via Candidate Bundle 15b84a0b5291feedab26a522b643d601c11e3a19b3fd096730c9e80cdea2b4b0",
+        "F-0002 F5g/playwright 41b3d4045b0370d4a5eead86454bccb4b9bcc0b4f6a226b4e8919307adda3349: stale (contract changed) via Candidate Bundle 93d68c39c0f8730328715ec6d7568524a4aef74a2e1f7c62914656ded836bb7a",
+        "F-0003 F5g/playwright: no exact evidence"
+      ],
+      "status": "STALE",
+      "subjects": [
+        "F-0001",
+        "F-0002",
+        "F-0003"
+      ]
+    },
+    {
+      "area": "integrated_product",
+      "basis": [
+        "F-0001 F3/smoke 9d143f8fcb2b5ef2128b4b067797865c422ad64c71d7ef78e2d7b1e547af34c5 via Candidate Bundle 15b84a0b5291feedab26a522b643d601c11e3a19b3fd096730c9e80cdea2b4b0",
+        "F-0001 F3/product_journey 81dd1c117a30f78e1923ca5235823737a928d1d0424155e80320b1541769d3ed via Candidate Bundle 15b84a0b5291feedab26a522b643d601c11e3a19b3fd096730c9e80cdea2b4b0",
+        "F-0001 F5g/playwright 7713f1a08b7407b68ce4770c4576c82c011ec37b0dd78820b71095276bcbcabe via Candidate Bundle 15b84a0b5291feedab26a522b643d601c11e3a19b3fd096730c9e80cdea2b4b0",
+        "F-0002 F3/smoke e5c51927d7f66e44a54026aa2e876c02084b250585c557aae4debcf5866fe2c0: stale (contract changed) via Candidate Bundle 93d68c39c0f8730328715ec6d7568524a4aef74a2e1f7c62914656ded836bb7a",
+        "F-0002 F3/product_journey 158110eea2f00fc0f033ee13525bd6ce63e6887176a6b8b1feb7993579ed1c79: stale (contract changed) via Candidate Bundle 93d68c39c0f8730328715ec6d7568524a4aef74a2e1f7c62914656ded836bb7a",
+        "F-0002 F5g/playwright 41b3d4045b0370d4a5eead86454bccb4b9bcc0b4f6a226b4e8919307adda3349: stale (contract changed) via Candidate Bundle 93d68c39c0f8730328715ec6d7568524a4aef74a2e1f7c62914656ded836bb7a",
+        "F-0003 F3/smoke 7c8a8cc49bf060852c7faa4ed31cd8ed4f82bb1ff38b6a71b41dc28706fc483e",
+        "F-0003 F3/product_journey: no exact evidence",
+        "F-0003 F5g/playwright: no exact evidence"
+      ],
+      "status": "STALE",
+      "subjects": [
+        "F-0001",
+        "F-0002",
+        "F-0003"
+      ]
+    }
+  ],
   "project": {
     "configuration": "DBA-26",
     "name": "golden"

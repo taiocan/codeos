@@ -21,6 +21,7 @@ pub mod history;
 pub mod instrument;
 pub mod monitor;
 pub mod observations;
+pub mod platform_assurance;
 pub mod project;
 pub mod qualification;
 pub mod receipts;

@@ -136,7 +136,10 @@ pub struct Subject {
     pub workflow: Workflow,
     pub id: String,
     pub gui: bool,
+    pub backend: bool,
     pub persistence: bool,
+    /// All three Platform Baseline rows have an explicit changed/unchanged value.
+    pub impact_accounting_complete: bool,
     pub arch_approval_required: bool,
     pub reality_claims: Vec<String>,
     /// Feature Workflow v11 inherited claims, which need no production run of their own.
@@ -153,7 +156,8 @@ pub struct InheritedClaim {
 
 impl Subject {
     pub fn resolve(project: &Project, workflow: Workflow, id: &str) -> Result<Self> {
-        let (mut gui, mut persistence) = (false, false);
+        let (mut gui, mut backend, mut persistence) = (false, false, false);
+        let mut impact_accounting_complete = workflow != Workflow::Feature;
         let mut reality_claims = Vec::new();
         let mut inherited_claims = Vec::new();
         if workflow == Workflow::Feature {
@@ -161,8 +165,15 @@ impl Subject {
             if let Ok(text) = std::fs::read_to_string(&contract_path) {
                 // Read the Feature Impact Accounting table rows only, plus an explicit marker.
                 let lower = text.to_lowercase();
-                gui = lower.contains("gui-visible outcome") || impact_row_changed(&lower, "gui");
-                persistence = impact_row_changed(&lower, "persistence");
+                let gui_impact = impact_row(&lower, "gui");
+                let backend_impact = impact_row(&lower, "backend");
+                let persistence_impact = impact_row(&lower, "persistence");
+                impact_accounting_complete = gui_impact.is_some()
+                    && backend_impact.is_some()
+                    && persistence_impact.is_some();
+                gui = lower.contains("gui-visible outcome") || gui_impact == Some(true);
+                backend = backend_impact == Some(true);
+                persistence = persistence_impact == Some(true);
                 let inherits = project.feature_workflow_version()? >= 11;
                 (reality_claims, inherited_claims) = reality_basis(&text, inherits)?;
             }
@@ -171,7 +182,9 @@ impl Subject {
             workflow,
             id: id.to_string(),
             gui,
+            backend,
             persistence,
+            impact_accounting_complete,
             arch_approval_required: false,
             reality_claims,
             inherited_claims,
@@ -205,7 +218,9 @@ pub fn evaluate(project: &Project, subject: &Subject) -> Result<Vec<CheckpointRe
                 workflow: Workflow::Bootstrap,
                 id: "solution".into(),
                 gui: false,
+                backend: false,
                 persistence: false,
+                impact_accounting_complete: true,
                 arch_approval_required: false,
                 reality_claims: vec![],
                 inherited_claims: vec![],
@@ -325,13 +340,25 @@ pub fn evaluate(project: &Project, subject: &Subject) -> Result<Vec<CheckpointRe
     Ok(reports)
 }
 
-/// A Feature Impact Accounting row `| <tier…> | changed | <reason> |` for the given tier keyword.
-fn impact_row_changed(lower_text: &str, tier_keyword: &str) -> bool {
-    lower_text.lines().any(|line| {
+/// One explicit Feature Impact Accounting row: changed, unchanged, or absent/invalid.
+fn impact_row(lower_text: &str, tier_keyword: &str) -> Option<bool> {
+    lower_text.lines().find_map(|line| {
         let l = line.trim();
-        l.starts_with('|')
-            && l.contains(tier_keyword)
-            && l.split('|').map(str::trim).any(|cell| cell == "changed")
+        if !l.starts_with('|') {
+            return None;
+        }
+        let values: Vec<_> = l.split('|').map(str::trim).collect();
+        if !values
+            .get(1)
+            .is_some_and(|tier| tier.contains(tier_keyword))
+        {
+            return None;
+        }
+        match values.get(2).copied() {
+            Some("changed") => Some(true),
+            Some("unchanged") => Some(false),
+            _ => None,
+        }
     })
 }
 
@@ -5006,6 +5033,17 @@ mod journey_tests {
     use super::*;
 
     #[test]
+    fn impact_accounting_reads_only_the_tier_and_state_cells() {
+        let table = "| Persistence (PostgreSQL) | unchanged | backend stores nothing |\n\
+                     | Backend (Rust) | changed | endpoint |\n\
+                     | GUI (Svelte) | invalid | undecided |"
+            .to_lowercase();
+        assert_eq!(impact_row(&table, "persistence"), Some(false));
+        assert_eq!(impact_row(&table, "backend"), Some(true));
+        assert_eq!(impact_row(&table, "gui"), None);
+    }
+
+    #[test]
     fn required_decision_bindings_follow_decide_and_accept_pre_product_scope_receipts() {
         let map = |names: &[&str]| -> BTreeMap<String, String> {
             names
@@ -5188,7 +5226,9 @@ mod journey_tests {
             workflow: Workflow::Feature,
             id: "F-1".into(),
             gui,
+            backend: false,
             persistence: false,
+            impact_accounting_complete: true,
             arch_approval_required: false,
             reality_claims: vec![],
             inherited_claims: vec![],

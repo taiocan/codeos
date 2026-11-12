@@ -188,6 +188,7 @@ pub struct ProjectStatus {
     pub attention: Vec<AttentionItem>,
     pub open_observations: Vec<OpenObservation>,
     pub health: Vec<crate::health::Health>,
+    pub platform_assurance: Vec<crate::platform_assurance::PlatformAssurance>,
     /// Present only when requested with `status --history`.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub history: Option<crate::history::History>,
@@ -362,6 +363,7 @@ impl ProjectStatus {
         let attention = attention(project, &bootstrap, &features, current_feature.as_deref())?;
         let open_observations = open_observations(project)?;
         let health = crate::health::derive(project, &features, &open_observations)?;
+        let platform_assurance = crate::platform_assurance::derive(project, &features)?;
 
         Ok(Self {
             schema_version: if project.workflow_governance_version()? >= 3 {
@@ -381,6 +383,7 @@ impl ProjectStatus {
             attention,
             open_observations,
             health,
+            platform_assurance,
             history: None,
         })
     }
@@ -863,6 +866,26 @@ pub fn render_width(status: &ProjectStatus, width: usize) -> String {
     table(
         &mut out,
         &[("DOMAIN", false), ("STATE", false), ("BASIS", true)],
+        &rows,
+        width,
+        true,
+    );
+
+    out.push_str("\nPLATFORM ASSURANCE — DEVELOPMENT EVIDENCE\n");
+    let rows = status
+        .platform_assurance
+        .iter()
+        .map(|item| {
+            vec![
+                item.area.platform_label().to_string(),
+                item.status.label().to_string(),
+                item.compact_summary(),
+            ]
+        })
+        .collect::<Vec<_>>();
+    table(
+        &mut out,
+        &[("AREA", false), ("STATE", false), ("BASIS", true)],
         &rows,
         width,
         true,
