@@ -1,6 +1,6 @@
 //! Durable Operation v2 observations, routes, and human closures.
 
-use crate::contract::OPERATION_ROUTES;
+use crate::contract::{OPERATION_ROUTES, RETIREMENT_ROUTE};
 use crate::hashing;
 use crate::project::Project;
 use anyhow::{Context, Result};
@@ -132,7 +132,8 @@ impl ObservationStore {
         target_id: Option<String>,
     ) -> Result<Route> {
         anyhow::ensure!(
-            OPERATION_ROUTES.contains(&route),
+            OPERATION_ROUTES.contains(&route)
+                || (route == RETIREMENT_ROUTE && project.operation_workflow_version()? >= 3),
             "invalid operation route '{route}'"
         );
         anyhow::ensure!(
@@ -211,7 +212,9 @@ impl ObservationStore {
 
 fn validate_target(route: &str, target_type: Option<&str>, target_id: Option<&str>) -> Result<()> {
     let expected = match route {
-        "implementation_defect" | "specification_change" | "new_feature" => Some("feature"),
+        "implementation_defect" | "specification_change" | "new_feature" | RETIREMENT_ROUTE => {
+            Some("feature")
+        }
         "charter_change" => Some("charter"),
         "architecture_reassessment" => Some("architecture_scope"),
         "no_action" => None,
@@ -238,7 +241,7 @@ fn validate_target(route: &str, target_type: Option<&str>, target_id: Option<&st
 
 fn target_path(project: &Project, route: &str, target: Option<&str>) -> Option<PathBuf> {
     match route {
-        "implementation_defect" | "new_feature" | "specification_change" => {
+        "implementation_defect" | "new_feature" | "specification_change" | RETIREMENT_ROUTE => {
             target.map(|v| project.intent(v))
         }
         "charter_change" => Some(project.charter()),
@@ -282,6 +285,17 @@ fn validate_closure(
             rationale.is_some_and(|v| !v.trim().is_empty()),
             "no_action closure requires rationale"
         ),
+        RETIREMENT_ROUTE => {
+            anyhow::ensure!(
+                has("retirement_receipt") && has("commit"),
+                "feature_retirement closure requires retirement_receipt and commit evidence"
+            );
+            let feature = route.target_id.as_deref().unwrap_or_default();
+            anyhow::ensure!(
+                crate::retirement::specification_artifacts(project, feature).is_empty(),
+                "feature_retirement closure requires the feature's Specification Package to be removed"
+            );
+        }
         _ => anyhow::bail!("invalid route {}", route.route),
     }
     for item in evidence {
@@ -327,6 +341,14 @@ fn validate_evidence(project: &Project, route: &Route, evidence: &ClosureEvidenc
             route.target_id.as_deref(),
             Some("acceptance"),
             Some("accepted"),
+        )?,
+        "retirement_receipt" => validate_jsonl_identity(
+            &project.codeos_dir().join("06-workflow/decisions.jsonl"),
+            &evidence.reference,
+            &route.timestamp,
+            route.target_id.as_deref(),
+            Some("retirement"),
+            Some("retired"),
         )?,
         "approved_artifact" => {
             let path = project.root.join(&evidence.reference);

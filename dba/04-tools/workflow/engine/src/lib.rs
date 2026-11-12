@@ -26,6 +26,7 @@ pub mod project;
 pub mod qualification;
 pub mod receipts;
 pub mod report;
+pub mod retirement;
 pub mod revalidation;
 pub mod session;
 pub mod store_cache;

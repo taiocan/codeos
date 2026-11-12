@@ -251,13 +251,13 @@ struct DecideArgs {
     workflow: String,
     #[arg(long)]
     subject: String,
-    /// One of: initial_product_preview, early_preview, reconciliation, final_ux_validation, acceptance, operation_route, no_action_closure
+    /// One of: initial_product_preview, early_preview, reconciliation, final_ux_validation, acceptance, operation_route, no_action_closure, retirement
     #[arg(long)]
     checkpoint: String,
     /// The recorded outcome (e.g. direction_confirmed, completed, accepted, new_feature, no_action).
     #[arg(long)]
     result: String,
-    /// Required for no_action_closure / a no_action result.
+    /// Required for no_action_closure / a no_action result / retirement.
     #[arg(long)]
     rationale: Option<String>,
     /// The observation statement (or @path to a file). Required for operation_route / no_action_closure;
@@ -842,7 +842,26 @@ fn run(cli: &Cli, start: &std::path::Path) -> Result<i32> {
 
             // Compute the bindings the checker will later evaluate this receipt against, plus any
             // explicit --bind pairs.
-            let mut bindings = checker::bindings_for_decision(&project, &subject, &a.checkpoint)?;
+            let retirement = a.checkpoint == "retirement";
+            if retirement
+                && (workflow != Workflow::Feature
+                    || a.result != "retired"
+                    || a.rationale
+                        .as_deref()
+                        .map(str::trim)
+                        .unwrap_or("")
+                        .is_empty())
+            {
+                eprintln!(
+                    "retirement requires --workflow feature, --result retired, and --rationale"
+                );
+                return Ok(EXIT_USAGE);
+            }
+            let mut bindings = if retirement {
+                codeos_workflow::retirement::decision_bindings(&project, &a.subject)?
+            } else {
+                checker::bindings_for_decision(&project, &subject, &a.checkpoint)?
+            };
             if a.checkpoint == "reconciliation" && !subject.reality_claims.is_empty() {
                 let Some(identity) = a.production_evidence.as_deref() else {
                     eprintln!("reconciliation for reality-dependent claims requires --production-evidence <sha256>");

@@ -384,6 +384,9 @@ pub const OPERATION_ROUTES: &[&str] = &[
     "no_action",
 ];
 
+/// Operation & Learning Workflow Contract v3 adds this route to the v2 observation routes.
+pub const RETIREMENT_ROUTE: &str = "feature_retirement";
+
 pub fn operation_contract(version: u8) -> Vec<Checkpoint> {
     use Requirement::*;
     vec![

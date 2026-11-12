@@ -187,6 +187,9 @@ pub struct ProjectStatus {
     pub feature_inventory_warnings: Vec<String>,
     pub attention: Vec<AttentionItem>,
     pub open_observations: Vec<OpenObservation>,
+    /// Workflow Governance v5 retired features; absent before v5 or when none exist.
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub retired_features: Vec<crate::retirement::RetiredFeature>,
     pub health: Vec<crate::health::Health>,
     pub platform_assurance: Vec<crate::platform_assurance::PlatformAssurance>,
     /// Present only when requested with `status --history`.
@@ -200,7 +203,10 @@ impl ProjectStatus {
         let bootstrap = summarize(&checker::evaluate(project, &bootstrap_subject)?);
 
         let mut features = Vec::new();
-        for id in specification_feature_ids(project)? {
+        let specified = specification_feature_ids(project)?;
+        let (retired_features, retirement_violations) =
+            crate::retirement::derive(project, &specified.iter().cloned().collect())?;
+        for id in specified {
             let subject = Subject::resolve(project, Workflow::Feature, &id)?;
             let historically_accepted = crate::revalidation::historically_accepted(project, &id)?;
             // One assessment decides current validity and explains it.
@@ -360,7 +366,24 @@ impl ProjectStatus {
             .map(|feature| feature.id.clone())
             .collect();
         let current_feature = (incomplete.len() == 1).then(|| incomplete[0].clone());
-        let attention = attention(project, &bootstrap, &features, current_feature.as_deref())?;
+        let mut attention = attention(project, &bootstrap, &features, current_feature.as_deref())?;
+        for violation in retirement_violations {
+            attention.push(AttentionItem {
+                subject: violation.feature,
+                class: AttentionClass::Blocker,
+                checkpoint: Some("RETIREMENT".into()),
+                issue: Some(violation.issue),
+                reason: None,
+                authority: authority(project, "workflow_governance_policy")?,
+                affected_surfaces: Vec::new(),
+                unchanged_surfaces: Vec::new(),
+                evidence: Vec::new(),
+                surfaces_origin: None,
+                next_action: Some(violation.next_action),
+                action: None,
+                actor: Some(Actor::Assisted),
+            });
+        }
         let open_observations = open_observations(project)?;
         let health = crate::health::derive(project, &features, &open_observations)?;
         let platform_assurance = crate::platform_assurance::derive(project, &features)?;
@@ -382,6 +405,7 @@ impl ProjectStatus {
             feature_inventory_warnings,
             attention,
             open_observations,
+            retired_features,
             health,
             platform_assurance,
             history: None,
@@ -390,6 +414,10 @@ impl ProjectStatus {
 
     pub fn is_blocked(&self) -> bool {
         self.bootstrap.status != DisplayStatus::Complete
+            || self
+                .attention
+                .iter()
+                .any(|item| item.checkpoint.as_deref() == Some("RETIREMENT"))
             || self
                 .features
                 .iter()
@@ -1110,6 +1138,15 @@ pub fn render_width(status: &ProjectStatus, width: usize) -> String {
                     (Some(route), None) => format!("routed: {route}"),
                     _ => "not routed".into(),
                 }
+            ));
+        }
+    }
+    if !status.retired_features.is_empty() {
+        out.push_str("\nRETIRED\n");
+        for feature in &status.retired_features {
+            out.push_str(&format!(
+                "  {}  retired {}\n",
+                feature.id, feature.retired_at
             ));
         }
     }

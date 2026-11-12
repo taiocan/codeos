@@ -433,7 +433,7 @@ fn reality_basis(contract: &str, inherits: bool) -> Result<(Vec<String>, Vec<Inh
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-enum JourneyContribution {
+pub(crate) enum JourneyContribution {
     Preserve {
         reason: String,
     },
@@ -547,7 +547,7 @@ fn section_fields(text: &str, heading: &str) -> BTreeMap<String, String> {
     fields
 }
 
-fn journey_contribution(path: &Path) -> Result<JourneyContribution> {
+pub(crate) fn journey_contribution(path: &Path) -> Result<JourneyContribution> {
     let text = std::fs::read_to_string(path)?;
     let fields = section_fields(&text, "Product Journey Contribution");
     match fields.get("mode").map(String::as_str) {

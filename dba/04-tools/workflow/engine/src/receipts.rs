@@ -19,6 +19,7 @@ pub const RECEIPT_CHECKPOINTS: &[&str] = &[
     "acceptance",              // feature F9
     "operation_route",         // operation O2
     "no_action_closure",       // operation O5 (no_action branch only)
+    "retirement",              // feature retirement (Workflow Governance v5)
 ];
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -43,7 +44,7 @@ impl Receipt {
     /// Only the closure receipt carries the "why no action" rationale; the O2 route classification
     /// does not.
     pub fn requires_rationale(&self) -> bool {
-        self.checkpoint == "no_action_closure"
+        matches!(self.checkpoint.as_str(), "no_action_closure" | "retirement")
     }
 }
 

@@ -276,6 +276,25 @@ pub fn scope_approvals(project: &Project) -> Result<Vec<(String, bool)>> {
         .collect()
 }
 
+/// Every current Architecture Scope that names `feature` as a member, producer, or consumer.
+pub fn scopes_naming(project: &Project, feature: &str) -> Result<Vec<String>> {
+    let mut out = Vec::new();
+    for (path, text) in tree_files(project, "WORKTREE")? {
+        let normalized = normalized(&text);
+        let (metadata, body) = parts(&normalized)?;
+        let topology = body.lines().any(|line| {
+            line.trim()
+                .strip_prefix("producer_feature:")
+                .or_else(|| line.trim().strip_prefix("consumer_feature:"))
+                .is_some_and(|named| named.trim() == feature)
+        });
+        if topology || metadata.features.iter().any(|named| named == feature) {
+            out.push(path);
+        }
+    }
+    Ok(out)
+}
+
 pub fn scope_path(project: &Project, subject: &str) -> Result<Option<String>> {
     let files = tree_files(project, "WORKTREE")?;
     let mut matches = Vec::new();

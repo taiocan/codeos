@@ -273,7 +273,7 @@ impl Project {
         self.selected_policy_version(
             "workflow_governance_policy",
             "dba/02-policies/workflow-governance/v1.md",
-            &[1, 2, 3, 4],
+            &[1, 2, 3, 4, 5],
         )
     }
 
@@ -281,7 +281,7 @@ impl Project {
         self.selected_policy_version(
             "workflow_operation_policy",
             "dba/02-policies/workflow-operation/v1.md",
-            &[1, 2],
+            &[1, 2, 3],
         )
     }
 
