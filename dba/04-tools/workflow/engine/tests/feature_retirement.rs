@@ -1,21 +1,19 @@
 //! Feature retirement (Workflow Governance v5, Operation & Learning v3): an accepted feature leaves
-//! the governed set only through one human retirement receipt. Runs under the DBA-30 candidate in a
-//! toolkit copy.
+//! the governed set only through one human retirement receipt. Runs under DBA-30.
 
 mod fai_fixture;
 
 use codeos_workflow::monitor::ProjectStatus;
 use codeos_workflow::observations::{ClosureEvidence, ObservationStore};
 use codeos_workflow::retirement;
-use fai_fixture::{candidate_toolkit, Fixture};
+use fai_fixture::Fixture;
 use std::fs;
 use std::process::Command;
 
 const PRESERVE: &str = "mode: preserve\nreason: secondary capability";
 
 fn candidate() -> Fixture {
-    let (toolkit, id) = candidate_toolkit();
-    let fx = Fixture::under_toolkit(toolkit, id, "    provider: [backend]\n");
+    let fx = Fixture::under("DBA-30", "    provider: [backend]\n");
     fx.spec("F-0002", PRESERVE, "");
     fx.git(&["add", "-A"]);
     fx.git(&["commit", "-qm", "F-0002"]);

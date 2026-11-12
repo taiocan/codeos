@@ -11,4 +11,5 @@ workflow_bootstrap_policy: dba/02-policies/workflow-bootstrap/v1.md
 workflow_feature_policy: dba/02-policies/workflow-feature/v13.md
 workflow_operation_policy: dba/02-policies/workflow-operation/v3.md
 
-status: candidate
+status: approved
+approved_at: 2026-11-12
