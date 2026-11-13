@@ -15,6 +15,7 @@ pub const CONTRACT: &str = "dba/04-tools/reviewer/contract/v17.md";
 pub const CONTRACT_V18: &str = "dba/04-tools/reviewer/contract/v18.md";
 pub const CONTRACT_V19: &str = "dba/04-tools/reviewer/contract/v19.md";
 pub const CONTRACT_V20: &str = "dba/04-tools/reviewer/contract/v20.md";
+pub const CONTRACT_V21: &str = "dba/04-tools/reviewer/contract/v21.md";
 
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 pub struct ReviewInputManifest {
@@ -73,14 +74,18 @@ pub(crate) struct Derived {
 pub fn selected(contract: Option<&str>) -> bool {
     matches!(
         contract,
-        Some(CONTRACT) | Some(CONTRACT_V18) | Some(CONTRACT_V19) | Some(CONTRACT_V20)
+        Some(CONTRACT)
+            | Some(CONTRACT_V18)
+            | Some(CONTRACT_V19)
+            | Some(CONTRACT_V20)
+            | Some(CONTRACT_V21)
     )
 }
 
 pub fn candidate_lifecycle(contract: Option<&str>) -> bool {
     matches!(
         contract,
-        Some(CONTRACT_V18) | Some(CONTRACT_V19) | Some(CONTRACT_V20)
+        Some(CONTRACT_V18) | Some(CONTRACT_V19) | Some(CONTRACT_V20) | Some(CONTRACT_V21)
     )
 }
 

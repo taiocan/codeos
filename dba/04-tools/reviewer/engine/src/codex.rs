@@ -43,14 +43,16 @@ pub fn invoke(packet: &ReviewPacket, cfg: &Config) -> Result<InvokeOutcome> {
         return Ok(InvokeOutcome::RefusedOverBudget(refusal));
     }
 
+    let contract = crate::config::resolve_reviewer_tool_contract(cfg).ok();
+    let expected_cli_version = pinned_cli_version(contract.as_deref(), &cfg.codex_cli_version);
     let isolation = CodexIsolation::establish(&cfg.repo_root)?;
     let final_message = tempfile::NamedTempFile::new().context("create Codex output file")?;
     let start = Instant::now();
-    let output = run_codex(
+    let (cli_version, output) = run_codex(
         &isolation,
         &cfg.reasoning_effort,
         &cfg.reviewer_model,
-        &cfg.codex_cli_version,
+        expected_cli_version,
         packet.content(),
         final_message.path(),
     )?;
@@ -94,19 +96,26 @@ pub fn invoke(packet: &ReviewPacket, cfg: &Config) -> Result<InvokeOutcome> {
                 .count() as u32,
             effort: cfg.reasoning_effort.clone(),
             model: cfg.reviewer_model.clone(),
-            cli_version: cfg.codex_cli_version.clone(),
+            cli_version,
         },
     }))
+}
+
+/// The Codex CLI version a review must run on. Reviewer Tool Contract v21 runs whichever CLI is
+/// installed and records it; earlier contracts, or an unresolvable selection, keep v20's
+/// fail-closed match against the release lock.
+fn pinned_cli_version<'a>(contract: Option<&str>, locked: &'a str) -> Option<&'a str> {
+    (contract != Some(crate::manifest::CONTRACT_V21)).then_some(locked)
 }
 
 fn run_codex(
     isolation: &CodexIsolation,
     effort: &str,
     model: &str,
-    expected_cli_version: &str,
+    expected_cli_version: Option<&str>,
     packet: &str,
     final_message: &Path,
-) -> Result<std::process::Output> {
+) -> Result<(String, std::process::Output)> {
     let version_output = Command::new(&isolation.executable)
         .arg("--version")
         .output()
@@ -117,7 +126,10 @@ fn run_codex(
         .last()
         .unwrap_or_default()
         .to_string();
-    anyhow::ensure!(actual_version == expected_cli_version, "Codex CLI version {actual_version} differs from approved release identity {expected_cli_version}");
+    if let Some(expected_cli_version) = expected_cli_version {
+        anyhow::ensure!(actual_version == expected_cli_version, "Codex CLI version {actual_version} differs from approved release identity {expected_cli_version}");
+    }
+    anyhow::ensure!(!actual_version.is_empty(), "codex --version reported no version");
     let mut command = Command::new(&isolation.executable);
     command.args([
         "exec",
@@ -162,9 +174,10 @@ fn run_codex(
         .context("codex stdin unavailable")?
         .write_all(packet.as_bytes())
         .context("failed to write packet to codex stdin")?;
-    child
+    let output = child
         .wait_with_output()
-        .context("failed to wait for codex exec")
+        .context("failed to wait for codex exec")?;
+    Ok((actual_version, output))
 }
 
 impl CodexIsolation {
@@ -375,6 +388,14 @@ mod tests {
     }
 
     use super::*;
+
+    #[test]
+    fn only_contract_v21_unpins_the_codex_cli_version() {
+        use crate::manifest::{CONTRACT_V20, CONTRACT_V21};
+        assert_eq!(pinned_cli_version(Some(CONTRACT_V21), "0.162.0"), None);
+        assert_eq!(pinned_cli_version(Some(CONTRACT_V20), "0.162.0"), Some("0.162.0"));
+        assert_eq!(pinned_cli_version(None, "0.162.0"), Some("0.162.0"));
+    }
 
     #[test]
     fn extracts_thread_started_id() {
