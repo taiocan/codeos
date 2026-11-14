@@ -85,12 +85,9 @@ pub fn decision_bindings(project: &Project, feature: &str) -> Result<BTreeMap<St
     let store = ObservationStore::at(&project.codeos_dir());
     let mut routed = false;
     for route in store.routes()? {
-        if route.route == RETIREMENT_ROUTE
+        routed |= route.route == RETIREMENT_ROUTE
             && route.target_id.as_deref() == Some(feature)
-            && store.closure(&route.observation)?.is_none()
-        {
-            routed = true;
-        }
+            && store.closure(&route.observation)?.is_none();
     }
     anyhow::ensure!(
         routed,

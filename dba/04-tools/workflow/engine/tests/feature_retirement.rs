@@ -91,6 +91,45 @@ fn refusal(fx: &Fixture, feature: &str) -> String {
         .to_string()
 }
 
+fn receipt_identity(fx: &Fixture, checkpoint: &str) -> String {
+    let decisions =
+        fs::read_to_string(fx.root.join(".codeos/06-workflow/decisions.jsonl")).unwrap();
+    let line = decisions
+        .lines()
+        .find(|line| line.contains(&format!(r#""checkpoint":"{checkpoint}""#)))
+        .unwrap();
+    codeos_workflow::hashing::text_sha256(line)
+}
+
+fn close(fx: &Fixture, observation: &str, receipt: String) -> anyhow::Result<()> {
+    let head = String::from_utf8(
+        Command::new("git")
+            .args(["rev-parse", "HEAD"])
+            .current_dir(&fx.root)
+            .output()
+            .unwrap()
+            .stdout,
+    )
+    .unwrap();
+    ObservationStore::at(&fx.root.join(".codeos"))
+        .close(
+            &fx.project(),
+            observation,
+            vec![
+                ClosureEvidence {
+                    kind: "retirement_receipt".into(),
+                    reference: receipt,
+                },
+                ClosureEvidence {
+                    kind: "commit".into(),
+                    reference: head.trim().into(),
+                },
+            ],
+            None,
+        )
+        .map(|_| ())
+}
+
 #[test]
 fn a_routed_retirement_removes_the_feature_and_keeps_its_history() {
     let fx = candidate();
@@ -113,36 +152,7 @@ fn a_routed_retirement_removes_the_feature_and_keeps_its_history() {
         fs::read_to_string(fx.root.join(".codeos/06-workflow/decisions.jsonl")).unwrap();
     assert!(decisions.contains(r#""subject":"F-0002","checkpoint":"acceptance""#));
 
-    let receipt_line = decisions
-        .lines()
-        .find(|line| line.contains(r#""checkpoint":"retirement""#))
-        .unwrap();
-    let head = String::from_utf8(
-        Command::new("git")
-            .args(["rev-parse", "HEAD"])
-            .current_dir(&fx.root)
-            .output()
-            .unwrap()
-            .stdout,
-    )
-    .unwrap();
-    ObservationStore::at(&fx.root.join(".codeos"))
-        .close(
-            &fx.project(),
-            &observation,
-            vec![
-                ClosureEvidence {
-                    kind: "retirement_receipt".into(),
-                    reference: codeos_workflow::hashing::text_sha256(receipt_line),
-                },
-                ClosureEvidence {
-                    kind: "commit".into(),
-                    reference: head.trim().into(),
-                },
-            ],
-            None,
-        )
-        .unwrap();
+    close(&fx, &observation, receipt_identity(&fx, "retirement")).unwrap();
 }
 
 #[test]
@@ -208,4 +218,45 @@ fn dba_29_neither_routes_retirement_nor_reports_it() {
     assert!(err.to_string().contains("invalid operation route"));
     remove(&fx, "F-0002");
     assert!(retirement_blockers(&fx).is_empty());
+}
+
+#[test]
+fn a_feature_is_retired_once() {
+    let fx = candidate();
+    route(&fx, "F-0002");
+    assert!(decide(&fx, "F-0002").status.success());
+    assert!(refusal(&fx, "F-0002").contains("F-0002 is already retired"));
+}
+
+#[test]
+fn closure_requires_removal_and_a_later_retirement_receipt_for_the_target() {
+    let fx = candidate();
+    let observation = route(&fx, "F-0002");
+    assert!(decide(&fx, "F-0002").status.success());
+    let receipt = receipt_identity(&fx, "retirement");
+
+    let why = close(&fx, &observation, receipt.clone())
+        .unwrap_err()
+        .to_string();
+    assert!(why.contains("Specification Package to be removed"), "{why}");
+
+    remove(&fx, "F-0002");
+    let why = close(&fx, &observation, receipt_identity(&fx, "acceptance"))
+        .unwrap_err()
+        .to_string();
+    assert!(
+        why.contains("absent, too early, or targets another subject"),
+        "{why}"
+    );
+
+    // Receipts record whole seconds; a route in a later second makes the receipt too early.
+    std::thread::sleep(std::time::Duration::from_millis(1100));
+    let late = route(&fx, "F-0002");
+    let why = close(&fx, &late, receipt.clone()).unwrap_err().to_string();
+    assert!(
+        why.contains("absent, too early, or targets another subject"),
+        "{why}"
+    );
+
+    close(&fx, &observation, receipt).unwrap();
 }
