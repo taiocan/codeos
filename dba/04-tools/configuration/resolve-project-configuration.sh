@@ -46,7 +46,7 @@ printf 'dba_configuration=%s\n' "${configuration_id}"
 printf 'support_status=%s\n' "${support_status}"
 printf 'configuration_path=%s\n' "${configuration_path}"
 for key in doctrine review_policy architecture_synthesis_policy implementation_profile_policy \
-  reviewer_tool_contract codeos_mechanics_policy reader_output_policy workflow_governance_policy \
+  reviewer_tool_contract codeos_mechanics_policy reader_output_policy user_learning_policy workflow_governance_policy \
   workflow_bootstrap_policy workflow_feature_policy workflow_operation_policy; do
   value="$(awk -v wanted="${key}:" '$1 == wanted { print $2; exit }' "${configuration_path}")"
   [[ -n "${value}" ]] && printf '%s=%s\n' "${key}" "${value}"

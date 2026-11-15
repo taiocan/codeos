@@ -17,6 +17,9 @@ project has adopted selects (`reader_output_policy`), or
 together with `.codeos/toolkit/dba/05-guidance/terminology.md` and `.codeos/00-project/terminology.md`
 when it exists.
 
+When the adopted DBA configuration selects `user_learning_policy`, read and apply that User
+Learning policy in every interactive session. Learning state lives only under `.codeos-state/`.
+
 ## Minimum Complexity
 
 Use the smallest solution and artifact set that preserves exact approved meaning. Prefer deletion,

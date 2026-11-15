@@ -66,6 +66,18 @@ previous_frontier: [required only for advance: the current accepted frontier]
 proposed_frontier: [required only for advance: one stable new frontier]
 transition: [required only for advance: the observable previous → new capability]
 
+## User Learning
+
+<!-- Required when the adopted configuration selects `user_learning_policy`, the Charter's
+user_learning mode is guided, and this feature introduces a significant new user concept;
+delete otherwise. -->
+
+- Concept and expected learning outcome: [concept; what the user understands afterwards]
+- Learning element the user notices: [explanation, prediction, observation, or repeat step]
+- Behavior with learning off: [which learning elements are hidden]
+- Invariant: core results and the business flow are identical with learning on and off.
+- Verification: [runtime check of both modes and persistence of the user's setting]
+
 ## Scenarios
 
 ### Happy Path

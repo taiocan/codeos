@@ -48,6 +48,16 @@ initial_frontier: entry
 target_outcome: [the useful outcome or supported decision the completed journey reaches]
 verification_route: product_journey
 
+## User Learning
+
+<!-- Required when the adopted configuration selects `user_learning_policy`; delete otherwise.
+Propose guided with per-user opt-out for a human interface; not-applicable needs a reason. -->
+
+user_learning:
+  mode: [guided | off | not-applicable]
+  audience: [primary user]
+  opt_out: [per-user | n/a]
+
 ## Problem
 
 [What is wrong, difficult, expensive, slow, risky, or missing today, and for whom? Describe the

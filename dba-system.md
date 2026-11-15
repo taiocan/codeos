@@ -172,6 +172,10 @@ DBA configuration selects (`reader_output_policy`), or
 together with `.codeos/toolkit/dba/05-guidance/terminology.md` and the project terminology at
 `.codeos/00-project/terminology.md` when it exists.
 
+When the canonically resolved DBA configuration selects `user_learning_policy`, read and apply
+that User Learning policy in every interactive session and to the Charter and Contracts. A
+configuration that selects none uses no learning interactions.
+
 Numeric workflow prefixes `01` through `09` are reserved for governed Stage IDs and correspond
 exactly to Stages 1 through 9. Every non-stage workflow prompt uses a descriptive
 `support-<role>.md` filename. Support workflows are not stages and MUST NOT be described as Stage

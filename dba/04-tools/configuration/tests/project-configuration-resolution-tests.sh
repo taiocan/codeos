@@ -187,6 +187,10 @@ grep -Fxq 'workflow_feature_policy=dba/02-policies/workflow-feature/v12.md' <<<"
 grep -Fxq 'codeos_mechanics_policy=dba/02-policies/codeos-mechanics/v7.md' <<<"${explicit}" || fail 'DBA-28 did not preserve DBA-27 Codeos Mechanics'
 grep -Fxq 'reviewer_tool_contract=dba/04-tools/reviewer/contract/v20.md' <<<"${explicit}" || fail 'DBA-28 did not preserve DBA-27 Reviewer Contract'
 
+printf 'codeos_schema: 2\ndba_configuration: DBA-31\n' > "${WORK}/.codeos/00-project/codeos.yaml"
+explicit="$(bash "${RESOLVER}" "${WORK}")"
+if grep -q '^user_learning_policy=' <<<"${explicit}"; then fail 'DBA-31 gained a User Learning policy'; fi
+
 printf 'codeos_schema: 2\n' > "${WORK}/.codeos/00-project/codeos.yaml"
 if bash "${RESOLVER}" "${WORK}" >/dev/null 2>&1; then fail 'missing schema-2 binding was accepted'; fi
 
