@@ -17,3 +17,4 @@ implemented changes; this file is planning context, not workflow state or implem
 | DQA | `DQA/charter.md` | Delivery qualification and assurance | High | Closed 2026-10-19 |
 | TSTAT | `TSTAT/charter.md` | Compact terminal status | Medium | Accepted 2026-10-17 |
 | REVIEW-BUDGET | `REVIEW-shared-evidence-budget.md` | Shared production evidence in Stage 8 packets | Medium | Proposed |
+| LEARNING | `LEARNING/README.md` | Default guided user learning (DBA-32) | High | Approved 2026-11-15 |
