@@ -20,6 +20,7 @@ pub struct RuntimeVerification {
     pub backend_health_url: String,
     pub web_url: String,
     pub journey_guard_script: Option<String>,
+    pub verification_command: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -48,12 +49,18 @@ struct RealityVerificationInput {
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 struct RuntimeVerificationInput {
-    database_service: String,
-    database_test_url_env: String,
-    backend_health_url: String,
-    web_url: String,
+    #[serde(default)]
+    database_service: Option<String>,
+    #[serde(default)]
+    database_test_url_env: Option<String>,
+    #[serde(default)]
+    backend_health_url: Option<String>,
+    #[serde(default)]
+    web_url: Option<String>,
     #[serde(default)]
     journey_guard_script: Option<String>,
+    #[serde(default)]
+    verification_command: Option<String>,
 }
 
 /// The canonical locations a checkpoint reads evidence from. Downstream projects use `.codeos/…`;
@@ -408,29 +415,37 @@ impl Project {
                 backend_health_url: DEFAULT_BACKEND_HEALTH_URL.into(),
                 web_url: DEFAULT_WEB_URL.into(),
                 journey_guard_script: None,
+                verification_command: None,
             });
         };
+        let database_service = input
+            .database_service
+            .unwrap_or_else(|| DEFAULT_DATABASE_SERVICE.into());
+        let database_test_url_env = input.database_test_url_env;
+        let backend_health_url = input
+            .backend_health_url
+            .unwrap_or_else(|| DEFAULT_BACKEND_HEALTH_URL.into());
+        let web_url = input.web_url.unwrap_or_else(|| DEFAULT_WEB_URL.into());
         for (name, value) in [
-            ("database_service", input.database_service.as_str()),
-            (
-                "database_test_url_env",
-                input.database_test_url_env.as_str(),
-            ),
-            ("backend_health_url", input.backend_health_url.as_str()),
-            ("web_url", input.web_url.as_str()),
+            ("database_service", database_service.as_str()),
+            ("backend_health_url", backend_health_url.as_str()),
+            ("web_url", web_url.as_str()),
         ] {
             if value.trim().is_empty() {
                 anyhow::bail!("runtime_verification.{name} must be non-empty");
             }
         }
-        if !valid_env_name(&input.database_test_url_env) {
+        if database_test_url_env
+            .as_deref()
+            .is_some_and(|value| !valid_env_name(value))
+        {
             anyhow::bail!(
                 "runtime_verification.database_test_url_env must be an environment-variable name"
             );
         }
         for (name, value) in [
-            ("backend_health_url", input.backend_health_url.as_str()),
-            ("web_url", input.web_url.as_str()),
+            ("backend_health_url", backend_health_url.as_str()),
+            ("web_url", web_url.as_str()),
         ] {
             if !(value.starts_with("http://") || value.starts_with("https://")) {
                 anyhow::bail!("runtime_verification.{name} must be an http(s) URL");
@@ -442,14 +457,22 @@ impl Project {
                     "runtime_verification.journey_guard_script requires Codeos Mechanics v5"
                 );
             }
-            validate_project_executable(&self.root, path)?;
+            validate_project_executable(
+                &self.root,
+                path,
+                "runtime_verification.journey_guard_script",
+            )?;
+        }
+        if let Some(path) = input.verification_command.as_deref() {
+            validate_project_executable(&self.root, path, "runtime_verification.verification_command")?;
         }
         Ok(RuntimeVerification {
-            database_service: input.database_service,
-            database_test_url_env: Some(input.database_test_url_env),
-            backend_health_url: input.backend_health_url,
-            web_url: input.web_url,
+            database_service,
+            database_test_url_env,
+            backend_health_url,
+            web_url,
             journey_guard_script: input.journey_guard_script,
+            verification_command: input.verification_command,
         })
     }
 
@@ -460,7 +483,7 @@ impl Project {
         let input = config
             .reality_verification
             .context("reality-dependent claims require reality_verification.command")?;
-        validate_project_executable(&self.root, &input.command)?;
+        validate_project_executable(&self.root, &input.command, "reality_verification.command")?;
         let scopes = input.scopes.unwrap_or_default();
         if !scopes.is_empty() {
             anyhow::ensure!(
@@ -748,7 +771,7 @@ fn version_from_policy(path: &str, supported: &[u8]) -> Result<u8> {
     Ok(version)
 }
 
-fn validate_project_executable(root: &Path, supplied: &str) -> Result<()> {
+fn validate_project_executable(root: &Path, supplied: &str, field: &str) -> Result<()> {
     let path = Path::new(supplied);
     if path.is_absolute()
         || supplied.trim().is_empty()
@@ -756,20 +779,20 @@ fn validate_project_executable(root: &Path, supplied: &str) -> Result<()> {
             .components()
             .any(|c| matches!(c, std::path::Component::ParentDir))
     {
-        anyhow::bail!("runtime_verification.journey_guard_script must be a non-traversing project-relative path");
+        anyhow::bail!("{field} must be a non-traversing project-relative path");
     }
     let canonical = root
         .join(path)
         .canonicalize()
         .with_context(|| format!("resolve journey guard script {supplied}"))?;
     if !canonical.starts_with(root) || !canonical.is_file() {
-        anyhow::bail!("runtime_verification.journey_guard_script must resolve to a regular file inside the project");
+        anyhow::bail!("{field} must resolve to a regular file inside the project");
     }
     #[cfg(unix)]
     {
         use std::os::unix::fs::PermissionsExt;
         if canonical.metadata()?.permissions().mode() & 0o111 == 0 {
-            anyhow::bail!("runtime_verification.journey_guard_script must be executable");
+            anyhow::bail!("{field} must be executable");
         }
     }
     Ok(())
@@ -895,6 +918,30 @@ mod tests {
     }
 
     #[test]
+    #[cfg(unix)]
+    fn project_native_verification_command_does_not_require_docker_runtime_fields() {
+        use std::os::unix::fs::PermissionsExt;
+        let (_dir, project) = downstream_project();
+        fs::create_dir_all(project.root.join("scripts")).unwrap();
+        let command = project.root.join("scripts/verify-bootstrap");
+        fs::write(&command, "#!/usr/bin/env bash\nexit 0\n").unwrap();
+        let mut permissions = command.metadata().unwrap().permissions();
+        permissions.set_mode(0o755);
+        fs::set_permissions(&command, permissions).unwrap();
+        fs::write(
+            project.codeos_yaml(),
+            "runtime_verification:\n  verification_command: scripts/verify-bootstrap\n",
+        )
+        .unwrap();
+        let runtime = project.runtime_verification().unwrap();
+        assert_eq!(
+            runtime.verification_command.as_deref(),
+            Some("scripts/verify-bootstrap")
+        );
+        assert_eq!(runtime.database_test_url_env, None);
+    }
+
+    #[test]
     fn runtime_profile_rejects_unknown_keys_and_invalid_values() {
         let (_dir, project) = downstream_project();
         fs::write(
@@ -916,8 +963,8 @@ mod tests {
         let mut permissions = guard.metadata().unwrap().permissions();
         permissions.set_mode(0o755);
         fs::set_permissions(&guard, permissions).unwrap();
-        validate_project_executable(&project.root, "scripts/guard.sh").unwrap();
-        assert!(validate_project_executable(&project.root, "../outside.sh").is_err());
+        validate_project_executable(&project.root, "scripts/guard.sh", "test.guard").unwrap();
+        assert!(validate_project_executable(&project.root, "../outside.sh", "test.guard").is_err());
     }
 
     #[test]

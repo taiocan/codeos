@@ -3619,6 +3619,16 @@ fn run_mechanic(project: &Project, subject: &Subject, mechanic: &str) -> evidenc
             }
         }
     }
+    if matches!(mechanic, "baseline" | "smoke" | "product_journey" | "behavior" | "repeatability" | "data_integrity") {
+        match project.runtime_verification() {
+            Ok(runtime) => {
+                if let Some(command) = runtime.verification_command.as_deref() {
+                    return evidence::run(&project.root, &project.root.join(command).to_string_lossy(), &[mechanic]);
+                }
+            }
+            Err(error) => return failure(error.to_string()),
+        }
+    }
     let web = project.root.join("web");
     match mechanic {
         "baseline" => run_integrated_baseline(project),
@@ -5031,6 +5041,41 @@ fn short(s: &str) -> String {
 #[cfg(test)]
 mod journey_tests {
     use super::*;
+
+    #[test]
+    #[cfg(unix)]
+    fn integrated_baseline_uses_declared_project_native_command_without_docker() {
+        use std::os::unix::fs::PermissionsExt;
+        let dir = tempfile::tempdir().unwrap();
+        std::fs::create_dir_all(dir.path().join(".codeos/00-project")).unwrap();
+        std::fs::create_dir_all(dir.path().join("scripts")).unwrap();
+        std::fs::write(
+            dir.path().join(".codeos/00-project/codeos.yaml"),
+            "runtime_verification:\n  verification_command: scripts/verify-bootstrap\n",
+        )
+        .unwrap();
+        let command = dir.path().join("scripts/verify-bootstrap");
+        std::fs::write(&command, "#!/usr/bin/env bash\necho native-baseline\n").unwrap();
+        let mut permissions = command.metadata().unwrap().permissions();
+        permissions.set_mode(0o755);
+        std::fs::set_permissions(&command, permissions).unwrap();
+        let project = Project::discover(dir.path()).unwrap();
+        let subject = Subject {
+            workflow: Workflow::Bootstrap,
+            id: "solution".into(),
+            gui: false,
+            backend: true,
+            persistence: true,
+            impact_accounting_complete: true,
+            arch_approval_required: false,
+            reality_claims: vec![],
+            inherited_claims: vec![],
+        };
+        let result = run_mechanic(&project, &subject, "baseline");
+        assert!(result.ok, "{}", result.summary);
+        assert!(result.summary.contains("native-baseline"));
+        assert!(!dir.path().join("docker-compose.yml").exists());
+    }
 
     #[test]
     fn impact_accounting_reads_only_the_tier_and_state_cells() {

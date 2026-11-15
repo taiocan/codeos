@@ -10,6 +10,7 @@ fail() { printf 'project config contract failed: %s\n' "$1" >&2; exit 1; }
 
 CONFIG="${1:-${CODEOS_ROOT}/dba/05-guidance/templates/codeos.yaml}"
 [[ -f "${CONFIG}" ]] || fail "configuration does not exist: ${CONFIG}"
+CONFIG="$(cd "$(dirname "${CONFIG}")" && pwd -P)/$(basename "${CONFIG}")"
 
 # All consumers use the canonical resolver. For a canonical downstream path, derive its project;
 # for templates and test fixtures, the supplied file itself is still the resolution input.
@@ -96,8 +97,20 @@ if grep -q '^runtime_verification:' "${CONFIG}"; then
     expected_keys=$'backend_health_url\ndatabase_service\ndatabase_test_url_env\njourney_guard_script\nweb_url'
   fi
   actual_keys="$(printf '%s\n' "${runtime_lines[@]}" | sed -E 's/^  ([a-z_]+):.*/\1/' | LC_ALL=C sort)"
-  [[ "${actual_keys}" == "${expected_keys}" ]] ||
-    fail 'runtime_verification must contain exactly database_service, database_test_url_env, backend_health_url, and web_url'
+  if [[ "${actual_keys}" == 'verification_command' ]]; then
+    verification_command="$(printf '%s\n' "${runtime_lines[@]}" | sed -n 's/^  verification_command:[[:space:]]*//p')"
+    [[ -n "${verification_command}" && "${verification_command}" != /* && "${verification_command}" != *'..'* ]] ||
+      fail 'runtime_verification.verification_command must be a non-traversing project-relative path'
+    [[ -f "${PROJECT_ROOT}/${verification_command}" && -x "${PROJECT_ROOT}/${verification_command}" ]] ||
+      fail 'runtime_verification.verification_command must resolve to an executable project file'
+    actual_keys='verification_command'
+  elif [[ "${actual_keys}" != "${expected_keys}" ]]; then
+    fail 'runtime_verification must contain either verification_command or the four Docker runtime locator fields'
+  fi
+
+  if [[ "${actual_keys}" == 'verification_command' ]]; then
+    :
+  else
 
   runtime_value() {
     local key="$1"
@@ -120,6 +133,7 @@ if grep -q '^runtime_verification:' "${CONFIG}"; then
       [[ "${journey_guard_script}" != /* && "${journey_guard_script}" != *'..'* ]] ||
         fail 'runtime_verification.journey_guard_script must be a non-traversing project-relative path'
     fi
+  fi
   fi
 fi
 

@@ -24,6 +24,8 @@ platform:
 # skeleton. Omit this block to retain the canonical legacy defaults. The referenced database URL
 # is read from the environment only while checks run; its value is never stored in evidence.
 # runtime_verification:
+#   # Optional project-native mechanic verifier for an approved non-Docker Platform Baseline.
+#   verification_command: scripts/verify-bootstrap
 #   database_service: postgres
 #   database_test_url_env: PROJECT_TEST_DATABASE_URL
 #   backend_health_url: http://127.0.0.1:8080/health
