@@ -191,6 +191,10 @@ printf 'codeos_schema: 2\ndba_configuration: DBA-31\n' > "${WORK}/.codeos/00-pro
 explicit="$(bash "${RESOLVER}" "${WORK}")"
 if grep -q '^user_learning_policy=' <<<"${explicit}"; then fail 'DBA-31 gained a User Learning policy'; fi
 
+printf 'codeos_schema: 2\ndba_configuration: DBA-32\n' > "${WORK}/.codeos/00-project/codeos.yaml"
+explicit="$(bash "${RESOLVER}" "${WORK}")"
+grep -Fxq 'user_learning_policy=dba/02-policies/user-learning/v1.md' <<<"${explicit}" || fail 'DBA-32 did not select User Learning v1'
+
 printf 'codeos_schema: 2\n' > "${WORK}/.codeos/00-project/codeos.yaml"
 if bash "${RESOLVER}" "${WORK}" >/dev/null 2>&1; then fail 'missing schema-2 binding was accepted'; fi
 

@@ -24,6 +24,11 @@ done
 grep -Fxq '/.codeos/toolkit' "${PROJECT}/.gitignore" || fail 'toolkit mount is not ignored'
 grep -Fxq '/.codeos-state/' "${PROJECT}/.gitignore" || fail 'operational state is not ignored'
 grep -Fxq '# a&b/c\d' "${PROJECT}/.codeos/00-project/CLAUDE.md" || fail 'project name substitution was unsafe'
+ACTIVE_ID="$(sed -n 's#^Active configuration: `.*/\(DBA-[0-9]*\)\.yaml`$#\1#p' "${CODEOS_ROOT}/dba-system.md")"
+grep -Fxq "dba_configuration: ${ACTIVE_ID}" "${PROJECT}/.codeos/00-project/codeos.yaml" \
+  || fail 'a fresh project is not bound to the active configuration'
+bash "${CODEOS_ROOT}/dba/04-tools/configuration/project-config-contract.sh" "${PROJECT}/.codeos/00-project/codeos.yaml" >/dev/null \
+  || fail 'a fresh project configuration fails the project config contract'
 
 for path in \
   .codeos/00-project/terminology.md .codeos/00-discovery .codeos/02-architecture \

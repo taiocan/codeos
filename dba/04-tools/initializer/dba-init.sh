@@ -160,6 +160,9 @@ if [[ "$PLATFORM_BASELINE" == true ]]; then
         echo "[skip] .codeos/00-project/codeos.yaml already exists"
     else
         cp "$CODEOS_PATH/dba/05-guidance/templates/codeos.yaml" "$PROJECT_CODEOS_YAML"
+        # The binding is the active configuration dba-system.md names, never the template's example.
+        ACTIVE_ID="$(basename "$ACTIVE_CONFIG_REL" .yaml)"
+        sed -i "s/^dba_configuration: .*/dba_configuration: ${ACTIVE_ID}/" "$PROJECT_CODEOS_YAML"
         # The fixed `mechanics:` block is the exact set the active configuration's Codeos Mechanics
         # policy defines — rendered here rather than carried statically, so one template serves every
         # policy version and project-config-contract.sh can validate the block against that policy.
