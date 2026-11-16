@@ -22,6 +22,11 @@ so every other byte is the source. Any other type, a missing or inexact type, a 
 another location, another schema, or another shape is shown whole. There is no general GeoJSON or
 numeric projector and no project-specific projection configuration.
 
+The projection is a review presentation transformation only. It does not change workflow evidence
+parsing, evidence currentness, claim satisfaction, or the underlying evidence identity. The 16
+samples are descriptive reviewer context, never evidence that the route is geometrically correct;
+the full array stays mechanically bound.
+
 A future feature that needs human review of route geometry introduces its own reviewable artifact.
 
 ## Acceptance criteria

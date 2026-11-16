@@ -18,7 +18,7 @@ regression guard, and let `review-status` show the next real bottleneck.
 | WO | Class | Title | Status |
 |---|---|---|---|
 | [WO-01](WO-01-review-accounting.md) | NORMAL | Deterministic review accounting | Accepted 2026-11-16 |
-| [WO-02](WO-02-route-geometry-projection.md) | PROTECTED | Route-geometry projection | Corrected rule approved 2026-11-16; DBA-33 candidate |
+| [WO-02](WO-02-route-geometry-projection.md) | PROTECTED | Route-geometry projection | DBA-33 issued 2026-11-16; JamFree adoption and release next |
 | [WO-03](WO-03-budget-guard.md) | NORMAL | Budget as a fixed guard | After WO-02 |
 
 This table is the only place WO status is kept.
