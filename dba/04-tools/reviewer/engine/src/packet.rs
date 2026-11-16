@@ -2,7 +2,7 @@ use crate::precheck::redact_secrets;
 use anyhow::{bail, Context, Result};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
-use std::collections::{BTreeSet, HashSet};
+use std::collections::{BTreeMap, BTreeSet, HashSet};
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
@@ -327,6 +327,8 @@ pub struct PacketBuildOptions {
     /// The required input set under Reviewer Tool Contract v17. Only these paths may enter the
     /// diff, untracked, exclusion, and budget accounting; `None` keeps whole-repository behavior.
     pub scope: Option<BTreeSet<String>>,
+    /// Why each required input was included (REVIEW-SCALE accounting); shown in the manifest.
+    pub inclusion: BTreeMap<String, BTreeSet<String>>,
 }
 
 fn in_scope(opts: &PacketBuildOptions, path: &str) -> bool {
@@ -860,6 +862,7 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
             "    - path: {}\n      mode: path_sha_only\n      bytes: {}\n      sha256: {}\n",
             so, bytes, sha
         ));
+        manifest_sha_only.push_str(&crate::accounting::manifest_lines(&opts.inclusion, so));
     }
 
     // Full / delta artifacts
@@ -878,6 +881,7 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
             manifest_full.push_str(&format!(
                 "    - path: {}\n      mode: omitted_with_reason\n      reason: requested artifact missing\n", a
             ));
+            manifest_full.push_str(&crate::accounting::manifest_lines(&opts.inclusion, a));
             artifact_excluded = true;
             excluded_paths.push((
                 a.clone(),
@@ -903,6 +907,7 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
                 "    - path: {}\n      mode: omitted_with_reason\n      reason: over size limit\n",
                 a
             ));
+            manifest_full.push_str(&crate::accounting::manifest_lines(&opts.inclusion, a));
             artifact_excluded = true;
             excluded_paths.push((
                 a.clone(),
@@ -960,6 +965,7 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
                         ""
                     }
                 ));
+                manifest_full.push_str(&crate::accounting::manifest_lines(&opts.inclusion, a));
                 review_content_bytes += redacted.len() as u64;
                 file_contributors.push((a.clone(), redacted.len() as u64));
                 delta_diff_count += 1;
@@ -1004,6 +1010,7 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
                         ""
                     }
                 ));
+                manifest_full.push_str(&crate::accounting::manifest_lines(&opts.inclusion, a));
                 review_content_bytes += redacted.len() as u64;
                 file_contributors.push((a.clone(), redacted.len() as u64));
                 shown_count += 1;
@@ -1032,6 +1039,7 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
                 "    - path: {}\n      mode: {}\n      bytes: {}\n      sha256: {}\n",
                 a, vis, bytes, sha
             ));
+            manifest_full.push_str(&crate::accounting::manifest_lines(&opts.inclusion, a));
             if changed {
                 delta_diff_count += 1;
             }
@@ -1052,12 +1060,14 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
                     "    - path: {}\n      mode: full_file\n      bytes: {}\n      sha256: {}\n      note: secret value redacted in place\n",
                     a, bytes, sha
                 ));
+                manifest_full.push_str(&crate::accounting::manifest_lines(&opts.inclusion, a));
                 "shown_redacted"
             } else {
                 manifest_full.push_str(&format!(
                     "    - path: {}\n      mode: full_file\n      bytes: {}\n      sha256: {}\n",
                     a, bytes, sha
                 ));
+                manifest_full.push_str(&crate::accounting::manifest_lines(&opts.inclusion, a));
                 "shown"
             };
             let indented: String = redacted.lines().map(|l| format!("    {}\n", l)).collect();

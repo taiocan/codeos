@@ -540,6 +540,52 @@ fn coverage_and_budget_are_scoped_to_required_inputs() {
 }
 
 #[test]
+fn every_counted_input_has_one_recorded_role_and_all_its_reasons() {
+    let fixture = ready_project(true);
+    change_implementation(&fixture, true);
+    let fake = setup_fake_codex();
+    let (status, stdout, stderr) = review(&fixture, &fake, &[]);
+    assert_eq!(status, 0, "review failed:\n{stdout}\n{stderr}");
+
+    let sidecar = sidecar(&fixture);
+    let manifest = &sidecar["manifest"];
+    let inclusion = manifest["inclusion"]
+        .as_object()
+        .expect("inclusion reasons");
+    for path in manifest["required_inputs"].as_array().unwrap() {
+        let reasons = inclusion[path.as_str().unwrap()].as_array();
+        assert!(
+            reasons.is_some_and(|r| !r.is_empty()),
+            "{path} has no reason"
+        );
+    }
+    let mut total = 0;
+    for contributor in sidecar["budget_contributors"].as_array().unwrap() {
+        let path = contributor[0].as_str().unwrap();
+        total += contributor[1].as_u64().unwrap();
+        assert!(
+            path.starts_with('(') || inclusion.contains_key(path),
+            "{path} counts toward the budget without a recorded reason"
+        );
+    }
+    assert_eq!(total, sidecar["review_content_bytes"].as_u64().unwrap());
+    assert!(inclusion["src/new.rs"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|reason| reason == "changed_implementation"));
+    assert!(manifest["accepted_feature_count_at_review"].is_u64());
+
+    let packet = std::fs::read_to_string(&fake.packet_log).unwrap();
+    assert!(packet.contains("    - path: src/new.rs\n"));
+    assert!(packet.contains("      role: changed_implementation\n"));
+    assert!(
+        stdout.contains("changed_implementation"),
+        "composition not printed:\n{stdout}"
+    );
+}
+
+#[test]
 fn caller_cannot_omit_a_changed_implementation_file() {
     let fixture = ready_project(false);
     change_implementation(&fixture, false);

@@ -2720,6 +2720,7 @@ mod tests {
             repo_root: repo_root.to_string_lossy().into_owned(),
             toolkit_root: toolkit_root.to_string_lossy().into_owned(),
             scope: None,
+            inclusion: Default::default(),
         };
         crate::packet::build(&opts).expect("build packet")
     }

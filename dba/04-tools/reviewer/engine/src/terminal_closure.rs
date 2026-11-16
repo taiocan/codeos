@@ -1128,6 +1128,7 @@ mod tests {
             repo_root: repo.path().display().to_string(),
             toolkit_root: toolkit_root.display().to_string(),
             scope: None,
+            inclusion: Default::default(),
         })
         .unwrap();
         packet.bounded_changed_paths = Some(BTreeSet::from([
@@ -1239,6 +1240,7 @@ mod tests {
             repo_root: repo.path().display().to_string(),
             toolkit_root: toolkit_root.display().to_string(),
             scope: None,
+            inclusion: Default::default(),
         })
         .unwrap();
         let control = tempfile::tempdir().unwrap();
@@ -1282,6 +1284,7 @@ mod tests {
             repo_root: repo.path().display().to_string(),
             toolkit_root: toolkit_root.display().to_string(),
             scope: None,
+            inclusion: Default::default(),
         })
         .unwrap();
         current.bounded_changed_paths = Some(BTreeSet::from([
@@ -1315,6 +1318,7 @@ mod tests {
             repo_root: repo.path().display().to_string(),
             toolkit_root: toolkit_root.display().to_string(),
             scope: None,
+            inclusion: Default::default(),
         })
         .unwrap();
         drifted.bounded_changed_paths = Some(BTreeSet::from([

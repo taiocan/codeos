@@ -44,6 +44,13 @@ pub struct ReviewInputManifest {
     /// The subset of required inputs CodeOS derived itself, as opposed to caller-declared ones.
     #[serde(default)]
     pub derived_inputs: BTreeSet<String>,
+    /// REVIEW-SCALE accounting: every required input -> every derivation rule that included it.
+    /// The accounting role is derived from these reasons by `crate::accounting::role`.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub inclusion: BTreeMap<String, BTreeSet<String>>,
+    /// Historically accepted features when this review was derived; `None` when not derivable.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub accepted_feature_count_at_review: Option<u64>,
     /// Content identity of everything the reviewer receives; set once the packet is final.
     pub reviewed_snapshot: String,
     #[serde(skip)]
@@ -111,7 +118,9 @@ pub fn derive(
         configuration: hash(".codeos/00-project/codeos.yaml"),
         ..Default::default()
     };
-    manifest.required_inputs = declared.iter().cloned().collect();
+    for path in declared {
+        manifest.include(path.clone(), crate::accounting::DECLARED);
+    }
     if stage != "8" {
         return manifest;
     }
@@ -138,8 +147,7 @@ pub fn derive(
     }
     for path in governed {
         manifest.governed_context.insert(path.clone(), hash(&path));
-        manifest.derived_inputs.insert(path.clone());
-        manifest.required_inputs.insert(path);
+        manifest.derive_input(path, crate::accounting::GOVERNED);
     }
 
     let project = match Project::discover(root) {
@@ -149,6 +157,7 @@ pub fn derive(
             return manifest;
         }
     };
+    manifest.accepted_feature_count_at_review = accepted_feature_count(&project);
     if candidate_lifecycle(
         crate::config::resolve_reviewer_tool_contract(cfg)
             .ok()
@@ -159,8 +168,7 @@ pub fn derive(
             Ok(Some(id)) => {
                 let path = format!(".codeos/06-workflow/candidates/{id}.json");
                 manifest.candidate_bundle = Some(id);
-                manifest.derived_inputs.insert(path.clone());
-                manifest.required_inputs.insert(path);
+                manifest.derive_input(path, crate::accounting::CANDIDATE);
             }
             Ok(None) => {
                 manifest.derived.project_error = Some(
@@ -179,8 +187,7 @@ pub fn derive(
             .iter()
             .any(|scope| path == *scope || path.starts_with(&format!("{scope}/")))
         {
-            manifest.derived_inputs.insert(path.clone());
-            manifest.required_inputs.insert(path);
+            manifest.derive_input(path, crate::accounting::CHANGED_IMPLEMENTATION);
         }
     }
 
@@ -210,8 +217,7 @@ pub fn derive(
     };
     if let Some(selected) = &manifest.production_evidence {
         let path = format!(".codeos/06-workflow/reality-evidence/{selected}.json");
-        manifest.derived_inputs.insert(path.clone());
-        manifest.required_inputs.insert(path);
+        manifest.derive_input(path, crate::accounting::PRODUCTION_EVIDENCE);
     }
 
     let store = std::fs::read_to_string(root.join(".codeos/06-workflow/verifications.jsonl"))
@@ -302,22 +308,20 @@ pub fn derive(
         .and_then(|details| details.get("event_evidence"))
         .and_then(|value| value.as_str())
         .map(str::to_string);
-    if let Some(path) = &manifest.runtime_evidence {
-        manifest.derived_inputs.insert(path.clone());
-        manifest.required_inputs.insert(path.clone());
+    if let Some(path) = manifest.runtime_evidence.clone() {
+        manifest.derive_input(path, crate::accounting::RUNTIME_EVIDENCE);
     }
     // A new candidate assessment shows what each test-based verification checked: its bound
     // per-test outcomes and the bound inputs that define those tests.
-    if let Some(id) = &manifest.candidate_bundle {
+    if let Some(id) = manifest.candidate_bundle.clone() {
         for (_, identity) in manifest.test_evidence() {
             if let Some(identity) = identity {
                 let path = format!("{}/{identity}.json", codeos_workflow::test_evidence::DIR);
-                manifest.derived_inputs.insert(path.clone());
-                manifest.required_inputs.insert(path);
+                manifest.derive_input(path, crate::accounting::TEST_EVIDENCE);
             }
         }
         if let Ok(bundle) =
-            codeos_workflow::candidate::CandidateStore::at(&project.codeos_dir()).read(id)
+            codeos_workflow::candidate::CandidateStore::at(&project.codeos_dir()).read(&id)
         {
             let mut names = BTreeSet::new();
             for (_, identity) in manifest.test_evidence() {
@@ -336,8 +340,7 @@ pub fn derive(
             for path in test_definition_inputs(&bundle.implementation_inputs, &names, |path| {
                 std::fs::read_to_string(root.join(path)).ok()
             }) {
-                manifest.derived_inputs.insert(path.clone());
-                manifest.required_inputs.insert(path);
+                manifest.derive_input(path, crate::accounting::TEST_DEFINITION);
             }
         }
     }
@@ -345,8 +348,7 @@ pub fn derive(
     // inspectable required input.
     if let Some(referenced) = manifest.referenced_production_evidence() {
         let path = format!(".codeos/06-workflow/reality-evidence/{referenced}.json");
-        manifest.derived_inputs.insert(path.clone());
-        manifest.required_inputs.insert(path);
+        manifest.derive_input(path, crate::accounting::PRODUCTION_EVIDENCE);
     }
     manifest
 }
@@ -415,7 +417,36 @@ fn changed_paths(root: &std::path::Path, basis: &ReviewBasis) -> BTreeSet<String
     }
 }
 
+/// Features with a recorded F9 acceptance, or `None` when the receipts cannot be read.
+fn accepted_feature_count(project: &Project) -> Option<u64> {
+    let accepted: BTreeSet<String> = ReceiptStore::at(&project.codeos_dir())
+        .all()
+        .ok()?
+        .into_iter()
+        .filter(|r| {
+            r.workflow == "feature" && r.checkpoint == "acceptance" && r.result == "accepted"
+        })
+        .map(|r| r.subject)
+        .collect();
+    Some(accepted.len() as u64)
+}
+
 impl ReviewInputManifest {
+    /// Require `path` and record why.
+    fn include(&mut self, path: String, reason: &str) {
+        self.inclusion
+            .entry(path.clone())
+            .or_default()
+            .insert(reason.to_string());
+        self.required_inputs.insert(path);
+    }
+
+    /// Require a CodeOS-derived `path` and record the derivation rule that included it.
+    fn derive_input(&mut self, path: String, reason: &str) {
+        self.derived_inputs.insert(path.clone());
+        self.include(path, reason);
+    }
+
     /// The production evidence identity the F5 production-source record references.
     pub fn referenced_production_evidence(&self) -> Option<String> {
         let (_, record) = self.derived.records.get("F5/production_source_evidence")?;

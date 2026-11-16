@@ -661,6 +661,10 @@ pub fn prepare(
         scope: manifest
             .as_ref()
             .map(|manifest| manifest.required_inputs.clone()),
+        inclusion: manifest
+            .as_ref()
+            .map(|manifest| manifest.inclusion.clone())
+            .unwrap_or_default(),
     })
     .map_err(|error| PrepareFailure::packet(format!("error building packet: {error}")))?;
 
@@ -2114,6 +2118,7 @@ pub fn run(mut args: ReviewArgs, cfg: &Config) -> Result<i32> {
         RunSource::Codex {
             reconnect_count,
             effort,
+            model,
             ..
         } => {
             println!("review logged: {}", review_log_path.display());
@@ -2123,8 +2128,12 @@ pub fn run(mut args: ReviewArgs, cfg: &Config) -> Result<i32> {
                 parsed.codex_concern, parsed.effective_concern, parsed.evidence
             );
             println!(
-                "  effort: {}   elapsed: {}ms   reconnects: {}",
-                effort, raw.elapsed_ms, reconnect_count
+                "  model: {}   effort: {}   elapsed: {}ms   reconnects: {}",
+                model, effort, raw.elapsed_ms, reconnect_count
+            );
+            crate::accounting::print_composition(
+                &review_packet,
+                &crate::accounting::inclusion(&review_packet),
             );
         }
         RunSource::External { .. } => {

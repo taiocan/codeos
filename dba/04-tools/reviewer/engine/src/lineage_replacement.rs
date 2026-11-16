@@ -38,14 +38,14 @@ fn block<'a>(log: &'a str, review_id: &str) -> Result<&'a str> {
     Ok(tail.split("\n## ").next().unwrap_or(tail))
 }
 
-fn line<'a>(block: &'a str, prefix: &str) -> Result<&'a str> {
+pub(crate) fn line<'a>(block: &'a str, prefix: &str) -> Result<&'a str> {
     block
         .lines()
         .find_map(|value| value.strip_prefix(prefix))
         .with_context(|| format!("review record omits {prefix}"))
 }
 
-fn reference(block: &str, prefix: &str) -> Result<(PathBuf, String)> {
+pub(crate) fn reference(block: &str, prefix: &str) -> Result<(PathBuf, String)> {
     let value = line(block, prefix)?;
     let (path, hash) = value
         .rsplit_once(" (sha256:")

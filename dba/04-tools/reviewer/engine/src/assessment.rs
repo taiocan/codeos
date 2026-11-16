@@ -951,6 +951,7 @@ mod tests {
             repo_root: repo_root.to_string_lossy().into_owned(),
             toolkit_root: toolkit_root.to_string_lossy().into_owned(),
             scope: None,
+            inclusion: Default::default(),
         })
         .expect("build packet");
         let raw = make_raw(
@@ -1042,6 +1043,7 @@ mod tests {
             repo_root: repo_root.to_string_lossy().into_owned(),
             toolkit_root: toolkit_root.to_string_lossy().into_owned(),
             scope: None,
+            inclusion: Default::default(),
         };
         let packet = crate::packet::build(&opts).expect("build packet");
         let raw = make_raw(

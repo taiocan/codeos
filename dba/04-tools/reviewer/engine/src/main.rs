@@ -2,6 +2,7 @@ use clap::{Args, Parser, Subcommand};
 use std::path::PathBuf;
 use std::process;
 
+mod accounting;
 mod assessment;
 mod assessment_input_correction;
 mod build_identity;
@@ -189,6 +190,12 @@ enum Commands {
         correction_record_sha: Option<String>,
         #[arg(long = "override", value_name = "RATIONALE")]
         override_reason: Option<String>,
+    },
+    /// Read-only review cost and composition, derived from the review log and its records.
+    ReviewStatus {
+        /// Print the status as JSON.
+        #[arg(long)]
+        json: bool,
     },
     /// Show resolved reviewer configuration and state.
     Diagnose {
@@ -388,6 +395,7 @@ fn run() -> i32 {
             eprintln!("error: {error}");
             EXIT_WRITE
         }),
+        Commands::ReviewStatus { json } => cmd::status::run(&cfg, json),
         Commands::Diagnose { feature, stage } => {
             cmd::diagnose::run(feature.as_deref(), stage.as_deref(), &cfg);
             EXIT_SUCCESS

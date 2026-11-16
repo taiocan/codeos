@@ -32,6 +32,7 @@ pub fn run(args: EvidenceArgs, emit_packet: Option<PathBuf>, cfg: &Config) -> Re
             crate::readiness::evaluate(cfg, &manifest, &prepared.packet, &prepared.args.sha_only);
         readiness.print_plan();
         manifest.print_size(&prepared.packet);
+        crate::accounting::print_composition(&prepared.packet, &manifest.inclusion);
         if !readiness.passes() {
             return Ok(crate::EXIT_PACKET);
         }
