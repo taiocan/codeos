@@ -14,6 +14,7 @@ mod log;
 mod manifest;
 mod packet;
 mod precheck;
+mod projection;
 mod readiness;
 mod release_identity;
 mod run;

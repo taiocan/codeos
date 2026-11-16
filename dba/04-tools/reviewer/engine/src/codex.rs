@@ -101,11 +101,15 @@ pub fn invoke(packet: &ReviewPacket, cfg: &Config) -> Result<InvokeOutcome> {
     }))
 }
 
-/// The Codex CLI version a review must run on. Reviewer Tool Contract v21 runs whichever CLI is
-/// installed and records it; earlier contracts, or an unresolvable selection, keep v20's
+/// The Codex CLI version a review must run on. Reviewer Tool Contract v21 and later run whichever
+/// CLI is installed and record it; earlier contracts, or an unresolvable selection, keep v20's
 /// fail-closed match against the release lock.
 fn pinned_cli_version<'a>(contract: Option<&str>, locked: &'a str) -> Option<&'a str> {
-    (contract != Some(crate::manifest::CONTRACT_V21)).then_some(locked)
+    let unpinned = matches!(
+        contract,
+        Some(crate::manifest::CONTRACT_V21) | Some(crate::manifest::CONTRACT_V22)
+    );
+    (!unpinned).then_some(locked)
 }
 
 fn run_codex(
@@ -129,7 +133,10 @@ fn run_codex(
     if let Some(expected_cli_version) = expected_cli_version {
         anyhow::ensure!(actual_version == expected_cli_version, "Codex CLI version {actual_version} differs from approved release identity {expected_cli_version}");
     }
-    anyhow::ensure!(!actual_version.is_empty(), "codex --version reported no version");
+    anyhow::ensure!(
+        !actual_version.is_empty(),
+        "codex --version reported no version"
+    );
     let mut command = Command::new(&isolation.executable);
     command.args([
         "exec",
@@ -391,9 +398,13 @@ mod tests {
 
     #[test]
     fn only_contract_v21_unpins_the_codex_cli_version() {
-        use crate::manifest::{CONTRACT_V20, CONTRACT_V21};
+        use crate::manifest::{CONTRACT_V20, CONTRACT_V21, CONTRACT_V22};
         assert_eq!(pinned_cli_version(Some(CONTRACT_V21), "0.162.0"), None);
-        assert_eq!(pinned_cli_version(Some(CONTRACT_V20), "0.162.0"), Some("0.162.0"));
+        assert_eq!(pinned_cli_version(Some(CONTRACT_V22), "0.162.0"), None);
+        assert_eq!(
+            pinned_cli_version(Some(CONTRACT_V20), "0.162.0"),
+            Some("0.162.0")
+        );
         assert_eq!(pinned_cli_version(None, "0.162.0"), Some("0.162.0"));
     }
 

@@ -329,6 +329,8 @@ pub struct PacketBuildOptions {
     pub scope: Option<BTreeSet<String>>,
     /// Why each required input was included (REVIEW-SCALE accounting); shown in the manifest.
     pub inclusion: BTreeMap<String, BTreeSet<String>>,
+    /// Reviewer Tool Contract v22: show schema-1 route coordinates as their projection.
+    pub route_geometry_projection: bool,
 }
 
 fn in_scope(opts: &PacketBuildOptions, path: &str) -> bool {
@@ -1047,6 +1049,55 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
         } else {
             let raw = std::fs::read_to_string(a)
                 .with_context(|| format!("could not read artifact {}", a))?;
+            let production_evidence = opts
+                .inclusion
+                .get(a)
+                .is_some_and(|reasons| reasons.contains(crate::accounting::PRODUCTION_EVIDENCE));
+            if let Some(shown) = (opts.route_geometry_projection && production_evidence)
+                .then(|| crate::projection::route_geometry(&raw))
+                .flatten()
+            {
+                let (redacted, rc) = redact_secrets(&shown);
+                if rc > 0 {
+                    secret_flag = true;
+                    redaction_count += rc;
+                    excluded_paths.push((
+                        a.clone(),
+                        "secret value redacted in place".to_string(),
+                        "artifact".to_string(),
+                    ));
+                }
+                let shown_bytes = redacted.len() as u64;
+                let indented: String = redacted.lines().map(|l| format!("    {}\n", l)).collect();
+                artifacts_block.push_str(&format!(
+                    "  --- {} (sha256: {}, visibility: projected — {}: the exact route coordinates are mechanically verified evidence, shown as count, endpoints, bounding box, 16 evenly spaced samples and the SHA-256 of the full array) ---\n{}\n",
+                    a, sha, crate::projection::ROUTE_GEOMETRY, indented
+                ));
+                manifest_full.push_str(&format!(
+                    "    - path: {}\n      mode: projected\n      projection: {}\n      bytes: {}\n      projected_bytes: {}\n      sha256: {}{}\n",
+                    a,
+                    crate::projection::ROUTE_GEOMETRY,
+                    bytes,
+                    shown_bytes,
+                    sha,
+                    if rc > 0 {
+                        "\n      note: secret value redacted in place"
+                    } else {
+                        ""
+                    }
+                ));
+                manifest_full.push_str(&crate::accounting::manifest_lines(&opts.inclusion, a));
+                artifacts.push(ArtifactEntry {
+                    path: a.clone(),
+                    sha256: sha,
+                    visibility: "projected".to_string(),
+                    bytes,
+                });
+                review_content_bytes += shown_bytes;
+                file_contributors.push((a.clone(), shown_bytes));
+                shown_count += 1;
+                continue;
+            }
             let (redacted, rc) = redact_secrets(&raw);
             let vis = if rc > 0 {
                 secret_flag = true;
@@ -1728,6 +1779,124 @@ fn stage_checks(stage: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn only_manifest_production_evidence_is_projected_and_its_file_hash_stays_bound() {
+        let repo = tempfile::tempdir().unwrap();
+        for args in [
+            ["init", "-q"].as_slice(),
+            [
+                "-c",
+                "user.email=t@t.test",
+                "-c",
+                "user.name=T",
+                "commit",
+                "-q",
+                "--allow-empty",
+                "-m",
+                "i",
+            ]
+            .as_slice(),
+        ] {
+            assert!(Command::new("git")
+                .args(args)
+                .current_dir(repo.path())
+                .status()
+                .unwrap()
+                .success());
+        }
+        let points: Vec<serde_json::Value> = (0..2000)
+            .map(|i| serde_json::json!([14.0 + i as f64 / 1e4, 46.0]))
+            .collect();
+        let evidence = serde_json::json!({"schema": 1, "observations": [
+            {"visible_result": {"route": {"geometry": {"coordinates": points, "type": "LineString"}}}}
+        ]})
+        .to_string();
+        let production = repo.path().join("evidence.json");
+        let other = repo.path().join("other.json");
+        std::fs::write(&production, &evidence).unwrap();
+        std::fs::write(&other, &evidence).unwrap();
+        let (production, other) = (
+            production.display().to_string(),
+            other.display().to_string(),
+        );
+        let toolkit_root = Path::new(env!("CARGO_MANIFEST_DIR"))
+            .ancestors()
+            .nth(4)
+            .unwrap();
+        let packet = |projection: bool| {
+            build(&PacketBuildOptions {
+                feature: "FEAT".into(),
+                stage: "8".into(),
+                artifacts: vec![production.clone(), other.clone()],
+                sha_only_paths: vec![],
+                basis: ReviewBasis::Ordinary { base: None },
+                repo_root: repo.path().display().to_string(),
+                toolkit_root: toolkit_root.display().to_string(),
+                scope: None,
+                inclusion: BTreeMap::from([
+                    (
+                        production.clone(),
+                        BTreeSet::from([crate::accounting::PRODUCTION_EVIDENCE.to_string()]),
+                    ),
+                    (
+                        other.clone(),
+                        BTreeSet::from([crate::accounting::TEST_EVIDENCE.to_string()]),
+                    ),
+                ]),
+                route_geometry_projection: projection,
+            })
+            .unwrap()
+        };
+        let projected = packet(true);
+        let entry = |packet: &ReviewPacket, path: &str| {
+            packet
+                .artifacts
+                .iter()
+                .find(|e| e.path == path)
+                .unwrap()
+                .visibility
+                .clone()
+        };
+        assert_eq!(entry(&projected, &production), "projected");
+        assert_eq!(
+            entry(&projected, &other),
+            "shown",
+            "same shape, not production evidence"
+        );
+        let item = projected
+            .artifacts
+            .iter()
+            .find(|e| e.path == production)
+            .unwrap();
+        assert_eq!(
+            item.sha256,
+            sha256_str(&evidence),
+            "the whole file stays bound"
+        );
+        assert_eq!(item.bytes, evidence.len() as u64);
+        let counted = |packet: &ReviewPacket, path: &str| {
+            packet
+                .budget_contributors
+                .iter()
+                .find(|(p, _)| p == path)
+                .unwrap()
+                .1
+        };
+        assert!(counted(&projected, &production) < 2_000);
+        assert_eq!(counted(&projected, &other), evidence.len() as u64);
+        assert!(projected
+            .content()
+            .contains("      mode: projected\n      projection: route-geometry/v1\n"));
+        assert!(projected
+            .content()
+            .contains("\"projection\":\"route-geometry/v1\""));
+
+        // Without v22 every input is shown whole.
+        let whole = packet(false);
+        assert_eq!(entry(&whole, &production), "shown");
+        assert_eq!(counted(&whole, &production), evidence.len() as u64);
+    }
 
     #[test]
     fn sha256_str_is_deterministic() {

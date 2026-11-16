@@ -522,6 +522,9 @@ fn inspectability(
                 readiness.fail(Reason::RequiredInputMissing, path, "file is empty")
             }
             "shown" | "shown_redacted" | "added_file" | "delta_diff" => {}
+            // Reviewer Tool Contract v22: the whole file stays bound by its hash; only its
+            // mechanically verified route coordinates are summarized.
+            "projected" => {}
             // An unchanged file in a delta review was already reviewed; its identity suffices.
             "path_sha_only" if !caller_sha_only.contains(path) && !packet.base_sha.is_empty() => {}
             visibility => readiness.fail(

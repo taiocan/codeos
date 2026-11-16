@@ -952,6 +952,7 @@ mod tests {
             toolkit_root: toolkit_root.to_string_lossy().into_owned(),
             scope: None,
             inclusion: Default::default(),
+            route_geometry_projection: false,
         })
         .expect("build packet");
         let raw = make_raw(
@@ -1044,6 +1045,7 @@ mod tests {
             toolkit_root: toolkit_root.to_string_lossy().into_owned(),
             scope: None,
             inclusion: Default::default(),
+            route_geometry_projection: false,
         };
         let packet = crate::packet::build(&opts).expect("build packet");
         let raw = make_raw(
