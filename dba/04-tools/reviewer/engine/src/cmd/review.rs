@@ -665,7 +665,10 @@ pub fn prepare(
             .as_ref()
             .map(|manifest| manifest.inclusion.clone())
             .unwrap_or_default(),
-        route_geometry_projection: contract.as_deref() == Some(crate::manifest::CONTRACT_V22),
+        route_geometry_projection: matches!(
+            contract.as_deref(),
+            Some(crate::manifest::CONTRACT_V22) | Some(crate::manifest::CONTRACT_V23)
+        ),
     })
     .map_err(|error| PrepareFailure::packet(format!("error building packet: {error}")))?;
 

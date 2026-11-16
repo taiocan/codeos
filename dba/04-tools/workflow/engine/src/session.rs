@@ -207,6 +207,35 @@ pub fn attesting(project: &Project, receipt: &Receipt) -> Result<Option<Session>
     Ok((stated && surface).then_some(session))
 }
 
+/// Each `observation:human` claim of the subject -> the identity of the intact sealed session its
+/// checkpoint's latest receipt binds, or `None` when no receipt or no attesting session exists.
+/// Reviewer Tool Contract v23 shows these sessions to Stage 8; satisfaction stays the checker's.
+pub fn human_claim_sessions(
+    project: &Project,
+    subject: &Subject,
+) -> Result<BTreeMap<String, Option<String>>> {
+    let store = ReceiptStore::at(&project.codeos_dir());
+    let mut sessions = BTreeMap::new();
+    for claim in checker::subject_claims(project, subject)?.unwrap_or_default() {
+        if claim.evidence != Evidence::Human {
+            continue;
+        }
+        let receipt = match QUESTIONS.iter().find(|(id, _)| *id == claim.checkpoint) {
+            Some((_, checkpoint)) => store.latest("feature", &subject.id, checkpoint)?,
+            None => None,
+        };
+        let session = match receipt {
+            Some(receipt) => attesting(project, &receipt)?
+                .is_some()
+                .then(|| receipt.bindings.get("session").cloned())
+                .flatten(),
+            None => None,
+        };
+        sessions.insert(claim.id, session);
+    }
+    Ok(sessions)
+}
+
 /// The human outcome a receipt's session states for a claim.
 pub fn claim_outcome(project: &Project, receipt: &Receipt, claim: &str) -> Result<Option<String>> {
     Ok(attesting(project, receipt)?.and_then(|session| {

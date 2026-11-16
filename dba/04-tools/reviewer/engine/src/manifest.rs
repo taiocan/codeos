@@ -17,6 +17,7 @@ pub const CONTRACT_V19: &str = "dba/04-tools/reviewer/contract/v19.md";
 pub const CONTRACT_V20: &str = "dba/04-tools/reviewer/contract/v20.md";
 pub const CONTRACT_V21: &str = "dba/04-tools/reviewer/contract/v21.md";
 pub const CONTRACT_V22: &str = "dba/04-tools/reviewer/contract/v22.md";
+pub const CONTRACT_V23: &str = "dba/04-tools/reviewer/contract/v23.md";
 
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 pub struct ReviewInputManifest {
@@ -52,6 +53,10 @@ pub struct ReviewInputManifest {
     /// Historically accepted features when this review was derived; `None` when not derivable.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub accepted_feature_count_at_review: Option<u64>,
+    /// Reviewer Tool Contract v23: each `observation:human` claim -> the sealed Human Validation
+    /// Session attesting it, or `None` when none does.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub human_sessions: BTreeMap<String, Option<String>>,
     /// Content identity of everything the reviewer receives; set once the packet is final.
     pub reviewed_snapshot: String,
     #[serde(skip)]
@@ -88,6 +93,7 @@ pub fn selected(contract: Option<&str>) -> bool {
             | Some(CONTRACT_V20)
             | Some(CONTRACT_V21)
             | Some(CONTRACT_V22)
+            | Some(CONTRACT_V23)
     )
 }
 
@@ -99,6 +105,7 @@ pub fn candidate_lifecycle(contract: Option<&str>) -> bool {
             | Some(CONTRACT_V20)
             | Some(CONTRACT_V21)
             | Some(CONTRACT_V22)
+            | Some(CONTRACT_V23)
     )
 }
 
@@ -348,6 +355,30 @@ pub fn derive(
             }) {
                 manifest.derive_input(path, crate::accounting::TEST_DEFINITION);
             }
+        }
+    }
+    // Reviewer Tool Contract v23: the sealed session is the evidence of an `observation:human`
+    // claim, so Stage 8 shows it whole.
+    if crate::config::resolve_reviewer_tool_contract(cfg)
+        .ok()
+        .as_deref()
+        == Some(CONTRACT_V23)
+    {
+        if let Ok(subject) = &subject {
+            match codeos_workflow::session::human_claim_sessions(&project, subject) {
+                Ok(sessions) => manifest.human_sessions = sessions,
+                Err(error) => manifest.derived.project_error = Some(format!("{error:#}")),
+            }
+        }
+        for id in manifest
+            .human_sessions
+            .values()
+            .flatten()
+            .cloned()
+            .collect::<Vec<_>>()
+        {
+            let path = format!(".codeos/06-workflow/sessions/{id}.json");
+            manifest.derive_input(path, crate::accounting::HUMAN_OBSERVATION);
         }
     }
     // A production-source record references its evidence by identity; the evidence itself is the

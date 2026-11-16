@@ -107,7 +107,9 @@ pub fn invoke(packet: &ReviewPacket, cfg: &Config) -> Result<InvokeOutcome> {
 fn pinned_cli_version<'a>(contract: Option<&str>, locked: &'a str) -> Option<&'a str> {
     let unpinned = matches!(
         contract,
-        Some(crate::manifest::CONTRACT_V21) | Some(crate::manifest::CONTRACT_V22)
+        Some(crate::manifest::CONTRACT_V21)
+            | Some(crate::manifest::CONTRACT_V22)
+            | Some(crate::manifest::CONTRACT_V23)
     );
     (!unpinned).then_some(locked)
 }
@@ -398,9 +400,10 @@ mod tests {
 
     #[test]
     fn only_contract_v21_unpins_the_codex_cli_version() {
-        use crate::manifest::{CONTRACT_V20, CONTRACT_V21, CONTRACT_V22};
+        use crate::manifest::{CONTRACT_V20, CONTRACT_V21, CONTRACT_V22, CONTRACT_V23};
         assert_eq!(pinned_cli_version(Some(CONTRACT_V21), "0.162.0"), None);
         assert_eq!(pinned_cli_version(Some(CONTRACT_V22), "0.162.0"), None);
+        assert_eq!(pinned_cli_version(Some(CONTRACT_V23), "0.162.0"), None);
         assert_eq!(
             pinned_cli_version(Some(CONTRACT_V20), "0.162.0"),
             Some("0.162.0")

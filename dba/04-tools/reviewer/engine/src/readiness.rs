@@ -262,6 +262,15 @@ fn evidence(
     readiness: &mut Readiness,
 ) {
     let mut environment_needed = false;
+    for (claim, session) in &manifest.human_sessions {
+        if session.is_none() {
+            readiness.fail(
+                Reason::RequiredInputMissing,
+                claim,
+                "no sealed Human Validation Session attests this observation:human claim",
+            );
+        }
+    }
     for (key, sha) in &manifest.verification {
         let Some((_, record)) = manifest.derived.records.get(key) else {
             debug_assert!(sha.is_none());
@@ -732,6 +741,25 @@ mod tests {
         assert_eq!(
             issues(&cfg, &manifest, Reason::EvidenceStale),
             [key, "F6".to_string()]
+        );
+    }
+
+    /// Reviewer Tool Contract v23: an `observation:human` claim with no attesting session fails
+    /// closed before any Codex execution, naming the claim.
+    #[test]
+    fn a_human_claim_without_an_attesting_session_is_a_missing_required_input() {
+        let dir = tempfile::tempdir().unwrap();
+        let cfg = config(dir.path());
+        let mut manifest = ReviewInputManifest::default();
+        manifest
+            .human_sessions
+            .insert("F-1/readable".into(), Some("session-1".into()));
+        manifest
+            .human_sessions
+            .insert("F-1/subordinate".into(), None);
+        assert_eq!(
+            issues(&cfg, &manifest, Reason::RequiredInputMissing),
+            ["F-1/subordinate"]
         );
     }
 

@@ -447,6 +447,13 @@ fn one_session_records_mixed_explicit_outcomes_and_nothing_more() {
         observe(&fx, feature, "surface-1");
     }
     let project = fx.project();
+    let readable = |project| {
+        session::human_claim_sessions(project, &fx.subject("F-0001"))
+            .unwrap()
+            .remove("F-0001/readable")
+            .expect("observation:human claim listed")
+    };
+    assert_eq!(readable(&project), None, "no session attests the claim yet");
 
     // The human claim must be stated explicitly.
     let error = session::record(
@@ -485,6 +492,11 @@ fn one_session_records_mixed_explicit_outcomes_and_nothing_more() {
     )
     .unwrap();
     assert_eq!(fx.state("F-0001", "F4").0, State::Pass);
+    assert_eq!(
+        readable(&project),
+        Some(id.clone()),
+        "Stage 8 shows the attesting session"
+    );
     let (state, unmet) = fx.state("F-0002", "F4");
     assert_ne!(state, State::Pass, "mixed result: F-0002 did not confirm");
     assert!(

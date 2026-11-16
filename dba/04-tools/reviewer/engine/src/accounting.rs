@@ -11,6 +11,7 @@ pub const GOVERNED: &str = "governed";
 pub const CHANGED_IMPLEMENTATION: &str = "changed_implementation";
 pub const PRODUCTION_EVIDENCE: &str = "production_evidence";
 pub const RUNTIME_EVIDENCE: &str = "runtime_evidence";
+pub const HUMAN_OBSERVATION: &str = "human_observation";
 pub const TEST_EVIDENCE: &str = "test_evidence";
 pub const TEST_DEFINITION: &str = "test_definition";
 pub const VERIFICATION_RECORDS: &str = "verification_records";
@@ -25,6 +26,7 @@ pub const PRECEDENCE: &[&str] = &[
     CHANGED_IMPLEMENTATION,
     PRODUCTION_EVIDENCE,
     RUNTIME_EVIDENCE,
+    HUMAN_OBSERVATION,
     TEST_EVIDENCE,
     TEST_DEFINITION,
     VERIFICATION_RECORDS,
@@ -68,6 +70,7 @@ fn inferred(path: &str) -> Option<&'static str> {
         (".codeos/06-workflow/reality-evidence/", PRODUCTION_EVIDENCE),
         (".codeos/06-workflow/event-evidence/", RUNTIME_EVIDENCE),
         (".codeos/06-workflow/test-evidence/", TEST_EVIDENCE),
+        (".codeos/06-workflow/sessions/", HUMAN_OBSERVATION),
     ]
     .into_iter()
     .find(|(prefix, _)| path.starts_with(prefix))
