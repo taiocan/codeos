@@ -32,7 +32,8 @@
     "DBA-30": "supported",
     "DBA-31": "supported",
     "DBA-32": "supported",
-    "DBA-33": "supported"
+    "DBA-33": "supported",
+    "DBA-34": "supported"
   },
   "lifecycle": {},
   "consumers": [
