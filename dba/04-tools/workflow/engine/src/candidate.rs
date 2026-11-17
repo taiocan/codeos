@@ -190,16 +190,16 @@ pub fn assemble(
 
     let mut verification_records = BTreeMap::new();
     let store = VerificationStore::at(&project.codeos_dir());
-    let qualification_bindings = checker::verification_bindings_for_mechanic(
-        project,
-        subject,
-        "candidate",
-        "project_qualification",
-    )?;
+    let dependency_additions = validate_additions(project, additions)?;
+    let qualification_bindings =
+        checker::qualification_bindings(project, subject, "candidate", &dependency_additions)?;
     let qualification =
         store.latest("feature", &subject.id, "candidate", "project_qualification")?;
-    let qualification =
-        require_pre_candidate_qualification(qualification, &qualification_bindings)?;
+    let qualification = require_pre_candidate_qualification(
+        qualification,
+        &qualification_bindings,
+        &dependency_additions,
+    )?;
     verification_records.insert(
         "candidate/project_qualification".into(),
         hashing::record_identity(&qualification)?,
@@ -261,7 +261,6 @@ pub fn assemble(
         None
     };
 
-    let dependency_additions = validate_additions(project, additions)?;
     let implementation_inputs = derive_inputs(project, &subject.id, &dependency_additions)?;
     anyhow::ensure!(
         !implementation_inputs.is_empty(),
@@ -319,7 +318,19 @@ pub fn assemble(
 fn require_pre_candidate_qualification(
     record: Option<crate::verification::VerificationRecord>,
     bindings: &BTreeMap<String, String>,
+    additions: &[String],
 ) -> Result<crate::verification::VerificationRecord> {
+    // Evaluation compares recorded bindings only, so a record that never declared an addition would
+    // otherwise stay current; the declared set must equal the candidate's.
+    if let Some(record) = &record {
+        let declared = checker::declared_dependency_additions(record);
+        anyhow::ensure!(
+            declared == additions,
+            "candidate pre-candidate project qualification covers includes [{}]; candidate declares [{}]; rerun qualify-project with the candidate's --include",
+            declared.join(", "),
+            additions.join(", ")
+        );
+    }
     match verification::evaluate(record, bindings) {
         RecordState::Current(record) => Ok(record),
         RecordState::Absent => {
@@ -539,7 +550,7 @@ fn latest_accepted_bundle(project: &Project, feature: &str) -> Result<Option<Str
         .and_then(|r| r.bindings.get("candidate_bundle").cloned()))
 }
 
-fn validate_additions(project: &Project, additions: &[String]) -> Result<Vec<String>> {
+pub fn validate_additions(project: &Project, additions: &[String]) -> Result<Vec<String>> {
     let mut out = BTreeSet::new();
     for supplied in additions {
         let rel = Path::new(supplied);
@@ -976,15 +987,103 @@ mod tests {
             details: None,
         };
 
-        assert!(require_pre_candidate_qualification(Some(record.clone()), &bindings).is_ok());
-        assert!(require_pre_candidate_qualification(None, &bindings).is_err());
+        assert!(require_pre_candidate_qualification(Some(record.clone()), &bindings, &[]).is_ok());
+        assert!(require_pre_candidate_qualification(None, &bindings, &[]).is_err());
 
         let mut failed = record.clone();
         failed.result = "failed".into();
-        assert!(require_pre_candidate_qualification(Some(failed), &bindings).is_err());
+        assert!(require_pre_candidate_qualification(Some(failed), &bindings, &[]).is_err());
 
         let stale = BTreeMap::from([("implementation_state".into(), "changed".into())]);
-        assert!(require_pre_candidate_qualification(Some(record), &stale).is_err());
+        assert!(require_pre_candidate_qualification(Some(record), &stale, &[]).is_err());
+    }
+
+    #[test]
+    fn qualification_binds_declared_dependency_additions() {
+        let (_dir, project, _) = fixture();
+        let subject = Subject {
+            workflow: crate::contract::Workflow::Feature,
+            id: "F-1".into(),
+            gui: true,
+            backend: false,
+            persistence: false,
+            impact_accounting_complete: true,
+            arch_approval_required: false,
+            reality_claims: vec![],
+            inherited_claims: vec![],
+        };
+        let review = "docs/privacy-review.md";
+        fs::create_dir_all(project.root.join("docs")).unwrap();
+        fs::write(project.root.join(review), "reviewed v1\n").unwrap();
+        let additions = vec![review.to_string()];
+        let record = |bindings| crate::verification::VerificationRecord {
+            workflow: "feature".into(),
+            subject: "F-1".into(),
+            checkpoint: "candidate".into(),
+            verification: "project_qualification".into(),
+            result: "passed".into(),
+            bindings,
+            command: "scripts/codeos-qualify".into(),
+            timestamp: "2026-11-17T00:00:00Z".into(),
+            details: None,
+        };
+        let without =
+            checker::qualification_bindings(&project, &subject, "candidate", &[]).unwrap();
+        let with =
+            checker::qualification_bindings(&project, &subject, "candidate", &additions).unwrap();
+        assert!(with.contains_key("dependency_addition:docs/privacy-review.md"));
+
+        // No additions anywhere: unchanged behavior.
+        assert!(
+            require_pre_candidate_qualification(Some(record(without.clone())), &without, &[])
+                .is_ok()
+        );
+        // Declared sets must match in both directions.
+        assert!(require_pre_candidate_qualification(
+            Some(record(without.clone())),
+            &with,
+            &additions
+        )
+        .is_err());
+        assert!(
+            require_pre_candidate_qualification(Some(record(with.clone())), &without, &[]).is_err()
+        );
+        // Equal sets, unchanged file.
+        assert!(
+            require_pre_candidate_qualification(Some(record(with.clone())), &with, &additions)
+                .is_ok()
+        );
+
+        // Status derives the declared set from the latest record and re-hashes the file.
+        VerificationStore::at(&project.codeos_dir())
+            .append(&record(with.clone()))
+            .unwrap();
+        let status = |p: &Project| {
+            let want = checker::verification_bindings_for_mechanic(
+                p,
+                &subject,
+                "candidate",
+                "project_qualification",
+            )
+            .unwrap();
+            let have = VerificationStore::at(&p.codeos_dir())
+                .latest("feature", "F-1", "candidate", "project_qualification")
+                .unwrap();
+            verification::evaluate(have, &want)
+        };
+        assert!(matches!(status(&project), RecordState::Current(_)));
+
+        fs::write(project.root.join(review), "reviewed v2\n").unwrap();
+        let project = Project::discover(&project.root).unwrap();
+        assert!(matches!(
+            status(&project),
+            RecordState::Stale { ref binding, .. } if binding == "dependency_addition:docs/privacy-review.md"
+        ));
+        let changed =
+            checker::qualification_bindings(&project, &subject, "candidate", &additions).unwrap();
+        assert!(
+            require_pre_candidate_qualification(Some(record(with)), &changed, &additions).is_err()
+        );
     }
 
     #[test]

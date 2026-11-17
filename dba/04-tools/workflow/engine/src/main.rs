@@ -117,6 +117,9 @@ struct QualifyProjectArgs {
     /// Feature whose current evidence identity the pre-candidate qualification is bound to.
     #[arg(long)]
     subject: Option<String>,
+    /// A dependency addition the candidate will declare with the same --include. May be repeated.
+    #[arg(long = "include", value_name = "PROJECT_RELATIVE_PATH")]
+    include: Vec<String>,
 }
 
 #[derive(clap::Args)]
@@ -364,6 +367,11 @@ fn run(cli: &Cli, start: &std::path::Path) -> Result<i32> {
         Cmd::QualifyProject(args) => {
             let project = Project::discover(start)?;
             anyhow::ensure!(
+                args.include.is_empty() || args.mode == "acceptance",
+                "--include applies only to acceptance qualification"
+            );
+            let additions = candidate::validate_additions(&project, &args.include)?;
+            anyhow::ensure!(
                 project.feature_workflow_version()? >= 9,
                 "project qualification requires Feature workflow v9"
             );
@@ -389,12 +397,8 @@ fn run(cli: &Cli, start: &std::path::Path) -> Result<i32> {
                     .as_deref()
                     .context("acceptance qualification requires --subject for candidate binding")?;
                 let subject = Subject::resolve(&project, Workflow::Feature, id)?;
-                let bindings = checker::verification_bindings_for_mechanic(
-                    &project,
-                    &subject,
-                    "candidate",
-                    "project_qualification",
-                )?;
+                let bindings =
+                    checker::qualification_bindings(&project, &subject, "candidate", &additions)?;
                 VerificationStore::at(&project.codeos_dir()).append(&VerificationRecord {
                     workflow: "feature".into(),
                     subject: subject.id,

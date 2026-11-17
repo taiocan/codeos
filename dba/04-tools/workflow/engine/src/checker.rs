@@ -3341,6 +3341,47 @@ pub fn verification_bindings_for_mechanic(
     verification_bindings(project, subject, checkpoint, Some(mechanic))
 }
 
+/// Binding-key prefix for a dependency addition declared to a project qualification.
+const DEPENDENCY_ADDITION: &str = "dependency_addition:";
+
+/// The dependency additions a project-qualification record declared.
+pub fn declared_dependency_additions(record: &VerificationRecord) -> Vec<String> {
+    record
+        .bindings
+        .keys()
+        .filter_map(|key| key.strip_prefix(DEPENDENCY_ADDITION))
+        .map(String::from)
+        .collect()
+}
+
+/// Project-qualification bindings for an explicit set of dependency additions, used where the set
+/// is declared on the command line rather than taken from the latest record.
+pub fn qualification_bindings(
+    project: &Project,
+    subject: &Subject,
+    checkpoint: &str,
+    additions: &[String],
+) -> Result<BTreeMap<String, String>> {
+    let mut b = verification_bindings(project, subject, checkpoint, Some("project_qualification"))?;
+    b.retain(|key, _| !key.starts_with(DEPENDENCY_ADDITION));
+    bind_dependency_additions(project, &mut b, additions)?;
+    Ok(b)
+}
+
+/// Binds each addition's current content; a removed file binds nothing, so its record is stale.
+fn bind_dependency_additions(
+    project: &Project,
+    b: &mut BTreeMap<String, String>,
+    additions: &[String],
+) -> Result<()> {
+    for path in additions {
+        if let Some(h) = hashing::file_sha256(&project.root.join(path))? {
+            b.insert(format!("{DEPENDENCY_ADDITION}{path}"), h);
+        }
+    }
+    Ok(())
+}
+
 fn verification_bindings(
     project: &Project,
     subject: &Subject,
@@ -3409,6 +3450,17 @@ fn verification_bindings(
             &project.root.join("scripts/codeos-qualify"),
         )?;
         put(&mut b, "codeos_yaml", &project.codeos_yaml())?;
+        // Dependency additions the latest record declared are re-hashed, so changing one stales it.
+        let declared = VerificationStore::at(&project.codeos_dir())
+            .latest(
+                subject.workflow.slug(),
+                &subject.id,
+                checkpoint,
+                "project_qualification",
+            )?
+            .map(|record| declared_dependency_additions(&record))
+            .unwrap_or_default();
+        bind_dependency_additions(project, &mut b, &declared)?;
     }
     if mechanic == Some("production_source_evidence") && project.feature_workflow_version()? >= 11 {
         let latest = VerificationStore::at(&project.codeos_dir())
