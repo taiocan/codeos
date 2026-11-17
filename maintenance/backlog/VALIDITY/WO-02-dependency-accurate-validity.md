@@ -23,6 +23,13 @@ evidence), without forcing every record type into one abstraction.
 
 ## Part A — Decision brief (human approves before code)
 
+**First-class question: validity reuse and review reuse are different decisions.** A human or
+evidence receipt may stay valid because its dependencies did not change. CodeOS may still choose
+periodic or trigger-specific advisory re-review to catch defects missed earlier. The brief presents
+the measured cost (WO-01: 17–20 of 36 Stage 8 reviews followed no relevant change) and the catch
+rate (5 of the 10 Stage 8 findings came from such reviews). It asks which review guarantees are
+intended, and doesn't presuppose keeping all reviews or dropping them all.
+
 The dependency set for each governed validity decision, derived from WO-01's findings; content
 identity per evidence class; the freshness rule per evidence class; definitions for "dependency
 set", "content identity" and "freshness" proposed for `dba/05-guidance/terminology.md` (none exist
