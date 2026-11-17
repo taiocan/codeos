@@ -829,12 +829,10 @@ fn accepted_journey_definition(
     excluded_subject: Option<&str>,
 ) -> Result<(JourneyDefinition, Option<String>)> {
     let (journey_id, _, initial, _) = charter_journey(project)?;
+    // From v13 the definition follows the same stable accepted chain as the journey target, so a
+    // stale acceptance stays in the topology here too.
     let advances = if project.feature_workflow_version()? >= 13 {
-        let chain = accepted_chain(&initial, accepted_advances_excluding(project, None)?)?;
-        match excluded_subject {
-            Some(subject) => before(chain, subject),
-            None => chain,
-        }
+        accepted_journey_chain(project, excluded_subject)?.1
     } else {
         accepted_chain(
             &initial,
@@ -2319,10 +2317,12 @@ fn shared_execution(
     }
     let mut inputs = crate::evidence_set::common_inputs(project)?;
     if mechanic == "product_journey" {
-        // The journey definition `check` passes to the journey, or why it cannot be derived.
+        // The journey definition `check` passes to the journey, or why it cannot be derived. An
+        // underivable definition names its feature: the same error text in two features must
+        // never let one feature's journey run serve the other.
         let definition = match journey_definition(project, subject) {
             Ok(definition) => serde_json::to_string(&definition)?,
-            Err(error) => format!("underivable: {error}"),
+            Err(error) => format!("underivable for {}: {error}", subject.id),
         };
         inputs.insert(
             "journey_definition".into(),

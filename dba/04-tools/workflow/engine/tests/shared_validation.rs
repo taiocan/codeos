@@ -862,3 +862,41 @@ printf '{"schema":1,"project":"fixture","implementation_sha256":"%s","charter_sh
         c1()
     );
 }
+
+/// Found by JamFree after F-0002's acceptance: a feature whose Contract changed since its last
+/// acceptance stays in the journey topology, so each feature's journey keeps its own execution
+/// identity and the features never share one journey run.
+#[test]
+fn a_revised_upstream_contract_keeps_each_journey_its_own_execution() {
+    let fx = candidate("    provider: [backend]\n");
+    fx.write(
+        "claim-scopes.json",
+        r#"{"F-0001": {"route": ["provider"]}}"#,
+    );
+    fx.spec("F-0001", ADVANCE, ROUTE);
+    commit(&fx, "F-0001");
+    fx.check("F-0001");
+    let evidence = fx.evidence("F-0001");
+    fx.accept("F-0001", Some(&evidence));
+    fx.spec(
+        "F-0002",
+        "mode: advance\nprevious_frontier: decided\nproposed_frontier: returned\ntransition: the driver returns",
+        "",
+    );
+    commit(&fx, "F-0002");
+    fx.check("F-0002");
+    fx.accept("F-0002", None);
+    let contract = fx
+        .root
+        .join(".codeos/01-specification/contracts/F-0001_contract.md");
+    let text = fs::read_to_string(&contract).unwrap();
+    fs::write(&contract, format!("{text}\nRevised wording.\n")).unwrap();
+    commit(&fx, "revise F-0001");
+    for feature in ["F-0001", "F-0002"] {
+        fx.seed(feature, "F3", "product_journey");
+    }
+    let identity = |feature| {
+        record(&fx, feature, "F3", "product_journey").bindings["execution_identity"].clone()
+    };
+    assert_ne!(identity("F-0001"), identity("F-0002"));
+}
