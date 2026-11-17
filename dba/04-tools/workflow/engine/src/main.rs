@@ -388,6 +388,7 @@ fn run(cli: &Cli, start: &std::path::Path) -> Result<i32> {
                     subject,
                     "project_qualification",
                     Some(codeos_workflow::execution::Environment::Deterministic),
+                    &additions,
                 )?,
                 None => codeos_workflow::qualification::run(&project, &args.mode),
             };

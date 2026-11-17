@@ -2275,11 +2275,12 @@ pub fn run_shared(
     subject: &Subject,
     mechanic: &str,
     environment: Option<Environment>,
+    additions: &[String],
 ) -> Result<evidence::CommandOutcome> {
     let Some(env) = environment else {
         return Ok(run_mechanic(project, subject, mechanic));
     };
-    let Some((identity, inputs)) = shared_execution(project, subject, mechanic)? else {
+    let Some((identity, inputs)) = shared_execution(project, subject, mechanic, additions)? else {
         return Ok(crate::execution::within(env, || {
             run_mechanic(project, subject, mechanic)
         }));
@@ -2308,6 +2309,7 @@ fn shared_execution(
     project: &Project,
     subject: &Subject,
     mechanic: &str,
+    additions: &[String],
 ) -> Result<Option<(String, BTreeMap<String, String>)>> {
     if subject.workflow != Workflow::Feature
         || project.feature_workflow_version()? < 13
@@ -2330,6 +2332,12 @@ fn shared_execution(
             "journey_runner".into(),
             if subject.gui { "browser" } else { "api" }.into(),
         );
+    }
+    // A qualification's declared dependency additions are execution inputs: changing one must run
+    // the qualification again rather than reuse a set made before the change. None adds nothing,
+    // so identities without additions are unchanged.
+    if mechanic == "project_qualification" {
+        bind_dependency_additions(project, &mut inputs, additions)?;
     }
     let identity = crate::evidence_set::identity(mechanic, Environment::Deterministic, &inputs);
     Ok(Some((identity, inputs)))
@@ -2412,7 +2420,8 @@ fn execute(
     if matches!(verification::evaluate(have, &want), RecordState::Current(_)) {
         return Ok(Step::Current); // already verified against the current inputs
     }
-    let outcome = run_shared(project, subject, mechanic, environment)?;
+    let additions = declared_additions(project, subject, checkpoint, mechanic)?;
+    let outcome = run_shared(project, subject, mechanic, environment, &additions)?;
     project.refresh_snapshot(); // the mechanic ran project code
     record_outcome(
         project,
@@ -2916,7 +2925,8 @@ pub fn run_revalidation_checks(
     }
     let store = VerificationStore::at(&project.codeos_dir());
     for (checkpoint, mechanic, want) in runnable {
-        let outcome = run_shared(project, subject, mechanic, environment)?;
+        let additions = declared_additions(project, subject, checkpoint, mechanic)?;
+        let outcome = run_shared(project, subject, mechanic, environment, &additions)?;
         project.refresh_snapshot(); // the mechanic ran project code
         log.push(format!("{checkpoint} / {mechanic}: {}", outcome.summary));
         if !outcome.ok {
@@ -3362,10 +3372,30 @@ pub fn qualification_bindings(
     checkpoint: &str,
     additions: &[String],
 ) -> Result<BTreeMap<String, String>> {
-    let mut b = verification_bindings(project, subject, checkpoint, Some("project_qualification"))?;
-    b.retain(|key, _| !key.starts_with(DEPENDENCY_ADDITION));
-    bind_dependency_additions(project, &mut b, additions)?;
-    Ok(b)
+    bindings_with(
+        project,
+        subject,
+        checkpoint,
+        Some("project_qualification"),
+        Some(additions),
+    )
+}
+
+/// The dependency additions the latest record of a project qualification declared; none for any
+/// other mechanic.
+fn declared_additions(
+    project: &Project,
+    subject: &Subject,
+    checkpoint: &str,
+    mechanic: &str,
+) -> Result<Vec<String>> {
+    if mechanic != "project_qualification" {
+        return Ok(Vec::new());
+    }
+    Ok(VerificationStore::at(&project.codeos_dir())
+        .latest(subject.workflow.slug(), &subject.id, checkpoint, mechanic)?
+        .map(|record| declared_dependency_additions(&record))
+        .unwrap_or_default())
 }
 
 /// Binds each addition's current content; a removed file binds nothing, so its record is stale.
@@ -3388,6 +3418,24 @@ fn verification_bindings(
     checkpoint: &str,
     mechanic: Option<&str>,
 ) -> Result<BTreeMap<String, String>> {
+    bindings_with(project, subject, checkpoint, mechanic, None)
+}
+
+/// `additions` is an explicitly declared qualification set; `None` takes the latest record's.
+fn bindings_with(
+    project: &Project,
+    subject: &Subject,
+    checkpoint: &str,
+    mechanic: Option<&str>,
+    additions: Option<&[String]>,
+) -> Result<BTreeMap<String, String>> {
+    let additions = match additions {
+        Some(additions) => additions.to_vec(),
+        None => match mechanic {
+            Some(mechanic) => declared_additions(project, subject, checkpoint, mechanic)?,
+            None => Vec::new(),
+        },
+    };
     let mut b = BTreeMap::new();
     let put = |b: &mut BTreeMap<String, String>, k: &str, path: &Path| -> Result<()> {
         if let Some(h) = hashing::file_sha256(path)? {
@@ -3450,17 +3498,8 @@ fn verification_bindings(
             &project.root.join("scripts/codeos-qualify"),
         )?;
         put(&mut b, "codeos_yaml", &project.codeos_yaml())?;
-        // Dependency additions the latest record declared are re-hashed, so changing one stales it.
-        let declared = VerificationStore::at(&project.codeos_dir())
-            .latest(
-                subject.workflow.slug(),
-                &subject.id,
-                checkpoint,
-                "project_qualification",
-            )?
-            .map(|record| declared_dependency_additions(&record))
-            .unwrap_or_default();
-        bind_dependency_additions(project, &mut b, &declared)?;
+        // Declared dependency additions are re-hashed, so changing one stales the record.
+        bind_dependency_additions(project, &mut b, &additions)?;
     }
     if mechanic == Some("production_source_evidence") && project.feature_workflow_version()? >= 11 {
         let latest = VerificationStore::at(&project.codeos_dir())
@@ -3475,7 +3514,7 @@ fn verification_bindings(
     }
     // Feature Workflow v13: a shared verification's record binds its execution identity.
     if let Some(mechanic) = mechanic {
-        if let Some((identity, _)) = shared_execution(project, subject, mechanic)? {
+        if let Some((identity, _)) = shared_execution(project, subject, mechanic, &additions)? {
             b.insert("execution_identity".into(), identity);
         }
     }

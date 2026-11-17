@@ -778,3 +778,87 @@ fn a_mid_chain_feature_builds_on_the_chain_before_its_own_step() {
         );
     }
 }
+
+/// A changed dependency addition declared with `--include` runs the qualification again instead of
+/// reusing the Validation Evidence Set made before the change.
+#[test]
+fn a_changed_included_file_runs_the_qualification_again() {
+    let fx = candidate("    provider: [backend]\n");
+    fx.spec("F-0001", "mode: preserve\nreason: one", "");
+    let charter = fs::read_to_string(fx.root.join(".codeos/00-project/charter.md")).unwrap();
+    fx.write(
+        ".codeos/00-project/charter.md",
+        &format!("{charter}\n## System Constraints\n\n| ID | Constraint | Type | Verification route |\n|---|---|---|---|\n| C-1 | private | quality | scripts/codeos-qualify |\n"),
+    );
+    fx.write("docs/privacy-review.md", "review-v1\n");
+    fx.write(
+        "scripts/codeos-qualify",
+        r#"#!/usr/bin/env bash
+set -eu
+echo run >> "$(dirname "$0")/../.codeos/06-workflow/qualify-runs"
+review="$(tr -d '\n' < "$(dirname "$0")/../docs/privacy-review.md")"
+printf '{"schema":1,"project":"fixture","implementation_sha256":"%s","charter_sha256":"%s","configuration_sha256":"%s","tools":{"fixture":"1"},"constraints":[{"id":"C-1","phase":"acceptance","status":"pass","evidence":["%s"],"measurements":{}}],"baseline":[{"id":"static_analysis","status":"pass","tool":"fixture","version":"1","summary":"ok"},{"id":"dependency_vulnerabilities","status":"pass","tool":"fixture","version":"1","summary":"ok"},{"id":"dependency_licences","status":"pass","tool":"fixture","version":"1","summary":"ok"},{"id":"committed_secrets","status":"pass","tool":"fixture","version":"1","summary":"ok"}]}' "$CODEOS_IMPLEMENTATION_SHA256" "$CODEOS_CHARTER_SHA256" "$CODEOS_CONFIGURATION_SHA256" "$review" > "$CODEOS_QUALIFICATION_OUTPUT"
+"#,
+    );
+    std::process::Command::new("chmod")
+        .args(["+x", "scripts/codeos-qualify"])
+        .current_dir(&fx.root)
+        .status()
+        .unwrap();
+    commit(&fx, "qualification");
+    let qualify = || {
+        let out = std::process::Command::new(env!("CARGO_BIN_EXE_codeos-workflow"))
+            .args([
+                "--project",
+                fx.root.to_str().unwrap(),
+                "qualify-project",
+                "--mode",
+                "acceptance",
+            ])
+            .args(["--subject", "F-0001", "--include", "docs/privacy-review.md"])
+            .output()
+            .unwrap();
+        assert!(
+            out.status.success(),
+            "{}",
+            String::from_utf8_lossy(&out.stderr)
+        );
+        String::from_utf8_lossy(&out.stdout).into_owned()
+    };
+    let runs = || {
+        fs::read_to_string(fx.root.join(".codeos/06-workflow/qualify-runs"))
+            .unwrap()
+            .lines()
+            .count()
+    };
+    let c1 = || {
+        record(&fx, "F-0001", "candidate", "project_qualification")
+            .details
+            .unwrap()
+            .to_string()
+    };
+
+    qualify();
+    assert_eq!(runs(), 1);
+    let first = cited_set(&fx, "F-0001", "candidate", "project_qualification");
+    let again = qualify();
+    assert!(again.contains("reused Validation Evidence Set"), "{again}");
+    assert_eq!(runs(), 1, "unchanged inputs reuse the set");
+
+    fx.write("docs/privacy-review.md", "review-v2\n");
+    let changed = qualify();
+    assert!(
+        !changed.contains("reused Validation Evidence Set"),
+        "{changed}"
+    );
+    assert_eq!(runs(), 2, "a changed included file runs the qualification");
+    assert_ne!(
+        cited_set(&fx, "F-0001", "candidate", "project_qualification"),
+        first
+    );
+    assert!(
+        c1().contains("review-v2"),
+        "C-1 comes from the new run: {}",
+        c1()
+    );
+}
