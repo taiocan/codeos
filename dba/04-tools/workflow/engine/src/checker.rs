@@ -3358,6 +3358,10 @@ pub fn decision_state(
                 }
             }
             required.retain(|key| dependency_set.contains(key));
+        } else if subject.workflow == Workflow::Feature {
+            // A receipt recorded before v14 is compared as recorded: the keys only v14 records
+            // are not required of it.
+            required.retain(|key| !crate::validity::V14_KEYS.contains(&key.as_str()));
         }
     }
     let state = receipts::evaluate_required(latest, &bindings, &required);

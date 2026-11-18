@@ -238,3 +238,21 @@ fn an_early_preview_ignores_contract_prose_but_not_intent_prose() {
     edit(&fx, INTENT, "# Intent: F-0001", "# Intent: F-0001, revised");
     assert!(!current(&fx, "F-0001", "early_preview"));
 }
+
+/// Compatibility: a receipt recorded before v14 is compared as recorded after adoption.
+#[test]
+fn a_receipt_recorded_before_v14_stays_current_after_adoption() {
+    let (toolkit, id) = candidate_toolkit();
+    let fx = Fixture::under_toolkit(toolkit, "DBA-34", SCOPES);
+    fx.spec("F-0001", ADVANCE, ROUTE);
+    commit(&fx, "spec");
+    fx.receipt("F-0001", "early_preview", "direction_confirmed", None);
+    edit(
+        &fx,
+        ".codeos/00-project/codeos.yaml",
+        "dba_configuration: DBA-34",
+        &format!("dba_configuration: {id}"),
+    );
+    assert_eq!(fx.project().feature_workflow_version().unwrap(), 14);
+    assert!(current(&fx, "F-0001", "early_preview"));
+}

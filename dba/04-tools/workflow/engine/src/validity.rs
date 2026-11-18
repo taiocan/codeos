@@ -20,6 +20,15 @@ pub const ARTIFACTS: [(&str, &str); 3] = [
 
 pub const EQUIVALENCE: &str = "semantic_equivalence";
 
+/// The binding keys only a v14 receipt records.
+pub const V14_KEYS: [&str; 5] = [
+    "intent_meaning",
+    "contract_meaning",
+    "event_schema_meaning",
+    "judged_claims",
+    "architecture",
+];
+
 /// The file-hash bindings a v14 record or receipt keeps as history next to the meaning keys.
 pub const SPEC_FILE_KEYS: [&str; 3] = ["intent", "contract", "event_schema"];
 
