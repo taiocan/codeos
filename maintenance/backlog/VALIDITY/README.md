@@ -41,14 +41,19 @@ lookahead. Then measure again before adding anything.
 | [WO-01](WO-01-invalidation-replay.md) | NORMAL | Historical invalidation replay | Accepted 2026-11-17 |
 | [WO-02](WO-02-dependency-accurate-validity.md) | PROTECTED | Dependency-accurate validity | Accepted 2026-11-18; DBA-35 issued (Feature Workflow v14) |
 | [WO-03](WO-03-deterministic-preflight.md) | NORMAL | Deterministic preflight | Accepted 2026-11-18 |
-| [WO-04](WO-04-dba-impact-adoption.md) | PROTECTED | DBA impact-aware adoption | Waits for WO-02 |
+| [WO-04](WO-04-dba-impact-adoption.md) | PROTECTED | DBA impact-aware adoption | Part A approved 2026-11-18; Part B next |
 | [WO-05](WO-05-whole-path-plan.md) | NORMAL | Whole-path plan | Approved 2026-11-17 — may proceed |
+| [WO-06](WO-06-structured-consistency.md) | NORMAL | Structured-value consistency in preflight | Approved 2026-11-18 |
 
-This table is the only place WO status is kept. No further top-level WOs are justified now.
+This table is the only place WO status is kept.
 
 ## Deferred
 
 - **Atomic multi-feature acceptance.** Its motivating defect was fixed in 2ae639e; no evidence of
   material cost.
 - **JamFree cycle runbook script.** A JamFree WO, reconsidered after WO-05.
-- **AI spec-only review and prose-number lint.** Only if WO-03 misses a measured defect class.
+- **Spec-only Stage 8 review and prose-number lint.** Deferred by the human 2026-11-18. Measure what
+  WO-03 still misses first. The structured-value consistency check was approved separately as
+  WO-06.
+- **Advisory as-of provenance and freshness (U5).** Deferred out of WO-04 by the human 2026-11-18.
+  Implement only when a concrete freshness rule needs it; Boundary 2 of WO-02 still holds.

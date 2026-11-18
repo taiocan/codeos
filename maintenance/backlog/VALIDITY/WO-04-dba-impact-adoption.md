@@ -1,6 +1,6 @@
 # WO-04 — DBA Impact-Aware Adoption
 
-PROTECTED · after WO-02, reusing its dependency model
+PROTECTED · after WO-02, reusing its dependency model · Part A approved by the human 2026-11-18
 
 ## Goal
 
@@ -130,3 +130,21 @@ Mechanics version change stales execution identities.
    the qualification result as provenance only (Boundary 2: as-of identity exists, and no rule
    depends on it yet), and to keep any freshness rule for later evidence. Fold it into WO-04, or
    keep it separate?
+
+## Part A decisions (human, 2026-11-18)
+
+- **Rule W4: approved.** Each consumer binds only the canonical parsed values of the project sections
+  it reads, plus the immutable version identity of its governing policy or tool contract. It never
+  binds `codeos.yaml` as a whole. Version identity is sufficient only because issued policy versions
+  and their transitive semantic dependencies are frozen.
+- **The table lists direct dependencies only.** A consumer does not repeat a dependency it already
+  receives through the evidence or run identities it consumes, which prevents double invalidation.
+  F6 therefore has no `codeos.yaml` dependency.
+- **Qualification identity: approved** as the tool-owned qualification protocol schema version.
+  Qualification goes stale when its protocol or its own inputs change, not when unrelated workflow
+  policy changes.
+- **Advisory as-of provenance: deferred** out of WO-04 (README Deferred). It may be captured as
+  telemetry if near-free, but it is never a WO-04 acceptance requirement.
+
+**Core invariant:** a DBA adoption invalidates a consumer only when the canonical project values it
+reads or the immutable semantic version of its governing contract changes.
