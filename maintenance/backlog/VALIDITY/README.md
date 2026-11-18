@@ -41,7 +41,7 @@ lookahead. Then measure again before adding anything.
 | [WO-01](WO-01-invalidation-replay.md) | NORMAL | Historical invalidation replay | Accepted 2026-11-17 |
 | [WO-02](WO-02-dependency-accurate-validity.md) | PROTECTED | Dependency-accurate validity | Accepted 2026-11-18; DBA-35 issued (Feature Workflow v14) |
 | [WO-03](WO-03-deterministic-preflight.md) | NORMAL | Deterministic preflight | Accepted 2026-11-18 |
-| [WO-04](WO-04-dba-impact-adoption.md) | PROTECTED | DBA impact-aware adoption | Part B: DBA-36 candidate implemented 2026-11-18; awaits qualification and acceptance |
+| [WO-04](WO-04-dba-impact-adoption.md) | PROTECTED | DBA impact-aware adoption | Part B: DBA-36 qualified 2026-11-18 (d11a670c…); awaits acceptance and issue |
 | [WO-05](WO-05-whole-path-plan.md) | NORMAL | Whole-path plan | Approved 2026-11-17 — may proceed |
 | [WO-06](WO-06-structured-consistency.md) | NORMAL | Structured-value consistency in preflight | Approved 2026-11-18 |
 

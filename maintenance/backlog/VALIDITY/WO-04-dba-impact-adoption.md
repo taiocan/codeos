@@ -201,3 +201,7 @@ this clears F6 WAITING. It does not clear the rest:
 So the `check` chain from F7 to F9, and the Health and Platform Assurance reports derived from it,
 stay stale until each feature's next real change cycle produces v14 receipts and a schema 3 bundle.
 All features stay VALID throughout; this is the legacy cost of receipts evaluated as recorded.
+
+**Qualification (2026-11-18).** `qualify-candidate.sh dba-36` passed the suites, the compatibility
+matrix and every replay; all accepted JamFree replay outcomes are unchanged.
+`qualified_candidate_sha256: d11a670cfaf2b3bafb3d653150b916738beeb0f8720bcd8ae771e0e33388d073`.
