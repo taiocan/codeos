@@ -229,3 +229,14 @@ separate operational decisions.
 **Regression case:** under v15 semantics, JamFree's DBA-34 → DBA-35 adoption (c3b2e56) must
 invalidate none of B3, B4, run IDs, project qualification and F6. Checked by
 `wo04-adoption-replay.py <JamFree> HEAD --regression`.
+
+**Real-adoption acceptance test (human, 2026-11-18).** JamFree's DBA-36 adoption confirms WO-04 if:
+
+- B3, B4 and qualification incur only the known one-time legacy cost;
+- no TomTom work occurs;
+- Current Validity stays unchanged;
+- afterwards, a DBA-selection-only change no longer invalidates those consumers under v15/Bootstrap
+  v2 semantics.
+
+JamFree's legacy F6–F9 chain is not cleaned proactively; the next legitimate feature change
+regenerates those records under the new rules.
