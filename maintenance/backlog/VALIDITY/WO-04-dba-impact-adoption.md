@@ -192,15 +192,15 @@ before v15 / Bootstrap v2 are evaluated as recorded, so they go stale once:
 - qualifications re-run.
 
 F6 receipts recorded under v14 do *not* go stale, because their dependency set loses
-`codeos_yaml` (test `adopting_dba_36_keeps_v14_f6_and_re_asks_legacy_b4_once`). For JamFree
-this clears F6 WAITING. It does not clear the rest:
+`codeos_yaml` (test `adopting_dba_36_keeps_v14_f6_and_re_asks_legacy_b4_once`). *(Corrected
+2026-11-18: an earlier version said this clears JamFree's F6 WAITING. It does not. JamFree's F6
+receipts were recorded under DBA-34, before v14, so they are compared as recorded and stay stale on
+`codeos_yaml`.)*
 
-- JamFree's accepted Candidate Bundles are schema 2, which cites exact records.
-- Its F8/F9 receipts predate v14 and bind the bundle and the implementation.
-
-So the `check` chain from F7 to F9, and the Health and Platform Assurance reports derived from it,
-stay stale until each feature's next real change cycle produces v14 receipts and a schema 3 bundle.
-All features stay VALID throughout; this is the legacy cost of receipts evaluated as recorded.
+For JamFree, the F6 → F9 chain and the Health and Platform Assurance reports stay stale until each
+feature's next real change cycle produces v14/v15 receipts and a schema 3 bundle. All features stay
+VALID throughout; this is the legacy cost of receipts evaluated as recorded. Adopting DBA-36 now
+buys cheap future adoptions, not a cleaner present state.
 
 **Qualification (2026-11-18).** `qualify-candidate.sh dba-36` passed the suites, the compatibility
 matrix and every replay; all accepted JamFree replay outcomes are unchanged.
