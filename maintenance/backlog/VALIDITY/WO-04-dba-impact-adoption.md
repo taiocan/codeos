@@ -42,3 +42,15 @@ qualifications), with no TomTom calls; this case is WO-04's canonical example. W
 This applies to B3, B4, project and deployment qualification, and the Health and Platform Assurance
 states derived from them. **Boundary:** B4 stays valid only because its own dependency identity is
 unchanged; CodeOS never special-cases DBA adoption, or a product that "looks the same".
+
+**Refresh result (JamFree, 2026-11-18).** B3 and all five qualifications passed in about 53 s, with
+no provider calls. Still stale afterwards, from the same cause:
+
+- **Health:** the F9-checkpoint `project_qualification` records bind `codeos_yaml`. Only a feature
+  `check` writes them; `qualify-project` writes the candidate-checkpoint records.
+- **Platform Assurance:** the deterministic F3/F5/F5g records show "execution_identity changed",
+  because `evidence_set::common_inputs` includes the `codeos.yaml` bytes. Features stay VALID:
+  Current Validity compares the bundle's inputs, not record currency.
+
+A deterministic feature `check` clears both, at about 15–20 min for four features. That is the
+measured cost WO-04 removes.

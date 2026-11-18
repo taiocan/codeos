@@ -108,9 +108,12 @@ unquoting and Architecture Scope content approximate the engine):
    lever. F8 and F9 receipts stay current through the re-review; only the review re-runs.
 4. **Adoption cost:** records and receipts written before v14 carry no meaning keys and are
    compared as recorded. Adoption therefore re-runs no verification and spends no provider call.
-   DBA-35 adoption requires no mechanical verification or production-provider re-run solely due
-   to adoption. Legacy F6/F8/F9 receipts require one-time establishment of a v14-compatible
-   decision.
+   DBA-35 adoption requires no production-provider re-run and no F6/F8/F9 re-decision solely due
+   to adoption; JamFree observed this on 2026-11-18. *(Corrected 2026-11-18 after the JamFree
+   adoption: this note said that no mechanical verification re-runs. That was wrong. The execution
+   identity of every shared verification includes the `codeos.yaml` bytes
+   (`evidence_set::common_inputs`), so deterministic records go stale on adoption and Platform
+   Assurance follows them. That is the WO-04 over-binding, not a v14 rule.)*
 
 **Qualification** (2026-11-18): `qualify-candidate.sh dba-35` passed the suites, the compatibility
 matrix and every replay. All accepted JamFree replay outcomes are unchanged.
