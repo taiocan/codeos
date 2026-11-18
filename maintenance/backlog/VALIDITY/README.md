@@ -43,7 +43,7 @@ lookahead. Then measure again before adding anything.
 | [WO-03](WO-03-deterministic-preflight.md) | NORMAL | Deterministic preflight | Accepted 2026-11-18 |
 | [WO-04](WO-04-dba-impact-adoption.md) | PROTECTED | DBA impact-aware adoption | Accepted 2026-11-18; DBA-36 issued (Feature Workflow v15, Workflow Bootstrap v2) |
 | [WO-05](WO-05-whole-path-plan.md) | NORMAL | Whole-path plan | Accepted 2026-11-18 |
-| [WO-06](WO-06-structured-consistency.md) | NORMAL | Structured-value consistency in preflight | Approved 2026-11-18 |
+| [WO-06](WO-06-structured-consistency.md) | NORMAL | Structured-value consistency in preflight | Closed 2026-11-18: no applicable structured values; nothing implemented |
 
 This table is the only place WO status is kept.
 
