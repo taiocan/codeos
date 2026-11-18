@@ -3090,7 +3090,19 @@ fn current_bindings(
             // has its own Early Development Preview, and implementing a feature must not invalidate
             // the one-time confirmation that the baseline direction is right.
             put(&mut b, "charter", &project.charter())?;
-            put(&mut b, "codeos_yaml", &project.codeos_yaml())?;
+            if project.bootstrap_workflow_version()? >= 2 {
+                // Workflow Bootstrap v2: the Platform Baseline and the bootstrap contract version.
+                b.insert(
+                    "configuration".into(),
+                    crate::validity::configuration_identity(
+                        project,
+                        &["platform"],
+                        &["workflow_bootstrap_policy"],
+                    )?,
+                );
+            } else {
+                put(&mut b, "codeos_yaml", &project.codeos_yaml())?;
+            }
         }
         "early_preview" => {
             put(&mut b, "intent", &project.intent(&subject.id))?;
@@ -3344,6 +3356,10 @@ pub fn decision_state(
         {
             let mut dependency_set: BTreeSet<String> =
                 deps.iter().map(|key| key.to_string()).collect();
+            // Feature Workflow v15: F6 reaches configuration through its evidence, never directly.
+            if project.feature_workflow_version()? >= 15 {
+                dependency_set.remove("codeos_yaml");
+            }
             if crate::validity::judges_product(checkpoint) {
                 if let Some(narrowest) = PRODUCT_BINDINGS
                     .iter()
@@ -3584,7 +3600,19 @@ fn bindings_with(
         // is a completed phase, and from the first feature onward the live integration guarantee is
         // carried by each feature's own verification (F3 / F5 / F5d / F5g).
         "B3" => {
-            put(&mut b, "codeos_yaml", &project.codeos_yaml())?;
+            if project.bootstrap_workflow_version()? >= 2 {
+                // Workflow Bootstrap v2: what the integrated baseline actually depends on.
+                b.insert(
+                    "configuration".into(),
+                    crate::validity::configuration_identity(
+                        project,
+                        &["platform", "runtime_verification"],
+                        &["workflow_bootstrap_policy", "codeos_mechanics_policy"],
+                    )?,
+                );
+            } else {
+                put(&mut b, "codeos_yaml", &project.codeos_yaml())?;
+            }
         }
         // Every feature mechanical verification: the approved Specification Package plus the current
         // implementation. Revising the spec, or changing the implementation, re-blocks it.
@@ -3645,7 +3673,15 @@ fn bindings_with(
             "qualification_script",
             &project.root.join("scripts/codeos-qualify"),
         )?;
-        put(&mut b, "codeos_yaml", &project.codeos_yaml())?;
+        if project.feature_workflow_version()? >= 15 {
+            // Feature Workflow v15: the protocol version, not the whole codeos.yaml.
+            b.insert(
+                "qualification_protocol".into(),
+                crate::qualification::PROTOCOL_SCHEMA.to_string(),
+            );
+        } else {
+            put(&mut b, "codeos_yaml", &project.codeos_yaml())?;
+        }
         // Declared dependency additions are re-hashed, so changing one stales the record.
         bind_dependency_additions(project, &mut b, &additions)?;
     }

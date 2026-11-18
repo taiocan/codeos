@@ -148,3 +148,56 @@ Mechanics version change stales execution identities.
 
 **Core invariant:** a DBA adoption invalidates a consumer only when the canonical project values it
 reads or the immutable semantic version of its governing contract changes.
+
+## Part B — Implementation (DBA-36 candidate, 2026-11-18)
+
+`maintenance/candidates/dba-36.yaml`: DBA-35 with Feature Workflow v15 and Workflow Bootstrap v2.
+
+- `validity::configuration_identity(project, sections, contracts)`: the canonical parsed sections
+  plus the selected contract versions.
+- **B3** binds `configuration` (`platform`, `runtime_verification`; Workflow Bootstrap and Codeos
+  Mechanics versions). **B4** binds the Charter and `configuration` (`platform`; Workflow
+  Bootstrap version). Both are gated on Workflow Bootstrap v2.
+- **Execution identity** binds `configuration` (`platform`, `runtime_verification`,
+  `reality_verification`) in place of `codeos.yaml`. The Codeos Mechanics policy is bound as before.
+- **`project_qualification`** binds `qualification_protocol` (`qualification::PROTOCOL_SCHEMA`) in
+  place of `codeos.yaml`.
+- **F6**: `codeos.yaml` is dropped from its v14 dependency set (annex conformance).
+
+All of these are gated on Feature Workflow v15 unless stated; DBA-35 and earlier behave as issued.
+
+**Verification:**
+
+- `tests/configuration_impact.rs` (4 tests, contrasted with DBA-35; the fourth adopts the candidate over DBA-35 receipts):
+  - a `codeos.yaml` comment stales none of B3, B4, execution identity, qualification and F6
+    (under DBA-35 it stales all five);
+  - a `platform` change stales B3, B4 and execution identities, and qualification through its
+    execution identity;
+  - YAML quoting in `reality_verification` changes nothing, while a value change does.
+- The full engine suite and clippy are clean.
+- **Adoption replay** (`wo04-adoption-replay.py <JamFree> HEAD`; sections compared without
+  comments, which approximates the engine's parse): of JamFree's 17 adoptions from DBA-15 to
+  DBA-35, 15 invalidate nothing under W4. Today every one invalidated every consumer. The two
+  exceptions are real:
+  - DBA-24 → 25: a Codeos Mechanics version change stales B3 and execution identities;
+  - DBA-26 → 27: added `reality_verification` scopes stale execution identities.
+  DBA-34 → 35 invalidates nothing, so none of the measured refresh would have been needed.
+
+**Cost of adopting DBA-36 itself (one last time):** records and receipts bound to `codeos_yaml`
+before v15 / Bootstrap v2 are evaluated as recorded, so they go stale once:
+
+- B3 re-runs;
+- B4 needs one human re-confirmation;
+- execution identities change, so deterministic verifications re-run once;
+- qualifications re-run.
+
+F6 receipts recorded under v14 do *not* go stale, because their dependency set loses
+`codeos_yaml` (test `adopting_the_candidate_keeps_v14_f6_and_re_asks_legacy_b4_once`). For JamFree
+this clears F6 WAITING. It does not clear the rest:
+
+- JamFree's accepted Candidate Bundles are schema 2, which cites exact records.
+- Its F8/F9 receipts predate v14 and bind the bundle and the implementation.
+
+So the `check` chain from F7 to F9, and the Health and Platform Assurance reports derived from it,
+stay stale until each feature's next real change cycle produces v14 receipts and a schema 3 bundle.
+All features stay VALID throughout; this is the legacy cost of receipts evaluated as recorded.

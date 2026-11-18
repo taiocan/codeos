@@ -7,6 +7,9 @@ use crate::project::Project;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
 
+/// The qualification protocol's schema version: its governing contract identity (Feature Workflow v15).
+pub const PROTOCOL_SCHEMA: u8 = 1;
+
 const BASELINE_IDS: &[&str] = &[
     "static_analysis",
     "dependency_vulnerabilities",
@@ -114,7 +117,7 @@ fn run_inner(project: &Project, mode: &str) -> anyhow::Result<(bool, String, ser
     let bytes = std::fs::read(output.path())?;
     let result: QualificationResult = serde_json::from_slice(&bytes)?;
     anyhow::ensure!(
-        result.schema == 1,
+        result.schema == PROTOCOL_SCHEMA,
         "unsupported qualification result schema"
     );
     anyhow::ensure!(

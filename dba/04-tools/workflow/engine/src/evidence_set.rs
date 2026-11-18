@@ -68,10 +68,22 @@ pub fn common_inputs(project: &Project) -> Result<BTreeMap<String, String>> {
         "compose_build_contexts".into(),
         hashing::working_tree_state(&project.root, &contexts)?,
     );
-    inputs.insert(
-        "codeos_yaml".into(),
-        hashing::file_sha256(&project.codeos_yaml())?.unwrap_or_default(),
-    );
+    if project.feature_workflow_version()? >= 15 {
+        // Feature Workflow v15: the project sections execution reads, not the whole codeos.yaml.
+        inputs.insert(
+            "configuration".into(),
+            crate::validity::configuration_identity(
+                project,
+                &["platform", "runtime_verification", "reality_verification"],
+                &[],
+            )?,
+        );
+    } else {
+        inputs.insert(
+            "codeos_yaml".into(),
+            hashing::file_sha256(&project.codeos_yaml())?.unwrap_or_default(),
+        );
+    }
     inputs.insert(
         "codeos_mechanics_policy".into(),
         project

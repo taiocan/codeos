@@ -272,7 +272,7 @@ impl Project {
         self.selected_policy_version(
             "workflow_feature_policy",
             "dba/02-policies/workflow-feature/v1.md",
-            &[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
+            &[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
         )
     }
 
@@ -281,6 +281,14 @@ impl Project {
             "workflow_governance_policy",
             "dba/02-policies/workflow-governance/v1.md",
             &[1, 2, 3, 4, 5, 6],
+        )
+    }
+
+    pub fn bootstrap_workflow_version(&self) -> Result<u8> {
+        self.selected_policy_version(
+            "workflow_bootstrap_policy",
+            "dba/02-policies/workflow-bootstrap/v1.md",
+            &[1, 2],
         )
     }
 

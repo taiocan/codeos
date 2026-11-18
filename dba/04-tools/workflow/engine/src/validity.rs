@@ -271,3 +271,34 @@ pub fn receipt_content_identity(receipt: &Receipt) -> Result<String> {
     });
     Ok(hashing::text_sha256(&serde_json::to_string(&content)?))
 }
+
+/// Rule W4 (VALIDITY WO-04): the configuration a consumer depends on — the canonical parsed values
+/// of the `codeos.yaml` sections it reads and the selected versions of the contracts it applies —
+/// never the whole file.
+pub fn configuration_identity(
+    project: &Project,
+    sections: &[&str],
+    contracts: &[&str],
+) -> Result<String> {
+    let text = std::fs::read_to_string(project.codeos_yaml()).context("read codeos.yaml")?;
+    let parsed: serde_yaml::Value = serde_yaml::from_str(&text).context("parse codeos.yaml")?;
+    let mut values = serde_json::Map::new();
+    for section in sections {
+        values.insert(
+            format!("section:{section}"),
+            serde_json::to_value(
+                parsed
+                    .get(*section)
+                    .cloned()
+                    .unwrap_or(serde_yaml::Value::Null),
+            )?,
+        );
+    }
+    for contract in contracts {
+        values.insert(
+            format!("contract:{contract}"),
+            serde_json::Value::from(project.selected_policy(contract)?.unwrap_or_default()),
+        );
+    }
+    Ok(hashing::text_sha256(&serde_json::to_string(&values)?))
+}
