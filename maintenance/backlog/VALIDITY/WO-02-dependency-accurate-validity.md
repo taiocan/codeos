@@ -108,11 +108,13 @@ unquoting and Architecture Scope content approximate the engine):
    lever. F8 and F9 receipts stay current through the re-review; only the review re-runs.
 4. **Adoption cost:** records and receipts written before v14 carry no meaning keys and are
    compared as recorded. Adoption therefore re-runs no verification and spends no provider call.
-   Only receipts that bind `codeos.yaml` (F6, and F8/F9 recorded under v13) need one new decision,
-   as with every DBA adoption.
+   F4 receipts stay current. Receipts that bind `codeos.yaml` (F6, and F8/F9 recorded under v13)
+   need one new decision, as with every DBA adoption.
 
 **Qualification** (2026-11-18): `qualify-candidate.sh dba-35` passed the suites, the compatibility
 matrix and every replay. All accepted JamFree replay outcomes are unchanged.
-`qualified_candidate_sha256: 0f2bc35b01eb5901381318e4c357abe19a8f3af0c5cb338fd6bde8a2115b9224`.
-The first run found that v14 records binding meaning under the old key names would have re-run
-every pre-v14 verification; fixed in 3cc7fdc.
+`qualified_candidate_sha256: 2a27df26b90fc0ae28be542b523e5f9fd0932d7261ce184b6c4db65a00503080`.
+Qualification found two adoption defects, both fixed before this identity:
+- v14 records binding meaning under the old key names would have re-run every pre-v14
+  verification (3cc7fdc);
+- requiring v14-only keys of pre-v14 receipts would have staled every F4–F9 receipt (1042816).
