@@ -1,6 +1,5 @@
 //! VALIDITY WO-04 (Rule W4): a consumer binds the `codeos.yaml` sections it reads and the versions
-//! of the contracts it applies, never the whole file. Runs under the DBA-36 candidate; DBA-35 is
-//! the contrast.
+//! of the contracts it applies, never the whole file. Runs under DBA-36; DBA-35 is the contrast.
 
 mod fai_fixture;
 
@@ -16,10 +15,10 @@ use std::fs;
 
 const SCOPES: &str = "    provider: [backend]\n";
 
-/// F-0001 accepted, plus a B4 receipt, under the DBA-36 candidate (`w4`) or DBA-35.
+/// F-0001 accepted, plus a B4 receipt, under DBA-36 (`w4`) or DBA-35.
 fn accepted(w4: bool) -> Fixture {
     let fx = if w4 {
-        Fixture::candidate(SCOPES)
+        Fixture::under("DBA-36", SCOPES)
     } else {
         Fixture::under("DBA-35", SCOPES)
     };
@@ -165,9 +164,8 @@ fn a_reality_verification_change_stales_execution_but_quoting_does_not() {
 /// Adopting DBA-36: an F6 receipt recorded under DBA-35 (v14) stays current, because v15 drops
 /// `codeos.yaml` from its dependency set; B4 recorded before Bootstrap v2 is evaluated as recorded.
 #[test]
-fn adopting_the_candidate_keeps_v14_f6_and_re_asks_legacy_b4_once() {
-    let (toolkit, id) = candidate_toolkit();
-    let fx = Fixture::under_toolkit(toolkit, "DBA-35", SCOPES);
+fn adopting_dba_36_keeps_v14_f6_and_re_asks_legacy_b4_once() {
+    let fx = Fixture::under("DBA-35", SCOPES);
     fx.write(
         "claim-scopes.json",
         r#"{"F-0001": {"route": ["provider"]}}"#,
@@ -196,10 +194,7 @@ fn adopting_the_candidate_keeps_v14_f6_and_re_asks_legacy_b4_once() {
         })
         .unwrap();
     edit_yaml(&fx, |text| {
-        text.replace(
-            "dba_configuration: DBA-35",
-            &format!("dba_configuration: {id}"),
-        )
+        text.replace("dba_configuration: DBA-35", "dba_configuration: DBA-36")
     });
     let project = fx.project();
     assert_eq!(project.feature_workflow_version().unwrap(), 15);

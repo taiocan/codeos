@@ -192,7 +192,7 @@ before v15 / Bootstrap v2 are evaluated as recorded, so they go stale once:
 - qualifications re-run.
 
 F6 receipts recorded under v14 do *not* go stale, because their dependency set loses
-`codeos_yaml` (test `adopting_the_candidate_keeps_v14_f6_and_re_asks_legacy_b4_once`). For JamFree
+`codeos_yaml` (test `adopting_dba_36_keeps_v14_f6_and_re_asks_legacy_b4_once`). For JamFree
 this clears F6 WAITING. It does not clear the rest:
 
 - JamFree's accepted Candidate Bundles are schema 2, which cites exact records.
