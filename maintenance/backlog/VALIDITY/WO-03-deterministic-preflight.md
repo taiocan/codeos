@@ -47,6 +47,13 @@ Qualification outcomes:
   binding. The next step is `qualify-project`.
 - `NOT_APPLICABLE(NO_PROJECT_QUALIFICATION)`: the project declares no qualification.
 
+**Invariant (human, 2026-11-18):** preflight uses the workflow's own qualification-currency predicate
+and keeps no copy of the staleness rules. It holds: preflight and `prepare-candidate` both evaluate
+the latest record with `verification::evaluate` against `checker::qualification_bindings`. The one
+difference is that `prepare-candidate` also requires the record's declared `--include` additions to
+equal the candidate's. Preflight cannot know a future candidate's additions, so it evaluates the
+record against the additions the record itself declares.
+
 "Reality Basis rows cite existing tests" is not checked (accepted by the human): the Reality Basis
 table names no test CodeOS can resolve mechanically. Tests are cited through the `run:` evidence of
 the Validation Claims, which the claims check covers.
