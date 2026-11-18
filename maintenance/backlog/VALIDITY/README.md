@@ -39,7 +39,7 @@ lookahead. Then measure again before adding anything.
 | WO | Class | Title | Status |
 |---|---|---|---|
 | [WO-01](WO-01-invalidation-replay.md) | NORMAL | Historical invalidation replay | Accepted 2026-11-17 |
-| [WO-02](WO-02-dependency-accurate-validity.md) | PROTECTED | Dependency-accurate validity | Direction approved 2026-11-17; Part A detail pending; after WO-01 |
+| [WO-02](WO-02-dependency-accurate-validity.md) | PROTECTED | Dependency-accurate validity | Part A approved 2026-11-18 (five rules); Part B next |
 | [WO-03](WO-03-deterministic-preflight.md) | NORMAL | Deterministic preflight | Approved 2026-11-17 — may proceed |
 | [WO-04](WO-04-dba-impact-adoption.md) | PROTECTED | DBA impact-aware adoption | Waits for WO-02 |
 | [WO-05](WO-05-whole-path-plan.md) | NORMAL | Whole-path plan | Approved 2026-11-17 — may proceed |

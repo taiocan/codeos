@@ -99,19 +99,23 @@ makes it CodeOS-induced, like the `execution_identity` class.
    judgments.
 4. **CodeOS-induced invalidations:** 8 cases (`execution_identity`, timestamp, new binding keys).
    Content identity (WO-02) removes this class.
-5. **Narrowing Stage 8 has a measured cost.** 5 of the 10 Stage 8 findings in the window (9 CHANGES ADVISED, 1 DO NOT
-   ADVANCE) came from
-   reviews whose trigger was not relevant to the feature:
-   - DBA-33 packet: the architecture describes the previous refusal threshold; the return
-     presentation lacks its authoritative comparison;
-   - DBA-34: human readability evidence not inspectable; post-display endpoint preservation not
-     verified;
-   - F-0010's privacy prerequisite not established.
+5. **Narrowing Stage 8 has a measured cost.** 5 of the 10 Stage 8 findings in the window (9 CHANGES
+   ADVISED, 1 DO NOT ADVANCE) came from reviews whose trigger was not relevant to the feature. Each
+   was a first finding of a gap that earlier reviews had not reported:
+   - three after a reviewer-contract change, which is relevant to Stage 8 by design (WO-04):
+     - DBA-33 adoption, F-0001: the architecture describes the previous refusal threshold;
+     - DBA-33 adoption, F-0002: the return presentation lacks its authoritative comparison;
+     - DBA-34 adoption, F-0002: post-display endpoint preservation is not verified;
+   - two for F-0010 while it was not yet accepted, after changes only to other features' specs or
+     to tests: human readability evidence not inspectable (the gap DBA-34 then fixed), and the
+     declared privacy-review prerequisite not established.
 
-   Two came from a reviewer-contract change, which is relevant to Stage 8 by design (WO-04). The
-   other three are latent gaps that earlier reviews missed. WO-02 must not remove those catches
-   silently. It has to state that a review is skipped when the feature's dependency set is
-   unchanged, and accept that latent gaps then surface only on a relevant change.
+   WO-02 must not remove those catches silently. It has to state when a review is skipped, and
+   accept that some gaps then surface only at a later relevant change.
+   *(Corrected 2026-11-17, after acceptance: the first version said two came from a
+   reviewer-contract change and three were latent; the review files show three and two. The
+   readability finding came before DBA-34, not under it.)*
+
 6. **Shared surface:** F-0009 and F-0010 judge the shared return screen, so 4 of the 8 F4 surface
    cases came from F-0001/F-0002 changes. Mechanically these count as relevant; a feature-scoped
    surface remains WO-02's open question, as in FAI WO-01 row 1b.
