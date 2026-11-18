@@ -25,7 +25,7 @@ F8 and release remain later decisions.
 1. On a fixture, the plan lists exactly the gates `check` then requires.
 2. `cargo test` passes.
 
-## Results (2026-11-18, awaiting acceptance)
+## Results (accepted 2026-11-18)
 
 `codeos-workflow plan --subject F-NNNN [--subject …] [--json]` is read-only and executes nothing. It
 is a tool, not a checkpoint, so no DBA is involved. `checker::whole_path_plan` derives the steps
@@ -59,5 +59,16 @@ the workflow. Text output ends with "Consents the human can give now", "Later de
   - current receipts (F-0002 F4, both F6s) were correctly omitted;
   - F4, F8 and F9 were listed as later decisions.
 
-**Not covered by a fixture:** the claims column for an `observation:human` claim. The fixture
-feature is non-GUI, so it has no F4/F8.
+**Human-gate claims** (`human_gates_carry_exactly_their_own_claims`, added at the human's request).
+A GUI feature has an F4 claim, an F8 claim and an F5 `run:` claim; a second feature has its own F4
+claim. The test asserts:
+
+- F4 shows exactly `F-0001/readable` and is offered `now`, equal to what `evaluate` waits on, with
+  `--subject F-0001 --checkpoint early_preview`;
+- F8 shows exactly `F-0001/final-readable` and stays `later`; F9 stays `later`;
+- once a session records F4, it is not offered again.
+
+**Invariant (human, 2026-11-18):** `plan` projects workflow state. It never independently determines
+checkpoint applicability, evidence reuse or human-gate claims. It holds: `plan` uses the checker's
+own `applies` and `evaluate`, `verification_bindings_for_mechanic` with `verification::evaluate`,
+`subject_claims`, and `decision_state`.
