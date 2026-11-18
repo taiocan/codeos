@@ -205,3 +205,27 @@ All features stay VALID throughout; this is the legacy cost of receipts evaluate
 **Qualification (2026-11-18).** `qualify-candidate.sh dba-36` passed the suites, the compatibility
 matrix and every replay; all accepted JamFree replay outcomes are unchanged.
 `qualified_candidate_sha256: d11a670cfaf2b3bafb3d653150b916738beeb0f8720bcd8ae771e0e33388d073`.
+
+## Acceptance (human, 2026-11-18)
+
+**WO-04 Part B: ACCEPTED.** DBA-36 identity
+`d11a670cfaf2b3bafb3d653150b916738beeb0f8720bcd8ae771e0e33388d073` is approved for issuance, only
+if `issue-configuration.sh` recomputes it. Pushing, the qualified release and JamFree adoption are
+separate operational decisions.
+
+**Boundaries:**
+
+- Legacy records remain legacy: records written before v15 with whole-`codeos.yaml` bindings are
+  never retrofitted, and the one-time DBA-36 adoption cost is accepted.
+- Parsed-value comparison is authoritative for project sections: comments, ordering and quoting are
+  non-semantic.
+- Contract version identity is sufficient only because issued policy versions are immutable.
+- F6 has no direct configuration binding. Configuration effects reach it only through the evidence
+  and runtime dependencies it consumes.
+- Stale F7–F9, Health and Platform Assurance projections are acceptable only while feature Current
+  Validity stays VALID and no release gate treats those legacy projections as current acceptance
+  evidence.
+
+**Regression case:** under v15 semantics, JamFree's DBA-34 → DBA-35 adoption (c3b2e56) must
+invalidate none of B3, B4, run IDs, project qualification and F6. Checked by
+`wo04-adoption-replay.py <JamFree> HEAD --regression`.

@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """VALIDITY WO-04: replay JamFree's DBA adoptions under Rule W4, read-only.
 
-Usage: python3 -I wo04-adoption-replay.py <jamfree-repo> <commit>
+Usage: python3 -I wo04-adoption-replay.py <jamfree-repo> <commit> [--regression]
+
+--regression exits non-zero unless JamFree's DBA-34 -> DBA-35 adoption (c3b2e56) invalidates no
+consumer under W4: the demonstrated defect WO-04 fixes.
 
 For every commit that changed `dba_configuration`, it reports whether a consumer's W4 dependency
 changed: the `codeos.yaml` sections it reads (compared without comments) and the contract
@@ -58,6 +61,8 @@ def main():
             if any(section(old, s) != section(new, s) for s in sections) or any(a.get(k) != b.get(k) for k in keys):
                 changed.append(name)
         print(f"{c} {dba(old)} -> {dba(new)}: invalidated under W4: {', '.join(changed) or 'none'}")
+        if "--regression" in sys.argv and c.startswith("c3b2e56") and changed:
+            sys.exit("regression: DBA-34 -> DBA-35 must invalidate no consumer under W4")
 
 
 main()
