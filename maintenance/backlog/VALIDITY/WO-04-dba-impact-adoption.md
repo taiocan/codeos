@@ -73,3 +73,60 @@ DBA. WO-04's binding targets, each to be replaced by derived configuration impac
 - `codeos_yaml` in execution identities (`evidence_set::common_inputs`);
 - `codeos_yaml` in `project_qualification`, both the candidate and F9 checkpoints;
 - `codeos_yaml` in B3 and B4.
+
+## Part A — Decision brief (2026-11-18, for approval)
+
+**Finding: a closure diff is not a reliable impact input.** A configuration's semantic closure
+lists only its directly selected files. Feature Workflow v14 incorporates v13 by reference, but v13
+is not in DBA-35's closure, so terms used only by v13 seem to vanish (`Validation claim`,
+`Feature ID`, …). Impact derived from raw closure diffs would be noisy in both directions.
+
+**Finding: `codeos.yaml` mixes three things.** It holds the DBA selection, project sections
+(`platform`, `runtime_verification`, `reality_verification`, `artifacts`) and the fixed `mechanics`
+display. Every consumer below hashes all of it.
+
+**Rule W4.** `codeos.yaml` is never a dependency as a whole. Each consumer binds only:
+
+1. the canonical parsed values of the project sections it reads; and
+2. the identity of the governing contract it applies: a selected policy or tool contract,
+   identified by its immutable version. Issued versions never change, and a new version is the
+   only way semantics change. This is also the reviewer contract's semantic identity that R5 left
+   to WO-04.
+
+| Consumer | Project sections | Governing contract | Today |
+|---|---|---|---|
+| B3 integrated baseline | `platform`, `runtime_verification` | workflow-bootstrap policy, Codeos Mechanics policy | `codeos.yaml` bytes |
+| B4 platform direction | `platform` (plus the Charter, unchanged) | workflow-bootstrap policy | `codeos.yaml` bytes + Charter |
+| Execution identity of shared verifications | `platform`, `runtime_verification`, `reality_verification` | Codeos Mechanics policy (already bound) | `codeos.yaml` bytes + mechanics |
+| `project_qualification` (candidate and F9) | none; the project script and the Charter are bound already | the qualification protocol's schema version, owned by the tool (`schema: 1`) | `codeos.yaml` bytes |
+| F6 reconciliation | none (annex conformance) | — | `codeos.yaml` bytes |
+| Stage 8 / Candidate Bundle | — | reviewer tool contract + review policy versions (R5, already in DBA-35) | — |
+
+**Predicted for DBA-34 → DBA-35:** only Review, Feature Workflow and Governance changed. B3, B4,
+execution identities, qualification and F6 stay current. Stage 8 re-runs only for a new candidate
+under the new review policy. None of the refresh work measured above would be needed.
+
+**Invariant.** A consumer goes stale when a section it reads or the contract version it applies
+changes, and never for any other edit to `codeos.yaml`. History is never rewritten. Receipts and
+records written earlier keep their `codeos_yaml` binding and are evaluated as recorded (DBA-35
+pattern). Lands as a new DBA (Feature Workflow v15 with the F6 repair, plus Bootstrap and
+qualification changes as needed).
+
+**Verification.** Replay DBA-32 → 33 → 34 → 35 on JamFree history: which B3, B4, qualification and
+verification re-runs would remain. The DBA-34 → 35 adoption must need none. Fixtures: a
+`platform` change stales B3 and B4; a comment or DBA-selection change stales nothing; a Codeos
+Mechanics version change stales execution identities.
+
+**Questions for the human:**
+
+1. Approve Rule W4 with version-granular contract identity, instead of closure diffs or declared
+   per-version impact (both rejected above)?
+2. Qualification protocol identity: is the tool-owned schema version acceptable as its governing
+   contract? The alternative is binding the Feature Workflow version, which owns the protocol text;
+   that would re-qualify on every Feature Workflow change, including DBA-35's.
+3. U5 (advisory as-of identity): `cargo audit` has a local advisory database with an identity;
+   `npm audit` queries the registry online and has none. Binding the advisory identity for
+   currency would therefore need network access on every check. The proposal is to record it in
+   the qualification result as provenance only (Boundary 2: as-of identity exists, and no rule
+   depends on it yet), and to keep any freshness rule for later evidence. Fold it into WO-04, or
+   keep it separate?
