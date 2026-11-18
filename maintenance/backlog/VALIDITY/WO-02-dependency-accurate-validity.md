@@ -108,8 +108,9 @@ unquoting and Architecture Scope content approximate the engine):
    lever. F8 and F9 receipts stay current through the re-review; only the review re-runs.
 4. **Adoption cost:** records and receipts written before v14 carry no meaning keys and are
    compared as recorded. Adoption therefore re-runs no verification and spends no provider call.
-   F4 receipts stay current. Receipts that bind `codeos.yaml` (F6, and F8/F9 recorded under v13)
-   need one new decision, as with every DBA adoption.
+   DBA-35 adoption requires no mechanical verification or production-provider re-run solely due
+   to adoption. Legacy F6/F8/F9 receipts require one-time establishment of a v14-compatible
+   decision.
 
 **Qualification** (2026-11-18): `qualify-candidate.sh dba-35` passed the suites, the compatibility
 matrix and every replay. All accepted JamFree replay outcomes are unchanged.
@@ -175,3 +176,24 @@ changes, and the implementation order. Two open points, unresolved:
    `dependency`). The implementation is a review input, so its F7 dependencies did change. Keeping
    F7 would require removing runtime inputs from Stage 8's review inputs, which is a separate
    decision.
+
+## Acceptance (human, 2026-11-18)
+
+**WO-02 Part B: ACCEPTED.** The DBA-35 candidate identity
+`2a27df26b90fc0ae28be542b523e5f9fd0932d7261ce184b6c4db65a00503080` is approved for issuance,
+only if `issue-configuration.sh` recomputes exactly that identity. JamFree adoption remains
+separate. The annex's open points are accepted as implemented, within Boundary 1.
+
+**Boundary 1 — F4/F8 stay scoped to the feature's outcome.** A shared Human Validation Session is
+inspectable as a whole, but F4/F8 validity binds only the relevant feature or claim outcome and the
+judged surface, never unrelated outcomes in the same session. "Intent meaning" means the governed
+meaning of the judged feature's own Intent, never unrelated project intent content. The candidate
+conforms: session attestation checks only this feature's outcome and surface, sealed sessions are
+immutable, and `intent_meaning` is the feature's own Intent.
+
+**Boundary 2 — deferred Part A consequence: the advisory audit's as-of identity or date.** DBA-35
+introduces no advisory freshness rule. That identity must be implemented before any future validity
+rule depends on advisory age.
+
+**Not folded into WO-02:** narrowing the whole-project `implementation_state` in verification
+records, the measured Stage 8 lever. It deserves its own bounded follow-up.

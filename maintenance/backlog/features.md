@@ -19,4 +19,4 @@ implemented changes; this file is planning context, not workflow state or implem
 | REVIEW-BUDGET | `REVIEW-shared-evidence-budget.md` | Shared production evidence in Stage 8 packets | Medium | Superseded by REVIEW-SCALE 2026-11-15 |
 | REVIEW-SCALE | `REVIEW-SCALE/README.md` | Deterministic review accounting | High | WO-01 accepted; DBA-33 (WO-02) and DBA-34 (human-session evidence) issued 2026-11-16 |
 | LEARNING | `LEARNING/README.md` | Default guided user learning (DBA-32) | High | Approved 2026-11-15 |
-| VALIDITY | `VALIDITY/README.md` | Dependency-accurate validity | High | Approved in principle 2026-11-17 — WO-01, WO-03, WO-05 proceed |
+| VALIDITY | `VALIDITY/README.md` | Dependency-accurate validity | High | WO-01, WO-02 accepted; DBA-35 issued 2026-11-18; WO-03, WO-05 may proceed |

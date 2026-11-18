@@ -1,5 +1,5 @@
 //! Feature Workflow v14 (VALIDITY WO-02): a change invalidates only the decisions whose own
-//! dependency set changed. Runs under the DBA-35 candidate; DBA-34 is the contrast.
+//! dependency set changed. Runs under DBA-35; DBA-34 is the contrast.
 
 mod fai_fixture;
 
@@ -24,10 +24,10 @@ fn commit(fx: &Fixture, message: &str) {
     fx.git(&["commit", "-qm", message, "--allow-empty"]);
 }
 
-/// F-0001 accepted under the DBA-35 candidate (`v14`) or under DBA-34.
+/// F-0001 accepted under DBA-35 (`v14`) or under DBA-34.
 fn accepted(v14: bool) -> Fixture {
     let fx = if v14 {
-        Fixture::candidate(SCOPES)
+        Fixture::under("DBA-35", SCOPES)
     } else {
         Fixture::under("DBA-34", SCOPES)
     };
@@ -223,7 +223,7 @@ fn a_non_semantic_configuration_edit_stales_neither_acceptance_nor_the_bundle() 
 /// F4 binds the Intent's meaning, its judged claims and the judged product, not the Contract.
 #[test]
 fn an_early_preview_ignores_contract_prose_but_not_intent_prose() {
-    let fx = Fixture::candidate(SCOPES);
+    let fx = Fixture::under("DBA-35", SCOPES);
     fx.spec("F-0001", ADVANCE, ROUTE);
     commit(&fx, "spec");
     fx.receipt("F-0001", "early_preview", "direction_confirmed", None);
@@ -242,8 +242,7 @@ fn an_early_preview_ignores_contract_prose_but_not_intent_prose() {
 /// Compatibility: a receipt recorded before v14 is compared as recorded after adoption.
 #[test]
 fn a_receipt_recorded_before_v14_stays_current_after_adoption() {
-    let (toolkit, id) = candidate_toolkit();
-    let fx = Fixture::under_toolkit(toolkit, "DBA-34", SCOPES);
+    let fx = Fixture::under("DBA-34", SCOPES);
     fx.spec("F-0001", ADVANCE, ROUTE);
     commit(&fx, "spec");
     fx.receipt("F-0001", "early_preview", "direction_confirmed", None);
@@ -251,7 +250,7 @@ fn a_receipt_recorded_before_v14_stays_current_after_adoption() {
         &fx,
         ".codeos/00-project/codeos.yaml",
         "dba_configuration: DBA-34",
-        &format!("dba_configuration: {id}"),
+        "dba_configuration: DBA-35",
     );
     assert_eq!(fx.project().feature_workflow_version().unwrap(), 14);
     assert!(current(&fx, "F-0001", "early_preview"));
