@@ -43,7 +43,7 @@ lookahead. Then measure again before adding anything.
 | [WO-03](WO-03-deterministic-preflight.md) | NORMAL | Deterministic preflight | Accepted 2026-11-18 |
 | [WO-04](WO-04-dba-impact-adoption.md) | PROTECTED | DBA impact-aware adoption | Accepted 2026-11-18; DBA-36 issued (Feature Workflow v15, Workflow Bootstrap v2) |
 | [WO-05](WO-05-whole-path-plan.md) | NORMAL | Whole-path plan | Accepted 2026-11-18 |
-| [WO-06](WO-06-structured-consistency.md) | NORMAL | Structured-value consistency in preflight | Closed 2026-11-18: no applicable structured values; nothing implemented |
+| [WO-06](WO-06-structured-consistency.md) | NORMAL | Structured-value consistency in preflight | CLOSED — NO APPLICABLE STRUCTURED VALUES (2026-11-18) |
 
 This table is the only place WO status is kept.
 
@@ -55,5 +55,10 @@ This table is the only place WO status is kept.
 - **Spec-only Stage 8 review and prose-number lint.** Deferred by the human 2026-11-18. Measure what
   WO-03 still misses first. The structured-value consistency check was approved separately as
   WO-06.
+- **Prose-only cross-artifact consistency (finding of WO-06).** Some important cross-artifact
+  consistency constraints remain prose-only and therefore cannot be checked deterministically.
+  Revisit only if repeated evidence shows the class is costly enough to justify structured semantic
+  fields or an advisory spec review. Do not introduce structured ranges merely to make a check
+  possible.
 - **Advisory as-of provenance and freshness (U5).** Deferred out of WO-04 by the human 2026-11-18.
   Implement only when a concrete freshness rule needs it; Boundary 2 of WO-02 still holds.

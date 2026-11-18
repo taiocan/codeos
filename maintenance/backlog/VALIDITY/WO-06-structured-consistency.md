@@ -25,7 +25,7 @@ scenario prose; WO-06 covers it only if both sides are structured.
 1. A fixture where two structured fields disagree → preflight is `BLOCKED(DEFECT)`, naming both.
 2. A prose-only difference → no finding.
 
-## Result (2026-11-18): no applicable structured values; stopped as the WO prescribes
+## Result (2026-11-18): CLOSED — NO APPLICABLE STRUCTURED VALUES
 
 Examined in JamFree F-0001 (the measured case) and its Event Schema:
 
