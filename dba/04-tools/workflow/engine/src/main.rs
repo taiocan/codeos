@@ -57,6 +57,9 @@ enum Cmd {
     PrepareCandidate(PrepareCandidateArgs),
     /// Report deterministic feature impact for an architecture proposal. Read-only.
     ArchitectureImpact(ArchitectureImpactArgs),
+    /// Report cheap, provable defects of a feature before spec approval or F4: its Specification
+    /// Package, claims, journey contribution and project qualification. Read-only; records nothing.
+    Preflight(PreflightArgs),
     /// Feature Workflow v13: list the human questions the named features wait on, or seal one
     /// Human Validation Session over exactly the outcomes stated.
     Session(SessionArgs),
@@ -108,6 +111,13 @@ struct CloseObservationArgs {
     evidence: Vec<String>,
     #[arg(long)]
     rationale: Option<String>,
+}
+
+#[derive(clap::Args)]
+struct PreflightArgs {
+    /// The feature id.
+    #[arg(long)]
+    subject: String,
 }
 
 #[derive(clap::Args)]
@@ -369,6 +379,23 @@ fn run(cli: &Cli, start: &std::path::Path) -> Result<i32> {
             )?;
             println!("closed {} ({})", item.observation, item.route);
             Ok(EXIT_SUCCESS)
+        }
+        Cmd::Preflight(args) => {
+            let project = Project::discover(start)?;
+            let findings = codeos_workflow::preflight::run(&project, &args.subject);
+            for f in &findings {
+                println!(
+                    "{} {}: {}",
+                    if f.ok { "PASS" } else { "FAIL" },
+                    f.check,
+                    f.detail
+                );
+            }
+            Ok(if findings.iter().all(|f| f.ok) {
+                EXIT_SUCCESS
+            } else {
+                EXIT_BLOCKED
+            })
         }
         Cmd::QualifyProject(args) => {
             let project = Project::discover(start)?;

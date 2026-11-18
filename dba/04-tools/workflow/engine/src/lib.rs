@@ -22,6 +22,7 @@ pub mod instrument;
 pub mod monitor;
 pub mod observations;
 pub mod platform_assurance;
+pub mod preflight;
 pub mod project;
 pub mod qualification;
 pub mod receipts;
