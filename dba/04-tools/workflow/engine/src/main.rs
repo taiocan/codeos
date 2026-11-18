@@ -58,7 +58,8 @@ enum Cmd {
     /// Report deterministic feature impact for an architecture proposal. Read-only.
     ArchitectureImpact(ArchitectureImpactArgs),
     /// Report cheap, provable defects of a feature before spec approval or F4: its Specification
-    /// Package, claims, journey contribution and project qualification. Read-only; records nothing.
+    /// Package, claims and journey contribution, and the state of its project qualification.
+    /// Read-only; runs nothing and records nothing.
     Preflight(PreflightArgs),
     /// Feature Workflow v13: list the human questions the named features wait on, or seal one
     /// Human Validation Session over exactly the outcomes stated.
@@ -384,14 +385,18 @@ fn run(cli: &Cli, start: &std::path::Path) -> Result<i32> {
             let project = Project::discover(start)?;
             let findings = codeos_workflow::preflight::run(&project, &args.subject);
             for f in &findings {
-                println!(
-                    "{} {}: {}",
-                    if f.ok { "PASS" } else { "FAIL" },
-                    f.check,
-                    f.detail
-                );
+                let status = match &f.status {
+                    codeos_workflow::preflight::Status::Pass => "PASS".to_string(),
+                    codeos_workflow::preflight::Status::Blocked(reason) => {
+                        format!("BLOCKED({reason})")
+                    }
+                    codeos_workflow::preflight::Status::NotApplicable(reason) => {
+                        format!("NOT_APPLICABLE({reason})")
+                    }
+                };
+                println!("{status} {}: {}", f.check, f.detail);
             }
-            Ok(if findings.iter().all(|f| f.ok) {
+            Ok(if !findings.iter().any(|f| f.blocked()) {
                 EXIT_SUCCESS
             } else {
                 EXIT_BLOCKED
