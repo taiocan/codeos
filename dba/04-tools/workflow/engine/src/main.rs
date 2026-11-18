@@ -61,6 +61,10 @@ enum Cmd {
     /// Package, claims and journey contribution, and the state of its project qualification.
     /// Read-only; runs nothing and records nothing.
     Preflight(PreflightArgs),
+    /// Print the whole remaining path of one or more features: every checkpoint still to pass, its
+    /// verifications (reuse or rerun), production runs, reviews and human gates with the claims
+    /// they judge, and which consents can be given now. Read-only; it executes nothing.
+    Plan(PlanArgs),
     /// Feature Workflow v13: list the human questions the named features wait on, or seal one
     /// Human Validation Session over exactly the outcomes stated.
     Session(SessionArgs),
@@ -112,6 +116,16 @@ struct CloseObservationArgs {
     evidence: Vec<String>,
     #[arg(long)]
     rationale: Option<String>,
+}
+
+#[derive(clap::Args)]
+struct PlanArgs {
+    /// A feature id. May be repeated.
+    #[arg(long = "subject", required = true)]
+    subjects: Vec<String>,
+    /// Print JSON instead of text.
+    #[arg(long)]
+    json: bool,
 }
 
 #[derive(clap::Args)]
@@ -379,6 +393,64 @@ fn run(cli: &Cli, start: &std::path::Path) -> Result<i32> {
                 args.rationale.clone(),
             )?;
             println!("closed {} ({})", item.observation, item.route);
+            Ok(EXIT_SUCCESS)
+        }
+        Cmd::Plan(args) => {
+            let project = Project::discover(start)?;
+            let mut all = Vec::new();
+            for id in &args.subjects {
+                let subject = Subject::resolve(&project, Workflow::Feature, id)?;
+                all.push((id.clone(), checker::whole_path_plan(&project, &subject)?));
+            }
+            if args.json {
+                let value: serde_json::Map<_, _> = all
+                    .iter()
+                    .map(|(id, steps)| (id.clone(), serde_json::to_value(steps).unwrap()))
+                    .collect();
+                println!("{}", serde_json::to_string_pretty(&value)?);
+                return Ok(EXIT_SUCCESS);
+            }
+            for (id, steps) in &all {
+                println!("{id}");
+                if steps.is_empty() {
+                    println!("  nothing remains");
+                }
+                for s in steps {
+                    let mut line = format!(
+                        "  {} {:8} {:13} {:9} {}",
+                        s.checkpoint, s.state, s.kind, s.action, s.item
+                    );
+                    if !s.claims.is_empty() {
+                        line.push_str(&format!("  claims: {}", s.claims.join(", ")));
+                    }
+                    if let Some(calls) = &s.last_provider_calls {
+                        line.push_str(&format!("  last run calls: {calls}"));
+                    }
+                    println!("{line}");
+                }
+            }
+            let gates = |when: &str| -> Vec<String> {
+                all.iter()
+                    .flat_map(|(id, steps)| {
+                        steps
+                            .iter()
+                            .filter(move |s| s.kind == "decision" && s.consent == when)
+                            .map(move |s| format!("{id} {} ({})", s.checkpoint, s.item))
+                    })
+                    .collect()
+            };
+            println!("\nConsents the human can give now: {}", gates("now").join("; "));
+            println!("Later decisions: {}", gates("later").join("; "));
+            let production: Vec<String> = all
+                .iter()
+                .flat_map(|(id, steps)| {
+                    steps
+                        .iter()
+                        .filter(|s| s.kind == "production" && s.action == "rerun")
+                        .map(move |_| id.clone())
+                })
+                .collect();
+            println!("Production runs needed: {}", if production.is_empty() { "none".into() } else { production.join(", ") });
             Ok(EXIT_SUCCESS)
         }
         Cmd::Preflight(args) => {

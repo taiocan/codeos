@@ -5760,3 +5760,173 @@ mod journey_tests {
         }
     }
 }
+
+/// VALIDITY WO-05: one remaining step of a subject's path, derived from its workflow contract and
+/// current state. Read-only; it never replaces a checkpoint's own evaluation.
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct PathStep {
+    pub checkpoint: String,
+    pub title: String,
+    pub state: &'static str,
+    /// verification | production | review | decision | specification
+    pub kind: &'static str,
+    /// The mechanic or receipt this step concerns.
+    pub item: String,
+    /// reuse | rerun | required
+    pub action: &'static str,
+    pub actor: Actor,
+    /// The owner-qualified claims a human gate judges (F4/F8 `observation:human` claims).
+    pub claims: Vec<String>,
+    /// For a production run: the provider calls the latest run accounted.
+    pub last_provider_calls: Option<serde_json::Value>,
+    pub command: String,
+    /// `now` only for a human gate whose prerequisites already pass, so the human has its bound
+    /// information; F8 and F9 are always `later`.
+    pub consent: &'static str,
+}
+
+/// The whole remaining path of a feature: every applicable checkpoint that is not yet PASS, with
+/// each step its contract requires.
+pub fn whole_path_plan(project: &Project, subject: &Subject) -> Result<Vec<PathStep>> {
+    anyhow::ensure!(
+        subject.workflow == Workflow::Feature,
+        "the whole-path plan applies to features"
+    );
+    let reports = evaluate(project, subject)?;
+    let contract = contract_for(
+        subject.workflow,
+        project.feature_workflow_version()?,
+        project.operation_workflow_version()?,
+    );
+    let claims = subject_claims(project, subject).unwrap_or(None).unwrap_or_default();
+    let store = VerificationStore::at(&project.codeos_dir());
+    let id = &subject.id;
+    let mut steps = Vec::new();
+    for c in &contract {
+        let Some(report) = reports.iter().find(|r| r.id == c.id) else {
+            continue;
+        };
+        if !applies(c.applies, subject) || matches!(report.state, State::Pass | State::NotApplicable)
+        {
+            continue;
+        }
+        for requirement in &c.requirements {
+            let actor = Actor::default_for(requirement);
+            let step = |kind, item: String, action, command: String| PathStep {
+                checkpoint: c.id.into(),
+                title: c.title.into(),
+                state: report.state.label(),
+                kind,
+                item,
+                action,
+                actor,
+                claims: vec![],
+                last_provider_calls: None,
+                command,
+                consent: "later",
+            };
+            let currency = |checkpoint: &str, mechanic: &str| -> Result<&'static str> {
+                let want = verification_bindings_for_mechanic(project, subject, checkpoint, mechanic)?;
+                let have = store.latest("feature", id, checkpoint, mechanic)?;
+                Ok(match verification::evaluate(have, &want) {
+                    RecordState::Current(_) => "reuse",
+                    _ => "rerun",
+                })
+            };
+            match requirement {
+                Requirement::LiveVerification { mechanic, .. } => {
+                    if *mechanic == "runtime_event_schema" {
+                        steps.push(step(
+                            "verification",
+                            mechanic.to_string(),
+                            currency(c.id, mechanic)?,
+                            format!("codeos-workflow verify-events --subject {id} ..."),
+                        ));
+                    } else {
+                        steps.push(step(
+                            "verification",
+                            mechanic.to_string(),
+                            currency(c.id, mechanic)?,
+                            format!("codeos-workflow check --workflow feature --subject {id} --environment deterministic"),
+                        ));
+                    }
+                }
+                Requirement::ProductionSourceEvidence => {
+                    if subject.reality_claims.is_empty() {
+                        continue;
+                    }
+                    let mut s = step(
+                        "production",
+                        "production_source_evidence".into(),
+                        currency(c.id, "production_source_evidence")?,
+                        format!("codeos-workflow check --workflow feature --subject {id} --environment production"),
+                    );
+                    s.last_provider_calls = store
+                        .latest("feature", id, c.id, "production_source_evidence")?
+                        .and_then(|r| r.details)
+                        .and_then(|d| d.get("provider_calls").cloned());
+                    steps.push(s);
+                }
+                Requirement::ReviewRecord { stage } => steps.push(step(
+                    "review",
+                    format!("stage {stage}"),
+                    "required",
+                    format!("codeos-workflow prepare-candidate --subject {id}, then the Stage {stage} review"),
+                )),
+                Requirement::Receipt { checkpoint, results } => {
+                    if matches!(decision_state(project, subject, checkpoint), Ok(ReceiptState::Current(_))) {
+                        continue;
+                    }
+                    let mut s = step(
+                        "decision",
+                        checkpoint.to_string(),
+                        "required",
+                        format!(
+                            "codeos-workflow decide --workflow feature --subject {id} --checkpoint {checkpoint} --result {}",
+                            results.first().copied().unwrap_or("<result>")
+                        ),
+                    );
+                    s.claims = claims
+                        .iter()
+                        .filter(|claim| {
+                            claim.checkpoint == c.id
+                                && claim.evidence == crate::claims::Evidence::Human
+                        })
+                        .map(|claim| claim.id.clone())
+                        .collect();
+                    if report.state == State::Waiting
+                        && !matches!(*checkpoint, "final_ux_validation" | "acceptance")
+                    {
+                        s.consent = "now";
+                    }
+                    steps.push(s);
+                }
+                Requirement::CharterApproved
+                | Requirement::SpecPackageApproved
+                | Requirement::SemanticPackageRevision
+                | Requirement::CodeosYamlValid
+                | Requirement::ContractSection(_)
+                | Requirement::ProductJourneyContribution => {
+                    // Only when this checkpoint is blocked by its own requirements.
+                    if report
+                        .unmet
+                        .iter()
+                        .all(|u| u.starts_with("earlier checkpoint"))
+                    {
+                        continue;
+                    }
+                    steps.push(step(
+                        "specification",
+                        format!("{requirement:?}"),
+                        "required",
+                        report.next_action.clone().unwrap_or_default(),
+                    ));
+                }
+                Requirement::ObservationStated
+                | Requirement::ObservationRouted
+                | Requirement::RouteResolution => {}
+            }
+        }
+    }
+    Ok(steps)
+}
