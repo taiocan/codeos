@@ -20,6 +20,9 @@ pub const ARTIFACTS: [(&str, &str); 3] = [
 
 pub const EQUIVALENCE: &str = "semantic_equivalence";
 
+/// The file-hash bindings a v14 record or receipt keeps as history next to the meaning keys.
+pub const SPEC_FILE_KEYS: [&str; 3] = ["intent", "contract", "event_schema"];
+
 /// Whether this project selects Feature Workflow v14 or later.
 pub fn active(project: &Project) -> Result<bool> {
     Ok(project.feature_workflow_version()? >= 14)
@@ -195,6 +198,11 @@ pub fn judged_claims(project: &Project, subject: &Subject, checkpoint_id: &str) 
 pub fn content_identity(project: &Project, record: &VerificationRecord) -> Result<String> {
     let mut bindings = record.bindings.clone();
     let execution_identity = bindings.remove("execution_identity");
+    if bindings.contains_key("intent_meaning") {
+        for key in SPEC_FILE_KEYS {
+            bindings.remove(key);
+        }
+    }
     let evidence = match record
         .details
         .as_ref()

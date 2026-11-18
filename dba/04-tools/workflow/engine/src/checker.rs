@@ -3585,22 +3585,21 @@ fn bindings_with(
         // Every feature mechanical verification: the approved Specification Package plus the current
         // implementation. Revising the spec, or changing the implementation, re-blocks it.
         "F3" | "F5" | "F5d" | "F5g" | "F7" | "F9" | "candidate" => {
+            put(&mut b, "intent", &project.intent(&subject.id))?;
+            put(&mut b, "contract", &project.contract(&subject.id))?;
+            put(&mut b, "event_schema", &project.event_schema(&subject.id))?;
             if subject.workflow == Workflow::Feature && crate::validity::active(project)? {
-                // Feature Workflow v14: a verification depends on the specification's meaning
-                // identity (R3, R4), so a non-semantic edit re-runs nothing.
-                for (artifact, _) in crate::validity::ARTIFACTS {
+                // Feature Workflow v14: a verification also binds the specification's meaning
+                // identity (R3, R4) and is compared on it, so a non-semantic edit re-runs nothing.
+                for (artifact, key) in crate::validity::ARTIFACTS {
                     let path = crate::validity::artifact_path(project, &subject.id, artifact)
                         .expect("known artifact");
                     if let Some(identity) =
                         crate::validity::resolved_meaning(project, &subject.id, artifact, &path)?
                     {
-                        b.insert(artifact.into(), identity);
+                        b.insert(key.into(), identity);
                     }
                 }
-            } else {
-                put(&mut b, "intent", &project.intent(&subject.id))?;
-                put(&mut b, "contract", &project.contract(&subject.id))?;
-                put(&mut b, "event_schema", &project.event_schema(&subject.id))?;
             }
             b.insert(
                 "implementation_state".into(),

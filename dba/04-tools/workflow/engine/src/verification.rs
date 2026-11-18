@@ -136,7 +136,13 @@ pub fn evaluate(
     let Some(record) = record else {
         return RecordState::Absent;
     };
-    let comparisons = crate::hashing::binding_comparisons(&record.bindings, current);
+    let mut comparisons = crate::hashing::binding_comparisons(&record.bindings, current);
+    // Feature Workflow v14: a record that binds specification meaning is compared on meaning; the
+    // file hashes it also records are history. A record without meaning keys is compared as
+    // recorded.
+    if record.bindings.contains_key("intent_meaning") {
+        comparisons.retain(|c| !crate::validity::SPEC_FILE_KEYS.contains(&c.surface.as_str()));
+    }
     match crate::hashing::first_drift(&comparisons) {
         Some((binding, was, now)) => RecordState::Stale {
             record,
