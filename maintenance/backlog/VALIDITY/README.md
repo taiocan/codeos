@@ -1,5 +1,17 @@
 # VALIDITY — Dependency-Accurate Validity Work Orders
 
+**CLOSED 2026-11-18.** The initiative:
+
+- measured the invalidation waste (WO-01);
+- made validity dependency-accurate (WO-02, DBA-35);
+- moved deterministic blockers earlier (WO-03, preflight);
+- removed whole-configuration invalidation (WO-04, DBA-36, confirmed by JamFree's adoption);
+- made the whole remaining path visible (WO-05, plan);
+- investigated structured consistency and declined a mechanism the evidence did not support
+  (WO-06).
+
+Deferred items below stay deferred until new evidence justifies them.
+
 Planning context only. Git remains authoritative. Approved in principle by the human 2026-11-17.
 
 ## Problem
@@ -41,7 +53,7 @@ lookahead. Then measure again before adding anything.
 | [WO-01](WO-01-invalidation-replay.md) | NORMAL | Historical invalidation replay | Accepted 2026-11-17 |
 | [WO-02](WO-02-dependency-accurate-validity.md) | PROTECTED | Dependency-accurate validity | Accepted 2026-11-18; DBA-35 issued (Feature Workflow v14) |
 | [WO-03](WO-03-deterministic-preflight.md) | NORMAL | Deterministic preflight | Accepted 2026-11-18 |
-| [WO-04](WO-04-dba-impact-adoption.md) | PROTECTED | DBA impact-aware adoption | Accepted 2026-11-18; DBA-36 issued (Feature Workflow v15, Workflow Bootstrap v2) |
+| [WO-04](WO-04-dba-impact-adoption.md) | PROTECTED | DBA impact-aware adoption | Accepted 2026-11-18; DBA-36 issued; confirmed by the JamFree adoption; CLOSED |
 | [WO-05](WO-05-whole-path-plan.md) | NORMAL | Whole-path plan | Accepted 2026-11-18 |
 | [WO-06](WO-06-structured-consistency.md) | NORMAL | Structured-value consistency in preflight | CLOSED — NO APPLICABLE STRUCTURED VALUES (2026-11-18) |
 

@@ -240,3 +240,32 @@ invalidate none of B3, B4, run IDs, project qualification and F6. Checked by
 
 JamFree's legacy F6–F9 chain is not cleaned proactively; the next legitimate feature change
 regenerates those records under the new rules.
+
+## Confirmation and closure (2026-11-18)
+
+JamFree adopted DBA-36: 6a85105 selects it (`codeos.yaml` only); 5ddef0c holds the records and the
+adoption boundary in `docs/codeos-dba-adoptions.md`. The binary was verified as
+`codeos-e7ee8b7f914915f0`. All four criteria hold:
+
+1. **Only the known one-time cost:**
+   - B3: 247 s;
+   - qualifications: 54 s in total, F-0002 and F-0009 reused;
+   - feature checks: F-0001 259 s, F-0002 25 s, F-0009 and F-0010 3 s each;
+   - B4: one human re-confirmation, pending in the JamFree session.
+   No F6, F8 or F9 decision was asked.
+2. **Zero TomTom calls** (0 provider ledgers).
+3. **Current Validity unchanged:** all four features VALID.
+4. **A configuration-only change no longer invalidates the consumers.** On a copy of JamFree at
+   5ddef0c, a `codeos.yaml` edit outside every read section left read-only `status` identical; B3
+   stayed PASS and F-0002's F3/F5 verifications stayed current.
+
+**Remaining stale states, classified as legacy one-time behavior:** F6 WAITING, the Health
+project-quality, security, supply-chain and deployment rows, and Platform Assurance all come from
+records or receipts written before v14/v15 with whole-`codeos.yaml` bindings, compared as recorded.
+Each clears at the feature's next real change cycle. Not cleaned proactively, by decision.
+
+**Open observation (not a WO-04 defect):** Health reads the F9-checkpoint `project_qualification`
+records, which only a feature `check` past F6 writes, not the current candidate-checkpoint
+records. Whether Health should read the latter is a separate question about Health's source.
+
+**WO-04: CLOSED.**
