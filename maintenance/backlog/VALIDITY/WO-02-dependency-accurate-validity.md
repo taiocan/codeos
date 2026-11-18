@@ -52,13 +52,60 @@ additions. No path allowlists, no agent classification, no universal TTL.
 **Terms**, added to `dba/05-guidance/terminology.md` in Part B:
 
 - New: *Dependency set*, *Content identity*, *Freshness rule*, *Semantic Equivalence Receipt*.
-- Updated: *Current Validity* (R2's split) and *Candidate Bundle* (cites evidence identity per R3).
-- Reused unchanged: *Post-Acceptance Dependency Revalidation*.
+- *Current Validity*, *Candidate Bundle* and *Post-Acceptance Dependency Revalidation* stay
+  unchanged. Issued configurations freeze the definitions they use, so the v14 meanings are stated
+  in the new terms and in Feature Workflow v14 instead (found by the configuration integrity check
+  in Part B).
 
 ## Part B — Implementation
 
-One new DBA: Feature Workflow, Review and Workflow Governance as needed. Verified by:
+DBA-35 candidate (`maintenance/candidates/dba-35.yaml`): DBA-34 with Feature Workflow v14,
+Workflow Governance v6 and Review Policy v18. The checkpoint dependency sets were approved by the
+human on 2026-11-18 (F4/F8 judged surface and claims, F9 meaning, F6 by revalidation; Current
+Validity never satisfies F7, F8 or F9).
 
-- re-running the WO-01 replay under the new rules: cases classified as not relevant stop
-  invalidating, and cases classified as relevant still invalidate;
-- one fixture per rule.
+**Engine** (`dba/04-tools/workflow/engine`, all gated on v14; DBA-34 and earlier unchanged):
+
+- `validity.rs`: spec meaning (R4), resolution through Semantic Equivalence Receipts, content
+  identity (R3), the reviewer configuration identity (R5), judged claims.
+- `checker.rs`: v14 receipt keys; a v14 receipt is compared on its dependency set only; an accepted
+  feature's F6 is satisfied by a PASSED revalidation; verification records bind spec meaning.
+- `candidate.rs`: a schema 3 bundle cites content identities, spec meanings, the F6 receipt's
+  content and the reviewer configuration.
+- `revalidation.rs`: Current Validity compares spec meaning.
+- `decide --checkpoint semantic_equivalence --artifact <a> --from <identity>`.
+
+**Verification:**
+
+- `tests/dependency_validity.rs`, 7 tests, each contrasted with DBA-34:
+  - a runtime change keeps F9 and stales only Current Validity;
+  - a PASSED revalidation satisfies F6 with no new receipt;
+  - a YAML quoting fix stales no receipt, verification or bundle;
+  - a prose change needs an exact equivalence receipt, and the receipt covers only that delta;
+  - a re-run with identical content keeps the bundle;
+  - a `codeos.yaml` comment stales neither F9 nor the bundle;
+  - F4 ignores Contract prose but not Intent prose.
+- The full engine suite and clippy are clean.
+
+**WO-01 replay under v14** (`wo01-replay.py <JamFree> 80fb5ec --v14 [--rows]`; frontmatter
+unquoting and Architecture Scope content approximate the engine):
+
+| | F4 | F6 | Stage 8 | F8 | F9 |
+|---|---|---|---|---|---|
+| Re-asked today | 17 | 38 | 36 | 21 | 18 |
+| Re-asked under v14 | 15 | 27 (+10 satisfied by revalidation) | 33 | 10 | 7 |
+
+1. **Human decisions:** F4/F8/F9 drop from 56 to 32. Every case WO-01 judged not relevant stops
+   re-asking, except 2 F8 cases. Those were spec prose edits without a revision bump, which R4
+   deliberately treats as changes; one Semantic Equivalence Receipt would carry them (likewise 2 F6
+   and 4 Stage 8 cases).
+2. **Upper-bound "relevant" cases v14 no longer re-asks** (8): other features' product or
+   declared-dependency changes now go through Current Validity and revalidation, and architecture
+   changes through F9, by design.
+3. **Stage 8 barely changes (36 → 33).** Verification records still bind the whole-project
+   `implementation_state`, so any change re-opens every feature's candidate. Narrowing
+   verification-record implementation scope is outside WO-02's rules and is the next measured
+   lever. F8 and F9 receipts stay current through the re-review; only the review re-runs.
+4. **Adoption cost:** receipts and verification records written before v14 carry no v14 keys. On
+   adoption they are evaluated as recorded, records re-run once, and production evidence is
+   re-established once (provider calls).

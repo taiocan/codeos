@@ -254,7 +254,7 @@ struct DecideArgs {
     workflow: String,
     #[arg(long)]
     subject: String,
-    /// One of: initial_product_preview, early_preview, reconciliation, final_ux_validation, acceptance, operation_route, no_action_closure, retirement
+    /// One of: initial_product_preview, early_preview, reconciliation, final_ux_validation, acceptance, operation_route, no_action_closure, retirement, semantic_equivalence
     #[arg(long)]
     checkpoint: String,
     /// The recorded outcome (e.g. direction_confirmed, completed, accepted, new_feature, no_action).
@@ -273,6 +273,12 @@ struct DecideArgs {
     /// Content identity of the production-source evidence explicitly selected by F6.
     #[arg(long, value_name = "SHA256")]
     production_evidence: Option<String>,
+    /// semantic_equivalence: the artifact (intent, contract or event_schema).
+    #[arg(long)]
+    artifact: Option<String>,
+    /// semantic_equivalence: the artifact's previous meaning identity, which a receipt binds.
+    #[arg(long = "from", value_name = "SHA256")]
+    from_identity: Option<String>,
 }
 
 fn main() {
@@ -862,8 +868,32 @@ fn run(cli: &Cli, start: &std::path::Path) -> Result<i32> {
                 );
                 return Ok(EXIT_USAGE);
             }
+            let equivalence = a.checkpoint == codeos_workflow::validity::EQUIVALENCE;
+            if equivalence
+                && (workflow != Workflow::Feature
+                    || a.result != "equivalent"
+                    || a.artifact.is_none()
+                    || a.from_identity.is_none()
+                    || a.rationale
+                        .as_deref()
+                        .map(str::trim)
+                        .unwrap_or("")
+                        .is_empty())
+            {
+                eprintln!(
+                    "semantic_equivalence requires --workflow feature, --result equivalent, --artifact, --from and --rationale"
+                );
+                return Ok(EXIT_USAGE);
+            }
             let mut bindings = if retirement {
                 codeos_workflow::retirement::decision_bindings(&project, &a.subject)?
+            } else if equivalence {
+                codeos_workflow::validity::equivalence_bindings(
+                    &project,
+                    &a.subject,
+                    a.artifact.as_deref().unwrap_or_default(),
+                    a.from_identity.as_deref().unwrap_or_default(),
+                )?
             } else {
                 checker::bindings_for_decision(&project, &subject, &a.checkpoint)?
             };

@@ -132,6 +132,22 @@ fn dir(project: &Project, identity: &str) -> PathBuf {
         .join(identity)
 }
 
+/// The Evidence Set `id` filed under `identity`, if present and intact.
+pub fn read(project: &Project, identity: &str, id: &str) -> Result<Option<EvidenceSet>> {
+    let path = dir(project, identity).join(format!("{id}.json"));
+    let Ok(text) = std::fs::read_to_string(&path) else {
+        return Ok(None);
+    };
+    anyhow::ensure!(
+        hashing::text_sha256(&text) == id,
+        "Validation Evidence Set {} does not match its content",
+        path.display()
+    );
+    Ok(Some(serde_json::from_str(&text).with_context(|| {
+        format!("parse Validation Evidence Set {}", path.display())
+    })?))
+}
+
 /// A passed Evidence Set for this execution identity, with its content identity.
 pub fn find_passed(project: &Project, identity: &str) -> Result<Option<(String, EvidenceSet)>> {
     let dir = dir(project, identity);

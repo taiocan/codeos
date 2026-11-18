@@ -538,12 +538,25 @@ fn derive_acceptance_assessment(project: &Project, subject: &str) -> Result<Acce
         Ok(assessment)
     };
     let governed_now = governed(project, subject)?;
-    for key in ["intent", "contract", "event_schema"] {
-        assessment.comparisons.push(hashing::Comparison {
-            surface: key.into(),
-            was: acceptance.bindings.get(key).cloned(),
-            now: governed_now.get(key).cloned(),
-        });
+    if acceptance.bindings.contains_key("intent_meaning") {
+        // Feature Workflow v14: compare the specification meaning the acceptance bound.
+        for (artifact, key) in crate::validity::ARTIFACTS {
+            let path = crate::validity::artifact_path(project, subject, artifact)
+                .expect("known artifact");
+            assessment.comparisons.push(hashing::Comparison {
+                surface: artifact.into(),
+                was: acceptance.bindings.get(key).cloned(),
+                now: crate::validity::resolved_meaning(project, subject, artifact, &path)?,
+            });
+        }
+    } else {
+        for key in ["intent", "contract", "event_schema"] {
+            assessment.comparisons.push(hashing::Comparison {
+                surface: key.into(),
+                was: acceptance.bindings.get(key).cloned(),
+                now: governed_now.get(key).cloned(),
+            });
+        }
     }
     if assessment
         .comparisons

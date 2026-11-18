@@ -303,6 +303,122 @@ def trigger(causes):
     return "other:" + ",".join(sorted(names))
 
 
+# --- Feature Workflow v14 prediction (WO-02 Part B) -------------------------------------------
+# What v14 would have done on the same cases. Approximations, stated in WO-02: frontmatter is
+# compared after unquoting flat scalar values (the engine parses YAML exactly), and a feature's
+# architecture identity is the content of the Architecture Scopes that name it.
+
+TOOLKIT = __file__.rsplit("/maintenance/", 1)[0]
+
+
+def canonical_meaning(text):
+    if text is None:
+        return None
+    frontmatter, body = "", text
+    if text.startswith("---\n") and "\n---\n" in text[4:]:
+        frontmatter, body = text[4:].split("\n---\n", 1)
+    fields = {}
+    for line in frontmatter.splitlines():
+        if ":" in line and not line.startswith((" ", "-")):
+            key, value = line.split(":", 1)
+            value = value.strip()
+            if len(value) >= 2 and value[0] == value[-1] and value[0] in "'\"":
+                value = value[1:-1]
+            fields[key.strip()] = value
+    return hashlib.sha256((json.dumps(fields, sort_keys=True) + "\n---\n" + body).encode()).hexdigest()
+
+
+def reviewer_configuration(dba):
+    try:
+        text = open(f"{TOOLKIT}/dba/00-entry/configurations/{dba}.yaml").read()
+    except OSError:
+        return dba
+    return tuple(sorted(l for l in text.splitlines() if l.startswith(("reviewer_tool_contract:", "review_policy:"))))
+
+
+class V14:
+    def __init__(self, replay):
+        self.r = replay
+
+    def show(self, commit, path):
+        if commit is None:
+            return None
+        try:
+            return git(self.r.repo, "show", f"{commit.rstrip('*')}:{path}")
+        except subprocess.CalledProcessError:
+            return None
+
+    def meanings(self, commit, feature):
+        return tuple(canonical_meaning(self.show(commit, p)) for p in (
+            f".codeos/01-specification/intents/{feature}.md",
+            f".codeos/01-specification/contracts/{feature}_contract.md",
+            f".codeos/01-specification/event-schemas/{feature}_schema.md"))
+
+    def claims(self, commit, feature, checkpoint):
+        text = self.show(commit, f".codeos/01-specification/contracts/{feature}_contract.md") or ""
+        rows = []
+        for line in text.splitlines():
+            cells = [c.strip() for c in line.strip().strip("|").split("|")]
+            if len(cells) >= 4 and cells[0].startswith(f"{feature}/") and cells[2] == checkpoint:
+                rows.append((cells[0], " ".join(cells[1].split())))
+        return tuple(sorted(rows))
+
+    def architecture(self, commit, feature):
+        if commit is None:
+            return None
+        base = ".codeos/02-architecture/scopes/"
+        try:
+            names = git(self.r.repo, "ls-tree", "--name-only", commit.rstrip("*"), base).split()
+        except subprocess.CalledProcessError:
+            return ()
+        texts = [self.show(commit, n) or "" for n in names]
+        return tuple(t for t in texts if feature in t)
+
+    def dba(self, commit):
+        return self.r.field(commit, ".codeos/00-project/codeos.yaml", "dba_configuration")
+
+    def predict(self, row):
+        """`stale` (v14 re-asks), `revalidation` (F6 satisfied by revalidation) or `current`."""
+        cp, feature, _, causes, _, _, (older, newer) = row
+        if "first" in causes or older is None:
+            return "stale"
+        names = " ".join(causes)
+        meaning_changed = self.meanings(older, feature) != self.meanings(newer, feature)
+        intent_changed = self.meanings(older, feature)[0] != self.meanings(newer, feature)[0]
+        if cp in ("F4", "F8"):
+            claims = self.claims(older, feature, cp) != self.claims(newer, feature, cp)
+            surface = "observed_surface" in causes
+            return "stale" if intent_changed or claims or surface else "current"
+        if cp == "F9":
+            arch = self.architecture(older, feature) != self.architecture(newer, feature)
+            return "stale" if meaning_changed or arch else "current"
+        if cp == "F6":
+            if meaning_changed or "production_evidence" in causes or (
+                    "codeos_yaml" in causes and self.dba(older) == self.dba(newer)):
+                return "stale"
+            if "codeos_yaml" in causes:
+                return "stale"  # F6 keeps codeos.yaml until WO-04
+            if "delivered_state" in causes:
+                return "revalidation"
+            return "current"
+        # Stage 8: the v14 bundle (meanings, content identities, reviewer configuration).
+        if meaning_changed or self.architecture(older, feature) != self.architecture(newer, feature):
+            return "stale"
+        if reviewer_configuration(self.dba(older)) != reviewer_configuration(self.dba(newer)):
+            return "stale"
+        for c in causes:
+            if c.startswith("bundle>record:changed"):
+                keys = set(c.split("[", 1)[1].rstrip("]").split(",")) if "[" in c else {"?"}
+                if keys - {"execution_identity", "intent", "contract", "event_schema"}:
+                    return "stale"
+            elif c.startswith("bundle>") and not c.startswith((
+                    "bundle>record:same-content", "bundle>configuration_sha256",
+                    "bundle>governed_inputs", "bundle>semantic_revision", "bundle>f6_receipt_sha256",
+                    "bundle>baseline_acceptance", "bundle>kind", "bundle>trigger_commit")):
+                return "stale"
+        return "current"
+
+
 def main():
     repo, commit = sys.argv[1], git(sys.argv[1], "rev-parse", sys.argv[2]).strip()
     show_rows = "--rows" in sys.argv
@@ -346,6 +462,29 @@ def main():
         files = r.files(c)
         counts = " ".join(f"{k}:{per_commit[c][k]}" for k in order if per_commit[c][k])
         print(f"  {c} {subject}\n      files: {','.join(files[:5])}{' …' if len(files) > 5 else ''}\n      {counts}")
+
+    if "--v14" in sys.argv:
+        p = V14(r)
+        print("\nFeature Workflow v14 prediction (re-asks under v14, by WO-01 verdict):")
+        print("  " + "verdict".ljust(14) + "".join(k.rjust(14) for k in order))
+        for v in ("relevant", "runtime-only", "not-relevant", "per-DBA", "unresolved"):
+            cells = []
+            for k in order:
+                group = [row for row in rows if row[0] == k and r.relevance(row) == v]
+                stale = sum(1 for row in group if p.predict(row) == "stale")
+                cells.append(f"{stale}/{len(group)}")
+            print("  " + v.ljust(14) + "".join(c.rjust(14) for c in cells))
+        reval = sum(1 for row in rows if row[0] == "F6" and p.predict(row) == "revalidation")
+        total = {k: sum(1 for row in rows if row[0] == k) for k in order}
+        stale = {k: sum(1 for row in rows if row[0] == k and p.predict(row) == "stale") for k in order}
+        print("  total re-asked " + "".join(f"{stale[k]}/{total[k]}".rjust(14) for k in order))
+        print(f"  F6 satisfied by revalidation instead of a new receipt: {reval}")
+        if show_rows:
+            print("\n  Mismatches (relevant but current, or not relevant but stale):")
+            for row in rows:
+                v, pr = r.relevance(row), p.predict(row)
+                if (v == "relevant" and pr != "stale") or (v in ("not-relevant",) and pr == "stale"):
+                    print(f"    {row[0]:6} {row[1]} {row[2]} {v:13} v14={pr:12} {' | '.join(row[3])[:160]}")
 
     if show_rows:
         print("\nRows:")

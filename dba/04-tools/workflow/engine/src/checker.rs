@@ -2970,6 +2970,12 @@ pub fn bindings_for_decision(
         bindings.get("observed_surface").map(String::as_str) != Some(UNOBSERVED),
         "no passing F3 product_journey record carries an Observed Surface; run check first"
     );
+    anyhow::ensure!(
+        !(project.workflow_governance_version()? >= 3
+            && matches!(checkpoint, "final_ux_validation" | "acceptance")
+            && !bindings.contains_key("candidate_bundle")),
+        "no unique current Candidate Bundle; run prepare-candidate after F6"
+    );
     Ok(bindings)
 }
 
@@ -3138,10 +3144,17 @@ fn current_bindings(
             if project.workflow_governance_version()? >= 3
                 && matches!(checkpoint, "final_ux_validation" | "acceptance")
             {
-                let bundle = crate::candidate::unique_current(project, &subject.id)?.context(
-                    "no unique current Candidate Bundle; run prepare-candidate after F6",
-                )?;
-                b.insert("candidate_bundle".into(), bundle);
+                // Feature Workflow v14: the bundle is recorded, not a dependency, so currency does
+                // not need one; `decide` still does (bindings_for_decision).
+                match crate::candidate::unique_current(project, &subject.id)? {
+                    Some(bundle) => {
+                        b.insert("candidate_bundle".into(), bundle);
+                    }
+                    None if crate::validity::active(project)? => {}
+                    None => anyhow::bail!(
+                        "no unique current Candidate Bundle; run prepare-candidate after F6"
+                    ),
+                }
             }
         }
         "operation_route" | "no_action_closure" => {
@@ -3150,7 +3163,58 @@ fn current_bindings(
         }
         _ => {}
     }
+    if subject.workflow == Workflow::Feature
+        && crate::validity::active(project)?
+        && crate::validity::dependencies(checkpoint).is_some()
+    {
+        v14_bindings(project, subject, checkpoint, &mut b)?;
+    }
     Ok(b)
+}
+
+/// Feature Workflow v14: the meaning identities, judged claims and architecture identity a
+/// checkpoint's dependency set names, added to what v13 records.
+fn v14_bindings(
+    project: &Project,
+    subject: &Subject,
+    checkpoint: &str,
+    b: &mut BTreeMap<String, String>,
+) -> Result<()> {
+    let deps = crate::validity::dependencies(checkpoint).unwrap_or(&[]);
+    for (artifact, key) in crate::validity::ARTIFACTS {
+        if !deps.contains(&key) {
+            continue;
+        }
+        let path = crate::validity::artifact_path(project, &subject.id, artifact)
+            .expect("known artifact");
+        if let Some(identity) =
+            crate::validity::resolved_meaning(project, &subject.id, artifact, &path)?
+        {
+            b.insert(key.into(), identity);
+        }
+    }
+    match checkpoint {
+        "early_preview" => {
+            b.insert(
+                "judged_claims".into(),
+                crate::validity::judged_claims(project, subject, "F4")?,
+            );
+        }
+        "final_ux_validation" => {
+            b.insert(
+                "judged_claims".into(),
+                crate::validity::judged_claims(project, subject, "F8")?,
+            );
+        }
+        "acceptance" => {
+            b.insert(
+                "architecture".into(),
+                crate::architecture::feature_identity(project, &subject.id, "WORKTREE")?,
+            );
+        }
+        _ => {}
+    }
+    Ok(())
 }
 
 /// The state of a subject's latest decision at `checkpoint` against the current inputs it must
@@ -3268,7 +3332,74 @@ pub fn decision_state(
             }
         }
     }
-    Ok(receipts::evaluate_required(latest, &bindings, &required))
+    // Feature Workflow v14: a receipt carrying v14 dependency keys is compared on its dependency
+    // set only; every other recorded value is history and carried forward as recorded.
+    if let (Some(deps), Some(receipt)) = (
+        crate::validity::dependencies(checkpoint),
+        latest.as_ref(),
+    ) {
+        if subject.workflow == Workflow::Feature
+            && crate::validity::active(project)?
+            && receipt.bindings.contains_key("intent_meaning")
+        {
+            let mut dependency_set: BTreeSet<String> =
+                deps.iter().map(|key| key.to_string()).collect();
+            if crate::validity::judges_product(checkpoint) {
+                if let Some(narrowest) = PRODUCT_BINDINGS
+                    .iter()
+                    .find(|key| receipt.bindings.contains_key(**key))
+                {
+                    dependency_set.insert(narrowest.to_string());
+                }
+            }
+            for (key, value) in &receipt.bindings {
+                if !dependency_set.contains(key) {
+                    bindings.insert(key.clone(), value.clone());
+                }
+            }
+            required.retain(|key| dependency_set.contains(key));
+        }
+    }
+    let state = receipts::evaluate_required(latest, &bindings, &required);
+    if checkpoint == "reconciliation" && subject.workflow == Workflow::Feature {
+        if let ReceiptState::Stale {
+            receipt,
+            comparisons,
+            ..
+        } = &state
+        {
+            if revalidation_satisfies_reconciliation(project, &subject.id, comparisons)? {
+                return Ok(ReceiptState::Current(receipt.clone()));
+            }
+        }
+    }
+    Ok(state)
+}
+
+/// Feature Workflow v14: an accepted feature's F6 receipt that differs only in its product binding
+/// is satisfied by a PASSED Post-Acceptance Dependency Revalidation of its latest acceptance.
+fn revalidation_satisfies_reconciliation(
+    project: &Project,
+    feature: &str,
+    comparisons: &[hashing::Comparison],
+) -> Result<bool> {
+    if !crate::validity::active(project)? {
+        return Ok(false);
+    }
+    let only_product = comparisons
+        .iter()
+        .filter(|c| c.changed())
+        .all(|c| PRODUCT_BINDINGS.contains(&c.surface.as_str()));
+    if !only_product {
+        return Ok(false);
+    }
+    let Some(acceptance) = ReceiptStore::at(&project.codeos_dir())
+        .latest("feature", feature, "acceptance")?
+        .filter(|r| r.result == "accepted")
+    else {
+        return Ok(false);
+    };
+    crate::candidate::passed_revalidation(project, feature, &hashing::record_identity(&acceptance)?)
 }
 
 fn selected_production_evidence(project: &Project, subject: &Subject) -> Result<Option<String>> {
@@ -3454,9 +3585,23 @@ fn bindings_with(
         // Every feature mechanical verification: the approved Specification Package plus the current
         // implementation. Revising the spec, or changing the implementation, re-blocks it.
         "F3" | "F5" | "F5d" | "F5g" | "F7" | "F9" | "candidate" => {
-            put(&mut b, "intent", &project.intent(&subject.id))?;
-            put(&mut b, "contract", &project.contract(&subject.id))?;
-            put(&mut b, "event_schema", &project.event_schema(&subject.id))?;
+            if subject.workflow == Workflow::Feature && crate::validity::active(project)? {
+                // Feature Workflow v14: a verification depends on the specification's meaning
+                // identity (R3, R4), so a non-semantic edit re-runs nothing.
+                for (artifact, _) in crate::validity::ARTIFACTS {
+                    let path = crate::validity::artifact_path(project, &subject.id, artifact)
+                        .expect("known artifact");
+                    if let Some(identity) =
+                        crate::validity::resolved_meaning(project, &subject.id, artifact, &path)?
+                    {
+                        b.insert(artifact.into(), identity);
+                    }
+                }
+            } else {
+                put(&mut b, "intent", &project.intent(&subject.id))?;
+                put(&mut b, "contract", &project.contract(&subject.id))?;
+                put(&mut b, "event_schema", &project.event_schema(&subject.id))?;
+            }
             b.insert(
                 "implementation_state".into(),
                 project.implementation_state()?,

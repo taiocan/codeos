@@ -141,6 +141,12 @@ pub fn derive(project: &Project, features: &[FeatureStatus]) -> Result<Vec<Platf
     let store = VerificationStore::at(&project.codeos_dir());
     let mut by_identity = BTreeMap::new();
     for record in store.all()? {
+        // A schema 3 Candidate Bundle cites content identities (Feature Workflow v14).
+        if crate::validity::active(project)? {
+            if let Ok(identity) = crate::validity::content_identity(project, &record) {
+                by_identity.insert(identity, record.clone());
+            }
+        }
         by_identity.insert(hashing::record_identity(&record)?, record);
     }
 

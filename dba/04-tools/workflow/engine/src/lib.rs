@@ -30,6 +30,7 @@ pub mod retirement;
 pub mod revalidation;
 pub mod session;
 pub mod store_cache;
+pub mod validity;
 pub mod test_evidence;
 pub mod verification;
 

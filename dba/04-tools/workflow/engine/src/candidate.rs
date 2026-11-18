@@ -174,13 +174,25 @@ pub fn assemble(
         None
     };
 
-    let governed_inputs = governed(project, &subject.id, 2)?;
-    let configuration_sha256 =
-        hashing::file_sha256(&project.codeos_yaml())?.context("missing codeos.yaml")?;
+    let governed_inputs = governed(
+        project,
+        &subject.id,
+        if crate::validity::active(project)? { 3 } else { 2 },
+    )?;
+    // Review Policy v18: a v14 bundle depends on the reviewer configuration, not codeos.yaml bytes.
+    let configuration_sha256 = if crate::validity::active(project)? {
+        crate::validity::review_configuration_identity(project)?
+    } else {
+        hashing::file_sha256(&project.codeos_yaml())?.context("missing codeos.yaml")?
+    };
     let receipt = ReceiptStore::at(&project.codeos_dir())
         .latest("feature", &subject.id, "reconciliation")?
         .context("candidate requires the F6 reconciliation receipt")?;
-    let f6_receipt_sha256 = hashing::record_identity(&receipt)?;
+    let f6_receipt_sha256 = if crate::validity::active(project)? {
+        crate::validity::receipt_content_identity(&receipt)?
+    } else {
+        hashing::record_identity(&receipt)?
+    };
     // Revalidation creates no F6 receipt (Feature Workflow v8), so it selects the production
     // evidence verified for the revalidation implementation instead of the historical F6 selection.
     let production_evidence = match &revalidation_case {
@@ -188,6 +200,15 @@ pub fn assemble(
         None => receipt.bindings.get("production_evidence").cloned(),
     };
 
+    // Feature Workflow v14: a bundle cites each verification by its content identity.
+    let v14 = crate::validity::active(project)?;
+    let cite = |record: &crate::verification::VerificationRecord| -> Result<String> {
+        if v14 {
+            crate::validity::content_identity(project, record)
+        } else {
+            hashing::record_identity(record)
+        }
+    };
     let mut verification_records = BTreeMap::new();
     let store = VerificationStore::at(&project.codeos_dir());
     let dependency_additions = validate_additions(project, additions)?;
@@ -202,7 +223,7 @@ pub fn assemble(
     )?;
     verification_records.insert(
         "candidate/project_qualification".into(),
-        hashing::record_identity(&qualification)?,
+        cite(&qualification)?,
     );
     for (checkpoint, mechanic) in checker::candidate_verification_records(project, subject)? {
         if checkpoint == "candidate" {
@@ -224,7 +245,7 @@ pub fn assemble(
         );
         verification_records.insert(
             format!("{checkpoint}/{mechanic}"),
-            hashing::record_identity(&record)?,
+            cite(&record)?,
         );
     }
     let runtime_evidence = if observation_mode(project, &subject.id)? == "events" {
@@ -254,7 +275,7 @@ pub fn assemble(
         );
         verification_records.insert(
             "F7/runtime_event_schema".into(),
-            hashing::record_identity(&runtime)?,
+            cite(&runtime)?,
         );
         evidence
     } else {
@@ -288,7 +309,7 @@ pub fn assemble(
         .map(|claim| (claim.id, claim.digest))
         .collect();
     let bundle = CandidateBundle {
-        schema_version: 2,
+        schema_version: if v14 { 3 } else { 2 },
         feature: subject.id.clone(),
         semantic_revision: semantic_revision(&std::fs::read_to_string(
             project.intent(&subject.id),
@@ -414,7 +435,12 @@ pub fn current_for_review(project: &Project, id: &str) -> Result<bool> {
     let receipt = ReceiptStore::at(&project.codeos_dir())
         .latest("feature", &bundle.feature, "reconciliation")?
         .context("candidate reconciliation receipt disappeared")?;
-    if hashing::record_identity(&receipt)? != bundle.f6_receipt_sha256 {
+    let f6 = if bundle.schema_version >= 3 {
+        crate::validity::receipt_content_identity(&receipt)?
+    } else {
+        hashing::record_identity(&receipt)?
+    };
+    if f6 != bundle.f6_receipt_sha256 {
         return Ok(false);
     }
     let store = VerificationStore::at(&project.codeos_dir());
@@ -425,7 +451,12 @@ pub fn current_for_review(project: &Project, id: &str) -> Result<bool> {
         let Some(record) = store.latest("feature", &bundle.feature, checkpoint, mechanic)? else {
             return Ok(false);
         };
-        if hashing::record_identity(&record)? != *identity {
+        let cited = if bundle.schema_version >= 3 {
+            crate::validity::content_identity(project, &record)?
+        } else {
+            hashing::record_identity(&record)?
+        };
+        if cited != *identity {
             return Ok(false);
         }
     }
@@ -492,9 +523,15 @@ pub(crate) fn governed(
         ("contract", project.contract(feature)),
         ("event_schema", project.event_schema(feature)),
     ] {
+        // Feature Workflow v14 (schema 3): the specification meaning identity, not file bytes.
+        let identity = if schema_version >= 3 {
+            crate::validity::resolved_meaning(project, feature, name, &path)?
+        } else {
+            hashing::file_sha256(&path)?
+        };
         out.insert(
             name.into(),
-            hashing::file_sha256(&path)?.with_context(|| format!("missing {name}"))?,
+            identity.with_context(|| format!("missing {name}"))?,
         );
     }
     if schema_version >= 2 {

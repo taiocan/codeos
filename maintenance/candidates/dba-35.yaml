@@ -1,0 +1,15 @@
+# DBA-35 candidate (VALIDITY WO-02): DBA-34 with Feature Workflow v14, Workflow Governance v6 and Review Policy v18 — dependency-accurate validity (rules R1–R5).
+doctrine: dba/01-doctrine/v9.md
+review_policy: dba/02-policies/review/v18.md
+architecture_synthesis_policy: dba/02-policies/architecture-synthesis/v7.md
+implementation_profile_policy: dba/02-policies/implementation-profile/v2.md
+reviewer_tool_contract: dba/04-tools/reviewer/contract/v23.md
+codeos_mechanics_policy: dba/02-policies/codeos-mechanics/v7.md
+reader_output_policy: dba/02-policies/reader-output/v3.md
+user_learning_policy: dba/02-policies/user-learning/v1.md
+workflow_governance_policy: dba/02-policies/workflow-governance/v6.md
+workflow_bootstrap_policy: dba/02-policies/workflow-bootstrap/v1.md
+workflow_feature_policy: dba/02-policies/workflow-feature/v14.md
+workflow_operation_policy: dba/02-policies/workflow-operation/v3.md
+
+status: candidate
