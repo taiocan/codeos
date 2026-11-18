@@ -31,3 +31,14 @@ JamFree adopted DBA-35 in c3b2e56. Read-only `status` afterwards showed:
 DBA-35 changed neither the platform baseline nor the qualification semantics. These are the
 bindings WO-04 must derive from semantic impact: `checker.rs` binds `codeos_yaml` for B3, B4
 (`initial_product_preview`), F6 and `project_qualification`.
+
+**Human direction (2026-11-18).** JamFree pays the DBA-35 refresh once now (B3, B4,
+qualifications), with no TomTom calls; this case is WO-04's canonical example. WO-04's target:
+
+> A DBA or configuration change invalidates Bootstrap or qualification only when the changed
+> configuration semantics intersect that checkpoint's actual dependency set. A raw change to the
+> `codeos.yaml` bytes is not sufficient by itself.
+
+This applies to B3, B4, project and deployment qualification, and the Health and Platform Assurance
+states derived from them. **Boundary:** B4 stays valid only because its own dependency identity is
+unchanged; CodeOS never special-cases DBA adoption, or a product that "looks the same".
