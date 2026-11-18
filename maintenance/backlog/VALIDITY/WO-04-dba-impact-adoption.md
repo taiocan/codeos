@@ -54,3 +54,22 @@ no provider calls. Still stale afterwards, from the same cause:
 
 A deterministic feature `check` clears both, at about 15–20 min for four features. That is the
 measured cost WO-04 removes.
+
+**Deterministic checks (JamFree 28fca60).** F-0001 took 269 s, F-0002 26 s, F-0009 3 s, F-0010 3 s;
+no provider calls. Neither stale class cleared:
+
+- Every feature `check` now stops at "F6 WAITING: 'codeos_yaml' changed". Clearing it would mean
+  the full F6 → candidate → Stage 8 → F8/F9 cascade for an unchanged product; not run, by
+  decision.
+- Health and Platform Assurance stay STALE. They are read-only reports, not gates, and all four
+  features stay VALID and COMPLETE. They are recorded as WO-04 debt.
+
+**Conformance miss in DBA-35 (found here).** Feature Workflow v14 keeps `codeos.yaml` in F6's
+dependency set. The human's annex table for F6 does not include it. The WO-02 annex note claimed
+the F6 rule conformed; that was inaccurate. DBA-35 is frozen, so WO-04 owns the repair, in the next
+DBA. WO-04's binding targets, each to be replaced by derived configuration impact:
+
+- F6 `codeos_yaml`;
+- `codeos_yaml` in execution identities (`evidence_set::common_inputs`);
+- `codeos_yaml` in `project_qualification`, both the candidate and F9 checkpoints;
+- `codeos_yaml` in B3 and B4.
