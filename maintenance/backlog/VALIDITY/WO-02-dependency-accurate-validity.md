@@ -118,3 +118,60 @@ Qualification found two adoption defects, both fixed before this identity:
 - v14 records binding meaning under the old key names would have re-run every pre-v14
   verification (3cc7fdc);
 - requiring v14-only keys of pre-v14 receipts would have staled every F4–F9 receipt (1042816).
+
+## Annex — Checkpoint dependency decision (human, 2026-11-18)
+
+**Decision.** Approve F4/F8/F9 carry-forward, but do not let Current Validity automatically satisfy
+F7/F8/F9.
+
+**Core invariant.** Post-acceptance revalidation restores runtime/evidence validity only. Every
+checkpoint remains valid only while its own dependency set is unchanged.
+
+| Checkpoint | Depends on | Reuse rule |
+|---|---|---|
+| F4 | judged claim/question + observed surface | reuse if unchanged |
+| F6 | spec semantics + delivered/runtime state + required evidence | satisfied by PASSED revalidation |
+| F7 | review inputs/evidence + reviewer-contract semantic identity | reuse if unchanged |
+| F8 | judged claim/question + observed surface + relevant human outcome | reuse if unchanged |
+| F9 | governed meaning + accepted claims + normative semantic dependencies | reuse if unchanged |
+
+Constraints:
+
+- F4/F8 bind the judged claim, not the whole specification.
+- F8 binds the relevant session outcome, not necessarily the entire shared session file.
+
+**Expected behavior:**
+
+- A Dockerfile or runtime-only change → revalidate runtime and evidence; keep F4/F7/F8/F9 if their
+  dependencies are unchanged.
+- A reviewer-contract change → rerun F7 only.
+- A surface or UX change → rerun the affected F4/F8.
+- A claim or meaning change → rerun whichever checkpoints depend on that meaning.
+- A timestamp or run-ID-only change → no invalidation.
+
+**Implementation order:**
+
+1. Define checkpoint dependency sets.
+2. Implement evidence/content identity and spec equivalence.
+3. Make F6 satisfiable through post-acceptance revalidation.
+4. Reuse F4/F7/F8/F9 independently from their dependency sets.
+5. Replay WO-01.
+
+**Short version:** do not replace the old broad chain with a broad Current Validity shortcut. Make
+each checkpoint independently dependency-accurate.
+
+### Conformance of the DBA-35 candidate to this annex (2026-11-18)
+
+Conforms: the F6 rule, F9, the session outcome (attestation checks only this feature's outcome and
+surface), the reviewer-contract rule (at version granularity, pending WO-04), timestamp and run-ID
+changes, and the implementation order. Two open points, unresolved:
+
+1. **F4/F8 also bind the Intent's meaning**, not only the judged claims and surface. A change to the
+   Intent's prose therefore re-asks F4/F8. Contract and Event Schema prose do not. Conforming means
+   dropping `intent_meaning` from the F4/F8 dependency set. Note that a feature without
+   `observation:human` claims at F4/F8 then binds only its surface.
+2. **F7 re-runs on a runtime change** when the changed file is one of the feature's Candidate
+   Bundle implementation inputs, such as `web/Dockerfile` (role `product`) or a lockfile (role
+   `dependency`). The implementation is a review input, so its F7 dependencies did change. Keeping
+   F7 would require removing runtime inputs from Stage 8's review inputs, which is a separate
+   decision.
