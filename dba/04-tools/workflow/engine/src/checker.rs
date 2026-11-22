@@ -3898,6 +3898,9 @@ fn run_mechanic(project: &Project, subject: &Subject, mechanic: &str) -> evidenc
         match project.runtime_verification() {
             Ok(runtime) => {
                 if let Some(command) = runtime.verification_command.as_deref() {
+                    if matches!(mechanic, "behavior" | "repeatability") {
+                        return run_declared_test_verification(project, command, mechanic);
+                    }
                     return evidence::run(&project.root, &project.root.join(command).to_string_lossy(), &[mechanic]);
                 }
             }
@@ -3930,6 +3933,57 @@ fn run_mechanic(project: &Project, subject: &Subject, mechanic: &str) -> evidenc
             details: None,
         },
     }
+}
+
+/// Preserve Stage 8 inspectability when a project replaces the built-in runtime verifier with a
+/// native adapter. Behavior runs once; repeatability runs twice and compares the exact libtest
+/// case outcomes before storing the same content-addressed evidence used by the built-in path.
+fn run_declared_test_verification(
+    project: &Project,
+    command: &str,
+    verification: &str,
+) -> evidence::CommandOutcome {
+    let program = project.root.join(command);
+    let execute = |attempt| {
+        let (outcome, stdout) = evidence::run_env_output(
+            &project.root,
+            &program.to_string_lossy(),
+            &[verification],
+            &[],
+        );
+        if !outcome.ok {
+            return Err(outcome);
+        }
+        let run = test_evidence::TestRun::new(
+            "libtest",
+            attempt,
+            test_evidence::libtest_cases(&stdout),
+        )
+        .map_err(|error| failure(error.to_string()))?;
+        Ok((outcome, run))
+    };
+
+    let (mut outcome, first) = match execute(1) {
+        Ok(value) => value,
+        Err(failed) => return failed,
+    };
+    let mut runs = vec![first];
+    if verification == "repeatability" {
+        let (_, second) = match execute(2) {
+            Ok(value) => value,
+            Err(failed) => return failed,
+        };
+        let differences = test_evidence::differences(&runs[0].cases, &second.cases);
+        if !differences.is_empty() {
+            return failure(format!(
+                "nondeterministic test outcomes across two declared-adapter runs: {}",
+                differences.join("; ")
+            ));
+        }
+        outcome.command = format!("{} (twice; per-test outcomes compared)", outcome.command);
+        runs.push(second);
+    }
+    with_test_evidence(project, verification, runs, outcome)
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -5358,6 +5412,63 @@ mod journey_tests {
         assert!(result.ok, "{}", result.summary);
         assert!(result.summary.contains("native-baseline"));
         assert!(!dir.path().join("docker-compose.yml").exists());
+    }
+
+    #[test]
+    #[cfg(unix)]
+    fn declared_native_behavior_binds_inspectable_per_test_evidence() {
+        use std::os::unix::fs::PermissionsExt;
+        let dir = tempfile::tempdir().unwrap();
+        std::fs::create_dir_all(dir.path().join(".codeos/00-project")).unwrap();
+        std::fs::create_dir_all(dir.path().join("scripts")).unwrap();
+        std::fs::write(
+            dir.path().join(".codeos/00-project/codeos.yaml"),
+            "runtime_verification:\n  verification_command: scripts/verify-bootstrap\n",
+        )
+        .unwrap();
+        let command = dir.path().join("scripts/verify-bootstrap");
+        std::fs::write(
+            &command,
+            "#!/usr/bin/env bash\nprintf 'test domain::preserves_history ... ok\\n'\n",
+        )
+        .unwrap();
+        let mut permissions = command.metadata().unwrap().permissions();
+        permissions.set_mode(0o755);
+        std::fs::set_permissions(&command, permissions).unwrap();
+        let project = Project::discover(dir.path()).unwrap();
+        let subject = Subject {
+            workflow: Workflow::Feature,
+            id: "F-0001".into(),
+            gui: false,
+            backend: true,
+            persistence: true,
+            impact_accounting_complete: true,
+            arch_approval_required: false,
+            reality_claims: vec![],
+            inherited_claims: vec![],
+        };
+
+        for verification in ["behavior", "repeatability"] {
+            let result = run_mechanic(&project, &subject, verification);
+            assert!(result.ok, "{}", result.summary);
+            let identity = result
+                .details
+                .as_ref()
+                .and_then(|details| details[test_evidence::DETAILS_KEY].as_str())
+                .expect("test evidence binding");
+            let evidence: test_evidence::TestEvidence = serde_json::from_slice(
+                &std::fs::read(
+                    dir.path()
+                        .join(test_evidence::DIR)
+                        .join(format!("{identity}.json")),
+                )
+                .unwrap(),
+            )
+            .unwrap();
+            assert_eq!(evidence.runs.len(), if verification == "repeatability" { 2 } else { 1 });
+            assert_eq!(evidence.runs[0].cases[0].id, "domain::preserves_history");
+            assert_eq!(evidence.runs[0].cases[0].status, "passed");
+        }
     }
 
     #[test]
