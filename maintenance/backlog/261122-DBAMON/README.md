@@ -29,7 +29,7 @@ cross-project comparison, and any use of the monitor as workflow, validity or ac
 
 | WO | Class | Title | Status |
 |---|---|---|---|
-| [WO-01](WO-01-review-status-enrichment.md) | NORMAL | Enrich `review-status --json` per assessment | Approved 2026-11-22 — not started |
+| [WO-01](WO-01-review-status-enrichment.md) | NORMAL | Enrich `review-status --json` per assessment | Implemented 2026-11-22 — awaiting human acceptance |
 | [WO-02](WO-02-structured-test-durations.md) | NORMAL (PROTECTED if identity inputs change) | Structured test-evidence durations | Approved 2026-11-22 — not started |
 | [WO-03](WO-03-project-monitor-snapshot.md) | NORMAL | Immutable project-monitor snapshot | Approved 2026-11-22 — not started |
 | [WO-04](WO-04-toolkit-and-code-analytics.md) | NORMAL | Toolkit governance growth and code analytics | Approved 2026-11-22 — not started |

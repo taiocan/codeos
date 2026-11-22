@@ -53,7 +53,7 @@ pub(crate) fn reference(block: &str, prefix: &str) -> Result<(PathBuf, String)> 
     Ok((PathBuf::from(path), hash.trim_end_matches(')').to_string()))
 }
 
-fn frontmatter(path: &Path) -> Result<Value> {
+pub(crate) fn frontmatter(path: &Path) -> Result<Value> {
     let text = std::fs::read_to_string(path)?;
     let yaml = text
         .strip_prefix("---\n")

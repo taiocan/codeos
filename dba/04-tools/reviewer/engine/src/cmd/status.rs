@@ -37,6 +37,67 @@ pub struct Assessment {
     /// Recorded at review time; `None` (unknown) for reviews before accounting existed.
     pub accepted_feature_count_at_review: Option<u64>,
     pub contributions: Vec<accounting::Contribution>,
+    /// The following fields are copied verbatim from the assessment frontmatter. `None` means
+    /// the record does not state the field (older formats, external assessments, or an
+    /// unverifiable assessment); nothing is inferred.
+    pub candidate_outcome: Option<String>,
+    pub source: Option<String>,
+    pub codex_cli_version: Option<String>,
+    pub reviewer_build_sha256: Option<String>,
+    pub codeos_release_id: Option<String>,
+    pub findings: Option<FindingCounts>,
+}
+
+/// Recorded findings of one assessment, counted by their recorded labels.
+#[derive(Debug, Default, Serialize)]
+pub struct FindingCounts {
+    pub total: u64,
+    pub by_severity: BTreeMap<String, u64>,
+    pub by_classification: BTreeMap<String, u64>,
+    /// Only findings that record a blocker kind are counted here.
+    pub by_blocker_kind: BTreeMap<String, u64>,
+    /// Finding blocks the reviewer emitted that could not be parsed, as recorded.
+    pub unparsed: Option<u64>,
+}
+
+/// A scalar frontmatter value as text; YAML numbers (e.g. a CLI version) are kept as written.
+fn scalar(value: &serde_json::Value) -> Option<String> {
+    match value {
+        serde_json::Value::String(text) => Some(text.clone()),
+        serde_json::Value::Number(number) => Some(number.to_string()),
+        serde_json::Value::Bool(flag) => Some(flag.to_string()),
+        _ => None,
+    }
+}
+
+/// Copies the recorded outcome, provenance, and finding labels from a hash-verified assessment.
+fn record_frontmatter(assessment: &mut Assessment, frontmatter: &serde_json::Value) {
+    let reviewed = &frontmatter["reviewed"];
+    assessment.candidate_outcome = scalar(&reviewed["candidate_outcome"]);
+    assessment.source = scalar(&reviewed["source"]);
+    assessment.codex_cli_version = scalar(&reviewed["codex_cli_version"]);
+    assessment.reviewer_build_sha256 = scalar(&reviewed["reviewer_build_sha256"]);
+    assessment.codeos_release_id = scalar(&reviewed["codeos_release_id"]);
+    let Some(findings) = frontmatter["findings"].as_array() else {
+        return;
+    };
+    let mut counts = FindingCounts {
+        total: findings.len() as u64,
+        unparsed: frontmatter["unparsed_findings_count"].as_u64(),
+        ..Default::default()
+    };
+    for finding in findings {
+        for (key, map) in [
+            ("severity", &mut counts.by_severity),
+            ("classification", &mut counts.by_classification),
+            ("blocker_kind", &mut counts.by_blocker_kind),
+        ] {
+            if let Some(label) = scalar(&finding[key]) {
+                *map.entry(label).or_default() += 1;
+            }
+        }
+    }
+    assessment.findings = Some(counts);
 }
 
 #[derive(Debug, Default, Serialize)]
@@ -148,10 +209,15 @@ pub fn derive(cfg: &Config) -> Status {
             counts.reassessment += 1;
         }
 
+        let mut frontmatter = None;
         match crate::lineage_replacement::reference(entry, "Full assessment: ") {
             Ok((path, sha)) => {
-                if let Err(problem) = verified(&resolve(&cfg.repo_root, path), &sha) {
-                    incomplete.push(format!("{review_id}: assessment {problem}"));
+                let path = resolve(&cfg.repo_root, path);
+                match verified(&path, &sha) {
+                    Err(problem) => incomplete.push(format!("{review_id}: assessment {problem}")),
+                    // Only a hash-verified assessment is read; one without frontmatter reports
+                    // its fields as unknown rather than as a history defect.
+                    Ok(()) => frontmatter = crate::lineage_replacement::frontmatter(&path).ok(),
                 }
             }
             Err(_) => incomplete.push(format!("{review_id}: no assessment reference")),
@@ -171,7 +237,16 @@ pub fn derive(cfg: &Config) -> Status {
             budget_bytes: None,
             accepted_feature_count_at_review: None,
             contributions: Vec::new(),
+            candidate_outcome: None,
+            source: None,
+            codex_cli_version: None,
+            reviewer_build_sha256: None,
+            codeos_release_id: None,
+            findings: None,
         };
+        if let Some(frontmatter) = &frontmatter {
+            record_frontmatter(&mut assessment, frontmatter);
+        }
         match verified(&packet_path, &packet_sha) {
             Err(problem) => incomplete.push(format!("{review_id}: packet {problem}")),
             Ok(()) => {
@@ -453,6 +528,12 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let root = dir.path();
         let a_sha = write(root, "reviews/a.md", "assessment");
+        // A current-format assessment: its outcome, provenance, and findings are recorded.
+        let b_sha = write(
+            root,
+            "reviews/b.md",
+            "---\nreview_id: ID-1\nfindings:\n    - finding_id: F1\n      severity: High\n      classification: IN-SCOPE BLOCKER\n      summary: \"x\"\n      required_action: fix now\n      blocker_kind: SUBSTANTIVE\n    - finding_id: F2\n      severity: Low\n      classification: OUT-OF-SCOPE BACKLOG\n      summary: \"y\"\n      required_action: backlog\nunparsed_findings_count: 0\nreviewed:\n  feature: F-1\n  stage: 8\n  candidate_outcome: BLOCKED\n  source: codex\n  codex_cli_version: 0.163.0\n  reviewer_build_sha256: abc\n  codeos_release_id: DBA-36\n---\nbody\n",
+        );
         // An accounting-era packet whose sidecar records roles and the feature count.
         let p1 = "packet one\n  review_content_bytes: 30\n";
         let p1_sha = write(root, "reviews/p1.packet.txt", p1);
@@ -492,8 +573,8 @@ mod tests {
         log += &entry(
             "ID-1",
             "F-1",
-            "reviews/a.md",
-            &a_sha,
+            "reviews/b.md",
+            &b_sha,
             "reviews/p1.packet.txt",
             &p1_sha,
         );
@@ -555,7 +636,25 @@ mod tests {
         let total: u64 = recorded.contributions.iter().map(|c| c.bytes).sum();
         assert_eq!(Some(total), recorded.packet_bytes);
 
+        assert_eq!(recorded.candidate_outcome.as_deref(), Some("BLOCKED"));
+        assert_eq!(recorded.source.as_deref(), Some("codex"));
+        assert_eq!(recorded.codex_cli_version.as_deref(), Some("0.163.0"));
+        assert_eq!(recorded.reviewer_build_sha256.as_deref(), Some("abc"));
+        assert_eq!(recorded.codeos_release_id.as_deref(), Some("DBA-36"));
+        let findings = recorded.findings.as_ref().expect("findings recorded");
+        assert_eq!(findings.total, 2);
+        assert_eq!(findings.by_severity["High"], 1);
+        assert_eq!(findings.by_severity["Low"], 1);
+        assert_eq!(findings.by_classification["IN-SCOPE BLOCKER"], 1);
+        assert_eq!(findings.by_blocker_kind.len(), 1);
+        assert_eq!(findings.by_blocker_kind["SUBSTANTIVE"], 1);
+        assert_eq!(findings.unparsed, Some(0));
+
         let older = &status.assessments[1];
+        // No frontmatter: every recorded-only field is unknown, never defaulted.
+        assert_eq!(older.candidate_outcome, None);
+        assert_eq!(older.source, None);
+        assert!(older.findings.is_none());
         assert_eq!(older.packet_bytes, Some(12));
         assert_eq!(older.accepted_feature_count_at_review, None);
         assert!(older.contributions.is_empty());
