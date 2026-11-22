@@ -15,46 +15,11 @@
 # Exit codes: 0 success, 1 usage, 2 failure (nothing activated / verification failed).
 set -euo pipefail
 
-SCHEMA_VERSION=1
-fail() { printf 'monitor snapshot failed: %s\n' "$1" >&2; exit 2; }
-usage() { sed -n '4,5p' "${BASH_SOURCE[0]}" | sed 's/^#  *//' >&2; exit 1; }
-command -v jq >/dev/null || fail 'jq is required'
-
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 CODEOS_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd -P)"
-
-# The rows a data file holds: lines of a .jsonl file, 1 for a .json document.
-rows() { [[ "$1" == *.jsonl ]] && { grep -c '' "$1" || true; } || echo 1; }
-
-# Re-hash and re-count every file a manifest names; any difference or extra file fails.
-verify_snapshot() {
-  local dir="$1" manifest="$1/manifest.json"
-  [[ -f "${manifest}" ]] || fail "no manifest in ${dir}"
-  jq -e --argjson v "${SCHEMA_VERSION}" '.schema_version == $v and .status == "complete"' \
-    "${manifest}" >/dev/null || fail "manifest is not a complete schema-${SCHEMA_VERSION} snapshot"
-  local name sha count
-  while IFS=$'\t' read -r name sha count; do
-    [[ -f "${dir}/${name}" ]] || fail "missing ${name}"
-    [[ "$(sha256sum "${dir}/${name}" | cut -d' ' -f1)" == "${sha}" ]] || fail "hash mismatch: ${name}"
-    [[ "$(rows "${dir}/${name}")" == "${count}" ]] || fail "row count mismatch: ${name}"
-  done < <(jq -r '.files | to_entries[] | [.key, .value.sha256, .value.rows] | @tsv' "${manifest}")
-  [[ "$(cd "${dir}" && ls | grep -v '^manifest.json$' | sort)" == \
-     "$(jq -r '.files | keys[]' "${manifest}" | sort)" ]] || fail "files differ from the manifest"
-}
-
-verify_active() {
-  local root="$1" current="$1/current.json"
-  [[ -f "${current}" ]] || fail "no active snapshot: ${current}"
-  local id expected
-  id="$(jq -er '.snapshot_id' "${current}")" || fail 'current.json names no snapshot'
-  expected="$(jq -er '.manifest_sha256' "${current}")" || fail 'current.json has no manifest hash'
-  [[ "${id}" =~ ^[0-9]{8}T[0-9]{6}Z-[0-9a-f]{8}$ ]] || fail "malformed snapshot id: ${id}"
-  local dir="${root}/snapshots/${id}"
-  [[ "$(sha256sum "${dir}/manifest.json" 2>/dev/null | cut -d' ' -f1)" == "${expected}" ]] \
-    || fail "manifest hash differs from current.json for ${id}"
-  verify_snapshot "${dir}"
-  printf 'PASS: active snapshot %s is complete and hash-verified\n' "${id}"
-}
+# shellcheck source=snapshot-lib.sh
+source "${SCRIPT_DIR}/snapshot-lib.sh"
+usage() { sed -n '4,5p' "${BASH_SOURCE[0]}" | sed 's/^#  *//' >&2; exit 1; }
 
 if [[ "${1:-}" == "--verify-active" ]]; then
   [[ $# -eq 2 ]] || usage
@@ -77,10 +42,8 @@ WORKFLOW="$(binary workflow)"
 REVIEWER="$(binary reviewer)"
 WF="${PROJECT}/.codeos/06-workflow"
 
-ID="$(date -u +%Y%m%dT%H%M%SZ)-$(od -An -N4 -tx1 /dev/urandom | tr -d ' \n')"
-STAGE="${ROOT}/.staging-${ID}"
-mkdir -p "${STAGE}" "${ROOT}/snapshots"
-trap 'rm -rf "${STAGE}"' EXIT
+snapshot_stage "${ROOT}"
+STAGE="${SNAPSHOT_STAGE}"
 
 # 1. CodeOS projections, verbatim.
 (cd "${PROJECT}" && "${WORKFLOW}" status --json --history --since all) > "${STAGE}/status.json" \
@@ -132,12 +95,9 @@ else
 fi
 
 # 4. Manifest: provenance plus the hash and row count of every file.
-files="$(for path in "${STAGE}"/*; do
-  jq -n --arg name "$(basename "${path}")" --arg sha "$(sha256sum "${path}" | cut -d' ' -f1)" \
-    --argjson rows "$(rows "${path}")" '{($name): {sha256: $sha, rows: $rows}}'
-done | jq -s 'add')"
+files="$(snapshot_files "${STAGE}")"
 release="$(jq -r '.release_id // empty' "${CODEOS_ROOT}/maintenance/release-manifest.json" 2>/dev/null || true)"
-jq -n --argjson v "${SCHEMA_VERSION}" --arg id "${ID}" --argjson files "${files}" \
+jq -n --argjson v "${SNAPSHOT_SCHEMA_VERSION}" --arg id "${SNAPSHOT_ID}" --argjson files "${files}" \
   --arg generated "$(date -u +%Y-%m-%dT%H:%M:%SZ)" --arg project_root "${PROJECT}" \
   --slurpfile status "${STAGE}/status.json" --arg release "${release}" \
   --arg workflow_sha "$(sha256sum "${WORKFLOW}" | cut -d' ' -f1)" \
@@ -150,11 +110,4 @@ jq -n --argjson v "${SCHEMA_VERSION}" --arg id "${ID}" --argjson files "${files}
     files: $files}' > "${STAGE}/manifest.json"
 
 # 5. Verify in staging, move into place, then activate atomically.
-verify_snapshot "${STAGE}"
-mv "${STAGE}" "${ROOT}/snapshots/${ID}"
-trap - EXIT
-jq -n --arg id "${ID}" --arg sha "$(sha256sum "${ROOT}/snapshots/${ID}/manifest.json" | cut -d' ' -f1)" \
-  --arg at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-  '{snapshot_id: $id, manifest_sha256: $sha, activated_at: $at}' > "${ROOT}/current.json.tmp"
-mv "${ROOT}/current.json.tmp" "${ROOT}/current.json"
-verify_active "${ROOT}"
+snapshot_activate "${ROOT}"

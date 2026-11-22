@@ -10,7 +10,7 @@ fail() { printf 'monitor snapshot tests failed: %s\n' "$1" >&2; exit 1; }
 # A toolkit copy without built engines, so the script resolves the stubs on PATH.
 TOOLKIT="${WORK}/toolkit"
 mkdir -p "${TOOLKIT}/dba/04-tools/monitor" "${WORK}/bin"
-cp "${CODEOS_ROOT}/dba/04-tools/monitor/codeos-monitor-snapshot.sh" "${TOOLKIT}/dba/04-tools/monitor/"
+cp "${CODEOS_ROOT}/dba/04-tools/monitor/codeos-monitor-snapshot.sh" "${CODEOS_ROOT}/dba/04-tools/monitor/snapshot-lib.sh" "${TOOLKIT}/dba/04-tools/monitor/"
 SNAP="${TOOLKIT}/dba/04-tools/monitor/codeos-monitor-snapshot.sh"
 cat > "${WORK}/bin/codeos-workflow" <<'EOF'
 #!/usr/bin/env bash
