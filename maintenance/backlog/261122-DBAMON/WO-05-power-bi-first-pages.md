@@ -38,7 +38,7 @@ A project that runs its tests through its own `runtime_verification.verification
 example AII) records no CodeOS test evidence, so its test-run visuals stay empty. That is
 UNOBSERVED, not zero.
 
-Source written 2026-11-22 to `PowerBI/projects/dba-monitor` (not yet committed there), with a
+Committed to `PowerBI/projects/dba-monitor` after its first refresh on pb-prod, with a
 JamFree snapshot in its ignored `data/external`. Expected values at the first refresh:
 
 | Measure | Expected value |
