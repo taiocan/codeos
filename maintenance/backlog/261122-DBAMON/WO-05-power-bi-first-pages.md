@@ -34,6 +34,30 @@ Also included:
 - a KPI glossary giving each KPI's definition, source and any proxy label;
 - the not-publishable flag.
 
+A project that runs its tests through its own `runtime_verification.verification_command` (for
+example AII) records no CodeOS test evidence, so its test-run visuals stay empty. That is
+UNOBSERVED, not zero.
+
+Source written 2026-11-22 to `PowerBI/projects/dba-monitor` (not yet committed there), with a
+JamFree snapshot in its ignored `data/external`. Expected values at the first refresh:
+
+| Measure | Expected value |
+|---|---|
+| Verification records | 1,701 |
+| Failed verifications | 19 |
+| Decision receipts | 317 |
+| Candidate bundles | 175 |
+| Revalidation candidates | 103 |
+| Assessments | 195 |
+| PASSED | 112 |
+| BLOCKED | 42 |
+| Findings | 54 |
+| Execution-invalid attempts | 10 |
+| Test runs | 140 |
+| Test cases | 5,904 |
+| Change-failure proxy | 4/10 |
+| Defect-escape proxy | 4/23 |
+
 ## Verification
 
 - The prerequisite script passes.
