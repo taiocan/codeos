@@ -1814,6 +1814,11 @@ pub fn run(mut args: ReviewArgs, cfg: &Config) -> Result<i32> {
                         return Ok(crate::EXIT_PACKET);
                     }
                     Err(error) => {
+                        // Diagnostic only: the outcome below is identical for every provider
+                        // failure, and no other reviewer is selected (REVIEWER-AVAIL WO-01).
+                        if let Some(codex::ProviderFailure::UsageLimit(_)) = error.downcast_ref() {
+                            eprintln!("REVIEWER_UNAVAILABLE: Codex usage limit reached. No review recorded; no capacity consumed.");
+                        }
                         eprintln!("error: Codex invocation failed: {error}");
                         return Ok(crate::EXIT_PROVIDER);
                     }

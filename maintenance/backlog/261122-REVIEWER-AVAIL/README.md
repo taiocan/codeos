@@ -14,6 +14,6 @@ would be a separate PROTECTED reviewer-authority redesign.
 
 | WO | Class | Title | Status |
 |---|---|---|---|
-| [WO-01](WO-01-reviewer-unavailable-diagnostic.md) | NORMAL | Typed REVIEWER_UNAVAILABLE diagnostic for Codex quota exhaustion | Approved 2026-11-22 — not started |
+| [WO-01](WO-01-reviewer-unavailable-diagnostic.md) | NORMAL | Typed REVIEWER_UNAVAILABLE diagnostic for Codex quota exhaustion | Implemented 2026-11-22 — awaiting human acceptance |
 
 This table is the only place WO status is kept.

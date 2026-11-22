@@ -523,6 +523,22 @@ fn codex_failure_and_malformed_jsonl_fail_before_records() {
         assert_eq!(code, 3, "{stderr}");
         assert!(stderr.contains(expected), "{stderr}");
         assert!(!repo.path().join(".codeos/05-review/reviews").exists());
+        // Only a recognized usage limit is named REVIEWER_UNAVAILABLE, and the classification
+        // changes the message alone: same exit code, no records, Codex invoked exactly once.
+        assert_eq!(
+            stderr.contains("REVIEWER_UNAVAILABLE: Codex usage limit reached."),
+            mode == "usage_limit",
+            "{stderr}"
+        );
+        if mode == "usage_limit" {
+            let count =
+                std::fs::read_to_string(format!("{}.count", fake.args_log.display())).unwrap();
+            assert_eq!(
+                count.lines().count(),
+                1,
+                "Codex must be invoked exactly once"
+            );
+        }
     }
 }
 

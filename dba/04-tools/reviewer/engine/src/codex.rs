@@ -60,8 +60,10 @@ pub fn invoke(packet: &ReviewPacket, cfg: &Config) -> Result<InvokeOutcome> {
 
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr).trim().to_string();
-        let reported = failure_messages(&String::from_utf8_lossy(&output.stdout));
-        bail!(
+        let messages = failure_messages(&String::from_utf8_lossy(&output.stdout));
+        let usage_limit = messages.iter().any(|m| is_usage_limit(m));
+        let reported = messages.join("; ");
+        let failure = format!(
             "codex exec failed with status {}{}{}",
             output.status,
             if reported.is_empty() {
@@ -75,6 +77,11 @@ pub fn invoke(packet: &ReviewPacket, cfg: &Config) -> Result<InvokeOutcome> {
                 format!(": {stderr}")
             }
         );
+        return Err(if usage_limit {
+            ProviderFailure::UsageLimit(failure).into()
+        } else {
+            anyhow::anyhow!(failure)
+        });
     }
 
     let events = String::from_utf8(output.stdout).context("Codex JSONL output was not UTF-8")?;
@@ -365,9 +372,32 @@ fn path_arg(path: &Path) -> Result<&str> {
         .with_context(|| format!("path is not valid UTF-8: {}", path.display()))
 }
 
+/// A recognized Codex provider failure. Classification is diagnostic only: it changes the message
+/// the operator sees, never the exit code, the records, or which reviewer runs (REVIEWER-AVAIL).
+#[derive(Debug)]
+pub enum ProviderFailure {
+    /// Codex reported that its usage limit is reached. Carries the full failure description.
+    UsageLimit(String),
+}
+
+impl std::fmt::Display for ProviderFailure {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ProviderFailure::UsageLimit(detail) => f.write_str(detail),
+        }
+    }
+}
+
+impl std::error::Error for ProviderFailure {}
+
+fn is_usage_limit(message: &str) -> bool {
+    let message = message.to_ascii_lowercase();
+    message.contains("usage limit") || message.contains("usage_limit")
+}
+
 /// The error messages Codex reported in its JSONL event stream (e.g. a usage limit), deduplicated,
 /// so a failed invocation states its cause instead of only an exit status.
-fn failure_messages(stdout: &str) -> String {
+fn failure_messages(stdout: &str) -> Vec<String> {
     let mut messages: Vec<String> = Vec::new();
     for line in stdout.lines() {
         let Ok(event) = serde_json::from_str::<serde_json::Value>(line) else {
@@ -384,7 +414,7 @@ fn failure_messages(stdout: &str) -> String {
             }
         }
     }
-    messages.join("; ")
+    messages
 }
 
 #[cfg(test)]
@@ -392,8 +422,21 @@ mod tests {
     #[test]
     fn failure_messages_report_the_codex_error_once() {
         let stdout = "{\"type\":\"turn.started\"}\n{\"type\":\"error\",\"message\":\"usage limit\"}\n{\"type\":\"turn.failed\",\"error\":{\"message\":\"usage limit\"}}\nnot json\n";
-        assert_eq!(super::failure_messages(stdout), "usage limit");
-        assert_eq!(super::failure_messages("{\"type\":\"turn.started\"}"), "");
+        assert_eq!(super::failure_messages(stdout), ["usage limit"]);
+        assert!(super::failure_messages("{\"type\":\"turn.started\"}").is_empty());
+    }
+
+    #[test]
+    fn only_usage_limit_messages_classify_as_usage_limit() {
+        assert!(super::is_usage_limit(
+            "You've hit your usage limit. Try again later."
+        ));
+        assert!(super::is_usage_limit("usage_limit_reached"));
+        assert!(!super::is_usage_limit(
+            "stream disconnected before completion"
+        ));
+        assert!(!super::is_usage_limit("simulated Codex failure"));
+        assert!(!super::is_usage_limit(""));
     }
 
     use super::*;
