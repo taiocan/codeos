@@ -24,4 +24,4 @@ Legacy single-file briefs keep their original names.
 | REVIEW-SCALE | `261116-REVIEW-SCALE/README.md` | Deterministic review accounting | High | WO-01 accepted; DBA-33 (WO-02) and DBA-34 (human-session evidence) issued 2026-11-16 |
 | LEARNING | `261115-LEARNING/README.md` | Default guided user learning (DBA-32) | High | Approved 2026-11-15 |
 | VALIDITY | `261117-VALIDITY/README.md` | Dependency-accurate validity | High | Closed 2026-11-18 (DBA-35, DBA-36 issued) |
-| REVIEWER-AVAIL | `261122-REVIEWER-AVAIL/README.md` | Reviewer unavailability diagnostics | Medium | Approved 2026-11-22 — WO-01 implemented, awaiting acceptance |
+| REVIEWER-AVAIL | `261122-REVIEWER-AVAIL/README.md` | Reviewer unavailability diagnostics | Medium | Closed 2026-11-22 (WO-01 accepted) |
