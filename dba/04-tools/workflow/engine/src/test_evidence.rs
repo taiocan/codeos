@@ -32,6 +32,11 @@ pub struct TestRun {
     /// 1, or 2 for the repeated run of `repeatability`.
     pub attempt: u8,
     pub cases: Vec<TestCase>,
+    /// Wall-clock duration of the runner command that produced these cases, in milliseconds
+    /// (for libtest this includes compilation). Absent in evidence recorded before it was
+    /// measured: unknown, not zero. Diagnostic only; no decision reads it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub duration_ms: Option<u64>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -52,7 +57,14 @@ impl TestRun {
             runner: runner.into(),
             attempt,
             cases,
+            duration_ms: None,
         })
+    }
+
+    /// Record how long the runner command took.
+    pub fn timed(mut self, elapsed: std::time::Duration) -> Self {
+        self.duration_ms = Some(elapsed.as_millis() as u64);
+        self
     }
 }
 
@@ -277,6 +289,25 @@ mod tests {
             "fn other() { not_fn supports_day_sixty }",
             &names
         ));
+    }
+
+    #[test]
+    fn duration_is_additive_and_unknown_for_older_evidence() {
+        // Evidence recorded before durations existed parses unchanged, with the duration unknown.
+        let older = r#"{"schema":1,"verification":"behavior","runs":[{"runner":"libtest","attempt":1,"cases":[{"id":"a","status":"passed"}]}]}"#;
+        let parsed: TestEvidence = serde_json::from_str(older).unwrap();
+        assert_eq!(parsed.runs[0].duration_ms, None);
+        // An untimed run serializes byte-identically to the older format, so stored identities
+        // of existing evidence are unaffected.
+        assert_eq!(serde_json::to_string(&parsed).unwrap(), older);
+
+        let run = TestRun::new("libtest", 1, libtest_cases("test a ... ok\n"))
+            .unwrap()
+            .timed(std::time::Duration::from_millis(1234));
+        assert_eq!(run.duration_ms, Some(1234));
+        assert!(serde_json::to_string(&run)
+            .unwrap()
+            .ends_with(r#""duration_ms":1234}"#));
     }
 
     #[test]

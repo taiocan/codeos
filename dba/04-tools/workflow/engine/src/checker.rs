@@ -5060,6 +5060,7 @@ fn behavior_suite(
     (evidence::CommandOutcome, Vec<test_evidence::TestRun>),
     evidence::CommandOutcome,
 > {
+    let started = std::time::Instant::now();
     let (backend, stdout) = cargo_tests(project, &["test", "--workspace"]);
     if !backend.ok {
         return Err(backend);
@@ -5069,13 +5070,15 @@ fn behavior_suite(
         attempt,
         test_evidence::libtest_cases(&stdout),
     )
-    .map_err(|error| failure(error.to_string()))?];
+    .map_err(|error| failure(error.to_string()))?
+    .timed(started.elapsed())];
     let web = project.root.join("web");
     if !web.is_dir() || !project.web_has_script("test:unit") {
         return Ok((backend, runs));
     }
     let report = report_path("vitest");
     let output = format!("--outputFile.json={}", report.display());
+    let started = std::time::Instant::now();
     let frontend = evidence::run(
         &web,
         "npm",
@@ -5089,6 +5092,7 @@ fn behavior_suite(
             &output,
         ],
     );
+    let elapsed = started.elapsed();
     if !frontend.ok {
         let _ = std::fs::remove_file(&report);
         return Err(frontend);
@@ -5098,7 +5102,8 @@ fn behavior_suite(
         .map_err(|error| failure(error.to_string()))?;
     runs.push(
         test_evidence::TestRun::new("vitest", attempt, cases)
-            .map_err(|error| failure(error.to_string()))?,
+            .map_err(|error| failure(error.to_string()))?
+            .timed(elapsed),
     );
     Ok((
         evidence::CommandOutcome {
@@ -5139,6 +5144,7 @@ fn with_test_evidence(
 fn run_playwright(project: &Project, web: &Path, base_url: &str) -> evidence::CommandOutcome {
     let report = report_path("playwright");
     let report_text = report.to_string_lossy().into_owned();
+    let started = std::time::Instant::now();
     let outcome = evidence::run_env(
         web,
         "npm",
@@ -5148,12 +5154,14 @@ fn run_playwright(project: &Project, web: &Path, base_url: &str) -> evidence::Co
             ("PLAYWRIGHT_JSON_OUTPUT_FILE", report_text.as_str()),
         ],
     );
+    let elapsed = started.elapsed();
     if !outcome.ok {
         let _ = std::fs::remove_file(&report);
         return outcome;
     }
     let run = take_report(&report).and_then(|value| {
         test_evidence::TestRun::new("playwright", 1, test_evidence::playwright_cases(&value))
+            .map(|run| run.timed(elapsed))
     });
     match run {
         Ok(run) => with_test_evidence(project, "playwright", vec![run], outcome),
