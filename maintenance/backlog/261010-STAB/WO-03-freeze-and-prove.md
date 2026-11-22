@@ -25,7 +25,7 @@ Three qualifying features in total, or an explicit human decision to stop.
 
 ## Baseline (2026-10-17, after FAI)
 
-P3 restarts here, after the accepted [FAI](../FAI/charter.md) work. CodeOS is frozen from commit
+P3 restarts here, after the accepted [FAI](../261015-FAI/charter.md) work. CodeOS is frozen from commit
 `a48d27e` onward. JamFree is at `b9c8ef5` on DBA-28 (Feature Workflow v12, Evidence Scopes
 `backend` and `web`).
 - **Bootstrap:** current, B1–B5.
@@ -44,7 +44,7 @@ qualifying, two more needed. Next: "Arrive by", then one more qualifying feature
 ## Second baseline (2026-10-16, after SPERF, superseded)
 
 P3 restarts here, after the early P4 start (WO-04 decision) and the accepted
-[SPERF](../SPERF/charter.md) work. CodeOS is frozen from commit `2909c10` onward. JamFree is at
+[SPERF](../261015-SPERF/charter.md) work. CodeOS is frozen from commit `2909c10` onward. JamFree is at
 `d30545c`.
 - **Bootstrap:** current, B1–B5.
 - **Features:** F-0001, F-0002, F-0004 and F-0005 are VALID.
@@ -101,7 +101,7 @@ This section is the authoritative qualifying-feature count.
   validity for all four accepted features, where the old journey error stopped after two. Trigger
   for a performance root-cause trace: latency gets materially worse, blocks normal delivery, or
   grows nonlinearly as features are added. Root cause established 2026-10-15: repeated
-  recomputation and subprocess fan-out in the evaluator; see [SPERF](../SPERF/charter.md).
+  recomputation and subprocess fan-out in the evaluator; see [SPERF](../261015-SPERF/charter.md).
   Resolved 2026-10-16 by SPERF: about 6 s. The dominant cost turned out to be re-parsing the
   verification store.
 - 2026-10-15 (F-0005, expected): the window must change `web/src/routes/+page.svelte`, an
@@ -169,7 +169,7 @@ This section is the authoritative qualifying-feature count.
     TomTom calls) and are revalidated only if a new qualifying feature, release qualification, or
     an explicit DQA acceptance case needs them. The ~81 remaining approved calls are released.
 - 2026-10-18: P3 paused at 1/3 for DQA, the corrective branch of this WO
-  ([DQA](../DQA/README.md)). This WO stays open; P3 resumes from 1/3 after DQA, and STAB closes
+  ([DQA](../261017-DQA/README.md)). This WO stays open; P3 resumes from 1/3 after DQA, and STAB closes
   only after two more qualifying features.
 - 2026-10-19: DQA complete. JamFree adopted DBA-29 (`e119fd3`) after a compatibility repair
   (`9ad902e`) that accounts every provider attempt. Place search had made unreceipted TomTom

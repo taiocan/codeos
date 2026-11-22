@@ -2,7 +2,7 @@
 
 - **Status:** ACCEPTED — Primoz Gorjup, 2026-10-16, on WO-03 passing
 - **Class:** NORMAL. Implementation only: the full report stays semantically identical.
-- **Entry:** STAB WO-04 started it early on 2026-10-16, before [FAI](../FAI/charter.md), with P3
+- **Entry:** STAB WO-04 started it early on 2026-10-16, before [FAI](../261015-FAI/charter.md), with P3
   paused.
 
 Planning context only. Git and the governing policies stay authoritative.

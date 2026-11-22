@@ -13,8 +13,8 @@ Recommend one next structural improvement from the evidence. Nothing is implemen
 - The Charter's deferred items, each checked against its entry condition: batched human attention,
   reviewer throughput, and WO-07 automatic execution.
 - The revalidation fan-out finding below.
-- Candidates the human has already proposed: the [FAI charter](../FAI/charter.md) and the
-  [SPERF charter](../SPERF/charter.md) (2026-10-15).
+- Candidates the human has already proposed: the [FAI charter](../261015-FAI/charter.md) and the
+  [SPERF charter](../261015-SPERF/charter.md) (2026-10-15).
 
 ## Finding: revalidation fan-out (2026-10-14)
 
@@ -180,9 +180,9 @@ charter or WO.
 ## Results
 
 **Decision (2026-10-16).** P4 starts early, with P3 at 0 of 3 qualifying features. The order is:
-1. [SPERF](../SPERF/charter.md), limited to its Charter;
+1. [SPERF](../261015-SPERF/charter.md), limited to its Charter;
 2. a fresh P3 baseline;
-3. [FAI](../FAI/charter.md).
+3. [FAI](../261015-FAI/charter.md).
 
 The reason is that the next P3 feature, "Arrive by", would very likely change `+page.svelte` and
 repeat the known fan-out (F-0001 to F-0005 revalidated), so it would re-measure the FAI problem
@@ -191,7 +191,7 @@ rather than prove the freeze.
 **Revised order (2026-10-16, after SPERF).** FAI comes before the next P3 feature. The new order
 is:
 1. SPERF (done);
-2. [FAI](../FAI/charter.md);
+2. [FAI](../261015-FAI/charter.md);
 3. a fresh P3 baseline;
 4. "Arrive by";
 5. one more qualifying feature.

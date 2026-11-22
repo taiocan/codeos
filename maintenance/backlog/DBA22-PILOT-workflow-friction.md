@@ -10,7 +10,7 @@ Observed while running JamFree F-0003 under DBA-22 (2026-10-07).
   version requires a genuinely new governance rule, not a bug fix.
 - Historical state at STAB creation: 1/3 qualifying features (JamFree F-0003); F-0002 did not
   count. The forward stabilization criterion and completion decision are now owned by
-  `maintenance/backlog/STAB/charter.md`.
+  `maintenance/backlog/261010-STAB/charter.md`.
 - Priority order: items 7, 1, 2, 8 below. Everything else waits.
 
 ## Candidates

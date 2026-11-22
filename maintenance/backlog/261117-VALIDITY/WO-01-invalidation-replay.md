@@ -29,7 +29,7 @@ model.
 
 ## Results (accepted 2026-11-17)
 
-Command: `python3 -I maintenance/backlog/VALIDITY/wo01-replay.py <JamFree> 80fb5ec [--rows]`. It reads
+Command: `python3 -I maintenance/backlog/261117-VALIDITY/wo01-replay.py <JamFree> 80fb5ec [--rows]`. It reads
 only `git show 80fb5ec:<path>` and runs in about 10 s. The counts reproduce the analysis: F4 17, F6
 38, Stage 8 36, F8 21, F9 18 (130 cases).
 
