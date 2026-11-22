@@ -25,4 +25,4 @@ Legacy single-file briefs keep their original names.
 | LEARNING | `261115-LEARNING/README.md` | Default guided user learning (DBA-32) | High | Approved 2026-11-15 |
 | VALIDITY | `261117-VALIDITY/README.md` | Dependency-accurate validity | High | Closed 2026-11-18 (DBA-35, DBA-36 issued) |
 | REVIEWER-AVAIL | `261122-REVIEWER-AVAIL/README.md` | Reviewer unavailability diagnostics | Medium | Closed 2026-11-22 (WO-01 accepted) |
-| DBAMON | `261122-DBAMON/README.md` | DBA Monitor (Power BI projection) | Medium | Approved 2026-11-22 — WO-01..WO-03 accepted; WO-04 next |
+| DBAMON | `261122-DBAMON/README.md` | DBA Monitor (Power BI projection) | Medium | Approved 2026-11-22 — WO-01..WO-03 accepted; WO-04 implemented, awaiting acceptance |

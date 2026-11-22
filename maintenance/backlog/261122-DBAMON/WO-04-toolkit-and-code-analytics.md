@@ -20,8 +20,14 @@
    feature is context only.
 2. **Git churn and hotspots.** Churn per file per commit and hotspots (churn × size), with
    bookkeeping paths (`.codeos/`, `events/`, records) excluded.
-3. **Static and security summaries.** clippy warning counts, plus cargo-audit and cargo-deny
-   findings, run in a temporary worktree.
+3. **Static and security summaries:** moved to [WO-07](WO-07-static-and-security-summaries.md)
+   by the human on 2026-11-22.
+
+CodeOS-attributable defects and whether a DBA-N was issued as a correction are not recorded in
+structured form. Their columns are null, as decided by the human on 2026-11-22.
+
+Implemented as `dba/04-tools/monitor/codeos-toolkit-analytics.sh <external-root> [project ...]`. It
+reads git history only, and its bookkeeping exclusions include project `evidence/` record files.
 
 ## Verification
 

@@ -23,6 +23,7 @@ bash "${CODEOS_ROOT}/dba/04-tools/architecture-migration/tests/architecture-scop
 bash "${CODEOS_ROOT}/dba/04-tools/implementer/tests/codeos-implement-tests.sh"
 bash "${CODEOS_ROOT}/dba/04-tools/learning/tests/codeos-learning-tests.sh"
 bash "${CODEOS_ROOT}/dba/04-tools/monitor/tests/codeos-monitor-snapshot-tests.sh"
+bash "${CODEOS_ROOT}/dba/04-tools/monitor/tests/codeos-toolkit-analytics-tests.sh"
 cargo test --manifest-path "${CODEOS_ROOT}/dba/04-tools/reviewer/engine/Cargo.toml"
 cargo test --manifest-path "${CODEOS_ROOT}/dba/04-tools/workflow/engine/Cargo.toml"
 
