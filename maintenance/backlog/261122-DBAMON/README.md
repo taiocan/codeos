@@ -31,7 +31,7 @@ cross-project comparison, and any use of the monitor as workflow, validity or ac
 |---|---|---|---|
 | [WO-01](WO-01-review-status-enrichment.md) | NORMAL | Enrich `review-status --json` per assessment | Accepted 2026-11-22 |
 | [WO-02](WO-02-structured-test-durations.md) | NORMAL (PROTECTED if identity inputs change) | Structured test-evidence durations | Accepted 2026-11-22 — first real run pending observation |
-| [WO-03](WO-03-project-monitor-snapshot.md) | NORMAL | Immutable project-monitor snapshot | Approved 2026-11-22 — not started |
+| [WO-03](WO-03-project-monitor-snapshot.md) | NORMAL | Immutable project-monitor snapshot | Implemented 2026-11-22 — awaiting human acceptance |
 | [WO-04](WO-04-toolkit-and-code-analytics.md) | NORMAL | Toolkit governance growth and code analytics | Approved 2026-11-22 — not started |
 | [WO-05](WO-05-power-bi-first-pages.md) | PowerBI repo | First three Power BI pages | Approved 2026-11-22 — not started |
 | [WO-06](WO-06-deferred-pages.md) | Deferred | Further pages and instrumentation | Deferred until real use shows value |

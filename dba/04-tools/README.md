@@ -26,6 +26,10 @@ The sibling layout keeps supported paths stable; lifecycle is not inferred from 
 
 ## Bounded capabilities
 
+- `monitor/` builds an immutable, hash-verified snapshot of one project's CodeOS records for an
+  external read-only report (DBAMON). It only reads the project and is never workflow, validity,
+  or acceptance evidence.
+
 - `architecture-migration/` is the one-way bridge from the supported legacy architecture format.
   When that starting format leaves the support window, delete its implementation, fixtures, tests,
   and corresponding upgrade guidance together.
