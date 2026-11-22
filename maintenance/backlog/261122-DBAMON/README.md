@@ -35,6 +35,6 @@ cross-project comparison, and any use of the monitor as workflow, validity or ac
 | [WO-04](WO-04-toolkit-and-code-analytics.md) | NORMAL | Toolkit governance growth and git analytics | Accepted 2026-11-22 |
 | [WO-05](WO-05-power-bi-first-pages.md) | PowerBI repo | First three Power BI pages | Accepted 2026-11-22 |
 | [WO-06](WO-06-deferred-pages.md) | Deferred | Further pages and instrumentation | Deferred until real use shows value |
-| [WO-07](WO-07-static-and-security-summaries.md) | NORMAL | Static and security summaries (split from WO-04) | Approved 2026-11-22 — not started |
+| [WO-07](WO-07-static-and-security-summaries.md) | NORMAL | Static and security summaries (split from WO-04) | Implemented 2026-11-22 — awaiting human acceptance |
 
 This table is the only place WO status is kept.
