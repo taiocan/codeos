@@ -13,3 +13,6 @@ Migrations live in `migrations/` and run automatically at startup (`sqlx migrate
 migration file per feature that needs persistence — see
 `dba/05-guidance/patterns/postgresql-reliability.md` and `rust-project-structure.md` in the
 toolkit.
+
+The baseline enables no time library. `chrono` is flagged unmaintained (RUSTSEC-2026-0543); a
+feature that needs time types should use a maintained crate that sqlx supports, such as `time`.
