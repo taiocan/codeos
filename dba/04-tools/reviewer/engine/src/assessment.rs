@@ -120,6 +120,85 @@ fn yaml_escape(s: &str) -> String {
 /// `UPG-0045`/`UPG-0046` review rounds from this same session. This is ongoing model output
 /// variance, not a resolved historical format version — both shapes are permanently supported,
 /// not one treated as legacy.
+///
+/// The `Finding`/`Severity`/`Classification` header is likewise accepted in three equivalent
+/// shapes: one slash-joined line (the prompt's form), three separate lines, and a two-line form
+/// where the title stands alone and `Severity: X / Classification: Y` follows on one line. The
+/// two-line form is what reviewers produce when a long title breaks the prompt's single line; it
+/// failed whole reviews until it was accepted.
+///
+/// Markdown-decorated field lines (`1. **Finding:** t`, `   **Severity: High / Classification: Y**`)
+/// are unwrapped by `normalize_field_line` before matching. Every accepted shape yields the same
+/// `Finding`, and every missing, invalid, or duplicate field still leaves the block unparsed.
+/// Field labels whose markdown wrapper `normalize_field_line` may remove.
+const FIELD_LABELS: [&str; 9] = [
+    "Finding",
+    "Severity",
+    "Classification",
+    "Evidence required",
+    "Evidence",
+    "Why",
+    "Required action",
+    "Scope reason",
+    "Blocker kind",
+];
+
+/// Remove one markdown emphasis wrapper that opens at `pos` with a field label in `labels`:
+/// `**Label:** value` or `**Label: value**`. Only the opening marker and the next identical
+/// marker are removed. An unclosed wrapper leaves the text unchanged, so it stays malformed.
+fn unwrap_label_at(text: &mut String, pos: usize, labels: &[&str]) -> bool {
+    for marker in ["**", "__"] {
+        let rest = &text[pos..];
+        let Some(after) = rest.strip_prefix(marker) else {
+            continue;
+        };
+        if !labels.iter().any(|label| {
+            after
+                .strip_prefix(label)
+                .is_some_and(|tail| tail.starts_with(':'))
+        }) {
+            return false;
+        }
+        let open_end = pos + marker.len();
+        let Some(close) = text[open_end..].find(marker) else {
+            return false;
+        };
+        text.replace_range(open_end + close..open_end + close + marker.len(), "");
+        text.replace_range(pos..open_end, "");
+        return true;
+    }
+    false
+}
+
+/// Lexical, field-local normalization of one markdown-decorated field line. A line changes only
+/// when, after indentation and an optional `N. ` prefix, it opens with a wrapped field label; the
+/// indentation and that wrapper are removed, and on a `Finding`/`Severity` line so are wrappers
+/// on a following ` / Severity:` or ` / Classification:` segment. Field values are never edited,
+/// and any other line, including undecorated indented text, is returned unchanged.
+fn normalize_field_line(line: &str) -> String {
+    let body = line.trim_start();
+    let digits = body.len() - body.trim_start_matches(|c: char| c.is_ascii_digit()).len();
+    let prefix_len = if digits > 0 && body[digits..].starts_with(". ") {
+        digits + 2 + body[digits + 2..].len() - body[digits + 2..].trim_start().len()
+    } else {
+        0
+    };
+    let mut text = body.to_string();
+    if !unwrap_label_at(&mut text, prefix_len, &FIELD_LABELS) {
+        return line.to_string();
+    }
+    let opened = &text[prefix_len..];
+    if opened.starts_with("Finding:") || opened.starts_with("Severity:") {
+        let mut cursor = prefix_len;
+        while let Some(offset) = text[cursor..].find(" / ") {
+            let segment = cursor + offset + 3;
+            unwrap_label_at(&mut text, segment, &["Severity", "Classification"]);
+            cursor = segment;
+        }
+    }
+    text
+}
+
 /// Whether a line opens a finding block: `Finding:` at the start, optionally numbered.
 fn is_finding_header_line(line: &str) -> bool {
     let rest = line.trim_start_matches(|c: char| c.is_ascii_digit());
@@ -129,7 +208,8 @@ fn is_finding_header_line(line: &str) -> bool {
 
 pub fn parse_findings(raw_text: &str, review_id: &str) -> (Vec<Finding>, usize) {
     let real_region = raw_text.split("\nLOG SUMMARY:").next().unwrap_or(raw_text);
-    let lines: Vec<&str> = real_region.lines().collect();
+    let normalized: Vec<String> = real_region.lines().map(normalize_field_line).collect();
+    let lines: Vec<&str> = normalized.iter().map(String::as_str).collect();
 
     // The optional `N. ` prefix is a real recurring shape: reviewers number their findings. It was
     // silently dropping those findings entirely — they matched no header, so they were neither
@@ -141,6 +221,9 @@ pub fn parse_findings(raw_text: &str, review_id: &str) -> (Vec<Finding>, usize) 
     let finding_only_re = Regex::new(r"^(?:\d+\.\s+)?Finding: (.+?)\s*$").expect("valid regex");
     let severity_only_re = Regex::new(r"^Severity: (High|Medium|Low)\s*$").expect("valid regex");
     let classification_only_re = Regex::new(r"^Classification: (.+?)\s*$").expect("valid regex");
+    let severity_classification_re =
+        Regex::new(r"^Severity: (High|Medium|Low) / Classification: (.+?)\s*$")
+            .expect("valid regex");
     // The action is one exact canonical token. A real reviewer shape follows it with a dash and an
     // explanation; only the token carries meaning, and any other wording stays malformed.
     let combined_re = Regex::new(r"^Evidence: (.+?) / Why: (.+?) / Required action: (fix now|optional fix|backlog|reject)(?:\s+[—–-]\s+\S.*?)?\s*$")
@@ -182,6 +265,17 @@ pub fn parse_findings(raw_text: &str, review_id: &str) -> (Vec<Finding>, usize) 
             ))
         } else if !line.contains(" / Severity:") && !line.contains(" / Classification:") {
             finding_only_re.captures(line).and_then(|finding| {
+                if let Some(joined) = lines
+                    .get(i + 1)
+                    .and_then(|line| severity_classification_re.captures(line))
+                {
+                    return Some((
+                        finding[1].trim().to_string(),
+                        joined[1].to_string(),
+                        joined[2].trim().to_string(),
+                        2usize,
+                    ));
+                }
                 let severity = lines
                     .get(i + 1)
                     .and_then(|line| severity_only_re.captures(line));
@@ -1161,6 +1255,95 @@ mod tests {
         assert_eq!(multiline.why, single.why);
         assert_eq!(multiline.scope_reason, single.scope_reason);
         assert_eq!(multiline.blocker_kind, single.blocker_kind);
+    }
+
+    #[test]
+    fn every_accepted_header_and_decoration_shape_parses_to_the_same_finding() {
+        let tail =
+            "\n\nLOG SUMMARY: DO NOT ADVANCE — x\nEVIDENCE: B\nHIGHEST-IMPACT UNCERTAINTY: u\n";
+        let shapes = [
+            // Canonical single line.
+            "Finding: Snapshot activation accepts incomplete membership / Severity: High / Classification: IN-SCOPE BLOCKER\nEvidence: `lib.rs:263` — `verify_snapshot`\nWhy: empty maps pass / verification\nRequired action: fix now\nScope reason: explicit guarantee",
+            // Three separate lines.
+            "Finding: Snapshot activation accepts incomplete membership\nSeverity: High\nClassification: IN-SCOPE BLOCKER\nEvidence: `lib.rs:263` — `verify_snapshot`\nWhy: empty maps pass / verification\nRequired action: fix now\nScope reason: explicit guarantee",
+            // Two-line header (AII F-0001 Stage 8, attempts 1-2).
+            "Finding: Snapshot activation accepts incomplete membership  \nSeverity: High / Classification: IN-SCOPE BLOCKER  \nEvidence: `lib.rs:263` — `verify_snapshot`  \nWhy: empty maps pass / verification  \nRequired action: fix now  \nScope reason: explicit guarantee",
+            // Labels bolded (AII 20261122T213124Z attempt 3).
+            "1. **Finding:** Snapshot activation accepts incomplete membership  \n   **Severity:** High / **Classification:** IN-SCOPE BLOCKER  \n   **Evidence:** `lib.rs:263` — `verify_snapshot`  \n   **Why:** empty maps pass / verification  \n   **Required action:** fix now  \n   **Scope reason:** explicit guarantee",
+            // Whole fields bolded (AII 20261122T213930Z attempt 3).
+            "1. **Finding: Snapshot activation accepts incomplete membership**  \n   **Severity: High / Classification: IN-SCOPE BLOCKER**  \n   **Evidence:** `lib.rs:263` — `verify_snapshot`  \n   **Why:** empty maps pass / verification  \n   **Required action: fix now**  \n   **Scope reason:** explicit guarantee",
+        ];
+        let parsed: Vec<_> = shapes
+            .iter()
+            .map(|shape| {
+                let text = format!("{shape}{tail}");
+                let (findings, unparsed) = parse_findings(&text, RID);
+                assert_eq!((findings.len(), unparsed), (1, 0), "{shape}");
+                let parsed = parse_review_output(&text, &CoverageState::FullCoverage, 1, 0);
+                assert_eq!(parsed.parse_status, "OK", "{shape}");
+                assert_eq!(parsed.assessment_status, "COMPLETE", "{shape}");
+                findings[0].to_yaml_entry()
+                    + &format!(
+                        "{:?}",
+                        (
+                            &findings[0].evidence,
+                            &findings[0].why,
+                            &findings[0].scope_reason
+                        )
+                    )
+            })
+            .collect();
+        for other in &parsed[1..] {
+            assert_eq!(other, &parsed[0]);
+        }
+        assert!(parsed[0].contains("empty maps pass / verification"));
+    }
+
+    #[test]
+    fn decorated_and_two_line_headers_remain_fail_closed() {
+        for text in [
+            // Two-line form: invalid severity, non-canonical label, missing classification.
+            "Finding: t\nSeverity: Critical / Classification: IN-SCOPE BLOCKER\nEvidence: e\nWhy: w\nRequired action: fix now\n",
+            "Finding: t\nSeverity: High / Classification: MAYBE\nEvidence: e\nWhy: w\nRequired action: fix now\n",
+            "Finding: t\nSeverity: High /\nEvidence: e\nWhy: w\nRequired action: fix now\n",
+            // Two-line form followed by a competing field.
+            "Finding: t\nSeverity: High / Classification: IN-SCOPE BLOCKER\nClassification: REJECTED\nEvidence: e\nWhy: w\nRequired action: fix now\n",
+            "Finding: t\nSeverity: High / Classification: IN-SCOPE BLOCKER\nSeverity: Low\nEvidence: e\nWhy: w\nRequired action: fix now\n",
+            // Duplicates that only become visible after unwrapping.
+            "**Finding:** t\n**Severity:** High / **Classification:** IN-SCOPE BLOCKER\n**Severity:** Low\n**Evidence:** e\n**Why:** w\n**Required action:** fix now\n",
+            "**Finding:** t\n**Severity: High**\n**Classification: IN-SCOPE BLOCKER**\n   **Classification:** REJECTED\n**Evidence:** e\n**Why:** w\n**Required action:** fix now\n",
+            // Unclosed wrapper stays malformed rather than being guessed.
+            "**Finding: t\n**Severity: High / Classification: IN-SCOPE BLOCKER\n**Evidence:** e\n**Why:** w\n**Required action:** fix now\n",
+            // Decorated action must still be one canonical token.
+            "**Finding:** t\n**Severity:** High / **Classification:** IN-SCOPE BLOCKER\n**Evidence:** e\n**Why:** w\n**Required action:** fix it soon\n",
+        ] {
+            // An unclosed wrapper is not a header at all; the declared-finding count still
+            // catches it, so the review-level status is the guard asserted for every case.
+            let text = format!("{text}\nLOG SUMMARY: DO NOT ADVANCE — x\nEVIDENCE: B\n");
+            let (findings, unparsed) = parse_findings(&text, RID);
+            let parsed =
+                parse_review_output(&text, &CoverageState::FullCoverage, findings.len(), unparsed);
+            assert!(findings.is_empty(), "{text}");
+            assert_eq!(parsed.parse_status, "FAILED", "{text}");
+            assert_eq!(parsed.assessment_status, "INCOMPLETE", "{text}");
+        }
+    }
+
+    #[test]
+    fn normalization_leaves_non_field_and_undecorated_lines_unchanged() {
+        for line in [
+            "    Finding: / Severity: High|Medium|Low / Classification: <one of the TRIAGE RULE labels>",
+            "   Evidence: indented but undecorated",
+            "**Note:** not a field",
+            "| **Finding:** | table cell |",
+            "Why: value with **bold** inside",
+        ] {
+            assert_eq!(normalize_field_line(line), line);
+        }
+        assert_eq!(
+            normalize_field_line("   **Why:** value with **bold** / **Classification:** inside"),
+            "Why: value with **bold** / **Classification:** inside"
+        );
     }
 
     #[test]
