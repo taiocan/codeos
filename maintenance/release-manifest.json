@@ -1,0 +1,25 @@
+{
+  "schema": 1,
+  "release_id": "codeos-4711a9ba0ca8c98a",
+  "source_sha256": "4711a9ba0ca8c98a20bd725a0c68583964e74726245144578a39a738b48f57cd",
+  "binaries": {
+    "codeos-workflow": {
+      "sha256": "45a49ab1c19d3fd87c94c1b5db503bbdcab2457eaad8ec5bffbd1c478e67ebe9",
+      "build_id": "4711a9ba0ca8c98a20bd725a0c68583964e74726245144578a39a738b48f57cd"
+    },
+    "codeos-reviewer": {
+      "sha256": "d338aa117cce6b60e7c64f7b27e556fd0f0ee115f430c4511e7948dd122ef1df",
+      "build_id": "4711a9ba0ca8c98a20bd725a0c68583964e74726245144578a39a738b48f57cd"
+    }
+  },
+  "toolchains": {
+    "rust": "1.93.0",
+    "node": "20.19.2",
+    "npm": "9.2.0"
+  },
+  "reviewer": {
+    "codex_cli": "0.162.0",
+    "model": "gpt-6.1-sol",
+    "reasoning_effort": "high"
+  }
+}
