@@ -6,7 +6,8 @@
 
 - **Further pages:**
   - governance growth (WO-04);
-  - code health (WO-04);
+  - code health (WO-07) — delivered early as report page 4 "Code health" at the human's request
+    2026-11-22;
   - current control state (attention, validity matrix, health, platform assurance, all imported
     verbatim);
   - operations and learning (runtime Failed/Presented ratio, provider calls, observation age and

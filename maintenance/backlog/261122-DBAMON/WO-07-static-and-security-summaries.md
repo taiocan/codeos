@@ -21,6 +21,11 @@
 - A known advisory or lint in a fixture is counted.
 - A missing tool yields null.
 
+## Display
+
+The results are shown on report page 4 "Code health", delivered early under WO-06 at the human's
+request 2026-11-22.
+
 ## Acceptance
 
 The verification passes and the human accepts.
