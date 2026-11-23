@@ -37,6 +37,6 @@ cross-project comparison, and any use of the monitor as workflow, validity or ac
 | [WO-06](WO-06-deferred-pages.md) | Deferred | Further pages and instrumentation | Deferred until real use shows value |
 | [WO-07](WO-07-static-and-security-summaries.md) | NORMAL | Static and security summaries (split from WO-04) | Accepted 2026-11-22 |
 | [WO-08](WO-08-report-guidance.md) | PowerBI repo | In-report guidance for novice and CodeOS-developer readers | Accepted 2026-11-23 |
-| [WO-09](WO-09-monthly-assessment.md) | PowerBI repo | Monthly development assessment (advisory evaluation) | Implemented 2026-11-23; first assessment (2026-11) approved for display — awaiting WO acceptance |
+| [WO-09](WO-09-monthly-assessment.md) | PowerBI repo | Monthly development assessment (advisory evaluation) | Accepted 2026-11-23 |
 
 This table is the only place WO status is kept.
