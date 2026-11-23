@@ -23,8 +23,11 @@ case "${sub}" in
     printf '{"reason":"compiler-message","message":{"level":"note","code":null,"spans":[]}}\n'
     ;;
   audit)
-    printf '{"vulnerabilities":{"found":true,"list":[{"advisory":{"id":"RUSTSEC-2026-0001"},"package":{"name":"tokio","version":"1.0.0"}}]},"warnings":{"unmaintained":[{"advisory":{"id":"RUSTSEC-2026-0002"},"package":{"name":"old","version":"0.1.0"}}]}}\n'
+    printf '{"vulnerabilities":{"found":true,"list":[{"advisory":{"id":"RUSTSEC-2026-0001"},"package":{"name":"tokio","version":"1.0.0"}},{"advisory":{"id":"RUSTSEC-2026-0003"},"package":{"name":"ghost","version":"2.0.0"}}]},"warnings":{"unmaintained":[{"advisory":{"id":"RUSTSEC-2026-0002"},"package":{"name":"old","version":"0.1.0"}}]}}\n'
     exit 1 ;;
+  tree)
+    # Built crate: printed; lockfile-only crate: nothing printed; unknown spec: cargo error.
+    case "${!#}" in tokio@*) echo 'tokio v1.0.0' ;; old@*) ;; *) exit 101 ;; esac ;;
   deny)
     printf '%s\n' '{"type":"diagnostic","fields":{"severity":"error","code":"rejected"}}' \
       '{"type":"diagnostic","fields":{"severity":"error","code":"rejected"}}' '{"type":"summary","fields":{}}' >&2 ;;
@@ -65,9 +68,10 @@ row() { jq -c --arg r "$1" --arg w "$2" --arg t "$3" 'select(.repo == $r and .wo
 [[ "$(jq -c 'select(.workspace == "good") | [.lint, .count]' "${D}/clippy_lints.jsonl" | tr '\n' ' ')" \
   == '["clippy::needless_return",2] ["unused_variables",1] ' ]] || fail 'clippy lint counts'
 [[ "$(row toolkit broken clippy)" == '["failed",null]' ]] || fail 'a failed build must be null, not zero'
-[[ "$(row toolkit good cargo-audit)" == '["ok",2]' ]] || fail 'audit exit 1 with a report is ok'
-[[ "$(jq -c 'select(.workspace == "good") | [.kind, .id]' "${D}/advisories.jsonl" | tr '\n' ' ')" \
-  == '["vulnerability","RUSTSEC-2026-0001"] ["unmaintained","RUSTSEC-2026-0002"] ' ]] || fail 'advisories'
+[[ "$(row toolkit good cargo-audit)" == '["ok",3]' ]] || fail 'audit exit 1 with a report is ok'
+[[ "$(jq -c 'select(.workspace == "good") | [.kind, .id, .compiled]' "${D}/advisories.jsonl" | tr '\n' ' ')" \
+  == '["vulnerability","RUSTSEC-2026-0001",true] ["vulnerability","RUSTSEC-2026-0003",null] ["unmaintained","RUSTSEC-2026-0002",false] ' ]] \
+  || fail 'advisories: compiled is true when built, false when lockfile-only, null when unknown'
 [[ "$(row toolkit good cargo-deny)" == '["ok",2]' ]] || fail 'deny with committed config'
 [[ "$(jq -c 'select(.workspace == "good") | [.code, .count]' "${D}/deny_findings.jsonl")" == '["rejected",2]' ]] || fail 'deny counts'
 [[ "$(row project backend cargo-deny)" == '["not_configured",null]' ]] || fail 'uncommitted deny.toml must not be used'

@@ -16,7 +16,8 @@
 #   static_runs.jsonl    one row per workspace and tool: status ok | failed | not_configured |
 #                        unavailable, tool version, finding count (null unless ok), note
 #   clippy_lints.jsonl   distinct clippy/rustc diagnostics per workspace, by lint and level
-#   advisories.jsonl     cargo-audit vulnerabilities and warnings (unmaintained, yanked, unsound)
+#   advisories.jsonl     cargo-audit vulnerabilities and warnings (unmaintained, yanked, unsound),
+#                        with `compiled` (true | false | null): whether the crate is in the build graph
 #   deny_findings.jsonl  cargo-deny diagnostics per workspace, by code and severity
 #
 # Exit codes: 0 success, 1 usage, 2 failure (nothing activated / verification failed).
@@ -114,7 +115,18 @@ for repo in "${REPOS[@]}"; do
                | {kind: $kind, id: (.advisory.id // null), package: .package.name,
                   version: .package.version}])[]
             | {repo: $repo, workspace: $ws} + .' "${EXPORTS}/audit.json" > "${EXPORTS}/adv.jsonl"
-        cat "${EXPORTS}/adv.jsonl" >> "${STAGE}/advisories.jsonl"
+        # cargo-audit reads Cargo.lock, which also lists optional crates that are never built.
+        # `compiled` says whether the crate is in the build graph; null when that is unknown.
+        while IFS= read -r row; do
+          spec="$(jq -r '"\(.package)@\(.version)"' <<<"${row}")"
+          if tree="$(cd "${dir}" && CARGO_TARGET_DIR="${target}" cargo tree --locked --target all \
+                -e normal,build,dev -i "${spec}" 2>/dev/null)"; then
+            compiled="$([[ -n "${tree}" ]] && echo true || echo false)"
+          else
+            compiled=null
+          fi
+          jq -c --argjson c "${compiled}" '. + {compiled: $c}' <<<"${row}" >> "${STAGE}/advisories.jsonl"
+        done < "${EXPORTS}/adv.jsonl"
         run_row "${name}" "${ws}" cargo-audit ok "${AUDIT_VERSION}" "$(grep -c '' "${EXPORTS}/adv.jsonl" || true)" ''
       else
         run_row "${name}" "${ws}" cargo-audit failed "${AUDIT_VERSION}" null \
