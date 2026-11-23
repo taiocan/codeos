@@ -7,3 +7,6 @@
   standalone bump forces revalidation, with its cost and TomTom calls. Backend platform assurance
   and supply-chain health are already STALE and will be refreshed in that cycle anyway.
 - **Codeos role:** tracking only. The next static snapshot confirms the result.
+- **Re-checked 2026-11-23:** JamFree had no feature in progress, and `backend/src` never calls
+  `Url::origin()`, the vulnerable function, so practical exposure is low. The human kept the
+  deferral.
