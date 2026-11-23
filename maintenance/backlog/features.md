@@ -26,4 +26,4 @@ Legacy single-file briefs keep their original names.
 | VALIDITY | `261117-VALIDITY/README.md` | Dependency-accurate validity | High | Closed 2026-11-18 (DBA-35, DBA-36 issued) |
 | REVIEWER-AVAIL | `261122-REVIEWER-AVAIL/README.md` | Reviewer unavailability diagnostics | Medium | Closed 2026-11-22 (WO-01 accepted) |
 | DBAMON | `261122-DBAMON/README.md` | DBA Monitor (Power BI projection) | Medium | WO-01..WO-05, WO-07 accepted 2026-11-22; WO-06 deferred; WO-08, WO-09 accepted 2026-11-23 |
-| SKELDEPS | `261123-SKELDEPS/README.md` | Vulnerable dependencies in the initializer skeleton | Medium | Approved 2026-11-23 — WO-01 not started |
+| SKELDEPS | `261123-SKELDEPS/README.md` | Vulnerable dependencies in the initializer skeleton | Medium | WO-01 accepted 2026-11-23; WO-02 in progress |

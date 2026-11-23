@@ -54,7 +54,7 @@ It belongs to no release or configuration identity, and no binaries change.
 
 | WO | Class | Title | Status |
 |---|---|---|---|
-| [WO-01](WO-01-skeleton-patch-upgrades.md) | NORMAL | Patch url and tokio; remove unused chrono | Approved 2026-11-23 — not started |
+| [WO-01](WO-01-skeleton-patch-upgrades.md) | NORMAL | Patch url and tokio; remove unused chrono | Accepted 2026-11-23 |
 | [WO-02](WO-02-compiled-advisory-flag.md) | NORMAL (DBAMON monitor and report) | Mark whether an advisory's crate is compiled | Approved 2026-11-23 — not started |
 | [WO-03](WO-03-jamfree-url.md) | Project-owned | JamFree url 2.5.9 in its next feature cycle | Deferred to JamFree's next feature |
 | [WO-04](WO-04-sqlx-0-9.md) | Deferred | sqlx 0.9 in the skeleton | Deferred (trigger in the WO) |
