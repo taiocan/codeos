@@ -6,7 +6,8 @@
 
 ## Scope
 
-- Each page gets one collapsible "How to read this page" text box with two short parts:
+- Each page gets a "How to read this page" panel below its visuals (the page scrolls; collapsing
+  would need hand-written bookmark state, which is fragile) with two short parts:
   - **Novice:** what question the page answers and how to read each visual.
   - **CodeOS developer:** which CodeOS record each figure comes from, which figures are labelled
     proxies, which patterns deserve a look, and where to drill down next.

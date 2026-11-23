@@ -36,7 +36,7 @@ cross-project comparison, and any use of the monitor as workflow, validity or ac
 | [WO-05](WO-05-power-bi-first-pages.md) | PowerBI repo | First three Power BI pages | Accepted 2026-11-22 |
 | [WO-06](WO-06-deferred-pages.md) | Deferred | Further pages and instrumentation | Deferred until real use shows value |
 | [WO-07](WO-07-static-and-security-summaries.md) | NORMAL | Static and security summaries (split from WO-04) | Accepted 2026-11-22 |
-| [WO-08](WO-08-report-guidance.md) | PowerBI repo | In-report guidance for novice and CodeOS-developer readers | Approved 2026-11-23 — not started |
+| [WO-08](WO-08-report-guidance.md) | PowerBI repo | In-report guidance for novice and CodeOS-developer readers | Accepted 2026-11-23 |
 | [WO-09](WO-09-monthly-assessment.md) | PowerBI repo | Monthly development assessment (advisory narrative) | Approved 2026-11-23 — not started |
 
 This table is the only place WO status is kept.
