@@ -1,0 +1,15 @@
+# DBA-37 candidate (SQLITE): DBA-36 with Doctrine v10, Codeos Mechanics v8 and Workflow Bootstrap v3 — the Charter may select SQLite as the persistence engine; persistence verification runs against the real resolved engine.
+doctrine: dba/01-doctrine/v10.md
+review_policy: dba/02-policies/review/v18.md
+architecture_synthesis_policy: dba/02-policies/architecture-synthesis/v7.md
+implementation_profile_policy: dba/02-policies/implementation-profile/v2.md
+reviewer_tool_contract: dba/04-tools/reviewer/contract/v23.md
+codeos_mechanics_policy: dba/02-policies/codeos-mechanics/v8.md
+reader_output_policy: dba/02-policies/reader-output/v3.md
+user_learning_policy: dba/02-policies/user-learning/v1.md
+workflow_governance_policy: dba/02-policies/workflow-governance/v6.md
+workflow_bootstrap_policy: dba/02-policies/workflow-bootstrap/v3.md
+workflow_feature_policy: dba/02-policies/workflow-feature/v15.md
+workflow_operation_policy: dba/02-policies/workflow-operation/v3.md
+
+status: candidate

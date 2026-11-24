@@ -905,7 +905,7 @@ pub fn render_width(status: &ProjectStatus, width: usize) -> String {
         .iter()
         .map(|item| {
             vec![
-                item.area.platform_label().to_string(),
+                item.platform_label().to_string(),
                 item.status.label().to_string(),
                 item.compact_summary(),
             ]

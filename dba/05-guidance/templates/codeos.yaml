@@ -16,6 +16,8 @@ platform:
   backend: rust
   webapp: svelte
   runtime: docker
+  # persistence is postgresql by default, or sqlite when the Solution Charter selects it with a
+  # reason (Doctrine v10).
   # A tier reads "not-applicable: <reason>" only when the Solution Charter records why it does not
   # apply, e.g.:
   #   webapp: not-applicable: no end user; charter.md records this as a pure backend service

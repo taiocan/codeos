@@ -101,8 +101,9 @@ later outcome change identifies the features it may affect. Never reuse a retire
 
 <!--
 The solution gets PostgreSQL persistence, a Rust backend, a Svelte GUI, and Docker runtime by
-default. Record a tier here only when it does not apply — this is the sole exception mechanism;
-no separate approval is needed beyond this Charter's own approval.
+default. Record a tier here only when it does not apply, or record SQLite as the persistence
+engine with its reason (Doctrine v10) — this is the sole exception mechanism; no separate approval
+is needed beyond this Charter's own approval.
 -->
 
 All four Platform Baseline tiers apply. [Or: delete the line above and list each excepted tier with

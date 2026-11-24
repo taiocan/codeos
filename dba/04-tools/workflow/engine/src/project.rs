@@ -288,7 +288,7 @@ impl Project {
         self.selected_policy_version(
             "workflow_bootstrap_policy",
             "dba/02-policies/workflow-bootstrap/v1.md",
-            &[1, 2],
+            &[1, 2, 3],
         )
     }
 
@@ -304,7 +304,7 @@ impl Project {
         self.selected_policy_version(
             "codeos_mechanics_policy",
             "dba/02-policies/codeos-mechanics/v3.md",
-            &[1, 2, 3, 4, 5, 6, 7],
+            &[1, 2, 3, 4, 5, 6, 7, 8],
         )
     }
 
@@ -406,6 +406,19 @@ impl Project {
 
     pub fn charter(&self) -> PathBuf {
         self.codeos_dir().join("00-project/charter.md")
+    }
+
+    /// Doctrine v10: whether `codeos.yaml` resolves the persistence tier to SQLite. Any other
+    /// value, including an absent file, keeps the PostgreSQL default.
+    pub fn persistence_is_sqlite(&self) -> bool {
+        let Ok(text) = std::fs::read_to_string(self.codeos_yaml()) else {
+            return false;
+        };
+        text.lines()
+            .skip_while(|line| !line.starts_with("platform:"))
+            .skip(1)
+            .take_while(|line| line.starts_with(' ') || line.is_empty())
+            .any(|line| line.trim() == "persistence: sqlite")
     }
 
     pub fn codeos_yaml(&self) -> PathBuf {
@@ -876,6 +889,22 @@ mod tests {
         fs::create_dir_all(dir.path().join(".codeos/00-project")).unwrap();
         let project = Project::discover(dir.path()).unwrap();
         (dir, project)
+    }
+
+    #[test]
+    fn persistence_engine_defaults_to_postgresql_and_recognizes_sqlite() {
+        let (_dir, project) = downstream_project();
+        assert!(!project.persistence_is_sqlite());
+        fs::write(project.codeos_yaml(), "platform:\n  persistence: postgresql\n").unwrap();
+        assert!(!project.persistence_is_sqlite());
+        fs::write(
+            project.codeos_yaml(),
+            "platform:\n  persistence: sqlite\n  backend: rust\nartifacts:\n  persistence: sqlite\n",
+        )
+        .unwrap();
+        assert!(project.persistence_is_sqlite());
+        fs::write(project.codeos_yaml(), "artifacts:\n  persistence: sqlite\n").unwrap();
+        assert!(!project.persistence_is_sqlite());
     }
 
     #[test]

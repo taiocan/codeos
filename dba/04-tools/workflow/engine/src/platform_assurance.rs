@@ -105,9 +105,19 @@ pub struct PlatformAssurance {
     pub status: AssuranceStatus,
     pub subjects: Vec<String>,
     pub basis: Vec<String>,
+    /// Doctrine v10: set only when the persistence tier resolves to SQLite.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub engine: Option<&'static str>,
 }
 
 impl PlatformAssurance {
+    pub fn platform_label(&self) -> &'static str {
+        match (self.area, self.engine) {
+            (Area::Persistence, Some("SQLite")) => "Persistence (SQLite)",
+            (area, _) => area.platform_label(),
+        }
+    }
+
     pub fn subject_summary(&self) -> String {
         abbreviated(&self.subjects)
     }
@@ -150,6 +160,7 @@ pub fn derive(project: &Project, features: &[FeatureStatus]) -> Result<Vec<Platf
         by_identity.insert(hashing::record_identity(&record)?, record);
     }
 
+    let sqlite = project.persistence_is_sqlite();
     let mut rows = Vec::new();
     for area in Area::ALL {
         let mut status = AssuranceStatus::NotApplicable;
@@ -235,6 +246,7 @@ pub fn derive(project: &Project, features: &[FeatureStatus]) -> Result<Vec<Platf
             status,
             subjects,
             basis,
+            engine: (area == Area::Persistence && sqlite).then_some("SQLite"),
         });
     }
     Ok(rows)
@@ -412,6 +424,7 @@ mod tests {
             area: Area::Backend,
             status: AssuranceStatus::Stale,
             subjects: vec!["F-1".into(), "F-2".into(), "F-3".into()],
+            engine: None,
             basis: vec![
                 format!("F-1 F3/smoke {identity}: stale (contract changed)"),
                 "F-2 F3/smoke: no exact evidence".into(),
