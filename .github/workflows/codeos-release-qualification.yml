@@ -15,7 +15,7 @@ jobs:
       - name: Install locked Rust toolchain
         run: rustup toolchain install 1.93.0 --profile minimal --component clippy,rustfmt
       - name: Install qualification dependencies
-        run: sudo apt-get update && sudo apt-get install -y jq ripgrep && npm install --global npm@9.2.0 && cargo install cargo-audit --locked
+        run: sudo apt-get update && sudo apt-get install -y jq ripgrep && npm install --global npm@9.2.0 @openai/codex@0.171.0 && cargo install cargo-audit --locked
       - name: Test
         run: bash dba/04-tools/tests/run.sh
       - name: Format
