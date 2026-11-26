@@ -117,6 +117,7 @@ fn pinned_cli_version<'a>(contract: Option<&str>, locked: &'a str) -> Option<&'a
         Some(crate::manifest::CONTRACT_V21)
             | Some(crate::manifest::CONTRACT_V22)
             | Some(crate::manifest::CONTRACT_V23)
+            | Some(crate::manifest::CONTRACT_V24)
     );
     (!unpinned).then_some(locked)
 }

@@ -331,6 +331,8 @@ pub struct PacketBuildOptions {
     pub inclusion: BTreeMap<String, BTreeSet<String>>,
     /// Reviewer Tool Contract v22: show schema-1 route coordinates as their projection.
     pub route_geometry_projection: bool,
+    /// Reviewer Tool Contract v24: project each covered Charter obligation beside its scenarios.
+    pub obligation_projection: bool,
 }
 
 fn in_scope(opts: &PacketBuildOptions, path: &str) -> bool {
@@ -1349,6 +1351,9 @@ pub fn build(opts: &PacketBuildOptions) -> Result<ReviewPacket> {
     }
 
     content.push_str(&format!("\nWORKFLOW/STAGE-SPECIFIC CHECKS\n{}\n", checks));
+    if opts.obligation_projection && matches!(opts.stage.as_str(), "2" | "3" | "5") {
+        content.push_str(&obligation_projection(opts));
+    }
     content.push_str(&format!(
         "\nEXPECTED WORKFLOW/STAGE OUTPUT\n  {}\n",
         expected
@@ -1736,6 +1741,68 @@ pub fn sha256_str(s: &str) -> String {
     hex::encode(hasher.finalize())
 }
 
+/// Reviewer Tool Contract v24: the exact Charter clause beside each scenario that covers or
+/// contributes to it, with the sufficiency question for Stages 2 and 3 and the tagged-test question
+/// for Stage 5. The reviewer's answer stays advisory.
+fn obligation_projection(opts: &PacketBuildOptions) -> String {
+    use codeos_workflow::obligations::{parse_charter, parse_contract, tag};
+    let root = std::path::Path::new(&opts.repo_root);
+    let charter_path = root.join(".codeos/00-project/charter.md");
+    let contract_path = root.join(format!(
+        ".codeos/01-specification/contracts/{}_contract.md",
+        opts.feature
+    ));
+    let mut out = String::from("\nCHARTER OBLIGATION PROJECTION (Reviewer Tool Contract v24; advisory)\n");
+    let charter = match std::fs::read_to_string(&charter_path) {
+        Ok(text) => text,
+        Err(error) => {
+            out.push_str(&format!("  unavailable: Charter unreadable: {error}\n"));
+            return out;
+        }
+    };
+    out.push_str(&format!("  charter_sha256: {}\n", sha256_str(&charter)));
+    let parsed = parse_charter(&charter).and_then(|obligations| {
+        let contract = std::fs::read_to_string(&contract_path).unwrap_or_default();
+        Ok((obligations, parse_contract(&contract)?))
+    });
+    let (obligations, scenarios) = match parsed {
+        Ok(parsed) => parsed,
+        Err(error) => {
+            out.push_str(&format!("  unavailable: {error:#}\n"));
+            return out;
+        }
+    };
+    let mut any = false;
+    for scenario in &scenarios {
+        for (ids, relation) in [(&scenario.covers, "covers"), (&scenario.contributes, "contributes to")] {
+            for id in ids {
+                any = true;
+                let text = obligations
+                    .get(id)
+                    .map(|o| o.text.as_str())
+                    .unwrap_or("(not an obligation in the current Charter)");
+                out.push_str(&format!("  - {} {relation} {id}: {text}\n", scenario.id));
+                if opts.stage == "5" && relation == "covers" {
+                    out.push_str(&format!(
+                        "      tests for this scenario carry the tag `{}`\n",
+                        tag(&opts.feature, &scenario.id)
+                    ));
+                }
+            }
+        }
+    }
+    if !any {
+        out.push_str("  (the Contract declares no covers: or contributes: line)\n");
+        return out;
+    }
+    out.push_str(if opts.stage == "5" {
+        "  check: do the tagged tests of each covering scenario exercise the scenario's specified behavior, so that they would fail if the exact clause were violated? is any test tagged that does not exercise it?\n"
+    } else {
+        "  check: for each covered obligation, could a realistic implementation that violates the exact clause still pass every covering scenario? does an obligation depending on several features have an integrated product-journey scenario? is a compound clause hiding an uncovered condition?\n"
+    });
+    out
+}
+
 fn stage_expected(stage: &str) -> &'static str {
     match stage {
         "framing" => "Solution Framing — problem, vision, candidate outcomes, scope, candidate constraints, and open architecture concerns; non-authoritative banner present; promoted claims are reviewed at the next applicable review point.",
@@ -1845,6 +1912,7 @@ mod tests {
                     ),
                 ]),
                 route_geometry_projection: projection,
+                obligation_projection: false,
             })
             .unwrap()
         };
@@ -2074,6 +2142,44 @@ mod tests {
                 assert_ne!(a, b, "decision-boundary checklists must not collide");
             }
         }
+    }
+
+    #[test]
+    fn obligation_projection_shows_exact_clause_beside_its_scenario() {
+        let repo = tempfile::tempdir().unwrap();
+        let codeos = repo.path().join(".codeos");
+        std::fs::create_dir_all(codeos.join("00-project")).unwrap();
+        std::fs::create_dir_all(codeos.join("01-specification/contracts")).unwrap();
+        std::fs::write(
+            codeos.join("00-project/charter.md"),
+            "| ID | Requirement | Serves |\n|---|---|---|\n| R-8.1 | Code checks quotes | O-2 |\n",
+        )
+        .unwrap();
+        std::fs::write(
+            codeos.join("01-specification/contracts/F-0004_contract.md"),
+            "### Happy Path [S-1]\n\ncovers: R-8.1\ncontributes: R-9\n",
+        )
+        .unwrap();
+        let opts = |stage: &str| PacketBuildOptions {
+            feature: "F-0004".into(),
+            stage: stage.into(),
+            artifacts: Vec::new(),
+            sha_only_paths: Vec::new(),
+            basis: ReviewBasis::Ordinary { base: None },
+            repo_root: repo.path().to_string_lossy().into_owned(),
+            toolkit_root: String::new(),
+            scope: None,
+            inclusion: BTreeMap::new(),
+            route_geometry_projection: false,
+            obligation_projection: true,
+        };
+        let spec = obligation_projection(&opts("2"));
+        assert!(spec.contains("S-1 covers R-8.1: Code checks quotes | O-2"));
+        assert!(spec.contains("S-1 contributes to R-9: (not an obligation in the current Charter)"));
+        assert!(spec.contains("realistic implementation that violates the exact clause"));
+        let tests = obligation_projection(&opts("5"));
+        assert!(tests.contains("carry the tag `f0004s1`"));
+        assert!(tests.contains("exercise the scenario's specified behavior"));
     }
 
     #[test]

@@ -42,6 +42,10 @@ the section.
 - Express outcomes as measurable results rather than features, and give each a stable `O-#`
   identity. Never reuse a retired identity.
 - Record the scope boundary explicitly, in and out.
+- When the selected doctrine is v11 or later, record solution-level Requirements (`R-#`) and
+  Milestones (`M-#`) in the template's tables. Make every obligation atomic per that doctrine, split
+  compound ones into clause rows, and challenge compound text before approval. Keep related
+  conditions forming one invariant together. A Milestone's `Aggregates` names only obligations.
 - Record System Constraints that apply across features or solution-wide. Admit an entry only when it
   is a product or system obligation rather than an implementation choice; a constraint specific to
   one feature belongs in that feature's Contract.
@@ -87,7 +91,10 @@ acceptance requirement. Confirm that outcomes are measurable and identified, the
 explicit, every System Constraint has a type and a verification route, every threshold carries its
 context and rationale, and no feature behavior or architecture decision leaked into the artifact.
 When doctrine v8 or Feature Workflow v2 is selected, also confirm the Primary Product Journey is
-complete and consistent with the actor, supported decision, and target outcome.
+complete and consistent with the actor, supported decision, and target outcome. When doctrine v11
+is selected, confirm that every obligation is atomic, no ID is reused, and every Milestone
+aggregates only existing obligations. When revising, name each obligation whose row text changed:
+its coverage and verification must be reassessed.
 Apply the selected review policy at this decision boundary.
 
 ## Output / Next Action

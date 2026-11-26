@@ -26,6 +26,9 @@ skip this prompt and proceed to Intent.
    A candidate that creates a transition on the primary product journey must carry that transition
    through the continuous production path; do not decompose it into an isolated internal stage.
 3. Record only dependencies or open decisions that materially affect that decomposition.
+   When the selected Feature Workflow policy is v16 or later, propose the one owning candidate for
+   each Charter obligation. For an obligation depending on several candidates, name the owner that
+   will carry its integrated journey scenario.
 4. Do not allocate feature IDs; IDs belong to the resulting Intents.
 5. Do not write guarantees, Contract scenarios, events, or implementation design.
 

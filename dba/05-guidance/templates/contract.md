@@ -80,7 +80,9 @@ delete otherwise. -->
 
 ## Scenarios
 
-### Happy Path
+### Happy Path [S-1]
+
+covers: R-1.1
 
 ```gherkin
 Given [precondition describing valid starting state]
@@ -89,7 +91,7 @@ Then [observable outcome — state change or event emitted]
 And [additional observable outcome if needed]
 ```
 
-### Failure Path 1: [FailureName]
+### Failure Path 1: [FailureName] [S-2]
 
 ```gherkin
 Given [precondition]
@@ -98,7 +100,7 @@ Then [approved failure signal is observable]
 And [system state is unchanged OR specific known state]
 ```
 
-### Failure Path 2: [FailureName]
+### Failure Path 2: [FailureName] [S-3]
 
 ```gherkin
 Given [precondition]
@@ -106,6 +108,16 @@ When [trigger with failure condition]
 Then [approved failure signal is observable]
 And [system state is unchanged OR specific known state]
 ```
+
+<!--
+Feature Workflow v16 or later: every scenario heading ends with a stable ID `[S-k]`, unique in this
+Contract and never reused. `covers:` names the Charter obligations this feature is the one
+accountable owner for and this scenario is a mandatory check of; `contributes:` names obligations
+another feature owns. Write each covering scenario so that a realistic violating implementation
+fails it. When correctness depends on several features, cover the obligation with a scenario
+exercising the integrated product journey. Stage 5 tags its tests `fnnnnsk` (for example
+`f0004s3`). Delete `covers:` and the IDs under earlier configurations.
+-->
 
 <!--
 Add additional failure paths to exhaustively cover failure_classifications below.

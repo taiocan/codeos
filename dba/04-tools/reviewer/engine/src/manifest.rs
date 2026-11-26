@@ -18,6 +18,7 @@ pub const CONTRACT_V20: &str = "dba/04-tools/reviewer/contract/v20.md";
 pub const CONTRACT_V21: &str = "dba/04-tools/reviewer/contract/v21.md";
 pub const CONTRACT_V22: &str = "dba/04-tools/reviewer/contract/v22.md";
 pub const CONTRACT_V23: &str = "dba/04-tools/reviewer/contract/v23.md";
+pub const CONTRACT_V24: &str = "dba/04-tools/reviewer/contract/v24.md";
 
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 pub struct ReviewInputManifest {
@@ -94,6 +95,7 @@ pub fn selected(contract: Option<&str>) -> bool {
             | Some(CONTRACT_V21)
             | Some(CONTRACT_V22)
             | Some(CONTRACT_V23)
+            | Some(CONTRACT_V24)
     )
 }
 
@@ -106,6 +108,7 @@ pub fn candidate_lifecycle(contract: Option<&str>) -> bool {
             | Some(CONTRACT_V21)
             | Some(CONTRACT_V22)
             | Some(CONTRACT_V23)
+            | Some(CONTRACT_V24)
     )
 }
 
@@ -362,7 +365,7 @@ pub fn derive(
     if crate::config::resolve_reviewer_tool_contract(cfg)
         .ok()
         .as_deref()
-        == Some(CONTRACT_V23)
+        .is_some_and(|contract| contract == CONTRACT_V23 || contract == CONTRACT_V24)
     {
         if let Ok(subject) = &subject {
             match codeos_workflow::session::human_claim_sessions(&project, subject) {

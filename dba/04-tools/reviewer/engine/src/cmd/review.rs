@@ -667,8 +667,11 @@ pub fn prepare(
             .unwrap_or_default(),
         route_geometry_projection: matches!(
             contract.as_deref(),
-            Some(crate::manifest::CONTRACT_V22) | Some(crate::manifest::CONTRACT_V23)
+            Some(crate::manifest::CONTRACT_V22)
+                | Some(crate::manifest::CONTRACT_V23)
+                | Some(crate::manifest::CONTRACT_V24)
         ),
+        obligation_projection: contract.as_deref() == Some(crate::manifest::CONTRACT_V24),
     })
     .map_err(|error| PrepareFailure::packet(format!("error building packet: {error}")))?;
 

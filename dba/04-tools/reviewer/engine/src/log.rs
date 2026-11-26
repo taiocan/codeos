@@ -2722,6 +2722,7 @@ mod tests {
             scope: None,
             inclusion: Default::default(),
             route_geometry_projection: false,
+            obligation_projection: false,
         };
         crate::packet::build(&opts).expect("build packet")
     }

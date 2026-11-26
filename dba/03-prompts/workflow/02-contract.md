@@ -45,6 +45,12 @@ both artifacts in `DRAFT` and revise Intent if Contract work exposes a product g
   mechanism that would achieve it.
 - Record how this feature demonstrates conformance with any Charter System Constraint its
   implementation can affect. Do not copy the constraint text.
+- When the selected Feature Workflow policy is v16 or later, give every scenario a stable `[S-k]`
+  ID. Declare `covers:` for each Charter obligation this feature is the one accountable owner of,
+  and `contributes:` where another feature owns it, per that policy. A covering scenario must fail
+  on a realistic violation of the exact clause. Cover an obligation that depends on several
+  features with an integrated product-journey scenario. Surface a clause no feature can own, or
+  one that two features would cover, as a Charter or decomposition question.
 - Identify exact cross-module signals only when behavior depends on them.
 - Apply the vocabulary pattern only when Stage 1 identified a vocabulary dependency; keep
   resolution strategy out of the Contract.

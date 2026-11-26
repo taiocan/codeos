@@ -42,6 +42,9 @@ below.
   it must show instead of fabricating a test that does not prove it.
 - Do the same for any Charter System Constraint this feature's implementation can affect, using the
   conformance route the Contract recorded.
+- When the selected Feature Workflow policy is v16 or later, tag each test exercising scenario
+  `S-k` of this feature with the token `fnnnnsk` in its case ID (for example `f0004s3`). Tag only
+  tests that exercise the scenario's specified behavior; an untagged test never verifies it.
 - Verify state changes and approved failure signals without asserting private methods, intermediate
   computations, or uncontracted ordering.
 - Verify that internal technical errors do not masquerade as approved behavioral failures.
@@ -86,7 +89,9 @@ semantics.
 ## Applicable Checks
 
 Build a Contract coverage mapping with no required behavior or quality requirement silently
-omitted. Confirm each test would fail under the wrong behavior it claims to detect. When a test is
+omitted. Under Feature Workflow v16 or later, confirm that each covering scenario has tagged tests
+that exercise its specified behavior, and that `codeos-workflow obligations` reports no owned
+obligation without a tagged passing test. Confirm each test would fail under the wrong behavior it claims to detect. When a test is
 presented as acceptance evidence, confirm that it observes the boundary named by the acceptance
 claim rather than only an internal proxy. This adds no separate record for ordinary tests. Use the
 Review Package template for inline delivery evidence.

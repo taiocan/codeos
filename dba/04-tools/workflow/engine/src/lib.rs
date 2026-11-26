@@ -20,6 +20,7 @@ pub mod health;
 pub mod history;
 pub mod instrument;
 pub mod monitor;
+pub mod obligations;
 pub mod observations;
 pub mod platform_assurance;
 pub mod preflight;

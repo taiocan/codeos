@@ -97,6 +97,23 @@ later outcome change identifies the features it may affect. Never reuse a retire
 |---|---|---|
 | O-1 | [what must become true for people using the solution] | [the measure or observation that shows it] |
 
+## Solution Requirements
+
+<!-- Feature Workflow v16 or later (Doctrine v11); delete otherwise. Solution-level product
+behavior the Charter obliges, independent of which feature delivers it. A feature-specific
+requirement belongs in that feature's Contract.
+
+Charter obligations (O-, R-, C- and M- rows) are atomic: one independently observable violation
+establishes nonconformance without relying on an unrelated obligation. Keep conditions that form one
+invariant together. Split a compound obligation into clause rows `R-n.k`; the parent row then only
+names it, and its clauses carry the binding text. IDs are stable and never reused. Editing a row's
+text changes its meaning and invalidates its coverage and verification. -->
+
+| ID | Requirement | Serves |
+|---|---|---|
+| R-1 | [the obligated behavior, observable enough that a violation can be shown] | [O-1] |
+| R-1.1 | [one atomic clause of R-1, when R-1 is compound] | [O-1] |
+
 ## Platform Baseline
 
 <!--
@@ -144,6 +161,19 @@ new target needs no prior evidence, but an unexplained number is not a requireme
 | ID | Constraint | Type | Verification route |
 |---|---|---|---|
 | C-1 | [the obligation, with workload, operating context, and rationale when it states a threshold] | [quality \| regulatory \| interoperability \| deployment \| technology] | [how conformance is shown and where] |
+
+<!-- Feature Workflow v16 or later: a compound constraint may be split into clause rows `C-n.k`
+in a separate table, keeping the `C-n` row above for its type, route and project qualification. A
+`C-n` clause must be covered by a feature Contract; project qualification reports only `C-n`. -->
+
+## Milestones
+
+<!-- Feature Workflow v16 or later; delete when the solution has none. A milestone's acceptance
+condition aggregates verified obligations; it introduces no separate milestone workflow. -->
+
+| ID | Acceptance condition | Aggregates |
+|---|---|---|
+| M-1 | [the condition, with workload, operating context and rationale for any threshold] | [R-1.1, C-2, O-1] |
 
 <!--
 Changing a constraint, the scope, or the boundary requires an explicit impact assessment of

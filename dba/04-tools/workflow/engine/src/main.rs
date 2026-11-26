@@ -68,6 +68,17 @@ enum Cmd {
     /// Feature Workflow v13: list the human questions the named features wait on, or seal one
     /// Human Validation Session over exactly the outcomes stated.
     Session(SessionArgs),
+    /// Feature Workflow v16: report each Charter obligation's owner, mandatory checks and state
+    /// (UNASSESSED, ALLOCATED, SPECIFIED, VERIFIED), derived from the Charter, Contracts and
+    /// records. Read-only; exits non-zero when there are allocation findings.
+    Obligations(ObligationsArgs),
+}
+
+#[derive(clap::Args)]
+struct ObligationsArgs {
+    /// Emit the report as JSON.
+    #[arg(long)]
+    json: bool,
 }
 
 #[derive(clap::Args)]
@@ -453,6 +464,39 @@ fn run(cli: &Cli, start: &std::path::Path) -> Result<i32> {
             println!("Production runs needed: {}", if production.is_empty() { "none".into() } else { production.join(", ") });
             Ok(EXIT_SUCCESS)
         }
+        Cmd::Obligations(args) => {
+            let project = Project::discover(start)?;
+            let report = codeos_workflow::obligations::report(&project)?;
+            if args.json {
+                println!("{}", serde_json::to_string_pretty(&report)?);
+            } else {
+                for row in &report.obligations {
+                    let state = serde_json::to_value(row.state)?;
+                    let mut line = format!("{} {}", state.as_str().unwrap_or("?"), row.id);
+                    if let Some(owner) = &row.owner {
+                        line.push_str(&format!(" owner={owner}"));
+                    }
+                    if !row.checks.is_empty() {
+                        line.push_str(&format!(" checks=[{}]", row.checks.join(", ")));
+                    }
+                    if !row.contributors.is_empty() {
+                        line.push_str(&format!(" contributors=[{}]", row.contributors.join(", ")));
+                    }
+                    if !row.notes.is_empty() {
+                        line.push_str(&format!(" — {}", row.notes.join("; ")));
+                    }
+                    println!("{line}");
+                }
+                for finding in &report.findings {
+                    println!("FINDING {finding}");
+                }
+            }
+            Ok(if report.findings.is_empty() {
+                EXIT_SUCCESS
+            } else {
+                EXIT_BLOCKED
+            })
+        }
         Cmd::Preflight(args) => {
             let project = Project::discover(start)?;
             let findings = codeos_workflow::preflight::run(&project, &args.subject);
@@ -512,14 +556,19 @@ fn run(cli: &Cli, start: &std::path::Path) -> Result<i32> {
                     checker::qualification_bindings(&project, &subject, "candidate", &additions)?;
                 VerificationStore::at(&project.codeos_dir()).append(&VerificationRecord {
                     workflow: "feature".into(),
-                    subject: subject.id,
+                    subject: subject.id.clone(),
                     checkpoint: "candidate".into(),
                     verification: "project_qualification".into(),
                     result: if outcome.ok { "passed" } else { "failed" }.into(),
                     bindings,
                     command: outcome.command.clone(),
                     timestamp: chrono::Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string(),
-                    details: outcome.details.clone(),
+                    details: codeos_workflow::obligations::stamp(
+                        &project,
+                        &subject.id,
+                        "project_qualification",
+                        outcome.details.clone(),
+                    )?,
                 })?;
             }
             println!("{}", outcome.summary);

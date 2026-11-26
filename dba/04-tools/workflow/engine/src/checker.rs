@@ -81,7 +81,8 @@ impl Actor {
             Requirement::CodeosYamlValid
             | Requirement::SemanticPackageRevision
             | Requirement::ContractSection(_)
-            | Requirement::ProductJourneyContribution => Self::Assisted,
+            | Requirement::ProductJourneyContribution
+            | Requirement::ObligationsVerified => Self::Assisted,
         }
     }
 }
@@ -1401,6 +1402,20 @@ fn evaluate_checkpoint(
                     next_action.get_or_insert("approve the Solution Charter".into());
                 }
             }
+            Requirement::ObligationsVerified => {
+                let unverified = crate::obligations::unverified_owned(project, &subject.id)?;
+                if unverified.is_empty() {
+                    met.push("every Charter obligation this feature owns is VERIFIED".into());
+                } else {
+                    unmet.push(format!(
+                        "owned Charter obligations not VERIFIED: {}",
+                        unverified.join(", ")
+                    ));
+                    next_action.get_or_insert(
+                        "see codeos-workflow obligations; verify the owned obligations".into(),
+                    );
+                }
+            }
             Requirement::SpecPackageApproved => {
                 let parts = [
                     ("Intent", project.intent(&subject.id)),
@@ -2466,7 +2481,12 @@ fn record_outcome(
                 bindings: want,
                 command: outcome.command.clone(),
                 timestamp: chrono::Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string(),
-                details: stamped(outcome.details),
+                details: stamped(crate::obligations::stamp(
+                    project,
+                    &subject.id,
+                    mechanic,
+                    outcome.details,
+                )?),
             })?;
         }
         return Ok(Step::Failed);
@@ -2477,6 +2497,7 @@ fn record_outcome(
         outcome.command.clone()
     };
     let (bindings, details) = recorded_bindings(want, outcome.details);
+    let details = crate::obligations::stamp(project, &subject.id, mechanic, details)?;
     vstore.append(&VerificationRecord {
         workflow: slug.to_string(),
         subject: subject.id.clone(),
@@ -2933,6 +2954,7 @@ pub fn run_revalidation_checks(
             return Ok(log);
         }
         let (bindings, details) = recorded_bindings(want, outcome.details);
+        let details = crate::obligations::stamp(project, &subject.id, mechanic, details)?;
         store.append(&VerificationRecord {
             workflow: "feature".into(),
             subject: subject.id.clone(),
@@ -3561,6 +3583,17 @@ fn bind_dependency_additions(
         }
     }
     Ok(())
+}
+
+/// The bindings a `verification` record at `checkpoint` is evaluated against now, for readers
+/// outside the checker (Charter obligations, Feature Workflow v16).
+pub fn record_bindings(
+    project: &Project,
+    subject: &Subject,
+    checkpoint: &str,
+    verification: &str,
+) -> Result<BTreeMap<String, String>> {
+    verification_bindings(project, subject, checkpoint, Some(verification))
 }
 
 fn verification_bindings(
@@ -6019,6 +6052,17 @@ pub fn whole_path_plan(project: &Project, subject: &Subject) -> Result<Vec<PathS
                         s.consent = "now";
                     }
                     steps.push(s);
+                }
+                Requirement::ObligationsVerified => {
+                    if crate::obligations::unverified_owned(project, id)?.is_empty() {
+                        continue;
+                    }
+                    steps.push(step(
+                        "verification",
+                        "obligations".into(),
+                        "required",
+                        "codeos-workflow obligations".into(),
+                    ));
                 }
                 Requirement::CharterApproved
                 | Requirement::SpecPackageApproved

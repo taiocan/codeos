@@ -74,6 +74,8 @@ pub enum Requirement {
     ObservationRouted,
     /// Operation O4: the resolution evidence appropriate to the recorded route exists.
     RouteResolution,
+    /// F9 under Feature Workflow v16: every Charter obligation the feature owns is VERIFIED.
+    ObligationsVerified,
 }
 
 /// Stable machine-readable cause of a reported next action.
@@ -149,6 +151,7 @@ impl Requirement {
             Self::ObservationStated => A::RecordObservation,
             Self::ObservationRouted => A::RouteObservation,
             Self::RouteResolution => A::CloseObservation,
+            Self::ObligationsVerified => A::RunVerification,
         }
     }
 
@@ -167,6 +170,7 @@ impl Requirement {
             Self::ObservationStated => ReasonCode::ObservationStatement,
             Self::ObservationRouted => ReasonCode::ObservationRoute,
             Self::RouteResolution => ReasonCode::ObservationResolution,
+            Self::ObligationsVerified => ReasonCode::Verification,
         }
     }
 }
@@ -329,6 +333,9 @@ pub fn feature_contract(version: u8) -> Vec<Checkpoint> {
                     name: "project qualification",
                     mechanic: "project_qualification",
                 });
+            }
+            if version >= 16 {
+                requirements.push(ObligationsVerified);
             }
             requirements.push(Receipt {
                 checkpoint: "acceptance",
