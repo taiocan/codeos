@@ -40,3 +40,5 @@ pub const EXIT_SUCCESS: i32 = 0;
 pub const EXIT_USAGE: i32 = 1;
 pub const EXIT_BLOCKED: i32 = 2;
 pub const EXIT_ERROR: i32 = 3;
+
+fn   wo01_format_probe ( ) { }
