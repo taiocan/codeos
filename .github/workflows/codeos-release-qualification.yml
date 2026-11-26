@@ -26,6 +26,8 @@ jobs:
         run: cargo audit --file dba/04-tools/workflow/engine/Cargo.lock && cargo audit --file dba/04-tools/reviewer/engine/Cargo.lock
       - name: Committed secrets
         uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Compatibility
         run: bash dba/04-tools/compatibility/run.sh
       - name: Qualified release build
