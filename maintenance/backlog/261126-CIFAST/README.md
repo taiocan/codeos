@@ -1,5 +1,9 @@
 # CIFAST — Fast, Trustworthy CodeOS CI
 
+**CLOSED 2026-11-26.** main is green; one shared gate runs locally and in CI with a dependency
+preflight; a whole run takes 268 s (was about 472 s before CIFAST). WO-05 was accepted without a
+shared Cargo target directory and without removing test sleeps (reasons in WO-05).
+
 Planning context only. Git remains authoritative. Assessed and approved by the human 2026-11-26.
 NORMAL: CI is not a governed authority. Qualification and issuance run locally through
 `build-qualified-release.sh` and `issue-configuration.sh`.
@@ -42,12 +46,12 @@ predicts the CI result.
 
 ## Work orders
 
-| WO | Goal |
-|---|---|
-| [WO-01](WO-01-triggers-concurrency-order.md) | One run per change, superseded PR runs cancelled, fast failures first |
-| [WO-02](WO-02-shared-gate-and-preflight.md) | Local and CI run the same gate with an explicit dependency preflight |
-| [WO-03](WO-03-caching.md) | Warm runs skip dependency compilation |
-| [WO-04](WO-04-hermetic-tests.md) | The full gate passes without developer-machine state |
-| [WO-05](WO-05-build-and-test-speed.md) | Each engine compiles once per profile; tests drop avoidable waiting |
+| WO | Goal | Status |
+|---|---|---|
+| [WO-01](WO-01-triggers-concurrency-order.md) | One run per change, superseded PR runs cancelled, fast failures first | Accepted |
+| [WO-02](WO-02-shared-gate-and-preflight.md) | Local and CI run the same gate with an explicit dependency preflight | Accepted |
+| [WO-03](WO-03-caching.md) | Warm runs skip dependency compilation | Accepted |
+| [WO-04](WO-04-hermetic-tests.md) | The full gate passes without developer-machine state | Accepted |
+| [WO-05](WO-05-build-and-test-speed.md) | Each engine compiles once per profile; tests drop avoidable waiting | Accepted 2026-11-26 without the compile-once goal |
 
 Order: WO-01, WO-02, WO-03, WO-04, WO-05. `origin/main` was merged into local `main` on 2026-11-26.

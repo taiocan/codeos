@@ -56,4 +56,4 @@ No assertion changed.
 CI on 963a149 (run 45857333202, success): full gate 168 s (was 226 s), whole run 268 s (was 326 to
 392 s). Candidate tests 30 s (was 45 s); the engine suites and remaining scripts 106 s (was 139 s).
 
-Status: implemented. Acceptance without the two dropped items awaits the human decision.
+Status: accepted by the human 2026-11-26 without the two dropped items.
