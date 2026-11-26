@@ -472,7 +472,11 @@ impl Project {
             )?;
         }
         if let Some(path) = input.verification_command.as_deref() {
-            validate_project_executable(&self.root, path, "runtime_verification.verification_command")?;
+            validate_project_executable(
+                &self.root,
+                path,
+                "runtime_verification.verification_command",
+            )?;
         }
         Ok(RuntimeVerification {
             database_service,

@@ -439,7 +439,10 @@ fn run(cli: &Cli, start: &std::path::Path) -> Result<i32> {
                     })
                     .collect()
             };
-            println!("\nConsents the human can give now: {}", gates("now").join("; "));
+            println!(
+                "\nConsents the human can give now: {}",
+                gates("now").join("; ")
+            );
             println!("Later decisions: {}", gates("later").join("; "));
             let production: Vec<String> = all
                 .iter()
@@ -450,7 +453,14 @@ fn run(cli: &Cli, start: &std::path::Path) -> Result<i32> {
                         .map(move |_| id.clone())
                 })
                 .collect();
-            println!("Production runs needed: {}", if production.is_empty() { "none".into() } else { production.join(", ") });
+            println!(
+                "Production runs needed: {}",
+                if production.is_empty() {
+                    "none".into()
+                } else {
+                    production.join(", ")
+                }
+            );
             Ok(EXIT_SUCCESS)
         }
         Cmd::Preflight(args) => {

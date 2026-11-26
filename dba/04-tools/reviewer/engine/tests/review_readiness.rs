@@ -1801,10 +1801,12 @@ fn referenced_production_evidence_must_be_present_and_intact() {
 #[test]
 fn packet_size_report_separates_derived_and_declared_inputs() {
     let fixture = ready_project(true);
-    let (status, stdout, stderr) = run_in_dir_with_env(
+    let fake = setup_fake_codex();
+    let (status, stdout, stderr) = run_with_fake_codex(
         fixture.path(),
+        &fake,
         &["plan", FEATURE, "8", "--skip-prechecks", "src/lib.rs"],
-        &[],
+        "success",
     );
     assert_eq!(status, 0, "{stdout}\n{stderr}");
     for line in [
@@ -1824,10 +1826,12 @@ fn project_reviewer_toml_sets_the_packet_budget() {
         &fixture.path().join(".codeos/05-review/reviewer.toml"),
         "packet_budget_bytes = 204800\n",
     );
-    let (status, stdout, stderr) = run_in_dir_with_env(
+    let fake = setup_fake_codex();
+    let (status, stdout, stderr) = run_with_fake_codex(
         fixture.path(),
+        &fake,
         &["plan", FEATURE, "8", "--skip-prechecks", "src/lib.rs"],
-        &[],
+        "success",
     );
     assert_eq!(status, 0, "{stdout}\n{stderr}");
     assert!(stdout.contains("budget 204800"), "{stdout}");

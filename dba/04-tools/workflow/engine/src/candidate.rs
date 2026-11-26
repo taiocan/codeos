@@ -177,7 +177,11 @@ pub fn assemble(
     let governed_inputs = governed(
         project,
         &subject.id,
-        if crate::validity::active(project)? { 3 } else { 2 },
+        if crate::validity::active(project)? {
+            3
+        } else {
+            2
+        },
     )?;
     // Review Policy v18: a v14 bundle depends on the reviewer configuration, not codeos.yaml bytes.
     let configuration_sha256 = if crate::validity::active(project)? {
@@ -243,10 +247,7 @@ pub fn assemble(
             ),
             "candidate verification {checkpoint}/{mechanic} is stale"
         );
-        verification_records.insert(
-            format!("{checkpoint}/{mechanic}"),
-            cite(&record)?,
-        );
+        verification_records.insert(format!("{checkpoint}/{mechanic}"), cite(&record)?);
     }
     let runtime_evidence = if observation_mode(project, &subject.id)? == "events" {
         let runtime = store
@@ -273,10 +274,7 @@ pub fn assemble(
             evidence.is_some(),
             "candidate runtime verification has no inspectable event evidence binding"
         );
-        verification_records.insert(
-            "F7/runtime_event_schema".into(),
-            cite(&runtime)?,
-        );
+        verification_records.insert("F7/runtime_event_schema".into(), cite(&runtime)?);
         evidence
     } else {
         None

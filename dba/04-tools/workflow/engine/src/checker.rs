@@ -403,10 +403,9 @@ fn reality_basis(contract: &str, inherits: bool) -> Result<(Vec<String>, Vec<Inh
                 );
             }
             let source = cells[3].trim_matches('`');
-            let Some((feature, claim)) = source
-                .split_once('/')
-                .filter(|(f, c)| f.starts_with("F-") && !c.is_empty() && !c.contains(char::is_whitespace))
-            else {
+            let Some((feature, claim)) = source.split_once('/').filter(|(f, c)| {
+                f.starts_with("F-") && !c.is_empty() && !c.contains(char::is_whitespace)
+            }) else {
                 anyhow::bail!(
                     "inherited claim '{}' must name exactly one upstream F-NNNN/claim-id",
                     cells[0]
@@ -976,7 +975,11 @@ fn accepted_journey_chain(
                 if bundle.journey_previous == bundle.journey_target {
                     preserved.push((receipt.subject, bundle.journey_previous));
                 } else {
-                    advances.push((receipt.subject, bundle.journey_previous, bundle.journey_target));
+                    advances.push((
+                        receipt.subject,
+                        bundle.journey_previous,
+                        bundle.journey_target,
+                    ));
                 }
                 continue;
             }
@@ -3197,8 +3200,8 @@ fn v14_bindings(
         if !deps.contains(&key) {
             continue;
         }
-        let path = crate::validity::artifact_path(project, &subject.id, artifact)
-            .expect("known artifact");
+        let path =
+            crate::validity::artifact_path(project, &subject.id, artifact).expect("known artifact");
         if let Some(identity) =
             crate::validity::resolved_meaning(project, &subject.id, artifact, &path)?
         {
@@ -3346,10 +3349,9 @@ pub fn decision_state(
     }
     // Feature Workflow v14: a receipt carrying v14 dependency keys is compared on its dependency
     // set only; every other recorded value is history and carried forward as recorded.
-    if let (Some(deps), Some(receipt)) = (
-        crate::validity::dependencies(checkpoint),
-        latest.as_ref(),
-    ) {
+    if let (Some(deps), Some(receipt)) =
+        (crate::validity::dependencies(checkpoint), latest.as_ref())
+    {
         if subject.workflow == Workflow::Feature
             && crate::validity::active(project)?
             && receipt.bindings.contains_key("intent_meaning")
@@ -3894,14 +3896,21 @@ fn run_mechanic(project: &Project, subject: &Subject, mechanic: &str) -> evidenc
             }
         }
     }
-    if matches!(mechanic, "baseline" | "smoke" | "product_journey" | "behavior" | "repeatability" | "data_integrity") {
+    if matches!(
+        mechanic,
+        "baseline" | "smoke" | "product_journey" | "behavior" | "repeatability" | "data_integrity"
+    ) {
         match project.runtime_verification() {
             Ok(runtime) => {
                 if let Some(command) = runtime.verification_command.as_deref() {
                     if matches!(mechanic, "behavior" | "repeatability") {
                         return run_declared_test_verification(project, command, mechanic);
                     }
-                    return evidence::run(&project.root, &project.root.join(command).to_string_lossy(), &[mechanic]);
+                    return evidence::run(
+                        &project.root,
+                        &project.root.join(command).to_string_lossy(),
+                        &[mechanic],
+                    );
                 }
             }
             Err(error) => return failure(error.to_string()),
@@ -3954,12 +3963,9 @@ fn run_declared_test_verification(
         if !outcome.ok {
             return Err(outcome);
         }
-        let run = test_evidence::TestRun::new(
-            "libtest",
-            attempt,
-            test_evidence::libtest_cases(&stdout),
-        )
-        .map_err(|error| failure(error.to_string()))?;
+        let run =
+            test_evidence::TestRun::new("libtest", attempt, test_evidence::libtest_cases(&stdout))
+                .map_err(|error| failure(error.to_string()))?;
         Ok((outcome, run))
     };
 
@@ -5465,7 +5471,14 @@ mod journey_tests {
                 .unwrap(),
             )
             .unwrap();
-            assert_eq!(evidence.runs.len(), if verification == "repeatability" { 2 } else { 1 });
+            assert_eq!(
+                evidence.runs.len(),
+                if verification == "repeatability" {
+                    2
+                } else {
+                    1
+                }
+            );
             assert_eq!(evidence.runs[0].cases[0].id, "domain::preserves_history");
             assert_eq!(evidence.runs[0].cases[0].status, "passed");
         }
@@ -5917,7 +5930,9 @@ pub fn whole_path_plan(project: &Project, subject: &Subject) -> Result<Vec<PathS
         project.feature_workflow_version()?,
         project.operation_workflow_version()?,
     );
-    let claims = subject_claims(project, subject).unwrap_or(None).unwrap_or_default();
+    let claims = subject_claims(project, subject)
+        .unwrap_or(None)
+        .unwrap_or_default();
     let store = VerificationStore::at(&project.codeos_dir());
     let id = &subject.id;
     let mut steps = Vec::new();
@@ -5925,7 +5940,8 @@ pub fn whole_path_plan(project: &Project, subject: &Subject) -> Result<Vec<PathS
         let Some(report) = reports.iter().find(|r| r.id == c.id) else {
             continue;
         };
-        if !applies(c.applies, subject) || matches!(report.state, State::Pass | State::NotApplicable)
+        if !applies(c.applies, subject)
+            || matches!(report.state, State::Pass | State::NotApplicable)
         {
             continue;
         }
@@ -5945,7 +5961,8 @@ pub fn whole_path_plan(project: &Project, subject: &Subject) -> Result<Vec<PathS
                 consent: "later",
             };
             let currency = |checkpoint: &str, mechanic: &str| -> Result<&'static str> {
-                let want = verification_bindings_for_mechanic(project, subject, checkpoint, mechanic)?;
+                let want =
+                    verification_bindings_for_mechanic(project, subject, checkpoint, mechanic)?;
                 let have = store.latest("feature", id, checkpoint, mechanic)?;
                 Ok(match verification::evaluate(have, &want) {
                     RecordState::Current(_) => "reuse",
