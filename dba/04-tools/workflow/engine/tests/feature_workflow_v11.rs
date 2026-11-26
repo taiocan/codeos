@@ -11,7 +11,6 @@ use fai_fixture::*;
 use std::fs;
 use std::process::Command;
 
-
 #[test]
 fn a_test_only_change_leaves_production_evidence_and_f6_current() {
     let fx = routed(
@@ -49,7 +48,10 @@ fn a_test_runner_configuration_change_leaves_evidence_and_f6_current() {
         fx
     };
     let as_issued = routed_web("DBA-27");
-    as_issued.write("web/playwright.config.ts", "export default { workers: 1 };\n");
+    as_issued.write(
+        "web/playwright.config.ts",
+        "export default { workers: 1 };\n",
+    );
     assert_eq!(
         as_issued.evidence_current("F-0001"),
         Err("evidence_scope_state".into())
@@ -65,7 +67,10 @@ fn a_test_runner_configuration_change_leaves_evidence_and_f6_current() {
     assert!(bound.contains_key("delivered_state") && !bound.contains_key("product_state"));
     let product = fx.project().product_state().unwrap();
 
-    fx.write("web/playwright.config.ts", "export default { workers: 1 };\n");
+    fx.write(
+        "web/playwright.config.ts",
+        "export default { workers: 1 };\n",
+    );
     assert_eq!(fx.evidence_current("F-0001"), Ok(()));
     assert!(fx.f6_current("F-0001"));
     // F4 and F8 keep their product state, which still counts the configuration.
@@ -317,7 +322,6 @@ fn a_changed_observed_surface_still_stales_f4() {
     );
 }
 
-
 /// Feature Workflow v12 (DBA-28). Under v11 (DBA-27) as issued, an acceptance from before Candidate
 /// Bundles has no evidence to inherit.
 #[test]
@@ -352,7 +356,6 @@ fn an_inherited_claim_follows_the_upstream_revalidation_evidence() {
         assert_ne!(evidence, accepted);
     }
 }
-
 
 /// DQA WO-01C: `check --revalidation --plan` serializes the plan `check --revalidation` executes.
 /// It runs no verifier, writes nothing, and names exactly the verifications the executor then runs.

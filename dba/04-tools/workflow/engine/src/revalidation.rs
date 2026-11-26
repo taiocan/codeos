@@ -541,8 +541,8 @@ fn derive_acceptance_assessment(project: &Project, subject: &str) -> Result<Acce
     if acceptance.bindings.contains_key("intent_meaning") {
         // Feature Workflow v14: compare the specification meaning the acceptance bound.
         for (artifact, key) in crate::validity::ARTIFACTS {
-            let path = crate::validity::artifact_path(project, subject, artifact)
-                .expect("known artifact");
+            let path =
+                crate::validity::artifact_path(project, subject, artifact).expect("known artifact");
             assessment.comparisons.push(hashing::Comparison {
                 surface: artifact.into(),
                 was: acceptance.bindings.get(key).cloned(),

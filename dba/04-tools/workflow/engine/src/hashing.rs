@@ -81,9 +81,14 @@ pub fn product_state(repo_root: &Path, paths: &[String]) -> Result<String> {
 /// Whether a file only configures a test runner: it shapes how tests run, never what users receive.
 pub fn is_test_runner_config(rel: &str) -> bool {
     let name = rel.rsplit('/').next().unwrap_or(rel);
-    ["playwright.config.", "vitest.config.", "jest.config.", "cypress.config."]
-        .iter()
-        .any(|prefix| name.starts_with(prefix))
+    [
+        "playwright.config.",
+        "vitest.config.",
+        "jest.config.",
+        "cypress.config.",
+    ]
+    .iter()
+    .any(|prefix| name.starts_with(prefix))
 }
 
 /// Feature Workflow v12: a hash over the content of every delivered file under `paths`, that is,

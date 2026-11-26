@@ -9,13 +9,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 20.19.2
       - name: Install locked Rust toolchain
         run: rustup toolchain install 1.93.0 --profile minimal --component clippy,rustfmt
       - name: Install qualification dependencies
-        run: sudo apt-get update && sudo apt-get install -y jq && npm install --global npm@9.2.0 && cargo install cargo-audit --locked
+        run: sudo apt-get update && sudo apt-get install -y jq ripgrep && npm install --global npm@9.2.0 && cargo install cargo-audit --locked
       - name: Test
         run: bash dba/04-tools/tests/run.sh
       - name: Format
@@ -26,6 +28,8 @@ jobs:
         run: cargo audit --file dba/04-tools/workflow/engine/Cargo.lock && cargo audit --file dba/04-tools/reviewer/engine/Cargo.lock
       - name: Committed secrets
         uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Compatibility
         run: bash dba/04-tools/compatibility/run.sh
       - name: Qualified release build
