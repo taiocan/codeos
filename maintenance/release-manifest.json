@@ -1,15 +1,15 @@
 {
   "schema": 1,
-  "release_id": "codeos-4711a9ba0ca8c98a",
-  "source_sha256": "4711a9ba0ca8c98a20bd725a0c68583964e74726245144578a39a738b48f57cd",
+  "release_id": "codeos-a745f7dd68650170",
+  "source_sha256": "a745f7dd68650170459981c9dc4bbdbef5eca6bd12edf72a49f859da26a77784",
   "binaries": {
     "codeos-workflow": {
-      "sha256": "45a49ab1c19d3fd87c94c1b5db503bbdcab2457eaad8ec5bffbd1c478e67ebe9",
-      "build_id": "4711a9ba0ca8c98a20bd725a0c68583964e74726245144578a39a738b48f57cd"
+      "sha256": "11278705857b7d4e91b3b45c8a07ac57a240dcf2a3ce1f726aa9bdb6ab5f4724",
+      "build_id": "a745f7dd68650170459981c9dc4bbdbef5eca6bd12edf72a49f859da26a77784"
     },
     "codeos-reviewer": {
-      "sha256": "d338aa117cce6b60e7c64f7b27e556fd0f0ee115f430c4511e7948dd122ef1df",
-      "build_id": "4711a9ba0ca8c98a20bd725a0c68583964e74726245144578a39a738b48f57cd"
+      "sha256": "5d92e45bada5da45a35ab7b6e3fbaa527773f53f0409f71723451e554a54fba2",
+      "build_id": "a745f7dd68650170459981c9dc4bbdbef5eca6bd12edf72a49f859da26a77784"
     }
   },
   "toolchains": {
