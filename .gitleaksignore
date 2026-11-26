@@ -1,0 +1,6 @@
+# Reviewed false positives, exempted by exact finding (commit:file:rule:line) so any new secret is
+# still reported. CIFAST WO-03, 2026-11-26.
+# Fake key in the redaction unit test (sk-abc1234567890abcdef).
+a66bda9c42a2df025972593c901c989fc9a59371:tools/reviewer/src/precheck.rs:generic-api-key:157
+# Prose "strategic/execution role split" in a documentation table.
+4edf2b53667207b75337f84b30dcfa1e922bf94f:docs/oap-codeos-integration.md:generic-api-key:50
