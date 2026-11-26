@@ -1752,7 +1752,8 @@ fn obligation_projection(opts: &PacketBuildOptions) -> String {
         ".codeos/01-specification/contracts/{}_contract.md",
         opts.feature
     ));
-    let mut out = String::from("\nCHARTER OBLIGATION PROJECTION (Reviewer Tool Contract v24; advisory)\n");
+    let mut out =
+        String::from("\nCHARTER OBLIGATION PROJECTION (Reviewer Tool Contract v24; advisory)\n");
     let charter = match std::fs::read_to_string(&charter_path) {
         Ok(text) => text,
         Err(error) => {
@@ -1774,7 +1775,10 @@ fn obligation_projection(opts: &PacketBuildOptions) -> String {
     };
     let mut any = false;
     for scenario in &scenarios {
-        for (ids, relation) in [(&scenario.covers, "covers"), (&scenario.contributes, "contributes to")] {
+        for (ids, relation) in [
+            (&scenario.covers, "covers"),
+            (&scenario.contributes, "contributes to"),
+        ] {
             for id in ids {
                 any = true;
                 let text = obligations

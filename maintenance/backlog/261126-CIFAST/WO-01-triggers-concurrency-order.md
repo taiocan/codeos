@@ -17,3 +17,12 @@
 - One PR update yields exactly one run; a new commit cancels the superseded PR run.
 - Every main push still runs to completion.
 - A deliberate format error fails within about one minute of the job starting.
+
+## Implementation notes (2026-11-26)
+
+- Main pushes and manual runs use a per-run concurrency group (`github.run_id`). A shared group
+  without cancellation would still let a newer pending main run replace an older pending one.
+- The Rust toolchain, format, `jq`/`ripgrep`, layout contract and clippy now precede Node, npm and
+  `cargo install cargo-audit`, so a format error fails before the slow installs.
+- Locally verified: workflow YAML parses, `run.sh` PASS, both engines `cargo fmt --check` and
+  `clippy -D warnings` clean. The acceptance items need GitHub runs and are verified after the push.

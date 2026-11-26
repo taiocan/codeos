@@ -12,10 +12,8 @@
   - `fast`: layout contract, format, clippy;
   - `full`: `fast`, then `dba/04-tools/tests/run.sh`, dependency audit and compatibility.
 - CI steps call the gate instead of repeating its commands.
-- Find and fix the cause of the local and CI format verdicts disagreeing.
 
 ## Acceptance
 
 - `gate.sh full` passes locally exactly when CI passes on the same commit.
 - Removing a required binary fails at preflight, naming it.
-- Local and CI agree on format for the whole tree.

@@ -899,7 +899,11 @@ mod tests {
     fn persistence_engine_defaults_to_postgresql_and_recognizes_sqlite() {
         let (_dir, project) = downstream_project();
         assert!(!project.persistence_is_sqlite());
-        fs::write(project.codeos_yaml(), "platform:\n  persistence: postgresql\n").unwrap();
+        fs::write(
+            project.codeos_yaml(),
+            "platform:\n  persistence: postgresql\n",
+        )
+        .unwrap();
         assert!(!project.persistence_is_sqlite());
         fs::write(
             project.codeos_yaml(),

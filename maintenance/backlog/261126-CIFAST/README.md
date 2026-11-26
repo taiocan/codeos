@@ -18,8 +18,9 @@ workflows, PR-only triggers, concurrency, caching, self-contained tests and a de
   credentials, gitleaks permissions and history).
 - One run takes about 8 min: dependency install 3 min (mostly `cargo install cargo-audit`), tests
   3 min, release build 76 s, format and clippy 17 s. Format and clippy run after the tests.
-- Local `cargo fmt --check` reports diffs in files that CI and stdin `rustfmt` accept (for example
-  `workflow/engine/src/candidate.rs:177`). The local and CI format verdicts disagree; cause unknown.
+- Local `cargo fmt --check` reported diffs that CI did not. Resolved 2026-11-26: PR #3 had
+  formatted `origin/main`, and local `main` had not yet merged it. After the merge, the only diffs
+  were in unpushed local commits, now formatted. Local and CI formatting agree.
 
 ## Assessment
 
@@ -48,5 +49,4 @@ predicts the CI result.
 | [WO-03](WO-03-caching.md) | Warm runs skip dependency compilation |
 | [WO-04](WO-04-hermetic-tests.md) | The full gate passes without developer-machine state |
 
-Order: WO-01, WO-02, WO-03, WO-04. Prerequisite before any push: integrate `origin/main` (PR #3
-merge and CI fixes) into local `main`, which is 4 commits ahead.
+Order: WO-01, WO-02, WO-03, WO-04. `origin/main` was merged into local `main` on 2026-11-26.
