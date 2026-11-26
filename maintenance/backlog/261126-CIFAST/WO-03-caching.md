@@ -34,6 +34,8 @@ Baseline before WO-03 (run 45776215740, b0d16e5): install step 153 s, full gate 
 | 45776215740 | baseline, no cache | 153 s + 21 s | 22 s | 180 s | 76 s | ~472 s |
 | 45791481739 | cold (fills cache) | 15 s | 28 s | 240 s | 82 s | 391 s |
 | 45795757662 | warm, manual | 28 s | 15 s | 229 s | (stopped at secret scan) | 281 s |
+| 45796746341 | warm, manual, after the exemption | 35 s | 14 s | 234 s | 52 s | 347 s |
+| 45796732883 | warm, push to main | — | — | — | — | 326 s |
 
 - The warm run restored the 270 MB cache with a full key match, so installs took 28 s (target
   < 30 s). The prebuilt `cargo-audit` took 0 s on both runs.
@@ -43,3 +45,6 @@ Baseline before WO-03 (run 45776215740, b0d16e5): install step 153 s, full gate 
   (a66bda9, `tools/reviewer/src/precheck.rs:157`) and the prose "strategic/execution role split"
   (4edf2b5, `docs/oap-codeos-integration.md:50`). `.gitleaksignore` exempts exactly these two
   findings; a local full-history gitleaks scan then reports no leaks.
+
+Status: accepted. Warm installs are under 30 s with a full cache hit, and a warm main run takes
+about 5.5 min against about 8 min before. Both warm runs of the final commit are green.
