@@ -24,3 +24,31 @@
 
 - The workflow engine compiles once per profile per run.
 - `gate.sh full` time is recorded before and after, and every test still asserts what it did.
+
+## Result (2026-11-26)
+
+Measured first (CI run 45805764489, full gate 226 s; local warm 313 s). The largest avoidable cost
+was not compilation but `verify-configuration-manifest.sh`: 12 s per run, run about five times per
+suite (directly, twice in semantic-closure tests, twice in candidate tests), because it recomputes
+36 frozen closures one after another.
+
+| Change | Local before | Local after |
+|---|---|---|
+| Closures computed concurrently, compared in manifest order (same first failure, checked by tamper) | 12.4 s | 1.1 s |
+| `semantic-closure-tests.sh` (effect of the above) | 15.7 s | 6.1 s |
+| `candidate-tests.sh` (effect of the above) | 56.6 s | 32.9 s |
+| Both engine `cargo test` suites run concurrently; either failure fails `run.sh` | 153 s | 106 s |
+| `gate.sh full` | 313 s | 217 s |
+
+Not done, with reasons:
+
+- **Shared `CARGO_TARGET_DIR`.** The two lockfiles resolve different versions of serde, syn, libc and
+  others, so a shared directory still compiles the workflow engine twice. Compiling it once needs
+  one Cargo workspace and one lockfile, which moves the binary paths that release builds and
+  downstream toolkits use. The saving (about 8 s in tests, about 20 s in the main-only release
+  build) does not justify that. The "compiles once per profile" acceptance is therefore not met.
+- **Second-granularity sleeps.** About 12–15 s in total. Removing them needs either future-dated
+  commits or a clock override in the engine; both change how evidence timestamps are judged, an
+  integrity risk out of proportion to the saving.
+
+No assertion changed. Status: accepted pending CI timing.

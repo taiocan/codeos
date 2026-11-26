@@ -25,7 +25,21 @@ bash "${CODEOS_ROOT}/dba/04-tools/learning/tests/codeos-learning-tests.sh"
 bash "${CODEOS_ROOT}/dba/04-tools/monitor/tests/codeos-monitor-snapshot-tests.sh"
 bash "${CODEOS_ROOT}/dba/04-tools/monitor/tests/codeos-toolkit-analytics-tests.sh"
 bash "${CODEOS_ROOT}/dba/04-tools/monitor/tests/codeos-static-analytics-tests.sh"
-cargo test --manifest-path "${CODEOS_ROOT}/dba/04-tools/reviewer/engine/Cargo.toml"
-cargo test --manifest-path "${CODEOS_ROOT}/dba/04-tools/workflow/engine/Cargo.toml"
+# The engine suites are independent and mostly wait on git and subprocesses, so they run
+# concurrently (CIFAST WO-05). The reviewer output is printed after the workflow output.
+reviewer_log="$(mktemp)"
+trap 'rm -f "${reviewer_log}"' EXIT
+cargo test --manifest-path "${CODEOS_ROOT}/dba/04-tools/reviewer/engine/Cargo.toml" >"${reviewer_log}" 2>&1 &
+reviewer_pid=$!
+workflow_status=0
+cargo test --manifest-path "${CODEOS_ROOT}/dba/04-tools/workflow/engine/Cargo.toml" || workflow_status=$?
+reviewer_status=0
+wait "${reviewer_pid}" || reviewer_status=$?
+cat "${reviewer_log}"
+if ((workflow_status || reviewer_status)); then
+  printf '04-tools tests: FAIL (workflow engine exit %s, reviewer engine exit %s)\n' \
+    "${workflow_status}" "${reviewer_status}" >&2
+  exit 1
+fi
 
 printf '04-tools tests: PASS\n'
