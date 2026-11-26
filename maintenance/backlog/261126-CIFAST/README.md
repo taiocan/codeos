@@ -48,5 +48,6 @@ predicts the CI result.
 | [WO-02](WO-02-shared-gate-and-preflight.md) | Local and CI run the same gate with an explicit dependency preflight |
 | [WO-03](WO-03-caching.md) | Warm runs skip dependency compilation |
 | [WO-04](WO-04-hermetic-tests.md) | The full gate passes without developer-machine state |
+| [WO-05](WO-05-build-and-test-speed.md) | Each engine compiles once per profile; tests drop avoidable waiting |
 
-Order: WO-01, WO-02, WO-03, WO-04. `origin/main` was merged into local `main` on 2026-11-26.
+Order: WO-01, WO-02, WO-03, WO-04, WO-05. `origin/main` was merged into local `main` on 2026-11-26.

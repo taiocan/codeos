@@ -16,6 +16,7 @@ MODE="${1:-}"
 RUST_VERSION=1.93.0
 NODE_VERSION=v20.19.2
 NPM_VERSION=9.2.0
+CARGO_AUDIT_VERSION=0.23.0
 ENGINES=(dba/04-tools/workflow/engine dba/04-tools/reviewer/engine)
 
 missing=()
@@ -44,7 +45,11 @@ preflight() {
     else
       need npm "${NPM_VERSION}"
     fi
-    (cd "${CODEOS_ROOT}" && cargo audit --version >/dev/null 2>&1) || missing+=("cargo-audit")
+    if (cd "${CODEOS_ROOT}" && cargo audit --version >/dev/null 2>&1); then
+      version cargo-audit "${CARGO_AUDIT_VERSION}" "$(cd "${CODEOS_ROOT}" && cargo audit --version | awk '{print $2}')"
+    else
+      need cargo-audit "${CARGO_AUDIT_VERSION}"
+    fi
   fi
   if ((${#missing[@]})); then
     printf 'gate preflight FAIL: missing or mismatched dependencies:\n' >&2
