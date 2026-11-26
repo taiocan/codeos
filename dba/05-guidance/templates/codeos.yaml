@@ -9,7 +9,7 @@
 # below. Never restate it inside an artifact's own frontmatter.
 
 codeos_schema: 2
-dba_configuration: DBA-37
+dba_configuration: DBA-38
 
 platform:
   persistence: postgresql
