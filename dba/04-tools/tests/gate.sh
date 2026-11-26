@@ -27,6 +27,9 @@ version() { # name expected actual
 
 preflight() {
   for tool in git rg jq python3 sha256sum tar awk sed cargo; do need "${tool}"; done
+  if command -v python3 >/dev/null 2>&1 && ! python3 -c 'import yaml' >/dev/null 2>&1; then
+    missing+=("python3 module yaml (PyYAML)")
+  fi
   if command -v rustc >/dev/null 2>&1; then
     version rustc "${RUST_VERSION}" "$(cd "${CODEOS_ROOT}" && rustc --version | awk '{print $2}')"
   else

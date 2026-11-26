@@ -28,7 +28,7 @@ jobs:
             dba/04-tools/workflow/engine -> target
             dba/04-tools/reviewer/engine -> target
       - name: Install fast-check dependencies
-        run: sudo apt-get update && sudo apt-get install -y jq ripgrep
+        run: sudo apt-get update && sudo apt-get install -y jq ripgrep python3-yaml
       - name: Fast gate
         run: bash dba/04-tools/tests/gate.sh fast
       - uses: actions/setup-node@v4
