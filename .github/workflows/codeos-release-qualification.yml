@@ -21,29 +21,21 @@ jobs:
           fetch-depth: 0
       - name: Install locked Rust toolchain
         run: rustup toolchain install 1.93.0 --profile minimal --component clippy,rustfmt
-      - name: Format
-        run: cargo fmt --manifest-path dba/04-tools/workflow/engine/Cargo.toml --check && cargo fmt --manifest-path dba/04-tools/reviewer/engine/Cargo.toml --check
       - name: Install fast-check dependencies
         run: sudo apt-get update && sudo apt-get install -y jq ripgrep
-      - name: Layout contract
-        run: bash dba/04-tools/configuration/layout-contract.sh
-      - name: Static analysis
-        run: cargo clippy --manifest-path dba/04-tools/workflow/engine/Cargo.toml --all-targets -- -D warnings && cargo clippy --manifest-path dba/04-tools/reviewer/engine/Cargo.toml --all-targets -- -D warnings
+      - name: Fast gate
+        run: bash dba/04-tools/tests/gate.sh fast
       - uses: actions/setup-node@v4
         with:
           node-version: 20.19.2
       - name: Install qualification dependencies
         run: npm install --global npm@9.2.0 && cargo install cargo-audit --locked
-      - name: Test
-        run: bash dba/04-tools/tests/run.sh
-      - name: Dependency vulnerabilities
-        run: cargo audit --file dba/04-tools/workflow/engine/Cargo.lock && cargo audit --file dba/04-tools/reviewer/engine/Cargo.lock
+      - name: Full gate
+        run: bash dba/04-tools/tests/gate.sh full
       - name: Committed secrets
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Compatibility
-        run: bash dba/04-tools/compatibility/run.sh
       - name: Qualified release build
         if: github.event_name != 'pull_request'
         run: bash dba/04-tools/release/build-qualified-release.sh

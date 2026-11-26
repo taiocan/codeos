@@ -4127,11 +4127,7 @@ fn run_shared_production(
         })).collect::<Vec<_>>(),
         "scopes": config.scopes,
     });
-    let nonce = format!(
-        "{}-shared-{}",
-        std::process::id(),
-        chrono::Utc::now().timestamp_nanos_opt().unwrap_or_default()
-    );
+    let nonce = unique_nonce("shared");
     let definition_path = std::env::temp_dir().join(format!("codeos-reality-{nonce}.json"));
     let output_path = std::env::temp_dir().join(format!("codeos-reality-evidence-{nonce}.json"));
     let definition_text = serde_json::to_string_pretty(&definition).unwrap_or_default();
@@ -4433,12 +4429,7 @@ fn run_production_source_evidence(
     // from the scopes the new evidence states it observed.
     let mut governed = bindings.clone();
     governed.remove("evidence_scope_state");
-    let nonce = format!(
-        "{}-{}-{}",
-        std::process::id(),
-        subject.id,
-        chrono::Utc::now().timestamp_nanos_opt().unwrap_or_default()
-    );
+    let nonce = unique_nonce(&subject.id);
     let definition_path = std::env::temp_dir().join(format!("codeos-reality-{nonce}.json"));
     let output_path = std::env::temp_dir().join(format!("codeos-reality-evidence-{nonce}.json"));
     let definition = if v11 {
@@ -4662,12 +4653,7 @@ fn run_product_journey(project: &Project, subject: &Subject) -> evidence::Comman
         Ok(runtime) => runtime,
         Err(error) => return journey_failure(error.to_string()),
     };
-    let nonce = format!(
-        "{}-{}-{}",
-        std::process::id(),
-        subject.id,
-        chrono::Utc::now().timestamp_nanos_opt().unwrap_or_default()
-    );
+    let nonce = unique_nonce(&subject.id);
     let temp = std::env::temp_dir();
     let definition_path = temp.join(format!("codeos-journey-definition-{nonce}.json"));
     let evidence_path = temp.join(format!("codeos-journey-evidence-{nonce}.json"));
@@ -5130,10 +5116,22 @@ fn cargo_tests(project: &Project, args: &[&str]) -> (evidence::CommandOutcome, S
 /// A temporary path for one runner's JSON report.
 fn report_path(runner: &str) -> std::path::PathBuf {
     std::env::temp_dir().join(format!(
-        "codeos-{runner}-report-{}-{}.json",
-        std::process::id(),
-        chrono::Utc::now().timestamp_nanos_opt().unwrap_or_default()
+        "codeos-{runner}-report-{}.json",
+        unique_nonce("report")
     ))
+}
+
+/// A temporary-file nonce unique within this process and, through the pid, across processes.
+/// A timestamp alone can repeat when concurrent runs in one process (such as parallel tests on one
+/// subject) start in the same clock tick; they would then share and delete each other's files.
+fn unique_nonce(label: &str) -> String {
+    static NEXT: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+    format!(
+        "{}-{label}-{}-{}",
+        std::process::id(),
+        chrono::Utc::now().timestamp_nanos_opt().unwrap_or_default(),
+        NEXT.fetch_add(1, std::sync::atomic::Ordering::Relaxed)
+    )
 }
 
 /// Read and remove a runner's JSON report.
@@ -5670,6 +5668,13 @@ mod journey_tests {
         )
         .is_err());
     }
+    #[test]
+    fn temporary_file_nonces_never_repeat_within_a_process() {
+        let nonces: std::collections::BTreeSet<String> =
+            (0..1000).map(|_| unique_nonce("F-0001")).collect();
+        assert_eq!(nonces.len(), 1000);
+    }
+
     #[test]
     fn observations_are_read_only_from_the_named_regular_file() {
         let dir = tempfile::tempdir().unwrap();

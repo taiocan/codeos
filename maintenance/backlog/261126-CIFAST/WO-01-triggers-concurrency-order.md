@@ -26,3 +26,16 @@
   `cargo install cargo-audit`, so a format error fails before the slow installs.
 - Locally verified: workflow YAML parses, `run.sh` PASS, both engines `cargo fmt --check` and
   `clippy -D warnings` clean. The acceptance items need GitHub runs and are verified after the push.
+
+## Verification on GitHub (2026-11-26, probe PR #4, closed unmerged)
+
+- Pushes to the probe branch started no push run; each PR update started exactly one run.
+- Run 45767812540 was cancelled by the next commit on the PR.
+- A deliberate format error failed at Format 15 s after the job started (runs 45767600845,
+  45767639116, 45767698773).
+- Main run 45767552664 (dd74a9e) reached Format after 12 s and ran to completion. It failed at
+  `Test` on an intermittent fault, handled under WO-02. The probe run 45767891878 on the same code
+  passed every step.
+- Closing a PR does not cancel its in-progress run; only a newer commit does.
+
+Status: accepted on the evidence above.

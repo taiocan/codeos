@@ -17,3 +17,20 @@
 
 - `gate.sh full` passes locally exactly when CI passes on the same commit.
 - Removing a required binary fails at preflight, naming it.
+
+## Implementation notes (2026-11-26)
+
+- The gate is `dba/04-tools/tests/gate.sh`, beside `run.sh`, rather than a new `ci/` directory.
+- Codex is not a CI dependency: `ce08985` isolated the reviewer tests from Codex credentials and
+  removed it from CI, so the preflight does not require it.
+- The preflight checks presence of `git`, `rg`, `jq`, `python3`, `sha256sum`, `tar`, `awk`, `sed`,
+  `cargo`, rustfmt and clippy; the exact versions of Rust 1.93.0, and for `full` Node v20.19.2 and
+  npm 9.2.0; and `cargo-audit` for `full`. A miss lists each dependency with its expected version.
+- CI calls `gate.sh fast` before the slow installs and `gate.sh full` after them.
+- Main run 45767552664 failed `lifecycle_contract::a_revalidated_feature_is_current_for_the_workflow_and_the_reviewer`
+  with "verifier produced no readable evidence"; the same code passed in run 45767891878 and 10 of
+  10 local runs. Cause: verifier, journey and runner temp files were named from pid, subject and a
+  timestamp only, so parallel tests on one subject in one process could share files and delete
+  each other's evidence. Fixed with `unique_nonce`, which adds a process-wide counter, plus a test.
+- Locally verified: `gate.sh full` PASS; with `jq` hidden, the preflight fails naming `jq`.
+- Remaining acceptance: CI passes on the same commit as the local gate.
