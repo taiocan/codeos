@@ -51,4 +51,9 @@ Not done, with reasons:
   commits or a clock override in the engine; both change how evidence timestamps are judged, an
   integrity risk out of proportion to the saving.
 
-No assertion changed. Status: accepted pending CI timing.
+No assertion changed.
+
+CI on 963a149 (run 45857333202, success): full gate 168 s (was 226 s), whole run 268 s (was 326 to
+392 s). Candidate tests 30 s (was 45 s); the engine suites and remaining scripts 106 s (was 139 s).
+
+Status: implemented. Acceptance without the two dropped items awaits the human decision.
