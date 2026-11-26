@@ -358,7 +358,10 @@ fn standard_status_summarizes_platform_and_drill_down_keeps_project_exit_status(
         "GUI (Svelte)",
         "Integrated product",
     ] {
-        assert!(ordinary_text.contains(area), "{area} missing: {ordinary_text}");
+        assert!(
+            ordinary_text.contains(area),
+            "{area} missing: {ordinary_text}"
+        );
     }
     let text = String::from_utf8(platform.stdout).unwrap();
     assert!(text.starts_with("PLATFORM ASSURANCE — DEVELOPMENT EVIDENCE\n"));

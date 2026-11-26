@@ -31,8 +31,8 @@ pub mod retirement;
 pub mod revalidation;
 pub mod session;
 pub mod store_cache;
-pub mod validity;
 pub mod test_evidence;
+pub mod validity;
 pub mod verification;
 
 pub const EXIT_SUCCESS: i32 = 0;

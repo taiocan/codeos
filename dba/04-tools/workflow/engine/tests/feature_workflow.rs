@@ -926,7 +926,10 @@ fn accepted_journey_order_does_not_depend_on_receipt_order() {
     write_spec(
         &fx,
         "F-0303",
-        &dba9_spec("F-0303", "mode: preserve\nreason: refines the return decision"),
+        &dba9_spec(
+            "F-0303",
+            "mode: preserve\nreason: refines the return decision",
+        ),
     );
     assert_eq!(
         product_journey_target(&fx.project(), &fx.subject("F-0303")).unwrap(),
@@ -945,7 +948,9 @@ fn malformed_accepted_journey_topology_fails_closed() {
         fx.enable_dba10();
         accept_advance(&fx, "F-0401", "entry", "outbound");
         accept_advance(&fx, "F-0402", second.0, second.1);
-        let error = current_accepted_frontier(&fx.project()).unwrap_err().to_string();
+        let error = current_accepted_frontier(&fx.project())
+            .unwrap_err()
+            .to_string();
         assert!(error.contains(expected), "{error}");
         let error = codeos_workflow::checker::render_journey(&fx.project(), None)
             .unwrap_err()
