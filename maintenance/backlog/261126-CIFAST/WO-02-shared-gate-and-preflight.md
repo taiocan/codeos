@@ -33,4 +33,7 @@
   timestamp only, so parallel tests on one subject in one process could share files and delete
   each other's evidence. Fixed with `unique_nonce`, which adds a process-wide counter, plus a test.
 - Locally verified: `gate.sh full` PASS; with `jq` hidden, the preflight fails naming `jq`.
-- Remaining acceptance: CI passes on the same commit as the local gate.
+- CI run 45776215740 on b0d16e5 passed both gates and the release build, matching the local
+  `gate.sh full` PASS on the same commit. Main is green again.
+
+Status: accepted on the evidence above.

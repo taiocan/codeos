@@ -6,7 +6,9 @@
 ## Scope
 
 - `Swatinem/rust-cache` keyed for both engines (`workflow/engine`, `reviewer/engine`).
-- A prebuilt `cargo-audit` (for example `taiki-e/install-action`) instead of `cargo install`.
+- A prebuilt `cargo-audit` (for example `taiki-e/install-action`) instead of `cargo install`,
+  pinned to one version that the gate preflight also checks. CI currently installs the latest
+  (0.23.0) while local runs use 0.22.2.
 
 ## Acceptance
 
